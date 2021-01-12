@@ -403,9 +403,9 @@ def production(ID, starttime, endtime, FA=None, client=None, outpath=None, inst_
         if not rst:
             ttime += tinc
             continue
-        if inst_correction=='sensitivity'
+        if inst_correction=='sensitivity':
             rst.remove_sensitivity()
-        elif inst_correction=='response'
+        elif inst_correction=='response':
             rst.remove_response()
         elif inst_correction is None:
             pass
