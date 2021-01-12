@@ -164,7 +164,7 @@ class FS_Client(object):
         self.fs = fs
 
     def get_waveforms(self, network, station, location, channel,
-                      starttime, endtime, trim=True, debug=False):
+                      starttime, endtime, trim=True, debug=False, **kwargs):
         """
         Read data from the local file system.
         """
@@ -349,7 +349,7 @@ def _adjacent_filepattern(ID,starttime,fs,inc):
                     thistime = starttime + inc * datetime.timedelta(hours=1)
                 elif tpart == '%p':
                     thistime = starttime + inc * datetime.timedelta(hours=12)
-                elif tpart in ['%a','%A','%w','%d','%j']:
+                elif tpart in ['%a','%A','%w','%d','%j','%-j']:
                     thistime = starttime + inc * datetime.timedelta(days=1)
                 elif tpart in ['%U','%W']:
                     thistime = starttime + inc * datetime.timedelta(days=7)

@@ -10,6 +10,23 @@ import glob
 import matplotlib.pyplot as plt
 
 
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+class InputError(Error):
+    """Exception raised for errors in the input.
+
+    Attributes:
+        expression -- input expression in which the error occurred
+        message -- explanation of the error
+    """
+
+    def __init__(self, message):
+        self.message = message
+
+
+
 def plot(st, freq_keys=['?'], samp_keys=['?'], type_key='R', plot_type='lines', normalize=False, trafo=None):
     """Plot selected traces
 
@@ -356,7 +373,14 @@ class Field_Amplitudes():
 
     
     
-def production(ID, starttime, endtime, FA=None, client=None, outpath=None):
+def production(ID, starttime, endtime, FA=None, client=None, outpath=None, inst_correction='sensitivity'):
+    """
+    :type inst_correction: str
+    :param inst_correction: type of instrument correction to perform
+        'sensitivity' to remove only the instrument sensitivity
+        'response' to remove the full instument response
+        None to do nothing
+    """
     FA = FA or Field_Amplitudes()
     client = client or Client('GFZ')
     outpath = outpath or '.'
@@ -379,7 +403,14 @@ def production(ID, starttime, endtime, FA=None, client=None, outpath=None):
         if not rst:
             ttime += tinc
             continue
-        rst.remove_sensitivity()
+        if inst_correction=='sensitivity'
+            rst.remove_sensitivity()
+        elif inst_correction=='response'
+            rst.remove_response()
+        elif inst_correction is None:
+            pass
+        else:
+            raise InputError("Wrong value specified for 'inst_correction'")
         rst.merge(fill_value=None)
         print(rst, "Calculating")
         rst.trim(starttime=ttime-padding,endtime=ttime+tinc+padding+1,pad=True,fill_value=None)
