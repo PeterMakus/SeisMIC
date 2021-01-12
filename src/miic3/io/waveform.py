@@ -151,7 +151,7 @@ class Store_Client():
 
 
 
-class fs_client(object):
+class FS_Client(object):
     """
     Request Client for reading MSEED files from file system
     """
@@ -169,6 +169,10 @@ class fs_client(object):
         Read data from the local file system.
         """
         ID = network+'.'+station+'.'+location+'.'+channel
+        if isinstance(starttime,UTCDateTime):
+            starttime = starttime.datetime
+        if isinstance(endtime,UTCDateTime):
+            endtime = endtime.datetime
         st = read_from_filesystem(ID, starttime, endtime, self.fs, trim=trim, debug=debug)
         return st
     
