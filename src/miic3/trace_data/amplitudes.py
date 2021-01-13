@@ -355,7 +355,7 @@ class Field_Amplitudes():
         
     
     def write(self, root='.', filename=None):
-        if len(self.rst==0):
+        if len(self.rst)==0:
             print("No data in trace to write.")
             return
         filename = self.sds_filename()
