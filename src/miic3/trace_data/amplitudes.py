@@ -164,8 +164,10 @@ class Field_Amplitudes():
         self.calc_chi = calc_chi
         
     def enter_trace(self, tr):
+        min_samp = min(self.sampling.values())
         assert isinstance(tr,Trace), "'tr' must be an obspy.trace object"
-        assert tr.stats.endtime-tr.stats.starttime>2.*self.padding, "'tr' must be longer that twice the padding"
+        assert (tr.stats.endtime-tr.stats.starttime)>(2.*self.padding+min_samp),\
+                "'tr' must be longer that twice the padding plus minimum sampling"
         self.trace = tr
         self._pre_process()
         # calc start and endtimes such that the timeing of samples does not depend 
@@ -230,7 +232,7 @@ class Field_Amplitudes():
         sorder = np.argsort([self.sampling[key] for key in sorted(self.sampling.keys())])
         # check that trace length is enough for at least one sample of the shortest sampling
         if (self.trace.stats.endtime - self.trace.stats.starttime) \
-                    < (2*self.padding+self.sampling.keys()[sorder[0]]):
+                    < (2*self.padding+self.sampling[list(self.sampling.keys())[sorder[0]]]):
             self.rst = rst
             return rst
         # set the order of calculation for frequencies
