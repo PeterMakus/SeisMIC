@@ -134,7 +134,8 @@ def sampling_dict():
 
 
 class Field_Amplitudes():
-    """Estimate noise amplitudes from stream"""
+    """Estimate noise amplitudes from stream
+    """
     def __init__(self, frequencies=None, sampling=None, bandwidth_factor=0.125 , percentile_range=[1.,10], 
                  required_data=0.9, reftime=UTCDateTime(2000,1,1), padding=None, calc_chi=True):
         """
@@ -156,7 +157,7 @@ class Field_Amplitudes():
         self.bandwidth_key = chr(int(91-1./bandwidth_factor))
         self.sampling = sampling or sampling_dict()
         self.tmax = np.max([self.sampling[key] for key in self.sampling.keys()])
-        self.padding = padding or np.ceil(5.*1./np.min([frequencies[freq][0] for freq in frequencies]))
+        self.padding = padding or np.ceil(5.*1./np.min([frequencies[freq] for freq in frequencies.keys()]))
         self.percentile_range = percentile_range
         self.reftime = reftime
         self.required_data = required_data
@@ -219,12 +220,19 @@ class Field_Amplitudes():
         #percentiles = np.logspace(-4,2,601)
         #percentile_range_inds = np.arange(np.argmin(np.abs(percentiles-self.percentile_range[0])),
         #                                       np.argmin(np.abs(percentiles-self.percentile_range[1])))
+        # object to accumulate results
+        rst = Stream()
         # zero padding and Fourier transform
         N = next_pow_2(self.trace.stats.npts)
         current_sampling_rate = self.trace.stats.sampling_rate
         decimation = 1.
         # set order of calculations for sampling
         sorder = np.argsort([self.sampling[key] for key in sorted(self.sampling.keys())])
+        # check that trace length is enough for at least one sample of the shortest sampling
+        if (self.trace.stats.endtime - self.trace.stats.starttime) \
+                    < (2*self.padding+self.sampling.keys()[sorder[0]]):
+            self.rst = rst
+            return rst
         # set the order of calculation for frequencies
         # start with highest freqency and gradually truncate the spectrum for downsampling
         forder = np.argsort([self.frequencies[key] for key in sorted(self.frequencies.keys())])[-1::-1]
@@ -233,8 +241,6 @@ class Field_Amplitudes():
         spec = sp_fft.fft(self.trace.data, N, axis=0)
         freq = sp_fft.fftfreq(N,self.trace.stats.delta)
         h = self._hilbert_h(N)
-        # object to accumulate results
-        rst = Stream()
         # filtering and envelope calculation
         for find in forder:
             fkey = sorted(self.frequencies.keys())[find]
@@ -347,6 +353,9 @@ class Field_Amplitudes():
         
     
     def write(self, root='.', filename=None):
+        if len(self.rst==0):
+            print("No data in trace to write.")
+            return
         filename = self.sds_filename()
         filename = filename or self.sds_filename()
         filename = os.path.join(root,filename)
