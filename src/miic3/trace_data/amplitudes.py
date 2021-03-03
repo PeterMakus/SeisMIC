@@ -1,13 +1,17 @@
 ##### from obspy import Trace, Stream, UTCDateTime, read
-from obspy import Trace, Stream, UTCDateTime
+import os
+import glob
+
+from obspy import Trace, Stream, UTCDateTime, read
 from obspy.io.mseed import InternalMSEEDError
+from obspy.clients.filesystem.sds import Client
 import numpy as np
 from scipy import fft as sp_fft
 from obspy.signal.util import next_pow_2
 from copy import deepcopy
-import os
-import glob
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+
 
 
 class Error(Exception):
@@ -26,84 +30,286 @@ class InputError(Error):
         self.message = message
 
 
-
-def plot(st, freq_keys=['?'], samp_keys=['?'], type_key='R', plot_type='lines', normalize=False, trafo=None):
-    """Plot selected traces
-
-    :tpye freq_keys: list
-    :param freq_keys: list of frequency keys to plot
-    :tpye samp_keys: list
-    :param samp_keys: list of sampling rate keys to plot
-    :type type_key: char
-    :param type_key: one of 'R', 'M', 'S', 'C', 'D', 'E', 'F'
-        'R': mean square amplitude derived from the distribution of small amplitude samples
-        'M': mean amplitude of envelope
-        'S': mean square amplitude of envelope
-        'C': chi (mean log misfit of cumulative distribution function and sorted envelope samples)
-        'D': chi_abs (mean of absolute value of log misfit of cumulative distribution function and sorted envelope samples)
-        'E': chi restricted to the percentile range used to estimate 'R'
-        'F': chi_abs restricted to the percentile range used to estimate 'R'
-    :type plot_type: str
-    :param plot_type: 'lines', 'color_panel'
-    :type normalize: bool
-    :param normaliz: normalize each trace individualy
-    :type trafo: function or None
-    :param trafo: function to apply to the data for transformation.
-        It is expected to accept a numpy array as input and also return a numpy array with the transformed data,
+class FA_client():
     """
-    # select traces to plot
-    sst = Stream()
-    for freq_key in freq_keys:
-        for samp_key in samp_keys:
-            channel = "?%s?" % type_key
-            location = "%s%s" % (freq_key,samp_key)
-            sst += st.select(location=location, channel=channel)
-    # sort ferquencies
-    locs = [tr.stats.location.upper() for tr in sst]
-    inds = np.argsort(locs)
-    fkchar = np.array([ord(locs[ind][0]) for ind in inds])
-    # different frequencies present?
-    if np.any(np.diff(fkchar)!=0):
+    Client to access Field amplitude data stored on a disk
+    """
+    def __init__(self, path):
+        """
+        Initialise the client
+
+        type path: string
+        param path: root directory of the SDS archive
+        """
+        self.sds_root = path
+        self.sds_type = 'D'
+        self.fileborder_seconds = 30
+        self.fileborder_samples = 5000
+        self.client = Client(path, sds_type=self.sds_type, format="MSEED",
+                               fileborder_seconds=self.fileborder_seconds,
+                               fileborder_samples=self.fileborder_samples)
+        frequencies = {}
+        # for Gaussian filters the freqs are (central freq, standard deviation)
+        fac = 0.5
+        for num,ind in enumerate(np.arange(0,5,fac)):
+            frequencies.update({chr(int(num+65)):[2.**ind,2.**(ind-1)]})
+        for num,ind in enumerate(np.arange(-fac,-9,-fac)):
+            frequencies.update({chr(int(90-num)):[2.**(ind),2.**(ind-1)]})
+        self.frequencies = frequencies
+        self.freq_keys, self.freq_vals = zip(*[(key, frequencies[key][0]) for key in frequencies.keys()])
+        self.sampling = {'A':60, 'B':600, 'C':3600, 'D':3600*3,
+                        'E':3600*12, 'F':3600*24, 'G':3600*24*3}
+        self.samp_keys, self.samp_vals = zip(*[(key, self.sampling[key]) for key in self.sampling.keys()])
+
+
+    def load_fa(self,network,station,component,starttime,endtime,freq=None,sampling=None,type='R'):
+        """
+        Read field amplitude data
+        """
+        if freq:
+            fkey = self.freq_keys[self.freq_vals.index(freq)]
+        else:
+            fkey = '?'
+        if sampling:
+            skey = self.samp_keys[self.samp_vals.index(sampling)]
+        else:
+            skey = '?'
+        location = fkey+skey
+        channel = "?{type}{component}".format(type=type,component=component)
+        print(location, channel)
+        flist = []
+        stime = starttime-max(self.samp_vals)-1
+        while stime < endtime:
+            SDS_FMTSTR = os.path.join("{root}", "{year}", "{network}", "{station}", "{sds_type}",
+                                  "{network}.{station}.RA.*{component}.{sds_type}.{year}.{doy:03d}.mseed")
+            fname = SDS_FMTSTR.format(root=self.sds_root,
+                                      year=stime.year,
+                                      network=network,
+                                      station=station,
+                                      location="RA",
+                                      component=component,
+                                      sds_type="D",
+                                      doy=stime.julday)
+            gfname = glob.glob(fname)
+            if len(gfname)==1:
+                flist.append(gfname[0])
+            stime += 86400
+        st = Stream()
+        for fname in flist:
+            tst = read(fname,format='MSEED')
+            tst = tst.select(location=location,channel=channel)
+            st += tst
+        st.merge()
+        return st
+
+
+class envelopes():
+    """
+    Class for handling envelope amplitudes
+    """
+    def __init__(self):
+        self.frequency_dict = frequency_dict()
+        self.sampling_dict = sampling_dict()
+
+    def add_stream(self, st):
+        """
+        Add a stream that contains amplitude data as produced by Field_Amplitudes
+        """
+        self.st = st
+        self._set_properties()
+
+    def _set_properties(self):
+        frequencies = []
+        sampling = []
+        starttime = self.st[0].stats.starttime
+        endtime = self.st[0].stats.endtime
+        for tr in self.st:
+            frequencies.append(self.frequency_dict[tr.stats.location[0]])
+            sampling.append(self.sampling_dict[tr.stats.location[1]])
+            starttime = min((starttime,tr.stats.starttime))
+            endtime = max((starttime,tr.stats.endtime))
+        self.frequencies = np.array(frequencies)
+        self.sampling = np.array(sampling)
+        self.starttime = starttime
+        self.endtime = endtime
+
+    def trim(self,starttime=None,endtime=None):
+        """
+        Trim the trace in the object
+        """
+        self.st.trim(starttime,endtime)
+        self._set_properties()
+
+    def copy(self):
+        """
+        Return a copy of the object
+        """
+        return deepcopy(self)
+
+    def plot_time(self, freq_keys=['?'], samp_keys=['?'], type_key='R',
+                  plot_type='lines', normalize=False, trafo=None,
+                  clim=None):
+        """
+        Plot selected traces over time
+
+        :tpye freq_keys: list
+        :param freq_keys: list of frequency keys to plot
+        :tpye samp_keys: list
+        :param samp_keys: list of sampling rate keys to plot
+        :type type_key: char
+        :param type_key: one of 'R', 'M', 'S', 'C', 'D', 'E', 'F'
+            'R': mean square amplitude derived from the distribution of small amplitude samples
+            'M': mean amplitude of envelope
+            'S': mean square amplitude of envelope
+            'C': chi (mean log misfit of cumulative distribution function and sorted envelope samples)
+            'D': chi_abs (mean of absolute value of log misfit of cumulative distribution function and sorted envelope samples)
+            'E': chi restricted to the percentile range used to estimate 'R'
+            'F': chi_abs restricted to the percentile range used to estimate 'R'
+        :type plot_type: str
+        :param plot_type: 'lines', 'color_panel'
+        :type normalize: 0, 1 or anything else
+        :param normaliz: 
+            0: normalize each frequency individually over time
+            1: normalize each trace individualy over frequency
+            other input: do not normalize
+        :type trafo: function or None
+        :param trafo: function to apply to the data for transformation.
+            It is expected to accept a numpy array as input and also return a numpy array with the transformed data,
+        """
+
+        sst = Stream()
+        for freq_key in freq_keys:
+            for samp_key in samp_keys:
+                channel = "?%s?" % type_key
+                location = "%s%s" % (freq_key,samp_key)
+                sst += self.st.select(location=location, channel=channel)
+        # sort ferquencies
+        locs = [tr.stats.location.upper() for tr in sst]
+        inds = np.argsort(locs)
+        fkchar = np.array([ord(locs[ind][0]) for ind in inds])
+        # different frequencies present?
+        if np.any(np.diff(fkchar)!=0):
+            # any of these frequencies < 1Hz
+            if np.any(fkchar>76):
+                index = min(np.where(fkchar>76)[0])
+                inds = np.roll(inds,-index)
+        # check for different sampling rates
+        deltas = np.array([tr.stats.delta for tr in sst])
+        delta_min = np.min(deltas)
+        plot_freq = False
+        if np.sum(np.diff(deltas)) == 0:
+            plot_freq = True
+        if plot_type == 'lines':
+            plt.figure(figsize=(8,4))
+            for ind in inds:
+                tr = sst[ind]
+                times = [(tr.stats.starttime + dtim).datetime for dtim in (np.arange(tr.stats.npts)*tr.stats.delta)]
+                if plot_freq:
+                    tfreq = self.frequency_dict[tr.stats.location[0]]
+                    if tfreq < 1:
+                        label = "1/%0.1f s" % (1/tfreq)
+                    else:
+                        label = "%0.1f Hz" % tfreq
+                else:
+                    tsamp = self.sampling_dict[tr.stats.location[1]]
+                    label = "%d s" % tsamp
+                if trafo:
+                    plt.plot(times, trafo(tr.data),'. ', label=label)
+                else:
+                    plt.plot(times, tr.data,'.',label=label)
+            plt.xlabel('time')
+            plt.ylabel('log amplitude')
+            plt.legend()
+        elif plot_type == 'color_panel':
+            plt.figure(figsize=(8,4))
+            # times for plotting in seconds starting at the earliest sample in the stream
+            times = np.arange(int(np.ceil((self.endtime-self.starttime)/delta_min)))*delta_min
+            dtimes = [(self.starttime + dtim).datetime for dtim in (np.arange(len(times))*delta_min)]
+            pmat = np.zeros((len(sst),len(times)))
+            saxis = []
+            faxis = []
+            for ind,tr in enumerate([sst[ind] for ind in inds]):
+                #for ind,tr in enumerate(sst[inds]):
+                ttimes = np.arange(tr.stats.npts)*tr.stats.delta + (tr.stats.starttime-self.starttime)
+                pmat[ind,:] = np.interp(times,ttimes,tr.data)
+                saxis.append(self.sampling_dict[tr.stats.location[1]])
+                faxis.append(self.frequency_dict[tr.stats.location[0]])
+            if plot_freq:
+                axis = faxis
+            else:
+                axis = saxis
+            # normalization
+            if (type(normalize)==int) and (normalize in [0, 1, 2, 3]):
+                if normalize<2:
+                    pmat = pmat / np.nanmax(pmat,normalize,keepdims=True)
+                else:
+                    normalize-=2
+                    pmat = pmat - np.nanmax(pmat,normalize,keepdims=True)
+            if trafo:
+                pmat = trafo(pmat)
+            cmap = plt.get_cmap('inferno')
+            cmap.set_bad(color='gray') 
+            plt.pcolormesh(dtimes, axis, pmat, cmap=cmap)
+            plt.yscale('log')
+            if plot_freq:
+                plt.ylabel('frequency [Hz]')
+            else:
+                plt.ylabel('sampling interval [s]')
+            plt.xlabel('time')
+            if type(clim)!=type(None):
+                plt.clim(clim)
+            plt.colorbar(label='log amplitude')
+        else:
+            raise InputError("Invalid value for 'plot_type' %s" % plot_type)
+
+    def plot_psa(self, samp_key='A' , type_key='R', log_amp_scaling=True, nbins=100, bin_min=None, bin_max=None):
+        """
+        Plot probabilistic spectral amplitudes
+        """
+        channel = "?%s?" % type_key
+        location = "?%s" % (samp_key)
+        sst = self.st.select(location=location, channel=channel)
+        locs = [tr.stats.location.upper() for tr in sst]
+        inds = np.argsort(locs)
+        fkchar = np.array([ord(locs[ind][0]) for ind in inds])
         # any of these frequencies < 1Hz
         if np.any(fkchar>76):
             index = min(np.where(fkchar>76)[0])
             inds = np.roll(inds,-index)
-    print([tr.stats.location for tr in sst])
-    print(inds)
-    if plot_type == 'lines':
-        plt.figure(figsize=(8,4))
-        for ind in inds:
-            tr = sst[ind]
-            times = [(tr.stats.starttime + dtim).datetime for dtim in (np.arange(tr.stats.npts)*tr.stats.delta)]
-            if trafo:
-                plt.plot(times, trafo(tr.data),'.')
-            else:
-                plt.plot(times, tr.data,'.')
-    elif plot_type == 'color_panel':
-        # check for different sampling rates
         deltas = np.array([tr.stats.delta for tr in sst])
-        starttimes = [tr.stats.starttime for tr in sst]
-        endtimes = [tr.stats.endtime for tr in sst]
-        delta_min = np.min(deltas)
-        starttime_min = min(starttimes)
-        endtime_max = max(endtimes)
-        # times for plotting in seconds starting at the earliest sample in the stream
-        times = np.arange(int(np.ceil((endtime_max-starttime_min)/delta_min)))*delta_min
-        pmat = np.zeros((len(sst),len(times)))
+        for delta in deltas:
+            if delta != deltas[0]:
+                raise InputError("sampling should be identical in the traces")
+        amin = np.inf
+        amax = 0.
+        faxis = []
         for ind,tr in enumerate([sst[ind] for ind in inds]):
-            #for ind,tr in enumerate(sst[inds]):
-            ttimes = np.arange(tr.stats.npts)*tr.stats.delta + (tr.stats.starttime-starttime_min)
-            pmat[ind,:] = np.interp(times,ttimes,tr.data)
-        if normalize:
-            pmat = pmat / np.nanmax(pmat,1,keepdims=True)
-        if trafo:
-            pmat = trafo(pmat)
-        plt.imshow(pmat,aspect='auto',interpolation=None)
-        plt.colorbar()
-        return pmat
-
-
-
+            amin = np.nanmin(np.array((amin,np.nanpercentile(np.ma.filled(tr.data,np.nan),5))))
+            amax = np.nanmax(np.array((amax,np.nanmax(tr.data))))
+            faxis.append(self.frequency_dict[tr.stats.location[0]])
+        if type(bin_min)!=type(None):
+            amin = bin_min
+        if type(bin_max)!=type(None):
+            amax = bin_max
+        if log_amp_scaling:
+            bins = np.logspace(np.log10(amin),np.log10(amax),nbins)
+        else:
+            bins = np.linspace(amin,amax,nbins)
+        psdmat = np.zeros((nbins-1,len(sst)))
+        for ind,tr in enumerate([sst[ind] for ind in inds]):
+            N, edges = np.histogram(tr.data,bins=bins,density=False)
+            psdmat[:,ind] = N / np.max(N)  
+        plt.figure(figsize=(5,4))
+        cmap = plt.get_cmap('jet')
+        cmap.set_bad(color='gray') 
+        plt.pcolormesh(faxis,bins[:-1],np.log10(psdmat),cmap=cmap)
+        plt.xscale('log')
+        if log_amp_scaling:
+            plt.yscale('log')
+        plt.ylabel('amplitude')
+        plt.xlabel('frequency [Hz]')
+        plt.colorbar(label='probability')
+        return psdmat, faxis, bins
 
 
 
@@ -438,7 +644,7 @@ class Probabilistic_Field_Amplitudes():
     def __init__(self, frequency, sampling, padding=None, percentiles=None,
                  amplitudes=None, scale_percentile_range=[1.,10]):
         """
-        amplitudes: parameters of logarithmically spaces bins (min, max, number)
+        amplitudes: parameters of logarithmically spaced bins (min, max, number)
         """
         self.frequency = frequency
         self.sampling = sampling
@@ -618,15 +824,23 @@ def gauss_filter(st, frequency, width):
 def fit_Rayleigh_distribution(x,p=1.):
     """Fit the scale parameter of the Rayleigh distribution
     
-    x: 1 or 2 dimensional array containing the seismic envelope data
+    The amplitudes of the envelope of a random seismic wavefield should follow
+    a Rayleigh distribution. This function uses the 'p' smallest percentile
+    of the data to estimate the scale parameter of a Rayleigh distribution.
+    
+    :param x: 1 or 2 dimensional array containing the seismic envelope data
         time axis is oriented along the first dimension (0).
         The array for three traces with 1000 samples has shape (1000,3).
-    P: percentile of data points used to calculate the scale parameter.
-        p should be small enough
-    return: (sig, RayRMS, RMS) where 'sig' is the scale parameter of the Rayleigh
+    :type x: :class:`numpy.array`
+    :param p: percentile of data points used to calculate the scale parameter.
+        P is supposed to be between 0 and 100 (all data used).
+    :type p: float
+    :rtype: tuple of three numbers or three arrays
+    :return: (sig, RayMS, RMS) where 'sig' is the scale parameter of the Rayleigh
         distribution, 'RayMS' is the root mean square of the Rayleigh
         distributed values and 'RMS' is the root mean square of the
-        data.
+        data. If 'x' is a 2D array three arrays are returned each having a length of
+        x.shape[1]
     """
     assert ((p<100) & (p>0)), "The percentile 'p' must be in the range 0<p<100: %f" % p
     xp = np.percentile(x,p,axis=0)
@@ -634,7 +848,7 @@ def fit_Rayleigh_distribution(x,p=1.):
     sig = np.sqrt(-xp**2./(2.*np.log(1.-p/100.)))
     RayMS = np.sqrt(2.)*sig
     RMS = np.sqrt(np.mean(x**2))
-    return sig, RayRMS, RMS
+    return sig, RayMS, RMS
 
 
 
