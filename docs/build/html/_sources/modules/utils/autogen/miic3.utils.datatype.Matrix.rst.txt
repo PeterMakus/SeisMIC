@@ -1,0 +1,32 @@
+miic3.utils.datatype.Matrix
+===========================
+
+.. currentmodule:: miic3.utils.datatype
+
+.. autoclass:: Matrix
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Matrix.__init__
+      ~Matrix.copy
+      ~Matrix.load
+      ~Matrix.plot
+      ~Matrix.save
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Matrix.shape
+   
+   

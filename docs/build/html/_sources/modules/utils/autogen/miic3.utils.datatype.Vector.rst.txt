@@ -1,0 +1,26 @@
+miic3.utils.datatype.Vector
+===========================
+
+.. currentmodule:: miic3.utils.datatype
+
+.. autoclass:: Vector
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Vector.__init__
+      ~Vector.copy
+      ~Vector.load
+      ~Vector.plot
+      ~Vector.save
+   
+   
+
+   
+   
+   

@@ -1,0 +1,26 @@
+miic3.utils.datatype.Scalar
+===========================
+
+.. currentmodule:: miic3.utils.datatype
+
+.. autoclass:: Scalar
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Scalar.__init__
+      ~Scalar.copy
+      ~Scalar.get_data
+      ~Scalar.load
+      ~Scalar.save
+   
+   
+
+   
+   
+   

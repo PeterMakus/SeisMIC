@@ -1,0 +1,6 @@
+miic3.utils.datatype.save
+=========================
+
+.. currentmodule:: miic3.utils.datatype
+
+.. autofunction:: save

@@ -1,0 +1,6 @@
+miic3.utils.datatype.load
+=========================
+
+.. currentmodule:: miic3.utils.datatype
+
+.. autofunction:: load

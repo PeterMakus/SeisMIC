@@ -1,0 +1,6 @@
+miic3.trace\_data.waveform.read\_from\_filesystem
+=================================================
+
+.. currentmodule:: miic3.trace_data.waveform
+
+.. autofunction:: read_from_filesystem

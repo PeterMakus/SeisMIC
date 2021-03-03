@@ -1,0 +1,6 @@
+miic3.trace\_data.amplitudes.fit\_Rayleigh\_distribution
+========================================================
+
+.. currentmodule:: miic3.trace_data.amplitudes
+
+.. autofunction:: fit_Rayleigh_distribution
