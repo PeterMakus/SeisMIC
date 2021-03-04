@@ -66,7 +66,6 @@ class Store_Client(object):
         domain = RectangularDomain(minlatitude=minlat, maxlatitude=maxlat,
                            minlongitude=minlon, maxlongitude=maxlon)
 
-
         restrictions = Restrictions(
             starttime=starttime,
             endtime=endtime,
@@ -83,7 +82,8 @@ class Store_Client(object):
             # Same is true with the minimum length. All data might be useful.
             minimum_length=0.0,
             # Guard against the same station having different names.
-            minimum_interstation_distance_in_m=100.0)
+            minimum_interstation_distance_in_m=100.0,
+            sanitize=False)
 
         mdl = MassDownloader(providers=clients)
 
@@ -159,9 +159,11 @@ class Store_Client(object):
         print("Loading locally ... ", end = '')
         st = self.lclient.get_waveforms(network, station, location, channel, starttime,
                            endtime)
+        # Making sure that the order is correct for the next bit to work
+        st.sort(['starttime'])
         if ((len(st) == 0) or 
             ((starttime<(st[0].stats.starttime-st[0].stats.delta)) # potentially subtract 1 delta
-             or (endtime>st[0].stats.endtime+st[0].stats.delta))):
+             or (endtime>st[-1].stats.endtime+st[-1].stats.delta))):
             print("Failed")
             return None
         if attach_response:
