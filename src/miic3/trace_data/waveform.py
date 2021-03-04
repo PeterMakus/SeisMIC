@@ -4,6 +4,8 @@ from obspy.clients.fdsn import Client as rClient
 from obspy.clients.fdsn.header import FDSNNoDataException
 from obspy.clients.filesystem.sds import Client as lClient
 from obspy import read_inventory, UTCDateTime, read, Stream
+from obspy.clients.fdsn.mass_downloader import RectangularDomain, \
+    Restrictions, MassDownloader
 import warnings
 
 
@@ -11,9 +13,9 @@ SDS_FMTSTR = os.path.join(
     "{year}", "{network}", "{station}", "{channel}.{sds_type}",
     "{network}.{station}.{location}.{channel}.{sds_type}.{year}.{doy:03d}")
 
-class Store_Client():
+class Store_Client(object):
     """
-    Client for requst and local storage of waveform data
+    Client for request and local storage of waveform data
     
     Request client that stores downloaded data for later local retrieval. 
     When reading stored data the client reads from the local copy of the data.
@@ -51,7 +53,42 @@ class Store_Client():
                                fileborder_samples=self.fileborder_samples)
         self.rclient = Client
         self.read_only = read_only
+
+    def download_waveforms_mdl(
+        self, starttime:UTCDateTime, endtime:UTCDateTime, clients:list or None=None,
+        minlat:int or float or None=None, maxlat:int or float or None=None,
+        minlon:int or float or None=None, maxlon:int or float or None=None,
+        network:str or None=None, station:str or None=None,
+        location:str or None=None, channel:str or None=None):
         
+        # Initialise MassDownloader
+        
+        domain = RectangularDomain(minlatitude=minlat, maxlatitude=maxlat,
+                           minlongitude=minlon, maxlongitude=maxlon)
+
+
+        restrictions = Restrictions(
+            starttime=starttime,
+            endtime=endtime,
+            # Chunk it to have one file per day.
+            chunklength_in_sec=86400,
+            # Considering the enormous amount of data associated with continuous
+            # requests, you might want to limit the data based on SEED identifiers.
+            # If the location code is specified, the location priority list is not
+            # used; the same is true for the channel argument and priority list.
+            network=network, station=station, location=location, channel=channel,
+            # The typical use case for such a data set are noise correlations where
+            # gaps are dealt with at a later stage.
+            reject_channels_with_gaps=False,
+            # Same is true with the minimum length. All data might be useful.
+            minimum_length=0.0,
+            # Guard against the same station having different names.
+            minimum_interstation_distance_in_m=100.0)
+
+        mdl = MassDownloader(providers=clients)
+
+        mdl.download(domain, restrictions, mseed_storage=self._get_mseed_storage,
+                    stationxml_storage=self.inv_name)
         
     def get_waveforms(self, network, station, location, channel, starttime,
                       endtime, attach_response=True):
@@ -65,6 +102,26 @@ class Store_Client():
                               endtime, attach_response)
         return st
     
+    def _get_mseed_storage(self, network, station, location, channel, starttime,
+
+                      endtime):
+
+        # Returning True means that neither the data nor the StationXML file
+
+        # will be downloaded.
+
+        filename = SDS_FMTSTR.format(network=network, station=station,
+                                      location=location, channel=channel,
+                                      year=starttime.year, doy=starttime.julday,
+                                      sds_type=self.sds_type)
+        outf = os.path.join(self.sds_root, filename)
+
+        if os.path.isfile(outf):
+            return True
+
+        # If a string is returned the file will be saved in that location.
+
+        return outf
     
     def _load_remote(self, network, station, location, channel, starttime,
                      endtime, attach_response):

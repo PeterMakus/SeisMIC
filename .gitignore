@@ -2,3 +2,4 @@
 __pycache__
 tests/data/
 autogen/*.rst
+testnb.ipynb
