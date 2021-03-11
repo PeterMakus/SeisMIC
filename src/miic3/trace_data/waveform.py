@@ -1,12 +1,18 @@
+import fnmatch
 import os, datetime, glob
+from operator import itemgetter
+import warnings
+
+import numpy as np
 
 from obspy.clients.fdsn import Client as rClient
 from obspy.clients.fdsn.header import FDSNNoDataException
 from obspy.clients.filesystem.sds import Client as lClient
-from obspy import read_inventory, UTCDateTime, read, Stream
+from obspy import read_inventory, UTCDateTime, read, Stream, Trace
 from obspy.clients.fdsn.mass_downloader import RectangularDomain, \
     Restrictions, MassDownloader
-import warnings
+from obspy.core import AttribDict
+
 
 
 SDS_FMTSTR = os.path.join(
@@ -91,12 +97,12 @@ class Store_Client(object):
                     stationxml_storage=self.inv_name)
         
     def get_waveforms(self, network, station, location, channel, starttime,
-                      endtime, attach_response=True):
+                      endtime, attach_response=True, _check_times:bool=True):
         assert ~('?' in network+station+location+channel), "Only single channel requests supported."
         assert ~('*' in network+station+location+channel), "Only single channel requests supported."
         # try to load from local disk
         st = self._load_local(network, station, location, channel, starttime,
-                              endtime, attach_response)
+                              endtime, attach_response, _check_times)
         if st is None:
             st = self._load_remote(network, station, location, channel, starttime,
                               endtime, attach_response)
@@ -122,6 +128,43 @@ class Store_Client(object):
         # If a string is returned the file will be saved in that location.
 
         return outf
+    
+    def _get_times(self, network:str, station:str) -> tuple:
+        """
+        Return earliest and latest available time for a certain station.
+
+        :param network: network code
+        :type network: str
+        :param station: station code
+        :type station: str
+        :return: (UTCDateTime, UTCDateTime)
+        :rtype: tuple
+        """
+        dirlist = glob.glob(os.path.join(self.sds_root, '*', network, station))
+        dirlist2 = [os.path.basename(os.path.dirname(os.path.dirname(i))) for i in dirlist]
+        # We only want the folders with years
+        l0 = fnmatch.filter(dirlist2, '1*')
+        l1 = fnmatch.filter(dirlist2, '2*')
+        del dirlist2
+        dirlist = l0 + l1
+        if not dirlist:
+            warnings.warn('Station %s.%s not in database' %(network,station),
+            UserWarning)
+            return (None, None)
+        dirlist.sort()  # sort by time
+        startjul = [i[-3:] for i in glob.glob(os.path.join(self.sds_root, dirlist[0], network, station,'*','*'))]
+        if not startjul:
+            warnings.warn('Station %s.%s not in database' %(network,station),
+            UserWarning)
+            return (None, None)
+        startjul.sort()
+        starttime = UTCDateTime(year=int(dirlist[0]), julday=startjul[0])
+        endjul = [i[-3:] for i in glob.glob(os.path.join(self.sds_root, dirlist[-1], network, station,'*','*'))]
+        endjul.sort()
+        endtime = UTCDateTime(year=int(dirlist[-1]), julday=endjul[-1])
+        return (starttime, endtime)
+
+
     
     def _load_remote(self, network, station, location, channel, starttime,
                      endtime, attach_response):
@@ -152,7 +195,7 @@ class Store_Client(object):
     
     
     def _load_local(self, network, station, location, channel, starttime,
-                    endtime, attach_response):
+                    endtime, attach_response, _check_times):
         """
         Read data from local SDS structure.
         """
@@ -161,8 +204,8 @@ class Store_Client(object):
                            endtime)
         # Making sure that the order is correct for the next bit to work
         st.sort(['starttime'])
-        if ((len(st) == 0) or 
-            ((starttime<(st[0].stats.starttime-st[0].stats.delta)) # potentially subtract 1 delta
+        if _check_times and (len(st) == 0 or 
+            (starttime<(st[0].stats.starttime-st[0].stats.delta) # potentially subtract 1 delta
              or (endtime>st[-1].stats.endtime+st[-1].stats.delta))):
             print("Failed")
             return None
