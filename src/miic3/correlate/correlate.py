@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Thursday, 11th March 2021 09:25:07 am
+Last Modified: Friday, 12th March 2021 04:14:42 pm
 '''
 from glob import glob
 import os
@@ -19,28 +19,31 @@ from ..trace_data.waveform import Store_Client
 
 
 class Correlator(object):
-    def __init__(self, store_client:Store_Client) -> None:
+    def __init__(self, store_client: Store_Client) -> None:
         super().__init__()
         self.store_client = store_client
-    
+
     def preprocess_bulk(
-        self, network:str or None=None,
-        starttime:UTCDateTime or None=None, endtime:UTCDateTime or None=None):
+        self, network: str or None  =None,
+        starttime: UTCDateTime or None = None,
+            endtime: UTCDateTime or None = None):
         Parallel(n_jobs=-1)(
                     delayed(self.preprocess)(
                         network, station, '*', '*', starttime, endtime)
                     for network, station in self._all_stations_raw(network))
 
-    def preprocess(self, network:str, station:str,
-    location:str, channel:str, starttime:UTCDateTime or None=None,
-    endtime:UTCDateTime or None=None):
+    def preprocess(
+        self, network: str, station: str, location: str, channel: str,
+        starttime: UTCDateTime or None = None,
+            endtime: UTCDateTime or None = None):
 
-        assert not '*' in station or type(station) != list, \
-        'To process data from several stations, use Correlator.preprocess_bulk!'
+        assert '*' not in station or type(station) != list, 'To process data\
+             from several stations, use Correlator.preprocess_bulk!'
 
         if not starttime or not endtime:
-            warn('Returned start and endtimes will not be checked due to'+
-            ' wildcard.', category=UserWarning)
+            warn(
+                'Returned start and endtimes will not be checked due to' +
+                ' wildcard.', category=UserWarning)
             _check_times = False
             starttime, endtime = self.store_client._get_times(network, station)
             if not starttime:
@@ -63,7 +66,7 @@ class Correlator(object):
         else:
             starttimes = [starttime]
             endtimes = [endtime]
-            
+
         for starttime, endtime in zip(starttimes, endtimes):
             # Return obspy stream with data from this station
             st = self.store_client.get_waveforms(network, station, location, channel,
@@ -72,16 +75,17 @@ class Correlator(object):
             st = self._preprocess(st)
 
             # Create folder if it does not exist
-            os.makedirs(os.path.join(self.store_client.sds_root, 'preprocessed'),
-            exist_ok=True)
-            
+            os.makedirs(
+                os.path.join(self.store_client.sds_root, 'preprocessed'),
+                exist_ok=True)
+
             with ASDFDataSet(
-                os.path.join(self.store_client.sds_root, 'preprocessed', 
-                '%s.%s.h5' %(network, station))) as  ds:
+                os.path.join(self.store_client.sds_root, 'preprocessed',
+                '%s.%s.h5' % (network, station))) as  ds:
                 ds.add_waveforms(st, tag='processed')
 
-        
-        # Write 
+
+        # Write
 
     def _all_stations_raw(
         self, network:str or None=None) -> list:
