@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Monday, 15th March 2021 11:19:36 am
+Last Modified: Monday, 15th March 2021 03:19:51 pm
 '''
 from collections import namedtuple
 from glob import glob
@@ -14,6 +14,7 @@ from warnings import warn
 from joblib import Parallel, delayed, cpu_count
 import numpy as np
 from obspy import UTCDateTime, Stream
+from obspy.core.inventory.inventory import Inventory
 from pyasdf.asdf_data_set import ASDFDataSet
 
 from .waveform import Store_Client
@@ -48,7 +49,7 @@ class Preprocessor(object):
     """
     def __init__(
         self, store_client: Store_Client, filter: tuple,
-            sampling_frequency: float, outfolder: str) -> None:
+            sampling_rate: float, outfolder: str) -> None:
         """
         Create the Preprocesser object.
 
@@ -60,10 +61,10 @@ class Preprocessor(object):
             frequency must be lower or equal to the Nyquist frequency
             (i.e., half of the defined sampling frequency).
         :type filter: tuple
-        :param sampling_frequency: Frequency that the data will be
+        :param sampling_rate: Frequency that the data will be
             resampled to. All raw data with a lower native sampling frequency
             will be discarded!
-        :type sampling_frequency: float
+        :type sampling_rate: float
         :param outfolder: Name of the folder to write the asdf files to. Note
             that this is only the daughterdir under sds_root. **Must not be
             `inventory` or any year (e.g., `1975`)!**
@@ -74,17 +75,17 @@ class Preprocessor(object):
             sampling frequency than the one defined will be discarded!
         """
         super().__init__()
-        assert sampling_frequency < 2*filter[1], \
+        assert sampling_rate/2 > filter[1], \
             "The highcut frequency of the filter has to be lower than the \
                 Nyquist frequency (sampling frequency/2) of the signal to \
                     prevent aliasing. Current Nyquist frequency is: %s."\
-                         % sampling_frequency/2
+                         % str(sampling_rate/2)
         self.store_client = store_client
         # Probably importannt to save the filter and perhaps also the
         # sampling frequency in the asdf file, so one can perhaps start a
         # Preprocessor by giving the file as parameter.
         self.filter = Filter(filter[0], filter[1])
-        self.sampling_frequency = sampling_frequency
+        self.sampling_rate = sampling_rate
         self.outfolder = os.path.join(store_client.sds_root, outfolder)
 
     def preprocess_bulk(
@@ -218,17 +219,21 @@ class Preprocessor(object):
                 statlist.append(code)
         return statlist
 
-    def _preprocess(self, st: Stream) -> Stream:
+    def _preprocess(self, st: Stream, inv: Inventory or None = None) -> Stream:
         """
         Private method that executes the preprocessing steps on a *per Stream*
         basis.
         """
         # Check sampling frequency
-        if self.filter.highcut > st[0].stats.sampling_frequency/2:
+        if self.sampling_rate > st[0].stats.sampling_rate:
             raise FrequencyError(
-                'The highcut frequency of the filter (%sHz) is higher than the\
-                trace\'s Nyquist frequency (%s Hz).' % (
-                    self.filter.highcut, st[0].stats.sampling_frequency/2))
+                'The new sample rate (%sHz) is higher than the trace\'s native\
+                     sample rate (%s Hz).' % (
+                    str(self.filter.highcut), str(
+                        st[0].stats.sampling_rate/2)))
+        if inv:
+            ninv = inv
+            st.attach_response(ninv)
         try:
             st.remove_response()
         except ValueError:
@@ -241,12 +246,7 @@ class Preprocessor(object):
             st.attach_response(ninv)
             st.remove_response()
             self.store_client._write_inventory(ninv)
-        for tr in st:
-            # The actual data in the mseeds was changed from int to float64
-            # now,
-            # Save some space by changing it back to 32 bit (most of the
-            # digitizers work at 24 bit anyways)
-            tr.data = np.require(tr.data, np.float32)
+
         st.detrend()
         st.taper(
             max_percentage=0.05, type='hann', max_length=2, side='both')
@@ -254,10 +254,18 @@ class Preprocessor(object):
             'bandpass', freqmin=self.filter.lowcut,
             freqmax=self.filter.highcut, zerophase=True)
         # Downsample
-        st.resample(self.sampling_frequency)
+        st.resample(self.sampling_rate)
+
+        for tr in st:
+            # !Last operation before saving!
+            # The actual data in the mseeds was changed from int to float64
+            # now,
+            # Save some space by changing it back to 32 bit (most of the
+            # digitizers work at 24 bit anyways)
+            tr.data = np.require(tr.data, np.float32)
         try:
             return st, ninv
-        except NameError:
+        except (UnboundLocalError, NameError):
             # read inventory
             ninv = self.store_client.read_inventory().select(
                 network=tr.stats.network, station=tr.stats.station)

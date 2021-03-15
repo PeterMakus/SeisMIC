@@ -4,12 +4,13 @@ UnitTests for the preprocess module.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 15th March 2021 11:14:04 am
-Last Modified: Monday, 15th March 2021 12:27:19 pm
+Last Modified: Monday, 15th March 2021 03:21:14 pm
 '''
 import unittest
 
 import numpy as np
 from obspy import read
+from obspy.core.inventory.inventory import read_inventory
 
 from miic3.trace_data.preprocess import Preprocessor, FrequencyError
 from miic3.trace_data.waveform import Store_Client
@@ -28,7 +29,7 @@ class TestPreprocessor(unittest.TestCase):
         """
         with self.assertRaises(AssertionError):
             Preprocessor(
-                self.store_client, filter=(.1, 100), sampling_frequency=100,
+                self.store_client, filter=(.1, 100), sampling_rate=100,
                 outfolder='x')
 
     def test_frequency_error(self):
@@ -36,7 +37,7 @@ class TestPreprocessor(unittest.TestCase):
         Test the lowest level preprocessing frequency error
         """
         p = Preprocessor(
-                self.store_client, filter=(.1, 10), sampling_frequency=1000,
+                self.store_client, filter=(.1, 10), sampling_rate=1000,
                 outfolder='x')
         with self.assertRaises(FrequencyError):
             p._preprocess(read())
@@ -46,9 +47,9 @@ class TestPreprocessor(unittest.TestCase):
         Test whether the actual low-level preprocessing function works
         """
         p = Preprocessor(
-                self.store_client, filter=(.1, 10), sampling_frequency=25,
+                self.store_client, filter=(.1, 10), sampling_rate=25,
                 outfolder='x')
-        st = p._preprocess(read())
+        st, _ = p._preprocess(read(), inv=read_inventory())
         self.assertIsInstance(st[0].data[0], np.float32)
         self.assertEqual(st[0].stats.sampling_rate, 25)
 

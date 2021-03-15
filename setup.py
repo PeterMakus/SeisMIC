@@ -2,7 +2,7 @@
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 15th March 2021 12:05:35 pm
-Last Modified: Monday, 15th March 2021 12:10:41 pm
+Last Modified: Monday, 15th March 2021 03:22:19 pm
 '''
 
 import os
@@ -15,6 +15,7 @@ from setuptools.command.test import test as testcommand
 # README.md file and 2) it's easier to type in the README.md file than to put a raw
 # string in below ...
 
+
 # Function to read and output README into long decription
 def read(fname):
     """From Wenjie Lei 2019"""
@@ -22,6 +23,7 @@ def read(fname):
         return open(os.path.join(os.path.dirname(__file__), fname)).read()
     except Exception:
         return "Can't open %s" % fname
+
 
 long_description = "%s" % read("README.md")
 
