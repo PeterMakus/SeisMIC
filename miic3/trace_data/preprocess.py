@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Monday, 15th March 2021 03:19:51 pm
+Last Modified: Monday, 15th March 2021 03:56:48 pm
 '''
 from collections import namedtuple
 from glob import glob
@@ -86,7 +86,13 @@ class Preprocessor(object):
         # Preprocessor by giving the file as parameter.
         self.filter = Filter(filter[0], filter[1])
         self.sampling_rate = sampling_rate
-        self.outfolder = os.path.join(store_client.sds_root, outfolder)
+        self.outloc = os.path.join(store_client.sds_root, outfolder)
+
+        # Create preprocessing parameter dict
+        self.param = {
+            "filter": self.filter,
+            "sampling_rate": self.sampling_rate,
+            "outfolder": self.outloc}
 
     def preprocess_bulk(
         self, network: str or None = None,
@@ -182,14 +188,18 @@ class Preprocessor(object):
                 continue
 
             # Create folder if it does not exist
-            os.makedirs(self.outfolder, exist_ok=True)
+            os.makedirs(self.outloc, exist_ok=True)
 
             with ASDFDataSet(
                 os.path.join(
-                    self.store_client.sds_root, 'preprocessed',
-                    '%s.%s.h5' % (network, station))) as ds:
+                    self.outloc, '%s.%s.h5' % (network, station))) as ds:
                 ds.add_waveforms(st, tag='processed')
                 ds.add_stationxml(resp)
+
+                # Save some processing values as auxiliary data
+                ds.add_auxiliary_data(
+                    data=np.zeros(1), data_type='PreprossingParameters',
+                    path='filter', parameters=self.param)
 
     def _all_stations_raw(
             self, network: str or None = None) -> list:
