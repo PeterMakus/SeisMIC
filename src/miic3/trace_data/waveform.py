@@ -8,7 +8,7 @@ import numpy as np
 from obspy.clients.fdsn import Client as rClient
 from obspy.clients.fdsn.header import FDSNNoDataException
 from obspy.clients.filesystem.sds import Client as lClient
-from obspy import read_inventory, UTCDateTime, read, Stream, Trace
+from obspy import read_inventory, UTCDateTime, read, Stream, Trace, Inventory
 from obspy.clients.fdsn.mass_downloader import RectangularDomain, \
     Restrictions, MassDownloader
 from obspy.core import AttribDict
@@ -217,7 +217,15 @@ class Store_Client(object):
         print("Success")
         return st
 
-    
+    def read_inventory(self) -> Inventory:
+        """
+        Reads an up-to-date version of the corresponding Station Inventory.
+
+        :return: Station Inventory
+        :rtype: Inventory
+        """
+        return read_inventory(self.inv_name)
+
     def _write_local_data(self, st):
         """
         Write stream to local SDS structure.
