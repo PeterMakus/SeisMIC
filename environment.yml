@@ -1,0 +1,20 @@
+name: miic3
+channels:
+  - conda-forge
+dependencies:
+  - geographiclib
+  - joblib
+  - matplotlib
+  - numpy
+  - obspy
+  - pip
+  - prov
+  - pyasdf
+  - pytest
+  - python=3.8
+  - scipy
+  - flake8
+  - pip:
+    - sphinx
+    - sphinx-rtd-theme
+    - -e .

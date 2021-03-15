@@ -14,25 +14,25 @@ from obspy.clients.fdsn.mass_downloader import RectangularDomain, \
 from obspy.core import AttribDict
 
 
-
 SDS_FMTSTR = os.path.join(
     "{year}", "{network}", "{station}", "{channel}.{sds_type}",
     "{network}.{station}.{location}.{channel}.{sds_type}.{year}.{doy:03d}")
 
+
 class Store_Client(object):
     """
     Client for request and local storage of waveform data
-    
+
     Request client that stores downloaded data for later local retrieval. 
     When reading stored data the client reads from the local copy of the data.
     Inventory data is stored in the folder `inventory` and attached to data
     that is read.
     """
-    
-    def __init__(self,Client,path,read_only=False):
+
+    def __init__(self, Client, path, read_only=False):
         """
         Initialize the client
-        
+
         :type Client: obspy request client that supports the 'get_waveform'
             method
         :param Client: obspy request client that supports the 'get_waveform'
@@ -46,12 +46,13 @@ class Store_Client(object):
         self.fileborder_seconds = 30
         self.fileborder_samples = 5000
         self.sds_root = path
-        self.inv_name = os.path.join(path,"inventory","inventory.xml")
+        self.inv_name = os.path.join(path, "inventory", "inventory.xml")
         if os.path.exists(self.inv_name):
             self.inventory = read_inventory(self.inv_name)
         else:
             self.inventory = read_inventory()
-        if not os.path.exists(os.path.dirname(self.inv_name)):
+        if not os.path.exists(
+                os.path.dirname(self.inv_name)) and not read_only:
             os.makedirs(os.path.dirname(self.inv_name))
         self.sds_type = "D"
         self.lclient = lClient(path, sds_type=self.sds_type, format="MSEED",

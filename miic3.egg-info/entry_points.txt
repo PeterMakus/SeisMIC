@@ -1,0 +1,3 @@
+[console_scripts]
+sample-bin = matpy.bins.sample_bin:main
+

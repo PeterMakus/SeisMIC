@@ -4,12 +4,11 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Monday, 15th March 2021 10:23:27 am
+Last Modified: Monday, 15th March 2021 11:19:36 am
 '''
 from collections import namedtuple
 from glob import glob
 import os
-from typing import NamedTuple
 from warnings import warn
 
 from joblib import Parallel, delayed, cpu_count
@@ -42,9 +41,38 @@ class FrequencyError(Error):
 
 
 class Preprocessor(object):
+    """
+    Object that manages the preprocessing of raw ambient noise data. The
+    preprocessed files will be saved as an ASDF (h5) file.
+
+    """
     def __init__(
         self, store_client: Store_Client, filter: tuple,
-            sampling_frequency: float) -> None:
+            sampling_frequency: float, outfolder: str) -> None:
+        """
+        Create the Preprocesser object.
+
+        :param store_client: The associated Store_Client object that finds the
+            files in the sds structured database.
+        :type store_client: Store_Client
+        :param filter: Frequencies to filter with. Provided as tuple in the
+            form (lowcut_frequency, highcut_frequency). Note that the highcut
+            frequency must be lower or equal to the Nyquist frequency
+            (i.e., half of the defined sampling frequency).
+        :type filter: tuple
+        :param sampling_frequency: Frequency that the data will be
+            resampled to. All raw data with a lower native sampling frequency
+            will be discarded!
+        :type sampling_frequency: float
+        :param outfolder: Name of the folder to write the asdf files to. Note
+            that this is only the daughterdir under sds_root. **Must not be
+            `inventory` or any year (e.g., `1975`)!**
+        :type outfolder: str
+
+        .. warning:: Pay close attention to the correct definition of
+            filter and sampling frequencies. All raw data with a lower native
+            sampling frequency than the one defined will be discarded!
+        """
         super().__init__()
         assert sampling_frequency < 2*filter[1], \
             "The highcut frequency of the filter has to be lower than the \
@@ -52,13 +80,31 @@ class Preprocessor(object):
                     prevent aliasing. Current Nyquist frequency is: %s."\
                          % sampling_frequency/2
         self.store_client = store_client
+        # Probably importannt to save the filter and perhaps also the
+        # sampling frequency in the asdf file, so one can perhaps start a
+        # Preprocessor by giving the file as parameter.
         self.filter = Filter(filter[0], filter[1])
         self.sampling_frequency = sampling_frequency
+        self.outfolder = os.path.join(store_client.sds_root, outfolder)
 
     def preprocess_bulk(
         self, network: str or None = None,
         starttime: UTCDateTime or None = None,
             endtime: UTCDateTime or None = None):
+        """
+        Preprocesses data from several stations in parallel. Writes
+        preprocessed files to asdf file (one per station).
+
+        :param network: Network code, wildcards allowed. Use `None` if you wish
+            to process all available data, defaults to None.
+        :type network: strorNone, optional
+        :param starttime: Starttime. Use `None` to process from the earliest
+            time, defaults to None
+        :type starttime: UTCDateTimeorNone, optional
+        :param endtime: Endtime. If all available times should be used,
+            set `=None`. Defaults to None, defaults to None.
+        :type endtime: UTCDateTimeorNone, optional
+        """
         Parallel(n_jobs=-1)(
                     delayed(self.preprocess)(
                         network, station, '*', '*', starttime, endtime)
@@ -68,9 +114,32 @@ class Preprocessor(object):
         self, network: str, station: str, location: str, channel: str,
         starttime: UTCDateTime or None = None,
             endtime: UTCDateTime or None = None):
+        """
+        Function to preprocess data from one single station. Writes
+        preprocessed streams to asdf file.
+
+        :param network: Network code.
+        :type network: str
+        :param station: Station Code.
+        :type station: str
+        :param location: Location Code, wildcards allowed.
+        :type location: str
+        :param channel: Channel Code, wildcards allowed.
+        :type channel: str
+        :param starttime: Starttime. If all available times should be used,
+            set = None. Defaults to None
+        :type starttime: UTCDateTimeorNone, optional
+        :param endtime: Endtime. If all available times should be used,
+            set = None. Defaults to None, defaults to None
+        :type endtime: UTCDateTimeorNone, optional
+
+        .. seealso:: For processing of several stations or network use
+                    :func:`~Preprocessor.preprocess_bulk()`.
+        """
 
         assert '*' not in station or type(station) != list, 'To process data\
-             from several stations, use Correlator.preprocess_bulk!'
+             from several stations, use \
+                 :func:`~Preprocessor.preprocess_bulk()`!'
 
         if not starttime or not endtime:
             warn(
@@ -112,9 +181,7 @@ class Preprocessor(object):
                 continue
 
             # Create folder if it does not exist
-            os.makedirs(
-                os.path.join(self.store_client.sds_root, 'preprocessed'),
-                exist_ok=True)
+            os.makedirs(self.outfolder, exist_ok=True)
 
             with ASDFDataSet(
                 os.path.join(
@@ -127,8 +194,9 @@ class Preprocessor(object):
             self, network: str or None = None) -> list:
         """
         Returns a list of stations for which raw data is available.
-        Very similar to the lClient.get_all_stations() method with the
-        difference that this one allows to filter for particular networks.
+        Very similar to the
+        :func:`~obspy.clients.filesystem.sds.get_all_stations()` method with
+        the difference that this one allows to filter for particular networks.
 
         :param network: Only return stations from this network. `network==None`
         is similar to using a wildcard. Defaults to None
@@ -151,6 +219,10 @@ class Preprocessor(object):
         return statlist
 
     def _preprocess(self, st: Stream) -> Stream:
+        """
+        Private method that executes the preprocessing steps on a *per Stream*
+        basis.
+        """
         # Check sampling frequency
         if self.filter.highcut > st[0].stats.sampling_frequency/2:
             raise FrequencyError(
@@ -181,8 +253,8 @@ class Preprocessor(object):
         st.filter(
             'bandpass', freqmin=self.filter.lowcut,
             freqmax=self.filter.highcut, zerophase=True)
-        # Downsmaple
-        st.resample
+        # Downsample
+        st.resample(self.sampling_frequency)
         try:
             return st, ninv
         except NameError:

@@ -1,0 +1,21 @@
+Metadata-Version: 2.1
+Name: miic3
+Version: 0.3
+Summary: Monitoring and Imaging Base on Interferometric Concepts
+Home-page: https://git-int.gfz-potsdam.de/chris/miic3
+Author: The miic development team
+Author-email: makus@gfz-potsdam.de
+License: GNU Lesser General Public License, Version 3
+Description: miic
+        ====
+        
+        miic is a libary that emerged from a project called **Monitoring and Imaging based on Interferometric concepts**. It provides functionality to apply some concepts of seismic interferometry to different data of elastic waves. Mostly the monitoring of temporal changes are dealt with here.
+        
+Keywords: Seismology,Ambient Noise,Interferometry,Noise Imaging,Noise Monitoring
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Topic :: Utilities
+Classifier: License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)
+Description-Content-Type: text/markdown
+Provides-Extra: docs
+Provides-Extra: tests

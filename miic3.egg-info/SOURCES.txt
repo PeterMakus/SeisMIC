@@ -1,0 +1,9 @@
+README.md
+setup.py
+miic3.egg-info/PKG-INFO
+miic3.egg-info/SOURCES.txt
+miic3.egg-info/dependency_links.txt
+miic3.egg-info/entry_points.txt
+miic3.egg-info/not-zip-safe
+miic3.egg-info/requires.txt
+miic3.egg-info/top_level.txt
