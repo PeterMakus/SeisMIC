@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Monday, 15th March 2021 03:56:48 pm
+Last Modified: Tuesday, 16th March 2021 04:16:38 pm
 '''
 from collections import namedtuple
 from glob import glob
@@ -112,6 +112,8 @@ class Preprocessor(object):
             set `=None`. Defaults to None, defaults to None.
         :type endtime: UTCDateTimeorNone, optional
         """
+        # 16.03.21 This is awfully slow. However the single processes are not
+        # Maybe playing with chunk size to prevent overheating?
         Parallel(n_jobs=-1)(
                     delayed(self.preprocess)(
                         network, station, '*', '*', starttime, endtime)
@@ -164,12 +166,12 @@ class Preprocessor(object):
         # Else this becomes problematic especially, when processing with
         # several threads at the same time and the very long streams have to be
         # held in RAM.
-        if endtime-starttime > 3600*12:
+        if endtime-starttime > 3600*6:
             starttimes = []
             endtimes = []
             while starttime < endtime:
                 starttimes.append(starttime)
-                starttime = starttime+1800*12
+                starttime = starttime+3600*6
                 endtimes.append(starttime)
         else:
             starttimes = [starttime]
@@ -199,7 +201,7 @@ class Preprocessor(object):
                 # Save some processing values as auxiliary data
                 ds.add_auxiliary_data(
                     data=np.zeros(1), data_type='PreprossingParameters',
-                    path='filter', parameters=self.param)
+                    path='param', parameters=self.param)
 
     def _all_stations_raw(
             self, network: str or None = None) -> list:
@@ -258,8 +260,9 @@ class Preprocessor(object):
             self.store_client._write_inventory(ninv)
 
         st.detrend()
-        st.taper(
-            max_percentage=0.05, type='hann', max_length=2, side='both')
+        # st.taper(
+        #     max_percentage=0.05, type='hann', max_length=2, side='both')
+        # At this point, it probably does not make too much sense to taper.
         st.filter(
             'bandpass', freqmin=self.filter.lowcut,
             freqmax=self.filter.highcut, zerophase=True)

@@ -23,13 +23,13 @@ class Store_Client(object):
     """
     Client for request and local storage of waveform data
 
-    Request client that stores downloaded data for later local retrieval. 
+    Request client that stores downloaded data for later local retrieval.
     When reading stored data the client reads from the local copy of the data.
     Inventory data is stored in the folder `inventory` and attached to data
     that is read.
     """
 
-    def __init__(self, Client, path, read_only=False):
+    def __init__(self, Client: rClient, path: str, read_only: bool = False):
         """
         Initialize the client
 
@@ -62,16 +62,17 @@ class Store_Client(object):
         self.read_only = read_only
 
     def download_waveforms_mdl(
-        self, starttime:UTCDateTime, endtime:UTCDateTime, clients:list or None=None,
-        minlat:int or float or None=None, maxlat:int or float or None=None,
-        minlon:int or float or None=None, maxlon:int or float or None=None,
-        network:str or None=None, station:str or None=None,
-        location:str or None=None, channel:str or None=None):
-        
+        self, starttime: UTCDateTime, endtime: UTCDateTime,
+        clients: list or None = None, minlat: float or None = None,
+        maxlat: float or None = None, minlon: float or None = None,
+        maxlon: float or None = None, network: str or None = None,
+        station: str or None = None, location: str or None = None,
+            channel: str or None = None):
         # Initialise MassDownloader
-        
-        domain = RectangularDomain(minlatitude=minlat, maxlatitude=maxlat,
-                           minlongitude=minlon, maxlongitude=maxlon)
+
+        domain = RectangularDomain(
+            minlatitude=minlat, maxlatitude=maxlat, minlongitude=minlon,
+            maxlongitude=maxlon)
 
         restrictions = Restrictions(
             starttime=starttime,
@@ -94,33 +95,40 @@ class Store_Client(object):
 
         mdl = MassDownloader(providers=clients)
 
-        mdl.download(domain, restrictions, mseed_storage=self._get_mseed_storage,
-                    stationxml_storage=self.inv_name)
-        
-    def get_waveforms(self, network, station, location, channel, starttime,
-                      endtime, attach_response=True, _check_times:bool=True):
-        assert ~('?' in network+station+location+channel), "Only single channel requests supported."
-        assert ~('*' in network+station+location+channel), "Only single channel requests supported."
+        mdl.download(
+            domain, restrictions, mseed_storage=self._get_mseed_storage,
+            stationxml_storage=self.inv_name)
+
+    def get_waveforms(
+        self, network: str, station: str, location: str, channel: str,
+        starttime: UTCDateTime, endtime: UTCDateTime,
+            attach_response: bool = True, _check_times: bool = True):
+        assert ~('?' in network+station+location+channel), \
+            "Only single channel requests supported."
+        assert ~('*' in network+station+location+channel), \
+            "Only single channel requests supported."
         # try to load from local disk
         st = self._load_local(network, station, location, channel, starttime,
                               endtime, attach_response, _check_times)
         if st is None:
-            st = self._load_remote(network, station, location, channel, starttime,
-                              endtime, attach_response)
+            st = self._load_remote(
+                network, station, location, channel, starttime, endtime,
+                attach_response)
         return st
-    
-    def _get_mseed_storage(self, network, station, location, channel, starttime,
 
-                      endtime):
+    def _get_mseed_storage(
+        self, network: 'str', station: 'str', location: str,
+            channel: str, starttime: UTCDateTime):
+        # endtime: UTCDateTime):
 
         # Returning True means that neither the data nor the StationXML file
 
         # will be downloaded.
 
-        filename = SDS_FMTSTR.format(network=network, station=station,
-                                      location=location, channel=channel,
-                                      year=starttime.year, doy=starttime.julday,
-                                      sds_type=self.sds_type)
+        filename = SDS_FMTSTR.format(
+            network=network, station=station, location=location,
+            channel=channel, year=starttime.year, doy=starttime.julday,
+            sds_type=self.sds_type)
         outf = os.path.join(self.sds_root, filename)
 
         if os.path.isfile(outf):
@@ -129,8 +137,8 @@ class Store_Client(object):
         # If a string is returned the file will be saved in that location.
 
         return outf
-    
-    def _get_times(self, network:str, station:str) -> tuple:
+
+    def _get_times(self, network: str, station: str) -> tuple:
         """
         Return earliest and latest available time for a certain station.
 
@@ -142,21 +150,27 @@ class Store_Client(object):
         :rtype: tuple
         """
         dirlist = glob.glob(os.path.join(self.sds_root, '*', network, station))
-        dirlist2 = [os.path.basename(os.path.dirname(os.path.dirname(i))) for i in dirlist]
+        dirlist2 = [
+            os.path.basename(
+                os.path.dirname(os.path.dirname(i))) for i in dirlist]
         # We only want the folders with years
         l0 = fnmatch.filter(dirlist2, '1*')
         l1 = fnmatch.filter(dirlist2, '2*')
         del dirlist2
         dirlist = l0 + l1
         if not dirlist:
-            warnings.warn('Station %s.%s not in database' %(network,station),
-            UserWarning)
+            warnings.warn(
+                'Station %s.%s not in database' % (network, station),
+                UserWarning)
             return (None, None)
         dirlist.sort()  # sort by time
-        startjul = [i[-3:] for i in glob.glob(os.path.join(self.sds_root, dirlist[0], network, station,'*','*'))]
+        startjul = [i[-3:] for i in glob.glob(
+            os.path.join(
+                self.sds_root, dirlist[0], network, station, '*', '*'))]
         if not startjul:
-            warnings.warn('Station %s.%s not in database' %(network,station),
-            UserWarning)
+            warnings.warn(
+                'Station %s.%s not in database' % (network, station),
+                UserWarning)
             return (None, None)
         startjul.sort()
         starttime = UTCDateTime(year=int(dirlist[0]), julday=startjul[0])
@@ -165,8 +179,6 @@ class Store_Client(object):
         endtime = UTCDateTime(year=int(dirlist[-1]), julday=endjul[-1])
         return (starttime, endtime)
 
-
-    
     def _load_remote(self, network, station, location, channel, starttime,
                      endtime, attach_response):
         """
@@ -193,8 +205,7 @@ class Store_Client(object):
         if ((len(st) > 0) and not self.read_only):
             self._write_local_data(st)
         return st
-    
-    
+
     def _load_local(self, network, station, location, channel, starttime,
                     endtime, attach_response, _check_times):
         """
@@ -213,7 +224,7 @@ class Store_Client(object):
         if attach_response:
             try:
                 st.attach_response(self.inventory)
-            except:
+            except Exception:
                 pass
         print("Success")
         return st
@@ -349,7 +360,7 @@ def read_from_filesystem(ID,starttime,endtime,fs='SDS_archive',trim=True,debug=F
     second. This can be used if the filename contains part of the ID in a
     different form.
 
-    If fs is a single string it is interpreted as the base directory 
+    If fs is a single string it is interpreted as the base directory
     ''SDSdir' of a SeisComP Data Structure (SDS) with TYPE fixed to D
     <SDSdir>/Year/NET/STA/CHAN.TYPE/NET.STA.LOC.CHAN.TYPE.YEAR.DAY
     This usage should be equvalent to obspy.clients.filesystem.sds client.
@@ -370,34 +381,38 @@ def read_from_filesystem(ID,starttime,endtime,fs='SDS_archive',trim=True,debug=F
     period spans multiple files.
     """
 
-    #check input
+    # check input
     assert type(starttime) is datetime.datetime, \
         'starttime is not a datetime.datetime object: %s is type %s' % \
         (starttime, type(starttime))
     assert type(endtime) is datetime.datetime, \
-        'endtime is not a datetime.datetime object: %s is type' % \
+        'endtime is not a datetime.datetime object: %s is type %s' % \
         (endtime, type(endtime))
     # check if fs is a string and set fs to SDS structure
-    if isinstance(fs,str):
-        fs  = [fs,'%Y','%NET','%STA',['%CHA','.D'],['%NET','.','%STA','.','%LOC','.','%CHA','.D.','%Y','.','%j']]
+    if isinstance(fs, str):
+        fs = [fs, '%Y', '%NET', '%STA', ['%CHA', '.D'], [
+            '%NET', '.', '%STA', '.', '%LOC', '.', '%CHA', '.D.', '%Y', '.',
+            '%j']]
     # translate file structure string
-    fpattern = _current_filepattern(ID,starttime,fs)
+    fpattern = _current_filepattern(ID, starttime, fs)
     if debug:
         print('Searching for files matching: %s\n at time %s\n' %
               (fpattern, starttime))
-    st = _read_filepattern(fpattern, starttime, endtime,trim,debug)
+    st = _read_filepattern(fpattern, starttime, endtime, trim, debug)
 
     # if trace starts too late have a look in the previous section
-    if (len(st)==0) or ((st[0].stats.starttime-st[0].stats.delta).datetime > starttime):
-        fpattern, _ = _adjacent_filepattern(ID,starttime,fs,-1)
+    if (len(st) == 0) or (
+            (st[0].stats.starttime-st[0].stats.delta).datetime > starttime):
+        fpattern, _ = _adjacent_filepattern(ID, starttime, fs, -1)
         if debug:
             print('Searching for files matching: %s\n at time %s\n' %
                   (fpattern, starttime))
-        st += _read_filepattern(fpattern, starttime, endtime,trim,debug)
+        st += _read_filepattern(fpattern, starttime, endtime, trim, debug)
         st.merge()
     thistime = starttime
-    while ((len(st)==0) or (st[0].stats.endtime.datetime < endtime)) & (thistime < endtime):
-        fpattern, thistime = _adjacent_filepattern(ID,thistime,fs,1)
+    while ((len(st) == 0) or (st[0].stats.endtime.datetime < endtime)) & (
+            thistime < endtime):
+        fpattern, thistime = _adjacent_filepattern(ID, thistime, fs, 1)
         if debug:
             print('Searching for files matching: %s\n at time %s\n' %
                   (fpattern, thistime))
@@ -406,7 +421,7 @@ def read_from_filesystem(ID,starttime,endtime,fs='SDS_archive',trim=True,debug=F
         st += _read_filepattern(fpattern, starttime, endtime, trim, debug)
         st.merge()
     if trim:
-        st.trim(starttime=UTCDateTime(starttime),endtime=UTCDateTime(endtime))
+        st.trim(starttime=UTCDateTime(starttime), endtime=UTCDateTime(endtime))
     if debug:
         print('Following IDs are in the stream: ')
         for tr in st:
@@ -424,30 +439,32 @@ def _read_filepattern(fpattern, starttime, endtime, trim, debug):
     endtimes = []
     # first only read the header information
     for fname in flist:
-        st = read(fname,headonly=True)
+        st = read(fname, headonly=True)
         starttimes.append(st[0].stats.starttime.datetime)
         endtimes.append(st[-1].stats.endtime.datetime)
     # now read the stream from the files that contain the period
     if debug:
         print('Matching files:\n')
-        for (f,start,end) in zip(flist,starttimes,endtimes):
-            print('%s from %s to %s\n' % (f,start,end))
+        for (f, start, end) in zip(flist, starttimes, endtimes):
+            print('%s from %s to %s\n' % (f, start, end))
     st = Stream()
-    for ind,fname in enumerate(flist):
+    for ind, fname in enumerate(flist):
         if (starttimes[ind] < endtime) and (endtimes[ind] > starttime):
             if trim:
-                st += read(fname,starttime=UTCDateTime(starttime),endtime=UTCDateTime(endtime))
+                st += read(
+                    fname, starttime=UTCDateTime(starttime),
+                    endtime=UTCDateTime(endtime))
             else:
                 st += read(fname)
     try:
         st.merge()
-    except:
+    except Exception:
         print("Error merging traces for requested period!")
         st = Stream()
     return st
 
 
-def _adjacent_filepattern(ID,starttime,fs,inc):
+def _adjacent_filepattern(ID, starttime, fs, inc):
     """Return the file name that contains the data sequence prior to the one
     that contains the given time for a given file structure and ID.
 
@@ -460,22 +477,22 @@ def _adjacent_filepattern(ID,starttime,fs,inc):
     # find earlier time by turning back the time by one increment of the
     # last time indicator in the fs
     for part in fs[-1::-1]:
-        if not isinstance(part,list):
+        if not isinstance(part, list):
             part = [part]
         for tpart in part[-1::-1]:
-            if (not ((('(' in tpart) and (')' in tpart)) or (tpart in IDformat))
-                                        and ('%' in tpart)
-                                        and (flag == 0)):
+            if (not ((('(' in tpart) and (')' in tpart)) or
+                (tpart in IDformat))
+                    and ('%' in tpart) and (flag == 0)):
                 flag = 1
-                if tpart in ['%H','%I']:
+                if tpart in ['%H', '%I']:
                     thistime = starttime + inc * datetime.timedelta(hours=1)
                 elif tpart == '%p':
                     thistime = starttime + inc * datetime.timedelta(hours=12)
-                elif tpart in ['%a','%A','%w','%d','%j','%-j']:
+                elif tpart in ['%a', '%A', '%w', '%d', '%j', '%-j']:
                     thistime = starttime + inc * datetime.timedelta(days=1)
-                elif tpart in ['%U','%W']:
+                elif tpart in ['%U', '%W']:
                     thistime = starttime + inc * datetime.timedelta(days=7)
-                elif tpart in ['%b','%B','%m']:
+                elif tpart in ['%b', '%B', '%m']:
                     if starttime.month + inc == 0:
                         thistime = datetime.datetime(starttime.year-1,
                                                      12,
@@ -500,7 +517,7 @@ def _adjacent_filepattern(ID,starttime,fs,inc):
                                                      starttime.minute,
                                                      starttime.second,
                                                      starttime.microsecond)
-                elif tpart in ['%y','%Y']:
+                elif tpart in ['%y', '%Y']:
                     thistime = datetime.datetime(starttime.year - inc,
                                                      starttime.month,
                                                      starttime.day,
@@ -508,44 +525,44 @@ def _adjacent_filepattern(ID,starttime,fs,inc):
                                                      starttime.minute,
                                                      starttime.second,
                                                      starttime.microsecond)
-    fname = _current_filepattern(ID,thistime,fs)
+    fname = _current_filepattern(ID, thistime, fs)
     return fname, thistime
 
 
-def _current_filepattern(ID,starttime,fs):
+def _current_filepattern(ID, starttime, fs):
     """Return the file name that contains the data sequence that contains
     the given time for a given file structure and ID.
     """
     fname = ''
     for part in fs:
-        if not isinstance(part,list):
+        if not isinstance(part, list):
             part = [part]
         fpartname = ''
         for tpart in part:
-            fpartname += _fs_translate(tpart,ID,starttime)
-        fname = os.path.join(fname,fpartname)
+            fpartname += _fs_translate(tpart, ID, starttime)
+        fname = os.path.join(fname, fpartname)
     return fname
 
 
-def _fs_translate(part,ID,starttime):
+def _fs_translate(part, ID, starttime):
     """Translate part of the file structure descriptor.
     """
     IDlist = ID.split('.')
     if ('(' in part) and (')' in part):
-        trans = re.search('\(.*?\)',part).group(0)
+        trans = re.search('\(.*?\)', part).group(0)
     else:
         trans = None
     # in case there is something to translate remove from the filepart
     if trans:
-        part = part.replace(trans,'')
+        part = part.replace(trans, '')
     # if there is no %-sign it is a fixed string
-    if not '%' in part:
+    if '%' not in part:
         res = part
     # in case it belongs to the ID replace it with the respective ID-part
     if part in IDformat:
         idx = IDformat.index(part)
         res = IDlist[int(idx/2)]
-        if idx%2 != 0:  # idx is odd and IDformat is lowercase
+        if idx % 2 != 0:  # idx is odd and IDformat is lowercase
             res = res.lower()
     # otherwise it must be part of the date string
     else:
@@ -554,5 +571,6 @@ def _fs_translate(part,ID,starttime):
     if trans:
         transl = trans[1:-1].split(',')
         assert len(transl) == 2, "%s is not valid for replacement" % trans
-        res = res.replace(transl[0].replace("'",""),transl[1].replace("'",""))
+        res = res.replace(
+            transl[0].replace("'", ""), transl[1].replace("'", ""))
     return res
