@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Tuesday, 16th March 2021 05:34:56 pm
+Last Modified: Wednesday, 17th March 2021 09:40:02 am
 '''
 
 import os
@@ -25,24 +25,22 @@ class NoiseDB(object):
     """
 
     def __init__(
-        self, dir: str, network: str, station: str) -> None:
+            self, dir: str, network: str, station: str) -> None:
         super().__init__()
         # Location of the h5 file
         self.loc = os.path.join(dir, '%s.%s.h5' % (network, station))
 
         with ASDFDataSet(self.loc) as ds:
-            self.param = ds.auxiliary_data.PreprossingParameters
+            # get dict a bit convoluted but see pyasdf documentation
+            self.param = ds.auxiliary_data.PreprocessingParameters.\
+                param.parameters
 
         self.filter = self.param["filter"]
         self.sampling_rate = self.param["sampling_rate"]
         self.station = station
         self.network = network
 
-    def return_preprocessor(
-        self, store_client: Store_Client, client: Client,
-            sds_root: str) -> Preprocessor:
-
-        store_client = Store_Client(client, sds_root)
+    def return_preprocessor(self, store_client: Store_Client) -> Preprocessor:
 
         return Preprocessor(
             store_client, self.filter, self.sampling_rate,
@@ -113,7 +111,7 @@ class NoiseDB(object):
             with ASDFDataSet(self.loc) as ds:
                 for station in ds.ifilter(
                         ds.q.starttime >= starttime, ds.q.endtime <= endtime):
-                    st = station.preprocessed
+                    st = station.processed
                     f, t, S = spct_series_welch(st, window_length)
 
             if save_spectrum:

@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Tuesday, 16th March 2021 04:16:38 pm
+Last Modified: Wednesday, 17th March 2021 09:25:25 am
 '''
 from collections import namedtuple
 from glob import glob
@@ -198,10 +198,13 @@ class Preprocessor(object):
                 ds.add_waveforms(st, tag='processed')
                 ds.add_stationxml(resp)
 
-                # Save some processing values as auxiliary data
-                ds.add_auxiliary_data(
-                    data=np.zeros(1), data_type='PreprossingParameters',
-                    path='param', parameters=self.param)
+        with ASDFDataSet(
+                os.path.join(
+                    self.outloc, '%s.%s.h5' % (network, station))) as ds:
+            # Save some processing values as auxiliary data
+            ds.add_auxiliary_data(
+                data=np.empty(1), data_type='PreprocessingParameters',
+                path='param', parameters=self.param)
 
     def _all_stations_raw(
             self, network: str or None = None) -> list:

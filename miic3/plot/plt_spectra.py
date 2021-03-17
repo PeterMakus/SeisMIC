@@ -4,67 +4,19 @@ Simple script to compute and plot time-dependent spectral power densities.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 15th February 2021 02:09:48 pm
-Last Modified: Tuesday, 16th March 2021 04:38:20 pm
+Last Modified: Wednesday, 17th March 2021 09:08:35 am
 '''
-import os
-from pathlib import Path
 
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.dates as mdates
 import numpy as np
-from obspy import read, UTCDateTime
+from obspy import UTCDateTime
 import obspy
-from obspy.clients.fdsn import Client
 from scipy.signal import welch
 from scipy.interpolate import pchip_interpolate
 
-
-# def main():
-#     # read waveform data
-#     os.chdir('/home/chris/PROJECTS/KISS/DATA/mseed')
-    
-#     for folder, _, _ in os.walk('.'):
-#         try:
-#             # If this becomes to RAM hungry, I might want to load each
-#             # file and compute seperately
-#             st = read(os.path.join(folder, '*.shz'))
-#         except FileNotFoundError:
-#             continue
-#         except Exception:
-#             # They have a different Exception for file patterns
-#             continue
-#         name = '%s.%s_spectrum_medianf' %(st[0].stats.network, st[0].stats.station)
-#         outf = os.path.join('/home', 'makus', 'samovar', 'figures',
-#                             'spectrograms', name)
-        
-#         if  Path(outf+'.npz').is_file():
-#             with np.load(outf+'.npz') as A:
-#                 l = []
-#                 for item in A.files:
-#                     l.append(A[item])
-#                 f, t, S = l
-#                 # plot
-#                 plot_spct_series(S, f, t, title=name, outfile=outf, norm='f',
-#                                  norm_method='median')
-#                 plt.savefig(outf+'.png', format='png', dpi=300)
-#                 # just in case
-#                 plt.close()
-#         else:
-#             # preprocess the data
-#             st, _ = preprocess(st)
-#             # compute a spectral series with 4-hourly spaced data points
-#             f, t, S = spct_series_welch(st, 4*3600)
-
-#             # Save to file
-#             np.savez(outf, f, t, S)
-
-#             # plot
-#             plot_spct_series(S, f, t, title=name, outfile=outf)
-#             plt.savefig(outf+'.png', format='png', dpi=300)
-#             # just in case
-#             plt.close()
 
 def plot_spct_series(
     S: np.ndarray, f: np.ndarray, t: np.ndarray, norm: str = None,
@@ -80,10 +32,10 @@ def plot_spct_series(
     :param t: Vector containing times (in s)
     :type t: np.ndarray
     :param norm: Normalise the spectrum either on the time axis with
-        norm='t' or on the frequency axis with norm='f', defaults to None.
+        `norm='t'` or on the frequency axis with `norm='f'`, defaults to None.
     :type norm: str, optional
-    :param norm_method: Normation method to use. Either 'linalg' (i.e., length of vector),
-        'mean', or 'median'.
+    :param norm_method: Normation method to use. Either `'linalg'`
+        (i.e., length of vector), `'mean'`, or `'median'`.
     :param title: Plot title, defaults to None
     :type title: str, optional
     :param outfile: location to save the plot to, defaults to None
@@ -96,12 +48,12 @@ def plot_spct_series(
     for pit in t:
         utc.append(UTCDateTime(pit).datetime)
     del t
-    
+
     set_mpl_params()
-    
+
     plt.yscale('log')
     plt.ylim(10**-2, f.max())
-    
+
     # Normalise
     if not norm:
         pass
@@ -109,25 +61,26 @@ def plot_spct_series(
         if norm_method == 'linalg':
             S = np.divide(S, np.linalg.norm(S, axis=1)[:, np.newaxis])
         elif norm_method == 'mean':
-            S = np.divide(S, np.mean(S,axis=1)[:, np.newaxis])
+            S = np.divide(S, np.mean(S, axis=1)[:, np.newaxis])
         elif norm_method == 'median':
-            S = np.divide(S, np.median(S,axis=1)[:, np.newaxis])
+            S = np.divide(S, np.median(S, axis=1)[:, np.newaxis])
         else:
-            raise ValueError('Normalisation method %s unkown.' %norm_method)
+            raise ValueError('Normalisation method %s unkown.' % norm_method)
     elif norm == 't':
         if norm_method == 'linalg':
             S = np.divide(S, np.linalg.norm(S, axis=0))
         elif norm_method == 'mean':
-            S = np.divide(S, np.mean(S,axis=0))
+            S = np.divide(S, np.mean(S, axis=0))
         elif norm_method == 'median':
-            S = np.divide(S, np.median(S,axis=0))
+            S = np.divide(S, np.median(S, axis=0))
         else:
-            raise ValueError('Normalisation method %s unkown.' %norm_method)
+            raise ValueError('Normalisation method %s unkown.' % norm_method)
     else:
-        raise ValueError('Normalisation %s unkown.' %norm)
-    
+        raise ValueError('Normalisation %s unkown.' % norm)
+
     pcm = plt.pcolormesh(
-        utc, f, S, shading='gouraud', norm=colors.LogNorm(vmin=S.min(), vmax=S.max()))
+        utc, f, S, shading='gouraud', norm=colors.LogNorm(
+            vmin=S.min(), vmax=S.max()))
     plt.colorbar(pcm)
     plt.ylabel('Frequency [Hz]')
     plt.xlabel('(dd/mm)')
@@ -136,12 +89,13 @@ def plot_spct_series(
     if title:
         plt.title(title)
     if outfile:
-        if fmt=='pdf' or fmt=='svg':
-            plt.savefig(outfile+'.'+fmt,format=fmt)
+        if fmt == 'pdf' or fmt == 'svg':
+            plt.savefig(outfile+'.'+fmt, format=fmt)
         else:
-            plt.savefig(outfile+'.'+fmt,format=fmt, dpi=dpi)
+            plt.savefig(outfile+'.'+fmt, format=fmt, dpi=dpi)
     else:
-        plt.show()    
+        plt.show()
+
 
 def spct_series_welch(
         st: obspy.Stream, window_length: float) -> np.ndarray:
@@ -155,7 +109,8 @@ def spct_series_welch(
     :type st: ~obspy.core.Stream
     :param window_length: window length in seconds for each datapoint in time
     :type window_length: int or float
-    :return: Arrays containing a frequency and time series and the spectral series.
+    :return: Arrays containing a frequency and time series and the spectral
+        series.
     :rtype: np.ndarray
     """
     l = []
