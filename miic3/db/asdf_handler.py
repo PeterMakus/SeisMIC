@@ -4,13 +4,12 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Wednesday, 17th March 2021 09:40:02 am
+Last Modified: Thursday, 18th March 2021 04:25:20 pm
 '''
 
 import os
 
 import numpy as np
-from obspy.clients.fdsn import Client
 from obspy import UTCDateTime
 from pyasdf import ASDFDataSet
 
