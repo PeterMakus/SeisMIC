@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Thursday, 18th March 2021 04:25:20 pm
+Last Modified: Friday, 19th March 2021 03:34:22 pm
 '''
 
 import os
@@ -40,10 +40,20 @@ class NoiseDB(object):
         self.network = network
 
     def return_preprocessor(self, store_client: Store_Client) -> Preprocessor:
+        """
+        Returns the :class:`~miic3.trace_data.preprocess.Preprocessor` that
+        can be used to add data to this NoiseDB.
+
+        :param store_client: The Store Client that should be used to obtain
+            the new data.
+        :type store_client: Store_Client
+        :return: The Preprocessor.
+        :rtype: Preprocessor
+        """
 
         return Preprocessor(
             store_client, self.filter, self.sampling_rate,
-            os.path.dirname(self.loc))
+            os.path.dirname(self.loc), _ex_times=self.get_active_times())
 
     def plot_spectrum(
         self, window_length: int = 4*3600,

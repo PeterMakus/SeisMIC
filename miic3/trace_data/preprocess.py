@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Wednesday, 17th March 2021 09:25:25 am
+Last Modified: Friday, 19th March 2021 04:11:07 pm
 '''
 from collections import namedtuple
 from glob import glob
@@ -49,7 +49,8 @@ class Preprocessor(object):
     """
     def __init__(
         self, store_client: Store_Client, filter: tuple,
-            sampling_rate: float, outfolder: str) -> None:
+        sampling_rate: float, outfolder: str,
+            _ex_times: tuple = None) -> None:
         """
         Create the Preprocesser object.
 
@@ -69,6 +70,10 @@ class Preprocessor(object):
             that this is only the daughterdir under sds_root. **Must not be
             `inventory` or any year (e.g., `1975`)!**
         :type outfolder: str
+        :param _extimes: Already processed times. This is asserted
+            automatically by :class:`~miic3.asdf_handler.NoiseDB`.
+            Defaults to None.
+        :type _extimes: tuple, optional
 
         .. warning:: Pay close attention to the correct definition of
             filter and sampling frequencies. All raw data with a lower native
@@ -93,6 +98,9 @@ class Preprocessor(object):
             "filter": self.filter,
             "sampling_rate": self.sampling_rate,
             "outfolder": self.outloc}
+
+        # Add the already existing times
+        self.ex_times = _ex_times
 
     def preprocess_bulk(
         self, network: str or None = None,
@@ -150,6 +158,16 @@ class Preprocessor(object):
              from several stations, use \
                  :func:`~Preprocessor.preprocess_bulk()`!'
 
+        # Check whether there is already an existing output file and if
+        # make sure that the processing parameters are the same!
+        outfile = os.path.join(self.outloc, '%s.%s.h5' % (network, station))
+
+        if os.path.exists(outfile) and not self.ex_times:
+            msg = "The output file already exists. Use \
+                :func:`~miic3.db.asdf_handler.NoiseDB.return_preprocessor()` \
+                    to yield the correct Preprocessor!"
+            raise ValueError(msg)
+
         if not starttime or not endtime:
             warn(
                 'Returned start and endtimes will not be checked due to' +
@@ -162,26 +180,52 @@ class Preprocessor(object):
         else:
             _check_times = True
 
+ 
+        # check already existing times, there is one case with two request
+        # chunks, so we will have to create a list for times called
+        # req_start and req_end
+        # standard way with only new times:
+        req_start = [starttime]
+        req_end = [endtime]
+        if self.ex_times:
+            # No new data at all
+            if self.ex_times[0] <= starttime and self.ex_times[1] >= endtime:
+                raise ValueError('No new data found. All data has already \
+                    been preprocessed?')
+            # New new data
+            elif self.ex_times[0] <= starttime and self.ex_times[1] < endtime:
+                req_start = [self.ex_times[1]]
+            # New old data
+            elif self.ex_times[0] > starttime and self.ex_times[1] >= endtime:
+                req_end = [self.ex_times[0]]
+            # New data on both sides
+            else:
+                req_end = [self.ex_times[0], endtime]
+                req_start = [starttime, self.ex_times[1]]
+
         # Save some memory: will cut the requests in shorter chunks.
         # Else this becomes problematic especially, when processing with
         # several threads at the same time and the very long streams have to be
         # held in RAM.
-        if endtime-starttime > 3600*6:
-            starttimes = []
-            endtimes = []
-            while starttime < endtime:
+        starttimes = []
+        endtimes = []
+        for starttime, endtime in zip(req_start, req_end):
+            if endtime-starttime > 3600*6:
+                while starttime < endtime:
+                    starttimes.append(starttime)
+                    starttime = starttime+3600*6
+                    endtimes.append(starttime)
+            else:
                 starttimes.append(starttime)
-                starttime = starttime+3600*6
-                endtimes.append(starttime)
-        else:
-            starttimes = [starttime]
-            endtimes = [endtime]
+                endtimes.append(endtime)
 
         for starttime, endtime in zip(starttimes, endtimes):
-            # Return obspy stream with data from this station
+            # Return obspy stream with data from this station if the data
+            # does not already exist
             st = self.store_client.get_waveforms(
                 network, station, location, channel, starttime, endtime,
                 _check_times=_check_times)
+  
 
             try:
                 st, resp = self._preprocess(st)
@@ -192,15 +236,11 @@ class Preprocessor(object):
             # Create folder if it does not exist
             os.makedirs(self.outloc, exist_ok=True)
 
-            with ASDFDataSet(
-                os.path.join(
-                    self.outloc, '%s.%s.h5' % (network, station))) as ds:
+            with ASDFDataSet(outfile) as ds:
                 ds.add_waveforms(st, tag='processed')
                 ds.add_stationxml(resp)
 
-        with ASDFDataSet(
-                os.path.join(
-                    self.outloc, '%s.%s.h5' % (network, station))) as ds:
+        with ASDFDataSet(outfile) as ds:
             # Save some processing values as auxiliary data
             ds.add_auxiliary_data(
                 data=np.empty(1), data_type='PreprocessingParameters',
