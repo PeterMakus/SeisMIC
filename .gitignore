@@ -4,3 +4,4 @@ tests/data/
 autogen/*.rst
 testnb.ipynb
 .vscode/settings.json
+*.egg-info
