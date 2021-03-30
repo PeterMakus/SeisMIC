@@ -7,17 +7,20 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 29th March 2021 01:41:03 pm
+Last Modified: Tuesday, 30th March 2021 11:39:16 am
 '''
+from copy import deepcopy
 
 from mpi4py import MPI
 import numpy as np
-from obspy import Stream, UTCDateTime, Trace
+from obspy import Stream, UTCDateTime, Trace, Inventory
 from obspy.core import Stats
+import obspy.signal as osignal
 from scipy.fftpack import next_fast_len
+from scipy import signal
 
-from miic3.utils.nextpowof2 import nextpowerof2
-from miic3.utils.miic_utils import trace_calc_az_baz_dist
+# from miic3.utils.nextpowof2 import nextpowerof2
+from miic3.utils.miic_utils import trace_calc_az_baz_dist, inv_calc_az_baz_dist
 
 
 zerotime = UTCDateTime(1971, 1, 1)
@@ -67,7 +70,7 @@ class Correlator(object):
             cst.append(Trace(data=A[:, ii], header=cstats))
             cst[-1].stats_tr1 = st[comb[0]].stats
             cst[-1].stats_tr2 = st[comb[1]].stats
-    return cst
+        return cst
 
     def _pxcorr_matrix(self, A: np.ndarray):
         # time domain processing
@@ -183,7 +186,7 @@ class Correlator(object):
         return (C, starttimes)
 
 
-def st_to_np_array(self, st: Stream) -> np.ndarray:
+def st_to_np_array(st: Stream) -> np.ndarray:
     A = st[0].data
     del st[0]
     for tr in st:
@@ -284,7 +287,9 @@ def rfftfreq(n, d=1.0):
     return results * val
 
 
-def combine_stats(tr1, tr2):
+def combine_stats(
+    tr1: Trace, tr2: Trace, inv1: Inventory = None,
+        inv2: Inventory = None):
     """ Combine the meta-information of two ObsPy Trace objects
 
     This function returns a ObsPy :class:`~obspy.core.trace.Stats` object
@@ -351,8 +356,23 @@ def combine_stats(tr1, tr2):
         stats.sac['az'] = az
         stats.sac['baz'] = baz
     except AttributeError:
-        stats.pop('sac')
-        print("No station coordinates provided.")
+        if inv1 and inv2:
+            stats['sac'] = {}
+            stats.sac['stla'] = inv1[0][0].latitude
+            stats.sac['stlo'] = inv1[0][0].longitude
+            stats.sac['stel'] = inv1[0][0].elevation
+            stats.sac['evla'] = inv2[0][0].latitude
+            stats.sac['evlo'] = inv2[0][0].longitude
+            stats.sac['evel'] = inv2[0][0].elevation
+
+            az, baz, dist = inv_calc_az_baz_dist(inv1, inv2)
+
+            stats.sac['dist'] = dist / 1000
+            stats.sac['az'] = az
+            stats.sac['baz'] = baz
+        else:
+            stats.pop('sac')
+            print("No station coordinates provided.")
 
     return stats
 
@@ -380,29 +400,30 @@ def calc_cross_combis(st, method='betweenStations'):
 
     combis = []
     if method == 'betweenStations':
-        for ii in range(len(st)):
-            for jj in range(ii+1,len(st)):
-                if ((st[ii].stats['network'] != st[jj].stats['network']) or 
-                    (st[ii].stats['station'] != st[jj].stats['station'])):
-                    combis.append((ii,jj))
+        for ii, tr in enumerate(st):
+            for jj in range(ii+1, len(st)):
+                if ((tr.stats['network'] != st[jj].stats['network']) or
+                        (tr.stats['station'] != st[jj].stats['station'])):
+                    combis.append((ii, jj))
     elif method == 'betweenComponents':
-        for ii in range(len(st)):
-            for jj in range(ii+1,len(st)):
-                if ((st[ii].stats['network'] == st[jj].stats['network']) and 
-                    (st[ii].stats['station'] == st[jj].stats['station']) and
-                    (st[ii].stats['channel'][-1] != st[jj].stats['channel'][-1])):
-                    combis.append((ii,jj))
+        for ii, tr in enumerate(st):
+            for jj in range(ii+1, len(st)):
+                if ((tr.stats['network'] == st[jj].stats['network']) and
+                    (tr.stats['station'] == st[jj].stats['station']) and
+                        (tr.stats['channel'][-1] !=
+                            st[jj].stats['channel'][-1])):
+                    combis.append((ii, jj))
     elif method == 'autoComponents':
-        for ii in range(len(st)):
-            combis.append((ii,ii))
+        for ii, _ in enumerate(st):
+            combis.append((ii, ii))
     elif method == 'allSimpleCombinations':
-        for ii in range(len(st)):
-            for jj in range(ii,len(st)):
-                    combis.append((ii,jj))
+        for ii, _ in enumerate(st):
+            for jj in range(ii, len(st)):
+                combis.append((ii, jj))
     elif method == 'allCombinations':
-        for ii in range(len(st)):
-            for jj in range(len(st)):
-                combis.append((ii,jj))
+        for ii, _ in enumerate(st):
+            for jj, _ in enumerate(st):
+                combis.append((ii, jj))
     else:
         raise ValueError("Method has to be one of ('betweenStations', "
                          "'betweenComponents', 'autoComponents', "
@@ -410,25 +431,25 @@ def calc_cross_combis(st, method='betweenStations'):
     return combis
 
 
-
-def rotate_multi_corr_stream(st):
+def rotate_multi_corr_stream(st: Stream) -> Stream:
     """Rotate a stream with full Greens tensor from ENZ to RTZ
 
-    Take a stream with numerous correlation traces and rotate the 
-    combinations of ENZ components into combinations of RTZ components in case all
-    nine components of the Green's tensor are present. If not all nine components
-    are present no trace for this station combination is returned.
-    
+    Take a stream with numerous correlation traces and rotate the
+    combinations of ENZ components into combinations of RTZ components in case
+    all nine components of the Green's tensor are present. If not all nine
+    components are present no trace for this station combination is returned.
+
     :type st: obspy.stream
     :param st: stream with data in ENZ system
     :rtype: obspy.stream
     :return: stream in the RTZ system
     """
-    
-    out_st = stream.Stream()
+
+    out_st = Stream()
     while st:
         tl = list(range(9))
-        tst = st.select(network=st[0].stats['network'],station=st[0].stats['station'])
+        tst = st.select(network=st[0].stats['network'],
+                        station=st[0].stats['station'])
         cnt = 0
         for ttr in tst:
             if ttr.stats['channel'][2] == 'E':
@@ -459,45 +480,46 @@ def rotate_multi_corr_stream(st):
                     tl[7] = ttr
                     cnt += 128
                 elif ttr.stats['channel'][6] == 'Z':
-                    tl[8] = ttr                   
+                    tl[8] = ttr
                     cnt += 256
         if cnt == 2**9-1:
-            st0 = stream.Stream()
+            st0 = Stream()
             for t in tl:
                 st0.append(t)
             st1 = _rotate_corr_stream(st0)
             out_st += st1
-        elif cnt == 27: # only horizontal component combinations present
-            st0 = stream.Stream()
+        elif cnt == 27:  # only horizontal component combinations present
+            st0 = Stream()
             for t in [0, 1, 3, 4]:
                 st0.append(tl[t])
             st1 = _rotate_corr_stream_horizontal(st0)
             out_st += st1
-        elif cnt == 283: # horizontal combinations + ZZ
-            st0 = stream.Stream()
+        elif cnt == 283:  # horizontal combinations + ZZ
+            st0 = Stream()
             for t in [0, 1, 3, 4]:
                 st0.append(tl[t])
             st1 = _rotate_corr_stream_horizontal(st0)
             out_st += st1
             out_st.append(tl[8])
         for ttr in tst:
-            for ind,tr in enumerate(st):
+            for ind, tr in enumerate(st):
                 if ttr.id == tr.id:
                     st.pop(ind)
-    
+
     return out_st
 
 
 def _rotate_corr_stream_horizontal(st):
     """ Rotate traces in stream from the EE-EN-NE-NN system to
     the RR-RT-TR-TT system. The letters give the component order
-    in the input and output streams. Input traces are assumed to be of same length
-    and simultaneously sampled.
+    in the input and output streams. Input traces are assumed to be of same
+    length and simultaneously sampled.
     """
 
     # rotation angles
     # phi1 : counter clockwise angle between E and R(towards second station)
-    # the leading -1 accounts fact that we rotate the coordinate system, not a vector
+    # the leading -1 accounts fact that we rotate the coordinate system,
+    # not a vector
     phi1 = - np.pi/180*(90-st[0].stats['sac']['az'])
     # phi2 : counter clockwise angle between E and R(away from first station)
     phi2 = - np.pi/180*(90-st[0].stats['sac']['baz']+180)
@@ -507,9 +529,10 @@ def _rotate_corr_stream_horizontal(st):
     c2 = np.cos(phi2)
     s2 = np.sin(phi2)
 
-    rt = stream.Stream()
+    rt = Stream()
     RR = st[0].copy()
-    RR.data = c1*c2*st[0].data - c1*s2*st[1].data - s1*c2*st[2].data + s1*s2*st[3].data
+    RR.data = c1*c2*st[0].data - c1*s2*st[1].data - s1*c2*st[2].data +\
+        s1*s2*st[3].data
     tcha = list(RR.stats['channel'])
     tcha[2] = 'R'
     tcha[6] = 'R'
@@ -517,7 +540,8 @@ def _rotate_corr_stream_horizontal(st):
     rt.append(RR)
 
     RT = st[0].copy()
-    RT.data = c1*s2*st[0].data + c1*c2*st[1].data - s1*s2*st[2].data - s1*c2*st[3].data
+    RT.data = c1*s2*st[0].data + c1*c2*st[1].data - s1*s2*st[2].data -\
+        s1*c2*st[3].data
     tcha = list(RT.stats['channel'])
     tcha[2] = 'R'
     tcha[6] = 'T'
@@ -525,7 +549,8 @@ def _rotate_corr_stream_horizontal(st):
     rt.append(RT)
 
     TR = st[0].copy()
-    TR.data = s1*c2*st[0].data - s1*s2*st[1].data + c1*c2*st[2].data - c1*s2*st[3].data
+    TR.data = s1*c2*st[0].data - s1*s2*st[1].data + c1*c2*st[2].data -\
+        c1*s2*st[3].data
     tcha = list(TR.stats['channel'])
     tcha[2] = 'T'
     tcha[6] = 'R'
@@ -533,7 +558,8 @@ def _rotate_corr_stream_horizontal(st):
     rt.append(TR)
 
     TT = st[0].copy()
-    TT.data = s1*s2*st[0].data + s1*c2*st[1].data + c1*s2*st[2].data + c1*c2*st[3].data
+    TT.data = s1*s2*st[0].data + s1*c2*st[1].data + c1*s2*st[2].data +\
+        c1*c2*st[3].data
     tcha = list(TT.stats['channel'])
     tcha[2] = 'T'
     tcha[6] = 'T'
@@ -546,39 +572,42 @@ def _rotate_corr_stream_horizontal(st):
 def _rotate_corr_stream(st):
     """ Rotate traces in stream from the EE-EN-EZ-NE-NN-NZ-ZE-ZN-ZZ system to
     the RR-RT-RZ-TR-TT-TZ-ZR-ZT-ZZ system. The letters give the component order
-    in the input and output streams. Input traces are assumed to be of same length
-    and simultaneously sampled.
+    in the input and output streams. Input traces are assumed to be of same
+    length and simultaneously sampled.
     """
-    
+
     # rotation angles
     # phi1 : counter clockwise angle between E and R(towards second station)
-    # the leading -1 accounts fact that we rotate the coordinate system, not a vector
+    # the leading -1 accounts fact that we rotate the coordinate system,
+    # not a vector
     phi1 = - np.pi/180*(90-st[0].stats['sac']['az'])
     # phi2 : counter clockwise angle between E and R(away from first station)
     phi2 = - np.pi/180*(90-st[0].stats['sac']['baz']+180)
-    
+
     c1 = np.cos(phi1)
     s1 = np.sin(phi1)
     c2 = np.cos(phi2)
     s2 = np.sin(phi2)
-    
-    rtz = stream.Stream()
+
+    rtz = Stream()
     RR = st[0].copy()
-    RR.data = c1*c2*st[0].data - c1*s2*st[1].data - s1*c2*st[3].data + s1*s2*st[4].data
+    RR.data = c1*c2*st[0].data - c1*s2*st[1].data - s1*c2*st[3].data +\
+        s1*s2*st[4].data
     tcha = list(RR.stats['channel'])
     tcha[2] = 'R'
     tcha[6] = 'R'
     RR.stats['channel'] = ''.join(tcha)
     rtz.append(RR)
-    
+
     RT = st[0].copy()
-    RT.data = c1*s2*st[0].data + c1*c2*st[1].data - s1*s2*st[3].data - s1*c2*st[4].data
+    RT.data = c1*s2*st[0].data + c1*c2*st[1].data - s1*s2*st[3].data -\
+        s1*c2*st[4].data
     tcha = list(RT.stats['channel'])
     tcha[2] = 'R'
     tcha[6] = 'T'
     RT.stats['channel'] = ''.join(tcha)
     rtz.append(RT)
-    
+
     RZ = st[0].copy()
     RZ.data = c1*st[2].data - s1*st[5].data
     tcha = list(RZ.stats['channel'])
@@ -586,23 +615,25 @@ def _rotate_corr_stream(st):
     tcha[6] = 'Z'
     RZ.stats['channel'] = ''.join(tcha)
     rtz.append(RZ)
-    
+
     TR = st[0].copy()
-    TR.data = s1*c2*st[0].data - s1*s2*st[1].data + c1*c2*st[3].data - c1*s2*st[4].data
+    TR.data = s1*c2*st[0].data - s1*s2*st[1].data + c1*c2*st[3].data -\
+        c1*s2*st[4].data
     tcha = list(TR.stats['channel'])
     tcha[2] = 'T'
     tcha[6] = 'R'
     TR.stats['channel'] = ''.join(tcha)
     rtz.append(TR)
-    
+
     TT = st[0].copy()
-    TT.data = s1*s2*st[0].data + s1*c2*st[1].data + c1*s2*st[3].data + c1*c2*st[4].data
+    TT.data = s1*s2*st[0].data + s1*c2*st[1].data + c1*s2*st[3].data +\
+        c1*c2*st[4].data
     tcha = list(TT.stats['channel'])
     tcha[2] = 'T'
     tcha[6] = 'T'
     TT.stats['channel'] = ''.join(tcha)
     rtz.append(TT)
-    
+
     TZ = st[0].copy()
     TZ.data = s1*st[2].data + c1*st[5].data
     tcha = list(TZ.stats['channel'])
@@ -610,7 +641,7 @@ def _rotate_corr_stream(st):
     tcha[6] = 'Z'
     TZ.stats['channel'] = ''.join(tcha)
     rtz.append(TZ)
-    
+
     ZR = st[0].copy()
     ZR.data = c2*st[6].data - s2*st[7].data
     tcha = list(ZR.stats['channel'])
@@ -618,7 +649,7 @@ def _rotate_corr_stream(st):
     tcha[6] = 'R'
     ZR.stats['channel'] = ''.join(tcha)
     rtz.append(ZR)
-    
+
     ZT = st[0].copy()
     ZT.data = s2*st[6].data + c2*st[7].data
     tcha = list(ZT.stats['channel'])
@@ -626,51 +657,48 @@ def _rotate_corr_stream(st):
     tcha[6] = 'T'
     ZT.stats['channel'] = ''.join(tcha)
     rtz.append(ZT)
-    
+
     rtz.append(st[8].copy())
-    
+
     return rtz
 
 
-def set_sample_options():
-    args = {'TDpreProcessing':[{'function':detrend,
-                                'args':{'type':'linear'}},
-                               {'function':taper,
-                                'args':{'type':'cosine_taper',
-                                        'p':0.01}},
-                               {'function':mute,
-                                'args':{'filter':{'type':'bandpass',
-                                                 'freqmin':1.,
-                                                 'freqmax':6.},
-                                       'taper_len':1.,
-                                       # 'threshold':1000, absolute threshold
-                                       'std_factor':1,
-                                       'extend_gaps':True}},
-                               {'function':TDfilter,
-                                'args':{'type':'bandpass',
-                                        'freqmin':1.,
-                                        'freqmax':3.}},
-                               {'function':TDnormalization,
-                                'args':{'filter':{'type':'bandpass',
-                                                 'freqmin':0.5,
-                                                 'freqmax':2.},
-                                        'windowLength':1.}},
-                               {'function':signBitNormalization,
-                                'args':{}}
+def set_sample_options() -> dict:
+    args = {'TDpreProcessing': [{'function': detrend,
+                                'args': {'type': 'linear'}},
+                                {'function': taper,
+                                'args': {'type': 'cosine_taper', 'p': 0.01}},
+                                {'function': mute,
+                                'args': {'filter': {
+                                    'type': 'bandpass',
+                                    'freqmin': 1., 'freqmax': 6.},
+                                    'taper_len': 1., 'std_factor': 1,
+                                    'extend_gaps': True}},
+                                {'function': TDfilter,
+                                'args': {
+                                    'type': 'bandpass',
+                                    'freqmin': 1., 'freqmax': 3.}},
+                                {'function': TDnormalization,
+                                'args': {'filter': {
+                                    'type': 'bandpass', 'freqmin': 0.5,
+                                    'freqmax': 2.}, 'windowLength': 1.}},
+                                {'function': signBitNormalization,
+                                'args': {}}
                                  ],
-            'FDpreProcessing':[{'function':spectralWhitening,
-                                'args':{}},
-                               {'function':FDfilter,
-                                'args':{'flimit':[0.5, 1., 5., 7.]}}],
-            'lengthToSave':20,
-            'center_correlation':True,      # make sure zero correlation time is in the center
-            'normalize_correlation':True,
-            'combinations':[(0,0),(0,1),(0,2),(1,2)]}
-              
+            'FDpreProcessing': [{'function': spectralWhitening,
+                                'args': {}},
+                               {'function': FDfilter,
+                                'args': {'flimit': [0.5, 1., 5., 7.]}}],
+            'lengthToSave': 20,
+            'center_correlation': True,
+            # make sure zero correlation time is in the center
+            'normalize_correlation': True,
+            'combinations': [(0, 0), (0, 1), (0, 2), (1, 2)]}
+
     return args
 
 
-def spectralWhitening(B,args,params):
+def spectralWhitening(B: np.ndarray, args: dict, params) -> np.ndarray:
     """
     Spectal whitening of Fourier-transformed date
 
@@ -679,7 +707,7 @@ def spectralWhitening(B,args,params):
     True the normalization of sets of three traces are normalized jointly by
     the mean of their amplitude spectra. This is useful for later rotation of
     correlated traces in the ZNE system into the ZRT system.
-    
+
     :type B: numpy.ndarray
     :param B: Fourier transformed time series data with frequency oriented\\
         along the first dimension (columns)
@@ -687,41 +715,40 @@ def spectralWhitening(B,args,params):
     :param args: arguments dictionary as described above
     :type params: dictionary
     :param params: not used here
-    
+
     :rtype: numpy.ndarray
     :return: whitened spectal data
     """
     absB = np.absolute(B)
     if 'joint_norm' in list(args.keys()):
-        if args['joint_norm'] == True:
+        if args['joint_norm']:
             assert B.shape[1] % 3 == 0, "for joint normalization the number\
                       of traces needs to the multiple of 3: %d" % B.shape[1]
-            for ii in np.arange(0,B.shape[1],3):
-                #print 'ii', ii
-                absB[:,ii:ii+3] = np.tile(np.atleast_2d(
-                                    np.mean(absB[:,ii:ii+3],axis=1)).T,[1,3])
+            for ii in np.arange(0, B.shape[1], 3):
+                absB[:, ii:ii+3] = np.tile(
+                    np.atleast_2d(np.mean(absB[:, ii:ii+3], axis=1)).T, [1, 3])
     with np.errstate(invalid='raise'):
-        try :
+        try:
             B /= absB
-        except FloatingPointError as e :
-            errargs=np.argwhere(absB==0)
+        except FloatingPointError as e:
+            errargs = np.argwhere(absB == 0)
             # Report error where there is zero divides for a non-zero freq
-            if not np.all(errargs[:,0]==0) :
+            if not np.all(errargs[:, 0] == 0):
                 print(e)
                 print(errargs)
 
     # Set zero frequency component to zero
-    B[0,:] = 0.j
+    B[0, :] = 0.j
 
     return B
-    
-    
-def FDfilter(B,args,params):
+
+
+def FDfilter(B: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """
     Filter Fourier-transformed data
 
     Filter Fourier tranformed data by tapering in frequency domain. The `args`
-    dictionary is supposed to contain the key `flimit` with a value that is a 
+    dictionary is supposed to contain the key `flimit` with a value that is a
     four element list or tuple defines the corner frequencies (f1, f2, f3, f4)
     in Hz of the cosine taper which is one between f2 and f3 and tapers to zero
     for f1 < f < f2 and f3 < f < f4.
@@ -734,26 +761,27 @@ def FDfilter(B,args,params):
     :type params: dictionary
     :param params: params['freqs'] contains an array with the freqency values
         of the samples in `B`
-    
+
     :rtype: numpy.ndarray
     :return: filtered spectal data
     """
     args = deepcopy(args)
-    args.update({'freqs':params['freqs']})
-    tap = osignal.invsim.cosine_taper(B.shape[0],**args)
-    B *= np.tile(np.atleast_2d(tap).T,(1,B.shape[1]))
+    args.update({'freqs': params['freqs']})
+    tap = osignal.invsim.cosine_taper(B.shape[0], **args)
+    B *= np.tile(np.atleast_2d(tap).T, (1, B.shape[1]))
     return B
-    
 
-def FDsignBitNormalization(B,args,params):
+
+def FDsignBitNormalization(
+        B: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """
     Sign bit normalization of frequency transformed data
-    
+
     Divides each sample by its amplitude resulting in trace with amplidues of
     (-1, 0, 1). As this operation is done in frequency domain it requires two
-    Fourier transforms and is thus quite costly but alows to be performed 
+    Fourier transforms and is thus quite costly but alows to be performed
     after other steps of frequency domain procesing e.g. whitening.
-    
+
 
     :type B: numpy.ndarray
     :param B: Fourier transformed time series data with frequency oriented\\
@@ -762,122 +790,122 @@ def FDsignBitNormalization(B,args,params):
     :param args: not used in this function
     :type params: dictionary
     :param params: not used in this function
-      
+
     :rtype: numpy.ndarray
     :return: frequency transform of the 1-bit normalized data
     """
-    B = np.fft.irfft(B,axis=0)
+    B = np.fft.irfft(B, axis=0)
     C = B.real
     C = np.sign(B)
-    return np.fft.rfft(C,axis=0)
+    return np.fft.rfft(C, axis=0)
 
 
-def mute(A,args,params):
+def mute(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """
     Mute parts of data that exceed a threshold
-    
+
     To completely surpress the effect of data with high amplitudes e.g. after
     aftershocks these parts of the data are muted (set to zero). The respective
     parts of the signal are identified as those where the envelope in a given
-    frequency exceeds a threshold given directly as absolute numer or as a 
+    frequency exceeds a threshold given directly as absolute numer or as a
     multiple of the data's standard deviation. A taper of length `taper_len` is
     applied to smooth the edges of muted segments. Setting `extend_gaps` to
     Ture will ensure that the taper is applied outside the segments and data
     inside these segments will all zero. Edges of the data will be tapered too
     in this case.
-    
+
     :Example:
     ``args={'filter':{'type':'bandpass', 'freqmin':1., 'freqmax':6.},'taper_len':1., 'threshold':1000, 'std_factor':1, 'extend_gaps':True}``
-              
+
     :type A: numpy.ndarray
-    :param A: time series data with time oriented along the first \\
-        dimension (columns)
+    :param A: time series data with time oriented along the first dimension
+        (columns)
     :type args: dictionary
     :param args: the following keywords are allowed:
-    
-        * `filter`: (dictionary) description of filter to be applied befor calculation of \\
-            the signal envelope. If not given the envelope is calculated \\
-            from raw data. The value of the keyword filter is the same as \\
-            the `args` for the function `TDfilter`.
+
+        * `filter`: (dictionary) description of filter to be applied before
+            calculation of the signal envelope. If not given the envelope is
+            calculated from raw data. The value of the keyword filter is the
+            same as the `args` for the function `TDfilter`.
         * `threshold`: (float) absolute amplitude of threhold for muting
-        * `std_factor`: (float) alternativly to an absolute number the threhold can be\\
-            estimated as a multiple of the standard deviation if the scaling\\
-            is given in as value of the keyword `std_factor`. If neither\\
-            `threshold` nor `std_factor` are given `std_factor`=1 is assumed.\\
-        * `extend_gaps` (boolean) if True date abive the threshold is \\
-            guaranteed to be muted, otherwise tapering will leak into these\\
+        * `std_factor`: (float) alternativly to an absolute number the threhold
+            can be estimated as a multiple of the standard deviation if the
+            scaling is given in as value of the keyword `std_factor`. If
+            neither `threshold` nor `std_factor` are given `std_factor`=1 is
+            assumed.
+        * `extend_gaps` (boolean) if True date abive the threshold is
+            guaranteed to be muted, otherwise tapering will leak into these
             parts. This step involves an additional convolution.
         * `taper_len`: (float) length of taper for muted segments in seconds
     :type params: dictionary
     :param params: filled automatically by `pxcorr`
-    
+
     :rtype: numpy.ndarray
     :return: clipped time series data
     """
 
     # return zeros if length of traces is shorter than taper
     ntap = int(args['taper_len']*params['sampling_rate'])
-    if A.shape[0]<=ntap:
+    if A.shape[0] <= ntap:
         return np.zeros_like(A)
 
     # filter if asked to
     if 'filter' in list(args.keys()):
-        C = TDfilter(A,args['filter'],params)
+        C = TDfilter(A, args['filter'], params)
     else:
         C = deepcopy(A)
-    
+
     # calculate envelope
-    #D = np.abs(signal.hilbert(C,axis=0))
     D = np.abs(C)
-    
+
     # calculate threshold
     if 'threshold' in list(args.keys()):
         thres = np.zeros(A.shape[1]) + args['threshold']
     elif 'std_factor' in list(args.keys()):
-        thres = np.std(C,axis=0) * args['std_factor']
+        thres = np.std(C, axis=0) * args['std_factor']
     else:
-        thres = np.std(C,axis=0)
-    
+        thres = np.std(C, axis=0)
+
     # calculate mask
     mask = np.ones_like(D)
-    mask[D>np.tile(np.atleast_2d(thres),(A.shape[0],1))]=0
+    mask[D > np.tile(np.atleast_2d(thres), (A.shape[0], 1))] = 0
     # extend the muted segments to make sure the whole segment is zero after
     if args['extend_gaps']:
         tap = np.ones(ntap)/ntap
         for ind in range(A.shape[1]):
-            mask[:,ind] = np.convolve(mask[:,ind],tap, mode='same')
+            mask[:, ind] = np.convolve(mask[:, ind], tap, mode='same')
         nmask = np.ones_like(D)
-        nmask[mask<1.] = 0
+        nmask[mask < 1.] = 0
     else:
         nmask = mask
-    
+
     # apply taper
-    tap = 2. - (np.cos(np.arange(ntap,dtype=float)/ntap*2.*np.pi) + 1.)
+    tap = 2. - (np.cos(np.arange(ntap, dtype=float)/ntap*2.*np.pi) + 1.)
     tap /= ntap
     for ind in range(A.shape[1]):
-        nmask[:,ind] = np.convolve(nmask[:,ind],tap, mode='same')
-    
+        nmask[:, ind] = np.convolve(nmask[:, ind], tap, mode='same')
+
     # mute date with tapered mask
     A *= nmask
     return A
 
 
-def TDfilter(A,args,params):
+def TDfilter(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """
     Filter time series data
-    
+
     Filter in time domain. Types of filters are defined by `obspy.signal`.
-    
+
     `args` has the following structure:
-    
+
         args = {'type':`filterType`, fargs}
-            
-        `type` may be `bandpass` with the corresponding fargs `freqmin` and \\ 
+
+        `type` may be `bandpass` with the corresponding fargs `freqmin` and
         `freqmax` or `highpass`/`lowpass` with the `fargs` `freqmin`/`freqmax`
-            
-        :Example:  
+
+        :Example:
         ``args = {'type':'bandpass','freqmin':0.5,'freqmax':2.}``
-        
+
     :type A: numpy.ndarray
     :param A: time series data with time oriented along the first \\
         dimension (columns)
@@ -885,24 +913,25 @@ def TDfilter(A,args,params):
     :param args: arguments dictionary as described above
     :type params: dictionary
     :param params: not used here
-    
+
     :rtype: numpy.ndarray
     :return: filtered time series data
     """
-    func = getattr(osignal.filter,args['type'])
+    func = getattr(osignal.filter, args['type'])
     args = deepcopy(args)
     args.pop('type')
     # filtering in obspy.signal is done along the last dimension that why .T
-    A = func(A.T,df=params['sampling_rate'],**args).T
+    A = func(A.T, df=params['sampling_rate'], **args).T
     return A
 
 
-def normalizeStandardDeviation(A,args,params):
+def normalizeStandardDeviation(
+        A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """
     Divide the time series by their standard deviation
-    
+
     Divide the amplitudes of each trace by its standard deviation.
-    
+
     :type A: numpy.ndarray
     :param A: time series data with time oriented along the first \\
         dimension (columns)
@@ -910,21 +939,22 @@ def normalizeStandardDeviation(A,args,params):
     :param args: not used here
     :type params: dictionary
     :param params: not used here
-    
+
     :rtype: numpy.ndarray
     :return: normalized time series data
     """
-    std = np.std(A,axis=0)
-    A /= np.tile(std,(A.shape[0],1))
+    std = np.std(A, axis=0)
+    A /= np.tile(std, (A.shape[0], 1))
     return A
-    
-    
-def signBitNormalization(A,args,params):
+
+
+def signBitNormalization(
+        A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """
     One bit normalization of time series data
-    
+
     Return the sign of the samples (-1, 0, 1).
-    
+
     :type A: numpy.ndarray
     :param A: time series data with time oriented along the first \\
         dimension (columns)
@@ -932,26 +962,26 @@ def signBitNormalization(A,args,params):
     :param args: not used here
     :type params: dictionary
     :param params: not used here
-    
+
     :rtype: numpy.ndarray
     :return: 1-bit normalized time series data
     """
     return np.sign(A)
 
 
-def detrend(A,args,params):
+def detrend(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """
     Remove trend from data
-    
+
     Remove the trend from the time series data in `A`. Several methods are \\
     possible. The method is specified as the value of the `type` keyword in
     the argument dictionary `args`.
-    
+
     Possible `types` of detrending:
        -`constant` or `demean`: substract mean of traces
-       
+
        -`linear`: substract a least squares fitted linear trend form the data
-    
+
     :type A: numpy.ndarray
     :param A: time series data with time oriented along the first \\
         dimension (columns)
@@ -959,33 +989,33 @@ def detrend(A,args,params):
     :param args: the only used keyword is `type`
     :type params: dictionary
     :param params: not used here
-    
+
     :rtype: numpy.ndarray
     :return: detrended time series data
     """
-    #for compatibility with obspy
+    # for compatibility with obspy
     if args['type'] == 'demean':
         args['type'] = 'constant'
     if args['type'] == 'detrend':
         args['type'] = 'linear'
 
     # Detrend function taken from scipy and modified to account for nan
-    type=args['type']
-    axis=0
-    data=A
+    type = args['type']
+    axis = 0
+    data = A
     if type not in ['linear', 'l', 'constant', 'c']:
         raise ValueError("Trend type must be 'linear' or 'constant'.")
-    data = asarray(data)
+    data = np.asarray(data)
     dtype = data.dtype.char
     if dtype not in 'dfDF':
         dtype = 'd'
     if type in ['constant', 'c']:
-        ret = data - expand_dims(nanmean(data, axis), axis)
+        ret = data - np.expand_dims(np.nanmean(data, axis), axis)
         return ret
     else:
         dshape = data.shape
         N = dshape[axis]
-        bp = sort(unique(r_[0, bp, N]))
+        bp = np.sort(np.unique(r_[0, bp, N]))
         if np.any(bp > N):
             raise ValueError("Breakpoints must be less than length "
                              "of data along given axis.")
@@ -996,7 +1026,7 @@ def detrend(A,args,params):
         if axis < 0:
             axis = axis + rnk
         newdims = r_[axis, 0:axis, axis + 1:rnk]
-        newdata = reshape(transpose(data, tuple(newdims)),
+        newdata = np.reshape(np.transpose(data, tuple(newdims)),
                           (N, _prod(dshape) // N))
         newdata = newdata.copy()  # make sure we have a copy
         if newdata.dtype.char not in 'dfDF':
@@ -1004,40 +1034,41 @@ def detrend(A,args,params):
         # Find leastsq fit and remove it for each piece
         for m in range(Nreg):
             Npts = bp[m + 1] - bp[m]
-            A = ones((Npts, 2), dtype)
-            A[:, 0] = cast[dtype](arange(1, Npts + 1) * 1.0 / Npts)
+            A = np.ones((Npts, 2), dtype)
+            A[:, 0] = np.cast[dtype](np.arange(1, Npts + 1) * 1.0 / Npts)
             sl = slice(bp[m], bp[m + 1])
-            coef, resids, rank, s = linalg.lstsq(A, newdata[sl])
-            newdata[sl] = newdata[sl] - dot(A, coef)
+            coef, resids, rank, s = np.linalg.lstsq(A, newdata[sl])
+            newdata[sl] = newdata[sl] - np.dot(A, coef)
         # Put data back in original shape.
-        tdshape = take(dshape, newdims, 0)
-        ret = reshape(newdata, tuple(tdshape))
+        tdshape = np.take(dshape, newdims, 0)
+        ret = np.reshape(newdata, tuple(tdshape))
         vals = list(range(1, rnk))
         olddims = vals[:axis] + [0] + vals[axis:]
-        ret = transpose(ret, tuple(olddims))
+        ret = np.transpose(ret, tuple(olddims))
         return ret
 
-def TDnormalization(A,args,params):
+
+def TDnormalization(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """
     Amplitude dependent time domain normalization
-    
+
     Calculate the envelope of the filtered trace, smooth it in a window of
     length `windowLength` and normalize the waveform by this trace. The two
     used keywords in `args` are `filter and `windowLength` that describe the
     filter and the length of the envelope smoothing window, respectively.
-    
+
     `args` has the following structure:
-    
+
         args = {'windowLength':`length of the envelope smoothing window in \\
         [s]`,'filter':{'type':`filterType`, fargs}}``
-            
-        `type` may be `bandpass` with the corresponding fargs `freqmin` and \\ 
+
+        `type` may be `bandpass` with the corresponding fargs `freqmin` and \\
         `freqmax` or `highpass`/`lowpass` with the `fargs` `freqmin`/`freqmax`
-            
-        :Example:  
+
+        :Example:
         ``args = {'windowLength':5,'filter':{'type':'bandpass','freqmin':0.5,
         'freqmax':2.}}``
-        
+
     :type A: numpy.ndarray
     :param A: time series data with time oriented along the first \\
         dimension (columns)
@@ -1045,52 +1076,53 @@ def TDnormalization(A,args,params):
     :param args: arguments dictionary as described above
     :type params: dictionary
     :param params: not used here
-    
+
     :rtype: numpy.ndarray
     :return: normalized time series data
     """
     # filter if args['filter']
     B = deepcopy(A)
     if args['filter']:
-        func = getattr(osignal,args['filter']['type'])
+        func = getattr(osignal, args['filter']['type'])
         fargs = deepcopy(args['filter'])
         fargs.pop('type')
-        B = func(A.T,df=params['sampling_rate'],**fargs).T
+        B = func(A.T, df=params['sampling_rate'], **fargs).T
     else:
         B = deepcopy(A)
     # simple calculation of envelope
     B = B**2
-    #print 'shape B', B.shape
+    # print 'shape B', B.shape
     # smoothing of envelepe in both directions to avoid a shift
-    window = (np.ones(np.ceil(args['windowLength']*params['sampling_rate']))/
-              np.ceil(args['windowLength']*params['sampling_rate']))
-    #print 'shape window', window.shape
+    window = (
+        np.ones(np.ceil(args['windowLength'] * params['sampling_rate']))
+        / np.ceil(args['windowLength']*params['sampling_rate']))
+    # print 'shape window', window.shape
     for ind in range(B.shape[1]):
-        B[:,ind] = np.convolve(B[:,ind],window, mode='same')        
-        B[:,ind] = np.convolve(B[::-1,ind],window, mode='same')[::-1]
-        B[:,ind] += np.max(B[:,ind])*1e-6
+        B[:, ind] = np.convolve(B[:, ind], window, mode='same')
+        B[:, ind] = np.convolve(B[::-1, ind], window, mode='same')[::-1]
+        B[:, ind] += np.max(B[:, ind])*1e-6
     # normalization
     A /= np.sqrt(B)
     return A
 
 
-def taper(A,args,params):
+def taper(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """
     Taper to the time series data
-    
+
     Apply a simple taper to the time series data.
-    
+
     `args` has the following structure:
-    
+
         args = {'type':`type of taper`,taper_args}``
-            
-        `type` may be `cosine_taper` with the corresponding taper_args `p` the 
+
+        `type` may be `cosine_taper` with the corresponding taper_args `p` the
         percentage of the traces to taper. Possibilities of `type` are \\
         given by `obspy.signal`.
-            
-        :Example:  
+
+        :Example:
         ``args = {'type':'cosine_taper','p':0.1}``
-    
+
     :type A: numpy.ndarray
     :param A: time series data with time oriented along the first \\
         dimension (columns)
@@ -1098,31 +1130,31 @@ def taper(A,args,params):
     :param args: arguments dictionary as described above
     :type params: dictionary
     :param params: not used here
-    
+
     :rtype: numpy.ndarray
     :return: tapered time series data
     """
     if args['type'] == 'cosine_taper':
         func = osignal.invsim.cosine_taper
     else:
-        func = getattr(signal,args['type'])
+        func = getattr(signal, args['type'])
     args = deepcopy(args)
     args.pop('type')
-    tap = func(A.shape[0],**args)
-    A *= np.tile(np.atleast_2d(tap).T,(1,A.shape[1]))
+    tap = func(A.shape[0], **args)
+    A *= np.tile(np.atleast_2d(tap).T, (1, A.shape[1]))
     return A
 
 
-def clip(A,args,params):
+def clip(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """
     Clip time series data at a multiple of the standard deviation
-    
+
     Set amplitudes exeeding a certatin threshold to this threshold.
     The threshold for clipping is estimated as the standard deviation of each
     trace times a factor specified in `args`.
-    
+
     :Note: Traces should be demeaned before clipping.
-        
+
     :type A: numpy.ndarray
     :param A: time series data with time oriented along the first \\
         dimension (columns)
@@ -1131,13 +1163,13 @@ def clip(A,args,params):
         scaling of the standard deviation for the clipping threshold
     :type params: dictionary
     :param params: not used here
-    
+
     :rtype: numpy.ndarray
     :return: clipped time series data
     """
-    stds = np.nanstd(A,axis=0)
+    stds = np.nanstd(A, axis=0)
     for ind in range(A.shape[1]):
         ts = args['std_factor']*stds[ind]
-        A[A[:,ind]>ts,ind] = ts
-        A[A[:,ind]<-ts,ind] = -ts
+        A[A[:, ind] > ts, ind] = ts
+        A[A[:, ind] < -ts, ind] = -ts
     return A
