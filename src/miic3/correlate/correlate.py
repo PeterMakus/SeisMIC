@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 30th March 2021 11:39:16 am
+Last Modified: Tuesday, 6th April 2021 09:39:48 am
 '''
 from copy import deepcopy
 
@@ -21,6 +21,7 @@ from scipy import signal
 
 # from miic3.utils.nextpowof2 import nextpowerof2
 from miic3.utils.miic_utils import trace_calc_az_baz_dist, inv_calc_az_baz_dist
+from miic3.db.asdf_handler import get_available_stations, NoiseDB
 
 
 zerotime = UTCDateTime(1971, 1, 1)
@@ -29,11 +30,48 @@ zerotime = UTCDateTime(1971, 1, 1)
 class Correlator(object):
     def __init__(self, options: dict) -> None:
         super().__init__()
+        # init MPI
         self.comm = MPI.COMM_WORLD
         self.psize = self.comm.Get_size()
         self.rank = self.comm.Get_rank()
 
         self.options = options
+
+        # find the available noise dbs
+        network = options['network']
+        station = options['station']
+        if isinstance(network, str):
+            network = [network]
+        if isinstance(station, str):
+            station = [station]
+        if len(station) != len(network):
+            if len(station) == 1:
+                station = station*len(network)
+            elif len(network == 1):
+                network = network*len(station)
+            else:
+                raise ValueError("""The lists containing network and station
+                codes must either have the same length or one of them can have
+                the length 1""")
+
+        # Resolve patterns
+        self.netlist = []
+        self.statlist = []
+        for net, stat in zip(network, station):
+            if '*' in network+station or '?' in net+stat:
+                net, stat = get_available_stations(options['dir', net, stat)
+                self.netlist.extend(net)
+                self.statlist.extend(stat)
+            else:
+                self.netlist.append(net)
+                self.statlist.append(stat)
+
+        # and, finally, find the h5 files associated to each of them
+        self.noisedbs = [NoiseDB(
+            options['dir'], net, stat) for net, stat in zip(
+            self.netlist, self.statlist)]
+        # note that the indexing in the noisedb list and in the statlist
+        # are identical, which could be useful to find them easily
 
     def pxcorr(self, st):
         # Maybe here we have to ensure that all traces have the same length
