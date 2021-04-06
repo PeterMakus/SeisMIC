@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Friday, 19th March 2021 04:11:07 pm
+Last Modified: Tuesday, 30th March 2021 09:30:25 am
 '''
 from collections import namedtuple
 from glob import glob
@@ -180,7 +180,6 @@ class Preprocessor(object):
         else:
             _check_times = True
 
- 
         # check already existing times, there is one case with two request
         # chunks, so we will have to create a list for times called
         # req_start and req_end
@@ -225,7 +224,6 @@ class Preprocessor(object):
             st = self.store_client.get_waveforms(
                 network, station, location, channel, starttime, endtime,
                 _check_times=_check_times)
-  
 
             try:
                 st, resp = self._preprocess(st)
