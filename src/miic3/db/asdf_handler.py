@@ -4,9 +4,10 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Friday, 19th March 2021 03:34:22 pm
+Last Modified: Friday, 26th March 2021 10:00:18 am
 '''
 
+from glob import glob
 import os
 
 import numpy as np
@@ -18,16 +19,25 @@ from miic3.trace_data.waveform import Store_Client
 from miic3.trace_data.preprocess import Preprocessor
 
 
+h5_FMTSTR = os.path.join("{dir}", "{network}.{station}.h5")
+
+
 class NoiseDB(object):
     """
-    [summary]
+    Class to handle ASDF files that contain the preprocessed noise data.
     """
 
     def __init__(
             self, dir: str, network: str, station: str) -> None:
+
+        assert isinstance(station, str) and isinstance(network, str), \
+            "Station and network have to be provided as strings."
+        assert '*' not in dir+network+station or '?' not in \
+            dir+network+station, "Files patterns are not supported."
+
         super().__init__()
         # Location of the h5 file
-        self.loc = os.path.join(dir, '%s.%s.h5' % (network, station))
+        self.loc = h5_FMTSTR.format(dir=dir, network=network, station=station)
 
         with ASDFDataSet(self.loc) as ds:
             # get dict a bit convoluted but see pyasdf documentation
@@ -144,3 +154,30 @@ class NoiseDB(object):
             starttime = st[0].stats.starttime
             endtime = st[-1].stats.endtime
         return (starttime, endtime)
+
+
+def get_available_stations(dir: str, network: str, station: str) -> tuple:
+    """
+    Returns two lists, decribing the stations with available preprocessed data.
+    The first list contains the stations' network codes, the second the station
+    codes.
+
+    :param dir: directory to search in
+    :type dir: str
+    :param network: network, file patterns allowed
+    :type network: str
+    :param station: stations, file patterns allowed
+    :type station: str
+    :return: two lists `(networkcodes, stationcodes)`
+    :rtype: tuple
+    """
+    pattern = h5_FMTSTR.format(dir=dir, network=network, station=station)
+    pathl = glob(os.path.join(dir, pattern))
+    if not len(pathl):
+        raise FileNotFoundError("""No files found for the requested network
+        and station combination.""")
+    codea = np.array(
+        [path.split(os.path.sep)[-1].split('.') for path in pathl])
+    netlist = list(codea[:, 0])
+    statlist = list(codea[:, 1])
+    return netlist, statlist
