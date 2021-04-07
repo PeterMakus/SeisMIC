@@ -4,14 +4,14 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Friday, 26th March 2021 10:00:18 am
+Last Modified: Wednesday, 7th April 2021 10:06:09 am
 '''
 
 from glob import glob
 import os
 
 import numpy as np
-from obspy import UTCDateTime
+from obspy import UTCDateTime, Stream
 from pyasdf import ASDFDataSet
 
 from miic3.plot.plt_spectra import plot_spct_series, spct_series_welch
@@ -148,12 +148,25 @@ class NoiseDB(object):
         :return: (UTCDateTime, UTCDateTime)
         :rtype: tuple
         """
+
         with ASDFDataSet(self.loc) as ds:
             st = ds.waveforms["%s.%s" % (self.network, self.station)].processed
             st.sort(keys=['starttime'])
             starttime = st[0].stats.starttime
             endtime = st[-1].stats.endtime
         return (starttime, endtime)
+
+    def get_all_data(self) -> Stream:
+        """
+        Returns all available data to a single `~obspy.core.Stream`.
+
+        :return: Stream object containing daily traces.
+        :rtype: `~obspy.core.Stream`
+        """
+
+        with ASDFDataSet(self.loc) as ds:
+            st = ds.waveforms["%s.%s" % (self.network, self.station)].processed
+        return st
 
 
 def get_available_stations(dir: str, network: str, station: str) -> tuple:

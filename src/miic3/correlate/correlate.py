@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 6th April 2021 09:39:48 am
+Last Modified: Wednesday, 7th April 2021 04:55:05 pm
 '''
 from copy import deepcopy
 
@@ -35,11 +35,11 @@ class Correlator(object):
         self.psize = self.comm.Get_size()
         self.rank = self.comm.Get_rank()
 
-        self.options = options
+        self.options = options['co']
 
         # find the available noise dbs
-        network = options['network']
-        station = options['station']
+        network = options['net']['network']
+        station = options['net']['station']
         if isinstance(network, str):
             network = [network]
         if isinstance(station, str):
@@ -47,7 +47,7 @@ class Correlator(object):
         if len(station) != len(network):
             if len(station) == 1:
                 station = station*len(network)
-            elif len(network == 1):
+            elif len(network) == 1:
                 network = network*len(station)
             else:
                 raise ValueError("""The lists containing network and station
@@ -59,7 +59,7 @@ class Correlator(object):
         self.statlist = []
         for net, stat in zip(network, station):
             if '*' in network+station or '?' in net+stat:
-                net, stat = get_available_stations(options['dir', net, stat)
+                net, stat = get_available_stations(options['dir'], net, stat)
                 self.netlist.extend(net)
                 self.statlist.extend(stat)
             else:
@@ -73,10 +73,12 @@ class Correlator(object):
         # note that the indexing in the noisedb list and in the statlist
         # are identical, which could be useful to find them easily
 
-    def pxcorr(self, st):
+    def pxcorr(self):
         # Maybe here we have to ensure that all traces have the same length
         # We start out by moving the stream into a matrix
         if self.rank == 0:
+            # put all the data into a single stream
+            st = self._all_data_to_stream()
             starttime = []
             npts = []
             for tr in st:
@@ -85,17 +87,18 @@ class Correlator(object):
             npts = np.max(np.array(npts))
             # create numpy array
             A = st_to_np_array(st)
-            del st
+            sampling_rate = st[0].stats['sampling_rate']
+            del st  # save some memory
         else:
             starttime = None
             npts = None
 
         starttime = self.comm.bcast(starttime, root=0)
         npts = self.comm.bcast(npts, root=0)
-        self.comm.Bcast([A, MPI.DOUBLE], root=0)
+        self.comm.Bcast([A, MPI.FLOAT], root=0)
         self.options.update(
             {'starttime': starttime,
-                'sampling_rate': st[0].stats['sampling_rate']})
+                'sampling_rate': sampling_rate})
         A, starttime = self._pxcorr_matrix(A)
 
         # put trace into a stream
@@ -109,6 +112,21 @@ class Correlator(object):
             cst[-1].stats_tr1 = st[comb[0]].stats
             cst[-1].stats_tr2 = st[comb[1]].stats
         return cst
+
+    def _all_data_to_stream(self) -> Stream:
+        """
+        Moves all the available data into one `~obspy.core.Stream` object.
+        Also computes all the available station combinations from that data.
+
+        :return: [description]
+        :rtype: Stream
+        """
+
+        st = Stream()
+        for ndb in self.noisedbs:
+            st.extend(ndb.get_all_data())
+        self.options['combinations'] = calc_cross_combis(st)
+        return st
 
     def _pxcorr_matrix(self, A: np.ndarray):
         # time domain processing
@@ -124,8 +142,9 @@ class Correlator(object):
         for key in list(self.options.keys()):
             if 'Processing' not in key:
                 params.update({key: self.options[key]})
-        for proc in self.options['TDpreProcessing']:
-            A[:, ind] = proc['function'](A[:, ind], proc['args'], params)
+        # This is already down here
+        # for proc in self.options['TDpreProcessing']:
+        #     A[:, ind] = proc['function'](A[:, ind], proc['args'], params)
         # zero-padding
         A = zeroPadding(A, {'type': 'avoidWrapPowerTwo'}, params)
 
@@ -225,11 +244,11 @@ class Correlator(object):
 
 
 def st_to_np_array(st: Stream) -> np.ndarray:
-    A = st[0].data
-    del st[0]
-    for tr in st:
-        np.append(A, tr.data, axis=0)
-    return A
+    st.sort(keys=['npts'])
+    A = np.zeros((st.count(), st[-1].stats.npts))
+    for ii, tr in enumerate(st):
+        A[ii, :tr.stats.npts] = tr.data
+    return A.T
 
 
 def zeroPadding(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
@@ -265,8 +284,8 @@ def zeroPadding(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     elif args['type'] == 'avoidWrapAround':
         N = npts + params['sampling_rate'] * params['lengthToSave']
     elif args['type'] == 'avoidWrapPowerTwo':
-        N = next_fast_len(
-            npts + params['sampling_rate'] * params['lengthToSave'])
+        N = next_fast_len(int(
+            npts + params['sampling_rate'] * params['lengthToSave']))
     else:
         raise ValueError("type '%s' of zero padding not implemented" %
                          args['type'])

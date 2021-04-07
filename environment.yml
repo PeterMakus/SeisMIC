@@ -12,6 +12,7 @@ dependencies:
   - prov
   - pyasdf
   - pytest
+  - pyyaml
   - python=3.8
   - scipy
   - flake8
