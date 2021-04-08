@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Wednesday, 7th April 2021 10:06:09 am
+Last Modified: Thursday, 8th April 2021 12:31:42 pm
 '''
 
 from glob import glob
@@ -187,7 +187,7 @@ def get_available_stations(dir: str, network: str, station: str) -> tuple:
     pattern = h5_FMTSTR.format(dir=dir, network=network, station=station)
     pathl = glob(os.path.join(dir, pattern))
     if not len(pathl):
-        raise FileNotFoundError("""No files found for the requested network
+        raise FileNotFoundError("""No files found for the requested network \
         and station combination.""")
     codea = np.array(
         [path.split(os.path.sep)[-1].split('.') for path in pathl])

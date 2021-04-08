@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Tuesday, 30th March 2021 09:30:25 am
+Last Modified: Thursday, 8th April 2021 12:34:09 pm
 '''
 from collections import namedtuple
 from glob import glob
@@ -163,15 +163,15 @@ class Preprocessor(object):
         outfile = os.path.join(self.outloc, '%s.%s.h5' % (network, station))
 
         if os.path.exists(outfile) and not self.ex_times:
-            msg = "The output file already exists. Use \
-                :func:`~miic3.db.asdf_handler.NoiseDB.return_preprocessor()` \
-                    to yield the correct Preprocessor!"
+            msg = """The output file already exists. Use \
+            :func:`~miic3.db.asdf_handler.NoiseDB.return_preprocessor()` \
+            to yield the correct Preprocessor!"""
             raise ValueError(msg)
 
         if not starttime or not endtime:
             warn(
-                'Returned start and endtimes will not be checked due to' +
-                ' wildcard.', category=UserWarning)
+                """Returned start and endtimes will not be checked due to\
+             wildcard.""", category=UserWarning)
             _check_times = False
             starttime, endtime = self.store_client._get_times(network, station)
             if not starttime:
@@ -190,7 +190,7 @@ class Preprocessor(object):
             # No new data at all
             if self.ex_times[0] <= starttime and self.ex_times[1] >= endtime:
                 raise ValueError('No new data found. All data has already \
-                    been preprocessed?')
+                been preprocessed?')
             # New new data
             elif self.ex_times[0] <= starttime and self.ex_times[1] < endtime:
                 req_start = [self.ex_times[1]]
@@ -281,7 +281,7 @@ class Preprocessor(object):
         if self.sampling_rate > st[0].stats.sampling_rate:
             raise FrequencyError(
                 'The new sample rate (%sHz) is higher than the trace\'s native\
-                     sample rate (%s Hz).' % (
+            sample rate (%s Hz).' % (
                     str(self.filter.highcut), str(
                         st[0].stats.sampling_rate/2)))
         if inv:

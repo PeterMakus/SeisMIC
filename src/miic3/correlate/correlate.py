@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 7th April 2021 04:55:05 pm
+Last Modified: Thursday, 8th April 2021 04:30:15 pm
 '''
 from copy import deepcopy
 
@@ -53,7 +53,6 @@ class Correlator(object):
                 raise ValueError("""The lists containing network and station
                 codes must either have the same length or one of them can have
                 the length 1""")
-
         # Resolve patterns
         self.netlist = []
         self.statlist = []
@@ -72,13 +71,23 @@ class Correlator(object):
             self.netlist, self.statlist)]
         # note that the indexing in the noisedb list and in the statlist
         # are identical, which could be useful to find them easily
+        # Check whether all the data has the same sampling rate
+        self.sampling_rate = self.noisedbs[0].sampling_rate
+        for ndb in self.noisedbs:
+            if ndb.sampling_rate != self.sampling_rate:
+                raise ValueError(
+                    'Station %s.%s has a different sampling rate with %s Hz.\
+                 The sampling rate taken from station %s.%s is %s Hz.'
+                    % (ndb.network, ndb.station, ndb.sampling_rate,
+                        self.noisedbs[0].network, self.noisedbs[0].station,
+                        self.sampling_rate))
 
     def pxcorr(self):
         # Maybe here we have to ensure that all traces have the same length
         # We start out by moving the stream into a matrix
+        st = self._all_data_to_stream()
         if self.rank == 0:
             # put all the data into a single stream
-            st = self._all_data_to_stream()
             starttime = []
             npts = []
             for tr in st:
@@ -87,20 +96,20 @@ class Correlator(object):
             npts = np.max(np.array(npts))
             # create numpy array
             A = st_to_np_array(st)
-            sampling_rate = st[0].stats['sampling_rate']
             del st  # save some memory
         else:
             starttime = None
             npts = None
+            # Note A has to have at least the shape of A with rank0 for this to work
+            A = np.empty((1,1), np.float32)
 
         starttime = self.comm.bcast(starttime, root=0)
         npts = self.comm.bcast(npts, root=0)
-        self.comm.Bcast([A, MPI.FLOAT], root=0)
+        A = self.comm.Bcast([A, MPI.FLOAT], root=0)
         self.options.update(
             {'starttime': starttime,
-                'sampling_rate': sampling_rate})
+                'sampling_rate': self.sampling_rate})
         A, starttime = self._pxcorr_matrix(A)
-
         # put trace into a stream
         cst = Stream()
         for ii, (st, comb) in enumerate(
@@ -156,7 +165,7 @@ class Correlator(object):
         B = np.zeros((fftsize, ntrc), dtype=complex)
 
         B[:, ind] = np.fft.rfft(A[:, ind], axis=0)
-        freqs = rfftfreq(zmsize[0], 1./self.__dict__['sampling_rate'])
+        freqs = rfftfreq(zmsize[0], 1./self.sampling_rate)
 
         ######################################
         # frequency domain pre-processing
@@ -454,6 +463,7 @@ def calc_cross_combis(st, method='betweenStations'):
         ``'allCombinations'``: All traces are combined in both orders ((0,1)
             and (1,0))
     """
+    print('starting combination test')
 
     combis = []
     if method == 'betweenStations':
@@ -485,6 +495,7 @@ def calc_cross_combis(st, method='betweenStations'):
         raise ValueError("Method has to be one of ('betweenStations', "
                          "'betweenComponents', 'autoComponents', "
                          "'allSimpleCombinations' or 'allCombinations').")
+    print('finished combiations')
     return combis
 
 
