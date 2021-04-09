@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 8th April 2021 04:30:15 pm
+Last Modified: Friday, 9th April 2021 04:32:44 pm
 '''
 from copy import deepcopy
 
@@ -22,10 +22,15 @@ from scipy import signal
 # from miic3.utils.nextpowof2 import nextpowerof2
 from miic3.utils.miic_utils import trace_calc_az_baz_dist, inv_calc_az_baz_dist
 from miic3.db.asdf_handler import get_available_stations, NoiseDB
+from miic3.utils.fetch_func_from_str import func_from_str
 
 
 zerotime = UTCDateTime(1971, 1, 1)
 
+
+# Note, when using MPI and hdf5 in parallel: All processes that open or write
+# to an hdf5 file have to do that in parallel to the same file else MPI will
+# freeze
 
 class Correlator(object):
     def __init__(self, options: dict) -> None:
@@ -65,7 +70,7 @@ class Correlator(object):
                 self.netlist.append(net)
                 self.statlist.append(stat)
 
-        # and, finally, find the h5 files associated to each of them
+        # and, finally, find the hdf5 files associated to each of them
         self.noisedbs = [NoiseDB(
             options['dir'], net, stat) for net, stat in zip(
             self.netlist, self.statlist)]
@@ -77,11 +82,11 @@ class Correlator(object):
             if ndb.sampling_rate != self.sampling_rate:
                 raise ValueError(
                     'Station %s.%s has a different sampling rate with %s Hz.\
-                 The sampling rate taken from station %s.%s is %s Hz.'
+                The sampling rate taken from station %s.%s is %s Hz.'
                     % (ndb.network, ndb.station, ndb.sampling_rate,
                         self.noisedbs[0].network, self.noisedbs[0].station,
                         self.sampling_rate))
-
+ 
     def pxcorr(self):
         # Maybe here we have to ensure that all traces have the same length
         # We start out by moving the stream into a matrix
@@ -96,26 +101,31 @@ class Correlator(object):
             npts = np.max(np.array(npts))
             # create numpy array
             A = st_to_np_array(st)
-            del st  # save some memory
+            As = A.shape
         else:
             starttime = None
             npts = None
-            # Note A has to have at least the shape of A with rank0 for this to work
-            A = np.empty((1,1), np.float32)
-
+            As = None
+        # del st  # save some memory
         starttime = self.comm.bcast(starttime, root=0)
         npts = self.comm.bcast(npts, root=0)
-        A = self.comm.Bcast([A, MPI.FLOAT], root=0)
+
+        # Tell the other processes the shape of A
+        As = self.comm.bcast(As, root=0)
+        if self.rank != 0:
+            A = np.empty(As, dtype=np.float32)
+        self.comm.Bcast([A, MPI.FLOAT], root=0)
+
         self.options.update(
             {'starttime': starttime,
                 'sampling_rate': self.sampling_rate})
         A, starttime = self._pxcorr_matrix(A)
         # put trace into a stream
         cst = Stream()
-        for ii, (st, comb) in enumerate(
+        for ii, (startt, comb) in enumerate(
                 zip(starttime, self.options['combinations'])):
             cstats = combine_stats(st[comb[0]], st[comb[1]])
-            cstats['starttime'] = st
+            cstats['starttime'] = startt
             cstats['npts'] = npts
             cst.append(Trace(data=A[:, ii], header=cstats))
             cst[-1].stats_tr1 = st[comb[0]].stats
@@ -145,17 +155,22 @@ class Correlator(object):
 
         # indecies for traces to be worked on by each process
         ind = pmap == self.rank
+        print(ind)
     ######################################
+        corr_args = self.options['corr_args']
         # time domain pre-processing
         params = {}
-        for key in list(self.options.keys()):
+        for key in list(corr_args.keys()):
             if 'Processing' not in key:
-                params.update({key: self.options[key]})
-        # This is already down here
+                params.update({key: corr_args[key]})
+        params['sampling_rate'] = self.sampling_rate
+        # This is already done before
         # for proc in self.options['TDpreProcessing']:
         #     A[:, ind] = proc['function'](A[:, ind], proc['args'], params)
         # zero-padding
+        print(A.shape)
         A = zeroPadding(A, {'type': 'avoidWrapPowerTwo'}, params)
+        print(A.shape)
 
         ######################################
         # FFT
@@ -164,15 +179,25 @@ class Correlator(object):
         fftsize = zmsize[0]//2+1
         B = np.zeros((fftsize, ntrc), dtype=complex)
 
-        B[:, ind] = np.fft.rfft(A[:, ind], axis=0)
+        # B[:, ind] = np.fft.rfft(A[:, ind], axis=0)
+        # B[ind, :] = np.fft.rfft(A[ind, :], axis=1)  # Should axis be =1?
         freqs = rfftfreq(zmsize[0], 1./self.sampling_rate)
 
         ######################################
         # frequency domain pre-processing
         params.update({'freqs': freqs})
         # Here, I will have to make sure to add all the functions to the module
-        for proc in self.options['FDpreProcessing']:
-            B[:, ind] = proc['function'](B[:, ind], proc['args'], params)
+        for proc in corr_args['FDpreProcessing']:
+            #call = eval(proc['function'](B[:, ind], proc['args'], params))  # Fetch function
+            #B[:, ind] = call['function'](B[:, ind], proc['args'], params)
+            # B[:, ind] = globals()[proc['function']](  # This works but isnt elegant at all
+            #     B[:, ind], proc['args'], params)
+
+            # The big advantage of this rather lengthy code is that we can also
+            # import any function that has been defined anywhere else (i.e,
+            # not only within the miic framework)
+            func = func_from_str(proc['function'])
+            B[:, ind] = func(B[:, ind], proc['args'], params)
 
         ######################################
         # collect results
@@ -185,7 +210,7 @@ class Correlator(object):
         irfftsize = (fftsize-1)*2
         sampleToSave = int(
             np.ceil(
-                self.options['lengthToSave'] * self.options['sampling_rate']))
+                corr_args['lengthToSave'] * self.sampling_rate))
         C = np.zeros((sampleToSave*2+1, csize), dtype=np.float64)
 
         # center = irfftsize // 2
@@ -200,17 +225,16 @@ class Correlator(object):
                 self.options['starttime'][
                     self.options['combinations'][ii][0]] - self.options[
                         'starttime'][self.options['combinations'][ii][1]])
-            if self.options['center_correlation']:
+            if corr_args['center_correlation']:
                 roffset = 0.
             else:
                 # offset exceeding a fraction of integer
                 roffset = np.fix(
-                    offset * self.options['sampling_rate']) / self.options[
-                        'sampling_rate']
+                    offset * self.sampling_rate) / self.sampling_rate
             # faction of samples to be compenasated by shifting
             offset -= roffset
             # normalization factor of fft correlation
-            if self.options['normalize_correlation']:
+            if corr_args['normalize_correlation']:
                 norm = (
                     np.sqrt(
                         2.*np.sum(B[:, self.options[
@@ -238,8 +262,8 @@ class Correlator(object):
             # cut the center and do fftshift
             C[:, ii] = np.concatenate(
                 (tmp[-sampleToSave:], tmp[:sampleToSave+1]))/norm
-            starttimes[ii] = zerotime - sampleToSave / self.options[
-                'sampling_rate'] - roffset
+            starttimes[ii] = zerotime - sampleToSave / self.sampling_rate \
+                - roffset
 
         ######################################
         # time domain postProcessing
@@ -254,10 +278,10 @@ class Correlator(object):
 
 def st_to_np_array(st: Stream) -> np.ndarray:
     st.sort(keys=['npts'])
-    A = np.zeros((st.count(), st[-1].stats.npts))
+    A = np.zeros((st.count(), st[-1].stats.npts), dtype=np.float32)
     for ii, tr in enumerate(st):
         A[ii, :tr.stats.npts] = tr.data
-    return A.T
+    return A
 
 
 def zeroPadding(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
@@ -287,6 +311,7 @@ def zeroPadding(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     :rtype: numpy.ndarray
     :return: zero padded time series data
     """
+    A = A.T
     npts, ntrc = A.shape
     if args['type'] == 'nextPowerOfTwo':
         N = next_fast_len(npts)
