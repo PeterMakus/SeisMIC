@@ -4,14 +4,14 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Thursday, 8th April 2021 12:31:42 pm
+Last Modified: Tuesday, 13th April 2021 10:37:55 am
 '''
 
 from glob import glob
 import os
 
 import numpy as np
-from obspy import UTCDateTime, Stream
+from obspy import UTCDateTime, Stream, Inventory
 from pyasdf import ASDFDataSet
 
 from miic3.plot.plt_spectra import plot_spct_series, spct_series_welch
@@ -166,7 +166,24 @@ class NoiseDB(object):
 
         with ASDFDataSet(self.loc) as ds:
             st = ds.waveforms["%s.%s" % (self.network, self.station)].processed
-        return st
+        # Make sure all the time windows have an equal length
+        st2 = Stream()
+        for windowed_st in st.slide(window_length=3600*6, step=3600*6):
+            st2.extend(windowed_st)
+        return st2
+
+    def get_inventory(self) -> Inventory:
+        """
+        Returns the StationXML belonging to the station for that the data
+        has been preprocessed.
+
+        :return: Inventory object.
+        :rtype: `~obspy.core.Inventory`
+        """
+        with ASDFDataSet(self.loc) as ds:
+            inv = ds.waveforms[
+                "%s.%s" % (self.network, self.station)].StationXML
+        return inv
 
 
 def get_available_stations(dir: str, network: str, station: str) -> tuple:

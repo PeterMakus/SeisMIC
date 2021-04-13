@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 9th April 2021 04:32:44 pm
+Last Modified: Tuesday, 13th April 2021 10:29:53 am
 '''
 from copy import deepcopy
 
@@ -86,7 +86,7 @@ class Correlator(object):
                     % (ndb.network, ndb.station, ndb.sampling_rate,
                         self.noisedbs[0].network, self.noisedbs[0].station,
                         self.sampling_rate))
- 
+
     def pxcorr(self):
         # Maybe here we have to ensure that all traces have the same length
         # We start out by moving the stream into a matrix
@@ -120,11 +120,14 @@ class Correlator(object):
             {'starttime': starttime,
                 'sampling_rate': self.sampling_rate})
         A, starttime = self._pxcorr_matrix(A)
+
         # put trace into a stream
         cst = Stream()
+        # Fetch station coordinates
+        inv = self._get_inventory()
         for ii, (startt, comb) in enumerate(
                 zip(starttime, self.options['combinations'])):
-            cstats = combine_stats(st[comb[0]], st[comb[1]])
+            cstats = combine_stats(st[comb[0]], st[comb[1]], inv=inv)
             cstats['starttime'] = startt
             cstats['npts'] = npts
             cst.append(Trace(data=A[:, ii], header=cstats))
@@ -132,13 +135,19 @@ class Correlator(object):
             cst[-1].stats_tr2 = st[comb[1]].stats
         return cst
 
+    def _get_inventory(self) -> Inventory:
+        inv = Inventory()
+        for ndb in self.noisedbs:
+            inv.extend(ndb.get_inventory())
+        return inv
+
     def _all_data_to_stream(self) -> Stream:
         """
         Moves all the available data into one `~obspy.core.Stream` object.
         Also computes all the available station combinations from that data.
 
         :return: [description]
-        :rtype: Stream
+        :rtype: :class:`~obspy.core.stream.Stream`
         """
 
         st = Stream()
@@ -149,13 +158,16 @@ class Correlator(object):
 
     def _pxcorr_matrix(self, A: np.ndarray):
         # time domain processing
-        # map of traces on precesses
-        ntrc = A.shape[0]
+        # map of traces on processes
+        ntrc = A.shape[1]
         pmap = (np.arange(ntrc)*self.psize)/ntrc
+        # This step was not in the original but is necessary for it to work?
+        # maybe a difference in an old python/np version?
+        pmap = pmap.astype(np.int32)
 
-        # indecies for traces to be worked on by each process
+        # indices for traces to be worked on by each process
         ind = pmap == self.rank
-        print(ind)
+
     ######################################
         corr_args = self.options['corr_args']
         # time domain pre-processing
@@ -168,9 +180,7 @@ class Correlator(object):
         # for proc in self.options['TDpreProcessing']:
         #     A[:, ind] = proc['function'](A[:, ind], proc['args'], params)
         # zero-padding
-        print(A.shape)
         A = zeroPadding(A, {'type': 'avoidWrapPowerTwo'}, params)
-        print(A.shape)
 
         ######################################
         # FFT
@@ -179,7 +189,7 @@ class Correlator(object):
         fftsize = zmsize[0]//2+1
         B = np.zeros((fftsize, ntrc), dtype=complex)
 
-        # B[:, ind] = np.fft.rfft(A[:, ind], axis=0)
+        B[:, ind] = np.fft.rfft(A[:, ind], axis=0)
         # B[ind, :] = np.fft.rfft(A[ind, :], axis=1)  # Should axis be =1?
         freqs = rfftfreq(zmsize[0], 1./self.sampling_rate)
 
@@ -188,10 +198,6 @@ class Correlator(object):
         params.update({'freqs': freqs})
         # Here, I will have to make sure to add all the functions to the module
         for proc in corr_args['FDpreProcessing']:
-            #call = eval(proc['function'](B[:, ind], proc['args'], params))  # Fetch function
-            #B[:, ind] = call['function'](B[:, ind], proc['args'], params)
-            # B[:, ind] = globals()[proc['function']](  # This works but isnt elegant at all
-            #     B[:, ind], proc['args'], params)
 
             # The big advantage of this rather lengthy code is that we can also
             # import any function that has been defined anywhere else (i.e,
@@ -216,9 +222,11 @@ class Correlator(object):
         # center = irfftsize // 2
 
         pmap = (np.arange(csize)*self.psize)/csize
+        pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
         ind = np.arange(csize)[ind]
         starttimes = np.zeros(csize, dtype=np.float64)
+        print(ind)
         for ii in ind:
             # offset of starttimes in samples(just remove fractions of samples)
             offset = (
@@ -278,9 +286,11 @@ class Correlator(object):
 
 def st_to_np_array(st: Stream) -> np.ndarray:
     st.sort(keys=['npts'])
-    A = np.zeros((st.count(), st[-1].stats.npts), dtype=np.float32)
+    # A = np.zeros((st.count(), st[-1].stats.npts), dtype=np.float32)
+    A = np.zeros((st[-1].stats.npts, st.count()), dtype=np.float32)
     for ii, tr in enumerate(st):
-        A[ii, :tr.stats.npts] = tr.data
+        # A[ii, :tr.stats.npts] = tr.data
+        A[:tr.stats.npts, ii] = tr.data
     return A
 
 
@@ -311,7 +321,6 @@ def zeroPadding(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     :rtype: numpy.ndarray
     :return: zero padded time series data
     """
-    A = A.T
     npts, ntrc = A.shape
     if args['type'] == 'nextPowerOfTwo':
         N = next_fast_len(npts)
@@ -378,9 +387,7 @@ def rfftfreq(n, d=1.0):
     return results * val
 
 
-def combine_stats(
-    tr1: Trace, tr2: Trace, inv1: Inventory = None,
-        inv2: Inventory = None):
+def combine_stats(tr1: Trace, tr2: Trace, inv: Inventory = None):
     """ Combine the meta-information of two ObsPy Trace objects
 
     This function returns a ObsPy :class:`~obspy.core.trace.Stats` object
@@ -398,6 +405,9 @@ def combine_stats(
     :param tr1: First Trace
     :type tr2: :class:`~obspy.core.trace.Trace`
     :param tr2: Second Trace
+    :type inv: :class:`~obspy.core.inventory.Inventory`, optional
+    :param inv: Inventory containing the station coordinates. Only needed if
+        station coordinates are not in Trace.Stats. Defaults to None.
 
     :rtype: :class:`~obspy.core.trace.Stats`
     :return: **stats**: combined Stats object
@@ -447,7 +457,11 @@ def combine_stats(
         stats.sac['az'] = az
         stats.sac['baz'] = baz
     except AttributeError:
-        if inv1 and inv2:
+        if inv:
+            inv1 = inv.select(
+                network=tr1.stats.network, station=tr1.stats.station)
+            inv2 = inv.select(
+                network=tr2.stats.network, station=tr2.stats.station)
             stats['sac'] = {}
             stats.sac['stla'] = inv1[0][0].latitude
             stats.sac['stlo'] = inv1[0][0].longitude
@@ -488,7 +502,6 @@ def calc_cross_combis(st, method='betweenStations'):
         ``'allCombinations'``: All traces are combined in both orders ((0,1)
             and (1,0))
     """
-    print('starting combination test')
 
     combis = []
     if method == 'betweenStations':
@@ -520,7 +533,6 @@ def calc_cross_combis(st, method='betweenStations'):
         raise ValueError("Method has to be one of ('betweenStations', "
                          "'betweenComponents', 'autoComponents', "
                          "'allSimpleCombinations' or 'allCombinations').")
-    print('finished combiations')
     return combis
 
 
