@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Tuesday, 13th April 2021 10:37:55 am
+Last Modified: Tuesday, 13th April 2021 03:03:11 pm
 '''
 
 from glob import glob
@@ -39,7 +39,7 @@ class NoiseDB(object):
         # Location of the h5 file
         self.loc = h5_FMTSTR.format(dir=dir, network=network, station=station)
 
-        with ASDFDataSet(self.loc) as ds:
+        with ASDFDataSet(self.loc, mode="r", mpi=False) as ds:
             # get dict a bit convoluted but see pyasdf documentation
             self.param = ds.auxiliary_data.PreprocessingParameters.\
                 param.parameters
@@ -149,7 +149,7 @@ class NoiseDB(object):
         :rtype: tuple
         """
 
-        with ASDFDataSet(self.loc) as ds:
+        with ASDFDataSet(self.loc, mode="r", mpi=False) as ds:
             st = ds.waveforms["%s.%s" % (self.network, self.station)].processed
             st.sort(keys=['starttime'])
             starttime = st[0].stats.starttime
@@ -164,7 +164,7 @@ class NoiseDB(object):
         :rtype: `~obspy.core.Stream`
         """
 
-        with ASDFDataSet(self.loc) as ds:
+        with ASDFDataSet(self.loc, mode="r", mpi=False) as ds:
             st = ds.waveforms["%s.%s" % (self.network, self.station)].processed
         # Make sure all the time windows have an equal length
         st2 = Stream()
@@ -180,7 +180,7 @@ class NoiseDB(object):
         :return: Inventory object.
         :rtype: `~obspy.core.Inventory`
         """
-        with ASDFDataSet(self.loc) as ds:
+        with ASDFDataSet(self.loc, mode="r", mpi=False) as ds:
             inv = ds.waveforms[
                 "%s.%s" % (self.network, self.station)].StationXML
         return inv

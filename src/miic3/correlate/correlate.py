@@ -7,15 +7,17 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 13th April 2021 10:29:53 am
+Last Modified: Thursday, 15th April 2021 09:49:04 am
 '''
 from copy import deepcopy
+import os
 
 from mpi4py import MPI
 import numpy as np
 from obspy import Stream, UTCDateTime, Trace, Inventory
 from obspy.core import Stats
 import obspy.signal as osignal
+from pyasdf import ASDFDataSet
 from scipy.fftpack import next_fast_len
 from scipy import signal
 
@@ -39,6 +41,8 @@ class Correlator(object):
         self.comm = MPI.COMM_WORLD
         self.psize = self.comm.Get_size()
         self.rank = self.comm.Get_rank()
+        self.proj_dir = options['proj_dir']
+        self.corr_dir = os.path.join(self.proj_dir, options['co']['subdir'])
 
         self.options = options['co']
 
@@ -72,8 +76,8 @@ class Correlator(object):
 
         # and, finally, find the hdf5 files associated to each of them
         self.noisedbs = [NoiseDB(
-            options['dir'], net, stat) for net, stat in zip(
-            self.netlist, self.statlist)]
+            os.path.join(self.proj_dir, options['prepro_subdir']), net, stat)
+            for net, stat in zip(self.netlist, self.statlist)]
         # note that the indexing in the noisedb list and in the statlist
         # are identical, which could be useful to find them easily
         # Check whether all the data has the same sampling rate
@@ -133,7 +137,103 @@ class Correlator(object):
             cst.append(Trace(data=A[:, ii], header=cstats))
             cst[-1].stats_tr1 = st[comb[0]].stats
             cst[-1].stats_tr2 = st[comb[1]].stats
-        return cst
+
+        ###############
+        # Write correlations to ASDF
+        print('creating cstlist')
+        # No pretty way of organising, but the only way I got it to work
+        # cst.sort()
+        # cstlist = []
+        # station = cst[0].stats.station
+        # network = cst[0].stats.network
+        # st = Stream()
+        # for tr in cst:
+        #     if tr.stats.station == station and tr.stats.network == network:
+        #         st.append(cst.pop(0))
+        #     else:
+        #         cstlist.append(st.copy())
+        #         st.clear()
+        #         station = tr.stats.station
+        #         network = tr.stats.network
+        #         st.append(tr)
+        cst.sort()
+        matrixlist_station = []
+        matrixlist_location = []
+        datalist = []
+        statlist_station = []
+        statlist_location = []
+        station = cst[0].stats.station
+        network = cst[0].stats.network
+        loc = cst[0].stats.location
+        chan = cst[0].stats.channel
+        statlist_location.append(cst[0].stats)
+        for tr in cst:
+            if tr.stats.station == station and tr.stats.network == network and\
+                 tr.stats.location == loc and tr.stats.channel == chan:
+                datalist.append(cst.pop(0).data)
+            elif tr.stats.station == station and tr.stats.network == network:
+                statlist_location.append(tr.stats)
+                matrixlist_location.append(
+                    np.array(datalist, dtype=np.float32))
+                datalist.clear()
+                datalist.append(cst.pop(0).data)
+                loc = tr.stats.location
+                chan = tr.stats.channel
+            else:
+                matrixlist_location.append(
+                    np.array(datalist, dtype=np.float32))
+                matrixlist_station.append(matrixlist_location.copy())
+                matrixlist_location.clear()
+                statlist_station.append(statlist_location.copy())
+                statlist_location.clear()
+                statlist_location.append(tr.stats)
+                station = tr.stats.station
+                network = tr.stats.network
+                loc = tr.stats.location
+                chan = tr.stats.channel
+                datalist.clear()
+                datalist.append(cst.pop(0).data)
+        matrixlist_location.append(
+                    np.array(datalist, dtype=np.float32))
+        matrixlist_station.append(matrixlist_location)
+
+        # Decide which process writes to which station
+        # pmap = (np.arange(len(cstlist))*self.psize)/len(cstlist)
+        # pmap = pmap.astype(np.int32)
+        # ind = pmap == self.rank
+        # ind = np.arange(len(cstlist))[ind]
+
+        n_stats = len(matrixlist_station)
+        pmap = (np.arange(n_stats)*self.psize)/n_stats
+        pmap = pmap.astype(np.int32)
+        ind = pmap == self.rank
+        ind = np.arange(n_stats)[ind]
+
+        print('writing files')
+        for ii in ind:
+            print('write file', ii)
+            outf = os.path.join(self.corr_dir, '%s.%s.h5' % (
+                    statlist_station[ii][0].stats.network,
+                    statlist_station[ii][0].stats.station))
+            with ASDFDataSet(outf, mpi=False) as ds:
+                for A, stats in zip(
+                        matrixlist_station[ii], statlist_station[ii]):
+                    ds.add_auxiliary_data(
+                        A, 'Correlation', '%s.%s'
+                        % (stats.location, stats.channel), parameters=stats)
+        # for ii in ind:
+        #     print('write file', ii)
+        #     outf = os.path.join(self.corr_dir, '%s.%s.h5' % (
+        #             cstlist[ii][0].stats.network,
+        #             cstlist[ii][0].stats.station))
+        #     with ASDFDataSet(outf, mpi=False) as ds:
+        #         for tr in cstlist[ii]:
+        #             ds.add_auxiliary_data(
+        #                 tr.data, 'Correlation', '%s.%s'
+        #                 % (cstlist[ii][0].stats.network,
+        #                     cstlist[ii][0].stats.station), parameters=tr.stats)
+
+        # return cst
 
     def _get_inventory(self) -> Inventory:
         inv = Inventory()
@@ -226,7 +326,6 @@ class Correlator(object):
         ind = pmap == self.rank
         ind = np.arange(csize)[ind]
         starttimes = np.zeros(csize, dtype=np.float64)
-        print(ind)
         for ii in ind:
             # offset of starttimes in samples(just remove fractions of samples)
             offset = (
