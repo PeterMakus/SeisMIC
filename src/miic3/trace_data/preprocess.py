@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Thursday, 8th April 2021 12:34:09 pm
+Last Modified: Friday, 16th April 2021 09:55:06 am
 '''
 from collections import namedtuple
 from glob import glob
@@ -300,7 +300,7 @@ class Preprocessor(object):
             st.remove_response()
             self.store_client._write_inventory(ninv)
 
-        st.detrend()
+        # st.detrend()
         # st.taper(
         #     max_percentage=0.05, type='hann', max_length=2, side='both')
         # At this point, it probably does not make too much sense to taper.
@@ -324,3 +324,40 @@ class Preprocessor(object):
             ninv = self.store_client.read_inventory().select(
                 network=tr.stats.network, station=tr.stats.station)
             return st, ninv
+
+
+def detrend(data: np.ndarray) -> np.ndarray:
+    '''
+    From NoisPy (Jian et. al., 2020)
+
+    Should be used with a matrix, so it's probably best to apply this right
+    before correlation.
+
+    this function removes the signal trend based on QR decomposion
+    NOTE: QR is a lot faster than the least square inversion used by
+    scipy (also in obspy).
+    PARAMETERS:
+    ---------------------
+    data: input data matrix
+    RETURNS:
+    ---------------------
+    data: data matrix with trend removed
+    '''
+    if data.ndim == 1:
+        npts = data.shape[0]
+        X = np.ones((npts, 2))
+        X[:, 0] = np.arange(0, npts)/npts
+        Q, R = np.linalg.qr(X)
+        rq = np.dot(np.linalg.inv(R), Q.transpose())
+        coeff = np.dot(rq, data)
+        data = data-np.dot(X, coeff)
+    elif data.ndim == 2:
+        npts = data.shape[1]
+        X = np.ones((npts, 2))
+        X[:, 0] = np.arange(0, npts)/npts
+        Q, R = np.linalg.qr(X)
+        rq = np.dot(np.linalg.inv(R), Q.transpose())
+        for ii in range(data.shape[0]):
+            coeff = np.dot(rq, data[ii])
+            data[ii] = data[ii] - np.dot(X, coeff)
+    return data

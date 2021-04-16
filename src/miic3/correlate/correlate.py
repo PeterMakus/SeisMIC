@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 15th April 2021 09:49:04 am
+Last Modified: Friday, 16th April 2021 04:36:52 pm
 '''
 from copy import deepcopy
 import os
@@ -25,6 +25,7 @@ from scipy import signal
 from miic3.utils.miic_utils import trace_calc_az_baz_dist, inv_calc_az_baz_dist
 from miic3.db.asdf_handler import get_available_stations, NoiseDB
 from miic3.utils.fetch_func_from_str import func_from_str
+from miic3.trace_data.preprocess import detrend as qr_detrend
 
 
 zerotime = UTCDateTime(1971, 1, 1)
@@ -33,6 +34,24 @@ zerotime = UTCDateTime(1971, 1, 1)
 # Note, when using MPI and hdf5 in parallel: All processes that open or write
 # to an hdf5 file have to do that in parallel to the same file else MPI will
 # freeze
+
+
+class CorrTrace(Trace):
+    def __init__(
+        self, data: np.ndarray = None, header1: dict = None,
+        header2: dict = None, inv1: Inventory = None,
+            inv2: Inventory = None):
+        if not header1 and not header2:
+            header = {}
+        # if trace is not None:
+        #     data = trace.data
+        #     header = trace.stats
+        super(CorrTrace, self).__init__(data=data, header=header)
+        st = self.stats
+        if ('_format' in st and st._format.upper() == 'Q' and
+                st.station.count('.') > 0):
+            st.network, st.station, st.location = st.station.split('.')[:3]
+        self._read_format_specific_header()
 
 class Correlator(object):
     def __init__(self, options: dict) -> None:
@@ -103,8 +122,9 @@ class Correlator(object):
                 starttime.append(tr.stats['starttime'])
                 npts.append(tr.stats['npts'])
             npts = np.max(np.array(npts))
-            # create numpy array
+            # create numpy array - Do a QR detrend here?
             A = st_to_np_array(st)
+            A = qr_detrend(A)
             As = A.shape
         else:
             starttime = None
@@ -133,7 +153,8 @@ class Correlator(object):
                 zip(starttime, self.options['combinations'])):
             cstats = combine_stats(st[comb[0]], st[comb[1]], inv=inv)
             cstats['starttime'] = startt
-            cstats['npts'] = npts
+            # cstats['npts'] = npts
+            cstats['npts'] = A.shape[0]
             cst.append(Trace(data=A[:, ii], header=cstats))
             cst[-1].stats_tr1 = st[comb[0]].stats
             cst[-1].stats_tr2 = st[comb[1]].stats
@@ -142,96 +163,108 @@ class Correlator(object):
         # Write correlations to ASDF
         print('creating cstlist')
         # No pretty way of organising, but the only way I got it to work
-        # cst.sort()
-        # cstlist = []
-        # station = cst[0].stats.station
-        # network = cst[0].stats.network
-        # st = Stream()
-        # for tr in cst:
-        #     if tr.stats.station == station and tr.stats.network == network:
-        #         st.append(cst.pop(0))
-        #     else:
-        #         cstlist.append(st.copy())
-        #         st.clear()
-        #         station = tr.stats.station
-        #         network = tr.stats.network
-        #         st.append(tr)
         cst.sort()
-        matrixlist_station = []
-        matrixlist_location = []
-        datalist = []
-        statlist_station = []
-        statlist_location = []
+        cstlist = []
         station = cst[0].stats.station
         network = cst[0].stats.network
-        loc = cst[0].stats.location
-        chan = cst[0].stats.channel
-        statlist_location.append(cst[0].stats)
+        st = Stream()
         for tr in cst:
-            if tr.stats.station == station and tr.stats.network == network and\
-                 tr.stats.location == loc and tr.stats.channel == chan:
-                datalist.append(cst.pop(0).data)
-            elif tr.stats.station == station and tr.stats.network == network:
-                statlist_location.append(tr.stats)
-                matrixlist_location.append(
-                    np.array(datalist, dtype=np.float32))
-                datalist.clear()
-                datalist.append(cst.pop(0).data)
-                loc = tr.stats.location
-                chan = tr.stats.channel
+            if tr.stats.station == station and tr.stats.network == network:
+                st.append(cst.pop(0))
             else:
-                matrixlist_location.append(
-                    np.array(datalist, dtype=np.float32))
-                matrixlist_station.append(matrixlist_location.copy())
-                matrixlist_location.clear()
-                statlist_station.append(statlist_location.copy())
-                statlist_location.clear()
-                statlist_location.append(tr.stats)
+                cstlist.append(st.copy())
+                st.clear()
                 station = tr.stats.station
                 network = tr.stats.network
-                loc = tr.stats.location
-                chan = tr.stats.channel
-                datalist.clear()
-                datalist.append(cst.pop(0).data)
-        matrixlist_location.append(
-                    np.array(datalist, dtype=np.float32))
-        matrixlist_station.append(matrixlist_location)
+                st.append(tr)
+        # cst.sort()
+        # matrixlist_station = []
+        # matrixlist_location = []
+        # datalist = []
+        # statlist_station = []
+        # statlist_location = []
+        # station = cst[0].stats.station
+        # network = cst[0].stats.network
+        # loc = cst[0].stats.location
+        # chan = cst[0].stats.channel
+        # statlist_location.append(cst[0].stats)
+        # for tr in cst:
+        #     if tr.stats.station == station and tr.stats.network == network and\
+        #          tr.stats.location == loc and tr.stats.channel == chan:
+        #         datalist.append(cst.pop(0).data)
+        #     elif tr.stats.station == station and tr.stats.network == network:
+        #         statlist_location.append(tr.stats)
+        #         matrixlist_location.append(
+        #             np.array(datalist, dtype=np.float64))
+        #         datalist.clear()
+        #         datalist.append(cst.pop(0).data)
+        #         loc = tr.stats.location
+        #         chan = tr.stats.channel
+        #     else:
+        #         matrixlist_location.append(
+        #             np.array(datalist, dtype=np.float64))
+        #         matrixlist_station.append(matrixlist_location.copy())
+        #         matrixlist_location.clear()
+        #         statlist_station.append(statlist_location.copy())
+        #         statlist_location.clear()
+        #         statlist_location.append(tr.stats)
+        #         station = tr.stats.station
+        #         network = tr.stats.network
+        #         loc = tr.stats.location
+        #         chan = tr.stats.channel
+        #         datalist.clear()
+        #         datalist.append(cst.pop(0).data)
+        # matrixlist_location.append(
+        #             np.array(datalist, dtype=np.float64))
+        # matrixlist_station.append(matrixlist_location)
 
         # Decide which process writes to which station
-        # pmap = (np.arange(len(cstlist))*self.psize)/len(cstlist)
-        # pmap = pmap.astype(np.int32)
-        # ind = pmap == self.rank
-        # ind = np.arange(len(cstlist))[ind]
-
-        n_stats = len(matrixlist_station)
-        pmap = (np.arange(n_stats)*self.psize)/n_stats
+        pmap = (np.arange(len(cstlist))*self.psize)/len(cstlist)
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
-        ind = np.arange(n_stats)[ind]
+        ind = np.arange(len(cstlist))[ind]
+
+        # n_stats = len(matrixlist_station)
+        # pmap = (np.arange(n_stats)*self.psize)/n_stats
+        # pmap = pmap.astype(np.int32)
+        # ind = pmap == self.rank
+        # ind = np.arange(n_stats)[ind]
 
         print('writing files')
-        for ii in ind:
-            print('write file', ii)
-            outf = os.path.join(self.corr_dir, '%s.%s.h5' % (
-                    statlist_station[ii][0].stats.network,
-                    statlist_station[ii][0].stats.station))
-            with ASDFDataSet(outf, mpi=False) as ds:
-                for A, stats in zip(
-                        matrixlist_station[ii], statlist_station[ii]):
-                    ds.add_auxiliary_data(
-                        A, 'Correlation', '%s.%s'
-                        % (stats.location, stats.channel), parameters=stats)
         # for ii in ind:
         #     print('write file', ii)
         #     outf = os.path.join(self.corr_dir, '%s.%s.h5' % (
-        #             cstlist[ii][0].stats.network,
-        #             cstlist[ii][0].stats.station))
+        #             statlist_station[ii][0].network,
+        #             statlist_station[ii][0].station))
         #     with ASDFDataSet(outf, mpi=False) as ds:
-        #         for tr in cstlist[ii]:
+        #         for A, stats in zip(
+        #                 matrixlist_station[ii], statlist_station[ii]):
+        #             # stats.pop('asdf')
+        #             # stats.pop('sac')
+        #             stats.pop('processing', None)
+        #             # Has the annoying tendency to be an AttribDict
+        #             stats = dict(stats)
+        #             stats['sac'] = dict(stats['sac'])
+        #             # Not supported in ASDF, so discard meaningless anyways
+        #             stats.pop('starttime')
+        #             stats.pop('endtime')
+        #             print(stats)
         #             ds.add_auxiliary_data(
-        #                 tr.data, 'Correlation', '%s.%s'
-        #                 % (cstlist[ii][0].stats.network,
-        #                     cstlist[ii][0].stats.station), parameters=tr.stats)
+        #                 A, 'Correlation', '%s.%s'
+        #                 % (stats['location'], stats['channel']), parameters=stats)
+        for ii in ind:
+            print('write file', ii)
+            outf = os.path.join(self.corr_dir, '%s.%s.h5' % (
+                    cstlist[ii][0].stats.network,
+                    cstlist[ii][0].stats.station))
+            with ASDFDataSet(outf, mpi=False) as ds:
+                for tr in cstlist[ii]:
+                    print(tr.data.shape, tr.stats.npts)
+                    ds.add_waveforms(tr, 'correlation')
+                    # ds.add_auxiliary_data(
+                    #     tr.data, 'Correlation', '%s.%s'
+                    #     % (cstlist[ii][0].stats.network,
+                    #         cstlist[ii][0].stats.station), parameters=tr.stats)
 
         # return cst
 
@@ -249,10 +282,11 @@ class Correlator(object):
         :return: [description]
         :rtype: :class:`~obspy.core.stream.Stream`
         """
-
+        opt = self.options['subdivision']
         st = Stream()
         for ndb in self.noisedbs:
-            st.extend(ndb.get_all_data())
+            st.extend(ndb.get_all_data(
+                window_length=opt['corr_len'], increment=opt['corr_inc']))
         self.options['combinations'] = calc_cross_combis(st)
         return st
 
@@ -518,10 +552,16 @@ def combine_stats(tr1: Trace, tr2: Trace, inv: Inventory = None):
     if not isinstance(tr2, Trace):
         raise TypeError("tr2 must be an obspy Trace object.")
 
+    # We also have to remove these as they are obspy AttributeDicts as well
+    tr1.stats.pop('asdf', None)
+    tr2.stats.pop('asdf', None)
+
     tr1_keys = list(tr1.stats.keys())
     tr2_keys = list(tr2.stats.keys())
 
     stats = Stats()
+    stats['corr_start'] = tr1.stats.starttime
+    stats['corr_end'] = tr1.stats.starttime
 
     # Adjust the information to create a new SEED like id
     keywords = ['network', 'station', 'location', 'channel']
@@ -542,42 +582,40 @@ def combine_stats(tr1: Trace, tr2: Trace, inv: Inventory = None):
                         pass
 
     try:
-        stats['sac'] = {}
-        stats.sac['stla'] = tr1.stats.sac.stla
-        stats.sac['stlo'] = tr1.stats.sac.stlo
-        stats.sac['stel'] = tr1.stats.sac.stel
-        stats.sac['evla'] = tr2.stats.sac.stla
-        stats.sac['evlo'] = tr2.stats.sac.stlo
-        stats.sac['evel'] = tr2.stats.sac.stel
+        stats['stla'] = tr1.stats.sac.stla
+        stats['stlo'] = tr1.stats.sac.stlo
+        stats['stel'] = tr1.stats.sac.stel
+        stats['evla'] = tr2.stats.sac.stla
+        stats['evlo'] = tr2.stats.sac.stlo
+        stats['evel'] = tr2.stats.sac.stel
 
         az, baz, dist = trace_calc_az_baz_dist(tr1, tr2)
 
-        stats.sac['dist'] = dist / 1000
-        stats.sac['az'] = az
-        stats.sac['baz'] = baz
+        stats['dist'] = dist / 1000
+        stats['az'] = az
+        stats['baz'] = baz
     except AttributeError:
         if inv:
             inv1 = inv.select(
                 network=tr1.stats.network, station=tr1.stats.station)
             inv2 = inv.select(
                 network=tr2.stats.network, station=tr2.stats.station)
-            stats['sac'] = {}
-            stats.sac['stla'] = inv1[0][0].latitude
-            stats.sac['stlo'] = inv1[0][0].longitude
-            stats.sac['stel'] = inv1[0][0].elevation
-            stats.sac['evla'] = inv2[0][0].latitude
-            stats.sac['evlo'] = inv2[0][0].longitude
-            stats.sac['evel'] = inv2[0][0].elevation
+            stats['stla'] = inv1[0][0].latitude
+            stats['stlo'] = inv1[0][0].longitude
+            stats['stel'] = inv1[0][0].elevation
+            stats['evla'] = inv2[0][0].latitude
+            stats['evlo'] = inv2[0][0].longitude
+            stats['evel'] = inv2[0][0].elevation
 
             az, baz, dist = inv_calc_az_baz_dist(inv1, inv2)
 
-            stats.sac['dist'] = dist / 1000
-            stats.sac['az'] = az
-            stats.sac['baz'] = baz
+            stats['dist'] = dist / 1000
+            stats['az'] = az
+            stats['baz'] = baz
         else:
-            stats.pop('sac')
             print("No station coordinates provided.")
-
+    stats.pop('sac', None)
+    stats['_format'] = 'hdf5'
     return stats
 
 
