@@ -9,29 +9,144 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Friday, 16th April 2021 04:02:15 pm
+Last Modified: Monday, 19th April 2021 02:21:06 pm
 '''
+import os
+import re
+import warnings
 
 import numpy as np
+from numpy.core.fromnumeric import compress
+from obspy.core.utcdatetime import UTCDateTime
+from obspy.core import Stats
 import h5py
+
+from miic3.correlate.correlate import CorrStream, CorrTrace
+
+base_path = 'corr_data'
+hierachy = base_path + "/{network}/{station}/{channel}/{corr_st}_{corr_et}"
+h5_FMTSTR = os.path.join("{dir}", "{network}.{station}.h5")
 
 
 class CorrelationDataBase(object):
-    def __init__(self, path: str, mode: str = 'a'):
+    def __init__(self, path: str, mode: str = 'a', compression: str = 'gzip3'):
         # Create / read file
-        if not path.split('.')[-1] == 'hdf5':
-            path += '.hdf5'
-        self.db_file = h5py.File(path, mode)
+        if not path.split('.')[-1] == 'h5':
+            path += '.h5'
+        self.path = path
+        self.mode = mode
+        self.compression = compression
 
-    def add_correlation(self, data: np.ndarray, header: dict):
+    def __enter__(self):
+        self.db_handler = DBHandler(self.path, self.mode, self.compression)
+        return self.db_handler
+
+    def __exit__(self, exc_type, exc_value, tb):
+        self.db_handler._close()
+        if exc_type is not None:
+            return False
+
+
+class DBHandler(h5py.File):
+    def __init__(self, path, mode, compression):
+        # self.db_file = h5py.File(path, mode)
+        super(DBHandler, self).__init__(path, mode=mode)
+        self.compression = re.findall(r'(\w+?)(\d+)', compression)[0][0]
+        self.compression_opts = int(
+            re.findall(r'(\w+?)(\d+)', compression)[0][1])
+
+    def _close(self):
+        self.close()
+
+    def add_correlation(self, data: CorrTrace or CorrStream):
         # There should be a CorrTrace and CorrStream object that are subclasses
         # of the obspy classes that can be used here.
-        try :
-                h5file.create_dataset("corr_data/"+t, data=data)
-            except RuntimeError as e :
-                print(("The appending dataset is corr_data/"+t+" in file "+filename))
-                #sys.exit()
-                raise e
+        if not isinstance(data, CorrTrace) and\
+                not isinstance(data, CorrStream):
+            raise TypeError('Data has to be either a \
+            :class:`~miic3.correlate.correlate.CorrTrace` object or a \
+            :class:`~miic3.correlate.correlate.CorrStream` object')
+
+        if isinstance(data, CorrTrace):
+            data = [data]
+
+        for tr in data:
+            st = tr.stats
+            path = hierachy.format(
+                network=st.network, station=st.station, channel=st.channel,
+                corr_st=st.start_corr_time.format_fissures(),
+                corr_et=st.end_corr_time.format_fissures())
+            try:
+                ds = self.create_dataset(
+                    path, data=tr.data, compression=self.compression,
+                    compression_opts=self.compression_opts)
+                convert_header_to_hdf5(ds, st)
+            except ValueError as e:
+                print(e)
+                warnings.warn("The dataset %s is already in file and will be \
+                omitted." % path, category=UserWarning)
+
+    def get_data(
+        self, network: str, station: str, channel: str,
+        corr_start: UTCDateTime = None,
+            corr_end: UTCDateTime = None) -> CorrStream:
+        if corr_start:
+            corr_start = corr_start.format_fissures()
+        else:
+            corr_start = '*'
+        if corr_end:
+            corr_end = corr_end.format_fissures()
+        else:
+            corr_end = '*'
+        path = hierachy.format(
+            network=network, station=station, channel=channel,
+            corr_st=corr_start, corr_et=corr_end)
+        # Extremely ugly way of changing the path
+        if '*' not in path:
+            print(path)
+            data = self[path]
+            header = read_hdf5_header(self[path])
+            return CorrStream(CorrTrace(data, _header=header))
+        elif corr_start+corr_end == '**':
+            if channel == '*':
+                if station == '*':
+                    if network == '*':
+                        path = base_path
+                    else:
+                        path = '/'.join(path.split('/')[:2])
+                else:
+                    path = '/'.join(path.split('/')[:3])
+            else:
+                path = '/'.join(path.split('/')[:4])
+        
+                            
+
+
+def convert_header_to_hdf5(dataset, header):
+    header = dict(header)
+    for key in header:
+        if isinstance(header[key], UTCDateTime):
+            # convert time to string
+            header[key] = header[key].format_fissures()
+        try:
+            dataset.attrs[key] = header[key]
+        except TypeError:
+            warnings.warn('The header contains an item of type %s. Information\
+             of this type cannot be written to an hdf5 file.'
+                % str(type(header[key])), UserWarning)
+            continue
+
+
+def read_hdf5_header(dataset) -> Stats:
+    attrs = dataset.attrs
+    time_keys = ['starttime', 'endtime', 'start_corr_time', 'end_corr_time']
+    header = {}
+    for key in attrs:
+        if key in time_keys:
+            header[key] = UTCDateTime(attrs[key])
+        else:
+            header[key] = attrs[key]
+    return Stats(header)
 
 
 def save_dict_to_hdf5(dic, filename):

@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 16th April 2021 04:36:52 pm
+Last Modified: Monday, 19th April 2021 12:37:49 pm
 '''
 from copy import deepcopy
 import os
@@ -31,27 +31,80 @@ from miic3.trace_data.preprocess import detrend as qr_detrend
 zerotime = UTCDateTime(1971, 1, 1)
 
 
-# Note, when using MPI and hdf5 in parallel: All processes that open or write
-# to an hdf5 file have to do that in parallel to the same file else MPI will
-# freeze
+class CorrStream(Stream):
+    """
+    Baseclass to hold correlation traces. Basically just a list of the
+    correlation traces.
+    """
+    def __init__(self, traces: list = None):
+        self.traces = []
+        if isinstance(traces, CorrTrace):
+            self.traces = [traces]
+        if traces:
+            for tr in traces:
+                if not isinstance(tr, CorrTrace):
+                    raise TypeError('Traces have to be of type \
+                        :class:`~miic3.correlate.correlate.CorrTrace`.')
+                self.traces.append(tr)
 
 
 class CorrTrace(Trace):
+    """
+    Baseclass to hold correlation data. Derived from the class
+    :class:`~obspy.core.trace.Trace`.
+    """
     def __init__(
-        self, data: np.ndarray = None, header1: dict = None,
-        header2: dict = None, inv1: Inventory = None,
-            inv2: Inventory = None):
-        if not header1 and not header2:
+        self, data: np.ndarray, header1: Stats = None,
+        header2: Stats = None, inv: Inventory = None,
+        start_corr_time: UTCDateTime = None, end_corr_time: UTCDateTime = None,
+            _header: dict = None):
+        """
+        Initialise the correlation trace. Is done by combining the stats of the
+        two :class:`~obspy.core.trace.Trace` objects' headers. If said headers
+        do not contain Station information (i.e., coordinates), an
+        :class:`~obspy.core.inventory.Inventory` with information about both
+        stations should be provided as well.
+
+        :param data: The correlation data
+        :type data: np.ndarray
+        :param header1: header of the first trace, defaults to None
+        :type header1: Stats, optional
+        :param header2: header of the second trace, defaults to None
+        :type header2: Stats, optional
+        :param inv: Inventory object for the stations, defaults to None
+        :type inv: Inventory, optional
+        :param start_corr_time: The start time of the time windows that were
+            used to compute this correlation.
+        :type start_corr_time: :class:`~obspy.core.UTCDateTime`.
+        :param end_corr_time: The end time of the time windows that were
+            used to compute this correlation.
+        :type end_corr_time: :class:`~obspy.core.UTCDateTime`.
+        :param _header: Already combined header, used when reading correlations
+            from a file, defaults to None
+        :type _header: dict, optional
+        """
+        if _header:
+            header = Stats(_header)
+        elif not header1 and not header2:
             header = {}
+            if start_corr_time and end_corr_time:
+                self.start_corr_time = start_corr_time
+                self.end_corr_time = end_corr_time
+        else:
+            header = combine_stats(
+                header1, header2, start_corr_time,
+                end_corr_time, inv=inv)
+        header['npts'] = len(data)
         # if trace is not None:
         #     data = trace.data
         #     header = trace.stats
         super(CorrTrace, self).__init__(data=data, header=header)
-        st = self.stats
-        if ('_format' in st and st._format.upper() == 'Q' and
-                st.station.count('.') > 0):
-            st.network, st.station, st.location = st.station.split('.')[:3]
-        self._read_format_specific_header()
+        # st = self.stats
+        # if ('_format' in st and st._format.upper() == 'Q' and
+        #         st.station.count('.') > 0):
+        #     st.network, st.station, st.location = st.station.split('.')[:3]
+        # self._read_format_specific_header()
+
 
 class Correlator(object):
     def __init__(self, options: dict) -> None:
@@ -520,12 +573,14 @@ def rfftfreq(n, d=1.0):
     return results * val
 
 
-def combine_stats(tr1: Trace, tr2: Trace, inv: Inventory = None):
-    """ Combine the meta-information of two ObsPy Trace objects
+def combine_stats(
+    stats1: Stats, stats2: Stats, start_corr_time: UTCDateTime,
+        end_corr_time: UTCDateTime, inv: Inventory = None):
+    """ Combine the meta-information of two ObsPy Trace.Stats objects
 
     This function returns a ObsPy :class:`~obspy.core.trace.Stats` object
     obtained combining the two associated with the input Traces.
-    Namely ``tr1.stats`` and ``tr2.stats``.
+    Namely ``stats1`` and ``stats2``.
 
     The fields ['network','station','location','channel'] are combined in
     a ``-`` separated fashion to create a "pseudo" SEED like ``id``.
@@ -534,10 +589,16 @@ def combine_stats(tr1: Trace, tr2: Trace, inv: Inventory = None):
     means that only keywords that exist in both dictionaries will be included
     in the resulting one.
 
-    :type tr1: :class:`~obspy.core.trace.Trace`
-    :param tr1: First Trace
-    :type tr2: :class:`~obspy.core.trace.Trace`
-    :param tr2: Second Trace
+    :type stats1: :class:`~obspy.core.trace.Stats`
+    :param stats1: First Trace's stats
+    :type stats2: :class:`~obspy.core.trace.Stats`
+    :param stats2: Second Trace's stats
+    :param start_corr_time: Start time of the respective time windows that were
+        used to compute this correlation.
+    :type start_corr_time: :class:`obspy.core.UTCDateTime`
+    :param end_corr_time: End time of the respective time windows that were
+        used to compute this correlation.
+    :type end_corr_time: :class:`obspy.core.UTCDateTime`
     :type inv: :class:`~obspy.core.inventory.Inventory`, optional
     :param inv: Inventory containing the station coordinates. Only needed if
         station coordinates are not in Trace.Stats. Defaults to None.
@@ -546,22 +607,22 @@ def combine_stats(tr1: Trace, tr2: Trace, inv: Inventory = None):
     :return: **stats**: combined Stats object
     """
 
-    if not isinstance(tr1, Trace):
-        raise TypeError("tr1 must be an obspy Trace object.")
+    if not isinstance(stats1, Stats):
+        raise TypeError("stats1 must be an obspy Stats object.")
 
-    if not isinstance(tr2, Trace):
-        raise TypeError("tr2 must be an obspy Trace object.")
+    if not isinstance(stats2, Stats):
+        raise TypeError("stats2 must be an obspy Stats object.")
 
     # We also have to remove these as they are obspy AttributeDicts as well
-    tr1.stats.pop('asdf', None)
-    tr2.stats.pop('asdf', None)
+    stats1.pop('asdf', None)
+    stats2.pop('asdf', None)
 
-    tr1_keys = list(tr1.stats.keys())
-    tr2_keys = list(tr2.stats.keys())
+    tr1_keys = list(stats1.keys())
+    tr2_keys = list(stats2.keys())
 
     stats = Stats()
-    stats['corr_start'] = tr1.stats.starttime
-    stats['corr_end'] = tr1.stats.starttime
+    stats['corr_start'] = stats1.starttime
+    stats['corr_end'] = stats1.starttime
 
     # Adjust the information to create a new SEED like id
     keywords = ['network', 'station', 'location', 'channel']
@@ -569,27 +630,27 @@ def combine_stats(tr1: Trace, tr2: Trace, inv: Inventory = None):
 
     for key in keywords:
         if key in tr1_keys and key in tr2_keys:
-            stats[key] = tr1.stats[key] + '-' + tr2.stats[key]
+            stats[key] = stats1[key] + '-' + stats2[key]
 
     for key in tr1_keys:
         if key not in keywords and key not in sac_keywords:
             if key in tr2_keys:
-                if tr1.stats[key] == tr2.stats[key]:
+                if stats1[key] == stats2[key]:
                     # in the stats object there are read only objects
                     try:
-                        stats[key] = tr1.stats[key]
+                        stats[key] = stats1[key]
                     except AttributeError:
                         pass
 
     try:
-        stats['stla'] = tr1.stats.sac.stla
-        stats['stlo'] = tr1.stats.sac.stlo
-        stats['stel'] = tr1.stats.sac.stel
-        stats['evla'] = tr2.stats.sac.stla
-        stats['evlo'] = tr2.stats.sac.stlo
-        stats['evel'] = tr2.stats.sac.stel
+        stats['stla'] = stats1.sac.stla
+        stats['stlo'] = stats1.sac.stlo
+        stats['stel'] = stats1.sac.stel
+        stats['evla'] = stats2.sac.stla
+        stats['evlo'] = stats2.sac.stlo
+        stats['evel'] = stats2.sac.stel
 
-        az, baz, dist = trace_calc_az_baz_dist(tr1, tr2)
+        az, baz, dist = trace_calc_az_baz_dist(stats1, stats2)
 
         stats['dist'] = dist / 1000
         stats['az'] = az
@@ -597,9 +658,9 @@ def combine_stats(tr1: Trace, tr2: Trace, inv: Inventory = None):
     except AttributeError:
         if inv:
             inv1 = inv.select(
-                network=tr1.stats.network, station=tr1.stats.station)
+                network=stats1.network, station=stats1.station)
             inv2 = inv.select(
-                network=tr2.stats.network, station=tr2.stats.station)
+                network=stats2.network, station=stats2.station)
             stats['stla'] = inv1[0][0].latitude
             stats['stlo'] = inv1[0][0].longitude
             stats['stel'] = inv1[0][0].elevation
@@ -615,7 +676,13 @@ def combine_stats(tr1: Trace, tr2: Trace, inv: Inventory = None):
         else:
             print("No station coordinates provided.")
     stats.pop('sac', None)
+    stats.pop('response', None)
     stats['_format'] = 'hdf5'
+
+    # note that those have to be adapted whenever several correlations are
+    # stacked
+    stats['start_corr_time'] = start_corr_time
+    stats['end_corr_time'] = end_corr_time
     return stats
 
 
