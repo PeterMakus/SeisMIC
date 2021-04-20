@@ -9,7 +9,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Tuesday, 20th April 2021 11:25:38 am
+Last Modified: Tuesday, 20th April 2021 04:23:27 pm
 '''
 import fnmatch
 import os
@@ -22,7 +22,7 @@ from obspy.core.utcdatetime import UTCDateTime
 from obspy.core import Stats
 import h5py
 
-from miic3.correlate.correlate import CorrStream, CorrTrace
+from miic3.correlate.stream import CorrStream, CorrTrace
 
 base_path = '/corr_data'
 hierachy = base_path + "/{network}/{station}/{channel}/{corr_st}/{corr_et}"
@@ -124,8 +124,8 @@ class DBHandler(h5py.File):
             st = tr.stats
             path = hierachy.format(
                 network=st.network, station=st.station, channel=st.channel,
-                corr_st=st.start_corr_time.format_fissures(),
-                corr_et=st.end_corr_time.format_fissures())
+                corr_st=st.corr_start.format_fissures(),
+                corr_et=st.corr_end.format_fissures())
             try:
                 ds = self.create_dataset(
                     path, data=tr.data, compression=self.compression,
@@ -144,6 +144,7 @@ class DBHandler(h5py.File):
         Returns a :class:`~miic3.correlate.correlate.CorrStream` holding
         all the requested data. **Wildcards are allowed for all parameters.**
 
+
         :param network: network (combination), e.g., IU-YP
         :type network: str
         :param station: station (combination), e.g., HRV-BRK
@@ -160,6 +161,15 @@ class DBHandler(h5py.File):
         all the requested data.
         :rtype: CorrStream
         """
+        # Make sure the request is structured correctly
+        sort = ['.'.join([net, stat, chan]) for net, stat, chan in zip(
+                network.split('-'), station.split('-'), channel.split('-'))]
+        sorted = sort.copy()
+        sorted.sort()
+        if sorted != sort:
+            network, station, channel = ['-'.join([a, b]) for a, b in zip(
+                sorted[0].split('.'), sorted[1].split('.'))]
+
         if isinstance(corr_start, UTCDateTime):
             corr_start = corr_start.format_fissures()
         else:
