@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 19th April 2021 12:37:49 pm
+Last Modified: Tuesday, 20th April 2021 08:40:20 am
 '''
 from copy import deepcopy
 import os
@@ -39,7 +39,7 @@ class CorrStream(Stream):
     def __init__(self, traces: list = None):
         self.traces = []
         if isinstance(traces, CorrTrace):
-            self.traces = [traces]
+            traces = [traces]
         if traces:
             for tr in traces:
                 if not isinstance(tr, CorrTrace):
