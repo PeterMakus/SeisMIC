@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Thursday, 15th April 2021 04:05:05 pm
+Last Modified: Wednesday, 21st April 2021 09:01:47 am
 '''
 
 from glob import glob
@@ -177,6 +177,13 @@ class NoiseDB(object):
                 window_length=window_length, step=increment):
             st2.extend(windowed_st)
         return st2
+
+    def get_time_window(self, start: UTCDateTime, end: UTCDateTime) -> Stream:
+        with ASDFDataSet(self.loc, mode="r", mpi=False) as ds:
+            st = ds.waveforms[
+                "%s.%s" % (self.network, self.station)].processed.slice(
+                    start, end)
+        return st
 
     def get_inventory(self) -> Inventory:
         """

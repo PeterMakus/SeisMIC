@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 20th April 2021 04:31:20 pm
+Last Modified: Wednesday, 21st April 2021 10:18:54 am
 '''
 from copy import deepcopy
 import os
@@ -87,9 +87,16 @@ class Correlator(object):
                         self.sampling_rate))
 
     def pxcorr(self):
+        for st in self._generate_data():
+            self._pxcorr_inner(st)
+
+    def _pxcorr_inner(self, st: Stream):
+        """
+        Inner loop of pxcorr. Don't call this function!
+        """
         # Maybe here we have to ensure that all traces have the same length
         # We start out by moving the stream into a matrix
-        st = self._all_data_to_stream()
+        # st = self._all_data_to_stream()
         if self.rank == 0:
             # put all the data into a single stream
             starttime = []
@@ -260,10 +267,14 @@ class Correlator(object):
 
     def _all_data_to_stream(self) -> Stream:
         """
-        Moves all the available data into one `~obspy.core.Stream` object.
+        Moves all the available data into one :class:`~obspy.core.Stream`
+        object.
         Also computes all the available station combinations from that data.
+        
+        :warning: Very RAM hungry, consider using
+        :funct:`~miic3.correlate.correlate.Correlator._generate_data()`.
 
-        :return: [description]
+        :return: A stream containing all data
         :rtype: :class:`~obspy.core.stream.Stream`
         """
         opt = self.options['subdivision']
@@ -273,6 +284,43 @@ class Correlator(object):
                 window_length=opt['corr_len'], increment=opt['corr_inc']))
         self.options['combinations'] = calc_cross_combis(st)
         return st
+
+    def _generate_data(self) -> Stream:
+        """
+        Returns an Iterator that loops over each start and end time with the
+        requested window length.
+
+        :yield: An obspy stream containing the time window x for all stations
+        that were active during this time.
+        :rtype: Iterator[Stream]
+        """
+        opt = self.options['subdivision']
+        starts = []  # start of each time window
+        ends = []
+        for ndb in self.noisedbs:
+            start, end = ndb.get_active_times()
+            starts.append(start)
+            ends.append(end)
+        # the time window that the loop will go over
+        t0 = UTCDateTime(self.options['read_start']).timestamp
+        t1 = UTCDateTime(self.options['read_end']).timestamp
+        loop_window = np.arange(t0, t1, opt['corr_inc'])
+        for t in loop_window:
+            st = Stream()
+            startt = UTCDateTime(t)
+            endt = startt + opt['corr_len']
+            for ii, ndb in enumerate(self.noisedbs):
+                # Skip if time window is not available for this station
+                # Note that this will return shorter time windows if
+                # the requested time is only partly available
+                if endt < starts[ii] or startt > ends[ii]:
+                    continue
+                st.extend(ndb.get_time_window(start, endt))
+            if st.count() == 0:
+                # No time available at none of the stations
+                continue
+            self.options['combinations'] = calc_cross_combis(st)
+            yield st
 
     def _pxcorr_matrix(self, A: np.ndarray):
         # time domain processing

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Tuesday, 20th April 2021 04:21:59 pm
+Last Modified: Wednesday, 21st April 2021 08:44:39 am
 '''
 import numpy as np
 from obspy import Stream, Trace, Inventory
@@ -80,7 +80,7 @@ class CorrTrace(Trace):
             # make sure the order is correct
             # Will do that always alphabetically sorted
             sort1 = header1.network + header1.station + header1.channel
-            sort2 = header1.network + header1.station + header1.channel
+            sort2 = header2.network + header2.station + header2.channel
             sort = [sort1, sort2]
             sorted = sort.copy()
             sorted.sort()
