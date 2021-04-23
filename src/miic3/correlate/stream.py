@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Wednesday, 21st April 2021 08:44:39 am
+Last Modified: Friday, 23rd April 2021 02:04:12 pm
 '''
 import numpy as np
 from obspy import Stream, Trace, Inventory
@@ -154,6 +154,9 @@ def combine_stats(
     # actual correlation times
     stats['corr_start'] = max(stats1.starttime, stats2.starttime)
     stats['corr_end'] = min(stats1.endtime, stats2.endtime)
+    # This makes stats['endtime'] meaningsless, but obspy needs something that
+    # identifies the Trace as unique
+    stats['startime'] = stats['corr_start']
 
     # Adjust the information to create a new SEED like id
     keywords = ['network', 'station', 'location', 'channel']

@@ -9,7 +9,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Tuesday, 20th April 2021 04:57:43 pm
+Last Modified: Friday, 23rd April 2021 02:47:22 pm
 '''
 import fnmatch
 import os
@@ -25,7 +25,7 @@ import h5py
 from miic3.correlate.stream import CorrStream, CorrTrace
 
 base_path = '/corr_data'
-hierachy = base_path + "/{network}/{station}/{channel}/{corr_st}/{corr_et}"
+hierarchy = base_path + "/{network}/{station}/{channel}/{corr_st}/{corr_et}"
 h5_FMTSTR = os.path.join("{dir}", "{network}.{station}.h5")
 
 
@@ -122,7 +122,7 @@ class DBHandler(h5py.File):
 
         for tr in data:
             st = tr.stats
-            path = hierachy.format(
+            path = hierarchy.format(
                 network=st.network, station=st.station, channel=st.channel,
                 corr_st=st.corr_start.format_fissures(),
                 corr_et=st.corr_end.format_fissures())
@@ -178,7 +178,7 @@ class DBHandler(h5py.File):
             corr_end = corr_end.format_fissures()
         else:
             corr_end = '*'
-        path = hierachy.format(
+        path = hierarchy.format(
             network=network, station=station, channel=channel,
             corr_st=corr_start, corr_et=corr_end)
         # Extremely ugly way of changing the path

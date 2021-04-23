@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Wednesday, 21st April 2021 09:01:47 am
+Last Modified: Friday, 23rd April 2021 02:37:22 pm
 '''
 
 from glob import glob
@@ -183,6 +183,7 @@ class NoiseDB(object):
             st = ds.waveforms[
                 "%s.%s" % (self.network, self.station)].processed.slice(
                     start, end)
+            st.merge()  # To return one trace rather than several
         return st
 
     def get_inventory(self) -> Inventory:

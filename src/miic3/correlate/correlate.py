@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 21st April 2021 10:18:54 am
+Last Modified: Friday, 23rd April 2021 02:36:39 pm
 '''
 from copy import deepcopy
 import os
@@ -165,7 +165,7 @@ class Correlator(object):
                 st.clear()
                 station = tr.stats.station
                 network = tr.stats.network
-                st.append(tr)
+                st.append(cst.pop(0))
         # cst.sort()
         # matrixlist_station = []
         # matrixlist_location = []
@@ -218,8 +218,6 @@ class Correlator(object):
         # pmap = pmap.astype(np.int32)
         # ind = pmap == self.rank
         # ind = np.arange(n_stats)[ind]
-
-        print('writing files')
         # for ii in ind:
         #     print('write file', ii)
         #     outf = os.path.join(self.corr_dir, '%s.%s.h5' % (
