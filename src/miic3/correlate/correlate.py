@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 23rd April 2021 02:36:39 pm
+Last Modified: Tuesday, 27th April 2021 03:14:35 pm
 '''
 from copy import deepcopy
 import os
@@ -28,6 +28,7 @@ from miic3.trace_data.preprocess import detrend as qr_detrend
 
 
 zerotime = UTCDateTime(1971, 1, 1)
+
 
 class Correlator(object):
     def __init__(self, options: dict) -> None:
@@ -87,7 +88,7 @@ class Correlator(object):
                         self.sampling_rate))
 
     def pxcorr(self):
-        for st in self._generate_data():
+        for st in self._generate_data(taper=True):
             self._pxcorr_inner(st)
 
     def _pxcorr_inner(self, st: Stream):
@@ -268,7 +269,7 @@ class Correlator(object):
         Moves all the available data into one :class:`~obspy.core.Stream`
         object.
         Also computes all the available station combinations from that data.
-        
+
         :warning: Very RAM hungry, consider using
         :funct:`~miic3.correlate.correlate.Correlator._generate_data()`.
 
@@ -283,11 +284,17 @@ class Correlator(object):
         self.options['combinations'] = calc_cross_combis(st)
         return st
 
-    def _generate_data(self) -> Stream:
+    def _generate_data(self, taper: bool) -> Stream:
         """
         Returns an Iterator that loops over each start and end time with the
         requested window length.
 
+        :param taper: If true, the time windows will be tapered on both ends.
+            Also will lead to the time windows being prolonged by the sum of
+            the length of the tapered end, so that no data is lost. Always
+            a hann taper so far. Taper length is 5% of the requested time
+            window on each side.
+        :type taper: bool
         :yield: An obspy stream containing the time window x for all stations
         that were active during this time.
         :rtype: Iterator[Stream]
@@ -303,10 +310,14 @@ class Correlator(object):
         t0 = UTCDateTime(self.options['read_start']).timestamp
         t1 = UTCDateTime(self.options['read_end']).timestamp
         loop_window = np.arange(t0, t1, opt['corr_inc'])
+        if taper:
+            corr_len = opt['corr_len']/.9
+        else:
+            corr_len = opt['corr_len']
         for t in loop_window:
             st = Stream()
             startt = UTCDateTime(t)
-            endt = startt + opt['corr_len']
+            endt = startt + corr_len
             for ii, ndb in enumerate(self.noisedbs):
                 # Skip if time window is not available for this station
                 # Note that this will return shorter time windows if
@@ -318,6 +329,8 @@ class Correlator(object):
                 # No time available at none of the stations
                 continue
             self.options['combinations'] = calc_cross_combis(st)
+            if taper:
+                st.taper(max_percentage=0.05)
             yield st
 
     def _pxcorr_matrix(self, A: np.ndarray):
