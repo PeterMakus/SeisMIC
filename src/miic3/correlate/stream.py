@@ -1,6 +1,5 @@
 '''
 :copyright:
-   The PyGLImER development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -8,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Friday, 23rd April 2021 02:04:12 pm
+Last Modified: Wednesday, 28th April 2021 03:48:09 pm
 '''
 import numpy as np
 from obspy import Stream, Trace, Inventory

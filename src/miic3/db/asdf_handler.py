@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Friday, 23rd April 2021 02:37:22 pm
+Last Modified: Wednesday, 28th April 2021 03:52:44 pm
 '''
 
 from glob import glob
@@ -159,14 +159,14 @@ class NoiseDB(object):
     def get_all_data(
             self, window_length: int = 3600, increment: int = 3600) -> Stream:
         """
-        Returns all available data to a single `~obspy.core.Stream`.
+        Returns all available data to a single :class:`~obspy.core.Stream`.
 
         :param window_length: Length in seconds of each Trace in the Stream.
         :type window_length: int, optional
         :param increment: Step between each of the Windows in seconds.
         :type increment: int, optional
         :return: Stream object containing daily traces.
-        :rtype: `~obspy.core.Stream`
+        :rtype: :class:`~obspy.core.Stream`
         """
 
         with ASDFDataSet(self.loc, mode="r", mpi=False) as ds:
@@ -192,7 +192,7 @@ class NoiseDB(object):
         has been preprocessed.
 
         :return: Inventory object.
-        :rtype: `~obspy.core.Inventory`
+        :rtype: :class:`~obspy.core.inventory.Inventory`
         """
         with ASDFDataSet(self.loc, mode="r", mpi=False) as ds:
             inv = ds.waveforms[

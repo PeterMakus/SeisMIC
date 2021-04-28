@@ -7,14 +7,14 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 27th April 2021 03:14:35 pm
+Last Modified: Wednesday, 28th April 2021 03:57:08 pm
 '''
 from copy import deepcopy
 import os
 
 from mpi4py import MPI
 import numpy as np
-from obspy import Stream, UTCDateTime, Trace, Inventory
+from obspy import Stream, UTCDateTime, Inventory
 import obspy.signal as osignal
 from scipy.fftpack import next_fast_len
 from scipy import signal
@@ -27,11 +27,25 @@ from miic3.utils.fetch_func_from_str import func_from_str
 from miic3.trace_data.preprocess import detrend as qr_detrend
 
 
-zerotime = UTCDateTime(1971, 1, 1)
-
-
 class Correlator(object):
+    """
+    Object to manage the actual Correlation (i.e., Green's function retrieval)
+    for the database.
+    """
     def __init__(self, options: dict) -> None:
+        """
+        Initiates the Correlator object. When executing
+        :func:`~miic3.correlate.correlate.Correlator.pxcorr()`, it will
+        actually compute the correlations and save them in an hdf5 file that
+        can be handled using :class:`~miic3.db.corr_hdf5.CorrelationDataBase`.
+        Data has to be preprocessed before calling this (i.e., the data already
+        has to be given in an ASDF format). Check out
+        :class:`~miic3.trace_data.preprocess.Preprocessor` for information on
+        how to proceed with this.
+
+        :param options: Dictionary containing all options for the correlation.
+        :type options: dict
+        """
         super().__init__()
         # init MPI
         self.comm = MPI.COMM_WORLD
@@ -39,6 +53,7 @@ class Correlator(object):
         self.rank = self.comm.Get_rank()
         self.proj_dir = options['proj_dir']
         self.corr_dir = os.path.join(self.proj_dir, options['co']['subdir'])
+        os.makedirs(self.corr_dir, exist_ok=True)
 
         self.options = options['co']
 
@@ -88,6 +103,10 @@ class Correlator(object):
                         self.sampling_rate))
 
     def pxcorr(self):
+        """
+        Start the correlation with the parameters that were defined when
+        initiating the object.
+        """
         for st in self._generate_data(taper=True):
             self._pxcorr_inner(st)
 
@@ -141,17 +160,9 @@ class Correlator(object):
                     A[:, ii], header1=st[comb[0]].stats,
                     header2=st[comb[1]].stats, inv=inv, start_lag=startlag,
                     end_lag=endlag))
-            # cstats = combine_stats(st[comb[0]], st[comb[1]], inv=inv)
-            #cstats['starttime'] = startt
-            # cstats['npts'] = npts
-            # cstats['npts'] = A.shape[0]
-            #cst.append(Trace(data=A[:, ii], header=cstats))
-            # cst[-1].stats_tr1 = st[comb[0]].stats
-            # cst[-1].stats_tr2 = st[comb[1]].stats
 
         ###############
         # Write correlations to ASDF
-        print('creating cstlist')
         # No pretty way of organising, but the only way I got it to work
         cst.sort()
         cstlist = []
@@ -167,46 +178,6 @@ class Correlator(object):
                 station = tr.stats.station
                 network = tr.stats.network
                 st.append(cst.pop(0))
-        # cst.sort()
-        # matrixlist_station = []
-        # matrixlist_location = []
-        # datalist = []
-        # statlist_station = []
-        # statlist_location = []
-        # station = cst[0].stats.station
-        # network = cst[0].stats.network
-        # loc = cst[0].stats.location
-        # chan = cst[0].stats.channel
-        # statlist_location.append(cst[0].stats)
-        # for tr in cst:
-        #     if tr.stats.station == station and tr.stats.network == network and\
-        #          tr.stats.location == loc and tr.stats.channel == chan:
-        #         datalist.append(cst.pop(0).data)
-        #     elif tr.stats.station == station and tr.stats.network == network:
-        #         statlist_location.append(tr.stats)
-        #         matrixlist_location.append(
-        #             np.array(datalist, dtype=np.float64))
-        #         datalist.clear()
-        #         datalist.append(cst.pop(0).data)
-        #         loc = tr.stats.location
-        #         chan = tr.stats.channel
-        #     else:
-        #         matrixlist_location.append(
-        #             np.array(datalist, dtype=np.float64))
-        #         matrixlist_station.append(matrixlist_location.copy())
-        #         matrixlist_location.clear()
-        #         statlist_station.append(statlist_location.copy())
-        #         statlist_location.clear()
-        #         statlist_location.append(tr.stats)
-        #         station = tr.stats.station
-        #         network = tr.stats.network
-        #         loc = tr.stats.location
-        #         chan = tr.stats.channel
-        #         datalist.clear()
-        #         datalist.append(cst.pop(0).data)
-        # matrixlist_location.append(
-        #             np.array(datalist, dtype=np.float64))
-        # matrixlist_station.append(matrixlist_location)
 
         # Decide which process writes to which station
         pmap = (np.arange(len(cstlist))*self.psize)/len(cstlist)
@@ -214,51 +185,21 @@ class Correlator(object):
         ind = pmap == self.rank
         ind = np.arange(len(cstlist))[ind]
 
-        # n_stats = len(matrixlist_station)
-        # pmap = (np.arange(n_stats)*self.psize)/n_stats
-        # pmap = pmap.astype(np.int32)
-        # ind = pmap == self.rank
-        # ind = np.arange(n_stats)[ind]
-        # for ii in ind:
-        #     print('write file', ii)
-        #     outf = os.path.join(self.corr_dir, '%s.%s.h5' % (
-        #             statlist_station[ii][0].network,
-        #             statlist_station[ii][0].station))
-        #     with ASDFDataSet(outf, mpi=False) as ds:
-        #         for A, stats in zip(
-        #                 matrixlist_station[ii], statlist_station[ii]):
-        #             # stats.pop('asdf')
-        #             # stats.pop('sac')
-        #             stats.pop('processing', None)
-        #             # Has the annoying tendency to be an AttribDict
-        #             stats = dict(stats)
-        #             stats['sac'] = dict(stats['sac'])
-        #             # Not supported in ASDF, so discard meaningless anyways
-        #             stats.pop('starttime')
-        #             stats.pop('endtime')
-        #             print(stats)
-        #             ds.add_auxiliary_data(
-        #                 A, 'Correlation', '%s.%s'
-        #                 % (stats['location'], stats['channel']), parameters=stats)
         for ii in ind:
-            print('write file', ii)
             outf = os.path.join(self.corr_dir, '%s.%s.h5' % (
                     cstlist[ii][0].stats.network,
                     cstlist[ii][0].stats.station))
             with CorrelationDataBase(outf) as cdb:
                 cdb.add_correlation(cstlist[ii])
-            # with ASDFDataSet(outf, mpi=False) as ds:
-            #     for tr in cstlist[ii]:
-            #         print(tr.data.shape, tr.stats.npts)
-            #         ds.add_waveforms(tr, 'correlation')
-                    # ds.add_auxiliary_data(
-                    #     tr.data, 'Correlation', '%s.%s'
-                    #     % (cstlist[ii][0].stats.network,
-                    #         cstlist[ii][0].stats.station), parameters=tr.stats)
-
-        # return cst
 
     def _get_inventory(self) -> Inventory:
+        """
+        Returns an :class:`~obspy.core.inventory.Inventory` object containing
+        information about all stations that are used for this correlation
+
+        :return: :class:`~obspy.core.inventory.Inventory`
+        :rtype: Inventory
+        """
         inv = Inventory()
         for ndb in self.noisedbs:
             inv.extend(ndb.get_inventory())
