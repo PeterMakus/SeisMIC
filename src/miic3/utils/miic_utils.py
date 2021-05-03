@@ -8,9 +8,9 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Monday, 19th April 2021 09:16:34 am
+Last Modified: Friday, 30th April 2021 11:10:35 am
 '''
-from obspy import Inventory
+from obspy import Inventory, Stream
 from obspy.core import Stats
 
 
@@ -92,3 +92,25 @@ def inv_calc_az_baz_dist(inv1: Inventory, inv2: Inventory):
                                      inv2[0][0].longitude)
 
     return az, baz, dist
+
+
+def resample_or_decimate(data: Stream, sampling_rate_new: int) -> Stream:
+    """
+    Decimates the data if the desired new sampling rate allows to do so.
+    Else the signal will be interpolated (a lot slower).
+
+    :note: The stream has to be filtered a priori to avoid aliasing.
+
+    :param data: Stream to be resampled.
+    :type data: Stream
+    :param sampling_rate_new: The desired new sampling rate
+    :type sampling_rate_new: int
+    :return: The resampled stream
+    :rtype: Stream
+    """
+    sr = data[0].stats.sampling_rate
+    srn = sampling_rate_new
+    if sr/srn == sr//srn:
+        return data.decimate(int(sr//srn), no_filter=True)
+    else:
+        return data.resample(srn)

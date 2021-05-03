@@ -4,20 +4,21 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Friday, 16th April 2021 09:55:06 am
+Last Modified: Monday, 3rd May 2021 11:25:28 am
 '''
 from collections import namedtuple
 from glob import glob
 import os
 from warnings import warn
+from time import time
 
-from joblib import Parallel, delayed, cpu_count
 import numpy as np
 from obspy import UTCDateTime, Stream
 from obspy.core.inventory.inventory import Inventory
 from pyasdf.asdf_data_set import ASDFDataSet
 
 from .waveform import Store_Client
+from miic3.utils.miic_utils import resample_or_decimate
 
 
 # Class to define filter frequencies
@@ -105,7 +106,8 @@ class Preprocessor(object):
     def preprocess_bulk(
         self, network: str or None = None,
         starttime: UTCDateTime or None = None,
-            endtime: UTCDateTime or None = None):
+        endtime: UTCDateTime or None = None,
+            backend: str = 'joblib', n_cpus: int = -1):
         """
         Preprocesses data from several stations in parallel. Writes
         preprocessed files to asdf file (one per station).
@@ -119,13 +121,49 @@ class Preprocessor(object):
         :param endtime: Endtime. If all available times should be used,
             set `=None`. Defaults to None, defaults to None.
         :type endtime: UTCDateTimeorNone, optional
+        :param backend: Backend to use for the multi-threading. If you are
+            starting this script with mpirun, set it `=mpi`. Defaults to
+            `joblib` (which uses the loky backend).
+        :type backend: str, optional
+        :param n_cpus: Only relevant if backend=joblib. Overwrites the number
+            of cpu cores that should be used. Joblib tends to oversubscribe
+            resources since it uses all virtual cores (i.e., threads), so it
+            can be useful to set this equal your number of **physical** cores
+            to achieve the best perfomance (expect a gain of about 15%) and
+            save some memory. -1 means all available **virtual** CPUs will be
+            used. Default to -1.
+        :type n_cpus: int, optional
         """
         # 16.03.21 This is awfully slow. However the single processes are not
         # Maybe playing with chunk size to prevent overheating?
-        Parallel(n_jobs=-1)(
-                    delayed(self.preprocess)(
-                        network, station, '*', '*', starttime, endtime)
-                    for network, station in self._all_stations_raw(network))
+        if backend == 'mpi':
+            from mpi4py import MPI
+            statlist = self._all_stations_raw(network)
+            comm = MPI.COMM_WORLD
+            psize = comm.Get_size()
+            rank = comm.Get_rank()
+            print(rank)
+            # decide which process processes which station
+            pmap = (np.arange(len(statlist))*psize)/len(statlist)
+            pmap = pmap.astype(np.int32)
+            ind = pmap == rank
+            ind = np.arange(len(statlist))[ind]
+            print(ind)
+            for ii in ind:
+                self.preprocess(
+                    statlist[ii][0], statlist[ii][1], '*', '*', starttime,
+                    endtime)
+            comm.barrier()
+        elif backend == 'joblib':
+            from joblib import Parallel, delayed
+            Parallel(n_jobs=n_cpus, verbose=8)(
+                        delayed(self.preprocess)(
+                            network, station, '*', '*', starttime, endtime)
+                        for network, station in self._all_stations_raw(
+                            network))
+        else:
+            msg = 'Backend "%s" not supported' % backend
+            raise ValueError(msg)
 
     def preprocess(
         self, network: str, station: str, location: str, channel: str,
@@ -163,15 +201,15 @@ class Preprocessor(object):
         outfile = os.path.join(self.outloc, '%s.%s.h5' % (network, station))
 
         if os.path.exists(outfile) and not self.ex_times:
-            msg = """The output file already exists. Use \
+            msg = "The output file already exists. Use \
             :func:`~miic3.db.asdf_handler.NoiseDB.return_preprocessor()` \
-            to yield the correct Preprocessor!"""
+            to yield the correct Preprocessor!"
             raise ValueError(msg)
 
         if not starttime or not endtime:
             warn(
-                """Returned start and endtimes will not be checked due to\
-             wildcard.""", category=UserWarning)
+                "Returned start and endtimes will not be checked due to\
+             wildcard.", category=UserWarning)
             _check_times = False
             starttime, endtime = self.store_client._get_times(network, station)
             if not starttime:
@@ -206,43 +244,67 @@ class Preprocessor(object):
         # Else this becomes problematic especially, when processing with
         # several threads at the same time and the very long streams have to be
         # held in RAM.
+        # chunk_len = 3600  # chunk length in s
+        # starttimes = []
+        # endtimes = []
+        # for starttime, endtime in zip(req_start, req_end):
+        #     if endtime-starttime > chunk_len:
+        #         while starttime < endtime:
+        #             starttimes.append(starttime)
+        #             starttime = starttime+chunk_len
+        #             endtimes.append(starttime)
+        #     else:
+        #         starttimes.append(starttime)
+        #         endtimes.append(endtime)
         starttimes = []
         endtimes = []
         for starttime, endtime in zip(req_start, req_end):
-            if endtime-starttime > 3600*6:
+            if endtime-starttime > 24*3600:
                 while starttime < endtime:
-                    starttimes.append(starttime)
-                    starttime = starttime+3600*6
-                    endtimes.append(starttime)
+                    starttimes.append(starttime+1)
+                    # Skip two seconds, so the same file is not loaded twice
+                    # endtimes.append(starttime+24*3600-1)
+                    starttime = starttime+24*3600
+                    endtimes.append(starttime-1)
             else:
                 starttimes.append(starttime)
                 endtimes.append(endtime)
 
+        chunk_len = 3600  # processing chunk length in s
+        # chunk_len = next_fast_len(chunk_len) are identical
+
+        # for starttime, endtime in zip(starttimes, endtimes):
         for starttime, endtime in zip(starttimes, endtimes):
             # Return obspy stream with data from this station if the data
             # does not already exist
-            st = self.store_client.get_waveforms(
+            st_raw = self.store_client.get_waveforms(
                 network, station, location, channel, starttime, endtime,
                 _check_times=_check_times)
 
-            try:
-                st, resp = self._preprocess(st)
-            except FrequencyError as e:
-                warn(e + ' Trace is skipped.')
-                continue
+            st_proc = Stream()
+            for st in st_raw.slide(
+                chunk_len, chunk_len,
+                    include_partial_windows=True):
+                try:
+                    st, resp = self._preprocess(
+                        st, self.store_client.inventory)
+                    st_proc.extend(st)
+                except FrequencyError as e:
+                    warn(e + ' Trace is skipped.')
+                    continue
 
             # Create folder if it does not exist
             os.makedirs(self.outloc, exist_ok=True)
 
-            with ASDFDataSet(outfile) as ds:
-                ds.add_waveforms(st, tag='processed')
-                ds.add_stationxml(resp)
+            with ASDFDataSet(outfile, mpi=False) as ds:
+                ds.add_waveforms(st_proc, tag='processed')
 
-        with ASDFDataSet(outfile) as ds:
+        with ASDFDataSet(outfile, mpi=False) as ds:
             # Save some processing values as auxiliary data
             ds.add_auxiliary_data(
                 data=np.empty(1), data_type='PreprocessingParameters',
                 path='param', parameters=self.param)
+            ds.add_stationxml(resp)
 
     def _all_stations_raw(
             self, network: str or None = None) -> list:
@@ -263,9 +325,11 @@ class Preprocessor(object):
         # If no network is defined use all
         network = network or '*'
         oslist = glob(
-            os.path.join(self.store_client.sds_root, '*', network, '*'))
+            os.path.join(self.store_client.sds_root, '????', network, '*'))
         statlist = []
         for path in oslist:
+            if not isinstance(eval(path.split('/')[-3]), int):
+                continue
             # Add all network and station combinations to list
             code = path.split('/')[-2:]
             if code not in statlist:
@@ -277,6 +341,7 @@ class Preprocessor(object):
         Private method that executes the preprocessing steps on a *per Stream*
         basis.
         """
+        st.sort(keys=['starttime'])
         # Check sampling frequency
         if self.sampling_rate > st[0].stats.sampling_rate:
             raise FrequencyError(
@@ -284,14 +349,21 @@ class Preprocessor(object):
             sample rate (%s Hz).' % (
                     str(self.filter.highcut), str(
                         st[0].stats.sampling_rate/2)))
+
+        st.filter(
+            'bandpass', freqmin=self.filter.lowcut,
+            freqmax=self.filter.highcut, zerophase=True)
+        # Downsample
+        st = resample_or_decimate(st, self.sampling_rate)
+
         if inv:
             ninv = inv
             st.attach_response(ninv)
         try:
             st.remove_response()
         except ValueError:
+            print('Station response not found ... loading from remote.')
             # missing station response
-            st.sort(keys=['starttime'])
             ninv = self.store_client.rclient.get_stations(
                 network=st[0].stats.network, station=st[0].stats.station,
                 channel='*', starttime=st[0].stats.starttime,
@@ -300,27 +372,20 @@ class Preprocessor(object):
             st.remove_response()
             self.store_client._write_inventory(ninv)
 
-        # st.detrend()
-        # st.taper(
-        #     max_percentage=0.05, type='hann', max_length=2, side='both')
-        # At this point, it probably does not make too much sense to taper.
-        st.filter(
-            'bandpass', freqmin=self.filter.lowcut,
-            freqmax=self.filter.highcut, zerophase=True)
-        # Downsample
-        st.resample(self.sampling_rate)
-
+        st.detrend()
         for tr in st:
             # !Last operation before saving!
             # The actual data in the mseeds was changed from int to float64
             # now,
             # Save some space by changing it back to 32 bit (most of the
             # digitizers work at 24 bit anyways)
+            # 30/04/21 remove first sample so it's not twice in data
             tr.data = np.require(tr.data, np.float32)
         try:
             return st, ninv
         except (UnboundLocalError, NameError):
             # read inventory
+            print('unncecessary access of inventory file')
             ninv = self.store_client.read_inventory().select(
                 network=tr.stats.network, station=tr.stats.station)
             return st, ninv
@@ -330,8 +395,6 @@ def detrend(data: np.ndarray) -> np.ndarray:
     '''
     From NoisPy (Jian et. al., 2020)
 
-    Should be used with a matrix, so it's probably best to apply this right
-    before correlation.
 
     this function removes the signal trend based on QR decomposion
     NOTE: QR is a lot faster than the least square inversion used by

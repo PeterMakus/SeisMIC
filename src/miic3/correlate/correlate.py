@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 28th April 2021 03:57:08 pm
+Last Modified: Monday, 3rd May 2021 11:09:06 am
 '''
 from copy import deepcopy
 import os
@@ -24,7 +24,7 @@ from miic3.correlate.stream import CorrTrace, CorrStream
 from miic3.db.asdf_handler import get_available_stations, NoiseDB
 from miic3.db.corr_hdf5 import CorrelationDataBase
 from miic3.utils.fetch_func_from_str import func_from_str
-from miic3.trace_data.preprocess import detrend as qr_detrend
+# from miic3.trace_data.preprocess import detrend as qr_detrend
 
 
 class Correlator(object):
@@ -107,7 +107,8 @@ class Correlator(object):
         Start the correlation with the parameters that were defined when
         initiating the object.
         """
-        for st in self._generate_data(taper=True):
+        for (ii, st) in enumerate(self._generate_data(taper=False)):
+            print('correlate ',ii)
             self._pxcorr_inner(st)
 
     def _pxcorr_inner(self, st: Stream):
@@ -127,7 +128,8 @@ class Correlator(object):
             npts = np.max(np.array(npts))
             # create numpy array - Do a QR detrend here?
             A = st_to_np_array(st)
-            A = qr_detrend(A)
+            # A = qr_detrend(A)
+            # detrend is done earlier now
             As = A.shape
         else:
             starttime = None
@@ -178,6 +180,7 @@ class Correlator(object):
                 station = tr.stats.station
                 network = tr.stats.network
                 st.append(cst.pop(0))
+        cstlist.append(st)
 
         # Decide which process writes to which station
         pmap = (np.arange(len(cstlist))*self.psize)/len(cstlist)
@@ -190,6 +193,7 @@ class Correlator(object):
                     cstlist[ii][0].stats.network,
                     cstlist[ii][0].stats.station))
             with CorrelationDataBase(outf) as cdb:
+                print('write file to file ', outf)
                 cdb.add_correlation(cstlist[ii])
 
     def _get_inventory(self) -> Inventory:

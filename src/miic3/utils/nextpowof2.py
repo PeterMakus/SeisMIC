@@ -6,6 +6,8 @@ Created on Fri Oct 18 20:36:40 2019
 @author: pm
 """
 
+from scipy.fftpack import next_fast_len
+
 
 def nextpowerof2(n):
     """ just returns the next higher power of two from n"""

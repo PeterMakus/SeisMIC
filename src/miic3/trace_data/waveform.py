@@ -48,9 +48,9 @@ class Store_Client(object):
         self.sds_root = path
         self.inv_name = os.path.join(path, "inventory", "inventory.xml")
         if os.path.exists(self.inv_name):
-            self.inventory = read_inventory(self.inv_name)
+            self.inventory = self.read_inventory()
         else:
-            self.inventory = read_inventory()
+            self.inventory = Inventory()
         if not os.path.exists(
                 os.path.dirname(self.inv_name)) and not read_only:
             os.makedirs(os.path.dirname(self.inv_name))
@@ -118,8 +118,7 @@ class Store_Client(object):
 
     def _get_mseed_storage(
         self, network: 'str', station: 'str', location: str,
-            channel: str, starttime: UTCDateTime):
-        # endtime: UTCDateTime):
+            channel: str, starttime: UTCDateTime, endtime: UTCDateTime):
 
         # Returning True means that neither the data nor the StationXML file
 

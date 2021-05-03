@@ -4,7 +4,7 @@ Simple script to compute and plot time-dependent spectral power densities.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 15th February 2021 02:09:48 pm
-Last Modified: Wednesday, 17th March 2021 09:08:35 am
+Last Modified: Friday, 30th April 2021 09:39:43 am
 '''
 
 import matplotlib
@@ -116,7 +116,9 @@ def spct_series_welch(
     l = []
     st.sort(keys=['starttime'])
     for tr in st:
-        for wintr in tr.slide(window_length=window_length, step=window_length):
+        for wintr in tr.slide(
+            window_length=window_length, step=window_length+tr.stats.delta,
+                include_partial_windows=True):
             # windows will overlap with half the window length
             # Hard-corded nperseg so that the longest period waves that
             # can be resolved are around 300s

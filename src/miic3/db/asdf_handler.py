@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Wednesday, 28th April 2021 03:52:44 pm
+Last Modified: Friday, 30th April 2021 09:41:08 am
 '''
 
 from glob import glob
@@ -174,7 +174,8 @@ class NoiseDB(object):
         # Make sure all the time windows have an equal length
         st2 = Stream()
         for windowed_st in st.slide(
-                window_length=window_length, step=increment):
+                window_length=window_length, step=increment+st[0].stats.delta,
+                include_partial_windows=True):
             st2.extend(windowed_st)
         return st2
 
