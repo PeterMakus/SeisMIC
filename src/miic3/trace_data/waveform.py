@@ -173,7 +173,9 @@ class Store_Client(object):
             return (None, None)
         startjul.sort()
         starttime = UTCDateTime(year=int(dirlist[0]), julday=startjul[0])
-        endjul = [i[-3:] for i in glob.glob(os.path.join(self.sds_root, dirlist[-1], network, station,'*','*'))]
+        endjul = [i[-3:] for i in glob.glob(
+            os.path.join(
+                self.sds_root, dirlist[-1], network, station, '*', '*'))]
         endjul.sort()
         endtime = UTCDateTime(year=int(dirlist[-1]), julday=endjul[-1])
         return (starttime, endtime)

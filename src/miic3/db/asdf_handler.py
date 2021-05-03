@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Friday, 30th April 2021 09:41:08 am
+Last Modified: Monday, 3rd May 2021 01:23:51 pm
 '''
 
 from glob import glob
@@ -16,7 +16,7 @@ from pyasdf import ASDFDataSet
 
 from miic3.plot.plt_spectra import plot_spct_series, spct_series_welch
 from miic3.trace_data.waveform import Store_Client
-from miic3.trace_data.preprocess import Preprocessor
+# from miic3.trace_data.preprocess import Preprocessor
 
 
 h5_FMTSTR = os.path.join("{dir}", "{network}.{station}.h5")
@@ -39,7 +39,7 @@ class NoiseDB(object):
         # Location of the h5 file
         self.loc = h5_FMTSTR.format(dir=dir, network=network, station=station)
 
-        with ASDFDataSet(self.loc, mode="r", mpi=False) as ds:
+        with ASDFDataSet(self.loc, mode='r', mpi=False) as ds:
             # get dict a bit convoluted but see pyasdf documentation
             self.param = ds.auxiliary_data.PreprocessingParameters.\
                 param.parameters
@@ -49,21 +49,25 @@ class NoiseDB(object):
         self.station = station
         self.network = network
 
-    def return_preprocessor(self, store_client: Store_Client) -> Preprocessor:
+    def return_preprocessor(self, store_client: Store_Client) -> dict:
         """
-        Returns the :class:`~miic3.trace_data.preprocess.Preprocessor` that
+        Returns the properties of
+        the :class:`~miic3.trace_data.preprocess.Preprocessor` that
         can be used to add data to this NoiseDB.
 
         :param store_client: The Store Client that should be used to obtain
             the new data.
         :type store_client: Store_Client
-        :return: The Preprocessor.
+        :return: The dictionary that can be used to initialise the correct
+            preprocessor.
         :rtype: Preprocessor
         """
-
-        return Preprocessor(
-            store_client, self.filter, self.sampling_rate,
-            os.path.dirname(self.loc), _ex_times=self.get_active_times())
+        kwargs = {
+            'store_client': store_client, 'filter': self.filter,
+            'sampling_rate': self.sampling_rate,
+            'outfolder': os.path.dirname(self.loc),
+            '_ex_times': self.get_active_times()}
+        return kwargs
 
     def plot_spectrum(
         self, window_length: int = 4*3600,

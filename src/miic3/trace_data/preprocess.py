@@ -4,13 +4,12 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Monday, 3rd May 2021 11:25:28 am
+Last Modified: Monday, 3rd May 2021 01:57:34 pm
 '''
 from collections import namedtuple
 from glob import glob
 import os
 from warnings import warn
-from time import time
 
 import numpy as np
 from obspy import UTCDateTime, Stream
@@ -18,6 +17,7 @@ from obspy.core.inventory.inventory import Inventory
 from pyasdf.asdf_data_set import ASDFDataSet
 
 from .waveform import Store_Client
+from miic3.db.asdf_handler import NoiseDB
 from miic3.utils.miic_utils import resample_or_decimate
 
 
@@ -131,39 +131,59 @@ class Preprocessor(object):
             can be useful to set this equal your number of **physical** cores
             to achieve the best perfomance (expect a gain of about 15%) and
             save some memory. -1 means all available **virtual** CPUs will be
-            used. Default to -1.
+            used. 1 is useful for debugging. Default to -1.
         :type n_cpus: int, optional
         """
-        # 16.03.21 This is awfully slow. However the single processes are not
-        # Maybe playing with chunk size to prevent overheating?
         if backend == 'mpi':
             from mpi4py import MPI
             statlist = self._all_stations_raw(network)
             comm = MPI.COMM_WORLD
             psize = comm.Get_size()
             rank = comm.Get_rank()
-            print(rank)
             # decide which process processes which station
             pmap = (np.arange(len(statlist))*psize)/len(statlist)
             pmap = pmap.astype(np.int32)
             ind = pmap == rank
             ind = np.arange(len(statlist))[ind]
-            print(ind)
             for ii in ind:
-                self.preprocess(
+                self._preprocess_mc_init(
                     statlist[ii][0], statlist[ii][1], '*', '*', starttime,
                     endtime)
             comm.barrier()
         elif backend == 'joblib':
             from joblib import Parallel, delayed
             Parallel(n_jobs=n_cpus, verbose=8)(
-                        delayed(self.preprocess)(
+                        delayed(self._preprocess_mc_init)(
                             network, station, '*', '*', starttime, endtime)
                         for network, station in self._all_stations_raw(
                             network))
         else:
             msg = 'Backend "%s" not supported' % backend
             raise ValueError(msg)
+
+    def _preprocess_mc_init(
+        self, network: str, station: str, location: str, channel: str,
+        starttime: UTCDateTime or None = None,
+            endtime: UTCDateTime or None = None):
+        """
+        Same as preprocess, but with automatic handlers for the inbuilt
+        exceptions.
+        """
+        try:
+            self.preprocess(
+                network, station, location, channel, starttime, endtime)
+        except PermissionError:
+            # Now we get the appropraite preprocessor and do a preprocess on
+            # that one
+            try:
+                ndb = NoiseDB(self.outloc, network, station)
+                kwargs = ndb.return_preprocessor(self.store_client)
+                p = Preprocessor(**kwargs)
+                p.preprocess(
+                    network, station, location, channel, starttime, endtime)
+            except FileExistsError:
+                print('No new data for station %s.%s processed.' % (
+                    network, station))
 
     def preprocess(
         self, network: str, station: str, location: str, channel: str,
@@ -204,7 +224,7 @@ class Preprocessor(object):
             msg = "The output file already exists. Use \
             :func:`~miic3.db.asdf_handler.NoiseDB.return_preprocessor()` \
             to yield the correct Preprocessor!"
-            raise ValueError(msg)
+            raise PermissionError(msg)
 
         if not starttime or not endtime:
             warn(
@@ -225,15 +245,19 @@ class Preprocessor(object):
         req_start = [starttime]
         req_end = [endtime]
         if self.ex_times:
+            print((starttime, endtime), self.ex_times)
             # No new data at all
-            if self.ex_times[0] <= starttime and self.ex_times[1] >= endtime:
-                raise ValueError('No new data found. All data has already \
+            if self.ex_times[0]-5 <= starttime and \
+                    self.ex_times[1]+5 >= endtime:
+                raise FileExistsError('No new data found. All data have already \
                 been preprocessed?')
             # New new data
-            elif self.ex_times[0] <= starttime and self.ex_times[1] < endtime:
+            elif self.ex_times[0]-5 <= starttime and \
+                    self.ex_times[1]+5 < endtime:
                 req_start = [self.ex_times[1]]
             # New old data
-            elif self.ex_times[0] > starttime and self.ex_times[1] >= endtime:
+            elif self.ex_times[0]-5 > starttime and \
+                    self.ex_times[1]+5 >= endtime:
                 req_end = [self.ex_times[0]]
             # New data on both sides
             else:
@@ -244,18 +268,6 @@ class Preprocessor(object):
         # Else this becomes problematic especially, when processing with
         # several threads at the same time and the very long streams have to be
         # held in RAM.
-        # chunk_len = 3600  # chunk length in s
-        # starttimes = []
-        # endtimes = []
-        # for starttime, endtime in zip(req_start, req_end):
-        #     if endtime-starttime > chunk_len:
-        #         while starttime < endtime:
-        #             starttimes.append(starttime)
-        #             starttime = starttime+chunk_len
-        #             endtimes.append(starttime)
-        #     else:
-        #         starttimes.append(starttime)
-        #         endtimes.append(endtime)
         starttimes = []
         endtimes = []
         for starttime, endtime in zip(req_start, req_end):
@@ -263,7 +275,6 @@ class Preprocessor(object):
                 while starttime < endtime:
                     starttimes.append(starttime+1)
                     # Skip two seconds, so the same file is not loaded twice
-                    # endtimes.append(starttime+24*3600-1)
                     starttime = starttime+24*3600
                     endtimes.append(starttime-1)
             else:
@@ -271,6 +282,7 @@ class Preprocessor(object):
                 endtimes.append(endtime)
 
         chunk_len = 3600  # processing chunk length in s
+        # One hour is pretty close to the optimal length
         # chunk_len = next_fast_len(chunk_len) are identical
 
         # for starttime, endtime in zip(starttimes, endtimes):
@@ -385,7 +397,6 @@ class Preprocessor(object):
             return st, ninv
         except (UnboundLocalError, NameError):
             # read inventory
-            print('unncecessary access of inventory file')
             ninv = self.store_client.read_inventory().select(
                 network=tr.stats.network, station=tr.stats.station)
             return st, ninv
@@ -406,6 +417,7 @@ def detrend(data: np.ndarray) -> np.ndarray:
     ---------------------
     data: data matrix with trend removed
     '''
+    # I ended up not using it because it seems to be slower after all.
     if data.ndim == 1:
         npts = data.shape[0]
         X = np.ones((npts, 2))
