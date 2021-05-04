@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Wednesday, 28th April 2021 03:48:09 pm
+Last Modified: Monday, 3rd May 2021 04:47:58 pm
 '''
 import numpy as np
 from obspy import Stream, Trace, Inventory

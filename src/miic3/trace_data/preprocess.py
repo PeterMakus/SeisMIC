@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Monday, 3rd May 2021 01:57:34 pm
+Last Modified: Tuesday, 4th May 2021 12:28:59 pm
 '''
 from collections import namedtuple
 from glob import glob
@@ -245,7 +245,6 @@ class Preprocessor(object):
         req_start = [starttime]
         req_end = [endtime]
         if self.ex_times:
-            print((starttime, endtime), self.ex_times)
             # No new data at all
             if self.ex_times[0]-5 <= starttime and \
                     self.ex_times[1]+5 >= endtime:
@@ -362,9 +361,7 @@ class Preprocessor(object):
                     str(self.filter.highcut), str(
                         st[0].stats.sampling_rate/2)))
 
-        st.filter(
-            'bandpass', freqmin=self.filter.lowcut,
-            freqmax=self.filter.highcut, zerophase=True)
+        st.filter('lowpass_cheby_2', freq=(self.sampling_rate/2)*.9)
         # Downsample
         st = resample_or_decimate(st, self.sampling_rate)
 

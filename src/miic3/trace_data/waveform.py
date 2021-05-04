@@ -1,17 +1,15 @@
 import fnmatch
-import os, datetime, glob
-from operator import itemgetter
+import os
+import datetime
+import glob
 import warnings
-
-import numpy as np
 
 from obspy.clients.fdsn import Client as rClient
 from obspy.clients.fdsn.header import FDSNNoDataException
 from obspy.clients.filesystem.sds import Client as lClient
-from obspy import read_inventory, UTCDateTime, read, Stream, Trace, Inventory
+from obspy import read_inventory, UTCDateTime, read, Stream, Inventory
 from obspy.clients.fdsn.mass_downloader import RectangularDomain, \
     Restrictions, MassDownloader
-from obspy.core import AttribDict
 
 
 SDS_FMTSTR = os.path.join(
@@ -187,8 +185,8 @@ class Store_Client(object):
         """
         print("Loading remotely.")
         try:
-            st = self.rclient.get_waveforms(network, station, location, channel, starttime,
-                                            endtime)
+            st = self.rclient.get_waveforms(
+                network, station, location, channel, starttime, endtime)
         except FDSNNoDataException as e:
             print(e)
             return Stream()
@@ -196,10 +194,11 @@ class Store_Client(object):
             warnings.filterwarnings('error')
             try:
                 st.attach_response(self.inventory)
-            except Warning as e:
+            except Warning:
                 print("Updating inventory.")
-                ninv = self.rclient.get_stations(network=network, station=station, channel=channel,
-                                             starttime=starttime, endtime=endtime, level='response')
+                ninv = self.rclient.get_stations(
+                    network=network, station=station, channel=channel,
+                    starttime=starttime, endtime=endtime, level='response')
                 if attach_response:
                     st.attach_response(ninv)
                 self._write_inventory(ninv)
@@ -212,14 +211,15 @@ class Store_Client(object):
         """
         Read data from local SDS structure.
         """
-        print("Loading locally ... ", end = '')
-        st = self.lclient.get_waveforms(network, station, location, channel, starttime,
-                           endtime)
+        print("Loading locally ... ", end='')
+        st = self.lclient.get_waveforms(
+            network, station, location, channel, starttime, endtime)
         # Making sure that the order is correct for the next bit to work
         st.sort(['starttime'])
-        if _check_times and (len(st) == 0 or 
-            (starttime<(st[0].stats.starttime-st[0].stats.delta) # potentially subtract 1 delta
-             or (endtime>st[-1].stats.endtime+st[-1].stats.delta))):
+        if _check_times and (
+            len(st) == 0 or (
+                starttime < (st[0].stats.starttime-st[0].stats.delta) or (
+                    endtime > st[-1].stats.endtime+st[-1].stats.delta))):
             print("Failed")
             return None
         if attach_response:
@@ -247,21 +247,22 @@ class Store_Client(object):
         for tr in st:
             starttime = tr.stats.starttime
             while starttime < tr.stats.endtime:
-                endtime = UTCDateTime(starttime.year,starttime.month,starttime.day)+86400*1.5
-                endtime = UTCDateTime(endtime.year,endtime.month,endtime.day)
-                ttr = tr.copy().trim(starttime,endtime,nearest_sample=False)
-                self._sds_write(ttr,starttime.year,starttime.julday)
+                endtime = UTCDateTime(
+                    starttime.year, starttime.month, starttime.day) + 86400*1.5
+                endtime = UTCDateTime(endtime.year, endtime.month, endtime.day)
+                ttr = tr.copy().trim(starttime, endtime, nearest_sample=False)
+                self._sds_write(ttr, starttime.year, starttime.julday)
                 starttime = endtime
 
-                
     def _sds_write(self, tr, year, julday):
         """
         Write max 1 day long trace to SDS structure.
         """
-        filename = SDS_FMTSTR.format(network=tr.stats.network, station=tr.stats.station,
-                                      location=tr.stats.location, channel=tr.stats.channel,
-                                      year=year, doy=julday, sds_type=self.sds_type)
-        filename = os.path.join(self.sds_root,filename)
+        filename = SDS_FMTSTR.format(
+            network=tr.stats.network, station=tr.stats.station,
+            location=tr.stats.location, channel=tr.stats.channel,
+            year=year, doy=julday, sds_type=self.sds_type)
+        filename = os.path.join(self.sds_root, filename)
         if os.path.exists(filename):
             rst = read(filename)
             rst.append(tr)
@@ -269,17 +270,15 @@ class Store_Client(object):
             if not os.path.exists(os.path.dirname(filename)):
                 os.makedirs(os.path.dirname(filename))
             rst = tr
-        rst.write(filename,format='MSEED')
-        
-                
-    def _write_inventory(self,ninv):
+        rst.write(filename, format='MSEED')
+
+    def _write_inventory(self, ninv):
         # write the inventory information
         if self.inventory is not None:
             self.inventory += ninv
         else:
             self.inventory = ninv
-        self.inventory.write(self.inv_name,format="STATIONXML", validate=True)
-
+        self.inventory.write(self.inv_name, format="STATIONXML", validate=True)
 
 
 class FS_Client(object):
@@ -300,22 +299,24 @@ class FS_Client(object):
         Read data from the local file system.
         """
         ID = network+'.'+station+'.'+location+'.'+channel
-        if isinstance(starttime,UTCDateTime):
+        if isinstance(starttime, UTCDateTime):
             starttime = starttime.datetime
-        if isinstance(endtime,UTCDateTime):
+        if isinstance(endtime, UTCDateTime):
             endtime = endtime.datetime
-        st = read_from_filesystem(ID, starttime, endtime, self.fs, trim=trim, debug=debug)
+        st = read_from_filesystem(
+            ID, starttime, endtime, self.fs, trim=trim, debug=debug)
         return st
-    
 
 
-IDformat = ['%NET','%net','%STA','%sta','%LOC','%loc','%CHA','%cha']
+IDformat = ['%NET', '%net', '%STA', '%sta', '%LOC', '%loc', '%CHA', '%cha']
 
-def read_from_filesystem(ID,starttime,endtime,fs='SDS_archive',trim=True,debug=False):
+
+def read_from_filesystem(
+        ID, starttime, endtime, fs='SDS_archive', trim=True, debug=False):
     """
     Read data from a filesystem
-    
-    Function to read miniSEED data from a given file structure by specifying 
+
+    Function to read miniSEED data from a given file structure by specifying
     ID and time interval plus a description of the file system structure.
 
     :param ID: seedID of the channel to read (NET.STA.LOC.CHA)
@@ -519,13 +520,10 @@ def _adjacent_filepattern(ID, starttime, fs, inc):
                                                      starttime.second,
                                                      starttime.microsecond)
                 elif tpart in ['%y', '%Y']:
-                    thistime = datetime.datetime(starttime.year - inc,
-                                                     starttime.month,
-                                                     starttime.day,
-                                                     starttime.hour,
-                                                     starttime.minute,
-                                                     starttime.second,
-                                                     starttime.microsecond)
+                    thistime = datetime.datetime(
+                        starttime.year - inc, starttime.month, starttime.day,
+                        starttime.hour, starttime.minute, starttime.second,
+                        starttime.microsecond)
     fname = _current_filepattern(ID, thistime, fs)
     return fname, thistime
 

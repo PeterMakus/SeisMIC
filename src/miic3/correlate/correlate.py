@@ -7,10 +7,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 3rd May 2021 11:09:06 am
+Last Modified: Tuesday, 4th May 2021 04:15:47 pm
 '''
 from copy import deepcopy
 import os
+from time import time
 
 from mpi4py import MPI
 import numpy as np
@@ -39,7 +40,7 @@ class Correlator(object):
         actually compute the correlations and save them in an hdf5 file that
         can be handled using :class:`~miic3.db.corr_hdf5.CorrelationDataBase`.
         Data has to be preprocessed before calling this (i.e., the data already
-        has to be given in an ASDF format). Check out
+        has to be given in an ASDF format). Consult
         :class:`~miic3.trace_data.preprocess.Preprocessor` for information on
         how to proceed with this.
 
@@ -107,17 +108,29 @@ class Correlator(object):
         Start the correlation with the parameters that were defined when
         initiating the object.
         """
-        for (ii, st) in enumerate(self._generate_data(taper=False)):
-            print('correlate ',ii)
-            self._pxcorr_inner(st)
+        cst = CorrStream()
+        # Fetch station coordinates
+        if self.rank == 0:
+            inv = self._get_inventory()
+        else:
+            inv = None
+        inv = self.comm.bcast(inv, root=0)
+        for st in self._generate_data():
+            cst.extend(self._pxcorr_inner(st, inv))
+        # The datasets are so small that it's probably ok to write everything
+        # at once
+        # There should be an option to stack before writing maybe?
+        # Write correlations to HDF5
+        self._write(cst)
 
-    def _pxcorr_inner(self, st: Stream):
+    def _pxcorr_inner(self, st: Stream, inv: Inventory):
         """
         Inner loop of pxcorr. Don't call this function!
         """
         # Maybe here we have to ensure that all traces have the same length
         # We start out by moving the stream into a matrix
         # st = self._all_data_to_stream()
+        # x = time()
         if self.rank == 0:
             # put all the data into a single stream
             starttime = []
@@ -138,6 +151,7 @@ class Correlator(object):
         # del st  # save some memory
         starttime = self.comm.bcast(starttime, root=0)
         npts = self.comm.bcast(npts, root=0)
+        # self.comm.Bcast([npts, MPI.INT], root=0)
 
         # Tell the other processes the shape of A
         As = self.comm.bcast(As, root=0)
@@ -148,12 +162,14 @@ class Correlator(object):
         self.options.update(
             {'starttime': starttime,
                 'sampling_rate': self.sampling_rate})
+        # print('Setting up and bcasting parameters: ', time()-x)
+        # x = time()
         A, startlags = self._pxcorr_matrix(A)
-
+        # print('Actual Correlation: ', time()-x)
         # put trace into a stream
         cst = CorrStream()
-        # Fetch station coordinates
-        inv = self._get_inventory()
+        # inv = self._get_inventory()
+        # x = time()
         for ii, (startlag, comb) in enumerate(
                 zip(startlags, self.options['combinations'])):
             endlag = startlag + len(A[:, ii])/self.options['sampling_rate']
@@ -162,10 +178,16 @@ class Correlator(object):
                     A[:, ii], header1=st[comb[0]].stats,
                     header2=st[comb[1]].stats, inv=inv, start_lag=startlag,
                     end_lag=endlag))
+        # print('Organising alist: ', time()-x)
+        return cst
 
-        ###############
-        # Write correlations to ASDF
-        # No pretty way of organising, but the only way I got it to work
+    def _write(self, cst):
+        """
+        Write correlation stream to files.
+
+        :param cst: :class:`~mii3.correlate.stream.CorrStream`
+        :type cst: [type]
+        """
         cst.sort()
         cstlist = []
         station = cst[0].stats.station
@@ -193,7 +215,6 @@ class Correlator(object):
                     cstlist[ii][0].stats.network,
                     cstlist[ii][0].stats.station))
             with CorrelationDataBase(outf) as cdb:
-                print('write file to file ', outf)
                 cdb.add_correlation(cstlist[ii])
 
     def _get_inventory(self) -> Inventory:
@@ -229,54 +250,69 @@ class Correlator(object):
         self.options['combinations'] = calc_cross_combis(st)
         return st
 
-    def _generate_data(self, taper: bool) -> Stream:
+    def _generate_data(self) -> Stream:
         """
         Returns an Iterator that loops over each start and end time with the
         requested window length.
 
-        :param taper: If true, the time windows will be tapered on both ends.
-            Also will lead to the time windows being prolonged by the sum of
-            the length of the tapered end, so that no data is lost. Always
-            a hann taper so far. Taper length is 5% of the requested time
-            window on each side.
-        :type taper: bool
+        If self.options['taper'] true, the time windows will be tapered on both
+        ends.
+        Also will lead to the time windows being prolonged by the sum of
+        the length of the tapered end, so that no data is lost. Always
+        a hann taper so far. Taper length is 5% of the requested time
+        window on each side.
+
         :yield: An obspy stream containing the time window x for all stations
         that were active during this time.
         :rtype: Iterator[Stream]
         """
         opt = self.options['subdivision']
-        starts = []  # start of each time window
-        ends = []
-        for ndb in self.noisedbs:
-            start, end = ndb.get_active_times()
-            starts.append(start)
-            ends.append(end)
+        if self.rank == 0:
+            starts = []  # start of each time window
+            ends = []
+            for ndb in self.noisedbs:
+                start, end = ndb.get_active_times()
+                starts.append(start)
+                ends.append(end)
+
         # the time window that the loop will go over
         t0 = UTCDateTime(self.options['read_start']).timestamp
         t1 = UTCDateTime(self.options['read_end']).timestamp
-        loop_window = np.arange(t0, t1, opt['corr_inc'])
-        if taper:
+        loop_window = np.arange(t0, t1, self.options['read_inc'])
+        if self.options['taper']:
             corr_len = opt['corr_len']/.9
+            # Additional data that have to be read at each end
+            delta = opt['corr_len']*.05
         else:
             corr_len = opt['corr_len']
+            delta = 0
         for t in loop_window:
-            st = Stream()
-            startt = UTCDateTime(t)
-            endt = startt + corr_len
-            for ii, ndb in enumerate(self.noisedbs):
-                # Skip if time window is not available for this station
-                # Note that this will return shorter time windows if
-                # the requested time is only partly available
-                if endt < starts[ii] or startt > ends[ii]:
-                    continue
-                st.extend(ndb.get_time_window(start, endt))
+            if self.rank == 0:
+                st = Stream()
+                startt = UTCDateTime(t)
+                endt = startt + self.options['read_len']
+                for ii, ndb in enumerate(self.noisedbs):
+                    # Skip if time window is not available for this station
+                    # Note that this will return shorter time windows if
+                    # the requested time is only partly available
+                    if endt < starts[ii] or startt > ends[ii]:
+                        continue
+                    st.extend(ndb.get_time_window(startt-delta, endt+delta))
+            else:
+                st = None
+            st = self.comm.bcast(st, root=0)
             if st.count() == 0:
                 # No time available at none of the stations
                 continue
-            self.options['combinations'] = calc_cross_combis(st)
-            if taper:
-                st.taper(max_percentage=0.05)
-            yield st
+            # Second loop to return the time window in correlation length
+            for win in st.slide(
+                    corr_len, opt['corr_inc'], include_partial_windows=True):
+                if self.options['taper']:
+                    # This could be done in the main script with several cores
+                    # to speed up things a tiny bit
+                    win.taper(max_percentage=0.05)
+                self.options['combinations'] = calc_cross_combis(st)
+                yield win
 
     def _pxcorr_matrix(self, A: np.ndarray):
         # time domain processing
@@ -326,6 +362,8 @@ class Correlator(object):
             # not only within the miic framework)
             func = func_from_str(proc['function'])
             B[:, ind] = func(B[:, ind], proc['args'], params)
+        # test
+        # B = np.nan_to_num(B)
 
         ######################################
         # collect results
@@ -388,6 +426,7 @@ class Correlator(object):
             #
 
             tmp = np.fft.irfft(M, axis=0).real
+
             # cut the center and do fftshift
             C[:, ii] = np.concatenate(
                 (tmp[-sampleToSave:], tmp[:sampleToSave+1]))/norm
