@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 4th May 2021 04:15:47 pm
+Last Modified: Wednesday, 5th May 2021 02:04:56 pm
 '''
 from copy import deepcopy
 import os
@@ -115,22 +115,20 @@ class Correlator(object):
         else:
             inv = None
         inv = self.comm.bcast(inv, root=0)
-        for st in self._generate_data():
+        for st, write_flag in self._generate_data():
             cst.extend(self._pxcorr_inner(st, inv))
-        # The datasets are so small that it's probably ok to write everything
-        # at once
-        # There should be an option to stack before writing maybe?
-        # Write correlations to HDF5
-        self._write(cst)
+            if write_flag:
+                # Here, we can recombine the correlations for the read_len
+                # size (i.e., stack)
+                # Write correlations to HDF5
+                self._write(cst)
 
     def _pxcorr_inner(self, st: Stream, inv: Inventory):
         """
         Inner loop of pxcorr. Don't call this function!
         """
-        # Maybe here we have to ensure that all traces have the same length
         # We start out by moving the stream into a matrix
-        # st = self._all_data_to_stream()
-        # x = time()
+        # Advantage of only doing this on rank 0?
         if self.rank == 0:
             # put all the data into a single stream
             starttime = []
@@ -140,7 +138,7 @@ class Correlator(object):
                 npts.append(tr.stats['npts'])
             npts = np.max(np.array(npts))
             # create numpy array - Do a QR detrend here?
-            A = st_to_np_array(st)
+            A, st = st_to_np_array(st, npts)
             # A = qr_detrend(A)
             # detrend is done earlier now
             As = A.shape
@@ -151,7 +149,7 @@ class Correlator(object):
         # del st  # save some memory
         starttime = self.comm.bcast(starttime, root=0)
         npts = self.comm.bcast(npts, root=0)
-        # self.comm.Bcast([npts, MPI.INT], root=0)
+        st = self.comm.bcast(st, root=0)
 
         # Tell the other processes the shape of A
         As = self.comm.bcast(As, root=0)
@@ -162,14 +160,11 @@ class Correlator(object):
         self.options.update(
             {'starttime': starttime,
                 'sampling_rate': self.sampling_rate})
-        # print('Setting up and bcasting parameters: ', time()-x)
-        # x = time()
+
         A, startlags = self._pxcorr_matrix(A)
-        # print('Actual Correlation: ', time()-x)
+
         # put trace into a stream
         cst = CorrStream()
-        # inv = self._get_inventory()
-        # x = time()
         for ii, (startlag, comb) in enumerate(
                 zip(startlags, self.options['combinations'])):
             endlag = startlag + len(A[:, ii])/self.options['sampling_rate']
@@ -178,7 +173,6 @@ class Correlator(object):
                     A[:, ii], header1=st[comb[0]].stats,
                     header2=st[comb[1]].stats, inv=inv, start_lag=startlag,
                     end_lag=endlag))
-        # print('Organising alist: ', time()-x)
         return cst
 
     def _write(self, cst):
@@ -279,6 +273,9 @@ class Correlator(object):
         t0 = UTCDateTime(self.options['read_start']).timestamp
         t1 = UTCDateTime(self.options['read_end']).timestamp
         loop_window = np.arange(t0, t1, self.options['read_inc'])
+        # if loop_window[-1] != t1:
+        #     loop_window = np.append(loop_window, t1)
+        print(loop_window)
         if self.options['taper']:
             corr_len = opt['corr_len']/.9
             # Additional data that have to be read at each end
@@ -286,7 +283,9 @@ class Correlator(object):
         else:
             corr_len = opt['corr_len']
             delta = 0
+
         for t in loop_window:
+            write_flag = True  # Write length is same as read length
             if self.rank == 0:
                 st = Stream()
                 startt = UTCDateTime(t)
@@ -312,7 +311,8 @@ class Correlator(object):
                     # to speed up things a tiny bit
                     win.taper(max_percentage=0.05)
                 self.options['combinations'] = calc_cross_combis(st)
-                yield win
+                yield win, write_flag
+                write_flag = False
 
     def _pxcorr_matrix(self, A: np.ndarray):
         # time domain processing
@@ -334,9 +334,10 @@ class Correlator(object):
             if 'Processing' not in key:
                 params.update({key: corr_args[key]})
         params['sampling_rate'] = self.sampling_rate
-        # This is already done before
-        # for proc in self.options['TDpreProcessing']:
-        #     A[:, ind] = proc['function'](A[:, ind], proc['args'], params)
+        # The steps that aren't done before
+        for proc in corr_args['TDpreProcessing']:
+            func = func_from_str(proc['function'])
+            A[:, ind] = func(A[:, ind], proc['args'], params)
         # zero-padding
         A = zeroPadding(A, {'type': 'avoidWrapPowerTwo'}, params)
 
@@ -348,6 +349,8 @@ class Correlator(object):
         B = np.zeros((fftsize, ntrc), dtype=complex)
 
         B[:, ind] = np.fft.rfft(A[:, ind], axis=0)
+        # if np.argwhere(np.isnan(B)).size:
+        #     print('B Contains NaNs')
         # B[ind, :] = np.fft.rfft(A[ind, :], axis=1)  # Should axis be =1?
         freqs = rfftfreq(zmsize[0], 1./self.sampling_rate)
 
@@ -362,8 +365,6 @@ class Correlator(object):
             # not only within the miic framework)
             func = func_from_str(proc['function'])
             B[:, ind] = func(B[:, ind], proc['args'], params)
-        # test
-        # B = np.nan_to_num(B)
 
         ######################################
         # collect results
@@ -377,7 +378,7 @@ class Correlator(object):
         sampleToSave = int(
             np.ceil(
                 corr_args['lengthToSave'] * self.sampling_rate))
-        C = np.zeros((sampleToSave*2+1, csize), dtype=np.float64)
+        C = np.zeros((sampleToSave*2+1, csize), dtype=complex)  # np.float64
 
         # center = irfftsize // 2
 
@@ -432,6 +433,8 @@ class Correlator(object):
                 (tmp[-sampleToSave:], tmp[:sampleToSave+1]))/norm
             startlags[ii] = - sampleToSave / self.sampling_rate \
                 - roffset
+            if abs(C.imag).sum():
+                print('complex values in C')
 
         ######################################
         # time domain postProcessing
@@ -444,14 +447,18 @@ class Correlator(object):
         return (C, startlags)
 
 
-def st_to_np_array(st: Stream) -> np.ndarray:
-    st.sort(keys=['npts'])
+def st_to_np_array(st: Stream, npts: int) -> np.ndarray:
+    # st.sort(keys=['npts'])
     # A = np.zeros((st.count(), st[-1].stats.npts), dtype=np.float32)
-    A = np.zeros((st[-1].stats.npts, st.count()), dtype=np.float32)
+    A = np.zeros((npts, st.count()), dtype=np.float32)
     for ii, tr in enumerate(st):
         # A[ii, :tr.stats.npts] = tr.data
         A[:tr.stats.npts, ii] = tr.data
-    return A
+        del tr.data  # Not needed any more, just uses up RAM
+    # Transferring the trace data to this array introduces NaNs?
+    # I don't really understand why. Should find out. For now, set them to 0
+    A = np.nan_to_num(A)
+    return A, st
 
 
 def zeroPadding(A: np.ndarray, args: dict, params: dict) -> np.ndarray:

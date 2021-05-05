@@ -9,7 +9,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Wednesday, 28th April 2021 03:53:51 pm
+Last Modified: Wednesday, 5th May 2021 01:51:14 pm
 '''
 import fnmatch
 import os
