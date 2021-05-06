@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Monday, 3rd May 2021 01:23:51 pm
+Last Modified: Thursday, 6th May 2021 09:39:25 am
 '''
 
 from glob import glob
@@ -44,7 +44,6 @@ class NoiseDB(object):
             self.param = ds.auxiliary_data.PreprocessingParameters.\
                 param.parameters
 
-        self.filter = self.param["filter"]
         self.sampling_rate = self.param["sampling_rate"]
         self.station = station
         self.network = network
@@ -63,7 +62,7 @@ class NoiseDB(object):
         :rtype: Preprocessor
         """
         kwargs = {
-            'store_client': store_client, 'filter': self.filter,
+            'store_client': store_client,
             'sampling_rate': self.sampling_rate,
             'outfolder': os.path.dirname(self.loc),
             '_ex_times': self.get_active_times()}
@@ -74,7 +73,7 @@ class NoiseDB(object):
         starttime: UTCDateTime or None = None,
         endtime: UTCDateTime or None = None, save_spectrum: bool = True,
         norm: str or None = None, norm_method: str = None, title: str = None,
-            outfile: str = None, fmt: str = 'pdf', dpi: str = 300):
+            outfile: str = None, fmt: str = 'pdf', dpi: int = 300):
         """
         Plots a spectral time series of the data in the requested time window.
         The computation is done by employing welch windows with an arbitrary

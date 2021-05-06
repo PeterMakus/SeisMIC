@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 5th May 2021 02:04:56 pm
+Last Modified: Thursday, 6th May 2021 11:38:24 am
 '''
 from copy import deepcopy
 import os
@@ -79,7 +79,9 @@ class Correlator(object):
         self.statlist = []
         for net, stat in zip(network, station):
             if '*' in network+station or '?' in net+stat:
-                net, stat = get_available_stations(options['dir'], net, stat)
+                net, stat = get_available_stations(
+                    os.path.join(self.proj_dir, options['prepro_subdir']),
+                    net, stat)
                 self.netlist.extend(net)
                 self.statlist.extend(stat)
             else:
@@ -122,6 +124,8 @@ class Correlator(object):
                 # size (i.e., stack)
                 # Write correlations to HDF5
                 self._write(cst)
+        # write the remaining data
+        self._write(cst)
 
     def _pxcorr_inner(self, st: Stream, inv: Inventory):
         """
@@ -275,7 +279,6 @@ class Correlator(object):
         loop_window = np.arange(t0, t1, self.options['read_inc'])
         # if loop_window[-1] != t1:
         #     loop_window = np.append(loop_window, t1)
-        print(loop_window)
         if self.options['taper']:
             corr_len = opt['corr_len']/.9
             # Additional data that have to be read at each end
@@ -349,8 +352,7 @@ class Correlator(object):
         B = np.zeros((fftsize, ntrc), dtype=complex)
 
         B[:, ind] = np.fft.rfft(A[:, ind], axis=0)
-        # if np.argwhere(np.isnan(B)).size:
-        #     print('B Contains NaNs')
+
         # B[ind, :] = np.fft.rfft(A[ind, :], axis=1)  # Should axis be =1?
         freqs = rfftfreq(zmsize[0], 1./self.sampling_rate)
 
@@ -433,8 +435,6 @@ class Correlator(object):
                 (tmp[-sampleToSave:], tmp[:sampleToSave+1]))/norm
             startlags[ii] = - sampleToSave / self.sampling_rate \
                 - roffset
-            if abs(C.imag).sum():
-                print('complex values in C')
 
         ######################################
         # time domain postProcessing

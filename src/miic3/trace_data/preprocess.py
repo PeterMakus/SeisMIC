@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Tuesday, 4th May 2021 12:28:59 pm
+Last Modified: Thursday, 6th May 2021 12:06:46 pm
 '''
 from collections import namedtuple
 from glob import glob
@@ -49,8 +49,7 @@ class Preprocessor(object):
 
     """
     def __init__(
-        self, store_client: Store_Client, filter: tuple,
-        sampling_rate: float, outfolder: str,
+        self, store_client: Store_Client, sampling_rate: float, outfolder: str,
             _ex_times: tuple = None) -> None:
         """
         Create the Preprocesser object.
@@ -81,22 +80,20 @@ class Preprocessor(object):
             sampling frequency than the one defined will be discarded!
         """
         super().__init__()
-        assert sampling_rate/2 > filter[1], \
-            "The highcut frequency of the filter has to be lower than the \
-                Nyquist frequency (sampling frequency/2) of the signal to \
-                    prevent aliasing. Current Nyquist frequency is: %s."\
-                         % str(sampling_rate/2)
+        # assert sampling_rate/2 > filter[1], \
+        #     "The highcut frequency of the filter has to be lower than the \
+        #         Nyquist frequency (sampling frequency/2) of the signal to \
+        #             prevent aliasing. Current Nyquist frequency is: %s."\
+        #                  % str(sampling_rate/2)
         self.store_client = store_client
         # Probably importannt to save the filter and perhaps also the
         # sampling frequency in the asdf file, so one can perhaps start a
         # Preprocessor by giving the file as parameter.
-        self.filter = Filter(filter[0], filter[1])
         self.sampling_rate = sampling_rate
         self.outloc = os.path.join(store_client.sds_root, outfolder)
 
         # Create preprocessing parameter dict
         self.param = {
-            "filter": self.filter,
             "sampling_rate": self.sampling_rate,
             "outfolder": self.outloc}
 
@@ -269,13 +266,15 @@ class Preprocessor(object):
         # held in RAM.
         starttimes = []
         endtimes = []
+        # Bit that needs to be added on each side for the extra taper
+        delta = 3600*0.05
         for starttime, endtime in zip(req_start, req_end):
-            if endtime-starttime > 24*3600:
+            if endtime-starttime > 24*3600+2*delta:
                 while starttime < endtime:
-                    starttimes.append(starttime+1)
+                    starttimes.append(starttime-delta)
                     # Skip two seconds, so the same file is not loaded twice
                     starttime = starttime+24*3600
-                    endtimes.append(starttime-1)
+                    endtimes.append(starttime+delta)
             else:
                 starttimes.append(starttime)
                 endtimes.append(endtime)
@@ -291,14 +290,29 @@ class Preprocessor(object):
             st_raw = self.store_client.get_waveforms(
                 network, station, location, channel, starttime, endtime,
                 _check_times=_check_times)
+            st_raw.sort()
 
             st_proc = Stream()
-            for st in st_raw.slide(
-                chunk_len, chunk_len,
-                    include_partial_windows=True):
+            # Devide chunk_len by .9 to compensate for the taper in response
+            # removal
+            for ii, st in enumerate(st_raw.slide(
+                chunk_len/.9, chunk_len,
+                    include_partial_windows=True)):
                 try:
                     st, resp = self._preprocess(
                         st, self.store_client.inventory)
+                    # Cut the tapered parts off again
+                    delta = (st[0].stats.endtime-st[0].stats.starttime)*0.05
+                    # if st[0].stats.starttime == st_raw[0].stats.starttime:
+                    #     st.trim(
+                    #         starttime=st[0].stats.starttime,
+                    #         endtime=st[0].stats.endtime-2*delta)
+                    # elif st[0].stats.endtime == st_raw[-1].stats.endtime:
+                    #     continue
+                    # else:
+                    st.trim(
+                        starttime=st[0].stats.starttime+delta,
+                        endtime=st[0].stats.endtime-delta)
                     st_proc.extend(st)
                 except FrequencyError as e:
                     warn(e + ' Trace is skipped.')
@@ -358,8 +372,8 @@ class Preprocessor(object):
             raise FrequencyError(
                 'The new sample rate (%sHz) is higher than the trace\'s native\
             sample rate (%s Hz).' % (
-                    str(self.filter.highcut), str(
-                        st[0].stats.sampling_rate/2)))
+                    str(self.sampling_rate), str(
+                        st[0].stats.sampling_rate)))
 
         st.filter('lowpass_cheby_2', freq=(self.sampling_rate/2)*.9)
         # Downsample
@@ -388,7 +402,6 @@ class Preprocessor(object):
             # now,
             # Save some space by changing it back to 32 bit (most of the
             # digitizers work at 24 bit anyways)
-            # 30/04/21 remove first sample so it's not twice in data
             tr.data = np.require(tr.data, np.float32)
         try:
             return st, ninv

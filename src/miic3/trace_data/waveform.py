@@ -175,7 +175,9 @@ class Store_Client(object):
             os.path.join(
                 self.sds_root, dirlist[-1], network, station, '*', '*'))]
         endjul.sort()
-        endtime = UTCDateTime(year=int(dirlist[-1]), julday=endjul[-1])
+        # This is of course not the latest endtime, but the latest starttime!
+        # Hence, add + 1 (PM 06/05/21)
+        endtime = UTCDateTime(year=int(dirlist[-1]), julday=int(endjul[-1])+1)
         return (starttime, endtime)
 
     def _load_remote(self, network, station, location, channel, starttime,
