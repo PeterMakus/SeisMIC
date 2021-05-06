@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Thursday, 6th May 2021 12:06:46 pm
+Last Modified: Thursday, 6th May 2021 02:28:43 pm
 '''
 from collections import namedtuple
 from glob import glob
@@ -267,7 +267,7 @@ class Preprocessor(object):
         starttimes = []
         endtimes = []
         # Bit that needs to be added on each side for the extra taper
-        delta = 3600*0.05
+        delta = 0 # 3600*0.05
         for starttime, endtime in zip(req_start, req_end):
             if endtime-starttime > 24*3600+2*delta:
                 while starttime < endtime:
@@ -283,46 +283,49 @@ class Preprocessor(object):
         # One hour is pretty close to the optimal length
         # chunk_len = next_fast_len(chunk_len) are identical
 
-        # for starttime, endtime in zip(starttimes, endtimes):
         for starttime, endtime in zip(starttimes, endtimes):
-            # Return obspy stream with data from this station if the data
-            # does not already exist
-            st_raw = self.store_client.get_waveforms(
+            # st_proc = Stream()
+            st = self.store_client.get_waveforms(
                 network, station, location, channel, starttime, endtime,
                 _check_times=_check_times)
-            st_raw.sort()
+            try:
+                st, resp = self._preprocess(
+                    st, self.store_client.inventory)
+            except FrequencyError as e:
+                warn(e + ' Trace is skipped.')
+                continue
+        # for starttime, endtime in zip(starttimes, endtimes):
+        #     # Return obspy stream with data from this station if the data
+        #     # does not already exist
+        #     st_raw = self.store_client.get_waveforms(
+        #         network, station, location, channel, starttime, endtime,
+        #         _check_times=_check_times)
+        #     st_raw.sort()
 
-            st_proc = Stream()
-            # Devide chunk_len by .9 to compensate for the taper in response
-            # removal
-            for ii, st in enumerate(st_raw.slide(
-                chunk_len/.9, chunk_len,
-                    include_partial_windows=True)):
-                try:
-                    st, resp = self._preprocess(
-                        st, self.store_client.inventory)
-                    # Cut the tapered parts off again
-                    delta = (st[0].stats.endtime-st[0].stats.starttime)*0.05
-                    # if st[0].stats.starttime == st_raw[0].stats.starttime:
-                    #     st.trim(
-                    #         starttime=st[0].stats.starttime,
-                    #         endtime=st[0].stats.endtime-2*delta)
-                    # elif st[0].stats.endtime == st_raw[-1].stats.endtime:
-                    #     continue
-                    # else:
-                    st.trim(
-                        starttime=st[0].stats.starttime+delta,
-                        endtime=st[0].stats.endtime-delta)
-                    st_proc.extend(st)
-                except FrequencyError as e:
-                    warn(e + ' Trace is skipped.')
-                    continue
+        #     st_proc = Stream()
+        #     # Devide chunk_len by .9 to compensate for the taper in response
+        #     # removal
+        #     for st in st_raw.slide(
+        #         chunk_len/.9, chunk_len,
+        #             include_partial_windows=True):
+        #         try:
+        #             st, resp = self._preprocess(
+        #                 st, self.store_client.inventory)
+        #             # Cut the tapered parts off again
+        #             delta = (st[0].stats.endtime-st[0].stats.starttime)*0.05
+        #             st.trim(
+        #                 starttime=st[0].stats.starttime+delta,
+        #                 endtime=st[0].stats.endtime-delta)
+        #             st_proc.extend(st)
+        #         except FrequencyError as e:
+        #             warn(e + ' Trace is skipped.')
+        #             continue
 
             # Create folder if it does not exist
             os.makedirs(self.outloc, exist_ok=True)
 
             with ASDFDataSet(outfile, mpi=False) as ds:
-                ds.add_waveforms(st_proc, tag='processed')
+                ds.add_waveforms(st, tag='processed')  # st_proc
 
         with ASDFDataSet(outfile, mpi=False) as ds:
             # Save some processing values as auxiliary data
