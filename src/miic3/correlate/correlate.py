@@ -7,9 +7,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 6th May 2021 11:38:24 am
+Last Modified: Monday, 10th May 2021 04:41:16 pm
 '''
 from copy import deepcopy
+from ctypes import string_at
 import os
 from time import time
 
@@ -123,9 +124,20 @@ class Correlator(object):
                 # Here, we can recombine the correlations for the read_len
                 # size (i.e., stack)
                 # Write correlations to HDF5
-                self._write(cst)
+                if self.options['subdivision']['recombine_subdivision']:
+                    stack = cst.stack(regard_location=False)
+                    print(len(stack))
+                    #self._write(stack, 'recombined')
+                if self.options['subdivision']['delete_subdivision']:
+                    cst.clear()
+                else:
+                    self._write(cst, tag='subdivision')
+
         # write the remaining data
-        self._write(cst)
+        # if self.options['subdivision']['recombine_subdivision']:
+        #     self._write(cst.stack(regard_location=False), 'recombined')
+        if not self.options['subdivision']['delete_subdivision']:
+            self._write(cst, tag='subdivision')
 
     def _pxcorr_inner(self, st: Stream, inv: Inventory):
         """
@@ -179,7 +191,7 @@ class Correlator(object):
                     end_lag=endlag))
         return cst
 
-    def _write(self, cst):
+    def _write(self, cst, tag: str):
         """
         Write correlation stream to files.
 
@@ -213,7 +225,7 @@ class Correlator(object):
                     cstlist[ii][0].stats.network,
                     cstlist[ii][0].stats.station))
             with CorrelationDataBase(outf) as cdb:
-                cdb.add_correlation(cstlist[ii])
+                cdb.add_correlation(cstlist[ii], tag)
 
     def _get_inventory(self) -> Inventory:
         """

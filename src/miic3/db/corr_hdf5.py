@@ -9,7 +9,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Monday, 10th May 2021 10:23:04 am
+Last Modified: Monday, 10th May 2021 03:16:39 pm
 '''
 import fnmatch
 import os
@@ -24,8 +24,7 @@ import h5py
 
 from miic3.correlate.stream import CorrStream, CorrTrace
 
-base_path = '/corr_data'
-hierarchy = base_path + "/{network}/{station}/{channel}/{corr_st}/{corr_et}"
+hierarchy = "/{tag}/{network}/{station}/{channel}/{corr_st}/{corr_et}"
 h5_FMTSTR = os.path.join("{dir}", "{network}.{station}.h5")
 
 
@@ -96,7 +95,8 @@ class DBHandler(h5py.File):
     def _close(self):
         self.close()
 
-    def add_correlation(self, data: CorrTrace or CorrStream):
+    def add_correlation(
+            self, data: CorrTrace or CorrStream, tag='subdivision'):
         """
         Add correlation data to the hdf5 file. Can be accessed using the
         :func:`~miic3.db.corr_hdf5.DBHandler.get_data()` method.
@@ -122,6 +122,7 @@ class DBHandler(h5py.File):
         for tr in data:
             st = tr.stats
             path = hierarchy.format(
+                tag=tag,
                 network=st.network, station=st.station, channel=st.channel,
                 corr_st=st.corr_start.format_fissures(),
                 corr_et=st.corr_end.format_fissures())
@@ -136,7 +137,7 @@ class DBHandler(h5py.File):
                 omitted." % path, category=UserWarning)
 
     def get_data(
-        self, network: str, station: str, channel: str,
+        self, network: str, station: str, channel: str, tag: str,
         corr_start: UTCDateTime = None,
             corr_end: UTCDateTime = None) -> CorrStream:
         """
@@ -178,7 +179,7 @@ class DBHandler(h5py.File):
         else:
             corr_end = '*'
         path = hierarchy.format(
-            network=network, station=station, channel=channel,
+            tag=tag, network=network, station=station, channel=channel,
             corr_st=corr_start, corr_et=corr_end)
         # Extremely ugly way of changing the path
         if '*' not in path:
@@ -193,7 +194,7 @@ class DBHandler(h5py.File):
                 if channel == '*':
                     if station == '*':
                         if network == '*':
-                            path = base_path
+                            path = tag
                         else:
                             path = '/'.join(path.split('/')[:-4])
                     else:
@@ -255,6 +256,8 @@ def read_hdf5_header(dataset) -> Stats:
     for key in attrs:
         if key in time_keys:
             header[key] = UTCDateTime(attrs[key])
+        elif key == 'processing':
+            header[key] = list(attrs[key])
         else:
             header[key] = attrs[key]
     return Stats(header)

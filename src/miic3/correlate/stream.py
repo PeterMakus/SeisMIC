@@ -7,11 +7,12 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Monday, 10th May 2021 02:01:02 pm
+Last Modified: Monday, 10th May 2021 05:08:11 pm
 '''
 import numpy as np
 from obspy import Stream, Trace, Inventory, UTCDateTime
 from obspy.core import Stats
+from obspy.core.util.misc import get_window_times
 
 from miic3.utils.miic_utils import trace_calc_az_baz_dist, inv_calc_az_baz_dist
 
@@ -31,6 +32,39 @@ class CorrStream(Stream):
                     raise TypeError('Traces have to be of type \
                         :class:`~miic3.correlate.correlate.CorrTrace`.')
                 self.traces.append(tr)
+
+    def __str__(self, extended=False):
+        """
+        Return short summary string of the current stream.
+
+        It will contain the number of Traces in the Stream and the return value
+        of each Trace's :meth:`~obspy.core.trace.Trace.__str__` method.
+
+        :type extended: bool, optional
+        :param extended: This method will show only 20 traces by default.
+            Enable this option to show all entries.
+
+        .. rubric:: Example
+
+        >>> stream = Stream([Trace(), Trace()])
+        >>> print(stream)  # doctest: +ELLIPSIS
+        2 Trace(s) in Stream:
+        ...
+        """
+        # get longest id
+        if self.traces:
+            id_length = self and max(len(tr.id) for tr in self) or 0
+        else:
+            id_length = 0
+        out = str(len(self.traces)) + ' Correlation(s) in Stream:\n'
+        if len(self.traces) <= 20 or extended is True:
+            out = out + "\n".join([_i.__str__(id_length) for _i in self])
+        else:
+            out = out + "\n" + self.traces[0].__str__() + "\n" + \
+                '...\n(%i other correlations)\n...\n' % (len(self.traces) - 2)\
+                + self.traces[-1].__str__() + '\n\n[Use "print(' + \
+                'Stream.__str__(extended=True))" to print all correlaitons]'
+        return out
 
     def stack(
         self, starttime: UTCDateTime = None, endtime: UTCDateTime = None,
@@ -79,8 +113,111 @@ class CorrStream(Stream):
         else:
             in_st = self
         for st in in_st.slide(
-                stack_len, stack_len, include_partial_windows=True):
+                stack_len, stack_len, include_partially_selected=True):
             outst.extend(stack_st_by_group(st, regard_location))
+        return outst
+
+    def slide(self, window_length, step,
+              include_partially_selected=True):
+        """
+        Generator yielding equal length sliding windows of the Stream.
+
+        Please keep in mind that it only returns a new view of the original
+        data. Any modifications are applied to the original data as well. If
+        you don't want this you have to create a copy of the yielded
+        windows. Also be aware that if you modify the original data and you
+        have overlapping windows, all following windows are affected as well.
+
+        Not all yielded windows must have the same number of traces. The
+        algorithm will determine the maximal temporal extents by analysing
+        all Traces and then creates windows based on these times.
+
+        .. rubric:: Example
+
+        >>> import obspy
+        >>> st = obspy.read()
+        >>> for windowed_st in st.slide(window_length=10.0, step=10.0):
+        ...     print(windowed_st)
+        ...     print("---")  # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+        3 Trace(s) in Stream:
+        ... | 2009-08-24T00:20:03.000000Z - 2009-08-24T00:20:13.000000Z | ...
+        ... | 2009-08-24T00:20:03.000000Z - 2009-08-24T00:20:13.000000Z | ...
+        ... | 2009-08-24T00:20:03.000000Z - 2009-08-24T00:20:13.000000Z | ...
+        ---
+        3 Trace(s) in Stream:
+        ... | 2009-08-24T00:20:13.000000Z - 2009-08-24T00:20:23.000000Z | ...
+        ... | 2009-08-24T00:20:13.000000Z - 2009-08-24T00:20:23.000000Z | ...
+        ... | 2009-08-24T00:20:13.000000Z - 2009-08-24T00:20:23.000000Z | ...
+
+
+        :param window_length: The length of each window in seconds.
+        :type window_length: float
+        :param step: The step between the start times of two successive
+            windows in seconds. Can be negative if an offset is given.
+        :type step: float
+        :param offset: The offset of the first window in seconds relative to
+            the start time of the whole interval.
+        :type offset: float
+        :param include_partial_windows: Determines if windows that are
+            shorter then 99.9 % of the desired length are returned.
+        :type include_partial_windows: bool
+        :param nearest_sample: If set to ``True``, the closest sample is
+            selected, if set to ``False``, the inner (next sample for a
+            start time border, previous sample for an end time border) sample
+            containing the time is selected. Defaults to ``True``.
+
+            Given the following trace containing 6 samples, "|" are the
+            sample points, "A" is the requested starttime::
+
+                |         |A        |         |       B |         |
+                1         2         3         4         5         6
+
+            ``nearest_sample=True`` will select samples 2-5,
+            ``nearest_sample=False`` will select samples 3-4 only.
+        :type nearest_sample: bool, optional
+        """
+        starttime = min(tr.stats.corr_start for tr in self)
+        endtime = max(tr.stats.corr_start for tr in self)
+        # windows = get_window_times(
+        #     starttime=starttime,
+        #     endtime=endtime,
+        #     window_length=window_length,
+        #     step=step,
+        #     offset=offset,
+        #     include_partial_windows=True)
+        windows = np.arange(
+            starttime.timestamp, endtime.timestamp+step, step)
+
+        if len(windows) < 1:
+            return
+
+        for start in windows:
+            start = UTCDateTime(start)
+            stop = start + window_length
+            temp = self.select_corr_time(
+                start, stop,
+                include_partially_selected=include_partially_selected)
+            # It might happen that there is a time frame where there are no
+            # windows, e.g. two traces separated by a large gap.
+            if not temp:
+                continue
+            yield temp
+
+    def select_corr_time(
+            self, starttime, endtime, include_partially_selected=True):
+        self.sort(keys=['corr_start'])
+        outst = CorrStream()
+        # the 2 seconds difference are to avoid accidental smoothing
+        if include_partially_selected:
+            for tr in self:
+                if tr.stats.corr_end > starttime and\
+                     tr.stats.corr_start < endtime:
+                    outst.append(tr)
+            return outst
+        for tr in self:
+            if tr.stats.corr_start > starttime and\
+                 tr.stats.corr_end < endtime:
+                outst.append(tr)
         return outst
 
 
@@ -151,6 +288,52 @@ class CorrTrace(Trace):
         #         st.station.count('.') > 0):
         #     st.network, st.station, st.location = st.station.split('.')[:3]
         # self._read_format_specific_header()
+
+    def __str__(self, id_length=None):
+        """
+        Return short summary string of the current trace.
+
+        :rtype: str
+        :return: Short summary string of the current trace containing the SEED
+            identifier, start time, end time, sampling rate and number of
+            points of the current trace.
+
+        .. rubric:: Example
+
+        >>> tr = Trace(header={'station':'FUR', 'network':'GR'})
+        >>> str(tr)  # doctest: +ELLIPSIS
+        'GR.FUR.. | 1970-01-01T00:00:00.000000Z - ... | 1.0 Hz, 0 samples'
+        """
+        # set fixed id width
+        if id_length:
+            out = "%%-%ds" % (id_length)
+            trace_id = out % self.id
+        else:
+            trace_id = "%s" % self.id
+        out = ''
+        # output depending on delta or sampling rate bigger than one
+        if self.stats.sampling_rate < 0.1:
+            if hasattr(self.stats, 'preview') and self.stats.preview:
+                out = out + ' | '\
+                    "%(corr_start)s - %(corr_end)s | " + \
+                    "%(delta).1f s, %(npts)d samples [preview]"
+            else:
+                out = out + ' | '\
+                    "%(corr_start)s - %(corr_end)s | " + \
+                    "%(delta).1f s, %(npts)d samples"
+        else:
+            if hasattr(self.stats, 'preview') and self.stats.preview:
+                out = out + ' | '\
+                    "%(corr_start)s - %(corr_end)s | " + \
+                    "%(sampling_rate).1f Hz, %(npts)d samples [preview]"
+            else:
+                out = out + ' | '\
+                    "%(corr_start)s - %(corr_end)s | " + \
+                    "%(sampling_rate).1f Hz, %(npts)d samples"
+        # check for masked array
+        if np.ma.count_masked(self.data):
+            out += ' (masked)'
+        return trace_id + out % (self.stats)
 
 
 def combine_stats(
@@ -333,9 +516,12 @@ def stack_st(st: CorrStream) -> CorrTrace:
     :rtype: CorrTrace
     """
     st.sort(keys=['corr_start'])
-    stats = st[0].stats
+    stats = st[0].stats.copy()
     stats['corr_end'] = st[-1].stats['corr_end']
-    A = np.empty((st.count(), st[0].stats.npts))
-    for ii, tr in enumerate(st):
-        A[ii, :] = tr.data
+    st.sort(keys=['npts'])
+    npts = st[-1].stats.npts
+    stack = []
+    for tr in st.select(npts=npts):
+        stack.append(tr.data)
+    A = np.array(stack)
     return CorrTrace(data=np.average(A, axis=0), _header=stats)

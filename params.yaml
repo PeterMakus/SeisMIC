@@ -83,10 +83,10 @@ co:
         # recombine these subdivisions
         # unused at the time
         # type: boolean
-        #recombine_subdivision : True
+        recombine_subdivision : True
         # delete
         # type: booblean
-        #delete_subdivisions : False
+        delete_subdivision : False
     # Taper the time windows with a 5% Hann taper on each side. If this is True,
     # the time windows will just simply be prolonged by the length of the taper,
     # so that no data is lost
