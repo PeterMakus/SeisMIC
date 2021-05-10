@@ -7,10 +7,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Monday, 3rd May 2021 04:47:58 pm
+Last Modified: Monday, 10th May 2021 02:01:02 pm
 '''
 import numpy as np
-from obspy import Stream, Trace, Inventory
+from obspy import Stream, Trace, Inventory, UTCDateTime
 from obspy.core import Stats
 
 from miic3.utils.miic_utils import trace_calc_az_baz_dist, inv_calc_az_baz_dist
@@ -31,6 +31,57 @@ class CorrStream(Stream):
                     raise TypeError('Traces have to be of type \
                         :class:`~miic3.correlate.correlate.CorrTrace`.')
                 self.traces.append(tr)
+
+    def stack(
+        self, starttime: UTCDateTime = None, endtime: UTCDateTime = None,
+            stack_len: int or str = 0, regard_location=True):
+        """
+        Average the data of all traces in the given time windows.
+        Will only stack data from the same network/channel/station combination.
+        Location codes will only optionally be regarded.
+
+        :param starttime: starttime of the stacking time windows. If None, the
+        earliest available is chosen, defaults to None
+        :type starttime: UTCDateTime, optional
+        :param endtime: endtime of the stacking time windows. If None, the
+        latest available is chosen,, defaults to None
+        :type endtime: UTCDateTime, optional
+        :param stack_len: Length of one stack. Is either a value in seconds,
+        the special option "daily" (creates 24h stacks that always start at
+        midnight), or 0 for a single stack over the whole time period,
+        defaults to 0
+        :type stack_len: intorstr, optional
+        :param regard_location: Don't stack correlations with varying location
+        code combinations, defaults to True
+        :type regard_location: bool, optional
+        :return: [description]
+        :rtype: :class`~miic3.correlate.stream.CorrStream`
+        """
+
+        # Seperate if there are different stations channel and or locations
+        # involved
+        if stack_len == 0:
+            return stack_st_by_group(self, regard_location)
+
+        # else
+        self.sort(keys=['corr_start'])
+        if not starttime:
+            starttime = self[0].stats.corr_start
+        if not endtime:
+            endtime = self[-1].stats.corr_end
+        outst = CorrStream()
+        if stack_len == 'daily':
+            starttime = UTCDateTime(year=starttime.year, day=starttime.day)
+            stack_len = 3600*24
+            st = self.slice(starttime=starttime, endtime=starttime+stack_len)
+            outst.extend(stack_st_by_group(st, regard_location))
+            in_st = self.slice(starttime=starttime+stack_len, endtime=endtime)
+        else:
+            in_st = self
+        for st in in_st.slide(
+                stack_len, stack_len, include_partial_windows=True):
+            outst.extend(stack_st_by_group(st, regard_location))
+        return outst
 
 
 class CorrTrace(Trace):
@@ -217,3 +268,74 @@ def combine_stats(
     stats['start_lag'] = start_lag
     stats['end_lag'] = end_lag
     return stats
+
+
+Compare_Str = "{network}.{station}.{channel}.{location}"
+Compare_Str_No_Loc = "{network}.{station}.{channel}"
+
+
+def compare_tr_id(tr0: Trace, tr1: Trace, regard_loc: bool = True) -> bool:
+    """
+    Check whether two traces are from the same channel, station, network, and,
+    optionally, location. Useful for stacking
+
+    :param tr0: first trace
+    :type tr0: :class:`~obspy.core.trace.Trace`
+    :param tr1: second trace
+    :type tr1: :class:`~obspy.core.trace.Trace`
+    :param regard_loc: Regard the location code or not
+    :type regard_loc: bool
+    :return: Bool whether the two are from the same (True) or not (False)
+    :rtype: bool
+    """
+    if regard_loc:
+        return Compare_Str.format(**tr0.stats)\
+             == Compare_Str.format(**tr1.stats)
+    else:
+        return Compare_Str_No_Loc.format(**tr0.stats)\
+             == Compare_Str_No_Loc.format(**tr1.stats)
+
+
+def stack_st_by_group(st: Stream, regard_loc: bool) -> CorrStream:
+    """
+    Stack all traces that belong to the same network, station, channel, and
+    (optionally) location combination in the input stream.
+
+    :param st: input Stream
+    :type st: Stream
+    :param regard_loc: Seperate data with different location code
+    :type regard_loc: bool
+    :return: :class:`~miic3.correlate.stream.CorrStream`
+    :rtype: CorrStream
+    """
+    stackst = CorrStream()
+    ctr = st[0]
+    stackst.append(stack_st(st.select(
+                ctr.stats.network, ctr.stats.station,
+                ctr.stats.location, ctr.stats.channel)))
+    for tr in st:
+        if not compare_tr_id(ctr, tr, regard_loc):
+            stackst.append(stack_st(st.select(
+                tr.stats.network, tr.stats.station,
+                tr.stats.location, tr.stats.channel)))
+            ctr = tr
+    return stackst
+
+
+def stack_st(st: CorrStream) -> CorrTrace:
+    """
+    Returns an average of the data of all traces in the stream. Also adjusts
+    the corr_start and corr_end parameters in the header.
+
+    :param st: input Stream
+    :type st: CorrStream
+    :return: Single trace with stacked data
+    :rtype: CorrTrace
+    """
+    st.sort(keys=['corr_start'])
+    stats = st[0].stats
+    stats['corr_end'] = st[-1].stats['corr_end']
+    A = np.empty((st.count(), st[0].stats.npts))
+    for ii, tr in enumerate(st):
+        A[ii, :] = tr.data
+    return CorrTrace(data=np.average(A, axis=0), _header=stats)

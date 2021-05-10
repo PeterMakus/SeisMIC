@@ -9,7 +9,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Wednesday, 5th May 2021 01:51:14 pm
+Last Modified: Monday, 10th May 2021 10:23:04 am
 '''
 import fnmatch
 import os
@@ -250,7 +250,7 @@ def convert_header_to_hdf5(dataset, header):
 
 def read_hdf5_header(dataset) -> Stats:
     attrs = dataset.attrs
-    time_keys = ['starttime', 'endtime', 'start_corr_time', 'end_corr_time']
+    time_keys = ['starttime', 'endtime', 'corr_start', 'corr_end']
     header = {}
     for key in attrs:
         if key in time_keys:
