@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 11th May 2021 03:59:14 pm
+Last Modified: Wednesday, 12th May 2021 04:31:57 pm
 '''
 from copy import deepcopy
 from ctypes import string_at
@@ -142,6 +142,7 @@ class Correlator(object):
         """
         Inner loop of pxcorr. Don't call this function!
         """
+            
         # We start out by moving the stream into a matrix
         # Advantage of only doing this on rank 0?
         if self.rank == 0:
@@ -154,9 +155,6 @@ class Correlator(object):
             npts = np.max(np.array(npts))
             # create numpy array - Do a QR detrend here?
             A, st = st_to_np_array(st, npts)
-            # np.save('/home/pm/Documents/PhD/testdata/A', A)
-            # print(starttime)
-            # np.kratzab
             # A = qr_detrend(A)
             # detrend is done earlier now
             As = A.shape
@@ -180,9 +178,8 @@ class Correlator(object):
                 'sampling_rate': self.sampling_rate})
 
         A, startlags = self._pxcorr_matrix(A)
-        np.save('/home/pm/Documents/PhD/testdata/A', A)
-            # print(starttime)
-        np.kratzab
+        # np.save('/home/pm/Documents/PhD/testdata/A', A)
+        # np.kratzab
 
         # put trace into a stream
         cst = CorrStream()
@@ -317,6 +314,13 @@ class Correlator(object):
                     if endt < starts[ii] or startt > ends[ii]:
                         continue
                     st.extend(ndb.get_time_window(startt, endt))
+                # preprocessing on stream basis
+                # Maybe a bad place to do that? 
+                st = st.split()  # remove masked data
+                if 'filter' in self.options['preProcessing'].keys():
+                    kwargs = self.options['preProcessing']['filter']['kwargs']
+                    st.filter(**kwargs)
+                st.merge()  # Else it messes with the indexing
             else:
                 st = None
             st = self.comm.bcast(st, root=0)
@@ -325,7 +329,7 @@ class Correlator(object):
                 continue
             # Second loop to return the time window in correlation length
             for win in st.slide(
-                opt['corr_len'], opt['corr_inc'],
+                opt['corr_len']-st[0].stats.delta, opt['corr_inc'],
                     include_partial_windows=True):
                 if self.options['taper']:
                     # This could be done in the main script with several cores
