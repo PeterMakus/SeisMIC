@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 10th May 2021 04:41:16 pm
+Last Modified: Tuesday, 11th May 2021 03:59:14 pm
 '''
 from copy import deepcopy
 from ctypes import string_at
@@ -126,16 +126,15 @@ class Correlator(object):
                 # Write correlations to HDF5
                 if self.options['subdivision']['recombine_subdivision']:
                     stack = cst.stack(regard_location=False)
-                    print(len(stack))
-                    #self._write(stack, 'recombined')
+                    self._write(stack, 'recombined')
                 if self.options['subdivision']['delete_subdivision']:
                     cst.clear()
                 else:
                     self._write(cst, tag='subdivision')
 
         # write the remaining data
-        # if self.options['subdivision']['recombine_subdivision']:
-        #     self._write(cst.stack(regard_location=False), 'recombined')
+        if self.options['subdivision']['recombine_subdivision']:
+            self._write(cst.stack(regard_location=False), 'recombined')
         if not self.options['subdivision']['delete_subdivision']:
             self._write(cst, tag='subdivision')
 
@@ -155,6 +154,9 @@ class Correlator(object):
             npts = np.max(np.array(npts))
             # create numpy array - Do a QR detrend here?
             A, st = st_to_np_array(st, npts)
+            # np.save('/home/pm/Documents/PhD/testdata/A', A)
+            # print(starttime)
+            # np.kratzab
             # A = qr_detrend(A)
             # detrend is done earlier now
             As = A.shape
@@ -178,6 +180,9 @@ class Correlator(object):
                 'sampling_rate': self.sampling_rate})
 
         A, startlags = self._pxcorr_matrix(A)
+        np.save('/home/pm/Documents/PhD/testdata/A', A)
+            # print(starttime)
+        np.kratzab
 
         # put trace into a stream
         cst = CorrStream()
@@ -291,13 +296,13 @@ class Correlator(object):
         loop_window = np.arange(t0, t1, self.options['read_inc'])
         # if loop_window[-1] != t1:
         #     loop_window = np.append(loop_window, t1)
-        if self.options['taper']:
-            corr_len = opt['corr_len']/.9
-            # Additional data that have to be read at each end
-            delta = opt['corr_len']*.05
-        else:
-            corr_len = opt['corr_len']
-            delta = 0
+        # if self.options['taper']:
+        #     corr_len = opt['corr_len']/.9
+        #     # Additional data that have to be read at each end
+        #     delta = opt['corr_len']*.05
+        # else:
+        #     corr_len = opt['corr_len']
+        #     delta = 0
 
         for t in loop_window:
             write_flag = True  # Write length is same as read length
@@ -311,7 +316,7 @@ class Correlator(object):
                     # the requested time is only partly available
                     if endt < starts[ii] or startt > ends[ii]:
                         continue
-                    st.extend(ndb.get_time_window(startt-delta, endt+delta))
+                    st.extend(ndb.get_time_window(startt, endt))
             else:
                 st = None
             st = self.comm.bcast(st, root=0)
@@ -320,7 +325,8 @@ class Correlator(object):
                 continue
             # Second loop to return the time window in correlation length
             for win in st.slide(
-                    corr_len, opt['corr_inc'], include_partial_windows=True):
+                opt['corr_len'], opt['corr_inc'],
+                    include_partial_windows=True):
                 if self.options['taper']:
                     # This could be done in the main script with several cores
                     # to speed up things a tiny bit

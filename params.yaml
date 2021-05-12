@@ -6,7 +6,7 @@ log_subdir : 'log'
 # folder for figures
 fig_subdir : 'figures'
 # folder containing preprocessed data
-prepro_subdir: 'testnb_preprocessed_wir'
+prepro_subdir: 'testnb_preprocessed_ndt'
 
 
 #### parameters that are network specific
@@ -30,7 +30,7 @@ net:
 co:
     # subdirectory of 'proj_dir' to store correlation
     # type: string
-    subdir : 'corr_wir'
+    subdir : 'corr_ndt'
     # times sequences to read for cliping or muting on stream basis
     # These should be long enough for the reference (e.g. the standard
     # deviation) to be rather independent of the parts to remove
@@ -90,7 +90,7 @@ co:
     # Taper the time windows with a 5% Hann taper on each side. If this is True,
     # the time windows will just simply be prolonged by the length of the taper,
     # so that no data is lost
-    taper: True
+    taper: False
 
     # parameters for correlation preprocessing
     corr_args : {'TDpreProcessing':[#{'function':'miic3.correlate.correlate.detrend',

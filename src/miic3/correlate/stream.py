@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Monday, 10th May 2021 05:08:11 pm
+Last Modified: Tuesday, 11th May 2021 10:24:29 am
 '''
 import numpy as np
 from obspy import Stream, Trace, Inventory, UTCDateTime
@@ -479,6 +479,41 @@ def compare_tr_id(tr0: Trace, tr1: Trace, regard_loc: bool = True) -> bool:
              == Compare_Str_No_Loc.format(**tr1.stats)
 
 
+# def stack_st_by_group(st: Stream, regard_loc: bool) -> CorrStream:
+#     """
+#     Stack all traces that belong to the same network, station, channel, and
+#     (optionally) location combination in the input stream.
+
+#     :param st: input Stream
+#     :type st: Stream
+#     :param regard_loc: Seperate data with different location code
+#     :type regard_loc: bool
+#     :return: :class:`~miic3.correlate.stream.CorrStream`
+#     :rtype: CorrStream
+#     """
+#     st.sort()
+#     stackst = CorrStream()
+#     ctr = st[0]
+#     if regard_loc:
+#         loc = ctr.stats.location
+#     else:
+#         loc = None
+#     stackst.append(stack_st(st.select(
+#                 ctr.stats.network, ctr.stats.station,
+#                 loc, ctr.stats.channel)))
+#     for tr in st:
+#         if not compare_tr_id(ctr, tr, regard_loc):
+#             if regard_loc:
+#                 loc = tr.stats.location
+#             else:
+#                 loc = None
+#             stackst.append(stack_st(st.select(
+#                 tr.stats.network, tr.stats.station,
+#                 loc, tr.stats.channel)))
+#             ctr = tr
+#     return stackst
+
+
 def stack_st_by_group(st: Stream, regard_loc: bool) -> CorrStream:
     """
     Stack all traces that belong to the same network, station, channel, and
@@ -491,17 +526,16 @@ def stack_st_by_group(st: Stream, regard_loc: bool) -> CorrStream:
     :return: :class:`~miic3.correlate.stream.CorrStream`
     :rtype: CorrStream
     """
-    stackst = CorrStream()
-    ctr = st[0]
-    stackst.append(stack_st(st.select(
-                ctr.stats.network, ctr.stats.station,
-                ctr.stats.location, ctr.stats.channel)))
+    if regard_loc:
+        key = "{network}.{station}.{channel}.{location}"
+    else:
+        key = "{network}.{station}.{channel}"
+    stackdict = {}
     for tr in st:
-        if not compare_tr_id(ctr, tr, regard_loc):
-            stackst.append(stack_st(st.select(
-                tr.stats.network, tr.stats.station,
-                tr.stats.location, tr.stats.channel)))
-            ctr = tr
+        stackdict.setdefault(key.format(**tr.stats), CorrStream()).append(tr)
+    stackst = CorrStream()
+    for k in stackdict:
+        stackst.append(stack_st(stackdict[k]))
     return stackst
 
 

@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Thursday, 6th May 2021 02:28:43 pm
+Last Modified: Tuesday, 11th May 2021 03:10:26 pm
 '''
 from collections import namedtuple
 from glob import glob
@@ -294,6 +294,7 @@ class Preprocessor(object):
             except FrequencyError as e:
                 warn(e + ' Trace is skipped.')
                 continue
+
         # for starttime, endtime in zip(starttimes, endtimes):
         #     # Return obspy stream with data from this station if the data
         #     # does not already exist
@@ -385,20 +386,20 @@ class Preprocessor(object):
         if inv:
             ninv = inv
             st.attach_response(ninv)
-        try:
-            st.remove_response()
-        except ValueError:
-            print('Station response not found ... loading from remote.')
-            # missing station response
-            ninv = self.store_client.rclient.get_stations(
-                network=st[0].stats.network, station=st[0].stats.station,
-                channel='*', starttime=st[0].stats.starttime,
-                endtime=st[-1].stats.endtime, level='response')
-            st.attach_response(ninv)
-            st.remove_response()
-            self.store_client._write_inventory(ninv)
+        # try:
+        #     st.remove_response()
+        # except ValueError:
+        #     print('Station response not found ... loading from remote.')
+        #     # missing station response
+        #     ninv = self.store_client.rclient.get_stations(
+        #         network=st[0].stats.network, station=st[0].stats.station,
+        #         channel='*', starttime=st[0].stats.starttime,
+        #         endtime=st[-1].stats.endtime, level='response')
+        #     st.attach_response(ninv)
+        #     st.remove_response()
+        #     self.store_client._write_inventory(ninv)
 
-        st.detrend()
+        # st.detrend()
         for tr in st:
             # !Last operation before saving!
             # The actual data in the mseeds was changed from int to float64
