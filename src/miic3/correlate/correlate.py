@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 12th May 2021 04:31:57 pm
+Last Modified: Friday, 14th May 2021 12:02:42 pm
 '''
 from copy import deepcopy
 from ctypes import string_at
@@ -170,8 +170,8 @@ class Correlator(object):
         # Tell the other processes the shape of A
         As = self.comm.bcast(As, root=0)
         if self.rank != 0:
-            A = np.empty(As, dtype=np.float32)
-        self.comm.Bcast([A, MPI.FLOAT], root=0)
+            A = np.empty(As, dtype=np.float32)  # np.float32
+        self.comm.Bcast([A, MPI.FLOAT], root=0)  # MPI.FLOAT
 
         self.options.update(
             {'starttime': starttime,
@@ -360,11 +360,34 @@ class Correlator(object):
                 params.update({key: corr_args[key]})
         params['sampling_rate'] = self.sampling_rate
         # The steps that aren't done before
+
+        # test
+        # self.comm.barrier()
+        # self.comm.Allreduce(MPI.IN_PLACE, [A, MPI.DOUBLE], op=MPI.SUM)
+        # # just save the stuff real fast to compare
+        # np.save('/home/pm/Documents/PhD/testdata/A', A)
+        # np.dienow
+
         for proc in corr_args['TDpreProcessing']:
             func = func_from_str(proc['function'])
             A[:, ind] = func(A[:, ind], proc['args'], params)
+
+        # # test
+        # self.comm.barrier()
+        # self.comm.Allreduce(MPI.IN_PLACE, [A, MPI.DOUBLE], op=MPI.SUM)
+        # # just save the stuff real fast to compare
+        # np.save('/home/pm/Documents/PhD/testdata/A', A)
+        # np.dienow
+
         # zero-padding
         A = zeroPadding(A, {'type': 'avoidWrapPowerTwo'}, params)
+
+        # # test
+        # self.comm.barrier()
+        # self.comm.Allreduce(MPI.IN_PLACE, [A, MPI.DOUBLE], op=MPI.SUM)
+        # # just save the stuff real fast to compare
+        # np.save('/home/pm/Documents/PhD/testdata/A', A)
+        # np.dienow
 
         ######################################
         # FFT
@@ -375,8 +398,14 @@ class Correlator(object):
 
         B[:, ind] = np.fft.rfft(A[:, ind], axis=0)
 
-        # B[ind, :] = np.fft.rfft(A[ind, :], axis=1)  # Should axis be =1?
         freqs = rfftfreq(zmsize[0], 1./self.sampling_rate)
+
+        # # test
+        # self.comm.barrier()
+        # self.comm.Allreduce(MPI.IN_PLACE, [B, MPI.DOUBLE], op=MPI.SUM)
+        # # just save the stuff real fast to compare
+        # np.save('/home/pm/Documents/PhD/testdata/B', B)
+        # np.dienow
 
         ######################################
         # frequency domain pre-processing
@@ -394,6 +423,9 @@ class Correlator(object):
         # collect results
         self.comm.barrier()
         self.comm.Allreduce(MPI.IN_PLACE, [B, MPI.DOUBLE], op=MPI.SUM)
+        # just save the stuff real fast to compare
+        # np.save('/home/pm/Documents/PhD/testdata/B', B)
+        # np.dienow
 
         ######################################
         # correlation
@@ -402,10 +434,9 @@ class Correlator(object):
         sampleToSave = int(
             np.ceil(
                 corr_args['lengthToSave'] * self.sampling_rate))
-        C = np.zeros((sampleToSave*2+1, csize), dtype=complex)  # np.float64
+        C = np.zeros((sampleToSave*2+1, csize), dtype=np.float64)
 
         # center = irfftsize // 2
-
         pmap = (np.arange(csize)*self.psize)/csize
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
@@ -471,8 +502,7 @@ class Correlator(object):
 
 def st_to_np_array(st: Stream, npts: int) -> np.ndarray:
     # st.sort(keys=['npts'])
-    # A = np.zeros((st.count(), st[-1].stats.npts), dtype=np.float32)
-    A = np.zeros((npts, st.count()), dtype=np.float32)
+    A = np.zeros((npts, st.count()), dtype=np.float32)  # np.float32
     for ii, tr in enumerate(st):
         # A[ii, :tr.stats.npts] = tr.data
         A[:tr.stats.npts, ii] = tr.data
@@ -521,7 +551,7 @@ def zeroPadding(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     else:
         raise ValueError("type '%s' of zero padding not implemented" %
                          args['type'])
-    A = np.concatenate((A, np.zeros((N-npts, ntrc), dtype=np.float64)), axis=0)
+    A = np.concatenate((A, np.zeros((N-npts, ntrc), dtype=np.float32)), axis=0)
     return A
 
 

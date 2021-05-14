@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Friday, 30th April 2021 11:10:35 am
+Last Modified: Friday, 14th May 2021 12:36:33 pm
 '''
 from obspy import Inventory, Stream
 from obspy.core import Stats
@@ -94,12 +94,11 @@ def inv_calc_az_baz_dist(inv1: Inventory, inv2: Inventory):
     return az, baz, dist
 
 
-def resample_or_decimate(data: Stream, sampling_rate_new: int) -> Stream:
+def resample_or_decimate(
+        data: Stream, sampling_rate_new: int, filter=True) -> Stream:
     """
     Decimates the data if the desired new sampling rate allows to do so.
     Else the signal will be interpolated (a lot slower).
-
-    :note: The stream has to be filtered a priori to avoid aliasing.
 
     :param data: Stream to be resampled.
     :type data: Stream
@@ -110,7 +109,14 @@ def resample_or_decimate(data: Stream, sampling_rate_new: int) -> Stream:
     """
     sr = data[0].stats.sampling_rate
     srn = sampling_rate_new
+
+    # Chosen this filter design as it's exactly the same as
+    # obspy.Stream.decimate uses
+    if filter:
+        freq = sr * 0.5 / float(sr/srn)
+        data.filter('lowpass_cheby_2', freq=freq, maxorder=12)
+
     if sr/srn == sr//srn:
-        return data.decimate(int(sr//srn), no_filter=True)
+        return data.decimate(int(sr//srn), no_filter=True)  #True
     else:
         return data.resample(srn)

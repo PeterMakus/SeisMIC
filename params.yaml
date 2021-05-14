@@ -6,7 +6,7 @@ log_subdir : 'log'
 # folder for figures
 fig_subdir : 'figures'
 # folder containing preprocessed data
-prepro_subdir: 'testnb_preprocessed_ndt'
+prepro_subdir: 'testnb_preprocessed_dailypp'
 
 
 #### parameters that are network specific
@@ -30,7 +30,7 @@ net:
 co:
     # subdirectory of 'proj_dir' to store correlation
     # type: string
-    subdir : 'corr_ndt'
+    subdir : 'corr_dailypp'
     # times sequences to read for cliping or muting on stream basis
     # These should be long enough for the reference (e.g. the standard
     # deviation) to be rather independent of the parts to remove
@@ -65,7 +65,7 @@ co:
     # and return an obspy.Stream object.
     preProcessing : {'filter':
                         {'kwargs':{'type':'bandpass',
-                                'freqmin':0.01, 'freqmax':9}}}
+                                'freqmin':2, 'freqmax':4}}}  #0.01 9
                     # {'function':'miic.core.stream.stream_filter',
                     #   'args':{'ftype':'bandpass',
                     #           'filter_option':{'freqmin':0.01, #0.01
@@ -95,7 +95,8 @@ co:
     taper: False
 
     # parameters for correlation preprocessing
-    corr_args : {'TDpreProcessing':[#{'function':'miic3.correlate.correlate.detrend',
+    corr_args : {'TDpreProcessing':[
+                                    #{'function':'miic3.correlate.correlate.detrend',
                                     # 'args':{'type':'constant'}},
                                    #{'function':'miic.core.pxcorr_func.TDfilter',
                                    # 'args':{'type':'bandpass','freqmin':0.01,'freqmax':4}},
@@ -109,8 +110,8 @@ co:
                                     'args':{'std_factor':3}},
                                    ],
                  'FDpreProcessing':[
-                                    # {'function':'miic3.correlate.correlate.spectralWhitening',
-                                    #  'args':{'joint_norm':False}},
+                                    {'function':'miic3.correlate.correlate.spectralWhitening',
+                                     'args':{'joint_norm':False}},
                                     {'function':'miic3.correlate.correlate.FDfilter',
                                      'args':{'freqs':[0.01,0.02,9,10]}}
                                     ],
@@ -118,11 +119,13 @@ co:
                  'center_correlation':True,      # make sure zero correlation time is in the center
                  'normalize_correlation':True,
                  'combinations':[],
+                 # Not used in miic3
                  'direct_output':{'function':'convert_to_matlab',
                                   'base_name':'trace'}
                 }
 
     # Component rotation (only possible if 'direct_output' is not in 'corr_args')
     # type: string ['NO', 'ZNE->ZRT', 'NE->RT']
+    # Not used yet
     rotation : 'NO'
 

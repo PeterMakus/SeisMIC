@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Tuesday, 11th May 2021 03:10:26 pm
+Last Modified: Friday, 14th May 2021 02:18:42 pm
 '''
 from collections import namedtuple
 from glob import glob
@@ -267,7 +267,7 @@ class Preprocessor(object):
         starttimes = []
         endtimes = []
         # Bit that needs to be added on each side for the extra taper
-        delta = 0 # 3600*0.05
+        delta = 3600*0.05
         for starttime, endtime in zip(req_start, req_end):
             if endtime-starttime > 24*3600+2*delta:
                 while starttime < endtime:
@@ -304,7 +304,7 @@ class Preprocessor(object):
         #     st_raw.sort()
 
         #     st_proc = Stream()
-        #     # Devide chunk_len by .9 to compensate for the taper in response
+        #     # Divide chunk_len by .9 to compensate for the taper in response
         #     # removal
         #     for st in st_raw.slide(
         #         chunk_len/.9, chunk_len,
@@ -379,25 +379,25 @@ class Preprocessor(object):
                     str(self.sampling_rate), str(
                         st[0].stats.sampling_rate)))
 
-        st.filter('lowpass_cheby_2', freq=(self.sampling_rate/2)*.9)
         # Downsample
+        # AA-Filter is done in this function as well
         st = resample_or_decimate(st, self.sampling_rate)
 
         if inv:
             ninv = inv
             st.attach_response(ninv)
-        # try:
-        #     st.remove_response()
-        # except ValueError:
-        #     print('Station response not found ... loading from remote.')
-        #     # missing station response
-        #     ninv = self.store_client.rclient.get_stations(
-        #         network=st[0].stats.network, station=st[0].stats.station,
-        #         channel='*', starttime=st[0].stats.starttime,
-        #         endtime=st[-1].stats.endtime, level='response')
-        #     st.attach_response(ninv)
-        #     st.remove_response()
-        #     self.store_client._write_inventory(ninv)
+        try:
+            st.remove_response()  # Changed for testing purposes
+        except ValueError:
+            print('Station response not found ... loading from remote.')
+            # missing station response
+            ninv = self.store_client.rclient.get_stations(
+                network=st[0].stats.network, station=st[0].stats.station,
+                channel='*', starttime=st[0].stats.starttime,
+                endtime=st[-1].stats.endtime, level='response')
+            st.attach_response(ninv)
+            st.remove_response()
+            self.store_client._write_inventory(ninv)
 
         # st.detrend()
         for tr in st:
