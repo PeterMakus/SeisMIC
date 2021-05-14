@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Friday, 14th May 2021 02:18:42 pm
+Last Modified: Friday, 14th May 2021 04:33:13 pm
 '''
 from collections import namedtuple
 from glob import glob
@@ -266,15 +266,14 @@ class Preprocessor(object):
         # held in RAM.
         starttimes = []
         endtimes = []
-        # Bit that needs to be added on each side for the extra taper
-        delta = 3600*0.05
+        taper_len = 15  # per side during instrument response removal
         for starttime, endtime in zip(req_start, req_end):
-            if endtime-starttime > 24*3600+2*delta:
+            if endtime-starttime > 24*3600+2*taper_len:
                 while starttime < endtime:
-                    starttimes.append(starttime-delta)
+                    starttimes.append(starttime-taper_len)
                     # Skip two seconds, so the same file is not loaded twice
                     starttime = starttime+24*3600
-                    endtimes.append(starttime+delta)
+                    endtimes.append(starttime+taper_len)
             else:
                 starttimes.append(starttime)
                 endtimes.append(endtime)
@@ -290,10 +289,17 @@ class Preprocessor(object):
                 _check_times=_check_times)
             try:
                 st, resp = self._preprocess(
-                    st, self.store_client.inventory)
+                    st, self.store_client.inventory, taper_len)
             except FrequencyError as e:
                 warn(e + ' Trace is skipped.')
                 continue
+            try:
+                st.trim(
+                    starttime=st[0].stats.starttime+taper_len,
+                    endtime=st[0].stats.endtime-taper_len)
+            except ValueError:
+                # very short traces
+                pass
 
         # for starttime, endtime in zip(starttimes, endtimes):
         #     # Return obspy stream with data from this station if the data
@@ -307,20 +313,23 @@ class Preprocessor(object):
         #     # Divide chunk_len by .9 to compensate for the taper in response
         #     # removal
         #     for st in st_raw.slide(
-        #         chunk_len/.9, chunk_len,
+        #         chunk_len+taper_len, chunk_len,
         #             include_partial_windows=True):
         #         try:
         #             st, resp = self._preprocess(
-        #                 st, self.store_client.inventory)
+        #                 st, self.store_client.inventory, taper_len)
         #             # Cut the tapered parts off again
-        #             delta = (st[0].stats.endtime-st[0].stats.starttime)*0.05
-        #             st.trim(
-        #                 starttime=st[0].stats.starttime+delta,
-        #                 endtime=st[0].stats.endtime-delta)
-        #             st_proc.extend(st)
         #         except FrequencyError as e:
         #             warn(e + ' Trace is skipped.')
         #             continue
+        #         try:
+        #             st.trim(
+        #                 starttime=st[0].stats.starttime+taper_len,
+        #                 endtime=st[0].stats.endtime-taper_len)
+        #         except ValueError:
+        #             # very short traces
+        #             pass
+        #         st_proc.extend(st)
 
             # Create folder if it does not exist
             os.makedirs(self.outloc, exist_ok=True)
@@ -365,7 +374,9 @@ class Preprocessor(object):
                 statlist.append(code)
         return statlist
 
-    def _preprocess(self, st: Stream, inv: Inventory or None = None) -> Stream:
+    def _preprocess(
+        self, st: Stream, inv: Inventory or None,
+            taper_len: float) -> Stream:
         """
         Private method that executes the preprocessing steps on a *per Stream*
         basis.
@@ -383,6 +394,10 @@ class Preprocessor(object):
         # AA-Filter is done in this function as well
         st = resample_or_decimate(st, self.sampling_rate)
 
+        # taper before instrument response removal
+        if taper_len:
+            st.taper(None, max_length=taper_len)
+
         if inv:
             ninv = inv
             st.attach_response(ninv)
@@ -396,7 +411,7 @@ class Preprocessor(object):
                 channel='*', starttime=st[0].stats.starttime,
                 endtime=st[-1].stats.endtime, level='response')
             st.attach_response(ninv)
-            st.remove_response()
+            st.remove_response(taper=False)
             self.store_client._write_inventory(ninv)
 
         # st.detrend()
