@@ -7,14 +7,14 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Tuesday, 11th May 2021 10:24:29 am
+Last Modified: Monday, 17th May 2021 12:46:10 pm
 '''
 import numpy as np
 from obspy import Stream, Trace, Inventory, UTCDateTime
 from obspy.core import Stats
-from obspy.core.util.misc import get_window_times
 
 from miic3.utils.miic_utils import trace_calc_az_baz_dist, inv_calc_az_baz_dist
+from miic3.plot.plot_utils import plot_correlation
 
 
 class CorrStream(Stream):
@@ -334,6 +334,11 @@ class CorrTrace(Trace):
         if np.ma.count_masked(self.data):
             out += ' (masked)'
         return trace_id + out % (self.stats)
+
+    def plot(
+        self, tlim: list = None, ax=None, outputdir: str = None,
+            clean=False):
+        plot_correlation(self, tlim, ax, outputdir, clean)
 
 
 def combine_stats(

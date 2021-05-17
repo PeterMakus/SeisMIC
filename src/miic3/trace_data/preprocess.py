@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Friday, 14th May 2021 04:33:13 pm
+Last Modified: Monday, 17th May 2021 04:58:42 pm
 '''
 from collections import namedtuple
 from glob import glob
@@ -101,7 +101,7 @@ class Preprocessor(object):
         self.ex_times = _ex_times
 
     def preprocess_bulk(
-        self, network: str or None = None,
+        self, network: str or None = None, statlist: list or None = None,
         starttime: UTCDateTime or None = None,
         endtime: UTCDateTime or None = None,
             backend: str = 'joblib', n_cpus: int = -1):
@@ -112,6 +112,9 @@ class Preprocessor(object):
         :param network: Network code, wildcards allowed. Use `None` if you wish
             to process all available data, defaults to None.
         :type network: strorNone, optional
+        :param statlist: List of station codes. If != None, one does also have
+            to provide a network code, defaults to None.
+        :type statlist: list or None, optional
         :param starttime: Starttime. Use `None` to process from the earliest
             time, defaults to None
         :type starttime: UTCDateTimeorNone, optional
@@ -131,9 +134,17 @@ class Preprocessor(object):
             used. 1 is useful for debugging. Default to -1.
         :type n_cpus: int, optional
         """
+        if statlist and not network:
+            raise ValueError(
+                'You have to define a network, when requesting' +
+                ' a list of stations.')
+        elif not statlist:
+            statlist = self._all_stations_raw(network)
+        else:
+            for ii, station in enumerate(statlist):
+                statlist[ii] = [network, station]
         if backend == 'mpi':
             from mpi4py import MPI
-            statlist = self._all_stations_raw(network)
             comm = MPI.COMM_WORLD
             psize = comm.Get_size()
             rank = comm.Get_rank()
@@ -152,8 +163,7 @@ class Preprocessor(object):
             Parallel(n_jobs=n_cpus, verbose=8)(
                         delayed(self._preprocess_mc_init)(
                             network, station, '*', '*', starttime, endtime)
-                        for network, station in self._all_stations_raw(
-                            network))
+                        for network, station in statlist)
         else:
             msg = 'Backend "%s" not supported' % backend
             raise ValueError(msg)
@@ -266,76 +276,102 @@ class Preprocessor(object):
         # held in RAM.
         starttimes = []
         endtimes = []
-        taper_len = 15  # per side during instrument response removal
+
+        tl = 30  # taper per side during instrument response removal
         for starttime, endtime in zip(req_start, req_end):
-            if endtime-starttime > 24*3600+2*taper_len:
+            if endtime-starttime > 24*3600+2*tl:
                 while starttime < endtime:
-                    starttimes.append(starttime-taper_len)
+                    starttimes.append(starttime-tl)
                     # Skip two seconds, so the same file is not loaded twice
                     starttime = starttime+24*3600
-                    endtimes.append(starttime+taper_len)
+                    endtimes.append(starttime+tl)
             else:
-                starttimes.append(starttime)
-                endtimes.append(endtime)
+                starttimes.append(starttime-tl)
+                endtimes.append(endtime+tl)
 
-        chunk_len = 3600  # processing chunk length in s
+        # processing chunk length in s
+        chunk_len = 3600 + np.random.randint(-360, high=360)
         # One hour is pretty close to the optimal length
         # chunk_len = next_fast_len(chunk_len) are identical
-
-        for starttime, endtime in zip(starttimes, endtimes):
-            # st_proc = Stream()
-            st = self.store_client.get_waveforms(
-                network, station, location, channel, starttime, endtime,
-                _check_times=_check_times)
-            try:
-                st, resp = self._preprocess(
-                    st, self.store_client.inventory, taper_len)
-            except FrequencyError as e:
-                warn(e + ' Trace is skipped.')
-                continue
-            try:
-                st.trim(
-                    starttime=st[0].stats.starttime+taper_len,
-                    endtime=st[0].stats.endtime-taper_len)
-            except ValueError:
-                # very short traces
-                pass
-
+        # taper_len += np.random.rand(len(starttimes))*60
         # for starttime, endtime in zip(starttimes, endtimes):
-        #     # Return obspy stream with data from this station if the data
-        #     # does not already exist
-        #     st_raw = self.store_client.get_waveforms(
+        #     # st_proc = Stream()
+        #     st = self.store_client.get_waveforms(
         #         network, station, location, channel, starttime, endtime,
         #         _check_times=_check_times)
-        #     st_raw.sort()
+        #     try:
+        #         st, resp = self._preprocess(
+        #             st, self.store_client.inventory, tl)
+        #     except FrequencyError as e:
+        #         warn(e + ' Trace is skipped.')
+        #         continue
+        #     try:
+        #         st.trim(
+        #             starttime=st[0].stats.starttime+tl,
+        #             endtime=st[0].stats.endtime-tl)
+        #     except ValueError:
+        #         # very short traces
+        #         pass
+        # taper_len += np.random.rand(len(starttimes))*60
+        # print(taper_len)
+        # random extra bit to take to avoid that the response removal causes a
+        # correlation peak
+        maxx = 720  # the maximum said random value can take
+        randx = np.random.randint(0, high=maxx)
+        startflag = False
+        endflag = False
 
-        #     st_proc = Stream()
-        #     # Divide chunk_len by .9 to compensate for the taper in response
-        #     # removal
-        #     for st in st_raw.slide(
-        #         chunk_len+taper_len, chunk_len,
-        #             include_partial_windows=True):
-        #         try:
-        #             st, resp = self._preprocess(
-        #                 st, self.store_client.inventory, taper_len)
-        #             # Cut the tapered parts off again
-        #         except FrequencyError as e:
-        #             warn(e + ' Trace is skipped.')
-        #             continue
-        #         try:
-        #             st.trim(
-        #                 starttime=st[0].stats.starttime+taper_len,
-        #                 endtime=st[0].stats.endtime-taper_len)
-        #         except ValueError:
-        #             # very short traces
-        #             pass
-        #         st_proc.extend(st)
+        for starttime, endtime in zip(starttimes, endtimes):
+            # Return obspy stream with data from this station if the data
+            # does not already exist
+            st_raw = self.store_client.get_waveforms(
+                network, station, location, channel, starttime-randx,
+                endtime+randx, _check_times=_check_times)
+            st_raw.sort()
+            if st_raw[0].stats.starttime != starttime-randx:
+                # start of the whole dataset / gap else it returns -tl
+                st_raw.trim(starttime=starttime+randx)
+                startflag = True
+            if st_raw[-1].stats.endtime != endtime+randx:
+                # end of the whole dataset / gap
+                st_raw.trim(endtime-randx)
+                endflag = True
+
+            st_proc = Stream()
+            for ii, st in enumerate(st_raw.slide(
+                chunk_len+tl, chunk_len,
+                    include_partial_windows=True)):
+                try:
+                    st, resp = self._preprocess(
+                        st, self.store_client.inventory, tl)
+                    # Cut the tapered parts off again
+                except FrequencyError as e:
+                    warn(e + ' Trace is skipped.')
+                    continue
+                try:
+                    st.trim(
+                        starttime=st[0].stats.starttime+tl,
+                        endtime=st[0].stats.endtime-tl)
+                    if startflag and ii == 0:
+                        # First trace of the day
+                        st.trim(
+                            starttime=st_raw[0].stats.starttime+maxx+tl)
+                        startflag = False
+                    elif endflag and \
+                            st_raw[-1].stats.endtime == st[0].stats.endtime:
+                        # Last trace of the day
+                        st.trim(
+                            endtime=st_raw[-1].stats.endtime-maxx-tl)
+                except ValueError:
+                    # very short traces
+                    pass
+                st_proc.extend(st)
 
             # Create folder if it does not exist
             os.makedirs(self.outloc, exist_ok=True)
 
             with ASDFDataSet(outfile, mpi=False) as ds:
-                ds.add_waveforms(st, tag='processed')  # st_proc
+                ds.add_waveforms(st_proc, tag='processed')  # st_proc
 
         with ASDFDataSet(outfile, mpi=False) as ds:
             # Save some processing values as auxiliary data
@@ -402,7 +438,7 @@ class Preprocessor(object):
             ninv = inv
             st.attach_response(ninv)
         try:
-            st.remove_response()  # Changed for testing purposes
+            st.remove_response(taper=False)  # Changed for testing purposes
         except ValueError:
             print('Station response not found ... loading from remote.')
             # missing station response
