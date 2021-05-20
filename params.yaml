@@ -6,7 +6,7 @@ log_subdir : 'log'
 # folder for figures
 fig_subdir : 'figures'
 # folder containing preprocessed data
-prepro_subdir: 'testnb_preprocessed'
+prepro_subdir: 'testnb_preprocessed_dailypp'
 
 
 #### parameters that are network specific
@@ -30,7 +30,7 @@ net:
 co:
     # subdirectory of 'proj_dir' to store correlation
     # type: string
-    subdir : 'corr'
+    subdir : 'corr_dailypp'
     # times sequences to read for cliping or muting on stream basis
     # These should be long enough for the reference (e.g. the standard
     # deviation) to be rather independent of the parts to remove
@@ -44,7 +44,7 @@ co:
     # kept in memory before writing to disk)
     # read_len : 160000
     # read_inc : 160000
-    read_len : 86400
+    read_len : 86398
     read_inc : 86400
 
     # required input sampling rate (data with different sampling rate are not used)

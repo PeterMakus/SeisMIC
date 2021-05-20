@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Monday, 17th May 2021 04:58:42 pm
+Last Modified: Tuesday, 18th May 2021 01:59:00 pm
 '''
 from collections import namedtuple
 from glob import glob
@@ -276,102 +276,104 @@ class Preprocessor(object):
         # held in RAM.
         starttimes = []
         endtimes = []
-
-        tl = 30  # taper per side during instrument response removal
+        # extra bit to load to avoid artefacts
+        # randx = np.random.randint(0, high=3600)
+        tl = 0  # taper per side during instrument response removal
+        xtra = tl*10
         for starttime, endtime in zip(req_start, req_end):
-            if endtime-starttime > 24*3600+2*tl:
+            if endtime-starttime > 24*3600+2*xtra:
                 while starttime < endtime:
-                    starttimes.append(starttime-tl)
+                    starttimes.append(starttime-xtra)
                     # Skip two seconds, so the same file is not loaded twice
-                    starttime = starttime+24*3600
-                    endtimes.append(starttime+tl)
+                    starttime = starttime+24*3600+xtra
+                    endtimes.append(starttime+xtra)
             else:
-                starttimes.append(starttime-tl)
-                endtimes.append(endtime+tl)
+                starttimes.append(starttime-xtra)
+                endtimes.append(endtime+xtra)
 
         # processing chunk length in s
-        chunk_len = 3600 + np.random.randint(-360, high=360)
+        chunk_len = 3600  # + np.random.randint(-360, high=360)
         # One hour is pretty close to the optimal length
         # chunk_len = next_fast_len(chunk_len) are identical
         # taper_len += np.random.rand(len(starttimes))*60
-        # for starttime, endtime in zip(starttimes, endtimes):
-        #     # st_proc = Stream()
-        #     st = self.store_client.get_waveforms(
-        #         network, station, location, channel, starttime, endtime,
-        #         _check_times=_check_times)
-        #     try:
-        #         st, resp = self._preprocess(
-        #             st, self.store_client.inventory, tl)
-        #     except FrequencyError as e:
-        #         warn(e + ' Trace is skipped.')
-        #         continue
-        #     try:
-        #         st.trim(
-        #             starttime=st[0].stats.starttime+tl,
-        #             endtime=st[0].stats.endtime-tl)
-        #     except ValueError:
-        #         # very short traces
-        #         pass
+        for starttime, endtime in zip(starttimes, endtimes):
+            # st_proc = Stream()
+            st = self.store_client.get_waveforms(
+                network, station, location, channel, starttime, endtime,
+                _check_times=_check_times)
+            try:
+                st, resp = self._preprocess(
+                    st, self.store_client.inventory, tl)
+            except FrequencyError as e:
+                warn(e + ' Trace is skipped.')
+                continue
+            # try:
+            #     st.trim(
+            #         starttime=st[0].stats.starttime+tl,
+            #         endtime=st[0].stats.endtime-tl)
+            # except ValueError:
+            #     # very short traces
+            #     pass
         # taper_len += np.random.rand(len(starttimes))*60
         # print(taper_len)
         # random extra bit to take to avoid that the response removal causes a
         # correlation peak
-        maxx = 720  # the maximum said random value can take
-        randx = np.random.randint(0, high=maxx)
-        startflag = False
-        endflag = False
+        # maxx = 720  # the maximum said random value can take
+        # randx = 0 #np.random.randint(0, high=maxx)
+        # startflag = False
+        # endflag = False
 
-        for starttime, endtime in zip(starttimes, endtimes):
-            # Return obspy stream with data from this station if the data
-            # does not already exist
-            st_raw = self.store_client.get_waveforms(
-                network, station, location, channel, starttime-randx,
-                endtime+randx, _check_times=_check_times)
-            st_raw.sort()
-            if st_raw[0].stats.starttime != starttime-randx:
-                # start of the whole dataset / gap else it returns -tl
-                st_raw.trim(starttime=starttime+randx)
-                startflag = True
-            if st_raw[-1].stats.endtime != endtime+randx:
-                # end of the whole dataset / gap
-                st_raw.trim(endtime-randx)
-                endflag = True
+        # for starttime, endtime in zip(starttimes, endtimes):
+        #     # Return obspy stream with data from this station if the data
+        #     # does not already exist
+        #     st_raw = self.store_client.get_waveforms(
+        #         network, station, location, channel, starttime,
+        #         endtime, _check_times=_check_times)
+        #     st_raw.sort()
+        #     # if st_raw[0].stats.starttime != starttime-randx:
+        #     #     # start of the whole dataset / gap else it returns -tl
+        #     #     st_raw.trim(starttime=starttime+randx)
+        #     #     startflag = True
+        #     # if st_raw[-1].stats.endtime != endtime+randx:
+        #     #     # end of the whole dataset / gap
+        #     #     st_raw.trim(endtime-randx)
+        #     #     endflag = True
 
-            st_proc = Stream()
-            for ii, st in enumerate(st_raw.slide(
-                chunk_len+tl, chunk_len,
-                    include_partial_windows=True)):
-                try:
-                    st, resp = self._preprocess(
-                        st, self.store_client.inventory, tl)
-                    # Cut the tapered parts off again
-                except FrequencyError as e:
-                    warn(e + ' Trace is skipped.')
-                    continue
-                try:
-                    st.trim(
-                        starttime=st[0].stats.starttime+tl,
-                        endtime=st[0].stats.endtime-tl)
-                    if startflag and ii == 0:
-                        # First trace of the day
-                        st.trim(
-                            starttime=st_raw[0].stats.starttime+maxx+tl)
-                        startflag = False
-                    elif endflag and \
-                            st_raw[-1].stats.endtime == st[0].stats.endtime:
-                        # Last trace of the day
-                        st.trim(
-                            endtime=st_raw[-1].stats.endtime-maxx-tl)
-                except ValueError:
-                    # very short traces
-                    pass
-                st_proc.extend(st)
+        #     st_proc = Stream()
+        #     for ii, st in enumerate(st_raw.slide(
+        #         chunk_len+xtra, chunk_len,
+        #             include_partial_windows=True)):
+        #         try:
+        #             st, resp = self._preprocess(
+        #                 st, self.store_client.inventory, tl)
+        #             # Cut the tapered parts off again
+        #         except FrequencyError as e:
+        #             warn(e + ' Trace is skipped.')
+        #             continue
+        #         # try:
+        #         #     st.trim(
+        #         #         starttime=st[0].stats.starttime+xtra,
+        #         #         endtime=st[0].stats.endtime-xtra)
+        #         #     # if startflag and ii == 0:
+        #         #     #     # First trace of the day
+        #         #     #     st.trim(
+        #         #     #         starttime=st_raw[0].stats.starttime+maxx+tl)
+        #         #     #     startflag = False
+        #         #     # elif endflag and \
+        #         #     #         st_raw[-1].stats.endtime == st[0].stats.endtime:
+        #         #     #     # Last trace of the day
+        #         #     #     st.trim(
+        #         #     #         endtime=st_raw[-1].stats.endtime-maxx-tl)
+        #         # except ValueError:
+        #         #     # very short traces
+        #         #     pass
+        #         st_proc.extend(st)
 
             # Create folder if it does not exist
             os.makedirs(self.outloc, exist_ok=True)
 
             with ASDFDataSet(outfile, mpi=False) as ds:
-                ds.add_waveforms(st_proc, tag='processed')  # st_proc
+                ds.add_waveforms(st, tag='processed')  # st_proc
 
         with ASDFDataSet(outfile, mpi=False) as ds:
             # Save some processing values as auxiliary data
@@ -431,26 +433,28 @@ class Preprocessor(object):
         st = resample_or_decimate(st, self.sampling_rate)
 
         # taper before instrument response removal
-        if taper_len:
-            st.taper(None, max_length=taper_len)
+        # if taper_len:
+        #     #st.taper(None, max_length=taper_len)
+        #     st = cos_taper_st(st, taper_len)
 
         if inv:
             ninv = inv
-            st.attach_response(ninv)
-        try:
-            st.remove_response(taper=False)  # Changed for testing purposes
-        except ValueError:
-            print('Station response not found ... loading from remote.')
-            # missing station response
-            ninv = self.store_client.rclient.get_stations(
-                network=st[0].stats.network, station=st[0].stats.station,
-                channel='*', starttime=st[0].stats.starttime,
-                endtime=st[-1].stats.endtime, level='response')
-            st.attach_response(ninv)
-            st.remove_response(taper=False)
-            self.store_client._write_inventory(ninv)
+        #     st.attach_response(ninv)
+        # try:
+        #     pass
+        #     st.remove_response(taper=False)  # Changed for testing purposes
+        # except ValueError:
+        #     print('Station response not found ... loading from remote.')
+        #     # missing station response
+        #     ninv = self.store_client.rclient.get_stations(
+        #         network=st[0].stats.network, station=st[0].stats.station,
+        #         channel='*', starttime=st[0].stats.starttime,
+        #         endtime=st[-1].stats.endtime, level='response')
+        #     st.attach_response(ninv)
+        #     st.remove_response(taper=False)
+        #     self.store_client._write_inventory(ninv)
 
-        # st.detrend()
+        #st.detrend()
         for tr in st:
             # !Last operation before saving!
             # The actual data in the mseeds was changed from int to float64
@@ -501,3 +505,19 @@ def detrend(data: np.ndarray) -> np.ndarray:
             coeff = np.dot(rq, data[ii])
             data[ii] = data[ii] - np.dot(X, coeff)
     return data
+
+
+def cos_taper_st(st, taper_len):
+    for tr in st:
+        tr = cos_taper(tr, taper_len)
+    return st
+
+
+def cos_taper(tr, taper_len):
+    taper = np.ones_like(tr.data)
+    tl_n = round(taper_len*tr.stats.sampling_rate)
+    tap = np.sin(np.linspace(0, np.pi, tl_n*2))
+    taper[:tl_n] = tap[:tl_n]
+    taper[-tl_n:] = tap[-tl_n:]
+    tr.data = np.multiply(tr.data, taper)
+    return tr

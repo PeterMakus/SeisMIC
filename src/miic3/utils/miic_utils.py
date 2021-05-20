@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Friday, 14th May 2021 12:36:33 pm
+Last Modified: Tuesday, 18th May 2021 11:01:08 am
 '''
 from obspy import Inventory, Stream
 from obspy.core import Stats
@@ -117,6 +117,6 @@ def resample_or_decimate(
         data.filter('lowpass_cheby_2', freq=freq, maxorder=12)
 
     if sr/srn == sr//srn:
-        return data.decimate(int(sr//srn), no_filter=True)  #True
+        return data.decimate(int(sr//srn), no_filter=True)
     else:
         return data.resample(srn)
