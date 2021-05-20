@@ -63,19 +63,19 @@ co:
     # preprocessing of the original length time series
     # these function work on an obspy.Stream object given as first argument
     # and return an obspy.Stream object.
-    preProcessing : {'filter':
-                        {'kwargs':{'type':'bandpass',
-                                'freqmin':2, 'freqmax':4}}}  #0.01 9
-                    # {'function':'miic.core.stream.stream_filter',
-                    #   'args':{'ftype':'bandpass',
-                    #           'filter_option':{'freqmin':0.01, #0.01
-                    #                            'freqmax':9}, # 9
-                    #           'parallel':False}},
+    preProcessing : [
+                    #{'filter':
+                    #    {'kwargs':{'type':'bandpass',
+                    #            'freqmin':.01, 'freqmax':9}}}  #0.01 9
+                    {'function':'miic3.utils.miic_utils.stream_filter',
+                      'args':{'ftype':'bandpass',
+                              'filter_option':{'freqmin':2, #0.01
+                                               'freqmax':4}}}
                      #{'function':'miic.core.stream.stream_mute',
                      # 'args':{'taper_len':100,
                      #         'mute_method':'std_factor',
                      #         'mute_value':3}}
-                    
+                    ]
     # subdivision of the read sequences for correlation
     # type: presence of this key
     subdivision:
@@ -117,7 +117,7 @@ co:
                                     ],
                  'lengthToSave':100,
                  'center_correlation':True,      # make sure zero correlation time is in the center
-                 'normalize_correlation':True,
+                 'normalize_correlation':False,
                  'combinations':[],
                  # Not used in miic3
                  'direct_output':{'function':'convert_to_matlab',

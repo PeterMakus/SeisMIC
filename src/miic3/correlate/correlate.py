@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 14th May 2021 12:02:42 pm
+Last Modified: Thursday, 20th May 2021 04:18:04 pm
 '''
 from copy import deepcopy
 from ctypes import string_at
@@ -17,6 +17,7 @@ from time import time
 from mpi4py import MPI
 import numpy as np
 from obspy import Stream, UTCDateTime, Inventory
+from obspy.core.util.base import _get_function_from_entry_point
 import obspy.signal as osignal
 from scipy.fftpack import next_fast_len
 from scipy import signal
@@ -316,11 +317,15 @@ class Correlator(object):
                     st.extend(ndb.get_time_window(startt, endt))
                 # preprocessing on stream basis
                 # Maybe a bad place to do that? 
-                st = st.split()  # remove masked data
-                if 'filter' in self.options['preProcessing'].keys():
-                    kwargs = self.options['preProcessing']['filter']['kwargs']
-                    st.filter(**kwargs)
-                st.merge()  # Else it messes with the indexing
+                # st = st.split()  # remove masked data
+                # if 'filter' in self.options['preProcessing'].keys():
+                #     kwargs = self.options['preProcessing']['filter']['kwargs']
+                #     st.filter(**kwargs)
+                # st.merge()  # Else it messes with the indexing
+                if 'preProcessing' in self.options.keys():
+                    for procStep in self.options['preProcessing']:
+                        func = func_from_str(procStep['function'])
+                        st = func(st,**procStep['args'])
             else:
                 st = None
             st = self.comm.bcast(st, root=0)
@@ -423,9 +428,6 @@ class Correlator(object):
         # collect results
         self.comm.barrier()
         self.comm.Allreduce(MPI.IN_PLACE, [B, MPI.DOUBLE], op=MPI.SUM)
-        # just save the stuff real fast to compare
-        # np.save('/home/pm/Documents/PhD/testdata/B', B)
-        # np.dienow
 
         ######################################
         # correlation

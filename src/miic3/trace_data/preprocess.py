@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Tuesday, 18th May 2021 01:59:00 pm
+Last Modified: Thursday, 20th May 2021 01:45:46 pm
 '''
 from collections import namedtuple
 from glob import glob
@@ -285,7 +285,7 @@ class Preprocessor(object):
                 while starttime < endtime:
                     starttimes.append(starttime-xtra)
                     # Skip two seconds, so the same file is not loaded twice
-                    starttime = starttime+24*3600+xtra
+                    starttime = starttime+24*3600
                     endtimes.append(starttime+xtra)
             else:
                 starttimes.append(starttime-xtra)
@@ -296,6 +296,10 @@ class Preprocessor(object):
         # One hour is pretty close to the optimal length
         # chunk_len = next_fast_len(chunk_len) are identical
         # taper_len += np.random.rand(len(starttimes))*60
+
+        # Create folder if it does not exist
+        os.makedirs(self.outloc, exist_ok=True)
+
         for starttime, endtime in zip(starttimes, endtimes):
             # st_proc = Stream()
             st = self.store_client.get_waveforms(
@@ -368,9 +372,7 @@ class Preprocessor(object):
         #         #     # very short traces
         #         #     pass
         #         st_proc.extend(st)
-
-            # Create folder if it does not exist
-            os.makedirs(self.outloc, exist_ok=True)
+            #st_proc.merge()
 
             with ASDFDataSet(outfile, mpi=False) as ds:
                 ds.add_waveforms(st, tag='processed')  # st_proc

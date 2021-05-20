@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Monday, 17th May 2021 12:46:10 pm
+Last Modified: Thursday, 20th May 2021 12:54:02 pm
 '''
 import numpy as np
 from obspy import Stream, Trace, Inventory, UTCDateTime
@@ -67,8 +67,9 @@ class CorrStream(Stream):
         return out
 
     def stack(
-        self, starttime: UTCDateTime = None, endtime: UTCDateTime = None,
-            stack_len: int or str = 0, regard_location=True):
+        self, weight: str = 'by_length', starttime: UTCDateTime = None,
+        endtime: UTCDateTime = None, stack_len: int or str = 0,
+            regard_location=True):
         """
         Average the data of all traces in the given time windows.
         Will only stack data from the same network/channel/station combination.
@@ -108,13 +109,13 @@ class CorrStream(Stream):
             starttime = UTCDateTime(year=starttime.year, day=starttime.day)
             stack_len = 3600*24
             st = self.slice(starttime=starttime, endtime=starttime+stack_len)
-            outst.extend(stack_st_by_group(st, regard_location))
+            outst.extend(stack_st_by_group(st, regard_location, weight))
             in_st = self.slice(starttime=starttime+stack_len, endtime=endtime)
         else:
             in_st = self
         for st in in_st.slide(
                 stack_len, stack_len, include_partially_selected=True):
-            outst.extend(stack_st_by_group(st, regard_location))
+            outst.extend(stack_st_by_group(st, regard_location, weight))
         return outst
 
     def slide(self, window_length, step,
@@ -519,7 +520,7 @@ def compare_tr_id(tr0: Trace, tr1: Trace, regard_loc: bool = True) -> bool:
 #     return stackst
 
 
-def stack_st_by_group(st: Stream, regard_loc: bool) -> CorrStream:
+def stack_st_by_group(st: Stream, regard_loc: bool, weight: str) -> CorrStream:
     """
     Stack all traces that belong to the same network, station, channel, and
     (optionally) location combination in the input stream.
@@ -540,11 +541,11 @@ def stack_st_by_group(st: Stream, regard_loc: bool) -> CorrStream:
         stackdict.setdefault(key.format(**tr.stats), CorrStream()).append(tr)
     stackst = CorrStream()
     for k in stackdict:
-        stackst.append(stack_st(stackdict[k]))
+        stackst.append(stack_st(stackdict[k]), weight)
     return stackst
 
 
-def stack_st(st: CorrStream) -> CorrTrace:
+def stack_st(st: CorrStream, weight: str) -> CorrTrace:
     """
     Returns an average of the data of all traces in the stream. Also adjusts
     the corr_start and corr_end parameters in the header.
@@ -560,7 +561,14 @@ def stack_st(st: CorrStream) -> CorrTrace:
     st.sort(keys=['npts'])
     npts = st[-1].stats.npts
     stack = []
+    dur = []  # duration of each trace
     for tr in st.select(npts=npts):
         stack.append(tr.data)
+        dur.append(tr.stats.corr_end-tr.stats.corr_start)
     A = np.array(stack)
-    return CorrTrace(data=np.average(A, axis=0), _header=stats)
+    if weight == 'mean' or weight == 'average':
+        return CorrTrace(data=np.average(A, axis=0), _header=stats)
+    elif weight == 'by_length':
+        # Weight by the length of each trace
+        data = np.sum(A, axis=0)*np.array(dur)/np.sum(dur)
+        return CorrTrace(data=data, _header=stats)

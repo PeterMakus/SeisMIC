@@ -8,8 +8,9 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Tuesday, 18th May 2021 11:01:08 am
+Last Modified: Thursday, 20th May 2021 11:04:14 am
 '''
+from multiprocessing import Pool
 from obspy import Inventory, Stream
 from obspy.core import Stats
 
@@ -120,3 +121,79 @@ def resample_or_decimate(
         return data.decimate(int(sr//srn), no_filter=True)
     else:
         return data.resample(srn)
+
+
+def stream_filter(st, ftype, filter_option):
+    """ Filter each trace of a Stream according to the given parameters
+
+    This faction apply the specified filter function to all the traces in the
+    present in the input :py:class:`~obspy.core.stream.Stream`.
+
+    .. Note::
+
+    This operation is performed in place on the actual data arrays. The
+    raw data is not accessible anymore afterwards. To keep your
+    original data, use :func:`~miic.core.alpha_mod.stream_copy` to create
+    a copy of your stream object.
+    This function can also work in parallel an all or a specified number of
+    cores available in the hosting machine.
+
+    :type ftype: str
+    :param ftype: String that specifies which filter is applied (e.g.
+            ``"bandpass"``). See the `Supported Filter`_ section below for
+            further details.
+    :type filter_option: dict
+    :param filter_option: Necessary arguments for the respective filter
+        that will be passed on. (e.g. ``freqmin=1.0``, ``freqmax=20.0`` for
+        ``"bandpass"``)
+    :type parallel: bool (Default: True)
+    :pram parallel: If the filtering will be run in parallel or not
+    :type processes: int
+    :pram processes: Number of processes to start (if None it will be equal
+        to the number of cores available in the hosting machine)
+
+    .. rubric:: _`Supported Filter`
+
+    ``'bandpass'``
+        Butterworth-Bandpass (uses :func:`obspy.signal.filter.bandpass`).
+
+    ``'bandstop'``
+        Butterworth-Bandstop (uses :func:`obspy.signal.filter.bandstop`).
+
+    ``'lowpass'``
+        Butterworth-Lowpass (uses :func:`obspy.signal.filter.lowpass`).
+
+    ``'highpass'``
+        Butterworth-Highpass (uses :func:`obspy.signal.filter.highpass`).
+
+    ``'lowpassCheby2'``
+        Cheby2-Lowpass (uses :func:`obspy.signal.filter.lowpassCheby2`).
+
+    ``'lowpassFIR'`` (experimental)
+        FIR-Lowpass (uses :func:`obspy.signal.filter.lowpassFIR`).
+
+    ``'remezFIR'`` (experimental)
+        Minimax optimal bandpass using Remez algorithm (uses
+        :func:`obspy.signal.filter.remezFIR`).
+
+    """
+    if not isinstance(st, Stream):
+        raise TypeError("'st' must be a 'obspy.core.stream.Stream' object")
+
+    fparam = dict([(kw_filed, filter_option[kw_filed]) \
+                for kw_filed in filter_option])
+
+    # take care of masked traces and keep their order in the stream
+    fst = Stream()
+    for tr in st:
+        sptr = tr.split()
+        sptr.filter(ftype, **fparam)
+        sptr.merge()
+        fst += sptr
+    st = fst
+
+    # Change the name to help blockcanvas readability
+    st_filtered = st
+    return st_filtered
+
+
