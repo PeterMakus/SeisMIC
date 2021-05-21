@@ -6,7 +6,7 @@ log_subdir : 'log'
 # folder for figures
 fig_subdir : 'figures'
 # folder containing preprocessed data
-prepro_subdir: 'testnb_preprocessed_dailypp'
+prepro_subdir: 'testnb_preprocessed'
 
 
 #### parameters that are network specific
@@ -30,7 +30,7 @@ net:
 co:
     # subdirectory of 'proj_dir' to store correlation
     # type: string
-    subdir : 'corr_dailypp'
+    subdir : 'corr'
     # times sequences to read for cliping or muting on stream basis
     # These should be long enough for the reference (e.g. the standard
     # deviation) to be rather independent of the parts to remove
@@ -69,8 +69,8 @@ co:
                     #            'freqmin':.01, 'freqmax':9}}}  #0.01 9
                     {'function':'miic3.utils.miic_utils.stream_filter',
                       'args':{'ftype':'bandpass',
-                              'filter_option':{'freqmin':2, #0.01
-                                               'freqmax':4}}}
+                              'filter_option':{'freqmin':0.01, #0.01
+                                               'freqmax':9}}}
                      #{'function':'miic.core.stream.stream_mute',
                      # 'args':{'taper_len':100,
                      #         'mute_method':'std_factor',
@@ -117,7 +117,7 @@ co:
                                     ],
                  'lengthToSave':100,
                  'center_correlation':True,      # make sure zero correlation time is in the center
-                 'normalize_correlation':False,
+                 'normalize_correlation':True,
                  'combinations':[],
                  # Not used in miic3
                  'direct_output':{'function':'convert_to_matlab',
