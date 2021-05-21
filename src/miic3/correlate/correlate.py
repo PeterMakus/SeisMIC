@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 20th May 2021 04:18:04 pm
+Last Modified: Friday, 21st May 2021 03:12:42 pm
 '''
 from copy import deepcopy
 from ctypes import string_at
@@ -179,17 +179,15 @@ class Correlator(object):
                 'sampling_rate': self.sampling_rate})
 
         A, startlags = self._pxcorr_matrix(A)
-        # np.save('/home/pm/Documents/PhD/testdata/A', A)
-        # np.kratzab
 
         # put trace into a stream
         cst = CorrStream()
         for ii, (startlag, comb) in enumerate(
                 zip(startlags, self.options['combinations'])):
-            endlag = startlag + len(A[:, ii])/self.options['sampling_rate']
+            endlag = startlag + A[:, ii].shape[0]/self.options['sampling_rate']
             cst.append(
                 CorrTrace(
-                    A[:, ii], header1=st[comb[0]].stats,
+                    A[:, ii].T, header1=st[comb[0]].stats,
                     header2=st[comb[1]].stats, inv=inv, start_lag=startlag,
                     end_lag=endlag))
         return cst

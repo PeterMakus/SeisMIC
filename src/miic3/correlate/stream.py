@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Thursday, 20th May 2021 12:54:02 pm
+Last Modified: Friday, 21st May 2021 03:19:39 pm
 '''
 import numpy as np
 from obspy import Stream, Trace, Inventory, UTCDateTime
@@ -96,7 +96,7 @@ class CorrStream(Stream):
         # Seperate if there are different stations channel and or locations
         # involved
         if stack_len == 0:
-            return stack_st_by_group(self, regard_location)
+            return stack_st_by_group(self, regard_location, weight)
 
         # else
         self.sort(keys=['corr_start'])
@@ -541,7 +541,7 @@ def stack_st_by_group(st: Stream, regard_loc: bool, weight: str) -> CorrStream:
         stackdict.setdefault(key.format(**tr.stats), CorrStream()).append(tr)
     stackst = CorrStream()
     for k in stackdict:
-        stackst.append(stack_st(stackdict[k]), weight)
+        stackst.append(stack_st(stackdict[k], weight))
     return stackst
 
 
@@ -570,5 +570,5 @@ def stack_st(st: CorrStream, weight: str) -> CorrTrace:
         return CorrTrace(data=np.average(A, axis=0), _header=stats)
     elif weight == 'by_length':
         # Weight by the length of each trace
-        data = np.sum(A, axis=0)*np.array(dur)/np.sum(dur)
+        data = np.sum((A.T*np.array(dur)).T, axis=0)/np.sum(dur)
         return CorrTrace(data=data, _header=stats)
