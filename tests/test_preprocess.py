@@ -4,9 +4,10 @@ UnitTests for the preprocess module.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 15th March 2021 11:14:04 am
-Last Modified: Wednesday, 26th May 2021 03:47:20 pm
+Last Modified: Thursday, 27th May 2021 04:19:48 pm
 '''
 import unittest
+from unittest import mock
 
 import numpy as np
 from obspy import read
@@ -50,6 +51,24 @@ class TestPreprocessor(unittest.TestCase):
         self.assertEqual(st[0].stats.sampling_rate, 25)
         # Response removal works?
         self.assertTrue('response' in st[0].stats.processing[-1])
+
+    @mock.patch('miic3.trace_data.preprocess.os.path.exists')
+    def test_path_exist(self, path_exists_mock):
+        path_exists_mock.return_value = True
+        p = Preprocessor(
+                self.store_client, sampling_rate=25,
+                outfolder='x', remove_response=True)
+        with self.assertRaises(PermissionError):
+            p.preprocess('bla', 'blub', '*', '*')
+
+    def test_use_bulk(self):
+        p = Preprocessor(
+                self.store_client, sampling_rate=25,
+                outfolder='x', remove_response=True)
+        with self.assertRaises(TypeError):
+            p.preprocess('bla', ['1', '2'], '*', '*')
+        with self.assertRaises(TypeError):
+            p.preprocess('bla', '*', '*', '*')
 
 
 if __name__ == "__main__":

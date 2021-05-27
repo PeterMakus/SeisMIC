@@ -7,17 +7,14 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 25th May 2021 10:52:16 am
+Last Modified: Thursday, 27th May 2021 04:42:23 pm
 '''
 from copy import deepcopy
-from ctypes import string_at
 import os
-from time import time
 
 from mpi4py import MPI
 import numpy as np
 from obspy import Stream, UTCDateTime, Inventory
-from obspy.core.util.base import _get_function_from_entry_point
 import obspy.signal as osignal
 from scipy.fftpack import next_fast_len
 from scipy import signal
@@ -487,10 +484,19 @@ class Correlator(object):
 
 
 def st_to_np_array(st: Stream, npts: int) -> np.ndarray:
-    # st.sort(keys=['npts'])
+    """
+    Converts an obspy stream to a matrix with the shape (npts, st.count()).
+    Also returns the same stream but without the data arrays in tr.data.
+
+    :param st: Input Stream
+    :type st: Stream
+    :param npts: Maximum number of samples per Trace
+    :type npts: int
+    :return: A stream and a matrix
+    :rtype: np.ndarray
+    """
     A = np.zeros((npts, st.count()), dtype=np.float32)  # np.float32
     for ii, tr in enumerate(st):
-        # A[ii, :tr.stats.npts] = tr.data
         A[:tr.stats.npts, ii] = tr.data
         del tr.data  # Not needed any more, just uses up RAM
     # Transferring the trace data to this array introduces NaNs?
@@ -507,9 +513,9 @@ def zeroPadding(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     to avoid wrap around effects. Three possibilities for the length of the
     padding can be set in `args['type']`
 
-        -`nextPowerOfTwo`: traces are padded to a length that is the next power \\
+        -`nextPowerOfTwo`: traces are padded to a length that is the next power
             of two from the original length
-        -`avoidWrapAround`: depending on length of the trace that is to be used \\
+        -`avoidWrapAround`: depending on length of the trace that is to be used
             the padded part is just long enough to avoid wrap around
         -`avoidWrapPowerTwo`: use the next power of two that avoids wrap around
 

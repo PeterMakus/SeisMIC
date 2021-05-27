@@ -13,7 +13,7 @@ from obspy.clients.fdsn.mass_downloader import RectangularDomain, \
 
 
 SDS_FMTSTR = os.path.join(
-    'mseed', "{year}", "{network}", "{station}", "{channel}.{sds_type}",
+    "{year}", "{network}", "{station}", "{channel}.{sds_type}",
     "{network}.{station}.{location}.{channel}.{sds_type}.{year}.{doy:03d}")
 
 
@@ -43,7 +43,7 @@ class Store_Client(object):
         assert os.path.isdir(path), "{} is not a directory".format(path)
         self.fileborder_seconds = 30
         self.fileborder_samples = 5000
-        self.sds_root = path
+        self.sds_root = os.path.join(path, 'mseed')
         self.inv_name = os.path.join(path, "inventory", "inventory.xml")
         if os.path.exists(self.inv_name):
             self.inventory = self.read_inventory()
@@ -130,7 +130,7 @@ class Store_Client(object):
         """
         # If no network is defined use all
         network = network or '*'
-        oslist = glob(
+        oslist = glob.glob(
             os.path.join(self.sds_root, '????', network, '*'))
         statlist = []
         for path in oslist:
@@ -140,6 +140,8 @@ class Store_Client(object):
             code = path.split('/')[-2:]
             if code not in statlist:
                 statlist.append(code)
+        if not statlist:
+            raise FileNotFoundError('No Data Available.')
         return statlist
 
     def _get_mseed_storage(
@@ -189,7 +191,10 @@ class Store_Client(object):
                 UserWarning)
             return (None, None)
         dirlist.sort()  # sort by time
-        startjul = [i[-3:] for i in glob.glob(
+        # startjul = [i[-3:] for i in glob.glob(
+        #     os.path.join(
+        #         self.sds_root, dirlist[0], network, station, '*', '*'))]
+        startjul = [i.split('.')[-1] for i in glob.glob(
             os.path.join(
                 self.sds_root, dirlist[0], network, station, '*', '*'))]
         if not startjul:
@@ -197,12 +202,16 @@ class Store_Client(object):
                 'Station %s.%s not in database' % (network, station),
                 UserWarning)
             return (None, None)
-        startjul.sort()
+        # the keys here make sure that 200 comes after 3, but before 300
+        startjul.sort(key=lambda l: (len(l), l))
         starttime = UTCDateTime(year=int(dirlist[0]), julday=startjul[0])
-        endjul = [i[-3:] for i in glob.glob(
+        # endjul = [i[-3:] for i in glob.glob(
+        #     os.path.join(
+        #         self.sds_root, dirlist[-1], network, station, '*', '*'))]
+        endjul = [i.split('.')[-1] for i in glob.glob(
             os.path.join(
                 self.sds_root, dirlist[-1], network, station, '*', '*'))]
-        endjul.sort()
+        endjul.sort(key=lambda l: (len(l), l))
         # This is of course not the latest endtime, but the latest starttime!
         # Hence, add + 1 (PM 06/05/21)
         endtime = UTCDateTime(year=int(dirlist[-1]), julday=int(endjul[-1])+1)

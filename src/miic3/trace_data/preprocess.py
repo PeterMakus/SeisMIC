@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Wednesday, 26th May 2021 04:02:19 pm
+Last Modified: Thursday, 27th May 2021 04:18:20 pm
 '''
 from glob import glob
 import os
@@ -227,9 +227,9 @@ class Preprocessor(object):
                     :func:`~Preprocessor.preprocess_bulk()`.
         """
 
-        assert '*' not in station or type(station) != list, 'To process data\
-             from several stations, use \
-                 :func:`~Preprocessor.preprocess_bulk()`!'
+        if '*' in station or isinstance(station, list):
+            raise TypeError(
+                'To process data from several stations, use preprocess_bulk!')
 
         # Check whether there is already an existing output file and if
         # make sure that the processing parameters are the same!
