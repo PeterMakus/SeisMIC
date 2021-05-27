@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Thursday, 20th May 2021 12:11:30 pm
+Last Modified: Thursday, 27th May 2021 12:27:48 pm
 '''
 
 from glob import glob
@@ -22,6 +22,18 @@ from miic3.trace_data.waveform import Store_Client
 h5_FMTSTR = os.path.join("{dir}", "{network}.{station}.h5")
 
 
+class NoDataError(Exception):
+    """Exception raised for errors in the input.
+
+    Attributes:
+        expression -- input expression in which the error occurred
+        message -- explanation of the error
+    """
+
+    def __init__(self, message):
+        self.message = message
+
+
 class NoiseDB(object):
     """
     Class to handle ASDF files that contain the preprocessed noise data.
@@ -29,11 +41,21 @@ class NoiseDB(object):
 
     def __init__(
             self, dir: str, network: str, station: str) -> None:
+        """
+        Initialises the noise database (ASDF handler).
+
+        :param dir: Directory to create the file in
+        :type dir: str
+        :param network: Network code
+        :type network: str
+        :param station: Station code
+        :type station: str
+        """
 
         assert isinstance(station, str) and isinstance(network, str), \
             "Station and network have to be provided as strings."
         assert '*' not in dir+network+station or '?' not in \
-            dir+network+station, "Files patterns are not supported."
+            dir+network+station, "Wildcards are not supported."
 
         super().__init__()
         # Location of the h5 file
@@ -65,6 +87,7 @@ class NoiseDB(object):
             'store_client': store_client,
             'sampling_rate': self.sampling_rate,
             'outfolder': os.path.dirname(self.loc),
+            'remove_response': self.param["remove_response"],
             '_ex_times': self.get_active_times()}
         return kwargs
 
@@ -183,11 +206,28 @@ class NoiseDB(object):
         return st2
 
     def get_time_window(self, start: UTCDateTime, end: UTCDateTime) -> Stream:
+        """
+        Return a Stream between the requested times.
+
+        .. note:: Will not raise an error if the time is only partly available.
+        However, this will raise an error if there is no data at all.
+
+
+        :param start: Starttime
+        :type start: UTCDateTime
+        :param end: Endtime
+        :type end: UTCDateTime
+        :raises NoDataError: If the stream to be returned is empty
+        :return: Stream containing all data in the requested time frame.
+        :rtype: Stream
+        """
         with ASDFDataSet(self.loc, mode="r", mpi=False) as ds:
             st = ds.waveforms[
                 "%s.%s" % (self.network, self.station)].processed.slice(
                     start, end)
             st.merge()  # To return one trace rather than several
+        if not st:
+            raise NoDataError('No Data between requested start and end.')
         return st
 
     def get_inventory(self) -> Inventory:
@@ -222,7 +262,8 @@ def get_available_stations(dir: str, network: str, station: str) -> tuple:
     pattern = h5_FMTSTR.format(dir=dir, network=network, station=station)
     pathl = glob(os.path.join(dir, pattern))
     if not len(pathl):
-        raise FileNotFoundError("""No files found for the requested network \
+        raise FileNotFoundError(
+            """No files found for the requested network \
         and station combination.""")
     codea = np.array(
         [path.split(os.path.sep)[-1].split('.') for path in pathl])

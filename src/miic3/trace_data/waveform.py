@@ -13,7 +13,7 @@ from obspy.clients.fdsn.mass_downloader import RectangularDomain, \
 
 
 SDS_FMTSTR = os.path.join(
-    "{year}", "{network}", "{station}", "{channel}.{sds_type}",
+    'mseed', "{year}", "{network}", "{station}", "{channel}.{sds_type}",
     "{network}.{station}.{location}.{channel}.{sds_type}.{year}.{doy:03d}")
 
 
@@ -114,6 +114,34 @@ class Store_Client(object):
                 attach_response)
         return st
 
+    def get_available_stations(self, network: str = None) -> list:
+        """
+        Returns a list of stations for which raw data is available.
+        Very similar to the
+        :func:`~obspy.clients.filesystem.sds.get_all_stations()` method with
+        the difference that this one allows to filter for particular networks.
+
+        :param network: Only return stations from this network. `network==None`
+        is similar to using a wildcard. Defaults to None
+        :type network: strorNone, optional
+        :return: List of network and station codes in the form:
+        `[[net0,stat0], [net1,stat1]]`.
+        :rtype: list
+        """
+        # If no network is defined use all
+        network = network or '*'
+        oslist = glob(
+            os.path.join(self.sds_root, '????', network, '*'))
+        statlist = []
+        for path in oslist:
+            if not isinstance(eval(path.split('/')[-3]), int):
+                continue
+            # Add all network and station combinations to list
+            code = path.split('/')[-2:]
+            if code not in statlist:
+                statlist.append(code)
+        return statlist
+
     def _get_mseed_storage(
         self, network: 'str', station: 'str', location: str,
             channel: str, starttime: UTCDateTime, endtime: UTCDateTime):
@@ -151,8 +179,8 @@ class Store_Client(object):
             os.path.basename(
                 os.path.dirname(os.path.dirname(i))) for i in dirlist]
         # We only want the folders with years
-        l0 = fnmatch.filter(dirlist2, '1*')
-        l1 = fnmatch.filter(dirlist2, '2*')
+        l0 = fnmatch.filter(dirlist2, '1???')
+        l1 = fnmatch.filter(dirlist2, '2???')
         del dirlist2
         dirlist = l0 + l1
         if not dirlist:
@@ -274,8 +302,8 @@ class Store_Client(object):
             rst = tr
         rst.write(filename, format='MSEED')
 
-    def _write_inventory(self, ninv):
-        # write the inventory information
+    def _write_inventory(self, ninv: Inventory):
+        """write the inventory information"""
         if self.inventory is not None:
             self.inventory += ninv
         else:

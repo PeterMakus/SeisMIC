@@ -4,7 +4,7 @@ Simple script to compute and plot time-dependent spectral power densities.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 15th February 2021 02:09:48 pm
-Last Modified: Friday, 30th April 2021 09:39:43 am
+Last Modified: Wednesday, 26th May 2021 04:04:56 pm
 '''
 
 import matplotlib
@@ -113,7 +113,7 @@ def spct_series_welch(
         series.
     :rtype: np.ndarray
     """
-    l = []
+    speclist = []
     st.sort(keys=['starttime'])
     for tr in st:
         for wintr in tr.slide(
@@ -128,8 +128,8 @@ def spct_series_welch(
             # 256 points of resolution in f direction hardcoded for now
             f2 = np.logspace(-3, np.log10(f.max()), 256)
             S2 = pchip_interpolate(f, S, f2)
-            l.append(S2)
-    S = np.array(l)
+            speclist.append(S2)
+    S = np.array(speclist)
 
     # compute time series
     t = np.linspace(

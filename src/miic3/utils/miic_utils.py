@@ -8,11 +8,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Thursday, 20th May 2021 11:04:14 am
+Last Modified: Wednesday, 26th May 2021 02:50:41 pm
 '''
-from multiprocessing import Pool
-from obspy import Inventory, Stream
-from obspy.core import Stats
+import numpy as np
+from obspy import Inventory, Stream, Trace
+from obspy.core import Stats, AttribDict
 
 
 def trace_calc_az_baz_dist(stats1: Stats, stats2: Stats):
@@ -36,10 +36,10 @@ def trace_calc_az_baz_dist(stats1: Stats, stats2: Stats):
     :return: **dist**: Distance between tr1 and tr2
     """
 
-    if not isinstance(stats1, Stats):
+    if not isinstance(stats1, (Stats, AttribDict)):
         raise TypeError("stats1 must be an obspy Stats object.")
 
-    if not isinstance(stats2, Stats):
+    if not isinstance(stats2, (Stats, AttribDict)):
         raise TypeError("stats2 must be an obspy Stats object.")
 
     try:
@@ -96,7 +96,8 @@ def inv_calc_az_baz_dist(inv1: Inventory, inv2: Inventory):
 
 
 def resample_or_decimate(
-        data: Stream, sampling_rate_new: int, filter=True) -> Stream:
+    data: Trace or Stream, sampling_rate_new: int,
+        filter=True) -> Stream or Trace:
     """
     Decimates the data if the desired new sampling rate allows to do so.
     Else the signal will be interpolated (a lot slower).
@@ -108,7 +109,13 @@ def resample_or_decimate(
     :return: The resampled stream
     :rtype: Stream
     """
-    sr = data[0].stats.sampling_rate
+    if isinstance(data, Stream):
+        sr = data[0].stats.sampling_rate
+    elif isinstance(data, Trace):
+        sr = data.stats.sampling_rate
+    else:
+        raise TypeError('Data has to be an obspy Stream or Trace.')
+
     srn = sampling_rate_new
 
     # Chosen this filter design as it's exactly the same as
@@ -180,8 +187,8 @@ def stream_filter(st, ftype, filter_option):
     if not isinstance(st, Stream):
         raise TypeError("'st' must be a 'obspy.core.stream.Stream' object")
 
-    fparam = dict([(kw_filed, filter_option[kw_filed]) \
-                for kw_filed in filter_option])
+    fparam = dict(
+        [(kw_filed, filter_option[kw_filed]) for kw_filed in filter_option])
 
     # take care of masked traces and keep their order in the stream
     fst = Stream()
@@ -197,3 +204,48 @@ def stream_filter(st, ftype, filter_option):
     return st_filtered
 
 
+def cos_taper_st(st: Stream, taper_len: float) -> Stream:
+    """
+    Applies a cosine taper to the input Stream.
+
+    .. note:: This action is performed in place. If you want to keep the
+        original data use :func:`~obspy.core.stream.Stream.copy`.
+
+    :param tr: Input Stream
+    :type tr: :class:`~obspy.core.stream.Stream`
+    :param taper_len: Length of the taper per side
+    :type taper_len: float
+    :return: Tapered Stream
+    :rtype: :class:`~obspy.core.stream.Stream`
+    """
+    for tr in st:
+        tr = cos_taper(tr, taper_len)
+    return st
+
+
+def cos_taper(tr: Trace, taper_len: float) -> Trace:
+    """
+    Applies a cosine taper to the input trace.
+
+    .. note:: This action is performed in place. If you want to keep the
+        original data use :func:`~obspy.core.trace.Trace.copy`.
+
+    :param tr: Input Trace
+    :type tr: Trace
+    :param taper_len: Length of the taper per side in seconds
+    :type taper_len: float
+    :return: Tapered Trace
+    :rtype: Trace
+    """
+    if taper_len <= 0:
+        raise ValueError('Taper length must be larger than 0 s')
+    taper = np.ones_like(tr.data)
+    tl_n = round(taper_len*tr.stats.sampling_rate)
+    if tl_n * 2 > tr.stats.npts:
+        raise ValueError(
+            'Taper Length * 2 has to be smaller or equal to trace\'s length.')
+    tap = np.sin(np.linspace(0, np.pi, tl_n*2))
+    taper[:tl_n] = tap[:tl_n]
+    taper[-tl_n:] = tap[-tl_n:]
+    tr.data = np.multiply(tr.data, taper)
+    return tr

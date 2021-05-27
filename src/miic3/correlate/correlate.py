@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 21st May 2021 03:12:42 pm
+Last Modified: Tuesday, 25th May 2021 10:52:16 am
 '''
 from copy import deepcopy
 from ctypes import string_at
@@ -290,15 +290,6 @@ class Correlator(object):
         t0 = UTCDateTime(self.options['read_start']).timestamp
         t1 = UTCDateTime(self.options['read_end']).timestamp
         loop_window = np.arange(t0, t1, self.options['read_inc'])
-        # if loop_window[-1] != t1:
-        #     loop_window = np.append(loop_window, t1)
-        # if self.options['taper']:
-        #     corr_len = opt['corr_len']/.9
-        #     # Additional data that have to be read at each end
-        #     delta = opt['corr_len']*.05
-        # else:
-        #     corr_len = opt['corr_len']
-        #     delta = 0
 
         for t in loop_window:
             write_flag = True  # Write length is same as read length
@@ -315,15 +306,10 @@ class Correlator(object):
                     st.extend(ndb.get_time_window(startt, endt))
                 # preprocessing on stream basis
                 # Maybe a bad place to do that? 
-                # st = st.split()  # remove masked data
-                # if 'filter' in self.options['preProcessing'].keys():
-                #     kwargs = self.options['preProcessing']['filter']['kwargs']
-                #     st.filter(**kwargs)
-                # st.merge()  # Else it messes with the indexing
                 if 'preProcessing' in self.options.keys():
                     for procStep in self.options['preProcessing']:
                         func = func_from_str(procStep['function'])
-                        st = func(st,**procStep['args'])
+                        st = func(st, **procStep['args'])
             else:
                 st = None
             st = self.comm.bcast(st, root=0)
@@ -338,7 +324,7 @@ class Correlator(object):
                     # This could be done in the main script with several cores
                     # to speed up things a tiny bit
                     win.taper(max_percentage=0.05)
-                self.options['combinations'] = calc_cross_combis(st)
+                self.options['combinations'] = calc_cross_combis(win)
                 yield win, write_flag
                 write_flag = False
 

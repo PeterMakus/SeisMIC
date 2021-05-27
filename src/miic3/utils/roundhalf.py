@@ -11,7 +11,8 @@ Author:
 Last updated:
 """
 
-def roundhalf(number):
+
+def roundhalf(number: float) -> float:
     """
     Rounds to next half of integer
 

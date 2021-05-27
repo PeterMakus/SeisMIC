@@ -4,9 +4,8 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Friday, 21st May 2021 04:04:04 pm
+Last Modified: Wednesday, 26th May 2021 04:02:19 pm
 '''
-from collections import namedtuple
 from glob import glob
 import os
 from warnings import warn
@@ -18,11 +17,7 @@ from pyasdf.asdf_data_set import ASDFDataSet
 
 from .waveform import Store_Client
 from miic3.db.asdf_handler import NoiseDB
-from miic3.utils.miic_utils import resample_or_decimate
-
-
-# Class to define filter frequencies
-Filter = namedtuple('Filter', 'lowcut highcut')
+from miic3.utils.miic_utils import resample_or_decimate, cos_taper_st
 
 
 class Error(Exception):
@@ -80,13 +75,9 @@ class Preprocessor(object):
             sampling frequency than the one defined will be discarded!
         """
         super().__init__()
-        # assert sampling_rate/2 > filter[1], \
-        #     "The highcut frequency of the filter has to be lower than the \
-        #         Nyquist frequency (sampling frequency/2) of the signal to \
-        #             prevent aliasing. Current Nyquist frequency is: %s."\
-        #                  % str(sampling_rate/2)
+
         self.store_client = store_client
-        # Probably importannt to save the filter and perhaps also the
+        # Probably important to save the filter and perhaps also the
         # sampling frequency in the asdf file, so one can perhaps start a
         # Preprocessor by giving the file as parameter.
         self.sampling_rate = sampling_rate
@@ -95,7 +86,8 @@ class Preprocessor(object):
         # Create preprocessing parameter dict
         self.param = {
             "sampling_rate": self.sampling_rate,
-            "outfolder": self.outloc}
+            "outfolder": self.outloc,
+            "remove_response": remove_response}
 
         # Add the already existing times
         self.ex_times = _ex_times
@@ -183,17 +175,30 @@ class Preprocessor(object):
             self.preprocess(
                 network, station, location, channel, starttime, endtime)
         except PermissionError:
-            # Now we get the appropraite preprocessor and do a preprocess on
+            # Now we get the appropriate preprocessor and do a preprocess on
             # that one
             try:
                 ndb = NoiseDB(self.outloc, network, station)
                 kwargs = ndb.return_preprocessor(self.store_client)
+                # Check whether the old processing parameters agree with the
+                # new ones
+                if kwargs['remove_response'] != self.remove_response or \
+                        kwargs['sampling_rate'] != self.sampling_rate:
+                    raise ValueError(
+                        'The target directory already contains a file for ' +
+                        'station %s.%s with different processing parameters.'
+                        % (network, station) + 'The processing parameters in' +
+                        ' the old file are as follows:\n' +
+                        'sampling rate: %s\nremove_response: %s'
+                        % (kwargs['sampling_rate'], kwargs['remove_response']))
                 p = Preprocessor(**kwargs)
                 p.preprocess(
                     network, station, location, channel, starttime, endtime)
             except FileExistsError:
                 print('No new data for station %s.%s processed.' % (
                     network, station))
+        except FileNotFoundError as e:
+            warn(e)
 
     def preprocess(
         self, network: str, station: str, location: str, channel: str,
@@ -244,7 +249,9 @@ class Preprocessor(object):
             starttime, endtime = self.store_client._get_times(network, station)
             if not starttime:
                 # No data
-                return
+                raise FileNotFoundError(
+                    'No files found in miniseed database for station %s.%s.'
+                    % (network, station))
         else:
             _check_times = True
 
@@ -279,106 +286,43 @@ class Preprocessor(object):
         # held in RAM.
         starttimes = []
         endtimes = []
-        # extra bit to load to avoid artefacts
-        # randx = np.random.randint(0, high=3600)
+
         tl = 30  # taper per side during instrument response removal
-        xtra = tl*3
         for starttime, endtime in zip(req_start, req_end):
-            if endtime-starttime > 24*3600+2*xtra:
+            if endtime-starttime > 24*3600+2*tl:
                 while starttime < endtime:
-                    starttimes.append(starttime-xtra)
+                    starttimes.append(starttime-tl)
                     # Skip two seconds, so the same file is not loaded twice
                     starttime = starttime+24*3600
-                    endtimes.append(starttime+xtra)
+                    endtimes.append(starttime+tl)
             else:
-                starttimes.append(starttime-xtra)
-                endtimes.append(endtime+xtra)
-
-        # processing chunk length in s
-        chunk_len = 3600  # + np.random.randint(-360, high=360)
-        # One hour is pretty close to the optimal length
-        # chunk_len = next_fast_len(chunk_len) are identical
-        # taper_len += np.random.rand(len(starttimes))*60
+                starttimes.append(starttime-tl)
+                endtimes.append(endtime+tl)
 
         # Create folder if it does not exist
         os.makedirs(self.outloc, exist_ok=True)
 
-        # for starttime, endtime in zip(starttimes, endtimes):
-        #     # st_proc = Stream()
-        #     st = self.store_client.get_waveforms(
-        #         network, station, location, channel, starttime, endtime,
-        #         _check_times=_check_times)
-        #     try:
-        #         st, resp = self._preprocess(
-        #             st, self.store_client.inventory, tl)
-        #     except FrequencyError as e:
-        #         warn(e + ' Trace is skipped.')
-        #         continue
-            # try:
-            #     st.trim(
-            #         starttime=st[0].stats.starttime+tl,
-            #         endtime=st[0].stats.endtime-tl)
-            # except ValueError:
-            #     # very short traces
-            #     pass
-        # taper_len += np.random.rand(len(starttimes))*60
-        # print(taper_len)
-        # random extra bit to take to avoid that the response removal causes a
-        # correlation peak
-        # maxx = 720  # the maximum said random value can take
-        # randx = 0 #np.random.randint(0, high=maxx)
-        # startflag = False
-        # endflag = False
-
         for starttime, endtime in zip(starttimes, endtimes):
-            # Return obspy stream with data from this station if the data
-            # does not already exist
-            st_raw = self.store_client.get_waveforms(
-                network, station, location, channel, starttime,
-                endtime, _check_times=_check_times)
-            st_raw.sort()
-            # if st_raw[0].stats.starttime != starttime-randx:
-            #     # start of the whole dataset / gap else it returns -tl
-            #     st_raw.trim(starttime=starttime+randx)
-            #     startflag = True
-            # if st_raw[-1].stats.endtime != endtime+randx:
-            #     # end of the whole dataset / gap
-            #     st_raw.trim(endtime-randx)
-            #     endflag = True
-
-            st_proc = Stream()
-            for ii, st in enumerate(st_raw.slide(
-                chunk_len+xtra, chunk_len,
-                    include_partial_windows=True)):
-                try:
-                    st, resp = self._preprocess(
-                        st, self.store_client.inventory, tl)
-                    # Cut the tapered parts off again
-                except FrequencyError as e:
-                    warn(e + ' Trace is skipped.')
-                    continue
-                try:
-                    st.trim(
-                        starttime=st[0].stats.starttime+xtra,
-                        endtime=st[0].stats.endtime-xtra)
-                    # if startflag and ii == 0:
-                    #     # First trace of the day
-                    #     st.trim(
-                    #         starttime=st_raw[0].stats.starttime+maxx+tl)
-                    #     startflag = False
-                    # elif endflag and \
-                    #         st_raw[-1].stats.endtime == st[0].stats.endtime:
-                    #     # Last trace of the day
-                    #     st.trim(
-                    #         endtime=st_raw[-1].stats.endtime-maxx-tl)
-                except ValueError:
-                    # very short traces
-                    pass
-                st_proc.extend(st)
-            #st_proc.merge()
+            # st_proc = Stream()
+            st = self.store_client.get_waveforms(
+                network, station, location, channel, starttime, endtime,
+                _check_times=_check_times)
+            try:
+                st, resp = self._preprocess(
+                    st, self.store_client.inventory, tl)
+            except FrequencyError as e:
+                warn(e + ' Trace is skipped.')
+                continue
+            try:
+                st.trim(
+                    starttime=st[0].stats.starttime+tl,
+                    endtime=st[0].stats.endtime-tl)
+            except ValueError:
+                # very short traces
+                pass
 
             with ASDFDataSet(outfile, mpi=False) as ds:
-                ds.add_waveforms(st_proc, tag='processed')  # st_proc
+                ds.add_waveforms(st, tag='processed')  # st_proc
 
         with ASDFDataSet(outfile, mpi=False) as ds:
             # Save some processing values as auxiliary data
@@ -402,20 +346,7 @@ class Preprocessor(object):
         `[[net0,stat0], [net1,stat1]]`.
         :rtype: list
         """
-
-        # If no network is defined use all
-        network = network or '*'
-        oslist = glob(
-            os.path.join(self.store_client.sds_root, '????', network, '*'))
-        statlist = []
-        for path in oslist:
-            if not isinstance(eval(path.split('/')[-3]), int):
-                continue
-            # Add all network and station combinations to list
-            code = path.split('/')[-2:]
-            if code not in statlist:
-                statlist.append(code)
-        return statlist
+        return self.store_client.get_available_stations(network)
 
     def _preprocess(
         self, st: Stream, inv: Inventory or None,
@@ -437,15 +368,13 @@ class Preprocessor(object):
         # AA-Filter is done in this function as well
         st = resample_or_decimate(st, self.sampling_rate)
 
- 
-
         if inv:
             ninv = inv
             st.attach_response(ninv)
         if self.remove_response:
             # taper before instrument response removal
             if taper_len:
-                #st.taper(None, max_length=taper_len)
+                # st.taper(None, max_length=taper_len)
                 st = cos_taper_st(st, taper_len)
             try:
                 pass
@@ -512,19 +441,3 @@ def detrend(data: np.ndarray) -> np.ndarray:
             coeff = np.dot(rq, data[ii])
             data[ii] = data[ii] - np.dot(X, coeff)
     return data
-
-
-def cos_taper_st(st, taper_len):
-    for tr in st:
-        tr = cos_taper(tr, taper_len)
-    return st
-
-
-def cos_taper(tr, taper_len):
-    taper = np.ones_like(tr.data)
-    tl_n = round(taper_len*tr.stats.sampling_rate)
-    tap = np.sin(np.linspace(0, np.pi, tl_n*2))
-    taper[:tl_n] = tap[:tl_n]
-    taper[-tl_n:] = tap[-tl_n:]
-    tr.data = np.multiply(tr.data, taper)
-    return tr

@@ -4,7 +4,7 @@ UnitTests for the preprocess module.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 15th March 2021 11:14:04 am
-Last Modified: Monday, 15th March 2021 03:21:14 pm
+Last Modified: Wednesday, 26th May 2021 03:47:20 pm
 '''
 import unittest
 
@@ -16,6 +16,9 @@ from miic3.trace_data.preprocess import Preprocessor, FrequencyError
 from miic3.trace_data.waveform import Store_Client
 
 
+# This module is rather difficult to test
+
+
 class TestPreprocessor(unittest.TestCase):
     """
     Test :class:`~miic3.trace_data.Preprocessor`.
@@ -23,35 +26,30 @@ class TestPreprocessor(unittest.TestCase):
     def setUp(self) -> None:
         self.store_client = Store_Client('IRIS', '/', read_only=True)
 
-    def test_aliasing_protect(self):
-        """
-        When the sampling frequency is too high, this should raise an Error.
-        """
-        with self.assertRaises(AssertionError):
-            Preprocessor(
-                self.store_client, filter=(.1, 100), sampling_rate=100,
-                outfolder='x')
-
     def test_frequency_error(self):
         """
         Test the lowest level preprocessing frequency error
         """
         p = Preprocessor(
-                self.store_client, filter=(.1, 10), sampling_rate=1000,
-                outfolder='x')
+                self.store_client, sampling_rate=1000,
+                outfolder='x', remove_response=True)
         with self.assertRaises(FrequencyError):
-            p._preprocess(read())
+            p._preprocess(read(), inv=read_inventory(), taper_len=0)
 
     def test_preprocess(self):
         """
         Test whether the actual low-level preprocessing function works
         """
         p = Preprocessor(
-                self.store_client, filter=(.1, 10), sampling_rate=25,
-                outfolder='x')
-        st, _ = p._preprocess(read(), inv=read_inventory())
+                self.store_client, sampling_rate=25,
+                outfolder='x', remove_response=True)
+        st, _ = p._preprocess(read(), inv=read_inventory(), taper_len=3)
+        # right data type?
         self.assertIsInstance(st[0].data[0], np.float32)
+        # new sampling frequency
         self.assertEqual(st[0].stats.sampling_rate, 25)
+        # Response removal works?
+        self.assertTrue('response' in st[0].stats.processing[-1])
 
 
 if __name__ == "__main__":

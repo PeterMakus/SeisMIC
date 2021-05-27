@@ -6,16 +6,14 @@ Created on Fri Oct 18 20:36:40 2019
 @author: pm
 """
 
-from scipy.fftpack import next_fast_len
-
 
 def nextpowerof2(n):
     """ just returns the next higher power of two from n"""
     count = 0
 
-    # First n in the below  
-    # condition is for the  
-    # case where n is 0 
+    # First n in the below
+    # condition is for the
+    # case where n is 0
     if n and not (n & (n - 1)):
         return n
 

@@ -3,26 +3,150 @@ Module to test the asdf handler.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th March 2021 04:26:31 pm
-Last Modified: Thursday, 18th March 2021 04:34:50 pm
+Last Modified: Thursday, 27th May 2021 12:45:58 pm
 '''
 import unittest
+from unittest import mock
 
-import random
+import numpy as np
 from obspy import read, read_inventory
-from pyasdf import ASDFDataSet
+from obspy.core import AttribDict
+
+from miic3.db import asdf_handler
 
 
 class TestNoiseDB(unittest.TestCase):
-    def setUp(self) -> None:
+    @mock.patch('miic3.db.asdf_handler.ASDFDataSet')
+    def setUp(self, asdf_mock) -> None:
         # Example data
-        st = read()
-        inv = read_inventory
-        a = random.random()
-        self.filter = (a, 3*a)
-        self.sampling_rate = 7*a
-        self.station = st[0].stats.station
-        self.network = st[0].stats.network
+        self.st = read()
+        self.station = self.st[0].stats.station
+        self.network = self.st[0].stats.network
+        self.param = {
+            "sampling_rate": 20,
+            "outfolder": 'location',
+            "remove_response": True}
+        asdf_mock.return_value.__enter__.return_value = AttribDict(
+            waveforms=AttribDict(
+                {'%s.%s' % (self.network, self.station): AttribDict({
+                    'processed': self.st})}),
+            auxiliary_data=AttribDict(
+                PreprocessingParameters=AttribDict(
+                    param=AttribDict(
+                        parameters=self.param))))
+        self.ndb = asdf_handler.NoiseDB('outdir', self.network, self.station)
 
-        with ASDFDataSet('test.h5') as ds:
-            ds.add_waveforms(st, tag='processed')
-            ds.add_stationxml(inv)
+    def test_param(self):
+        self.assertEqual(self.param, self.ndb.param)
+
+    @mock.patch('miic3.db.asdf_handler.ASDFDataSet')
+    def test_get_active_times(self, asdf_mock):
+        """
+        Test the result of get_active_times
+        """
+        asdf_mock.return_value.__enter__.return_value = AttribDict(
+            waveforms=AttribDict(
+                {'%s.%s' % (self.network, self.station): AttribDict({
+                    'processed': self.st})}),
+            auxiliary_data=AttribDict(
+                PreprocessingParameters=AttribDict(
+                    param=AttribDict(
+                        parameters=self.param))))
+        act_times = self.ndb.get_active_times()
+        self.assertAlmostEqual(act_times[0], self.st[0].stats.starttime)
+        self.assertAlmostEqual(act_times[1], self.st[0].stats.endtime)
+
+    def test_no_file(self):
+        """
+        Test the result of get_active_times
+        """
+        with self.assertRaises(FileNotFoundError):
+            _ = self.ndb.get_active_times()
+
+    @mock.patch('miic3.db.asdf_handler.ASDFDataSet')
+    def test_get_time_window(self, asdf_mock):
+        asdf_mock.return_value.__enter__.return_value = AttribDict(
+            waveforms=AttribDict(
+                {'%s.%s' % (self.network, self.station): AttribDict({
+                    'processed': self.st})}),
+            auxiliary_data=AttribDict(
+                PreprocessingParameters=AttribDict(
+                    param=AttribDict(
+                        parameters=self.param))))
+        start = self.st[0].stats.starttime + np.random.randint(1, 10)
+        end = self.st[0].stats.endtime - np.random.randint(1, 10)
+        st_out = self.ndb.get_time_window(start, end)
+        # Check times
+        self.assertAlmostEqual(st_out[0].stats.starttime, start)
+        self.assertAlmostEqual(st_out[0].stats.endtime, end)
+
+    @mock.patch('miic3.db.asdf_handler.ASDFDataSet')
+    def test_get_partial_data(self, asdf_mock):
+        asdf_mock.return_value.__enter__.return_value = AttribDict(
+            waveforms=AttribDict(
+                {'%s.%s' % (self.network, self.station): AttribDict({
+                    'processed': self.st})}),
+            auxiliary_data=AttribDict(
+                PreprocessingParameters=AttribDict(
+                    param=AttribDict(
+                        parameters=self.param))))
+        start = self.st[0].stats.starttime - 100
+        end = self.st[0].stats.endtime - 5
+        st_out = self.ndb.get_time_window(start, end)
+        # Check times
+        self.assertAlmostEqual(
+            st_out[0].stats.starttime, self.st[0].stats.starttime)
+        self.assertAlmostEqual(st_out[0].stats.endtime, end)
+
+    @mock.patch('miic3.db.asdf_handler.ASDFDataSet')
+    def test_no_data(self, asdf_mock):
+        asdf_mock.return_value.__enter__.return_value = AttribDict(
+            waveforms=AttribDict(
+                {'%s.%s' % (self.network, self.station): AttribDict({
+                    'processed': self.st})}),
+            auxiliary_data=AttribDict(
+                PreprocessingParameters=AttribDict(
+                    param=AttribDict(
+                        parameters=self.param))))
+        start = self.st[0].stats.starttime - 100
+        end = self.st[0].stats.starttime - 5
+        with self.assertRaises(asdf_handler.NoDataError):
+            _ = self.ndb.get_time_window(start, end)
+
+    @mock.patch('miic3.db.asdf_handler.ASDFDataSet')
+    def test_get_inventory(self, asdf_mock):
+        asdf_mock.return_value.__enter__.return_value = AttribDict(
+            waveforms=AttribDict(
+                {'%s.%s' % (self.network, self.station): AttribDict({
+                    'processed': self.st, 'StationXML': read_inventory()})}),
+            auxiliary_data=AttribDict(
+                PreprocessingParameters=AttribDict(
+                    param=AttribDict(
+                        parameters=self.param))))
+        self.assertEqual(read_inventory(), self.ndb.get_inventory())
+
+
+class TestGetAvailableStation(unittest.TestCase):
+    def test_no_data(self):
+        """
+        Tests what happens if there is no data available or the folder does
+        not exist.
+        """
+        with self.assertRaises(FileNotFoundError):
+            asdf_handler.get_available_stations(
+                '/does/definitely/not/exist', 'For', 'Sure')
+
+    @mock.patch('miic3.db.asdf_handler.glob')
+    def test_result(self, glob_mock):
+        dir = '/this/path/does/exist/'
+        net = ['TOTAL']*3 + ['RANDOM']*3
+        stat = ['RANDOM', 'BUT', 'SA', 'ME', 'LEN', 'GTH']
+        glob_mock.return_value = [
+            dir + a + '.' + b for a, b in zip(net, stat)]
+        self.assertEqual(
+            asdf_handler.get_available_stations(dir, '*', '*'),
+            (net, stat))
+
+
+if __name__ == "__main__":
+    unittest.main()
