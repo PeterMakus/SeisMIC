@@ -7,13 +7,16 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Thursday, 27th May 2021 04:47:49 pm
+Last Modified: Friday, 28th May 2021 03:36:01 pm
 '''
-
+from math import factorial
 import unittest
+from unittest.case import expectedFailure
 
 import numpy as np
-from obspy import read
+from obspy import read, Stream, Trace
+from obspy.core import AttribDict
+from scipy.fftpack import next_fast_len
 
 from miic3.correlate import correlate
 
@@ -38,8 +41,171 @@ class TestStToNpArray(unittest.TestCase):
             self.assertTrue(np.allclose(tr.data, A[:, ii]))
 
 
-# class TestZeroPadding(unittest.TestCase):
-#     def 
+class TestZeroPadding(unittest.TestCase):
+    def setUp(self):
+        self.params = {'sampling_rate': 25, 'lengthToSave': 200}
+        self.A = np.empty(
+            (np.random.randint(100, 666), np.random.randint(2, 45)))
+
+    def test_result_next_fast_len(self):
+        expected_len = next_fast_len(self.A.shape[0])
+        self.assertEqual(correlate.zeroPadding(
+            self.A, {'type': 'nextFastLen'}, self.params).shape[0],
+            expected_len)
+
+    def test_result_avoid_wrap_around(self):
+        expected_len = self.A.shape[0] + \
+            self.params['sampling_rate'] * self.params['lengthToSave']
+        self.assertEqual(correlate.zeroPadding(
+            self.A, {'type': 'avoidWrapAround'}, self.params).shape[0],
+            expected_len)
+
+    def test_result_avoid_wrap_fast_len(self):
+        expected_len = next_fast_len(int(
+            self.A.shape[0] +
+            self.params['sampling_rate'] * self.params['lengthToSave']))
+        self.assertEqual(correlate.zeroPadding(
+            self.A, {'type': 'avoidWrapFastLen'}, self.params).shape[0],
+            expected_len)
+
+    def test_result_next_fast_len_axis1(self):
+        expected_len = next_fast_len(self.A.shape[1])
+        self.assertEqual(correlate.zeroPadding(
+            self.A, {'type': 'nextFastLen'}, self.params, axis=1).shape[1],
+            expected_len)
+
+    def test_result_avoid_wrap_around_axis1(self):
+        expected_len = self.A.shape[1] + \
+            self.params['sampling_rate'] * self.params['lengthToSave']
+        self.assertEqual(correlate.zeroPadding(
+            self.A, {'type': 'avoidWrapAround'}, self.params, axis=1).shape[1],
+            expected_len)
+
+    def test_result_avoid_wrap_fast_len_axis1(self):
+        expected_len = next_fast_len(int(
+            self.A.shape[1] +
+            self.params['sampling_rate'] * self.params['lengthToSave']))
+        self.assertEqual(correlate.zeroPadding(
+            self.A, {'type': 'avoidWrapFastLen'}, self.params, axis=1).shape[1],
+            expected_len)
+
+    def test_weird_axis(self):
+        with self.assertRaises(NotImplementedError):
+            correlate.zeroPadding(self.A, {}, {}, axis=7)
+
+    def test_higher_dim(self):
+        with self.assertRaises(NotImplementedError):
+            correlate.zeroPadding(np.ones((3,3,3)), {}, {})
+
+    def test_unknown_method(self):
+        with self.assertRaises(ValueError):
+            correlate.zeroPadding(self.A, {'type': 'blub'}, self.params)
+
+    def test_empty_array(self):
+        B = np.array([])
+        with self.assertRaises(ValueError):
+            correlate.zeroPadding(B, {'type': 'nextFastLen'}, self.params)
+
+
+class TestCalcCrossCombis(unittest.TestCase):
+    def setUp(self):
+        channels = ['HHZ', 'HHE', 'HHN']
+        net = ['TOTALLY']*3 + ['RANDOM']*3
+        stat = ['RANDOM', 'BUT', 'SA', 'ME', 'LEN', 'GTH']
+        # randomize the length of each a bit
+        randfact = np.random.randint(2, 6)
+        xtran = []
+        xtras = []
+        for ii in range(2, randfact):
+            for n, s in zip(net, stat):
+                xtran.append(n*ii)
+                xtras.append(s*ii)
+        net.extend(xtran)
+        stat.extend(xtras)
+        # Also, randomize the len of the channels
+        # The channels are combined if the last letter is different
+        randfact = np.random.randint(-2, 3)
+        xtrac = ['R', 'L', 'P']
+        if randfact <= 0:
+            channels = channels[:randfact]
+        else:
+            channels.extend(xtrac[:randfact])
+        self.st = Stream()
+        for station, network in zip(stat, net):
+            for ch in channels:
+                stats = AttribDict(network=network, station=station, channel=ch)
+                self.st.append(Trace(header=stats))
+        self.N_stat = len(stat)
+        self.N_chan = len(channels)
+
+    def test_result_betw_stations(self):
+        # easiest probably to check the length
+        # in this cas \Sum_1^N (N-n)*M^2 where N is the number of stations
+        # and M the number of channels
+        expected_len = sum([(self.N_stat-n)*self.N_chan**2
+            for n in range(1, self.N_stat)])
+        
+        self.assertEqual(expected_len, len(correlate.calc_cross_combis(
+            self.st, method='betweenStations')))
+
+    def test_result_betw_components(self):
+        # easiest probably to check the length
+        # Here, we are looking for the same station but different component
+        expected_len = sum([(self.N_chan-n)*self.N_stat
+            for n in range(1, self.N_chan)])
+        
+        self.assertEqual(expected_len, len(correlate.calc_cross_combis(
+            self.st, method='betweenComponents')))
+
+    def test_result_auto_components(self):
+        expected_len = self.st.count()
+        self.assertEqual(expected_len, len(correlate.calc_cross_combis(
+            self.st, method='autoComponents')))
+
+    def test_result_all_simple(self):
+        expected_len = sum([self.st.count()-n
+            for n in range(0, self.st.count())])
+        self.assertEqual(expected_len, len(correlate.calc_cross_combis(
+            self.st, method='allSimpleCombinations')))
+
+    def test_result_all_combis(self):
+        expected_len = self.st.count()**2
+        self.assertEqual(expected_len, len(correlate.calc_cross_combis(
+            self.st, method='allCombinations')))
+
+    def test_unknown_method(self):
+        with self.assertRaises(ValueError):
+            correlate.calc_cross_combis(self.st, method='blablub')
+
+    def test_empty_stream(self):
+        self.assertEqual([], correlate.calc_cross_combis(
+            Stream(), method='allCombinations'))
+    
+
+class TestSpectralWhitening(unittest.TestCase):
+    def setUp(self):
+        dim = (np.random.randint(200,766), np.random.randint(2,44))
+        self.A = np.random.random(dim) + np.random.random(dim) * 1j
+
+    def test_result(self):
+        # Again so straightforward that I wonder whether it makes sense
+        # to test this
+        expected = self.A/abs(self.A)
+        expected[0, :] = 0.j
+        self.assertTrue(np.allclose(
+            expected, correlate.spectralWhitening(self.A, {}, {})))
+
+    def test_joint_norm_not_possible(self):
+        with self.assertRaises(AssertionError):
+            correlate.spectralWhitening(
+                np.ones((5, 5)), {'joint_norm': True}, {})
+
+    def test_empty_array(self):
+        A = np.array([])
+        with self.assertRaises(IndexError):
+            correlate.spectralWhitening(
+                A, {}, {})
+
 
 
 if __name__ == "__main__":

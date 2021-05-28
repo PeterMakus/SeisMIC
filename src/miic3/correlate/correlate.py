@@ -7,9 +7,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 27th May 2021 04:42:23 pm
+Last Modified: Friday, 28th May 2021 03:04:02 pm
 '''
 from copy import deepcopy
+from warnings import warn
 import os
 
 from mpi4py import MPI
@@ -366,7 +367,7 @@ class Correlator(object):
         # np.dienow
 
         # zero-padding
-        A = zeroPadding(A, {'type': 'avoidWrapPowerTwo'}, params)
+        A = zeroPadding(A, {'type': 'avoidWrapFastLen'}, params)
 
         # # test
         # self.comm.barrier()
@@ -384,7 +385,7 @@ class Correlator(object):
 
         B[:, ind] = np.fft.rfft(A[:, ind], axis=0)
 
-        freqs = rfftfreq(zmsize[0], 1./self.sampling_rate)
+        freqs = np.fft.rfftfreq(zmsize[0], 1./self.sampling_rate)
 
         # # test
         # self.comm.barrier()
@@ -505,7 +506,7 @@ def st_to_np_array(st: Stream, npts: int) -> np.ndarray:
     return A, st
 
 
-def zeroPadding(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
+def zeroPadding(A: np.ndarray, args: dict, params: dict, axis=0) -> np.ndarray:
     """
     Append zeros to the traces
 
@@ -513,11 +514,11 @@ def zeroPadding(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     to avoid wrap around effects. Three possibilities for the length of the
     padding can be set in `args['type']`
 
-        -`nextPowerOfTwo`: traces are padded to a length that is the next power
-            of two from the original length
+        -`nextFastLen`: traces are padded to a length that is the next fast
+            fft length
         -`avoidWrapAround`: depending on length of the trace that is to be used
             the padded part is just long enough to avoid wrap around
-        -`avoidWrapPowerTwo`: use the next power of two that avoids wrap around
+        -`avoidWrapFastLen`: use the next fast length that avoids wrap around
 
         :Example: ``args = {'type':'avoidWrapPowerTwo'}``
 
@@ -528,74 +529,92 @@ def zeroPadding(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     :param args: arguments dictionary as described above
     :type params: dictionary
     :param params: not used here
+    :param axis: axis to pad on
+    :type axis: tuple, optional
 
     :rtype: numpy.ndarray
     :return: zero padded time series data
     """
-    npts, ntrc = A.shape
-    if args['type'] == 'nextPowerOfTwo':
+    if A.ndim > 2 or axis > 1:
+        raise NotImplementedError('Only two-dimensional arrays are supported.')
+    npts = A.shape[axis]
+    if A.ndim == 2:
+        ntrc = A.shape[axis-1]
+    elif A.ndim == 1:
+        ntrc = 1
+    if not ntrc or not npts:
+        raise ValueError('Input Array is empty')
+        
+    if args['type'] == 'nextFastLen':
         N = next_fast_len(npts)
     elif args['type'] == 'avoidWrapAround':
         N = npts + params['sampling_rate'] * params['lengthToSave']
-    elif args['type'] == 'avoidWrapPowerTwo':
+    elif args['type'] == 'avoidWrapFastLen':
         N = next_fast_len(int(
             npts + params['sampling_rate'] * params['lengthToSave']))
     else:
         raise ValueError("type '%s' of zero padding not implemented" %
                          args['type'])
-    A = np.concatenate((A, np.zeros((N-npts, ntrc), dtype=np.float32)), axis=0)
+    
+    if axis == 0: 
+        A = np.concatenate(
+            (A, np.zeros((N-npts, ntrc), dtype=np.float32)), axis=axis)
+    else:
+        A = np.concatenate(
+            (A, np.zeros((ntrc, N-npts), dtype=np.float32)), axis=axis)
     return A
 
 
-def rfftfreq(n, d=1.0):
-    """
-    Return the Discrete Fourier Transform sample frequencies
-    (for usage with rfft, irfft).
+# This is just a copied function from numpy fft? I will just use it from there
+# def rfftfreq(n, d=1.0):
+#     """
+#     Return the Discrete Fourier Transform sample frequencies
+#     (for usage with rfft, irfft).
 
-    The returned float array `f` contains the frequency bin centers in cycles
-    per unit of the sample spacing (with zero at the start).  For instance, if
-    the sample spacing is in seconds, then the frequency unit is cycles/second.
+#     The returned float array `f` contains the frequency bin centers in cycles
+#     per unit of the sample spacing (with zero at the start).  For instance, if
+#     the sample spacing is in seconds, then the frequency unit is cycles/second.
 
-    Given a window length `n` and a sample spacing `d`::
+#     Given a window length `n` and a sample spacing `d`::
 
-      f = [0, 1, ...,     n/2-1,     n/2] / (d*n)   if n is even
-      f = [0, 1, ..., (n-1)/2-1, (n-1)/2] / (d*n)   if n is odd
+#       f = [0, 1, ...,     n/2-1,     n/2] / (d*n)   if n is even
+#       f = [0, 1, ..., (n-1)/2-1, (n-1)/2] / (d*n)   if n is odd
 
-    Unlike `fftfreq` (but like `scipy.fftpack.rfftfreq`)
-    the Nyquist frequency component is considered to be positive.
+#     Unlike `fftfreq` (but like `scipy.fftpack.rfftfreq`)
+#     the Nyquist frequency component is considered to be positive.
 
-    Parameters
-    ----------
-    n : int
-        Window length.
-    d : scalar, optional
-        Sample spacing (inverse of the sampling rate). Defaults to 1.
+#     Parameters
+#     ----------
+#     n : int
+#         Window length.
+#     d : scalar, optional
+#         Sample spacing (inverse of the sampling rate). Defaults to 1.
 
-    Returns
-    -------
-    f : ndarray
-        Array of length ``n//2 + 1`` containing the sample frequencies.
+#     Returns
+#     -------
+#     f : ndarray
+#         Array of length ``n//2 + 1`` containing the sample frequencies.
 
-    Examples
-    --------
-    >>> signal = np.array([-2, 8, 6, 4, 1, 0, 3, 5, -3, 4], dtype=float)
-    >>> fourier = np.fft.rfft(signal)
-    >>> n = signal.size
-    >>> sample_rate = 100
-    >>> freq = np.fft.fftfreq(n, d=1./sample_rate)
-    >>> freq
-    array([  0.,  10.,  20.,  30.,  40., -50., -40., -30., -20., -10.])
-    >>> freq = np.fft.rfftfreq(n, d=1./sample_rate)
-    >>> freq
-    array([  0.,  10.,  20.,  30.,  40.,  50.])
+#     Examples
+#     --------
+#     >>> signal = np.array([-2, 8, 6, 4, 1, 0, 3, 5, -3, 4], dtype=float)
+#     >>> fourier = np.fft.rfft(signal)
+#     >>> n = signal.size
+#     >>> sample_rate = 100
+#     >>> freq = np.fft.fftfreq(n, d=1./sample_rate)
+#     >>> freq
+#     array([  0.,  10.,  20.,  30.,  40., -50., -40., -30., -20., -10.])
+#     >>> freq = np.fft.rfftfreq(n, d=1./sample_rate)
+#     >>> freq
+#     array([  0.,  10.,  20.,  30.,  40.,  50.])
 
-    """
-    if not isinstance(n, int):
-        raise ValueError("n should be an integer")
-    val = 1.0/(n*d)
-    N = n//2 + 1
-    results = np.arange(0, N, dtype=int)
-    return results * val
+#     """
+#     if not isinstance(n, int):
+#         raise ValueError("n should be an integer")
+#     val = 1.0/(n*d)
+#     N = n//2 + 1
+#     results = np.arange(0, N, dtype=int)
+#     return results * val
 
 
 def calc_cross_combis(st, method='betweenStations'):
@@ -649,6 +668,8 @@ def calc_cross_combis(st, method='betweenStations'):
         raise ValueError("Method has to be one of ('betweenStations', "
                          "'betweenComponents', 'autoComponents', "
                          "'allSimpleCombinations' or 'allCombinations').")
+    if not len(combis):
+        warn('Method %s found no combinations.' % method)
     return combis
 
 
