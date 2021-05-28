@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 28th May 2021 03:04:02 pm
+Last Modified: Friday, 28th May 2021 04:33:04 pm
 '''
 from copy import deepcopy
 from warnings import warn
@@ -1038,7 +1038,7 @@ def FDsignBitNormalization(
     """
     B = np.fft.irfft(B, axis=0)
     C = B.real
-    C = np.sign(B)
+    C = np.sign(C)
     return np.fft.rfft(C, axis=0)
 
 

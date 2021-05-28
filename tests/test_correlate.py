@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Friday, 28th May 2021 03:36:01 pm
+Last Modified: Friday, 28th May 2021 04:33:34 pm
 '''
 from math import factorial
 import unittest
@@ -205,7 +205,16 @@ class TestSpectralWhitening(unittest.TestCase):
         with self.assertRaises(IndexError):
             correlate.spectralWhitening(
                 A, {}, {})
+                
 
+class TestSignBitNormalisation(unittest.TestCase):
+    def test_result(self):
+        dim = (np.random.randint(200,766), np.random.randint(2,44))
+        A = np.random.random(dim)-.5
+        Aft = np.fft.rfft(A, axis=0)
+        expected_result = np.fft.rfft(np.sign(A), axis=0)
+        self.assertTrue(np.allclose(
+            expected_result, correlate.signBitNormalization(Aft, {}, {})))
 
 
 if __name__ == "__main__":
