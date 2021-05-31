@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 28th May 2021 04:48:51 pm
+Last Modified: Monday, 31st May 2021 01:38:57 pm
 '''
 from copy import deepcopy
 from warnings import warn
@@ -19,6 +19,7 @@ from obspy import Stream, UTCDateTime, Inventory
 import obspy.signal as osignal
 from scipy.fftpack import next_fast_len
 from scipy import signal
+from scipy.signal.signaltools import detrend
 
 # from miic3.utils.nextpowof2 import nextpowerof2
 from miic3.correlate.stream import CorrTrace, CorrStream
@@ -544,7 +545,7 @@ def zeroPadding(A: np.ndarray, args: dict, params: dict, axis=0) -> np.ndarray:
         ntrc = 1
     if not ntrc or not npts:
         raise ValueError('Input Array is empty')
-        
+
     if args['type'] == 'nextFastLen':
         N = next_fast_len(npts)
     elif args['type'] == 'avoidWrapAround':
@@ -555,8 +556,8 @@ def zeroPadding(A: np.ndarray, args: dict, params: dict, axis=0) -> np.ndarray:
     else:
         raise ValueError("type '%s' of zero padding not implemented" %
                          args['type'])
-    
-    if axis == 0: 
+
+    if axis == 0:
         A = np.concatenate(
             (A, np.zeros((N-npts, ntrc), dtype=np.float32)), axis=axis)
     else:
@@ -1037,6 +1038,7 @@ def FDsignBitNormalization(
     :return: frequency transform of the 1-bit normalized data
     """
     B = np.fft.irfft(B, axis=0)
+    # B should always be real, so this line does not make an awful lot of sense
     C = np.sign(B.real)
     return np.fft.rfft(C, axis=0)
 
@@ -1051,12 +1053,13 @@ def mute(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     frequency exceeds a threshold given directly as absolute numer or as a
     multiple of the data's standard deviation. A taper of length `taper_len` is
     applied to smooth the edges of muted segments. Setting `extend_gaps` to
-    Ture will ensure that the taper is applied outside the segments and data
+    True will ensure that the taper is applied outside the segments and data
     inside these segments will all zero. Edges of the data will be tapered too
     in this case.
 
     :Example:
-    ``args={'filter':{'type':'bandpass', 'freqmin':1., 'freqmax':6.},'taper_len':1., 'threshold':1000, 'std_factor':1, 'extend_gaps':True}``
+    ``args={'filter':{'type':'bandpass', 'freqmin':1., 'freqmax':6.},
+    'taper_len':1., 'threshold':1000, 'std_factor':1, 'extend_gaps':True}``
 
     :type A: numpy.ndarray
     :param A: time series data with time oriented along the first dimension
@@ -1068,13 +1071,13 @@ def mute(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
             calculation of the signal envelope. If not given the envelope is
             calculated from raw data. The value of the keyword filter is the
             same as the `args` for the function `TDfilter`.
-        * `threshold`: (float) absolute amplitude of threhold for muting
+        * `threshold`: (float) absolute amplitude of threshold for muting
         * `std_factor`: (float) alternativly to an absolute number the threhold
             can be estimated as a multiple of the standard deviation if the
             scaling is given in as value of the keyword `std_factor`. If
             neither `threshold` nor `std_factor` are given `std_factor`=1 is
             assumed.
-        * `extend_gaps` (boolean) if True date abive the threshold is
+        * `extend_gaps` (boolean) if True date above the threshold is
             guaranteed to be muted, otherwise tapering will leak into these
             parts. This step involves an additional convolution.
         * `taper_len`: (float) length of taper for muted segments in seconds
@@ -1084,6 +1087,9 @@ def mute(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     :rtype: numpy.ndarray
     :return: clipped time series data
     """
+
+    if args['taper_len'] == 0:
+        raise ValueError('Taper Length cannot be zero.')
 
     # return zeros if length of traces is shorter than taper
     ntap = int(args['taper_len']*params['sampling_rate'])
@@ -1126,7 +1132,7 @@ def mute(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     for ind in range(A.shape[1]):
         nmask[:, ind] = np.convolve(nmask[:, ind], tap, mode='same')
 
-    # mute date with tapered mask
+    # mute data with tapered mask
     A *= nmask
     return A
 
@@ -1185,6 +1191,8 @@ def normalizeStandardDeviation(
     :return: normalized time series data
     """
     std = np.std(A, axis=0)
+    # avoid creating nans or Zerodivisionerror
+    std[np.where(std == 0)] = 1
     A /= np.tile(std, (A.shape[0], 1))
     return A
 
@@ -1210,83 +1218,85 @@ def signBitNormalization(
     return np.sign(A)
 
 
-def detrend(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
-    """
-    Remove trend from data
+# This is again just a copy of the scipy function
+# Use scipy instead
+# def detrend(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
+#     """
+#     Remove trend from data
 
-    Remove the trend from the time series data in `A`. Several methods are \\
-    possible. The method is specified as the value of the `type` keyword in
-    the argument dictionary `args`.
+#     Remove the trend from the time series data in `A`. Several methods are \\
+#     possible. The method is specified as the value of the `type` keyword in
+#     the argument dictionary `args`.
 
-    Possible `types` of detrending:
-       -`constant` or `demean`: substract mean of traces
+#     Possible `types` of detrending:
+#        -`constant` or `demean`: substract mean of traces
 
-       -`linear`: substract a least squares fitted linear trend form the data
+#        -`linear`: substract a least squares fitted linear trend form the data
 
-    :type A: numpy.ndarray
-    :param A: time series data with time oriented along the first \\
-        dimension (columns)
-    :type args: dictionary
-    :param args: the only used keyword is `type`
-    :type params: dictionary
-    :param params: not used here
+#     :type A: numpy.ndarray
+#     :param A: time series data with time oriented along the first \\
+#         dimension (columns)
+#     :type args: dictionary
+#     :param args: the only used keyword is `type`
+#     :type params: dictionary
+#     :param params: not used here
 
-    :rtype: numpy.ndarray
-    :return: detrended time series data
-    """
-    # for compatibility with obspy
-    if args['type'] == 'demean':
-        args['type'] = 'constant'
-    if args['type'] == 'detrend':
-        args['type'] = 'linear'
+#     :rtype: numpy.ndarray
+#     :return: detrended time series data
+#     """
+#     # for compatibility with obspy
+#     if args['type'] == 'demean':
+#         args['type'] = 'constant'
+#     if args['type'] == 'detrend':
+#         args['type'] = 'linear'
 
-    # Detrend function taken from scipy and modified to account for nan
-    type = args['type']
-    axis = 0
-    data = A
-    if type not in ['linear', 'l', 'constant', 'c']:
-        raise ValueError("Trend type must be 'linear' or 'constant'.")
-    data = np.asarray(data)
-    dtype = data.dtype.char
-    if dtype not in 'dfDF':
-        dtype = 'd'
-    if type in ['constant', 'c']:
-        ret = data - np.expand_dims(np.nanmean(data, axis), axis)
-        return ret
-    else:
-        dshape = data.shape
-        N = dshape[axis]
-        bp = np.sort(np.unique(r_[0, bp, N]))
-        if np.any(bp > N):
-            raise ValueError("Breakpoints must be less than length "
-                             "of data along given axis.")
-        Nreg = len(bp) - 1
-        # Restructure data so that axis is along first dimension and
-        #  all other dimensions are collapsed into second dimension
-        rnk = len(dshape)
-        if axis < 0:
-            axis = axis + rnk
-        newdims = r_[axis, 0:axis, axis + 1:rnk]
-        newdata = np.reshape(np.transpose(data, tuple(newdims)),
-                          (N, _prod(dshape) // N))
-        newdata = newdata.copy()  # make sure we have a copy
-        if newdata.dtype.char not in 'dfDF':
-            newdata = newdata.astype(dtype)
-        # Find leastsq fit and remove it for each piece
-        for m in range(Nreg):
-            Npts = bp[m + 1] - bp[m]
-            A = np.ones((Npts, 2), dtype)
-            A[:, 0] = np.cast[dtype](np.arange(1, Npts + 1) * 1.0 / Npts)
-            sl = slice(bp[m], bp[m + 1])
-            coef, resids, rank, s = np.linalg.lstsq(A, newdata[sl])
-            newdata[sl] = newdata[sl] - np.dot(A, coef)
-        # Put data back in original shape.
-        tdshape = np.take(dshape, newdims, 0)
-        ret = np.reshape(newdata, tuple(tdshape))
-        vals = list(range(1, rnk))
-        olddims = vals[:axis] + [0] + vals[axis:]
-        ret = np.transpose(ret, tuple(olddims))
-        return ret
+#     # Detrend function taken from scipy and modified to account for nan
+#     type = args['type']
+#     axis = 0
+#     data = A
+#     if type not in ['linear', 'l', 'constant', 'c']:
+#         raise ValueError("Trend type must be 'linear' or 'constant'.")
+#     data = np.asarray(data)
+#     dtype = data.dtype.char
+#     if dtype not in 'dfDF':
+#         dtype = 'd'
+#     if type in ['constant', 'c']:
+#         ret = data - np.expand_dims(np.nanmean(data, axis), axis)
+#         return ret
+#     else:
+#         dshape = data.shape
+#         N = dshape[axis]
+#         bp = np.sort(np.unique(r_[0, bp, N]))
+#         if np.any(bp > N):
+#             raise ValueError("Breakpoints must be less than length "
+#                              "of data along given axis.")
+#         Nreg = len(bp) - 1
+#         # Restructure data so that axis is along first dimension and
+#         #  all other dimensions are collapsed into second dimension
+#         rnk = len(dshape)
+#         if axis < 0:
+#             axis = axis + rnk
+#         newdims = r_[axis, 0:axis, axis + 1:rnk]
+#         newdata = np.reshape(np.transpose(data, tuple(newdims)),
+#                           (N, _prod(dshape) // N))
+#         newdata = newdata.copy()  # make sure we have a copy
+#         if newdata.dtype.char not in 'dfDF':
+#             newdata = newdata.astype(dtype)
+#         # Find leastsq fit and remove it for each piece
+#         for m in range(Nreg):
+#             Npts = bp[m + 1] - bp[m]
+#             A = np.ones((Npts, 2), dtype)
+#             A[:, 0] = np.cast[dtype](np.arange(1, Npts + 1) * 1.0 / Npts)
+#             sl = slice(bp[m], bp[m + 1])
+#             coef, resids, rank, s = np.linalg.lstsq(A, newdata[sl])
+#             newdata[sl] = newdata[sl] - np.dot(A, coef)
+#         # Put data back in original shape.
+#         tdshape = np.take(dshape, newdims, 0)
+#         ret = np.reshape(newdata, tuple(tdshape))
+#         vals = list(range(1, rnk))
+#         olddims = vals[:axis] + [0] + vals[axis:]
+#         ret = np.transpose(ret, tuple(olddims))
+#         return ret
 
 
 def TDnormalization(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
@@ -1321,6 +1331,8 @@ def TDnormalization(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     :rtype: numpy.ndarray
     :return: normalized time series data
     """
+    if args['windowLength'] <= 0:
+        raise ValueError('Window Length has to be greater than 0.')
     # filter if args['filter']
     B = deepcopy(A)
     if args['filter']:
@@ -1332,15 +1344,14 @@ def TDnormalization(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
         B = deepcopy(A)
     # simple calculation of envelope
     B = B**2
-    # print 'shape B', B.shape
-    # smoothing of envelepe in both directions to avoid a shift
+    # smoothing of envelope in both directions to avoid a shift
     window = (
-        np.ones(np.ceil(args['windowLength'] * params['sampling_rate']))
+        np.ones(int(np.ceil(args['windowLength'] * params['sampling_rate'])))
         / np.ceil(args['windowLength']*params['sampling_rate']))
-    # print 'shape window', window.shape
     for ind in range(B.shape[1]):
         B[:, ind] = np.convolve(B[:, ind], window, mode='same')
         B[:, ind] = np.convolve(B[::-1, ind], window, mode='same')[::-1]
+        # damping factor
         B[:, ind] += np.max(B[:, ind])*1e-6
     # normalization
     A /= np.sqrt(B)
@@ -1390,7 +1401,7 @@ def clip(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """
     Clip time series data at a multiple of the standard deviation
 
-    Set amplitudes exeeding a certatin threshold to this threshold.
+    Set amplitudes exeeding a certain threshold to this threshold.
     The threshold for clipping is estimated as the standard deviation of each
     trace times a factor specified in `args`.
 
