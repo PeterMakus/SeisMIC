@@ -7,8 +7,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Friday, 21st May 2021 03:19:39 pm
+Last Modified: Monday, 31st May 2021 05:30:07 pm
 '''
+from typing import Tuple
+
 import numpy as np
 from obspy import Stream, Trace, Inventory, UTCDateTime
 from obspy.core import Stats
@@ -33,7 +35,7 @@ class CorrStream(Stream):
                         :class:`~miic3.correlate.correlate.CorrTrace`.')
                 self.traces.append(tr)
 
-    def __str__(self, extended=False):
+    def __str__(self, extended=False) -> str:
         """
         Return short summary string of the current stream.
 
@@ -133,23 +135,6 @@ class CorrStream(Stream):
         algorithm will determine the maximal temporal extents by analysing
         all Traces and then creates windows based on these times.
 
-        .. rubric:: Example
-
-        >>> import obspy
-        >>> st = obspy.read()
-        >>> for windowed_st in st.slide(window_length=10.0, step=10.0):
-        ...     print(windowed_st)
-        ...     print("---")  # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-        3 Trace(s) in Stream:
-        ... | 2009-08-24T00:20:03.000000Z - 2009-08-24T00:20:13.000000Z | ...
-        ... | 2009-08-24T00:20:03.000000Z - 2009-08-24T00:20:13.000000Z | ...
-        ... | 2009-08-24T00:20:03.000000Z - 2009-08-24T00:20:13.000000Z | ...
-        ---
-        3 Trace(s) in Stream:
-        ... | 2009-08-24T00:20:13.000000Z - 2009-08-24T00:20:23.000000Z | ...
-        ... | 2009-08-24T00:20:13.000000Z - 2009-08-24T00:20:23.000000Z | ...
-        ... | 2009-08-24T00:20:13.000000Z - 2009-08-24T00:20:23.000000Z | ...
-
 
         :param window_length: The length of each window in seconds.
         :type window_length: float
@@ -178,16 +163,18 @@ class CorrStream(Stream):
         :type nearest_sample: bool, optional
         """
         starttime = min(tr.stats.corr_start for tr in self)
-        endtime = max(tr.stats.corr_start for tr in self)
-        # windows = get_window_times(
-        #     starttime=starttime,
-        #     endtime=endtime,
-        #     window_length=window_length,
-        #     step=step,
-        #     offset=offset,
-        #     include_partial_windows=True)
+        endtime = max(tr.stats.corr_end for tr in self)
+
+        if window_length < max(
+                tr.stats.corr_end-tr.stats.corr_start for tr in self):
+            raise ValueError(
+                'The length of the requested time window has ' +
+                'to be larger or equal than the actual correlation length of' +
+                ' one window. i.e., correlations can not be sliced, only ' +
+                'selected.')
+
         windows = np.arange(
-            starttime.timestamp, endtime.timestamp+step, step)
+            starttime.timestamp, endtime.timestamp, step)
 
         if len(windows) < 1:
             return
@@ -205,19 +192,43 @@ class CorrStream(Stream):
             yield temp
 
     def select_corr_time(
-            self, starttime, endtime, include_partially_selected=True):
+        self, starttime: UTCDateTime, endtime: UTCDateTime,
+            include_partially_selected: bool = True):
+        """
+        Selects correlations that are inside of the requested time window.
+
+        :param starttime: Requested start
+        :type starttime: UTCDateTime
+        :param endtime: Requested end
+        :type endtime: UTCDateTime
+        :param include_partially_selected: If set to ``True``, also the half
+            selected time window **before** the requested time will be attached
+            Given the following stream containing 6 correlations, "|" are the
+            correlation starts and ends, "A" is the requested starttime and "B"
+            the corresponding endtime::
+
+                |         |A        |         |       B |         |
+                1         2         3         4         5         6 
+            ``include_partially_selected=True`` will select samples 2-4,
+            ``include_partially_selected=False`` will select samples 3-4 only.
+            Defaults to True
+        :type include_partially_selected: bool, optional
+        :return: Correlation Stream holding all selected traces
+        :rtype: CorrStream
+        """
         self.sort(keys=['corr_start'])
         outst = CorrStream()
         # the 2 seconds difference are to avoid accidental smoothing
         if include_partially_selected:
             for tr in self:
                 if tr.stats.corr_end > starttime and\
-                     tr.stats.corr_start < endtime:
+                     tr.stats.corr_end < endtime:
                     outst.append(tr)
             return outst
+        # else
         for tr in self:
-            if tr.stats.corr_start > starttime and\
-                 tr.stats.corr_end < endtime:
+            if tr.stats.corr_start >= starttime and\
+                 tr.stats.corr_end <= endtime:
                 outst.append(tr)
         return outst
 
@@ -265,30 +276,11 @@ class CorrTrace(Trace):
                 header['start_lag'] = start_lag
                 header['end_lag'] = end_lag
         else:
-            # make sure the order is correct
-            # Will do that always alphabetically sorted
-            sort1 = header1.network + header1.station + header1.channel
-            sort2 = header2.network + header2.station + header2.channel
-            sort = [sort1, sort2]
-            sorted = sort.copy()
-            sorted.sort()
-            if sort != sorted:
-                header = combine_stats(
-                    header2, header1, end_lag,
-                    start_lag, inv=inv)
-                # reverse array and lag times
-                data = np.flip(data)
-            else:
-                header = combine_stats(
-                    header1, header2, start_lag,
-                    end_lag, inv=inv)
+            header, data = alphabetical_correlation(
+                header1, header2, start_lag, end_lag, data, inv)
+
         header['npts'] = len(data)
         super(CorrTrace, self).__init__(data=data, header=header)
-        # st = self.stats
-        # if ('_format' in st and st._format.upper() == 'Q' and
-        #         st.station.count('.') > 0):
-        #     st.network, st.station, st.location = st.station.split('.')[:3]
-        # self._read_format_specific_header()
 
     def __str__(self, id_length=None):
         """
@@ -340,6 +332,52 @@ class CorrTrace(Trace):
         self, tlim: list = None, ax=None, outputdir: str = None,
             clean=False):
         plot_correlation(self, tlim, ax, outputdir, clean)
+
+
+def alphabetical_correlation(
+    header1: Stats, header2: Stats, start_lag: float, end_lag: float,
+        data: np.ndarray, inv: Inventory) -> Tuple[Stats, np.ndarray]:
+    """
+    Make sure that Correlations are always created in alphabetical order,
+    so that we won't have both a correlation for AB-CD and CD-AB.
+    If the correlation was computed in the wrong order, the corr-data will be
+    flipped along the t-axis.
+
+    :param header1: Header of the first trace.
+    :type header1: Stats
+    :param header2: Header of the second trace
+    :type header2: Stats
+    :param start_lag: start lag in s
+    :type start_lag: float
+    :param end_lag: end lag in s
+    :type end_lag: float
+    :param data: The computed cross-correlation for header1-header2
+    :type data: np.ndarray
+    :param inv: The inventory holding the station coordinates. Only needed if
+        coords aren't provided in stats.
+    :type inv: Inventory
+    :return: the header for the CorrTrace and the data
+        (will also be modified in place)
+    :rtype: Tuple[Stats, np.ndarray]
+    """
+    # make sure the order is correct
+    # Will do that always alphabetically sorted
+    sort1 = header1.network + header1.station + header1.channel
+    sort2 = header2.network + header2.station + header2.channel
+    sort = [sort1, sort2]
+    sorted = sort.copy()
+    sorted.sort()
+    if sort != sorted:
+        header = combine_stats(
+            header2, header1, end_lag,
+            start_lag, inv=inv)
+        # reverse array and lag times
+        data = np.flip(data)
+    else:
+        header = combine_stats(
+            header1, header2, start_lag,
+            end_lag, inv=inv)
+    return header, data
 
 
 def combine_stats(
@@ -483,41 +521,6 @@ def compare_tr_id(tr0: Trace, tr1: Trace, regard_loc: bool = True) -> bool:
     else:
         return Compare_Str_No_Loc.format(**tr0.stats)\
              == Compare_Str_No_Loc.format(**tr1.stats)
-
-
-# def stack_st_by_group(st: Stream, regard_loc: bool) -> CorrStream:
-#     """
-#     Stack all traces that belong to the same network, station, channel, and
-#     (optionally) location combination in the input stream.
-
-#     :param st: input Stream
-#     :type st: Stream
-#     :param regard_loc: Seperate data with different location code
-#     :type regard_loc: bool
-#     :return: :class:`~miic3.correlate.stream.CorrStream`
-#     :rtype: CorrStream
-#     """
-#     st.sort()
-#     stackst = CorrStream()
-#     ctr = st[0]
-#     if regard_loc:
-#         loc = ctr.stats.location
-#     else:
-#         loc = None
-#     stackst.append(stack_st(st.select(
-#                 ctr.stats.network, ctr.stats.station,
-#                 loc, ctr.stats.channel)))
-#     for tr in st:
-#         if not compare_tr_id(ctr, tr, regard_loc):
-#             if regard_loc:
-#                 loc = tr.stats.location
-#             else:
-#                 loc = None
-#             stackst.append(stack_st(st.select(
-#                 tr.stats.network, tr.stats.station,
-#                 loc, tr.stats.channel)))
-#             ctr = tr
-#     return stackst
 
 
 def stack_st_by_group(st: Stream, regard_loc: bool, weight: str) -> CorrStream:

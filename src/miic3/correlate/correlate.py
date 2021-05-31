@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 31st May 2021 01:38:57 pm
+Last Modified: Monday, 31st May 2021 01:48:15 pm
 '''
 from copy import deepcopy
 from warnings import warn
@@ -142,7 +142,7 @@ class Correlator(object):
         """
         Inner loop of pxcorr. Don't call this function!
         """
-            
+
         # We start out by moving the stream into a matrix
         # Advantage of only doing this on rank 0?
         if self.rank == 0:
@@ -304,7 +304,7 @@ class Correlator(object):
                         continue
                     st.extend(ndb.get_time_window(startt, endt))
                 # preprocessing on stream basis
-                # Maybe a bad place to do that? 
+                # Maybe a bad place to do that?
                 if 'preProcessing' in self.options.keys():
                     for procStep in self.options['preProcessing']:
                         func = func_from_str(procStep['function'])
@@ -349,33 +349,12 @@ class Correlator(object):
         params['sampling_rate'] = self.sampling_rate
         # The steps that aren't done before
 
-        # test
-        # self.comm.barrier()
-        # self.comm.Allreduce(MPI.IN_PLACE, [A, MPI.DOUBLE], op=MPI.SUM)
-        # # just save the stuff real fast to compare
-        # np.save('/home/pm/Documents/PhD/testdata/A', A)
-        # np.dienow
-
         for proc in corr_args['TDpreProcessing']:
             func = func_from_str(proc['function'])
             A[:, ind] = func(A[:, ind], proc['args'], params)
 
-        # # test
-        # self.comm.barrier()
-        # self.comm.Allreduce(MPI.IN_PLACE, [A, MPI.DOUBLE], op=MPI.SUM)
-        # # just save the stuff real fast to compare
-        # np.save('/home/pm/Documents/PhD/testdata/A', A)
-        # np.dienow
-
         # zero-padding
         A = zeroPadding(A, {'type': 'avoidWrapFastLen'}, params)
-
-        # # test
-        # self.comm.barrier()
-        # self.comm.Allreduce(MPI.IN_PLACE, [A, MPI.DOUBLE], op=MPI.SUM)
-        # # just save the stuff real fast to compare
-        # np.save('/home/pm/Documents/PhD/testdata/A', A)
-        # np.dienow
 
         ######################################
         # FFT
@@ -387,13 +366,6 @@ class Correlator(object):
         B[:, ind] = np.fft.rfft(A[:, ind], axis=0)
 
         freqs = np.fft.rfftfreq(zmsize[0], 1./self.sampling_rate)
-
-        # # test
-        # self.comm.barrier()
-        # self.comm.Allreduce(MPI.IN_PLACE, [B, MPI.DOUBLE], op=MPI.SUM)
-        # # just save the stuff real fast to compare
-        # np.save('/home/pm/Documents/PhD/testdata/B', B)
-        # np.dienow
 
         ######################################
         # frequency domain pre-processing

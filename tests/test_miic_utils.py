@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Wednesday, 26th May 2021 02:52:39 pm
+Last Modified: Monday, 31st May 2021 01:58:17 pm
 '''
 import unittest
 import math as mathematics
@@ -48,6 +48,10 @@ class TestBazCalc(unittest.TestCase):
         self.assertEqual(az, self.az)
         self.assertEqual(baz, self.baz)
         self.assertEqual(dist, self.dist)
+
+    def test_identical_coords(self):
+        _, _, dist = inv_calc_az_baz_dist(self.inv1, self.inv1)
+        self.assertEqual(dist, 0)
 
     def test_result_tr(self):
         az, baz, dist = trace_calc_az_baz_dist(self.st1, self.st2)

@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Monday, 31st May 2021 01:43:16 pm
+Last Modified: Monday, 31st May 2021 01:48:49 pm
 '''
 import unittest
 
@@ -18,6 +18,10 @@ from scipy.fftpack import next_fast_len
 from scipy.signal.windows import gaussian
 
 from miic3.correlate import correlate
+
+
+# class TestCorrrelator(unittest.TestCase):
+# have not figured how to test this
 
 
 class TestStToNpArray(unittest.TestCase):
