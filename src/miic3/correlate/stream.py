@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Monday, 31st May 2021 05:30:07 pm
+Last Modified: Tuesday, 1st June 2021 10:19:25 am
 '''
 from typing import Tuple
 
@@ -108,22 +108,21 @@ class CorrStream(Stream):
             endtime = self[-1].stats.corr_end
         outst = CorrStream()
         if stack_len == 'daily':
-            starttime = UTCDateTime(year=starttime.year, day=starttime.day)
+            starttime = UTCDateTime(
+                year=starttime.year, julday=starttime.julday)
             stack_len = 3600*24
-            st = self.slice(starttime=starttime, endtime=starttime+stack_len)
-            outst.extend(stack_st_by_group(st, regard_location, weight))
-            in_st = self.slice(starttime=starttime+stack_len, endtime=endtime)
-        else:
-            in_st = self
-        for st in in_st.slide(
-                stack_len, stack_len, include_partially_selected=True):
+        for st in self.slide(
+                stack_len, stack_len, include_partially_selected=True,
+                starttime=starttime, endtime=endtime):
             outst.extend(stack_st_by_group(st, regard_location, weight))
         return outst
 
-    def slide(self, window_length, step,
-              include_partially_selected=True):
+    def slide(self, window_length: float, step: float,
+        include_partially_selected: bool = True,
+            starttime: UTCDateTime = None, endtime: UTCDateTime = None):
         """
-        Generator yielding equal length sliding windows of the Stream.
+        Generator yielding correlations that are inside of each requested time
+        window and inside of this stream.
 
         Please keep in mind that it only returns a new view of the original
         data. Any modifications are applied to the original data as well. If
@@ -136,34 +135,38 @@ class CorrStream(Stream):
         all Traces and then creates windows based on these times.
 
 
-        :param window_length: The length of each window in seconds.
+        :param window_length: The length of the requested time window in
+            seconds. Note that the window length has to correspond at least to
+            the length of the longest correlation window (i.e., the length of
+            the correlated waveforms). This is because the correlations cannot
+            be sliced.
         :type window_length: float
         :param step: The step between the start times of two successive
-            windows in seconds. Can be negative if an offset is given.
+            windows in seconds. Has to be greater than 0
         :type step: float
-        :param offset: The offset of the first window in seconds relative to
-            the start time of the whole interval.
-        :type offset: float
-        :param include_partial_windows: Determines if windows that are
-            shorter then 99.9 % of the desired length are returned.
-        :type include_partial_windows: bool
-        :param nearest_sample: If set to ``True``, the closest sample is
-            selected, if set to ``False``, the inner (next sample for a
-            start time border, previous sample for an end time border) sample
-            containing the time is selected. Defaults to ``True``.
-
-            Given the following trace containing 6 samples, "|" are the
-            sample points, "A" is the requested starttime::
+        :param include_partially_selected: If set to ``True``, also the half
+            selected time window **before** the requested time will be attached
+            Given the following stream containing 6 correlations, "|" are the
+            correlation starts and ends, "A" is the requested starttime and "B"
+            the corresponding endtime::
 
                 |         |A        |         |       B |         |
                 1         2         3         4         5         6
-
-            ``nearest_sample=True`` will select samples 2-5,
-            ``nearest_sample=False`` will select samples 3-4 only.
-        :type nearest_sample: bool, optional
+            ``include_partially_selected=True`` will select samples 2-4,
+            ``include_partially_selected=False`` will select samples 3-4 only.
+            Defaults to True
+        :type include_partially_selected: bool, optional
+        :param starttime: Start the sequence at this time instead of the
+            earliest available starttime.
+        :type starttime: UTCDateTime
+        :param endtime: Start the sequence at this time instead of the
+            latest available endtime.
+        :type endtime: UTCDateTime
         """
-        starttime = min(tr.stats.corr_start for tr in self)
-        endtime = max(tr.stats.corr_end for tr in self)
+        if not starttime:
+            starttime = min(tr.stats.corr_start for tr in self)
+        if not endtime:
+            endtime = max(tr.stats.corr_end for tr in self)
 
         if window_length < max(
                 tr.stats.corr_end-tr.stats.corr_start for tr in self):
@@ -172,6 +175,9 @@ class CorrStream(Stream):
                 'to be larger or equal than the actual correlation length of' +
                 ' one window. i.e., correlations can not be sliced, only ' +
                 'selected.')
+
+        if step <= 0:
+            raise ValueError('Step has to be larger than 0.')
 
         windows = np.arange(
             starttime.timestamp, endtime.timestamp, step)
@@ -208,7 +214,7 @@ class CorrStream(Stream):
             the corresponding endtime::
 
                 |         |A        |         |       B |         |
-                1         2         3         4         5         6 
+                1         2         3         4         5         6
             ``include_partially_selected=True`` will select samples 2-4,
             ``include_partially_selected=False`` will select samples 3-4 only.
             Defaults to True
@@ -221,8 +227,9 @@ class CorrStream(Stream):
         # the 2 seconds difference are to avoid accidental smoothing
         if include_partially_selected:
             for tr in self:
-                if tr.stats.corr_end > starttime and\
-                     tr.stats.corr_end < endtime:
+                if (tr.stats.corr_end > starttime and
+                    tr.stats.corr_end < endtime) or \
+                        tr.stats.corr_end == endtime:
                     outst.append(tr)
             return outst
         # else
