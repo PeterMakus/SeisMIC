@@ -9,7 +9,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Monday, 10th May 2021 03:16:39 pm
+Last Modified: Tuesday, 1st June 2021 11:16:27 am
 '''
 import fnmatch
 import os
@@ -233,23 +233,40 @@ def all_traces_recursive(
     return stream
 
 
-def convert_header_to_hdf5(dataset, header):
+def convert_header_to_hdf5(dataset: h5py.Dataset, header: Stats):
+    """
+    Convert an :class:`~obspy.core.Stats` object and adds it to the provided
+    hdf5 dataset.
+
+    :param dataset: the dataset that the header should be added to
+    :type dataset: h5py.Dataset
+    :param header: The trace's header
+    :type header: Stats
+    """
     header = dict(header)
     for key in header:
-        if isinstance(header[key], UTCDateTime):
-            # convert time to string
-            header[key] = header[key].format_fissures()
         try:
+            if isinstance(header[key], UTCDateTime):
+                # convert time to string
+                header[key] = header[key].format_fissures()
             dataset.attrs[key] = header[key]
         except TypeError:
             warnings.warn(
                 'The header contains an item of type %s. Information\
-             of this type cannot be written to an hdf5 file.'
+            of this type cannot be written to an hdf5 file.'
                 % str(type(header[key])), UserWarning)
             continue
 
 
-def read_hdf5_header(dataset) -> Stats:
+def read_hdf5_header(dataset: h5py.Dataset) -> Stats:
+    """
+    Takes an hdft5 dataset as input and returns the header of the CorrTrace.
+
+    :param dataset: The dataset to be read from
+    :type dataset: h5py.Dataset
+    :return: The trace's header
+    :rtype: Stats
+    """
     attrs = dataset.attrs
     time_keys = ['starttime', 'endtime', 'corr_start', 'corr_end']
     header = {}
