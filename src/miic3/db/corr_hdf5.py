@@ -9,7 +9,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Wednesday, 2nd June 2021 02:01:06 pm
+Last Modified: Wednesday, 2nd June 2021 07:45:42 pm
 '''
 import fnmatch
 import os
@@ -86,6 +86,10 @@ class DBHandler(h5py.File):
         super(DBHandler, self).__init__(path, mode=mode)
         if isinstance(compression, str):
             self.compression = re.findall(r'(\w+?)(\d+)', compression)[0][0]
+            if self.compression != 'gzip':
+                raise ValueError(
+                    'Compression of type %s is not supported.'
+                    % self.compression)
             self.compression_opts = int(
                 re.findall(r'(\w+?)(\d+)', compression)[0][1])
         else:
@@ -231,6 +235,7 @@ def all_traces_recursive(
         else:
             stream.append(CorrTrace(np.array(v), _header=read_hdf5_header(v)))
     return stream
+
 
 def convert_header_to_hdf5(dataset: h5py.Dataset, header: Stats):
     """

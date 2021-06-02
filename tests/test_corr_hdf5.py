@@ -7,10 +7,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 1st June 2021 10:42:03 am
-Last Modified: Wednesday, 2nd June 2021 02:45:04 pm
+Last Modified: Wednesday, 2nd June 2021 07:47:25 pm
 '''
 import unittest
 from unittest.mock import patch, MagicMock
+from unittest import mock
 
 from obspy import read, UTCDateTime
 import numpy as np
@@ -75,14 +76,16 @@ def create_group_mock(d: dict, name: str, group: bool):
     m.values.side_effect = d.values
     return m
 
+
 class TestAllTracesRecursive(unittest.TestCase):
     # The only thing I can do here is testing whether the conditions work
     @patch('miic3.db.corr_hdf5.read_hdf5_header')
     def test_is_np_array(self, read_header_mock):
         read_header_mock.return_value = None
-        d = {'a': create_group_mock({}, 'testname', False),
-        'b': create_group_mock({}, 'different_name', False)}
-        #ndarray_mock.side_effect = d.keys()
+        d = {
+            'a': create_group_mock({}, 'testname', False),
+            'b': create_group_mock({}, 'different_name', False)}
+
         g = create_group_mock(d, 'outer_group', True)
         st = CorrStream()
         st = corr_hdf5.all_traces_recursive(g, st, 'testname')
@@ -91,25 +94,38 @@ class TestAllTracesRecursive(unittest.TestCase):
         self.assertEqual(st.count(), 1)
         st = corr_hdf5.all_traces_recursive(g, st.clear(), '*name')
         self.assertEqual(st.count(), 2)
-        st = corr_hdf5.all_traces_recursive(g, st, 'no_match')
+        st = corr_hdf5.all_traces_recursive(g, st.clear(), 'no_match')
         self.assertEqual(st.count(), 0)
 
     @patch('miic3.db.corr_hdf5.read_hdf5_header')
-    @patch('miic3.db.corr_hdf5.fnmatch.fnmatch')
-    def test_recursive(self, read_header_mock, fnmatch_mock):
+    def test_recursive(self, read_header_mock):
         # For this we need to patch fnmatch as well, as the names here aren't
         # full path
         read_header_mock.return_value = None
-        fnmatch_mock.return_value = True
-        d_inner = {'a': create_group_mock({}, 'testname', False),
-        'b': create_group_mock({}, 'different_name', False)}
-        d_outer = {'A': create_group_mock(d_inner, 'outer_group0', True),
-                    'B': create_group_mock(d_inner, 'outer_group1', True)}
+        d_inner = {
+            'a': create_group_mock({}, 'testname', False),
+            'b': create_group_mock({}, 'different_name', False)}
+        d_outer = {
+            'A': create_group_mock(d_inner, 'outer_group0', True),
+            'B': create_group_mock(d_inner, 'outer_group1', True)}
         g = create_group_mock(d_outer, 'outout', True)
         st = CorrStream()
-        
-        st = corr_hdf5.all_traces_recursive(g, st, 'doesnt_matter')
+        st = corr_hdf5.all_traces_recursive(
+            g, st, 'outout/outer_group0/testname')
+        self.assertEqual(st.count(), 1)
+        st = corr_hdf5.all_traces_recursive(g, st.clear(), '*')
         self.assertEqual(st.count(), 4)
+
+
+class TestDBHandler(unittest.TestCase):
+    @patch('miic3.db.corr_hdf5.super')
+    def test_compression_indentifier(self, super_mock):
+        super_mock.return_value = None
+        dbh = corr_hdf5.DBHandler('a', 'a', 'gzip8')
+        self.assertEqual(dbh.compression, 'gzip')
+        self.assertEqual(dbh.compression_opts, 8)
+    # test with wrong string
+    # test with wrong digit and no digit
 
 if __name__ == "__main__":
     unittest.main()
