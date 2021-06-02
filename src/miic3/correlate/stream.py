@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Tuesday, 1st June 2021 10:19:25 am
+Last Modified: Wednesday, 2nd June 2021 02:27:40 pm
 '''
 from typing import Tuple
 
@@ -278,16 +278,17 @@ class CorrTrace(Trace):
         if _header:
             header = Stats(_header)
         elif not header1 and not header2:
-            header = Stats()
+            header = None
             if start_lag and end_lag:
+                header = Stats()
                 header['start_lag'] = start_lag
                 header['end_lag'] = end_lag
         else:
             header, data = alphabetical_correlation(
                 header1, header2, start_lag, end_lag, data, inv)
 
-        header['npts'] = len(data)
         super(CorrTrace, self).__init__(data=data, header=header)
+        self.stats['npts'] = len(data)
 
     def __str__(self, id_length=None):
         """

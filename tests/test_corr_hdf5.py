@@ -7,16 +7,18 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 1st June 2021 10:42:03 am
-Last Modified: Tuesday, 1st June 2021 04:18:12 pm
+Last Modified: Wednesday, 2nd June 2021 02:45:04 pm
 '''
 import unittest
 from unittest.mock import patch, MagicMock
 
 from obspy import read, UTCDateTime
 import numpy as np
-from h5py._hl.group import Group
+import h5py
+from obspy.core.trace import Stats
 
 from miic3.db import corr_hdf5
+from miic3.correlate.stream import CorrStream
 
 
 class TestConvertHeaderToHDF5(unittest.TestCase):
@@ -52,50 +54,62 @@ class TestReadHDF5Header(unittest.TestCase):
         self.assertEqual(corr_hdf5.read_hdf5_header(dataset), stats)
 
 
+def create_group_mock(d: dict, name: str, group: bool):
+    """
+    This is supposed to immitate the properties of
+    :class:`h5py._hl.group.Group`
+
+    :param d: dictionary
+    :type d: dict
+    :return: the mocked class
+    :rtype: MagicMock
+    """
+    if group:
+        m = MagicMock(spec=h5py._hl.group.Group)
+    else:
+        m = MagicMock()
+    m.name = name
+    m.__getitem__.side_effect = d.__getitem__
+    m.__iter__.side_effect = d.__iter__
+    m.__contains__.side_effect = d.__contains__
+    m.values.side_effect = d.values
+    return m
+
 class TestAllTracesRecursive(unittest.TestCase):
-    def setUp(self):
-        # This is gonna be ugly
-        #Doesn't work this way
-        tag = '/test'
-        net = ['TOTALLY']*3 + ['RANDOM']*3
-        stat = ['RANDOM', 'BUT', 'SA', 'ME', 'LEN', 'GTH']
-        channels = ['HHZ', 'HHE', 'HHN']
-        starts = np.arange(0, 3600, 100)
-        # List of paths
-        self.paths = []
-        # Create group mock
-        self.g = MagicMock(spec=Group)
-        self.g[tag] = MagicMock(spec=Group)
-        self.g[tag].name = tag
-        for n in net:
-            self.g[tag][n] = MagicMock(spec=Group)
-            self.g[tag][n].name = '/'.join([tag, n])
-            for s in stat:
-                self.g[tag][n][s] = MagicMock(spec=Group)
-                self.g[tag][n][s].name = '/'.join([tag, n, s])
-                for c in channels:
-                    self.g[tag][n][s][c] = MagicMock(spec=Group)
-                    self.g[tag][n][s][c].name = '/'.join([tag, n, s, c])
-                    self.paths.extend(list(corr_hdf5.hierarchy.format(
-                        tag='test', network=n, station=s, channel=c,
-                        corr_st=UTCDateTime(st).format_fissures(),
-                        corr_et=UTCDateTime(st+100).format_fissures())
-                        for st in starts))
-                    for st in starts:
-                        t0 = UTCDateTime(st).format_fissures()
-                        t1 = UTCDateTime(st+100).format_fissures()
-                        self.g[tag][n][s][c][t0][t1].name = '/'.join(
-                            [tag, n, c, t0, t1])
+    # The only thing I can do here is testing whether the conditions work
+    @patch('miic3.db.corr_hdf5.read_hdf5_header')
+    def test_is_np_array(self, read_header_mock):
+        read_header_mock.return_value = None
+        d = {'a': create_group_mock({}, 'testname', False),
+        'b': create_group_mock({}, 'different_name', False)}
+        #ndarray_mock.side_effect = d.keys()
+        g = create_group_mock(d, 'outer_group', True)
+        st = CorrStream()
+        st = corr_hdf5.all_traces_recursive(g, st, 'testname')
+        self.assertEqual(st.count(), 1)
+        st = corr_hdf5.all_traces_recursive(g, st.clear(), 'different_name')
+        self.assertEqual(st.count(), 1)
+        st = corr_hdf5.all_traces_recursive(g, st.clear(), '*name')
+        self.assertEqual(st.count(), 2)
+        st = corr_hdf5.all_traces_recursive(g, st, 'no_match')
+        self.assertEqual(st.count(), 0)
 
-    def test_get_all(self):
-        pattern = corr_hdf5.hierarchy.format(
-            tag='test', network='TOTALLY', station='*', channel='*', corr_st='*',
-            corr_et='*')
-        pattern = pattern.replace('/*', '*')
-        out = []
-        out = corr_hdf5.all_traces_recursive(self.g, out, pattern)
-        self.assertEqual(len(self.paths), len(out))
-
+    @patch('miic3.db.corr_hdf5.read_hdf5_header')
+    @patch('miic3.db.corr_hdf5.fnmatch.fnmatch')
+    def test_recursive(self, read_header_mock, fnmatch_mock):
+        # For this we need to patch fnmatch as well, as the names here aren't
+        # full path
+        read_header_mock.return_value = None
+        fnmatch_mock.return_value = True
+        d_inner = {'a': create_group_mock({}, 'testname', False),
+        'b': create_group_mock({}, 'different_name', False)}
+        d_outer = {'A': create_group_mock(d_inner, 'outer_group0', True),
+                    'B': create_group_mock(d_inner, 'outer_group1', True)}
+        g = create_group_mock(d_outer, 'outout', True)
+        st = CorrStream()
+        
+        st = corr_hdf5.all_traces_recursive(g, st, 'doesnt_matter')
+        self.assertEqual(st.count(), 4)
 
 if __name__ == "__main__":
     unittest.main()
