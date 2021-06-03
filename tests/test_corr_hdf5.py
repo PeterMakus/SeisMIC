@@ -7,11 +7,12 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 1st June 2021 10:42:03 am
-Last Modified: Wednesday, 2nd June 2021 07:47:25 pm
+Last Modified: Thursday, 3rd June 2021 12:22:07 pm
 '''
 import unittest
 from unittest.mock import patch, MagicMock
 from unittest import mock
+import warnings
 
 from obspy import read, UTCDateTime
 import numpy as np
@@ -19,7 +20,7 @@ import h5py
 from obspy.core.trace import Stats
 
 from miic3.db import corr_hdf5
-from miic3.correlate.stream import CorrStream
+from miic3.correlate.stream import CorrStream, CorrTrace
 
 
 class TestConvertHeaderToHDF5(unittest.TestCase):
@@ -119,13 +120,154 @@ class TestAllTracesRecursive(unittest.TestCase):
 
 class TestDBHandler(unittest.TestCase):
     @patch('miic3.db.corr_hdf5.super')
-    def test_compression_indentifier(self, super_mock):
+    def setUp(self, super_mock):
         super_mock.return_value = None
-        dbh = corr_hdf5.DBHandler('a', 'a', 'gzip8')
-        self.assertEqual(dbh.compression, 'gzip')
-        self.assertEqual(dbh.compression_opts, 8)
-    # test with wrong string
-    # test with wrong digit and no digit
+        self.dbh = corr_hdf5.DBHandler('a', 'r', 'gzip9')
+        tr = read()[0]
+        tr.data = np.ones_like(tr.data, dtype=int)
+        tr.stats['corr_start'] = tr.stats.starttime
+        tr.stats['corr_end'] = tr.stats.endtime
+        self.ctr = CorrTrace(tr.data, _header=tr.stats)
+
+    def test_compression_indentifier(self):
+        self.assertEqual(self.dbh.compression, 'gzip')
+        self.assertEqual(self.dbh.compression_opts, 9)
+
+    @patch('miic3.db.corr_hdf5.super')
+    def test_forbidden_compression(self, super_mock):
+        super_mock.return_value = None
+        with self.assertRaises(ValueError):
+            _ = corr_hdf5.DBHandler('a', 'a', 'notexisting5')
+
+    @patch('miic3.db.corr_hdf5.super')
+    def test_forbidden_compression_level(self, super_mock):
+        super_mock.return_value = None
+        with warnings.catch_warnings(record=True) as w:
+            dbh = corr_hdf5.DBHandler('a', 'a', 'gzip10')
+            self.assertEqual(dbh.compression_opts, 9)
+            self.assertEqual(len(w), 1)
+
+    @patch('miic3.db.corr_hdf5.super')
+    def test_no_compression_level(self, super_mock):
+        super_mock.return_value = None
+        with self.assertRaises(IndexError):
+            _ = corr_hdf5.DBHandler('a', 'a', 'gzip')
+
+    @patch('miic3.db.corr_hdf5.super')
+    def test_no_compression_name(self, super_mock):
+        super_mock.return_value = None
+        with self.assertRaises(IndexError):
+            _ = corr_hdf5.DBHandler('a', 'a', '9')
+
+    def test_add_already_available_data(self):
+        st = self.ctr.stats
+        path = corr_hdf5.hierarchy.format(
+                tag='subdivision',
+                network=st.network, station=st.station, channel=st.channel,
+                corr_st=st.corr_start.format_fissures(),
+                corr_et=st.corr_end.format_fissures())
+        with warnings.catch_warnings(record=True) as w:
+            with patch.object(self.dbh, 'create_dataset') as create_ds_mock:
+                create_ds_mock.side_effect = ValueError('test')
+                self.dbh.add_correlation(self.ctr)
+                create_ds_mock.assert_called_with(
+                    path, data=self.ctr.data, compression='gzip',
+                    compression_opts=9)
+            self.assertEqual(len(w), 1)
+
+    @patch('miic3.db.corr_hdf5.super')
+    def test_add_different_object(self, super_mock):
+        super_mock.return_value = None
+        dbh = corr_hdf5.DBHandler('a', 'r', 'gzip9')
+        with self.assertRaises(TypeError):
+            dbh.add_correlation(read())
+
+    @patch('miic3.db.corr_hdf5.h5py._hl.group.Group.__getitem__')
+    @patch('miic3.db.corr_hdf5.read_hdf5_header')
+    def test_get_data_no_wildcard(self, group_mock, read_hdf5_header_mock):
+        read_hdf5_header_mock.return_value = self.ctr.stats
+        net = 'AB-CD'
+        stat = 'AB-CD'
+        ch = 'XX-XX'
+        tag = 'rand'
+        corr_start = UTCDateTime(0)
+        corr_end = UTCDateTime(100)
+        exp_path = corr_hdf5.hierarchy.format(
+                    tag=tag,
+                    network=net, station=stat, channel=ch,
+                    corr_st=corr_start.format_fissures(),
+                    corr_et=corr_end.format_fissures())
+        d = {exp_path: self.ctr.data}
+        group_mock.__getitem__.side_effect = d.__getitem__
+
+        _ = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
+        group_mock.__getitem__.called_with(exp_path)
+
+    @patch('miic3.db.corr_hdf5.h5py._hl.group.Group.__getitem__')
+    @patch('miic3.db.corr_hdf5.read_hdf5_header')
+    def test_get_data_no_wildcard_not_alphabetical(
+            self, group_mock, read_hdf5_header_mock):
+        read_hdf5_header_mock.return_value = self.ctr.stats
+        net = 'CD-AB'
+        stat = 'AB-CD'
+        ch = 'XX-XX'
+        tag = 'rand'
+        corr_start = UTCDateTime(0)
+        corr_end = UTCDateTime(100)
+        exp_path = corr_hdf5.hierarchy.format(
+                    tag=tag,
+                    network='AB-CD', station='CD-AB', channel=ch,
+                    corr_st=corr_start.format_fissures(),
+                    corr_et=corr_end.format_fissures())
+        d = {exp_path: self.ctr.data}
+        group_mock.__getitem__.side_effect = d.__getitem__
+
+        _ = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
+        group_mock.__getitem__.called_with(exp_path)
+
+    @patch('miic3.db.corr_hdf5.h5py._hl.group.Group.__getitem__')
+    @patch('miic3.db.corr_hdf5.all_traces_recursive')
+    def test_get_data_wildcard(self, group_mock, all_tr_recursive_mock):
+        all_tr_recursive_mock.return_value = None
+        net = 'AB-CD'
+        stat = '*'
+        ch = 'XX-XX'
+        tag = 'rand'
+        corr_start = UTCDateTime(0)
+        corr_end = UTCDateTime(100)
+        exp_path = corr_hdf5.hierarchy.format(
+                    tag=tag,
+                    network=net, station=stat, channel=ch,
+                    corr_st=corr_start.format_fissures(),
+                    corr_et=corr_end.format_fissures())
+        d = {exp_path: self.ctr.data}
+        group_mock.__getitem__.side_effect = d.__getitem__
+
+        _ = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
+        group_mock.__getitem__.called_with(exp_path)
+
+    @patch('miic3.db.corr_hdf5.h5py._hl.group.Group.__getitem__')
+    @patch('miic3.db.corr_hdf5.all_traces_recursive')
+    def test_get_data_wildcard2(self, group_mock, all_tr_recursive_mock):
+        all_tr_recursive_mock.return_value = None
+        net = 'AB-CD'
+        stat = '*'
+        ch = '*'
+        tag = 'rand'
+        corr_start = '*'
+        corr_end = '*'
+        exp_path = corr_hdf5.hierarchy.format(
+                    tag=tag,
+                    network=net, station=stat, channel=ch,
+                    corr_st=corr_start,
+                    corr_et=corr_end)
+        exp_path = '/'.join(exp_path.split('/')[:-4])
+        d = {exp_path: self.ctr.data}
+        group_mock.__getitem__.side_effect = d.__getitem__
+
+        _ = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
+        group_mock.__getitem__.called_with(exp_path)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -9,7 +9,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Wednesday, 2nd June 2021 07:45:42 pm
+Last Modified: Thursday, 3rd June 2021 12:00:18 pm
 '''
 import fnmatch
 import os
@@ -92,6 +92,14 @@ class DBHandler(h5py.File):
                     % self.compression)
             self.compression_opts = int(
                 re.findall(r'(\w+?)(\d+)', compression)[0][1])
+            if self.compression_opts not in np.arange(1, 10, 1, dtype=int):
+                ii = np.argmin(abs(
+                    np.arange(1, 10, 1, dtype=int) - self.compression_opts))
+                self.compression_opts = np.arange(1, 10, 1, dtype=int)[ii]
+                warnings.warn(
+                    'Chosen compression level is not available for %s. \
+%s Has been chosen instead (closest)' % (
+                        self.compression, str(self.compression_opts)))
         else:
             self.compression = None
             self.compression_opts = None
@@ -112,13 +120,11 @@ class DBHandler(h5py.File):
         :type data: CorrTraceorCorrStream
         :raises TypeError: for wrong data type.
         """
-        # There should be a CorrTrace and CorrStream object that are subclasses
-        # of the obspy classes that can be used here.
         if not isinstance(data, CorrTrace) and\
                 not isinstance(data, CorrStream):
             raise TypeError('Data has to be either a \
-            :class:`~miic3.correlate.correlate.CorrTrace` object or a \
-            :class:`~miic3.correlate.correlate.CorrStream` object')
+:class:`~miic3.correlate.correlate.CorrTrace` object or a \
+:class:`~miic3.correlate.correlate.CorrStream` object')
 
         if isinstance(data, CorrTrace):
             data = [data]
@@ -146,7 +152,9 @@ class DBHandler(h5py.File):
             corr_end: UTCDateTime = None) -> CorrStream:
         """
         Returns a :class:`~miic3.correlate.correlate.CorrStream` holding
-        all the requested data. **Wildcards are allowed for all parameters.**
+        all the requested data.
+
+        ...note: **Wildcards are allowed for all parameters.**
 
 
         :param network: network (combination), e.g., IU-YP
