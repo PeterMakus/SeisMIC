@@ -276,7 +276,32 @@ class Store_Client(object):
         :return: Station Inventory
         :rtype: Inventory
         """
-        return read_inventory(self.inv_name)
+        self.inventory = read_inventory(self.inv_name)
+        return self.inventory
+
+    def select_inventory_or_load_remote(
+            self, network: str, station: str) -> Inventory:
+        """
+        Checks whether the response for the provided station is in
+        self.inventory if not the response will be fetched from remote.
+
+        :param network: Network code
+        :type network: str
+        :param station: Station Code
+        :type station: str
+        :return: An Obspy Inventory object holding the response for the
+            requested station.
+        :rtype: Inventory
+        """
+        inv = self.inventory.select(network=network, station=station)
+        if not len(inv):
+            print('Station response not found ... loading from remote.')
+            inv = self.rclient.get_stations(
+                    network=network, station=station,
+                    channel='*', level='response')
+            self._write_inventory(inv)
+        return inv
+
 
     def _write_local_data(self, st):
         """

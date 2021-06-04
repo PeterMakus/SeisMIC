@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Friday, 4th June 2021 09:20:10 am
+Last Modified: Friday, 4th June 2021 09:49:22 am
 '''
 from glob import glob
 import os
@@ -303,14 +303,17 @@ been preprocessed?')
         # Create folder if it does not exist
         os.makedirs(self.outloc, exist_ok=True)
 
+        # Fetch station response
+        resp = self.store_client.select_inventory_or_load_remote(
+            network, station)
+
         for starttime, endtime in zip(starttimes, endtimes):
             # st_proc = Stream()
             st = self.store_client.get_waveforms(
                 network, station, location, channel, starttime, endtime,
                 _check_times=_check_times)
             try:
-                st, resp = self._preprocess(
-                    st, self.store_client.inventory, tl)
+                st, resp = self._preprocess(st, resp, tl)
             except FrequencyError as e:
                 warn(e + ' Trace is skipped.')
                 continue
@@ -375,13 +378,6 @@ sample rate (%s Hz).' % (str(self.sampling_rate), str(
         if inv:
             ninv = inv
             st.attach_response(ninv)
-        else:
-            print('Station response not found ... loading from remote.')
-            # missing station response
-            ninv = self.store_client.rclient.get_stations(
-                network=st[0].stats.network, station=st[0].stats.station,
-                channel='*', starttime=st[0].stats.starttime,
-                endtime=st[-1].stats.endtime, level='response')
         if self.remove_response:
             # taper before instrument response removal
             if taper_len:
@@ -416,6 +412,9 @@ sample rate (%s Hz).' % (str(self.sampling_rate), str(
             ninv = self.store_client.read_inventory().select(
                 network=tr.stats.network, station=tr.stats.station)
             return st, ninv
+
+
+def 
 
 
 def detrend(data: np.ndarray) -> np.ndarray:
