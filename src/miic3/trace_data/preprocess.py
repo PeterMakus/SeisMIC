@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Thursday, 27th May 2021 04:18:20 pm
+Last Modified: Friday, 4th June 2021 08:58:22 am
 '''
 from glob import glob
 import os
@@ -238,13 +238,13 @@ class Preprocessor(object):
         if os.path.exists(outfile) and not self.ex_times:
             msg = "The output file already exists. Use \
             :func:`~miic3.db.asdf_handler.NoiseDB.return_preprocessor()` \
-            to yield the correct Preprocessor!"
+to yield the correct Preprocessor!"
             raise PermissionError(msg)
 
         if not starttime or not endtime:
             warn(
                 "Returned start and endtimes will not be checked due to\
-             wildcard.", category=UserWarning)
+wildcard.", category=UserWarning)
             _check_times = False
             starttime, endtime = self.store_client._get_times(network, station)
             if not starttime:
@@ -266,7 +266,7 @@ class Preprocessor(object):
             if self.ex_times[0]-5 <= starttime and \
                     self.ex_times[1]+5 >= endtime:
                 raise FileExistsError('No new data found. All data have already \
-                been preprocessed?')
+been preprocessed?')
             # New new data
             elif self.ex_times[0]-5 <= starttime and \
                     self.ex_times[1]+5 < endtime:
@@ -313,6 +313,9 @@ class Preprocessor(object):
             except FrequencyError as e:
                 warn(e + ' Trace is skipped.')
                 continue
+            except IndexError:
+                warn('No data found for station %s.%s and times %s-%s'
+                % (network, station, starttime, endtime))
             try:
                 st.trim(
                     starttime=st[0].stats.starttime+tl,
@@ -360,8 +363,7 @@ class Preprocessor(object):
         if self.sampling_rate > st[0].stats.sampling_rate:
             raise FrequencyError(
                 'The new sample rate (%sHz) is higher than the trace\'s native\
-            sample rate (%s Hz).' % (
-                    str(self.sampling_rate), str(
+sample rate (%s Hz).' % (str(self.sampling_rate), str(
                         st[0].stats.sampling_rate)))
 
         # Downsample

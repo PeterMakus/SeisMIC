@@ -4,13 +4,13 @@ UnitTests for the preprocess module.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 15th March 2021 11:14:04 am
-Last Modified: Thursday, 27th May 2021 04:19:48 pm
+Last Modified: Friday, 4th June 2021 08:59:54 am
 '''
 import unittest
 from unittest import mock
 
 import numpy as np
-from obspy import read
+from obspy import read, Stream
 from obspy.core.inventory.inventory import read_inventory
 
 from miic3.trace_data.preprocess import Preprocessor, FrequencyError
@@ -51,6 +51,13 @@ class TestPreprocessor(unittest.TestCase):
         self.assertEqual(st[0].stats.sampling_rate, 25)
         # Response removal works?
         self.assertTrue('response' in st[0].stats.processing[-1])
+
+    def test_error_empty_stream_preprocess(self):
+        p = Preprocessor(
+                self.store_client, sampling_rate=25,
+                outfolder='x', remove_response=True)
+        with self.assertRaises(IndexError):
+            _, _ = p._preprocess(Stream(), inv=read_inventory(), taper_len=3)
 
     @mock.patch('miic3.trace_data.preprocess.os.path.exists')
     def test_path_exist(self, path_exists_mock):
