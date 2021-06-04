@@ -44,6 +44,9 @@ class Store_Client(object):
         self.fileborder_seconds = 30
         self.fileborder_samples = 5000
         self.sds_root = os.path.join(path, 'mseed')
+        if not os.path.exists(
+                os.path.dirname(self.sds_root)) and not read_only:
+            os.makedirs(os.path.dirname(self.sds_root))
         self.inv_name = os.path.join(path, "inventory", "inventory.xml")
         if os.path.exists(self.inv_name):
             self.inventory = self.read_inventory()
