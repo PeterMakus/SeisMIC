@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Friday, 4th June 2021 09:09:11 am
+Last Modified: Friday, 4th June 2021 09:20:10 am
 '''
 from glob import glob
 import os
@@ -81,7 +81,8 @@ class Preprocessor(object):
         # sampling frequency in the asdf file, so one can perhaps start a
         # Preprocessor by giving the file as parameter.
         self.sampling_rate = sampling_rate
-        self.outloc = os.path.join(store_client.sds_root, outfolder)
+        self.outloc = os.path.join(
+            os.path.dirname(store_client.sds_root), outfolder)
 
         # Create preprocessing parameter dict
         self.param = {
@@ -374,6 +375,13 @@ sample rate (%s Hz).' % (str(self.sampling_rate), str(
         if inv:
             ninv = inv
             st.attach_response(ninv)
+        else:
+            print('Station response not found ... loading from remote.')
+            # missing station response
+            ninv = self.store_client.rclient.get_stations(
+                network=st[0].stats.network, station=st[0].stats.station,
+                channel='*', starttime=st[0].stats.starttime,
+                endtime=st[-1].stats.endtime, level='response')
         if self.remove_response:
             # taper before instrument response removal
             if taper_len:
