@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Friday, 4th June 2021 10:04:16 am
+Last Modified: Friday, 4th June 2021 02:23:40 pm
 '''
 from glob import glob
 import os
@@ -98,6 +98,7 @@ class Preprocessor(object):
 
     def preprocess_bulk(
         self, network: str or None = None, statlist: list or None = None,
+        channel: str or None = '*', location: str or None = '*',
         starttime: UTCDateTime or None = None,
         endtime: UTCDateTime or None = None,
             backend: str = 'joblib', n_cpus: int = -1):
@@ -109,8 +110,15 @@ class Preprocessor(object):
             to process all available data, defaults to None.
         :type network: strorNone, optional
         :param statlist: List of station codes. If != None, one does also have
-            to provide a network code, defaults to None.
+            to provide a network code, defaults to None. If `==None` all
+            available will be used 
         :type statlist: list or None, optional
+        :param channel: Which channel to use. using `None` is equal to all
+            ('*'). Defaults to '*'
+        :type channel: str or None, optional
+        :param location: Which location to use. using `None` is equal to all
+            ('*'). Defaults to '*'
+        :type location: str or None, optional
         :param starttime: Starttime. Use `None` to process from the earliest
             time, defaults to None
         :type starttime: UTCDateTimeorNone, optional
@@ -134,11 +142,13 @@ class Preprocessor(object):
             raise ValueError(
                 'You have to define a network, when requesting' +
                 ' a list of stations.')
-        elif not statlist:
+        elif not statlist or statlist == '*':
             statlist = self._all_stations_raw(network)
         else:
             for ii, station in enumerate(statlist):
                 statlist[ii] = [network, station]
+        channel = channel or '*'
+        location = location or '*'
         if backend == 'mpi':
             from mpi4py import MPI
             comm = MPI.COMM_WORLD
@@ -151,14 +161,15 @@ class Preprocessor(object):
             ind = np.arange(len(statlist))[ind]
             for ii in ind:
                 self._preprocess_mc_init(
-                    statlist[ii][0], statlist[ii][1], '*', '*', starttime,
-                    endtime)
+                    statlist[ii][0], statlist[ii][1], location, channel,
+                    starttime, endtime)
             comm.barrier()
         elif backend == 'joblib':
             from joblib import Parallel, delayed
             Parallel(n_jobs=n_cpus, verbose=8)(
                         delayed(self._preprocess_mc_init)(
-                            network, station, '*', '*', starttime, endtime)
+                            network, station, location, channel, starttime,
+                            endtime)
                         for network, station in statlist)
         else:
             msg = 'Backend "%s" not supported' % backend
@@ -308,7 +319,6 @@ been preprocessed?')
             network, station)
 
         for starttime, endtime in zip(starttimes, endtimes):
-            # st_proc = Stream()
             st = self.store_client.get_waveforms(
                 network, station, location, channel, starttime, endtime,
                 _check_times=_check_times)
@@ -318,8 +328,9 @@ been preprocessed?')
                 warn(e + ' Trace is skipped.')
                 continue
             except IndexError:
-                warn('No data found for station %s.%s and times %s-%s'
-                % (network, station, starttime, endtime))
+                warn(
+                    'No data found for station %s.%s and times %s-%s'
+                    % (network, station, starttime, endtime))
                 continue
             try:
                 st.trim(
