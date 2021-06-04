@@ -334,6 +334,7 @@ class Store_Client(object):
         if os.path.exists(filename):
             rst = read(filename)
             rst.append(tr)
+            rst.merge()
         else:
             if not os.path.exists(os.path.dirname(filename)):
                 os.makedirs(os.path.dirname(filename))
