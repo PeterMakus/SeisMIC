@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Friday, 4th June 2021 02:51:47 pm
+Last Modified: Friday, 4th June 2021 03:05:19 pm
 '''
 
 from glob import glob
@@ -42,7 +42,7 @@ class NoiseDB(object):
     """
 
     def __init__(
-            self, dir: str, network: str, station: str) -> None:
+            self, dir: str, network: str, station: str):
         """
         Initialises the noise database (ASDF handler).
 
@@ -91,8 +91,6 @@ class NoiseDB(object):
             'outfolder': os.path.dirname(self.loc),
             'remove_response': self.param["remove_response"],
             '_ex_times': self.get_active_times()}
-        if kwargs['_ex_times'] == (None, None):
-            kwargs['_ex_times'] = None
         return kwargs
 
     def plot_spectrum(

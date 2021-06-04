@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 17th May 2021 12:25:54 pm
-Last Modified: Monday, 17th May 2021 12:51:44 pm
+Last Modified: Friday, 4th June 2021 03:03:05 pm
 '''
 
 import os
@@ -97,7 +97,7 @@ def remove_topright(ax=None):
 
 def plot_correlation(
     corr, tlim: list or tuple = None, ax: plt.Axes = None,
-        outputdir: str = None, clean: bool = False):
+        outputdir: str = None, clean: bool = False) -> plt.Axes:
     set_mpl_params()
 
     # Get figure/axes dimensions

@@ -7,9 +7,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 31st May 2021 01:48:15 pm
+Last Modified: Friday, 4th June 2021 02:57:47 pm
 '''
 from copy import deepcopy
+from typing import Iterator, Tuple
 from warnings import warn
 import os
 
@@ -34,7 +35,7 @@ class Correlator(object):
     Object to manage the actual Correlation (i.e., Green's function retrieval)
     for the database.
     """
-    def __init__(self, options: dict) -> None:
+    def __init__(self, options: dict):
         """
         Initiates the Correlator object. When executing
         :func:`~miic3.correlate.correlate.Correlator.pxcorr()`, it will
@@ -138,7 +139,7 @@ class Correlator(object):
         if not self.options['subdivision']['delete_subdivision']:
             self._write(cst, tag='subdivision')
 
-    def _pxcorr_inner(self, st: Stream, inv: Inventory):
+    def _pxcorr_inner(self, st: Stream, inv: Inventory) -> CorrStream:
         """
         Inner loop of pxcorr. Don't call this function!
         """
@@ -260,7 +261,7 @@ class Correlator(object):
         self.options['combinations'] = calc_cross_combis(st)
         return st
 
-    def _generate_data(self) -> Stream:
+    def _generate_data(self) -> Iterator(Tuple[Stream, bool]):
         """
         Returns an Iterator that loops over each start and end time with the
         requested window length.
@@ -327,7 +328,7 @@ class Correlator(object):
                 yield win, write_flag
                 write_flag = False
 
-    def _pxcorr_matrix(self, A: np.ndarray):
+    def _pxcorr_matrix(self, A: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         # time domain processing
         # map of traces on processes
         ntrc = A.shape[1]
@@ -457,7 +458,7 @@ class Correlator(object):
         return (C, startlags)
 
 
-def st_to_np_array(st: Stream, npts: int) -> np.ndarray:
+def st_to_np_array(st: Stream, npts: int) -> Tuple[np.ndarray, Stream]:
     """
     Converts an obspy stream to a matrix with the shape (npts, st.count()).
     Also returns the same stream but without the data arrays in tr.data.
@@ -590,7 +591,7 @@ def zeroPadding(A: np.ndarray, args: dict, params: dict, axis=0) -> np.ndarray:
 #     return results * val
 
 
-def calc_cross_combis(st, method='betweenStations'):
+def calc_cross_combis(st: Stream, method: str = 'betweenStations') -> list:
     """
     Calculate a list of all cross correlation combination
     of traces in the stream: i.e. all combination with two different
@@ -724,7 +725,7 @@ def rotate_multi_corr_stream(st: Stream) -> Stream:
     return out_st
 
 
-def _rotate_corr_stream_horizontal(st):
+def _rotate_corr_stream_horizontal(st: Stream) -> Stream:
     """ Rotate traces in stream from the EE-EN-NE-NN system to
     the RR-RT-TR-TT system. The letters give the component order
     in the input and output streams. Input traces are assumed to be of same
@@ -784,7 +785,7 @@ def _rotate_corr_stream_horizontal(st):
     return rt
 
 
-def _rotate_corr_stream(st):
+def _rotate_corr_stream(st: Stream) -> Stream:
     """ Rotate traces in stream from the EE-EN-EZ-NE-NN-NZ-ZE-ZN-ZZ system to
     the RR-RT-RZ-TR-TT-TZ-ZR-ZT-ZZ system. The letters give the component order
     in the input and output streams. Input traces are assumed to be of same
@@ -866,10 +867,7 @@ def _rotate_corr_stream(st):
     rtz.append(ZR)
 
     ZT = st[0].copy()
-    ZT.data = s2*st[6].data + c2*st[7].data
-    tcha = list(ZT.stats['channel'])
-    tcha[2] = 'Z'
-    tcha[6] = 'T'
+    ZT.data = s2*st[6].data + c2*st[7].tuple
     ZT.stats['channel'] = ''.join(tcha)
     rtz.append(ZT)
 

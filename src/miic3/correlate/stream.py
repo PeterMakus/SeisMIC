@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Wednesday, 2nd June 2021 02:27:40 pm
+Last Modified: Friday, 4th June 2021 02:59:48 pm
 '''
 from typing import Tuple
 
@@ -290,7 +290,7 @@ class CorrTrace(Trace):
         super(CorrTrace, self).__init__(data=data, header=header)
         self.stats['npts'] = len(data)
 
-    def __str__(self, id_length=None):
+    def __str__(self, id_length: int = None) -> str:
         """
         Return short summary string of the current trace.
 
@@ -390,7 +390,7 @@ def alphabetical_correlation(
 
 def combine_stats(
     stats1: Stats, stats2: Stats, start_lag: float,
-        end_lag: float, inv: Inventory = None):
+        end_lag: float, inv: Inventory = None) -> Stats:
     """ Combine the meta-information of two ObsPy Trace.Stats objects
 
     This function returns a ObsPy :class:`~obspy.core.trace.Stats` object

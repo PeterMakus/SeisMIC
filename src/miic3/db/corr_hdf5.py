@@ -9,7 +9,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Thursday, 3rd June 2021 12:00:18 pm
+Last Modified: Friday, 4th June 2021 03:02:12 pm
 '''
 import fnmatch
 import os
@@ -61,11 +61,11 @@ class CorrelationDataBase(object):
         self.mode = mode
         self.compression = compression
 
-    def __enter__(self):
+    def __enter__(self) -> DBHandler:
         self.db_handler = DBHandler(self.path, self.mode, self.compression)
         return self.db_handler
 
-    def __exit__(self, exc_type, exc_value, tb):
+    def __exit__(self, exc_type, exc_value, tb) -> None or bool:
         self.db_handler._close()
         if exc_type is not None:
             return False

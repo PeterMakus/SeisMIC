@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Friday, 4th June 2021 02:23:40 pm
+Last Modified: Friday, 4th June 2021 03:06:50 pm
 '''
 from glob import glob
 import os
@@ -273,7 +273,7 @@ wildcard.", category=UserWarning)
         # standard way with only new times:
         req_start = [starttime]
         req_end = [endtime]
-        if self.ex_times:
+        if self.ex_times and not self.ex_times == (None, None):
             # No new data at all
             if self.ex_times[0]-5 <= starttime and \
                     self.ex_times[1]+5 >= endtime:

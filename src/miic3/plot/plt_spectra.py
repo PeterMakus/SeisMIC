@@ -4,9 +4,10 @@ Simple script to compute and plot time-dependent spectral power densities.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 15th February 2021 02:09:48 pm
-Last Modified: Wednesday, 26th May 2021 04:04:56 pm
+Last Modified: Friday, 4th June 2021 03:03:46 pm
 '''
 
+from typing import Tuple
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
@@ -98,7 +99,8 @@ def plot_spct_series(
 
 
 def spct_series_welch(
-        st: obspy.Stream, window_length: float) -> np.ndarray:
+        st: obspy.Stream, window_length: float) -> Tuple[
+            np.ndarray, np.ndarray, np.ndarray]:
     """
     Computes a spectral time series. Each point in time is computed using the
     welch method. Windows overlap by half the windolength. The input stream can
