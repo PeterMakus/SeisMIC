@@ -4,7 +4,7 @@ UnitTests for the waveform module.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 15th March 2021 03:33:25 pm
-Last Modified: Friday, 4th June 2021 10:03:19 am
+Last Modified: Friday, 4th June 2021 02:40:45 pm
 '''
 
 import unittest
@@ -59,7 +59,40 @@ class TestStoreClient(unittest.TestCase):
         #
         t_control = (
             UTCDateTime(year=start.year, julday=start.julday),
-            UTCDateTime(year=end.year, julday=end.julday+1))
+            UTCDateTime(year=end.year, julday=end.julday)+24*3600)
+        self.assertEqual(timetup, t_control)
+
+    @mock.patch('miic3.trace_data.waveform.glob.glob')
+    def test_get_times_year_change(self, glob_mock):
+        # Just checking as there is no julday 366 in most years
+        start = UTCDateTime(year=2015, month=12, day=31, hour=1)
+        end = start + 24*3600
+        years = np.arange(start.year, end.year+1)
+        # days in start year
+        startdays = np.arange(start.julday, 366)
+        # Days in end year
+        enddays = np.arange(1, end.julday+1)
+        yeardirs = [os.path.join(
+            self.outdir, str(year), self.net, self.stat) for year in years]
+        startdaydirs = [os.path.join(
+            yeardirs[0], 'HHE.D', "%s.%s.%s.%s.%s.%s.%s" %
+            (self.net, self.stat, '00', 'HHE', 'D', years[0], day))
+            for day in startdays]
+
+        enddaydirs = [os.path.join(
+            yeardirs[-1], 'HHE.D',
+            "%s.%s.%s.%s.%s.%s.%s" %
+            (self.net, self.stat, '00', 'HHE', 'D', years[-1], day))
+            for day in enddays]
+        glob_mock.side_effect = [yeardirs, startdaydirs, enddaydirs]
+        #
+        # Check if the directory is correct
+        self.assertEqual(self.sc.sds_root, self.outdir)
+        timetup = self.sc._get_times(self.net, self.stat)
+        #
+        t_control = (
+            UTCDateTime(year=start.year, julday=start.julday),
+            UTCDateTime(year=end.year, julday=end.julday)+24*3600)
         self.assertEqual(timetup, t_control)
 
     @mock.patch('miic3.trace_data.waveform.glob.glob')

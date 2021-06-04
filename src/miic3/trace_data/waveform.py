@@ -195,9 +195,7 @@ class Store_Client(object):
                 UserWarning)
             return (None, None)
         dirlist.sort()  # sort by time
-        # startjul = [i[-3:] for i in glob.glob(
-        #     os.path.join(
-        #         self.sds_root, dirlist[0], network, station, '*', '*'))]
+
         startjul = [i.split('.')[-1] for i in glob.glob(
             os.path.join(
                 self.sds_root, dirlist[0], network, station, '*', '*'))]
