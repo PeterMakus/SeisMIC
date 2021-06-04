@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Friday, 4th June 2021 08:58:22 am
+Last Modified: Friday, 4th June 2021 09:09:11 am
 '''
 from glob import glob
 import os
@@ -316,6 +316,7 @@ been preprocessed?')
             except IndexError:
                 warn('No data found for station %s.%s and times %s-%s'
                 % (network, station, starttime, endtime))
+                continue
             try:
                 st.trim(
                     starttime=st[0].stats.starttime+tl,
