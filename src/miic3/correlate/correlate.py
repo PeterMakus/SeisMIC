@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 4th June 2021 02:57:47 pm
+Last Modified: Friday, 4th June 2021 03:34:05 pm
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -261,7 +261,7 @@ class Correlator(object):
         self.options['combinations'] = calc_cross_combis(st)
         return st
 
-    def _generate_data(self) -> Iterator(Tuple[Stream, bool]):
+    def _generate_data(self) -> Iterator[Tuple[Stream, bool]]:
         """
         Returns an Iterator that loops over each start and end time with the
         requested window length.

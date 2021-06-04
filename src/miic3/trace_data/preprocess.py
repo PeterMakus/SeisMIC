@@ -4,10 +4,11 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Friday, 4th June 2021 03:06:50 pm
+Last Modified: Friday, 4th June 2021 03:10:09 pm
 '''
 from glob import glob
 import os
+from typing import Tuple
 from warnings import warn
 
 import numpy as np
@@ -45,7 +46,7 @@ class Preprocessor(object):
     """
     def __init__(
         self, store_client: Store_Client, sampling_rate: float, outfolder: str,
-            remove_response: bool = False, _ex_times: tuple = None) -> None:
+            remove_response: bool = False, _ex_times: tuple = None):
         """
         Create the Preprocesser object.
 
@@ -369,7 +370,7 @@ been preprocessed?')
 
     def _preprocess(
         self, st: Stream, inv: Inventory or None,
-            taper_len: float) -> Stream:
+            taper_len: float) -> Tuple[Stream, Inventory]:
         """
         Private method that executes the preprocessing steps on a *per Stream*
         basis.

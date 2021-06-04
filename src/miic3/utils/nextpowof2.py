@@ -7,7 +7,7 @@ Created on Fri Oct 18 20:36:40 2019
 """
 
 
-def nextpowerof2(n):
+def nextpowerof2(n: int) -> int:
     """ just returns the next higher power of two from n"""
     count = 0
 

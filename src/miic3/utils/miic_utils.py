@@ -8,14 +8,16 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Wednesday, 26th May 2021 02:50:41 pm
+Last Modified: Friday, 4th June 2021 03:27:02 pm
 '''
+from typing import Tuple
 import numpy as np
 from obspy import Inventory, Stream, Trace
 from obspy.core import Stats, AttribDict
 
 
-def trace_calc_az_baz_dist(stats1: Stats, stats2: Stats):
+def trace_calc_az_baz_dist(stats1: Stats, stats2: Stats) -> Tuple[
+        float, float, float]:
     """ Return azimuth, back azimhut and distance between tr1 and tr2
     This funtions calculates the azimut, back azimut and distance between tr1
     and tr2 if both have geo information in their stats dictonary.
@@ -57,7 +59,8 @@ def trace_calc_az_baz_dist(stats1: Stats, stats2: Stats):
     return az, baz, dist
 
 
-def inv_calc_az_baz_dist(inv1: Inventory, inv2: Inventory):
+def inv_calc_az_baz_dist(inv1: Inventory, inv2: Inventory) -> Tuple[
+        float, float, float]:
     """ Return azimuth, back azimuth and distance between stat1 and stat2
 
 
@@ -98,9 +101,7 @@ def inv_calc_az_baz_dist(inv1: Inventory, inv2: Inventory):
 def resample_or_decimate(
     data: Trace or Stream, sampling_rate_new: int,
         filter=True) -> Stream or Trace:
-    """
-    Decimates the data if the desired new sampling rate allows to do so.
-    Else the signal will be interpolated (a lot slower).
+    """type hinting type function lot slower).
 
     :param data: Stream to be resampled.
     :type data: Stream
@@ -130,7 +131,7 @@ def resample_or_decimate(
         return data.resample(srn)
 
 
-def stream_filter(st, ftype, filter_option):
+def stream_filter(st: Stream, ftype: str, filter_option: dict) -> Stream:
     """ Filter each trace of a Stream according to the given parameters
 
     This faction apply the specified filter function to all the traces in the

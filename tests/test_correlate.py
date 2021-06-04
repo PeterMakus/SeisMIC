@@ -7,9 +7,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Monday, 31st May 2021 01:48:49 pm
+Last Modified: Friday, 4th June 2021 04:03:21 pm
 '''
 import unittest
+import warnings
 
 import numpy as np
 from obspy import read, Stream, Trace
@@ -183,8 +184,10 @@ class TestCalcCrossCombis(unittest.TestCase):
             correlate.calc_cross_combis(self.st, method='blablub')
 
     def test_empty_stream(self):
-        self.assertEqual([], correlate.calc_cross_combis(
-            Stream(), method='allCombinations'))
+        with warnings.catch_warnings(record=True) as w:
+            self.assertEqual([], correlate.calc_cross_combis(
+                Stream(), method='allCombinations'))
+            self.assertEqual(len(w), 1)
 
 
 class TestSpectralWhitening(unittest.TestCase):

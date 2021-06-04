@@ -2,7 +2,9 @@ import fnmatch
 import os
 import datetime
 import glob
+from typing import Tuple
 import warnings
+import re
 
 from obspy.clients.fdsn import Client as rClient
 from obspy.clients.fdsn.header import FDSNNoDataException
@@ -104,7 +106,7 @@ class Store_Client(object):
     def get_waveforms(
         self, network: str, station: str, location: str, channel: str,
         starttime: UTCDateTime, endtime: UTCDateTime,
-            attach_response: bool = True, _check_times: bool = True):
+            attach_response: bool = True, _check_times: bool = True) -> Stream:
         assert ~('?' in network+station+location+channel), \
             "Only single channel requests supported."
         assert ~('*' in network+station+location+channel), \
@@ -150,7 +152,8 @@ class Store_Client(object):
 
     def _get_mseed_storage(
         self, network: 'str', station: 'str', location: str,
-            channel: str, starttime: UTCDateTime, endtime: UTCDateTime):
+        channel: str, starttime: UTCDateTime,
+            endtime: UTCDateTime) -> bool or str:
 
         # Returning True means that neither the data nor the StationXML file
 
@@ -169,7 +172,8 @@ class Store_Client(object):
 
         return outf
 
-    def _get_times(self, network: str, station: str) -> tuple:
+    def _get_times(self, network: str, station: str) -> Tuple[
+            UTCDateTime, UTCDateTime]:
         """
         Return earliest and latest available time for a certain station.
 
@@ -220,8 +224,10 @@ class Store_Client(object):
         endtime += 24*3600
         return (starttime, endtime)
 
-    def _load_remote(self, network, station, location, channel, starttime,
-                     endtime, attach_response):
+    def _load_remote(
+        self, network: str, station: str, location: str, channel: str,
+        starttime: UTCDateTime, endtime: UTCDateTime,
+            attach_response: bool) -> Stream:
         """
         Load data from remote resouce
         """
@@ -248,8 +254,10 @@ class Store_Client(object):
             self._write_local_data(st)
         return st
 
-    def _load_local(self, network, station, location, channel, starttime,
-                    endtime, attach_response, _check_times):
+    def _load_local(
+        self, network: str, station: str, location: str, channel: str,
+        starttime: UTCDateTime, endtime: UTCDateTime, attach_response: bool,
+            _check_times: bool) -> Stream or None:
         """
         Read data from local SDS structure.
         """
@@ -361,8 +369,10 @@ class FS_Client(object):
         """
         self.fs = fs
 
-    def get_waveforms(self, network, station, location, channel,
-                      starttime, endtime, trim=True, debug=False, **kwargs):
+    def get_waveforms(
+        self, network: str, station: str, location: str, channel: str,
+        starttime: UTCDateTime, endtime: UTCDateTime, trim: bool = True,
+            debug: bool = False, **kwargs) -> Stream:
         """
         Read data from the local file system.
         """
@@ -380,7 +390,9 @@ IDformat = ['%NET', '%net', '%STA', '%sta', '%LOC', '%loc', '%CHA', '%cha']
 
 
 def read_from_filesystem(
-        ID, starttime, endtime, fs='SDS_archive', trim=True, debug=False):
+    ID: str, starttime: datetime.datetime, endtime: datetime.datetime,
+    fs: str = 'SDS_archive', trim: bool = True,
+        debug: bool = False) -> Stream:
     """
     Read data from a filesystem
 
@@ -501,7 +513,9 @@ def read_from_filesystem(
     return st
 
 
-def _read_filepattern(fpattern, starttime, endtime, trim, debug):
+def _read_filepattern(
+    fpattern: str, starttime: datetime.datetime, endtime: datetime.datetime,
+        trim: bool, debug: bool) -> Stream:
     """Read a stream from files whose names match a given pattern.
     """
     flist = glob.glob(fpattern)
@@ -534,7 +548,9 @@ def _read_filepattern(fpattern, starttime, endtime, trim, debug):
     return st
 
 
-def _adjacent_filepattern(ID, starttime, fs, inc):
+def _adjacent_filepattern(
+    ID: str, starttime: datetime.datetime, fs: str,
+        inc: int) -> Tuple[str, datetime.datetime]:
     """Return the file name that contains the data sequence prior to the one
     that contains the given time for a given file structure and ID.
 
@@ -596,7 +612,8 @@ def _adjacent_filepattern(ID, starttime, fs, inc):
     return fname, thistime
 
 
-def _current_filepattern(ID, starttime, fs):
+def _current_filepattern(
+        ID: str, starttime: datetime.datetime, fs: str) -> str:
     """Return the file name that contains the data sequence that contains
     the given time for a given file structure and ID.
     """
@@ -611,7 +628,7 @@ def _current_filepattern(ID, starttime, fs):
     return fname
 
 
-def _fs_translate(part, ID, starttime):
+def _fs_translate(part: str, ID: str, starttime: datetime.datetime) -> str:
     """Translate part of the file structure descriptor.
     """
     IDlist = ID.split('.')

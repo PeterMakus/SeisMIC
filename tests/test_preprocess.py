@@ -4,7 +4,7 @@ UnitTests for the preprocess module.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 15th March 2021 11:14:04 am
-Last Modified: Friday, 4th June 2021 10:02:10 am
+Last Modified: Friday, 4th June 2021 03:40:31 pm
 '''
 import unittest
 from unittest import mock
@@ -24,7 +24,9 @@ class TestPreprocessor(unittest.TestCase):
     """
     Test :class:`~miic3.trace_data.Preprocessor`.
     """
-    def setUp(self) -> None:
+    @mock.patch('miic3.trace_data.waveform.lClient')
+    def setUp(self, lClient_mock):
+        lClient_mock.return_value = None
         self.store_client = Store_Client('IRIS', '/', read_only=True)
 
     def test_frequency_error(self):

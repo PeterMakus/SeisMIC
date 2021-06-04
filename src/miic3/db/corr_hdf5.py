@@ -9,7 +9,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Friday, 4th June 2021 03:02:12 pm
+Last Modified: Friday, 4th June 2021 03:33:07 pm
 '''
 import fnmatch
 import os
@@ -26,49 +26,6 @@ from miic3.correlate.stream import CorrStream, CorrTrace
 
 hierarchy = "/{tag}/{network}/{station}/{channel}/{corr_st}/{corr_et}"
 h5_FMTSTR = os.path.join("{dir}", "{network}.{station}.h5")
-
-
-class CorrelationDataBase(object):
-    """
-    Base class to handle the hdf5 files that contain noise correlations.
-    """
-    def __init__(self, path: str, mode: str = 'a', compression: str = 'gzip3'):
-        """
-        Access an hdf5 file holding correlations.
-
-        :warning: **Only access through a context manager (see below):**
-
-        >>> with CorrelationDataBase(myfile.h5) as cdb:
-        >>>     type(cdb)  # This is a DBHandler
-
-        :param path: Full path to the file
-        :type path: str
-        :param mode: Mode to access the file. Options are: 'a' for all, 'w' for
-        write, 'r+' for writing in an already existing file, or 'r' for
-        read-only , defaults to 'a'.
-        :type mode: str, optional
-        :param compression: The compression algorithm and compression level
-        that the arrays should be saved with. 'gzip3' tends to perform well,
-        else you could choose 'gzipx' where x is a digit between 1 and 9 (i.e.,
-        9 is the highest compression) or None for fastest perfomance,
-        defaults to 'gzip3'.
-        :type compression: str, optional
-        """
-        # Create / read file
-        if not path.split('.')[-1] == 'h5':
-            path += '.h5'
-        self.path = path
-        self.mode = mode
-        self.compression = compression
-
-    def __enter__(self) -> DBHandler:
-        self.db_handler = DBHandler(self.path, self.mode, self.compression)
-        return self.db_handler
-
-    def __exit__(self, exc_type, exc_value, tb) -> None or bool:
-        self.db_handler._close()
-        if exc_type is not None:
-            return False
 
 
 class DBHandler(h5py.File):
@@ -216,6 +173,49 @@ class DBHandler(h5py.File):
             else:
                 path = '/'.join(path.split('/')[:-1])
         return all_traces_recursive(self[path], CorrStream(), pattern)
+
+
+class CorrelationDataBase(object):
+    """
+    Base class to handle the hdf5 files that contain noise correlations.
+    """
+    def __init__(self, path: str, mode: str = 'a', compression: str = 'gzip3'):
+        """
+        Access an hdf5 file holding correlations.
+
+        :warning: **Only access through a context manager (see below):**
+
+        >>> with CorrelationDataBase(myfile.h5) as cdb:
+        >>>     type(cdb)  # This is a DBHandler
+
+        :param path: Full path to the file
+        :type path: str
+        :param mode: Mode to access the file. Options are: 'a' for all, 'w' for
+        write, 'r+' for writing in an already existing file, or 'r' for
+        read-only , defaults to 'a'.
+        :type mode: str, optional
+        :param compression: The compression algorithm and compression level
+        that the arrays should be saved with. 'gzip3' tends to perform well,
+        else you could choose 'gzipx' where x is a digit between 1 and 9 (i.e.,
+        9 is the highest compression) or None for fastest perfomance,
+        defaults to 'gzip3'.
+        :type compression: str, optional
+        """
+        # Create / read file
+        if not path.split('.')[-1] == 'h5':
+            path += '.h5'
+        self.path = path
+        self.mode = mode
+        self.compression = compression
+
+    def __enter__(self) -> DBHandler:
+        self.db_handler = DBHandler(self.path, self.mode, self.compression)
+        return self.db_handler
+
+    def __exit__(self, exc_type, exc_value, tb) -> None or bool:
+        self.db_handler._close()
+        if exc_type is not None:
+            return False
 
 
 def all_traces_recursive(

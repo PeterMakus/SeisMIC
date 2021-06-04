@@ -4,12 +4,13 @@ UnitTests for the waveform module.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 15th March 2021 03:33:25 pm
-Last Modified: Friday, 4th June 2021 02:40:45 pm
+Last Modified: Friday, 4th June 2021 03:45:41 pm
 '''
 
 import unittest
 from unittest import mock
 import os
+import warnings
 
 import numpy as np
 from obspy import UTCDateTime
@@ -28,7 +29,10 @@ class TestStoreClient(unittest.TestCase):
         self.sc = waveform.Store_Client('testclient', dir, read_only=True)
 
     def test_not_in_db(self):
-        self.assertEqual(self.sc._get_times(self.net, self.stat), (None, None))
+        with warnings.catch_warnings(record=True) as w:
+            self.assertEqual(
+                self.sc._get_times(self.net, self.stat), (None, None))
+            self.assertEqual(len(w), 1)
 
     @mock.patch('miic3.trace_data.waveform.glob.glob')
     def test_get_times(self, glob_mock):

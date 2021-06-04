@@ -6,11 +6,14 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 9th April 2021 04:07:06 pm
-Last Modified: Friday, 4th June 2021 12:18:52 pm
+Last Modified: Friday, 4th June 2021 03:23:33 pm
 '''
 
 
-def func_from_str(string: str):
+from typing import Callable
+
+
+def func_from_str(string: str) -> Callable:
     """
     Given a full string in the form 'module.submodule.function'. This function
     imports said function and returns it, so that it can be called. The actual
