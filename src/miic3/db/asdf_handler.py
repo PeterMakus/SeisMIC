@@ -4,11 +4,12 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Friday, 4th June 2021 02:47:42 pm
+Last Modified: Friday, 4th June 2021 02:51:47 pm
 '''
 
 from glob import glob
 import os
+from typing import Tuple
 
 import numpy as np
 from obspy import UTCDateTime, Stream, Inventory
@@ -252,7 +253,8 @@ class NoiseDB(object):
         return inv
 
 
-def get_available_stations(dir: str, network: str, station: str) -> tuple:
+def get_available_stations(
+        dir: str, network: str, station: str) -> Tuple[list, list]:
     """
     Returns two lists, decribing the stations with available preprocessed data.
     The first list contains the stations' network codes, the second the station
