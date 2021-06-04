@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Thursday, 27th May 2021 12:27:48 pm
+Last Modified: Friday, 4th June 2021 02:47:42 pm
 '''
 
 from glob import glob
@@ -13,6 +13,7 @@ import os
 import numpy as np
 from obspy import UTCDateTime, Stream, Inventory
 from pyasdf import ASDFDataSet
+import pyasdf
 
 from miic3.plot.plt_spectra import plot_spct_series, spct_series_welch
 from miic3.trace_data.waveform import Store_Client
@@ -89,6 +90,8 @@ class NoiseDB(object):
             'outfolder': os.path.dirname(self.loc),
             'remove_response': self.param["remove_response"],
             '_ex_times': self.get_active_times()}
+        if kwargs['_ex_times'] == (None, None):
+            kwargs['_ex_times'] = None
         return kwargs
 
     def plot_spectrum(
@@ -167,7 +170,7 @@ class NoiseDB(object):
             S, f, t, title=title, outfile=outfile, fmt=fmt, dpi=dpi, norm=norm,
             norm_method=norm_method)
 
-    def get_active_times(self) -> tuple:
+    def get_active_times(self) -> Tuple[UTCDateTime, UTCDateTime]:
         """
         Returns earliest available Starttime and latest available endtime.
 
@@ -176,10 +179,15 @@ class NoiseDB(object):
         """
 
         with ASDFDataSet(self.loc, mode="r", mpi=False) as ds:
-            st = ds.waveforms["%s.%s" % (self.network, self.station)].processed
-            st.sort(keys=['starttime'])
-            starttime = st[0].stats.starttime
-            endtime = st[-1].stats.endtime
+            try:
+                st = ds.waveforms[
+                    "%s.%s" % (self.network, self.station)].processed
+                st.sort(keys=['starttime'])
+                starttime = st[0].stats.starttime
+                endtime = st[-1].stats.endtime
+            except pyasdf.exceptions.WaveformNotInFileException:
+                # This happens when there are no times at all
+                return (None, None)
         return (starttime, endtime)
 
     def get_all_data(
