@@ -4,3 +4,4 @@ tests/data/
 autogen/*.rst
 .vscode/settings.json
 *.egg-info
+params.yaml
