@@ -53,9 +53,10 @@ class Store_Client(object):
                 os.path.dirname(self.inv_name)) and not read_only:
             os.makedirs(os.path.dirname(self.inv_name))
         self.sds_type = "D"
-        self.lclient = lClient(path, sds_type=self.sds_type, format="MSEED",
-                               fileborder_seconds=self.fileborder_seconds,
-                               fileborder_samples=self.fileborder_samples)
+        self.lclient = lClient(
+            self.sds_root, sds_type=self.sds_type, format="MSEED",
+            fileborder_seconds=self.fileborder_seconds,
+            fileborder_samples=self.fileborder_samples)
         self.rclient = Client
         self.read_only = read_only
 

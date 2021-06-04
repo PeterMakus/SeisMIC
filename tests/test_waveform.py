@@ -4,7 +4,7 @@ UnitTests for the waveform module.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 15th March 2021 03:33:25 pm
-Last Modified: Thursday, 27th May 2021 04:14:39 pm
+Last Modified: Friday, 4th June 2021 10:03:19 am
 '''
 
 import unittest
