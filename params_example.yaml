@@ -3,7 +3,9 @@
 proj_dir : '/path/to/project/root/'
 # directory for logging information
 log_subdir : 'log'
-debug: False  # Sets log level to logging.DEBUG
+# Sets log level to logging.DEBUG
+# Also catches the warnings in the logs
+debug: False
 # folder for figures
 fig_subdir : 'figures'  # not in use yet
 # subfolder containing preprocessed data

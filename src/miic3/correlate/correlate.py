@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 7th June 2021 12:16:12 pm
+Last Modified: Monday, 7th June 2021 02:10:59 pm
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -341,7 +341,8 @@ class Correlator(object):
                     try:
                         st.extend(ndb.get_time_window(startt, endt))
                     except NoDataError as e:
-                        warn('%e for %s.%s.' % (e, ndb.network, ndb.station))
+                        warn('%e for %s.%s.' % (
+                            str(e), ndb.network, ndb.station))
                 # preprocessing on stream basis
                 # Maybe a bad place to do that?
                 if 'preProcessing' in self.options.keys():
