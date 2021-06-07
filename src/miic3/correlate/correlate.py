@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 4th June 2021 03:34:05 pm
+Last Modified: Monday, 7th June 2021 09:07:07 am
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -24,7 +24,7 @@ from scipy.signal.signaltools import detrend
 
 # from miic3.utils.nextpowof2 import nextpowerof2
 from miic3.correlate.stream import CorrTrace, CorrStream
-from miic3.db.asdf_handler import get_available_stations, NoiseDB
+from miic3.db.asdf_handler import get_available_stations, NoiseDB, NoDataError
 from miic3.db.corr_hdf5 import CorrelationDataBase
 from miic3.utils.fetch_func_from_str import func_from_str
 # from miic3.trace_data.preprocess import detrend as qr_detrend
@@ -303,7 +303,10 @@ class Correlator(object):
                     # the requested time is only partly available
                     if endt < starts[ii] or startt > ends[ii]:
                         continue
-                    st.extend(ndb.get_time_window(startt, endt))
+                    try:
+                        st.extend(ndb.get_time_window(startt, endt))
+                    except NoDataError as e:
+                        warn('%e for %s.%s.' (e, ndb.network, ndb.station))
                 # preprocessing on stream basis
                 # Maybe a bad place to do that?
                 if 'preProcessing' in self.options.keys():
