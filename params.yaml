@@ -3,6 +3,7 @@
 proj_dir : '/home/pm/Documents/PhD/testdata/'
 # directory for logging information
 log_subdir : 'log'
+debug: True
 # folder for figures
 fig_subdir : 'figures'
 # folder containing preprocessed data
@@ -30,7 +31,7 @@ net:
 co:
     # subdirectory of 'proj_dir' to store correlation
     # type: string
-    subdir : 'corr_dailypp_lowwl'
+    subdir : 'corr'
     # times sequences to read for cliping or muting on stream basis
     # These should be long enough for the reference (e.g. the standard
     # deviation) to be rather independent of the parts to remove

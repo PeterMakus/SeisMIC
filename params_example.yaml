@@ -2,7 +2,8 @@
 # lowest level project directory
 proj_dir : '/path/to/project/root/'
 # directory for logging information
-log_subdir : 'log'  # not in use yet
+log_subdir : 'log'
+debug: False  # Sets log level to logging.DEBUG
 # folder for figures
 fig_subdir : 'figures'  # not in use yet
 # subfolder containing preprocessed data

@@ -7,12 +7,14 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 7th June 2021 09:07:07 am
+Last Modified: Monday, 7th June 2021 12:16:12 pm
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
 from warnings import warn
 import os
+import logging
+import json
 
 from mpi4py import MPI
 import numpy as np
@@ -54,9 +56,37 @@ class Correlator(object):
         self.comm = MPI.COMM_WORLD
         self.psize = self.comm.Get_size()
         self.rank = self.comm.Get_rank()
+        # directories
         self.proj_dir = options['proj_dir']
         self.corr_dir = os.path.join(self.proj_dir, options['co']['subdir'])
+        logdir = os.path.join(self.proj_dir, options['log_subdir'])
         os.makedirs(self.corr_dir, exist_ok=True)
+        os.makedirs(logdir, exist_ok=True)
+
+        # Logging - rank dependent
+        tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H:%M')
+        self.logger = logging.Logger("miic3.Correlator0%s" % str(self.rank))
+        self.logger.setLevel(logging.WARNING)
+        if options['debug']:
+            self.logger.setLevel(logging.DEBUG)
+            # also catch the warnings
+            logging.captureWarnings(True)
+        warnlog = logging.getLogger('py.warnings')
+        fh = logging.FileHandler(os.path.join(logdir, 'correlate%srank0%s' % (
+            tstr, self.rank)))
+        fh.setLevel(logging.WARNING)
+        if options['debug']:
+            fh.setLevel(logging.DEBUG)
+        self.logger.addHandler(fh)
+        warnlog.addHandler(fh)
+        fmt = logging.Formatter(
+            fmt='%(asctime)s - %(levelname)s - %(message)s')
+        fh.setFormatter(fmt)
+
+        # Write the options dictionary to the log file
+        with open(os.path.join(
+                logdir, 'params%s.txt' % tstr), 'w') as file:
+            file.write(json.dumps(options, indent=1))
 
         self.options = options['co']
 
@@ -89,6 +119,11 @@ class Correlator(object):
             else:
                 self.netlist.append(net)
                 self.statlist.append(stat)
+
+        self.logger.debug(
+            'Fetching data from the following stations:\n%s' % str(
+                ['{n}.{s}'.format(n=n, s=s) for n, s in zip(
+                    self.netlist, self.statlist)]))
 
         # and, finally, find the hdf5 files associated to each of them
         self.noisedbs = [NoiseDB(
@@ -306,7 +341,7 @@ class Correlator(object):
                     try:
                         st.extend(ndb.get_time_window(startt, endt))
                     except NoDataError as e:
-                        warn('%e for %s.%s.' (e, ndb.network, ndb.station))
+                        warn('%e for %s.%s.' % (e, ndb.network, ndb.station))
                 # preprocessing on stream basis
                 # Maybe a bad place to do that?
                 if 'preProcessing' in self.options.keys():
@@ -328,6 +363,8 @@ class Correlator(object):
                     # to speed up things a tiny bit
                     win.taper(max_percentage=0.05)
                 self.options['combinations'] = calc_cross_combis(win)
+                self.logger.debug('Working on correlation times %s-%s' % (
+                    str(win[0].stats.starttime), str(win[0].stats.endtime)))
                 yield win, write_flag
                 write_flag = False
 
