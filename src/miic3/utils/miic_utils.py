@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Friday, 4th June 2021 03:27:02 pm
+Last Modified: Tuesday, 8th June 2021 11:38:15 am
 '''
 from typing import Tuple
 import numpy as np
@@ -101,7 +101,8 @@ def inv_calc_az_baz_dist(inv1: Inventory, inv2: Inventory) -> Tuple[
 def resample_or_decimate(
     data: Trace or Stream, sampling_rate_new: int,
         filter=True) -> Stream or Trace:
-    """type hinting type function lot slower).
+    """Decimates the data if the desired new sampling rate allows to do so.
+    Else the signal will be interpolated (a lot slower).
 
     :param data: Stream to be resampled.
     :type data: Stream
@@ -137,15 +138,6 @@ def stream_filter(st: Stream, ftype: str, filter_option: dict) -> Stream:
     This faction apply the specified filter function to all the traces in the
     present in the input :py:class:`~obspy.core.stream.Stream`.
 
-    .. Note::
-
-    This operation is performed in place on the actual data arrays. The
-    raw data is not accessible anymore afterwards. To keep your
-    original data, use :func:`~miic.core.alpha_mod.stream_copy` to create
-    a copy of your stream object.
-    This function can also work in parallel an all or a specified number of
-    cores available in the hosting machine.
-
     :type ftype: str
     :param ftype: String that specifies which filter is applied (e.g.
             ``"bandpass"``). See the `Supported Filter`_ section below for
@@ -159,6 +151,15 @@ def stream_filter(st: Stream, ftype: str, filter_option: dict) -> Stream:
     :type processes: int
     :pram processes: Number of processes to start (if None it will be equal
         to the number of cores available in the hosting machine)
+
+    .. note::
+
+        This operation is performed in place on the actual data arrays. The
+        raw data is not accessible anymore afterwards. To keep your
+        original data, use :func:`~miic.core.alpha_mod.stream_copy` to create
+        a copy of your stream object.
+        This function can also work in parallel an all or a specified number of
+        cores available in the hosting machine.
 
     .. rubric:: _`Supported Filter`
 
@@ -209,15 +210,16 @@ def cos_taper_st(st: Stream, taper_len: float) -> Stream:
     """
     Applies a cosine taper to the input Stream.
 
-    .. note:: This action is performed in place. If you want to keep the
-        original data use :func:`~obspy.core.stream.Stream.copy`.
-
     :param tr: Input Stream
     :type tr: :class:`~obspy.core.stream.Stream`
     :param taper_len: Length of the taper per side
     :type taper_len: float
     :return: Tapered Stream
     :rtype: :class:`~obspy.core.stream.Stream`
+
+    .. note::
+        This action is performed in place. If you want to keep the
+        original data use :func:`~obspy.core.stream.Stream.copy`.
     """
     for tr in st:
         tr = cos_taper(tr, taper_len)
@@ -228,15 +230,17 @@ def cos_taper(tr: Trace, taper_len: float) -> Trace:
     """
     Applies a cosine taper to the input trace.
 
-    .. note:: This action is performed in place. If you want to keep the
-        original data use :func:`~obspy.core.trace.Trace.copy`.
-
     :param tr: Input Trace
     :type tr: Trace
     :param taper_len: Length of the taper per side in seconds
     :type taper_len: float
     :return: Tapered Trace
     :rtype: Trace
+
+    .. note::
+
+        This action is performed in place. If you want to keep the
+        original data use :func:`~obspy.core.trace.Trace.copy`.
     """
     if taper_len <= 0:
         raise ValueError('Taper length must be larger than 0 s')
@@ -250,3 +254,57 @@ def cos_taper(tr: Trace, taper_len: float) -> Trace:
     taper[-tl_n:] = tap[-tl_n:]
     tr.data = np.multiply(tr.data, taper)
     return tr
+
+
+def trim_stream_delta(
+        st: Stream, start: float, end: float, *args, **kwargs) -> Stream:
+    """
+    Cut all traces to starttime+start and endtime-end. *args and **kwargs will
+    be passed to :func:`~obspy.Stream.trim`
+
+    :param st: Input Stream
+    :type st: Stream
+    :param start: Delta to add to old starttime (in seconds)
+    :type start: float
+    :param end: Delta to remove from old endtime (in seconds)
+    :type end: float
+    :return: The trimmed stream
+    :rtype: Stream
+
+    .. note::
+
+        This operation is performed in place on the actual data arrays.
+        The raw data will no longer be accessible afterwards. To keep your
+        original data, use copy() to create a copy of your stream object.
+
+    """
+    for tr in st:
+        tr = trim_trace_delta(tr, start, end, *args, **kwargs)
+    return st
+
+
+def trim_trace_delta(
+        tr: Trace, start: float, end: float, *args, **kwargs) -> Trace:
+    """
+    Cut all traces to starttime+start and endtime-end. *args and **kwargs will
+    be passed to :func:`~obspy.Trace.trim`.
+
+    :param st: Input Trace
+    :type st: Trace
+    :param start: Delta to add to old starttime (in seconds)
+    :type start: float
+    :param end: Delta to remove from old endtime (in seconds)
+    :type end: float
+    :return: The trimmed trace
+    :rtype: Trace
+
+    .. note::
+
+        This operation is performed in place on the actual data arrays.
+        The raw data will no longer be accessible afterwards. To keep your
+        original data, use copy() to create a copy of your stream object.
+
+    """
+    return tr.trim(
+        starttime=tr.stats.starttime+start, endtime=tr.stats.endtime-end,
+        *args, **kwargs)

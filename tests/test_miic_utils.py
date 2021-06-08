@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Monday, 31st May 2021 01:58:17 pm
+Last Modified: Tuesday, 8th June 2021 11:53:04 am
 '''
 import unittest
 import math as mathematics
@@ -22,6 +22,7 @@ from obspy.core.inventory.station import Station
 from miic3.utils.fetch_func_from_str import func_from_str
 from miic3.utils.miic_utils import trace_calc_az_baz_dist,\
     inv_calc_az_baz_dist, resample_or_decimate, cos_taper
+import miic3.utils.miic_utils as mu
 
 
 class TestBazCalc(unittest.TestCase):
@@ -129,6 +130,27 @@ class TestCosTaper(unittest.TestCase):
             cos_taper(self.testtr.copy(), np.random.randint(-100, 0))
         with self.assertRaises(ValueError):
             cos_taper(self.testtr.copy(), 501*self.sr)
+
+
+class TestTrimTraceDelta(unittest.TestCase):
+    def setUp(self):
+        self.tr = read()[0]
+
+    def test_times(self):
+        delta = np.random.randint(1, 10)
+        tr = mu.trim_trace_delta(self.tr.copy(), delta, delta)
+        self.assertEqual(tr.stats.starttime, self.tr.stats.starttime+delta)
+        self.assertEqual(tr.stats.endtime, self.tr.stats.endtime-delta)
+
+    def test_delta_0(self):
+        tr = mu.trim_trace_delta(self.tr.copy(), 0, 0)
+        self.assertEqual(tr.stats.starttime, self.tr.stats.starttime)
+        self.assertEqual(tr.stats.endtime, self.tr.stats.endtime)
+
+    def test_pass_kwargs(self):
+        delta = np.random.randint(0, 5)
+        # this is alright as long as no error is raised
+        _ = mu.trim_trace_delta(self.tr.copy(), delta, delta, fill_value=0)
 
 
 if __name__ == "__main__":

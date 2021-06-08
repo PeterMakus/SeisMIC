@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Tuesday, 8th June 2021 10:56:44 am
+Last Modified: Tuesday, 8th June 2021 11:54:30 am
 '''
 from glob import glob
 import os
@@ -18,7 +18,8 @@ from pyasdf.asdf_data_set import ASDFDataSet
 
 from .waveform import Store_Client
 from miic3.db.asdf_handler import NoiseDB
-from miic3.utils.miic_utils import resample_or_decimate, cos_taper_st
+from miic3.utils.miic_utils import resample_or_decimate, cos_taper_st,\
+    trim_stream_delta
 
 
 class Error(Exception):
@@ -345,10 +346,7 @@ been preprocessed?')
                     % (network, station, starttime, endtime))
                 continue
             try:
-                st.trim(
-                    starttime=st[0].stats.starttime+tl,
-                    endtime=st[0].stats.endtime-tl,
-                    nearest_sample=False)
+                st = trim_stream_delta(st, tl, tl, nearest_sample=False)
             except ValueError:
                 # very short traces
                 pass
