@@ -9,7 +9,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Friday, 4th June 2021 03:33:07 pm
+Last Modified: Tuesday, 8th June 2021 03:40:44 pm
 '''
 import fnmatch
 import os
@@ -173,6 +173,45 @@ class DBHandler(h5py.File):
             else:
                 path = '/'.join(path.split('/')[:-1])
         return all_traces_recursive(self[path], CorrStream(), pattern)
+
+    def get_available_starttimes(
+        self, network: str, station: str, tag: str,
+            channel: str or list = '*') -> dict:
+        """
+        Returns a dictionary with channel codes as keys and available
+        correlation starttimes as values.
+
+        :param network: Network code (combined code, e.g., IU-YP)
+        :type network: str
+        :param station: Station code (combined)
+        :type station: str
+        :param tag: Tag
+        :type tag: str
+        :param channel: Channel code (combined), wildcards allowed,
+            defaults to '*'
+        :type channel: str, optional
+        :return: A dictionary holding the availabe starttimes for each channel
+            combination
+        :rtype: dict
+        """
+        path = hierarchy.format(
+            tag=tag, network=network, station=station, channel=channel,
+            corr_st='*', corr_et='*')
+        out = {}
+        if isinstance(channel, str):
+            if '*' not in channel:
+                path = '/'.join(path.split('/')[:-2])
+                try:
+                    out[channel] = list(self[path].keys())
+                except KeyError:
+                    pass
+                return out
+            channel = [channel]
+        path = '/'.join(path.split('/')[:-3])
+        for ch in channel:
+            for match in fnmatch.filter(self[path].keys(), ch):
+                out[match] = list(self['/'.join([path, match])].keys())
+        return out
 
 
 class CorrelationDataBase(object):
