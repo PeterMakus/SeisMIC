@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Friday, 4th June 2021 03:10:09 pm
+Last Modified: Tuesday, 8th June 2021 10:56:44 am
 '''
 from glob import glob
 import os
@@ -300,7 +300,12 @@ been preprocessed?')
         starttimes = []
         endtimes = []
 
-        tl = 30  # taper per side during instrument response removal
+        # We don't taper if there is no instrument response removal
+        if self.remove_response:
+            tl = 300  # taper per side during instrument response removal
+        else:
+            tl = 0
+
         for starttime, endtime in zip(req_start, req_end):
             if endtime-starttime > 24*3600+2*tl:
                 while starttime < endtime:
@@ -323,6 +328,12 @@ been preprocessed?')
             st = self.store_client.get_waveforms(
                 network, station, location, channel, starttime, endtime,
                 _check_times=_check_times)
+            for tr in st:
+                if tr.stats.npts*tr.stats.delta <= 2*tl:
+                    st.remove(tr)
+            if len(st) == 0:
+                warn('Data segments too short. Stream is skipped.')
+                continue
             try:
                 st, resp = self._preprocess(st, resp, tl)
             except FrequencyError as e:
@@ -336,7 +347,8 @@ been preprocessed?')
             try:
                 st.trim(
                     starttime=st[0].stats.starttime+tl,
-                    endtime=st[0].stats.endtime-tl)
+                    endtime=st[0].stats.endtime-tl,
+                    nearest_sample=False)
             except ValueError:
                 # very short traces
                 pass

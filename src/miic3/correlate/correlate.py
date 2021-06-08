@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 7th June 2021 02:10:59 pm
+Last Modified: Tuesday, 8th June 2021 10:46:13 am
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -22,7 +22,7 @@ from obspy import Stream, UTCDateTime, Inventory
 import obspy.signal as osignal
 from scipy.fftpack import next_fast_len
 from scipy import signal
-from scipy.signal.signaltools import detrend
+from scipy.signal.signaltools import detrend as sp_detrend
 
 # from miic3.utils.nextpowof2 import nextpowerof2
 from miic3.correlate.stream import CorrTrace, CorrStream
@@ -173,6 +173,9 @@ class Correlator(object):
             self._write(cst.stack(regard_location=False), 'recombined')
         if not self.options['subdivision']['delete_subdivision']:
             self._write(cst, tag='subdivision')
+
+    # def get_existing_correlations(self):
+        
 
     def _pxcorr_inner(self, st: Stream, inv: Inventory) -> CorrStream:
         """
@@ -1229,85 +1232,11 @@ def signBitNormalization(
     return np.sign(A)
 
 
-# This is again just a copy of the scipy function
-# Use scipy instead
-# def detrend(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
-#     """
-#     Remove trend from data
-
-#     Remove the trend from the time series data in `A`. Several methods are \\
-#     possible. The method is specified as the value of the `type` keyword in
-#     the argument dictionary `args`.
-
-#     Possible `types` of detrending:
-#        -`constant` or `demean`: substract mean of traces
-
-#        -`linear`: substract a least squares fitted linear trend form the data
-
-#     :type A: numpy.ndarray
-#     :param A: time series data with time oriented along the first \\
-#         dimension (columns)
-#     :type args: dictionary
-#     :param args: the only used keyword is `type`
-#     :type params: dictionary
-#     :param params: not used here
-
-#     :rtype: numpy.ndarray
-#     :return: detrended time series data
-#     """
-#     # for compatibility with obspy
-#     if args['type'] == 'demean':
-#         args['type'] = 'constant'
-#     if args['type'] == 'detrend':
-#         args['type'] = 'linear'
-
-#     # Detrend function taken from scipy and modified to account for nan
-#     type = args['type']
-#     axis = 0
-#     data = A
-#     if type not in ['linear', 'l', 'constant', 'c']:
-#         raise ValueError("Trend type must be 'linear' or 'constant'.")
-#     data = np.asarray(data)
-#     dtype = data.dtype.char
-#     if dtype not in 'dfDF':
-#         dtype = 'd'
-#     if type in ['constant', 'c']:
-#         ret = data - np.expand_dims(np.nanmean(data, axis), axis)
-#         return ret
-#     else:
-#         dshape = data.shape
-#         N = dshape[axis]
-#         bp = np.sort(np.unique(r_[0, bp, N]))
-#         if np.any(bp > N):
-#             raise ValueError("Breakpoints must be less than length "
-#                              "of data along given axis.")
-#         Nreg = len(bp) - 1
-#         # Restructure data so that axis is along first dimension and
-#         #  all other dimensions are collapsed into second dimension
-#         rnk = len(dshape)
-#         if axis < 0:
-#             axis = axis + rnk
-#         newdims = r_[axis, 0:axis, axis + 1:rnk]
-#         newdata = np.reshape(np.transpose(data, tuple(newdims)),
-#                           (N, _prod(dshape) // N))
-#         newdata = newdata.copy()  # make sure we have a copy
-#         if newdata.dtype.char not in 'dfDF':
-#             newdata = newdata.astype(dtype)
-#         # Find leastsq fit and remove it for each piece
-#         for m in range(Nreg):
-#             Npts = bp[m + 1] - bp[m]
-#             A = np.ones((Npts, 2), dtype)
-#             A[:, 0] = np.cast[dtype](np.arange(1, Npts + 1) * 1.0 / Npts)
-#             sl = slice(bp[m], bp[m + 1])
-#             coef, resids, rank, s = np.linalg.lstsq(A, newdata[sl])
-#             newdata[sl] = newdata[sl] - np.dot(A, coef)
-#         # Put data back in original shape.
-#         tdshape = np.take(dshape, newdims, 0)
-#         ret = np.reshape(newdata, tuple(tdshape))
-#         vals = list(range(1, rnk))
-#         olddims = vals[:axis] + [0] + vals[axis:]
-#         ret = np.transpose(ret, tuple(olddims))
-#         return ret
+def detrend(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
+    """
+    Remove trend from data
+    """
+    return sp_detrend(A, axis=0, **args)
 
 
 def TDnormalization(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
