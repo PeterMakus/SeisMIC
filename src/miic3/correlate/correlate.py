@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 8th June 2021 11:13:04 am
+Last Modified: Tuesday, 8th June 2021 04:57:24 pm
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -142,6 +142,20 @@ class Correlator(object):
                         self.noisedbs[0].network, self.noisedbs[0].station,
                         self.sampling_rate))
 
+    def find_existing_times(self, tag: str, channel: str = '*'):
+        netcombs, statcombs = compute_network_station_combinations(
+            self.netlist, self.statlist)
+        ex_dict = {}
+        for n, s in netcombs, statcombs:
+            code = '%s-%s' (n, s)
+            outf = os.path.join(self.corr_dir, '%s.%s.h5' % (n, s))
+            if not os.path.isfile(outf):
+                continue
+            with CorrelationDataBase(outf, 'r+') as cdb:
+                d = cdb.get_available_starttimes(n, s, tag, channel)
+            ex_dict[code] = d
+        return ex_dict
+
     def pxcorr(self):
         """
         Start the correlation with the parameters that were defined when
@@ -173,9 +187,6 @@ class Correlator(object):
             self._write(cst.stack(regard_location=False), 'recombined')
         if not self.options['subdivision']['delete_subdivision']:
             self._write(cst, tag='subdivision')
-
-    # def get_existing_correlations(self):
-        
 
     def _pxcorr_inner(self, st: Stream, inv: Inventory) -> CorrStream:
         """
@@ -328,6 +339,9 @@ class Correlator(object):
         t0 = UTCDateTime(self.options['read_start']).timestamp
         t1 = UTCDateTime(self.options['read_end']).timestamp
         loop_window = np.arange(t0, t1, self.options['read_inc'])
+
+        # find already available times
+        ex_dict = self.find_existing_times('subdivision')
 
         for t in loop_window:
             write_flag = True  # Write length is same as read length
@@ -1364,3 +1378,73 @@ def clip(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
         A[A[:, ind] > ts, ind] = ts
         A[A[:, ind] < -ts, ind] = -ts
     return A
+
+
+def sort_comb_name_alphabetically(
+        network1: str, station1: str, network2: str, station2: str) -> Tuple[
+            str, str]:
+    sort1 = network1 + station1
+    sort2 = network2 + station2
+    sort = [sort1, sort2]
+    sorted = sort.copy()
+    sorted.sort()
+    if sort == sorted:
+        netcode = '%s-%s' % (network1, network2)
+        statcode = '%s-%s' % (station1, station2)
+    else:
+        netcode = '%s-%s' % (network2, network1)
+        statcode = '%s-%s' % (station2, station1)
+    return netcode, statcode
+
+
+def compute_network_station_combinations(
+    netlist: list, statlist: list,
+        method: str = 'betweenStations') -> Tuple[list, list]:
+    """
+    Return the network and station codes of the correlations for the provided
+    network station combinations.
+
+    :param netlist: List in form
+    :type netlist: list
+    :param statlist: [description]
+    :type statlist: list
+    :param method: [description], defaults to 'betweenStations'
+    :type method: str, optional
+    :raises ValueError: [description]
+    :return: [description]
+    :rtype: Tuple[list, list]
+    """
+    netcombs = []
+    statcombs = []
+    if method == 'betweenStations':
+        for ii, (n, s) in enumerate(zip(netlist, statlist)):
+            for jj in range(ii+1, len(netlist)):
+                n2 = netlist[jj]
+                s2 = statlist[jj]
+                if n != n2 or s != s2:
+                    nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
+                    netcombs.append(nc)
+                    statcombs.append(sc)
+
+    elif method == 'betweenComponents' or method == 'autoComponents':
+        netcombs = [n+'-'+n for n in netlist]
+        statcombs = [s+'-'+s for s in statlist]
+    elif method == 'allSimpleCombinations':
+        for ii, (n, s) in enumerate(zip(netlist, statlist)):
+            for jj in range(ii+1, len(netlist)):
+                n2 = netlist[jj]
+                s2 = statlist[jj]
+                nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
+                netcombs.append(nc)
+                statcombs.append(sc)
+    elif method == 'allCombinations':
+        for n, s in zip(netlist, statlist):
+            for n2, s2 in zip(netlist, statlist):
+                nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
+                netcombs.append(nc)
+                statcombs.append(sc)
+    else:
+        raise ValueError("Method has to be one of ('betweenStations', "
+                         "'betweenComponents', 'autoComponents', "
+                         "'allSimpleCombinations' or 'allCombinations').")
+    return netcombs, statcombs
