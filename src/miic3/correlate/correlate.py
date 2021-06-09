@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 8th June 2021 04:57:24 pm
+Last Modified: Wednesday, 9th June 2021 05:43:09 pm
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -29,8 +29,6 @@ from miic3.correlate.stream import CorrTrace, CorrStream
 from miic3.db.asdf_handler import get_available_stations, NoiseDB, NoDataError
 from miic3.db.corr_hdf5 import CorrelationDataBase
 from miic3.utils.fetch_func_from_str import func_from_str
-# from miic3.trace_data.preprocess import detrend as qr_detrend
-
 
 class Correlator(object):
     """
@@ -146,14 +144,17 @@ class Correlator(object):
         netcombs, statcombs = compute_network_station_combinations(
             self.netlist, self.statlist)
         ex_dict = {}
-        for n, s in netcombs, statcombs:
-            code = '%s-%s' (n, s)
-            outf = os.path.join(self.corr_dir, '%s.%s.h5' % (n, s))
+        for (n0, n1), (s0, s1) in zip(netcombs, statcombs):
+            nc = '%s-%s' % (n0, n1)
+            sc = '%s-%s' % (s0, s1)
+            outf = os.path.join(
+                self.corr_dir, '%s.%s.h5' % (nc, sc))
             if not os.path.isfile(outf):
                 continue
             with CorrelationDataBase(outf, 'r+') as cdb:
-                d = cdb.get_available_starttimes(n, s, tag, channel)
-            ex_dict[code] = d
+                d = cdb.get_available_starttimes(nc, sc, tag, channel)
+            ex_dict['%s.%s' % (n0, s0)] = {}
+            ex_dict['%s.%s' % (n0, s0)]['%s.%s' % (n1, s1)] = d
         return ex_dict
 
     def pxcorr(self):
@@ -205,6 +206,7 @@ class Correlator(object):
             npts = np.max(np.array(npts))
             # create numpy array - Do a QR detrend here?
             A, st = st_to_np_array(st, npts)
+            print('combinations:', self.options['combinations'])
             # A = qr_detrend(A)
             # detrend is done earlier now
             As = A.shape
@@ -290,25 +292,26 @@ class Correlator(object):
             inv.extend(ndb.get_inventory())
         return inv
 
-    def _all_data_to_stream(self) -> Stream:
-        """
-        Moves all the available data into one :class:`~obspy.core.Stream`
-        object.
-        Also computes all the available station combinations from that data.
+    # def _all_data_to_stream(self) -> Stream:
+    #     """
+    #     Moves all the available data into one :class:`~obspy.core.Stream`
+    #     object.
+    #     Also computes all the available station combinations from that data.
 
-        :warning: Very RAM hungry, consider using
-        :funct:`~miic3.correlate.correlate.Correlator._generate_data()`.
+    #     :warning: Very RAM hungry, consider using
+    #     :funct:`~miic3.correlate.correlate.Correlator._generate_data()`.
 
-        :return: A stream containing all data
-        :rtype: :class:`~obspy.core.stream.Stream`
-        """
-        opt = self.options['subdivision']
-        st = Stream()
-        for ndb in self.noisedbs:
-            st.extend(ndb.get_all_data(
-                window_length=opt['corr_len'], increment=opt['corr_inc']))
-        self.options['combinations'] = calc_cross_combis(st)
-        return st
+    #     :return: A stream containing all data
+    #     :rtype: :class:`~obspy.core.stream.Stream`
+    #     """
+    #     warn('will be removed soon', DeprecationWarning)
+    #     opt = self.options['subdivision']
+    #     st = Stream()
+    #     for ndb in self.noisedbs:
+    #         st.extend(ndb.get_all_data(
+    #             window_length=opt['corr_len'], increment=opt['corr_inc']))
+    #     self.options['combinations'] = calc_cross_combis(st)
+    #     return st
 
     def _generate_data(self) -> Iterator[Tuple[Stream, bool]]:
         """
@@ -334,14 +337,16 @@ class Correlator(object):
                 start, end = ndb.get_active_times()
                 starts.append(start)
                 ends.append(end)
+            # find already available times
+            ex_dict = self.find_existing_times('subdivision')
+        else:
+            ex_dict = {}
+        self.comm.bcast(ex_dict, root=0)
 
         # the time window that the loop will go over
         t0 = UTCDateTime(self.options['read_start']).timestamp
         t1 = UTCDateTime(self.options['read_end']).timestamp
         loop_window = np.arange(t0, t1, self.options['read_inc'])
-
-        # find already available times
-        ex_dict = self.find_existing_times('subdivision')
 
         for t in loop_window:
             write_flag = True  # Write length is same as read length
@@ -371,6 +376,7 @@ class Correlator(object):
             if st.count() == 0:
                 # No time available at none of the stations
                 continue
+
             # Second loop to return the time window in correlation length
             for win in st.slide(
                 opt['corr_len']-st[0].stats.delta, opt['corr_inc'],
@@ -379,7 +385,13 @@ class Correlator(object):
                     # This could be done in the main script with several cores
                     # to speed up things a tiny bit
                     win.taper(max_percentage=0.05)
-                self.options['combinations'] = calc_cross_combis(win)
+                self.options['combinations'] = calc_cross_combis(win, ex_dict)
+                if not len(self.options['combinations']):
+                    # no new combinations for this time period
+                    self.logger.debug('no new data for times %s-%s' % (
+                        str(win[0].stats.starttime),
+                        str(win[0].stats.endtime)))
+                    continue
                 self.logger.debug('Working on correlation times %s-%s' % (
                     str(win[0].stats.starttime), str(win[0].stats.endtime)))
                 yield win, write_flag
@@ -449,7 +461,8 @@ class Correlator(object):
         sampleToSave = int(
             np.ceil(
                 corr_args['lengthToSave'] * self.sampling_rate))
-        C = np.zeros((sampleToSave*2+1, csize), dtype=np.float64)
+        C = np.zeros((sampleToSave*2+1, csize), dtype=np.float64)  # np.float64
+        print(C.shape)
 
         # center = irfftsize // 2
         pmap = (np.arange(csize)*self.psize)/csize
@@ -533,6 +546,7 @@ def st_to_np_array(st: Stream, npts: int) -> Tuple[np.ndarray, Stream]:
         del tr.data  # Not needed any more, just uses up RAM
     # Transferring the trace data to this array introduces NaNs?
     # I don't really understand why. Should find out. For now, set them to 0
+    # I guess it's because of missing samples (masked data)
     A = np.nan_to_num(A)
     return A, st
 
@@ -648,13 +662,18 @@ def zeroPadding(A: np.ndarray, args: dict, params: dict, axis=0) -> np.ndarray:
 #     return results * val
 
 
-def calc_cross_combis(st: Stream, method: str = 'betweenStations') -> list:
+def calc_cross_combis(
+        st: Stream, ex_corr: dict, method: str = 'betweenStations') -> list:
     """
     Calculate a list of all cross correlation combination
     of traces in the stream: i.e. all combination with two different
     stations involved.
 
-    :type method: string
+    :param st: Stream holding the tracecs to be correlated
+    :type st: :class:`~obspy.Stream`
+    :param ex_corr: dict holding the correlations that already exist in db
+    :type ex_corr: dict
+    :type method: stringf
     :param method: Determines which traces of the strem are combined.
 
         ``'betweenStations'``: Traces are combined if either their station or
@@ -670,30 +689,81 @@ def calc_cross_combis(st: Stream, method: str = 'betweenStations') -> list:
     """
 
     combis = []
+    # sort alphabetically
+    st.sort(keys=['network', 'station', 'channel'])
     if method == 'betweenStations':
         for ii, tr in enumerate(st):
             for jj in range(ii+1, len(st)):
-                if ((tr.stats['network'] != st[jj].stats['network']) or
-                        (tr.stats['station'] != st[jj].stats['station'])):
+                tr1 = st[jj]
+                if ((tr.stats['network'] != tr1.stats['network']) or
+                        (tr.stats['station'] != tr1.stats['station'])):
+                    # check first whether this combi is in dict
+                    try:
+                        if tr.stats.starttime.format_fissures() in ex_corr[
+                            '%s.%s' % (tr.stats.network, tr.stats.station)][
+                            '%s.%s' % (tr1.stats.network, tr1.stats.station)][
+                            '%s-%s' % (
+                                tr.stats.channel, tr1.stats.channel)]:
+                            continue
+                    except KeyError:
+                        pass
                     combis.append((ii, jj))
     elif method == 'betweenComponents':
         for ii, tr in enumerate(st):
             for jj in range(ii+1, len(st)):
-                if ((tr.stats['network'] == st[jj].stats['network']) and
-                    (tr.stats['station'] == st[jj].stats['station']) and
-                        (tr.stats['channel'][-1] !=
-                            st[jj].stats['channel'][-1])):
+                tr1 = st[jj]
+                if ((tr.stats['network'] == tr1.stats['network']) and
+                    (tr.stats['station'] == tr1.stats['station']) and
+                    (tr.stats['channel'][-1] !=
+                        tr1.stats['channel'][-1])):
+                    try:
+                        if tr.stats.starttime.format_fissures() in ex_corr[
+                            '%s.%s' % (tr.stats.network, tr.stats.station)][
+                            '%s.%s' % (tr1.stats.network, tr1.stats.station)][
+                            '%s-%s' % (
+                                tr.stats.channel, tr1.stats.channel)]:
+                            continue
+                    except KeyError:
+                        pass
                     combis.append((ii, jj))
     elif method == 'autoComponents':
-        for ii, _ in enumerate(st):
+        for ii, tr in enumerate(st):
+            try:
+                if tr.stats.starttime.format_fissures() in ex_corr[
+                    '%s.%s' % (tr.stats.network, tr.stats.station)][
+                    '%s.%s' % (tr.stats.network, tr.stats.station)][
+                    '%s-%s' % (
+                        tr.stats.channel, tr.stats.channel)]:
+                    continue
+            except KeyError:
+                pass
             combis.append((ii, ii))
     elif method == 'allSimpleCombinations':
-        for ii, _ in enumerate(st):
+        for ii, tr in enumerate(st):
             for jj in range(ii, len(st)):
+                tr1 = st[jj]
+                try:
+                    if tr.stats.starttime.format_fissures() in ex_corr[
+                        '%s.%s' % (tr.stats.network, tr.stats.station)][
+                        '%s.%s' % (tr1.stats.network, tr1.stats.station)][
+                        '%s-%s' % (
+                            tr.stats.channel, tr1.stats.channel)]:
+                        continue
+                except KeyError:
+                    pass
                 combis.append((ii, jj))
     elif method == 'allCombinations':
-        for ii, _ in enumerate(st):
-            for jj, _ in enumerate(st):
+        for ii, tr in enumerate(st):
+            for jj, tr1 in enumerate(st):
+                try:
+                    if tr.stats.starttime.format_fissures() in ex_corr[
+                        '%s.%s' % (tr.stats.network, tr.stats.station)][
+                        '%s.%s' % (tr1.stats.network, tr1.stats.station)][
+                        '%s-%s' % (
+                            tr.stats.channel, tr1.stats.channel)]:
+                        continue
+                except KeyError:
+                    pass
                 combis.append((ii, jj))
     else:
         raise ValueError("Method has to be one of ('betweenStations', "
@@ -1381,20 +1451,20 @@ def clip(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
 
 
 def sort_comb_name_alphabetically(
-        network1: str, station1: str, network2: str, station2: str) -> Tuple[
-            str, str]:
+    network1: str, station1: str, network2: str, station2: str) -> Tuple[
+        list, list]:
     sort1 = network1 + station1
     sort2 = network2 + station2
     sort = [sort1, sort2]
     sorted = sort.copy()
     sorted.sort()
     if sort == sorted:
-        netcode = '%s-%s' % (network1, network2)
-        statcode = '%s-%s' % (station1, station2)
+        netcomb = [network1, network2]
+        statcomb = [station1, station2]
     else:
-        netcode = '%s-%s' % (network2, network1)
-        statcode = '%s-%s' % (station2, station1)
-    return netcode, statcode
+        netcomb = [network2, network1]
+        statcomb = [station2, station1]
+    return netcomb, statcomb
 
 
 def compute_network_station_combinations(
@@ -1448,3 +1518,31 @@ def compute_network_station_combinations(
                          "'betweenComponents', 'autoComponents', "
                          "'allSimpleCombinations' or 'allCombinations').")
     return netcombs, statcombs
+
+
+# def remove_existing_times(st: Stream, et: dict) -> Stream:
+
+#     # This does not make any sense. I don't need to remove them here but I need
+#     # to exclude them from the computed possible combinations
+#     st.sort(keys=['network', 'station', 'channel'])
+#     if not et:
+#         return st
+#     for ii, tr0 in enumerate(st):
+#         if '%s.%s' % (tr0.stats.network, tr0.stats.station) not in et:
+#             continue
+#         for tr1 in st[ii:]:
+#             if '%s.%s' % (tr1.stats.network, tr1.stats.station) not in et[
+#                     '%s.%s' % (tr0.stats.network, tr0.stats.station)]:
+#                 continue
+#             # Check channels
+#             if '%s-%s' % (tr0.stats.channel, tr1.stats.channel) not in et[
+#                 '%s.%s' % (tr0.stats.network, tr0.stats.station)][
+#                     '%s.%s' % (tr1.stats.network, tr1.stats.station)]:
+#                 continue
+#             if tr0.stats.starttime.format_fissures() in et[
+#                 '%s.%s' % (tr0.stats.network, tr0.stats.station)][
+#                 '%s.%s' % (tr1.stats.network, tr1.stats.station)][
+#                     '%s-%s' % (tr0.stats.channel, tr1.stats.channel)]:
+#                 st.remove(tr1)
+#                 # st.remove(tr1)
+#     return st
