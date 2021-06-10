@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 10th June 2021 01:31:12 pm
+Last Modified: Thursday, 10th June 2021 04:53:09 pm
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -637,58 +637,6 @@ def zeroPadding(A: np.ndarray, args: dict, params: dict, axis=0) -> np.ndarray:
     return A
 
 
-# This is just a copied function from numpy fft? I will just use it from there
-# def rfftfreq(n, d=1.0):
-#     """
-#     Return the Discrete Fourier Transform sample frequencies
-#     (for usage with rfft, irfft).
-
-#     The returned float array `f` contains the frequency bin centers in cycles
-#     per unit of the sample spacing (with zero at the start).  For instance, if
-#     the sample spacing is in seconds, then the frequency unit is cycles/second.
-
-#     Given a window length `n` and a sample spacing `d`::
-
-#       f = [0, 1, ...,     n/2-1,     n/2] / (d*n)   if n is even
-#       f = [0, 1, ..., (n-1)/2-1, (n-1)/2] / (d*n)   if n is odd
-
-#     Unlike `fftfreq` (but like `scipy.fftpack.rfftfreq`)
-#     the Nyquist frequency component is considered to be positive.
-
-#     Parameters
-#     ----------
-#     n : int
-#         Window length.
-#     d : scalar, optional
-#         Sample spacing (inverse of the sampling rate). Defaults to 1.
-
-#     Returns
-#     -------
-#     f : ndarray
-#         Array of length ``n//2 + 1`` containing the sample frequencies.
-
-#     Examples
-#     --------
-#     >>> signal = np.array([-2, 8, 6, 4, 1, 0, 3, 5, -3, 4], dtype=float)
-#     >>> fourier = np.fft.rfft(signal)
-#     >>> n = signal.size
-#     >>> sample_rate = 100
-#     >>> freq = np.fft.fftfreq(n, d=1./sample_rate)
-#     >>> freq
-#     array([  0.,  10.,  20.,  30.,  40., -50., -40., -30., -20., -10.])
-#     >>> freq = np.fft.rfftfreq(n, d=1./sample_rate)
-#     >>> freq
-#     array([  0.,  10.,  20.,  30.,  40.,  50.])
-
-#     """
-#     if not isinstance(n, int):
-#         raise ValueError("n should be an integer")
-#     val = 1.0/(n*d)
-#     N = n//2 + 1
-#     results = np.arange(0, N, dtype=int)
-#     return results * val
-
-
 def _compare_existing_data(ex_corr: dict, tr0: Stream, tr1: Stream) -> bool:
     try:
         if tr0.stats.starttime.format_fissures() in ex_corr[
@@ -754,7 +702,7 @@ def calc_cross_combis(
                     combis.append((ii, jj))
     elif method == 'autoComponents':
         for ii, tr in enumerate(st):
-            if _compare_existing_data(ex_corr, tr, tr1):
+            if _compare_existing_data(ex_corr, tr, tr):
                 continue
             combis.append((ii, ii))
     elif method == 'allSimpleCombinations':
@@ -1525,31 +1473,3 @@ def compute_network_station_combinations(
                          "'betweenComponents', 'autoComponents', "
                          "'allSimpleCombinations' or 'allCombinations').")
     return netcombs, statcombs
-
-
-# def remove_existing_times(st: Stream, et: dict) -> Stream:
-
-#     # This does not make any sense. I don't need to remove them here but I need
-#     # to exclude them from the computed possible combinations
-#     st.sort(keys=['network', 'station', 'channel'])
-#     if not et:
-#         return st
-#     for ii, tr0 in enumerate(st):
-#         if '%s.%s' % (tr0.stats.network, tr0.stats.station) not in et:
-#             continue
-#         for tr1 in st[ii:]:
-#             if '%s.%s' % (tr1.stats.network, tr1.stats.station) not in et[
-#                     '%s.%s' % (tr0.stats.network, tr0.stats.station)]:
-#                 continue
-#             # Check channels
-#             if '%s-%s' % (tr0.stats.channel, tr1.stats.channel) not in et[
-#                 '%s.%s' % (tr0.stats.network, tr0.stats.station)][
-#                     '%s.%s' % (tr1.stats.network, tr1.stats.station)]:
-#                 continue
-#             if tr0.stats.starttime.format_fissures() in et[
-#                 '%s.%s' % (tr0.stats.network, tr0.stats.station)][
-#                 '%s.%s' % (tr1.stats.network, tr1.stats.station)][
-#                     '%s-%s' % (tr0.stats.channel, tr1.stats.channel)]:
-#                 st.remove(tr1)
-#                 # st.remove(tr1)
-#     return st

@@ -7,10 +7,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Friday, 4th June 2021 04:03:21 pm
+Last Modified: Thursday, 10th June 2021 04:47:31 pm
 '''
 import unittest
 import warnings
+from unittest import mock
 
 import numpy as np
 from obspy import read, Stream, Trace
@@ -152,7 +153,7 @@ class TestCalcCrossCombis(unittest.TestCase):
                             for n in range(1, self.N_stat)])
 
         self.assertEqual(expected_len, len(correlate.calc_cross_combis(
-            self.st, method='betweenStations')))
+            self.st, {}, method='betweenStations')))
 
     def test_result_betw_components(self):
         # easiest probably to check the length
@@ -161,33 +162,80 @@ class TestCalcCrossCombis(unittest.TestCase):
                             for n in range(1, self.N_chan)])
 
         self.assertEqual(expected_len, len(correlate.calc_cross_combis(
-            self.st, method='betweenComponents')))
+            self.st, {}, method='betweenComponents')))
 
     def test_result_auto_components(self):
         expected_len = self.st.count()
         self.assertEqual(expected_len, len(correlate.calc_cross_combis(
-            self.st, method='autoComponents')))
+            self.st, {}, method='autoComponents')))
 
     def test_result_all_simple(self):
         expected_len = sum([self.st.count()-n
                             for n in range(0, self.st.count())])
         self.assertEqual(expected_len, len(correlate.calc_cross_combis(
-            self.st, method='allSimpleCombinations')))
+            self.st, {}, method='allSimpleCombinations')))
 
     def test_result_all_combis(self):
         expected_len = self.st.count()**2
         self.assertEqual(expected_len, len(correlate.calc_cross_combis(
-            self.st, method='allCombinations')))
+            self.st, {}, method='allCombinations')))
 
     def test_unknown_method(self):
         with self.assertRaises(ValueError):
-            correlate.calc_cross_combis(self.st, method='blablub')
+            correlate.calc_cross_combis(self.st, {}, method='blablub')
 
     def test_empty_stream(self):
         with warnings.catch_warnings(record=True) as w:
             self.assertEqual([], correlate.calc_cross_combis(
-                Stream(), method='allCombinations'))
+                Stream(), {}, method='allCombinations'))
             self.assertEqual(len(w), 1)
+
+    @mock.patch('miic3.correlate.correlate._compare_existing_data')
+    def test_existing_db(self, compare_mock):
+        compare_mock.return_value = True
+        with warnings.catch_warnings(record=True) as w:
+            self.assertEqual(0, len(correlate.calc_cross_combis(
+                self.st, {}, method='betweenStations')))
+            self.assertEqual(len(w), 1)
+
+
+class TestCompareExistingData(unittest.TestCase):
+    def setUp(self):
+        st = read()
+        st.sort(keys=['channel'])
+        tr0 = st[0]
+        tr1 = st[1]
+        ex_d = {}
+        ex_d['%s.%s' % (tr0.stats.network, tr0.stats.station)] = {}
+        ex_d[
+            '%s.%s' % (tr0.stats.network, tr0.stats.station)][
+                '%s.%s' % (tr1.stats.network, tr1.stats.station)] = {}
+        ex_d[
+            '%s.%s' % (tr0.stats.network, tr0.stats.station)][
+                '%s.%s' % (tr1.stats.network, tr1.stats.station)] = {}
+        ex_d[
+            '%s.%s' % (tr0.stats.network, tr0.stats.station)][
+                '%s.%s' % (tr1.stats.network, tr1.stats.station)][
+            '%s-%s' % (
+                tr0.stats.channel, tr1.stats.channel)] = [
+                    tr0.stats.starttime]
+        self.ex_d = ex_d
+        self.tr0 = tr0
+        self.tr1 = tr1
+
+    def test_existing(self):
+        self.assertTrue(correlate._compare_existing_data(
+            self.ex_d, self.tr0, self.tr1))
+
+    def test_not_in_db(self):
+        ttr = self.tr0.copy()
+        ttr.stats.starttime += 1
+        self.assertFalse(correlate._compare_existing_data(
+            {}, ttr, self.tr1))
+
+    def test_key_error_handler(self):
+        self.assertFalse(correlate._compare_existing_data(
+            {}, self.tr0, self.tr1))
 
 
 class TestSpectralWhitening(unittest.TestCase):

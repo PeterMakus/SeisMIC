@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Thursday, 10th June 2021 12:32:34 pm
+Last Modified: Thursday, 10th June 2021 04:18:00 pm
 '''
 from typing import Tuple
 from warnings import warn
@@ -239,9 +239,9 @@ def cos_taper_st(
     """
     if isinstance(st, Trace):
         st = [st]
-    for tr in st:
+    for ii, tr in enumerate(st):
         try:
-            tr = cos_taper(tr, taper_len, taper_at_masked)
+            st[ii] = cos_taper(tr, taper_len, taper_at_masked)
         except ValueError as e:
             warn('%s, corresponding trace will be removed.' % e)
             st.remove(tr)
@@ -272,7 +272,11 @@ def cos_taper(tr: Trace, taper_len: float, taper_at_masked: bool) -> Trace:
     if taper_at_masked:
         st = tr.split()
         st = cos_taper_st(st, taper_len, False)
-        return st.merge()
+        st = st.merge()
+        if st.count():
+            return st[0]
+        else:
+            raise ValueError('Taper length must be larger than 0 s')
     taper = np.ones_like(tr.data)
     tl_n = round(taper_len*tr.stats.sampling_rate)
     if tl_n * 2 > tr.stats.npts:

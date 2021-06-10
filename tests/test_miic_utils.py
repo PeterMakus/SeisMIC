@@ -7,12 +7,13 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Tuesday, 8th June 2021 11:53:04 am
+Last Modified: Thursday, 10th June 2021 04:16:08 pm
 '''
 import unittest
 import math as mathematics
 
 import numpy as np
+from obspy.core.stream import Stream
 from obspy.geodetics import gps2dist_azimuth
 from obspy import Inventory, read, Trace
 from obspy.core import AttribDict
@@ -94,13 +95,14 @@ class TestResampleOrDecimate(unittest.TestCase):
 
 
 class TestCosTaper(unittest.TestCase):
+    #
     def setUp(self):
         self.sr = 10  # sampling rate
         st = AttribDict({'sampling_rate': self.sr})
         self.testtr = Trace(np.ones(1000), header=st)
         tl = np.random.randint(1, high=20)
         self.tls = tl * self.sr  # taper len in samples
-        self.tr_res = cos_taper(self.testtr.copy(), tl)
+        self.tr_res = cos_taper(self.testtr.copy(), tl, False)
 
     def test_ends(self):
         # Check that ends reduce to 0
@@ -123,13 +125,30 @@ class TestCosTaper(unittest.TestCase):
     def test_empty_trace(self):
         testtr = Trace(np.array([]), header=self.testtr.stats)
         with self.assertRaises(ValueError):
-            cos_taper(testtr, 10)
+            cos_taper(testtr, 10, False)
 
     def test_invalid_taper_len(self):
         with self.assertRaises(ValueError):
-            cos_taper(self.testtr.copy(), np.random.randint(-100, 0))
+            cos_taper(self.testtr.copy(), np.random.randint(-100, 0), False)
         with self.assertRaises(ValueError):
-            cos_taper(self.testtr.copy(), 501*self.sr)
+            cos_taper(self.testtr.copy(), 501*self.sr, False)
+
+    def test_masked_value(self):
+        tr0 = read()[0]
+        tr1 = tr0.copy()
+        tr1.stats.starttime += 240
+        st = Stream([tr0, tr1])
+        tr = st.merge()[0]
+        tl = np.random.randint(1, high=5)
+        ttr = cos_taper(tr, tl, True)
+        # Check that ends reduce to 0
+        self.assertAlmostEqual(ttr.data[0], 0)
+        self.assertAlmostEqual(ttr.data[-1], 0)
+        self.assertAlmostEqual(ttr.data[tr0.count()-1], 0)
+        self.assertAlmostEqual(ttr.data[-tr1.count()], 0)
+        # Also the mask should be retained
+        self.assertEqual(
+            len(ttr.data[ttr.data.mask]), ttr.count()-tr0.count()-tr1.count())
 
 
 class TestTrimTraceDelta(unittest.TestCase):
