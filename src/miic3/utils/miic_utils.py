@@ -8,9 +8,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Tuesday, 8th June 2021 11:38:15 am
+Last Modified: Thursday, 10th June 2021 12:32:34 pm
 '''
 from typing import Tuple
+from warnings import warn
+
 import numpy as np
 from obspy import Inventory, Stream, Trace
 from obspy.core import Stats, AttribDict
@@ -206,7 +208,18 @@ def stream_filter(st: Stream, ftype: str, filter_option: dict) -> Stream:
     return st_filtered
 
 
-def cos_taper_st(st: Stream, taper_len: float) -> Stream:
+def detrend_st(st, *args, **kwargs):
+    out = Stream()
+    for tr in st:
+        sst = tr.split()
+        sst.detrend(*args, **kwargs)
+        out.extend(sst.merge())
+        st.remove(tr)
+    return out
+
+
+def cos_taper_st(
+        st: Stream, taper_len: float, taper_at_masked: bool) -> Stream:
     """
     Applies a cosine taper to the input Stream.
 
@@ -214,6 +227,9 @@ def cos_taper_st(st: Stream, taper_len: float) -> Stream:
     :type tr: :class:`~obspy.core.stream.Stream`
     :param taper_len: Length of the taper per side
     :type taper_len: float
+    :param taper_at_masked: applies a split to each trace and merges again
+        afterwards
+    :type taper_at_masked: bool
     :return: Tapered Stream
     :rtype: :class:`~obspy.core.stream.Stream`
 
@@ -221,12 +237,18 @@ def cos_taper_st(st: Stream, taper_len: float) -> Stream:
         This action is performed in place. If you want to keep the
         original data use :func:`~obspy.core.stream.Stream.copy`.
     """
+    if isinstance(st, Trace):
+        st = [st]
     for tr in st:
-        tr = cos_taper(tr, taper_len)
+        try:
+            tr = cos_taper(tr, taper_len, taper_at_masked)
+        except ValueError as e:
+            warn('%s, corresponding trace will be removed.' % e)
+            st.remove(tr)
     return st
 
 
-def cos_taper(tr: Trace, taper_len: float) -> Trace:
+def cos_taper(tr: Trace, taper_len: float, taper_at_masked: bool) -> Trace:
     """
     Applies a cosine taper to the input trace.
 
@@ -234,6 +256,9 @@ def cos_taper(tr: Trace, taper_len: float) -> Trace:
     :type tr: Trace
     :param taper_len: Length of the taper per side in seconds
     :type taper_len: float
+    :param taper_at_masked: applies a split to each trace and merges again
+        afterwards
+    :type taper_at_masked: bool
     :return: Tapered Trace
     :rtype: Trace
 
@@ -244,6 +269,10 @@ def cos_taper(tr: Trace, taper_len: float) -> Trace:
     """
     if taper_len <= 0:
         raise ValueError('Taper length must be larger than 0 s')
+    if taper_at_masked:
+        st = tr.split()
+        st = cos_taper_st(st, taper_len, False)
+        return st.merge()
     taper = np.ones_like(tr.data)
     tl_n = round(taper_len*tr.stats.sampling_rate)
     if tl_n * 2 > tr.stats.npts:

@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Tuesday, 8th June 2021 11:54:30 am
+Last Modified: Thursday, 10th June 2021 01:23:53 pm
 '''
 from glob import glob
 import os
@@ -404,7 +404,7 @@ sample rate (%s Hz).' % (str(self.sampling_rate), str(
             # taper before instrument response removal
             if taper_len:
                 # st.taper(None, max_length=taper_len)
-                st = cos_taper_st(st, taper_len)
+                st = cos_taper_st(st, taper_len, False)
             try:
                 pass
                 st.remove_response(taper=False)  # Changed for testing purposes

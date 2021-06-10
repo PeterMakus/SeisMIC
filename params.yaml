@@ -7,7 +7,7 @@ debug: True
 # folder for figures
 fig_subdir : 'figures'
 # folder containing preprocessed data
-prepro_subdir: 'testnb_preprocessed_dailypp_lowwl'
+prepro_subdir: 'testnb_preprocessed_wir_true'
 
 
 #### parameters that are network specific
@@ -31,7 +31,7 @@ net:
 co:
     # subdirectory of 'proj_dir' to store correlation
     # type: string
-    subdir : 'corr'
+    subdir : 'corr_wir_true'
     # times sequences to read for cliping or muting on stream basis
     # These should be long enough for the reference (e.g. the standard
     # deviation) to be rather independent of the parts to remove
@@ -71,7 +71,12 @@ co:
                     {'function':'miic3.utils.miic_utils.stream_filter',
                       'args':{'ftype':'bandpass',
                               'filter_option':{'freqmin':0.5, #0.01
-                                               'freqmax':1}}}
+                                               'freqmax':1}}},
+                    {'function':'miic3.utils.miic_utils.cos_taper_st',
+                      'args':{'taper_len': 10, # seconds
+                              'taper_at_masked': True}},
+                    {'function':'miic3.utils.miic_utils.detrend_st',
+                    'args':{'type':'simple'}},
                      #{'function':'miic.core.stream.stream_mute',
                      # 'args':{'taper_len':100,
                      #         'mute_method':'std_factor',
@@ -97,7 +102,7 @@ co:
 
     # parameters for correlation preprocessing
     corr_args : {'TDpreProcessing':[
-                                    #{'function':'miic3.correlate.correlate.detrend',
+                                    # {'function':'miic3.correlate.correlate.detrend',
                                     # 'args':{'type':'constant'}},
                                    #{'function':'miic.core.pxcorr_func.TDfilter',
                                    # 'args':{'type':'bandpass','freqmin':0.01,'freqmax':4}},

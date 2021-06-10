@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 9th June 2021 05:43:09 pm
+Last Modified: Thursday, 10th June 2021 01:31:12 pm
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -29,6 +29,7 @@ from miic3.correlate.stream import CorrTrace, CorrStream
 from miic3.db.asdf_handler import get_available_stations, NoiseDB, NoDataError
 from miic3.db.corr_hdf5 import CorrelationDataBase
 from miic3.utils.fetch_func_from_str import func_from_str
+
 
 class Correlator(object):
     """
@@ -153,7 +154,7 @@ class Correlator(object):
                 continue
             with CorrelationDataBase(outf, 'r+') as cdb:
                 d = cdb.get_available_starttimes(nc, sc, tag, channel)
-            ex_dict['%s.%s' % (n0, s0)] = {}
+            ex_dict.setdefault('%s.%s' % (n0, s0), {})
             ex_dict['%s.%s' % (n0, s0)]['%s.%s' % (n1, s1)] = d
         return ex_dict
 
@@ -175,18 +176,21 @@ class Correlator(object):
                 # Here, we can recombine the correlations for the read_len
                 # size (i.e., stack)
                 # Write correlations to HDF5
-                if self.options['subdivision']['recombine_subdivision']:
+                if self.options['subdivision']['recombine_subdivision'] and \
+                        cst.count():
                     stack = cst.stack(regard_location=False)
                     self._write(stack, 'recombined')
                 if self.options['subdivision']['delete_subdivision']:
                     cst.clear()
-                else:
+                elif cst.count():
                     self._write(cst, tag='subdivision')
 
         # write the remaining data
-        if self.options['subdivision']['recombine_subdivision']:
+        if self.options['subdivision']['recombine_subdivision'] and \
+                cst.count():
             self._write(cst.stack(regard_location=False), 'recombined')
-        if not self.options['subdivision']['delete_subdivision']:
+        if not self.options['subdivision']['delete_subdivision'] and \
+                cst.count():
             self._write(cst, tag='subdivision')
 
     def _pxcorr_inner(self, st: Stream, inv: Inventory) -> CorrStream:
@@ -206,7 +210,6 @@ class Correlator(object):
             npts = np.max(np.array(npts))
             # create numpy array - Do a QR detrend here?
             A, st = st_to_np_array(st, npts)
-            print('combinations:', self.options['combinations'])
             # A = qr_detrend(A)
             # detrend is done earlier now
             As = A.shape
@@ -233,6 +236,9 @@ class Correlator(object):
 
         # put trace into a stream
         cst = CorrStream()
+        if A is None:
+            # No new data
+            return cst
         for ii, (startlag, comb) in enumerate(
                 zip(startlags, self.options['combinations'])):
             endlag = startlag + A[:, ii].shape[0]/self.options['sampling_rate']
@@ -250,6 +256,9 @@ class Correlator(object):
         :param cst: :class:`~mii3.correlate.stream.CorrStream`
         :type cst: [type]
         """
+        if not cst.count():
+            self.logger.debug('No new data written.')
+            return
         cst.sort()
         cstlist = []
         station = cst[0].stats.station
@@ -339,9 +348,10 @@ class Correlator(object):
                 ends.append(end)
             # find already available times
             ex_dict = self.find_existing_times('subdivision')
-        else:
-            ex_dict = {}
-        self.comm.bcast(ex_dict, root=0)
+            self.logger.debug('Already existing data: %s' % str(ex_dict))
+        # else:
+        #     ex_dict = None
+        # ex_dict = self.comm.bcast(ex_dict, root=0)
 
         # the time window that the loop will go over
         t0 = UTCDateTime(self.options['read_start']).timestamp
@@ -375,6 +385,8 @@ class Correlator(object):
             st = self.comm.bcast(st, root=0)
             if st.count() == 0:
                 # No time available at none of the stations
+                self.logger.debug(
+                    'No data found for day %s' % str(UTCDateTime(t)))
                 continue
 
             # Second loop to return the time window in correlation length
@@ -385,7 +397,13 @@ class Correlator(object):
                     # This could be done in the main script with several cores
                     # to speed up things a tiny bit
                     win.taper(max_percentage=0.05)
-                self.options['combinations'] = calc_cross_combis(win, ex_dict)
+                if self.rank == 0:
+                    self.options['combinations'] = calc_cross_combis(
+                        win, ex_dict)
+                else:
+                    self.options['combinations'] = None
+                self.options['combinations'] = self.comm.bcast(
+                    self.options['combinations'], root=0)
                 if not len(self.options['combinations']):
                     # no new combinations for this time period
                     self.logger.debug('no new data for times %s-%s' % (
@@ -418,6 +436,9 @@ class Correlator(object):
                 params.update({key: corr_args[key]})
         params['sampling_rate'] = self.sampling_rate
         # The steps that aren't done before
+
+        # nans from the masked parts are set to 0
+        np.nan_to_num(A, copy=False)
 
         for proc in corr_args['TDpreProcessing']:
             func = func_from_str(proc['function'])
@@ -462,7 +483,6 @@ class Correlator(object):
             np.ceil(
                 corr_args['lengthToSave'] * self.sampling_rate))
         C = np.zeros((sampleToSave*2+1, csize), dtype=np.float64)  # np.float64
-        print(C.shape)
 
         # center = irfftsize // 2
         pmap = (np.arange(csize)*self.psize)/csize
@@ -522,9 +542,15 @@ class Correlator(object):
 
         ######################################
         # collect results
-        self.comm.barrier()
+        self.logger.debug('%s %s' % (C.shape, C.dtype))
+        self.logger.debug('combis: %s' % (self.options['combinations']))
+
+        # self.comm.barrier()  # I don't think this is necessary or even a
+        # good idea
         self.comm.Allreduce(MPI.IN_PLACE, [C, MPI.DOUBLE], op=MPI.SUM)
-        self.comm.Allreduce(MPI.IN_PLACE, [startlags, MPI.DOUBLE], op=MPI.SUM)
+        self.comm.Allreduce(
+            MPI.IN_PLACE, [startlags, MPI.DOUBLE], op=MPI.SUM)
+
         return (C, startlags)
 
 
@@ -547,7 +573,8 @@ def st_to_np_array(st: Stream, npts: int) -> Tuple[np.ndarray, Stream]:
     # Transferring the trace data to this array introduces NaNs?
     # I don't really understand why. Should find out. For now, set them to 0
     # I guess it's because of missing samples (masked data)
-    A = np.nan_to_num(A)
+    # A = np.nan_to_num(A)
+    # This should be done later definitely after TDpreprocessing
     return A, st
 
 
@@ -662,6 +689,19 @@ def zeroPadding(A: np.ndarray, args: dict, params: dict, axis=0) -> np.ndarray:
 #     return results * val
 
 
+def _compare_existing_data(ex_corr: dict, tr0: Stream, tr1: Stream) -> bool:
+    try:
+        if tr0.stats.starttime.format_fissures() in ex_corr[
+            '%s.%s' % (tr0.stats.network, tr0.stats.station)][
+            '%s.%s' % (tr1.stats.network, tr1.stats.station)][
+            '%s-%s' % (
+                tr0.stats.channel, tr1.stats.channel)]:
+            return True
+    except KeyError:
+        pass
+    return False
+
+
 def calc_cross_combis(
         st: Stream, ex_corr: dict, method: str = 'betweenStations') -> list:
     """
@@ -698,15 +738,8 @@ def calc_cross_combis(
                 if ((tr.stats['network'] != tr1.stats['network']) or
                         (tr.stats['station'] != tr1.stats['station'])):
                     # check first whether this combi is in dict
-                    try:
-                        if tr.stats.starttime.format_fissures() in ex_corr[
-                            '%s.%s' % (tr.stats.network, tr.stats.station)][
-                            '%s.%s' % (tr1.stats.network, tr1.stats.station)][
-                            '%s-%s' % (
-                                tr.stats.channel, tr1.stats.channel)]:
-                            continue
-                    except KeyError:
-                        pass
+                    if _compare_existing_data(ex_corr, tr, tr1):
+                        continue
                     combis.append((ii, jj))
     elif method == 'betweenComponents':
         for ii, tr in enumerate(st):
@@ -716,54 +749,26 @@ def calc_cross_combis(
                     (tr.stats['station'] == tr1.stats['station']) and
                     (tr.stats['channel'][-1] !=
                         tr1.stats['channel'][-1])):
-                    try:
-                        if tr.stats.starttime.format_fissures() in ex_corr[
-                            '%s.%s' % (tr.stats.network, tr.stats.station)][
-                            '%s.%s' % (tr1.stats.network, tr1.stats.station)][
-                            '%s-%s' % (
-                                tr.stats.channel, tr1.stats.channel)]:
-                            continue
-                    except KeyError:
-                        pass
+                    if _compare_existing_data(ex_corr, tr, tr1):
+                        continue
                     combis.append((ii, jj))
     elif method == 'autoComponents':
         for ii, tr in enumerate(st):
-            try:
-                if tr.stats.starttime.format_fissures() in ex_corr[
-                    '%s.%s' % (tr.stats.network, tr.stats.station)][
-                    '%s.%s' % (tr.stats.network, tr.stats.station)][
-                    '%s-%s' % (
-                        tr.stats.channel, tr.stats.channel)]:
-                    continue
-            except KeyError:
-                pass
+            if _compare_existing_data(ex_corr, tr, tr1):
+                continue
             combis.append((ii, ii))
     elif method == 'allSimpleCombinations':
         for ii, tr in enumerate(st):
             for jj in range(ii, len(st)):
                 tr1 = st[jj]
-                try:
-                    if tr.stats.starttime.format_fissures() in ex_corr[
-                        '%s.%s' % (tr.stats.network, tr.stats.station)][
-                        '%s.%s' % (tr1.stats.network, tr1.stats.station)][
-                        '%s-%s' % (
-                            tr.stats.channel, tr1.stats.channel)]:
-                        continue
-                except KeyError:
-                    pass
+                if _compare_existing_data(ex_corr, tr, tr1):
+                    continue
                 combis.append((ii, jj))
     elif method == 'allCombinations':
         for ii, tr in enumerate(st):
             for jj, tr1 in enumerate(st):
-                try:
-                    if tr.stats.starttime.format_fissures() in ex_corr[
-                        '%s.%s' % (tr.stats.network, tr.stats.station)][
-                        '%s.%s' % (tr1.stats.network, tr1.stats.station)][
-                        '%s-%s' % (
-                            tr.stats.channel, tr1.stats.channel)]:
-                        continue
-                except KeyError:
-                    pass
+                if _compare_existing_data(ex_corr, tr, tr1):
+                    continue
                 combis.append((ii, jj))
     else:
         raise ValueError("Method has to be one of ('betweenStations', "
@@ -1319,7 +1324,9 @@ def detrend(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """
     Remove trend from data
     """
-    return sp_detrend(A, axis=0, **args)
+    A[np.logical_not(np.isnan(A))] = sp_detrend(
+        A[np.logical_not(np.isnan(A))], axis=0, overwrite_data=True, **args)
+    return sp_detrend(A, axis=0, overwrite_data=True, **args)
 
 
 def TDnormalization(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
