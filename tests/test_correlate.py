@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Thursday, 10th June 2021 04:47:31 pm
+Last Modified: Friday, 11th June 2021 02:16:57 pm
 '''
 import unittest
 import warnings
@@ -387,6 +387,55 @@ class TestClip(unittest.TestCase):
         A = np.ones((100, 5))
         res = correlate.clip(A.copy(), args, {})
         self.assertTrue(np.all(res == np.zeros_like(A)))
+
+
+class TestSortCombnameAlphabetically(unittest.TestCase):
+    def test_retain_input(self):
+        net0 = 'A'
+        net1 = 'B'
+        stat0 = 'Z'
+        stat1 = 'C'
+        exp_result = ([net0, net1], [stat0, stat1])
+        self.assertEqual(
+            correlate.sort_comb_name_alphabetically(net0, stat0, net1, stat1),
+            exp_result)
+
+    def test_flip_input(self):
+        net0 = 'B'
+        net1 = 'A'
+        stat0 = 'Z'
+        stat1 = 'C'
+        exp_result = ([net1, net0], [stat1, stat0])
+        self.assertEqual(
+            correlate.sort_comb_name_alphabetically(net0, stat0, net1, stat1),
+            exp_result)
+
+
+class TestComputeNetworkStationCombinations(unittest.TestCase):
+    def setUp(self):
+        self.nlist = ['A', 'A']
+        self.slist = ['B', 'C']
+
+    def test_between_stations_0(self):
+        exp_result = ([['A', 'A']], [['B', 'C']])
+        self.assertEqual(
+            correlate.compute_network_station_combinations(
+                self.nlist, self.slist),
+            exp_result)
+
+    def test_between_stations_1(self):
+        exp_result = ([], [])
+        self.assertEqual(
+            correlate.compute_network_station_combinations(
+                self.nlist, self.nlist),
+            exp_result)
+
+    def test_between_stations_2(self):
+        exp_result = ([['B', 'C']], [['A', 'A']])
+        self.assertEqual(
+            correlate.compute_network_station_combinations(
+                self.slist, self.nlist),
+            exp_result)
 
 
 if __name__ == "__main__":

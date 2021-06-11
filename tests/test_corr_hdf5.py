@@ -7,17 +7,15 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 1st June 2021 10:42:03 am
-Last Modified: Thursday, 3rd June 2021 12:22:07 pm
+Last Modified: Friday, 11th June 2021 02:00:45 pm
 '''
 import unittest
 from unittest.mock import patch, MagicMock
-from unittest import mock
 import warnings
 
 from obspy import read, UTCDateTime
 import numpy as np
 import h5py
-from obspy.core.trace import Stats
 
 from miic3.db import corr_hdf5
 from miic3.correlate.stream import CorrStream, CorrTrace
@@ -119,9 +117,10 @@ class TestAllTracesRecursive(unittest.TestCase):
 
 
 class TestDBHandler(unittest.TestCase):
-    @patch('miic3.db.corr_hdf5.super')
+    @patch('miic3.db.corr_hdf5.h5py.File.__init__')
     def setUp(self, super_mock):
-        super_mock.return_value = None
+        self.file_mock = MagicMock()
+        super_mock.return_value = self.file_mock
         self.dbh = corr_hdf5.DBHandler('a', 'r', 'gzip9')
         tr = read()[0]
         tr.data = np.ones_like(tr.data, dtype=int)
@@ -129,9 +128,13 @@ class TestDBHandler(unittest.TestCase):
         tr.stats['corr_end'] = tr.stats.endtime
         self.ctr = CorrTrace(tr.data, _header=tr.stats)
 
-    def test_compression_indentifier(self):
+    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    def test_compression_indentifier(self, getitem_mock):
+        d = {'test': 0}
+        getitem_mock.side_effect = d.__getitem__
         self.assertEqual(self.dbh.compression, 'gzip')
         self.assertEqual(self.dbh.compression_opts, 9)
+        self.assertEqual(self.dbh['test'], 0)
 
     @patch('miic3.db.corr_hdf5.super')
     def test_forbidden_compression(self, super_mock):
@@ -182,9 +185,9 @@ class TestDBHandler(unittest.TestCase):
         with self.assertRaises(TypeError):
             dbh.add_correlation(read())
 
-    @patch('miic3.db.corr_hdf5.h5py._hl.group.Group.__getitem__')
     @patch('miic3.db.corr_hdf5.read_hdf5_header')
-    def test_get_data_no_wildcard(self, group_mock, read_hdf5_header_mock):
+    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    def test_get_data_no_wildcard(self, file_mock, read_hdf5_header_mock):
         read_hdf5_header_mock.return_value = self.ctr.stats
         net = 'AB-CD'
         stat = 'AB-CD'
@@ -198,15 +201,16 @@ class TestDBHandler(unittest.TestCase):
                     corr_st=corr_start.format_fissures(),
                     corr_et=corr_end.format_fissures())
         d = {exp_path: self.ctr.data}
-        group_mock.__getitem__.side_effect = d.__getitem__
+        file_mock.side_effect = d.__getitem__
+        self.assertTrue(np.all(self.dbh[exp_path] == d[exp_path]))
+        outdata = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
+        self.assertEqual(outdata[0], self.ctr)
+        file_mock.assert_called_with(exp_path)
 
-        _ = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
-        group_mock.__getitem__.called_with(exp_path)
-
-    @patch('miic3.db.corr_hdf5.h5py._hl.group.Group.__getitem__')
     @patch('miic3.db.corr_hdf5.read_hdf5_header')
+    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_data_no_wildcard_not_alphabetical(
-            self, group_mock, read_hdf5_header_mock):
+            self, file_mock, read_hdf5_header_mock):
         read_hdf5_header_mock.return_value = self.ctr.stats
         net = 'CD-AB'
         stat = 'AB-CD'
@@ -220,18 +224,18 @@ class TestDBHandler(unittest.TestCase):
                     corr_st=corr_start.format_fissures(),
                     corr_et=corr_end.format_fissures())
         d = {exp_path: self.ctr.data}
-        group_mock.__getitem__.side_effect = d.__getitem__
+        file_mock.side_effect = d.__getitem__
+        out = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
+        file_mock.assert_called_with(exp_path)
+        self.assertEqual(out[0], self.ctr)
 
-        _ = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
-        group_mock.__getitem__.called_with(exp_path)
-
-    @patch('miic3.db.corr_hdf5.h5py._hl.group.Group.__getitem__')
     @patch('miic3.db.corr_hdf5.all_traces_recursive')
-    def test_get_data_wildcard(self, group_mock, all_tr_recursive_mock):
+    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    def test_get_data_wildcard(self, file_mock, all_tr_recursive_mock):
         all_tr_recursive_mock.return_value = None
         net = 'AB-CD'
         stat = '*'
-        ch = 'XX-XX'
+        ch = '*'
         tag = 'rand'
         corr_start = UTCDateTime(0)
         corr_end = UTCDateTime(100)
@@ -241,14 +245,14 @@ class TestDBHandler(unittest.TestCase):
                     corr_st=corr_start.format_fissures(),
                     corr_et=corr_end.format_fissures())
         d = {exp_path: self.ctr.data}
-        group_mock.__getitem__.side_effect = d.__getitem__
+        file_mock.side_effect = d.__getitem__
 
         _ = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
-        group_mock.__getitem__.called_with(exp_path)
+        file_mock.assert_called_with(exp_path)
 
-    @patch('miic3.db.corr_hdf5.h5py._hl.group.Group.__getitem__')
     @patch('miic3.db.corr_hdf5.all_traces_recursive')
-    def test_get_data_wildcard2(self, group_mock, all_tr_recursive_mock):
+    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    def test_get_data_wildcard2(self, file_mock, all_tr_recursive_mock):
         all_tr_recursive_mock.return_value = None
         net = 'AB-CD'
         stat = '*'
@@ -263,10 +267,63 @@ class TestDBHandler(unittest.TestCase):
                     corr_et=corr_end)
         exp_path = '/'.join(exp_path.split('/')[:-4])
         d = {exp_path: self.ctr.data}
-        group_mock.__getitem__.side_effect = d.__getitem__
+        file_mock.side_effect = d.__getitem__
 
         _ = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
-        group_mock.__getitem__.called_with(exp_path)
+        file_mock.assert_called_with(exp_path)
+
+    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    def test_get_available_starttimes(self, file_mock):
+        net = 'AB-CD'
+        stat = 'XY-YZ'
+        ch = 'HHZ'
+        tag = 'tag'
+        d = {}
+        starttimes = {
+            UTCDateTime(0).format_fissures(): None,
+            UTCDateTime(200).format_fissures(): None}
+        d['/'+'/'.join([tag, net, stat, ch])] = starttimes
+        file_mock.side_effect = d.__getitem__
+        exp_result = {ch: list(starttimes.keys())}
+        self.assertEqual(
+            self.dbh.get_available_starttimes(net, stat, tag, ch),
+            exp_result)
+        file_mock.assert_called_with('/'+'/'.join([tag, net, stat, ch]))
+
+    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    def test_get_available_starttimes_key_error(self, file_mock):
+        net = 'AB-CD'
+        stat = 'XY-YZ'
+        ch = 'HHZ'
+        tag = 'tag'
+        d = {}
+        starttimes = {
+            UTCDateTime(0).format_fissures(): None,
+            UTCDateTime(200).format_fissures(): None}
+        d['/'+'/'.join([tag, net, stat, ch])] = starttimes
+        file_mock.side_effect = d.__getitem__
+        self.assertEqual(
+            self.dbh.get_available_starttimes(net, stat, tag, 'blub'),
+            {})
+
+    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    def test_get_available_starttimes_wildcard(self, file_mock):
+        net = 'AB-CD'
+        stat = 'XY-YZ'
+        ch = 'HHZ'
+        tag = 'tag'
+        d = {}
+        starttimes = {
+            UTCDateTime(0).format_fissures(): None,
+            UTCDateTime(200).format_fissures(): None}
+        d['/'+'/'.join([tag, net, stat])] = {}
+        d['/'+'/'.join([tag, net, stat])][ch] = starttimes
+        d['/'+'/'.join([tag, net, stat, ch])] = starttimes
+        file_mock.side_effect = d.__getitem__
+        exp_result = {ch: list(starttimes.keys())}
+        self.assertEqual(
+            self.dbh.get_available_starttimes(net, stat, tag, '*'),
+            exp_result)
 
 
 if __name__ == "__main__":
