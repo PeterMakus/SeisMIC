@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 10th June 2021 04:53:09 pm
+Last Modified: Monday, 14th June 2021 11:07:45 am
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -15,6 +15,7 @@ from warnings import warn
 import os
 import logging
 import json
+import yaml
 
 from mpi4py import MPI
 import numpy as np
@@ -36,7 +37,7 @@ class Correlator(object):
     Object to manage the actual Correlation (i.e., Green's function retrieval)
     for the database.
     """
-    def __init__(self, options: dict):
+    def __init__(self, options: dict or str):
         """
         Initiates the Correlator object. When executing
         :func:`~miic3.correlate.correlate.Correlator.pxcorr()`, it will
@@ -48,9 +49,14 @@ class Correlator(object):
         how to proceed with this.
 
         :param options: Dictionary containing all options for the correlation.
-        :type options: dict
+            Can also be a path to a yaml file containing all the keys required
+            in options.
+        :type options: dict or str
         """
         super().__init__()
+        if isinstance(options, str):
+            with open(options) as file:
+                options = yaml.load(file, Loader=yaml.FullLoader)
         # init MPI
         self.comm = MPI.COMM_WORLD
         self.psize = self.comm.Get_size()

@@ -8,14 +8,18 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Thursday, 10th June 2021 04:18:00 pm
+Last Modified: Tuesday, 15th June 2021 10:48:02 am
 '''
 from typing import Tuple
 from warnings import warn
 
 import numpy as np
-from obspy import Inventory, Stream, Trace
+from obspy import Inventory, Stream, Trace, UTCDateTime
 from obspy.core import Stats, AttribDict
+
+
+# zero lag time
+lag0 = UTCDateTime(0)
 
 
 def trace_calc_az_baz_dist(stats1: Stats, stats2: Stats) -> Tuple[

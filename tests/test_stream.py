@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Tuesday, 1st June 2021 10:17:30 am
+Last Modified: Tuesday, 15th June 2021 04:28:53 pm
 '''
 
 import unittest
@@ -176,18 +176,21 @@ class TestCorrTrace(unittest.TestCase):
 
     def test_combine_headers(self):
         ctr = stream.CorrTrace(
-            np.empty(25), header1=self.st[0].stats, header2=self.st[1].stats)
+            np.empty(25), header1=self.st[0].stats, header2=self.st[1].stats,
+            start_lag=-10, end_lag=10)
         exp_res, _ = stream.alphabetical_correlation(
-            self.st[0].stats, self.st[1].stats, None, None, np.empty(25), None)
+            self.st[0].stats, self.st[1].stats, -10, 10, np.empty(25), None)
         exp_res.npts = 25
-        self.assertEqual(ctr.stats, exp_res)
+        for k in exp_res:
+            self.assertEqual(ctr.stats[k], exp_res[k])
 
     def test_no_header(self):
         ctr = stream.CorrTrace(
             np.empty(25))
         exp_res = Stats()
         exp_res['npts'] = 25
-        self.assertEqual(ctr.stats, exp_res)
+        for k in exp_res:
+            self.assertEqual(ctr.stats[k], exp_res[k])
 
 
 class TestCorrStream(unittest.TestCase):

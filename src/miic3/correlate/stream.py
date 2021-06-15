@@ -7,16 +7,121 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Friday, 4th June 2021 02:59:48 pm
+Last Modified: Tuesday, 15th June 2021 04:44:30 pm
 '''
-from typing import Tuple
+from typing import Iterator, List, Tuple
+from copy import deepcopy
 
 import numpy as np
 from obspy import Stream, Trace, Inventory, UTCDateTime
 from obspy.core import Stats
 
-from miic3.utils.miic_utils import trace_calc_az_baz_dist, inv_calc_az_baz_dist
+from miic3.utils.miic_utils import trace_calc_az_baz_dist, \
+    inv_calc_az_baz_dist, lag0
 from miic3.plot.plot_utils import plot_correlation
+from miic3.monitor.post_corr_process import corr_mat_normalize, \
+    corr_mat_extract_trace, corr_mat_stretch
+from miic3.monitor.dv import DV
+
+
+class CorrBulk(object):
+    """
+    An object for faster computations on several correlations. The input
+    correlation contain data from only one Station-Channel pair.
+    """
+    def __init__(
+            self, A: np.ndarray, stats: Stats = None, statlist: list = None):
+        self.data = A
+        if stats:
+            self.stats = stats
+        elif statlist:
+            self.stats = convert_statlist_to_bulk_stats(statlist)
+        else:
+            self.stats = Stats()
+            self.stats['n_traces'], self.stats['npts'] = A.shape
+
+    def normalize(
+        self, starttime: float = None, endtime: float = None,
+            normtype: str = 'energy'):
+        """
+        Correct amplitude variations with time.
+
+        Measure the maximum of the absolute value of the correlation matrix in
+        a specified lapse time window and normalize the correlation traces by
+        this values. A coherent phase in the respective lapse time window will
+        have constant ampitude afterwards..
+
+        :type starttime: float
+        :param starttime: Beginning of time window in seconds with respect to
+            the zero position.
+        :type endtime: float
+        :param endtime: end time window in seconds with respect to the zero
+            position.
+        :type normtype: string
+        :param normtype: one of the following 'energy', 'max', 'absmax',
+            'abssum' to decide about the way to calculate the normalization.
+
+        :rtype: CorrBulk
+        :return: Same object as in self, but normalised.
+
+        ..note:: This action is performed **in-place**. If you want to keep the
+            original data use CorrBulk.copy()
+        """
+        self.data = corr_mat_normalize(
+            self.data, self.stats, starttime, endtime, normtype)
+        return self
+
+    def copy(self):
+        """
+        Returns a copy of self
+
+        :return: A copy of self
+        """
+        return deepcopy(self)
+
+    def extract_trace(
+        self, method: str = 'mean',
+            percentile: float = 50.) -> np.ndarray:
+        """
+        Extract a representative trace from a correlation matrix.
+
+        Extract a correlation trace from the that best represents the
+        correlation matrix. ``Method`` decides about method to extract the
+        trace. The following possibilities are available
+
+        * ``mean`` averages all traces in the matrix
+        * ``norm_mean`` averages the traces normalized after normalizing for
+            maxima
+        * ``similarity_percentile`` averages the ``percentile`` % of traces
+            that best correlate with the mean of all traces. This will exclude
+            abnormal traces. ``percentile`` = 50 will return an average of
+            traces with correlation (with mean trace) above the median.
+
+        :type method: string
+        :param method: method to extract the trace
+        :type percentile: float
+        :param percentile: only used for method=='similarity_percentile'
+
+        :rtype: np.ndarray
+        :return: extracted trace
+
+        ..note:: the extracted trace will also be saved in self.ref_trc
+        """
+        outdata = corr_mat_extract_trace(
+            self.data, self.stats, method, percentile)
+        self.ref_trc = outdata
+        return outdata
+
+    def stretch(
+        self, ref_trc: np.ndarray = None, tw: List[np.ndarray] = None,
+        stretch_range: float = 0.1, stretch_steps: int = 100,
+            sides: str = 'both', return_sim_mat: bool = False) -> DV:
+        if not ref_trc:
+            ref_trc = self.ref_trc
+        dv_dict = corr_mat_stretch(
+            self.data, self.stats, ref_trc, tw, stretch_range, stretch_steps,
+            sides, return_sim_mat)
+        return DV(**dv_dict)
 
 
 class CorrStream(Stream):
@@ -117,7 +222,8 @@ class CorrStream(Stream):
             outst.extend(stack_st_by_group(st, regard_location, weight))
         return outst
 
-    def slide(self, window_length: float, step: float,
+    def slide(
+        self, window_length: float, step: float,
         include_partially_selected: bool = True,
             starttime: UTCDateTime = None, endtime: UTCDateTime = None):
         """
@@ -238,6 +344,52 @@ class CorrStream(Stream):
                  tr.stats.corr_end <= endtime:
                 outst.append(tr)
         return outst
+
+    def create_corr_bulk(
+        self, network: str = None, station: str = None, channel: str = None,
+        location: str = None,
+        times: Tuple[UTCDateTime, UTCDateTime] = None,
+            inplace=True) -> CorrBulk:
+        st = self.select(network, station, location, channel)
+        if times:
+            st = st.select_corr_time(times[0], times[1])
+        A = np.empty((st.count(), st[0].stats.npts))
+        statlist = []
+        for ii, tr in enumerate(st):
+            A[ii] = tr.data
+            if inplace:
+                del tr.data
+            statlist += tr.stats
+
+        stats = convert_statlist_to_bulk_stats(statlist)
+        return CorrBulk(A, stats)
+
+    def _to_matrix(
+        self, network: str = None, station: str = None, channel: str = None,
+        location: str = None,
+        times: Tuple[UTCDateTime, UTCDateTime] = None) -> Tuple[
+            np.ndarray, Iterator[Stats]]:
+        """
+        Creates a numpy array from the data in the
+        :class:`~miic3.correlate.stream.Stream` object. Also returns a list of
+        the Stats objects. The positional arguments are filter arguments.
+
+        :param st: Input Stream
+        :type st: CorrStream
+        :return: both a numpy array (i.e., matrix) and a list of the stats
+        :rtype: Tuple[np.ndarray, Iterator[Stats]]
+        """
+        st = self.select(network, station, location, channel)
+        if times:
+            st = st.select_corr_time(times[0], times[1])
+
+        st.sort(keys=['corr_start'])
+        A = np.empty((st.count(), st[0].stats.npts))
+        stats = []
+        for ii, tr in enumerate(st):
+            A[ii] = tr.data
+            stats.append(tr.stats)
+        return A, stats
 
 
 class CorrTrace(Trace):
@@ -441,7 +593,7 @@ def combine_stats(
     stats['corr_end'] = min(stats1.endtime, stats2.endtime)
     # This makes stats['endtime'] meaningsless, but obspy needs something that
     # identifies the Trace as unique
-    stats['startime'] = stats['corr_start']
+    # stats['startime'] = stats['corr_start']
 
     # Adjust the information to create a new SEED like id
     keywords = ['network', 'station', 'location', 'channel']
@@ -502,6 +654,7 @@ def combine_stats(
     # stacked
     stats['start_lag'] = start_lag
     stats['end_lag'] = end_lag
+    stats['starttime'] = lag0 + start_lag
     return stats
 
 
@@ -583,3 +736,39 @@ def stack_st(st: CorrStream, weight: str) -> CorrTrace:
         # Weight by the length of each trace
         data = np.sum((A.T*np.array(dur)).T, axis=0)/np.sum(dur)
         return CorrTrace(data=data, _header=stats)
+
+
+def convert_statlist_to_bulk_stats(
+        statlist: List[Stats], varying_loc: False) -> Stats:
+    """
+    Converts a list of :class:`~miic3.correlate.stream.CorrTrace` stats objects
+    to a single stats object that can be used for the creation of a
+    :class:`~miic3.correlate.stream.CorrBulk` object
+
+    :param statlist: list of Stats
+    :type statlist: List[Stats]
+    :param varying_loc: Set true if the location codes vary
+    :type varying_loc: False
+    :raises ValueError: raised if data does not fit together
+    :return: single Stats object
+    :rtype: Stats
+    """
+    stats = statlist[0].copy()
+    mutables = ['corr_start', 'corr_end', 'start_lag', 'end_lag']
+    immutables = ['npts', 'sampling_rate', 'network', 'station', 'channel']
+    if varying_loc:
+        mutables += ['location']
+    else:
+        immutables += ['location']
+    for key in mutables:
+        stats[key] = []
+    for trstat in statlist:
+        for key in mutables:
+            stats[key] += trstat[key]
+        for key in immutables:
+            if stats[key] != trstat[key]:
+                raise ValueError('The stream contains data with different \
+properties. The differing property is %s' % key)
+    stats['ntrcs'] = len(statlist)
+    return stats
+
