@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 14th June 2021 11:07:45 am
+Last Modified: Tuesday, 15th June 2021 04:51:01 pm
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -69,7 +69,12 @@ class Correlator(object):
         os.makedirs(logdir, exist_ok=True)
 
         # Logging - rank dependent
-        tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H:%M')
+        if self.rank == 0:
+            tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H:%M')
+        else:
+            tstr = None
+        tstr = self.comm.bcast(tstr, root=0)
+
         self.logger = logging.Logger("miic3.Correlator0%s" % str(self.rank))
         self.logger.setLevel(logging.WARNING)
         if options['debug']:
@@ -89,9 +94,10 @@ class Correlator(object):
         fh.setFormatter(fmt)
 
         # Write the options dictionary to the log file
-        with open(os.path.join(
-                logdir, 'params%s.txt' % tstr), 'w') as file:
-            file.write(json.dumps(options, indent=1))
+        if self.rank == 0:
+            with open(os.path.join(
+                    logdir, 'params%s.txt' % tstr), 'w') as file:
+                file.write(json.dumps(options, indent=1))
 
         self.options = options['co']
 
