@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Tuesday, 15th June 2021 04:00:20 pm
+Last Modified: Wednesday, 16th June 2021 05:03:34 pm
 '''
 from typing import List, Tuple
 
@@ -286,7 +286,7 @@ def time_stretch_estimate(
     time_facs = np.exp(-stretchs)
 
     # time axis
-    if sides is not 'single':
+    if sides != 'single':
         time_idx = np.arange(len(ref_trc)) - (len(ref_trc) - 1.) / 2.
     else:
         time_idx = np.arange(len(ref_trc))
@@ -566,7 +566,7 @@ def estimate_reftr_shifts_from_dt_corr(
             Its dimension is: :py:func:`(len(tw),mat.shape[1],len(strvec))`
         *second_axis*: It contains the stretch vector used for the velocity
             change estimate.
-        *vale_type*: It is equal to 'stretch' and specify the content of
+        *value_type*: It is equal to 'stretch' and specify the content of
             the returned 'value'.
         *method*: It is equal to 'single_ref' and specify in which "way" the
             values have been obtained.

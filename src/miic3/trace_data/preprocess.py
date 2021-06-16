@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Thursday, 10th June 2021 01:23:53 pm
+Last Modified: Wednesday, 16th June 2021 02:43:42 pm
 '''
 from glob import glob
 import os
@@ -113,7 +113,7 @@ class Preprocessor(object):
         :type network: strorNone, optional
         :param statlist: List of station codes. If != None, one does also have
             to provide a network code, defaults to None. If `==None` all
-            available will be used 
+            available will be used.
         :type statlist: list or None, optional
         :param channel: Which channel to use. using `None` is equal to all
             ('*'). Defaults to '*'

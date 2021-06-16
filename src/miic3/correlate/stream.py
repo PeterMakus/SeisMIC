@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Tuesday, 15th June 2021 04:44:30 pm
+Last Modified: Wednesday, 16th June 2021 04:44:28 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -20,7 +20,8 @@ from miic3.utils.miic_utils import trace_calc_az_baz_dist, \
     inv_calc_az_baz_dist, lag0
 from miic3.plot.plot_utils import plot_correlation
 from miic3.monitor.post_corr_process import corr_mat_normalize, \
-    corr_mat_extract_trace, corr_mat_stretch
+    corr_mat_extract_trace, corr_mat_stretch, corr_mat_smooth, \
+        corr_mat_filter, corr_mat_trim
 from miic3.monitor.dv import DV
 
 
@@ -39,6 +40,7 @@ class CorrBulk(object):
         else:
             self.stats = Stats()
             self.stats['n_traces'], self.stats['npts'] = A.shape
+        self.stats['processing_bulk'] = []
 
     def normalize(
         self, starttime: float = None, endtime: float = None,
@@ -64,11 +66,17 @@ class CorrBulk(object):
         :rtype: CorrBulk
         :return: Same object as in self, but normalised.
 
-        ..note:: This action is performed **in-place**. If you want to keep the
-            original data use CorrBulk.copy()
+        ..note:: This action is performed **in-place**. If you would like to
+            keep the original data use
+            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`.
         """
         self.data = corr_mat_normalize(
             self.data, self.stats, starttime, endtime, normtype)
+        proc_str = 'normalize; normtype: %s' % normtype
+        if starttime and endtime:
+            proc_str += ', starttime: %s, endtime: %s' % (
+                str(starttime), str(endtime))
+        self.stats.processing_bulk += [proc_str]
         return self
 
     def copy(self):
@@ -78,6 +86,27 @@ class CorrBulk(object):
         :return: A copy of self
         """
         return deepcopy(self)
+
+    def filter(self, freqs: Tuple[float, float], order: int = 3):
+        """
+        Filters the correlation matrix in the frequency band specified in
+        freqs using a zero phase filter of twice the order given in order.
+
+        :type freqs: Tuple
+        :param freqs: lower and upper limits of the pass band in Hertz
+        :type order: int
+        :param order: half the order of the Butterworth filter
+
+        :return: self
+
+        ..note:: This action is performed **in-place**. If you would like to
+            keep the original data use
+            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`.
+        """
+        self.data = corr_mat_filter(self.data, self.stats, freqs, order)
+        proc = ['filter; freqs: %s, order: %s' % (str(freqs), str(order))]
+        self.stats.processing_bulk += proc
+        return self
 
     def extract_trace(
         self, method: str = 'mean',
@@ -112,16 +141,76 @@ class CorrBulk(object):
         self.ref_trc = outdata
         return outdata
 
+    def smooth(
+        self, wsize: int, wtype: str = 'flat',
+            axis: int = 1) -> np.ndarray:
+        """
+        Smoothes the correlation matrix with a given window function of the
+        given width along the given axis. This method is based on the
+        convolution of a scaled window with the signal. Each row/col
+        (i.e. depending on the selected ``axis``) is "prepared" by introducing
+        reflected copies of it (with the window size) in both ends so that
+        transient parts are minimized in the beginning and end part of the
+        resulting array.
+
+        :type wsize: int
+        :param wsize: Window size
+        :type wtype: string
+        :param wtype: Window type. It can be one of:
+            ['flat', 'hanning', 'hamming', 'bartlett', 'blackman'] defaults to
+            'flat'
+        :type axis: int
+        :param axis: Axis along with apply the filter. O: smooth along
+            correlation lag time axis 1: smooth along time axis
+
+        :rtype: :class:`~numpy.ndarray`
+        :return: Filtered matrix
+
+        ..note:: This action is performed **in-place**. If you want to keep
+            the original data use
+            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`
+        """
+        self.data = corr_mat_smooth(self.data, wsize, wtype, axis)
+        self.stats.processing_bulk += [
+            'smooth. wsize: %s, wtype: %s, axis: %s'
+            % (str(wsize), wtype, str(axis))]
+        return self
+
     def stretch(
         self, ref_trc: np.ndarray = None, tw: List[np.ndarray] = None,
         stretch_range: float = 0.1, stretch_steps: int = 100,
             sides: str = 'both', return_sim_mat: bool = False) -> DV:
-        if not ref_trc:
+        if ref_trc is None:
             ref_trc = self.ref_trc
         dv_dict = corr_mat_stretch(
             self.data, self.stats, ref_trc, tw, stretch_range, stretch_steps,
             sides, return_sim_mat)
         return DV(**dv_dict)
+
+    def trim(self, starttime: float, endtime: float):
+        """
+
+        Trim the correlation matrix to the period from `starttime` to
+        `endtime` given in seconds from the zero position, so both can be
+        positive and negative.
+
+        :type starttime: float
+        :param starttime: start time in seconds with respect to the zero
+            position
+        :type endtime: float
+        :param order: end time in seconds with respect to the zero position
+
+        :return: self
+
+        ..note:: This action is performed **in-place**. If you want to keep
+            the original data use
+            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`
+        """
+        self.data, self.stats = corr_mat_trim(
+            self.data, self.stats, starttime, endtime)
+        proc = ['trim: %s, %s' % (str(starttime), str(endtime))]
+        self.stats.processing_bulk += proc
+        return self
 
 
 class CorrStream(Stream):
@@ -359,7 +448,7 @@ class CorrStream(Stream):
             A[ii] = tr.data
             if inplace:
                 del tr.data
-            statlist += tr.stats
+            statlist.append(tr.stats)
 
         stats = convert_statlist_to_bulk_stats(statlist)
         return CorrBulk(A, stats)
@@ -739,7 +828,7 @@ def stack_st(st: CorrStream, weight: str) -> CorrTrace:
 
 
 def convert_statlist_to_bulk_stats(
-        statlist: List[Stats], varying_loc: False) -> Stats:
+        statlist: List[Stats], varying_loc: bool = False) -> Stats:
     """
     Converts a list of :class:`~miic3.correlate.stream.CorrTrace` stats objects
     to a single stats object that can be used for the creation of a
@@ -764,7 +853,7 @@ def convert_statlist_to_bulk_stats(
         stats[key] = []
     for trstat in statlist:
         for key in mutables:
-            stats[key] += trstat[key]
+            stats[key] += [trstat[key]]
         for key in immutables:
             if stats[key] != trstat[key]:
                 raise ValueError('The stream contains data with different \

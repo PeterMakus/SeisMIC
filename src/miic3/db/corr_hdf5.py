@@ -9,11 +9,12 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Friday, 11th June 2021 01:58:16 pm
+Last Modified: Wednesday, 16th June 2021 02:52:30 pm
 '''
 import fnmatch
 import os
 import re
+from typing import List
 import warnings
 
 import numpy as np
@@ -213,6 +214,14 @@ class DBHandler(h5py.File):
                 out[match] = list(self['/'.join([path, match])].keys())
         return out
 
+    def get_available_channels(
+            self, tag: str, network: str, station: str) -> List[str]:
+        path = hierarchy.format(
+            tag=tag, network=network, station=station, channel='*',
+            corr_st='*', corr_et='*')
+        path = path.split('*')[0]
+        return list(self[path].keys())
+
 
 class CorrelationDataBase(object):
     """
@@ -329,3 +338,4 @@ def read_hdf5_header(dataset: h5py.Dataset) -> Stats:
         else:
             header[key] = attrs[key]
     return Stats(header)
+

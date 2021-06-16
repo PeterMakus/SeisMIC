@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Tuesday, 15th June 2021 04:04:27 pm
+Last Modified: Wednesday, 16th June 2021 04:54:22 pm
 '''
 
 from typing import List, Tuple
@@ -95,11 +95,11 @@ def _smooth(x, window_len=10, window='hanning'):
     if window_len < 3:
         return x
 
-    if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+    if window not in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         raise ValueError("Window is on of 'flat', 'hanning', 'hamming',\
             'bartlett', 'blackman'")
 
-    s = np.r_[2 * x[0] - x[window_len:1:-1], x, \
+    s = np.r_[2 * x[0] - x[window_len:1:-1], x,
               2 * x[-1] - x[-1:-window_len:-1]]
 
     if window == 'flat':  # moving average
@@ -111,7 +111,9 @@ def _smooth(x, window_len=10, window='hanning'):
     return y[window_len - 1:-window_len + 1]
 
 
-def corr_mat_smooth(corr_mat, wsize, wtype='flat', axis=1):
+def corr_mat_smooth(
+    data: np.ndarray, wsize: int, wtype: str = 'flat',
+        axis: int = 1) -> np.ndarray:
     """ Smoothing of a correlation matrix.
 
     Smoothes the correlation matrix with a given window function of the given
@@ -137,38 +139,27 @@ def corr_mat_smooth(corr_mat, wsize, wtype='flat', axis=1):
     :return: **X**: Filtered matrix
     """
 
-    # check input
-    # if not isinstance(corr_mat, dict):
-    #     raise TypeError("corr_mat needs to be correlation matrix dictionary.")
-
-    # if corr_mat_check(corr_mat)['is_incomplete']:
-    #     raise ValueError("Error: corr_mat is not a valid correlation_matix \
-    #         dictionary.")
-
-    rcorr_mat = deepcopy(corr_mat)
-    mat = rcorr_mat['corr_data']
-
     # Degenerated corr_mat: single vector
     try:
-        row, col = mat.shape
+        row, col = data.shape
     except ValueError:
         # Single vector not a matrix
-        corr_mat['corr_data'] = _smooth(mat, window_len=wsize, window=wtype)
-        return corr_mat
+        data = _smooth(data, window_len=wsize, window=wtype)
+        return data
 
     # Proper 2d matrix. Smooth on the chosen axis
     if axis == 0:
         for i in np.arange(row):
-            csig = mat[i]
+            csig = data[i]
             scsig = _smooth(csig, window_len=wsize, window=wtype)
-            mat[i] = scsig
+            data[i] = scsig
     elif axis == 1:
         for i in np.arange(col):
-            csig = mat[:, i]
+            csig = data[:, i]
             scsig = _smooth(csig, window_len=wsize, window=wtype)
-            mat[:, i] = scsig
+            data[:, i] = scsig
 
-    return rcorr_mat
+    return data
 
 
 if BC_UI:
@@ -349,8 +340,8 @@ def corr_mat_trim(
     """
 
     start = int(
-        np.floor((starttime-stats['start_lag'])*stats['sampling_rate']))
-    end = int(np.floor((endtime-stats['end_lag'])*stats['sampling_rate']))
+        np.floor((starttime-stats['start_lag'][0])*stats['sampling_rate']))
+    end = int(np.floor((endtime-stats['end_lag'][0])*stats['sampling_rate']))
 
     # check range
     if start < 0:
@@ -365,8 +356,8 @@ def corr_mat_trim(
     data = data[:, start: end + 1]
 
     # set starttime, endtime and npts of the new stats
-    stats['start_lag'] = starttime
-    stats['end_lag'] = endtime
+    stats['start_lag'] = [starttime]
+    stats['end_lag'] = [endtime]
     stats['starttime'] = lag0 + starttime
     stats['npts'] = data.shape[1]
     return data, stats
@@ -847,10 +838,14 @@ def corr_mat_normalize(
         # first sample
         start = starttime - stats[0]['start_lag']
         start = int(np.floor(start*stats['sampling_rate']))
+    else:
+        start = None
 
     if endtime:
         end = endtime - stats[0]['start_lag']
         end = int(np.floor(end*stats['sampling_rate']))
+    else:
+        end = None
 
     # check range
     if start and start < 0:
@@ -1985,8 +1980,8 @@ def corr_mat_stretch(
 
     # starttime = convert_time([corr_mat['stats']['starttime']])[0]
     # endtime = convert_time([corr_mat['stats']['endtime']])[0]
-    dta = -stats['start_lag']
-    dte = stats['end_lag']
+    dta = -stats['start_lag'][0]
+    dte = stats['end_lag'][0]
 
     # format (trimm) the matrix for zero-time to be either at the beginning
     # or at the center as required by
@@ -2009,11 +2004,11 @@ def corr_mat_stretch(
     # trim the matrices
     if sides is "single":
         # extract the time>0 part of the matrix
-        corr_mat = corr_mat_trim(data, stats, zerotime, dte)
+        corr_mat = corr_mat_trim(data, stats, 0, dte)
     else:
         # extract the central symmetric part (if dt<0 the trim will fail)
         dt = min(dta, dte)
-        corr_mat = corr_mat_trim(data, stats, zerotime - dt, zerotime + dt)
+        corr_mat = corr_mat_trim(data, stats, dt, dt)
 
     # create or extract references
     if ref_trc is None:
@@ -2026,13 +2021,10 @@ def corr_mat_stretch(
 
     # print ref_trc.shape
 
-    dv = multi_ref_vchange_and_align(corr_mat['corr_data'],
-                      ref_trc,
-                      tw=tw,
-                      stretch_range=stretch_range,
-                      stretch_steps=stretch_steps,
-                      sides=sides,
-                      return_sim_mat=return_sim_mat)
+    dv = multi_ref_vchange_and_align(
+        data, ref_trc, tw=tw, stretch_range=stretch_range,
+        stretch_steps=stretch_steps, sides=sides,
+        return_sim_mat=return_sim_mat)
 
     # add the keys the can directly be transferred from the correlation matrix
     dv_stats = stats

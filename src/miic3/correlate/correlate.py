@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 15th June 2021 04:51:01 pm
+Last Modified: Wednesday, 16th June 2021 10:12:38 am
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -65,8 +65,9 @@ class Correlator(object):
         self.proj_dir = options['proj_dir']
         self.corr_dir = os.path.join(self.proj_dir, options['co']['subdir'])
         logdir = os.path.join(self.proj_dir, options['log_subdir'])
-        os.makedirs(self.corr_dir, exist_ok=True)
-        os.makedirs(logdir, exist_ok=True)
+        if self.rank == 0:
+            os.makedirs(self.corr_dir, exist_ok=True)
+            os.makedirs(logdir, exist_ok=True)
 
         # Logging - rank dependent
         if self.rank == 0:

@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Friday, 4th June 2021 03:05:19 pm
+Last Modified: Wednesday, 16th June 2021 10:33:35 am
 '''
 
 from glob import glob
@@ -179,14 +179,23 @@ class NoiseDB(object):
 
         with ASDFDataSet(self.loc, mode="r", mpi=False) as ds:
             try:
-                st = ds.waveforms[
-                    "%s.%s" % (self.network, self.station)].processed
-                st.sort(keys=['starttime'])
-                starttime = st[0].stats.starttime
-                endtime = st[-1].stats.endtime
+                st = []
+                et = []
+                # This needs too much RAM
+                # st = ds.waveforms[
+                #     "%s.%s" % (self.network, self.station)].processed
+                # st.sort(keys=['starttime'])
+                # starttime = st[0].stats.starttime
+                # endtime = st[-1].stats.endtime
+                for tr in ds.waveforms[
+                        "%s.%s" % (self.network, self.station)].processed:
+                    st.append(tr.stats.starttime)
+                    et.append(tr.stats.endtime)
             except pyasdf.exceptions.WaveformNotInFileException:
                 # This happens when there are no times at all
                 return (None, None)
+        starttime = min(st)
+        endtime = max(et)
         return (starttime, endtime)
 
     def get_all_data(
