@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Wednesday, 16th June 2021 05:03:34 pm
+Last Modified: Thursday, 17th June 2021 10:07:00 am
 '''
 from typing import List, Tuple
 
@@ -777,3 +777,182 @@ def multi_ref_vchange_and_align(
         dv = multi_ref_panel['reftr_0']
 
     return dv
+
+
+def time_shift_estimate(
+    corr_data: np.ndarray, ref_trc: np.ndarray = None,
+    tw: List[np.ndarray] = None, shift_range: float = 10,
+    shift_steps: int = 100, single_sided: bool = False,
+        return_sim_mat: bool = True, remove_nans: bool = True) -> dict:
+    """ Time shift estimate through shifting and comparison.
+
+    This function is intended to estimate shift of traces as they can occur
+    in noise cross-correlation in case of drifting clocks.
+
+    Time shifts are estimated comparing each correlation function stored
+    in the ``corr_data`` matrix (one for each row) with ``shift_steps``
+    shifted versions  of reference trace stored in ``ref_trc``.
+    The maximum amount of shifting may be passed in ``shift_range``.
+    The best match (shifting amount and corresponding correlation value) is
+    calculated on different time windows. If ``tw = None`` the shifting is
+    estimated on the whole trace.
+
+    :type corr_data: :class:`~numpy.ndarray`
+    :param corr_data: 2d ndarray containing the correlation functions.
+        One for each row.
+    :type ref_trc: :class:`~numpy.ndarray`
+    :param ref_trc: 1D array containing the reference trace to be shifted and
+        compared to the individual traces in ``mat``
+    :type tw: list of :class:`~numpy.ndarray` of int
+    :param tw: list of 1D ndarrays holding the indices of sampels in the time
+        windows to be use in the time shift estimate. The sampels are counted
+        from the zero lag time with the index of the first sample being 0. If
+        ``tw = None`` the full time range is used.
+    :type shift_range: scalar
+    :param shift_range: Maximum amount of time shift in samples (in one
+        direction).
+        Shifting is tested in both directions from ``-shift_range`` to
+        ``shift_range``
+    :type shift_steps: scalar`
+    :param shift_steps: Number of shifted version to be tested. The increment
+            will be ``(2 * shift_range) / shift_steps``
+    :type sinlge_sided: boolean
+    :param single_sided: If ``True`` the zero lag time of the traces is in the
+        first sample. If ``False`` zero lag is assumed to be in the center of
+        the traces and the shifting is evaluated on the causal and acausal
+        parts of the traces separately and averaged. This is done to avoid bias
+        from velocity changes (stretching) in the case of strongly asymmetric
+        traces.
+    :type remove_nans: bool
+    :param remove_nans: If `True` applay :func:`~numpy.nan_to_num` to the
+        given correlation matrix before any other operation.
+
+    :rtype: Dictionary
+    :return: **dt**: Dictionary with the following keys
+
+        *corr*: :class:`~numpy.ndarray` 2d ndarray containing the correlation
+            value for the best match for each row of ``mat`` and for each
+            time window.
+            Its dimension is: :func:(len(tw),mat.shape[1])
+        *value*: :class:`~numpy.ndarray` 2d ndarray containing the amount of
+            shifting corresponding to the best match for each row of ``mat``
+            and for each time window. Shift is measured in units of the
+            sampling interval.
+            Its dimension is: :py:func:`(len(tw),mat.shape[1])`
+        *sim_mat*: 2d ndarray containing the similarity matrix that
+            indicate the time shift respect to the reference for the
+            selected time windows, for different times and different amount of
+            shift.
+            Its dimension is: :py:func:`(mat.shape[1],shift_steps)`
+        *second_axis*: It contains the shift vector used for the velocity
+            change estimate.
+        *vale_type*: It is equal to 'shift' and specify the content of
+            the returned 'value'.
+        *method*: It is equal to 'time_shift' and specify in which "way" the
+            values have been obtained.
+    """
+
+    # Mat must be a 2d vector in every case so
+    mat = np.atleast_2d(corr_data)
+
+    # FIX: Trace back this problem to the original source and remove
+    # this statement
+    if remove_nans:
+        mat = np.nan_to_num(mat)
+
+    # generate the reference trace if not given (use the whole time span)
+    if ref_trc is None:
+        ref_trc = np.nansum(mat, axis=0) / mat.shape[0]
+
+    # generate time window if not given (use the full length of
+    # the correlation trace)
+    if tw is None:
+        if single_sided:
+            tw = time_windows_creation([0], [mat.shape[1]])
+        # if center is in the middle use only half the length for the
+        # time window
+        else:
+            tw = time_windows_creation([0],
+                                       [int(np.floor(mat.shape[1] / 2.))])
+
+    # taper and extend the reference trace to avoid interpolation
+    # artefacts at the ends of the trace
+    taper = cosine_taper(len(ref_trc), 0.05)
+    ref_trc *= taper
+
+    # different values of shifting to be tested
+    shifts = np.linspace(-shift_range, shift_range, shift_steps)
+
+    # time axis
+    time_idx = np.arange(len(ref_trc))
+
+    # create the array to hold the shifted traces
+    ref_shift = np.zeros((len(shifts), len(ref_trc)))
+
+    # create a spline object for the reference trace
+    ref_tr_spline = UnivariateSpline(time_idx, ref_trc, s=0)
+
+    # evaluate the spline object at different points and put in the prepared
+    # array
+    for (k, this_shift) in enumerate(shifts):
+        ref_shift[k, :] = ref_tr_spline(time_idx - this_shift)
+
+    # search best fit of the crosscorrs to one of the shifted ref_traces
+    if single_sided:
+        vdict = velocity_change_estimate(
+            mat, tw, ref_shift, shifts, sides='single', return_sim_mat=True,
+            remove_nans=remove_nans)
+        corr = vdict['corr']
+        shift = vdict['value']
+        sim_mat = vdict['sim_mat']
+
+    else:
+        """
+        # estimate shifts for causal and acausal part individually and avarage
+        # to avoid apparent shift from velocity change and asymmetric
+        # amplitudes
+        lvdict = velocity_change_estimete(mat, tw, ref_shift,
+                                          shifts,
+                                          sides='left',
+                                          return_sim_mat=True,
+                                          remove_nans=remove_nans)
+        lcorr = lvdict['corr']
+        lshift = lvdict['value']
+        lsim_mat = lvdict['sim_mat']
+
+        rvdict = velocity_change_estimete(mat, tw, ref_shift,
+                                          shifts,
+                                          sides='right',
+                                          return_sim_mat=True,
+                                          remove_nans=remove_nans)
+        rcorr = rvdict['corr']
+        rshift = rvdict['value']
+        rsim_mat = rvdict['sim_mat']
+
+        shift = np.zeros_like(lshift)
+        corr = np.zeros_like(lshift)
+        sim_mat = np.zeros_like(lsim_mat)
+    
+        corr = (lcorr + rcorr) / 2.
+        shift = (lshift + rshift) / 2.
+        sim_mat = (lsim_mat + rsim_mat) / 2.
+        """
+        dtdict = velocity_change_estimate(
+            mat, tw, ref_shift, shifts, sides='both', return_sim_mat=True,
+            remove_nans=remove_nans)
+        corr = dtdict['corr']
+        shift = dtdict['value']
+        sim_mat = dtdict['sim_mat']
+
+
+    # create the result dictionary
+    dt = {'corr': np.squeeze(corr),
+          'value': np.squeeze(shift),
+          'second_axis': shifts,
+          'value_type': np.array(['shift']),
+          'method': np.array(['time_shift'])}
+    
+    if return_sim_mat:
+        dt.update({'sim_mat': np.squeeze(sim_mat)})
+
+    return dt

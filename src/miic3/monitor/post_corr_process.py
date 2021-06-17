@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Wednesday, 16th June 2021 04:54:22 pm
+Last Modified: Thursday, 17th June 2021 04:38:22 pm
 '''
 
 from typing import List, Tuple
@@ -24,13 +24,13 @@ import os
 import h5py
 
 # ETS imports
-try:
-    BC_UI = True
-    from traits.api import HasTraits, Int, Float, Array, Str, Enum, Directory
-    from traitsui.api import View, Item, VGroup
-except ImportError:
-    BC_UI = False
-    pass
+# try:
+#     BC_UI = True
+#     from traits.api import HasTraits, Int, Float, Array, Str, Enum, Directory
+#     from traitsui.api import View, Item, VGroup
+# except ImportError:
+#     BC_UI = False
+#     pass
     
 # Obspy imports
 from obspy.signal.invsim import cosine_taper
@@ -38,7 +38,8 @@ from obspy.core import trace, stream
 from obspy.core import Stream, AttribDict
 
 from miic3.utils.miic_utils import lag0
-from miic3.monitor.stretch_mod import multi_ref_vchange_and_align
+from miic3.monitor.stretch_mod import multi_ref_vchange_and_align, \
+    time_shift_estimate
 
 # Local imports
 # from miic.core.miic_utils import convert_time, convert_time_to_string, zerotime, \
@@ -463,7 +464,8 @@ if BC_UI:
                           Item('channel'))
     
 
-def corr_mat_resample(corr_mat, start_times, end_times=[]):
+def corr_mat_resample(
+    data: np.ndarray, stats: trace.Stats, start_times: list, end_times=[]):
     """ Function to create correlation matrices with constant sampling
 
     When created with recombine_corr_data the correlation matrix contains all
@@ -505,7 +507,7 @@ def corr_mat_resample(corr_mat, start_times, end_times=[]):
             start_times.")
 
     # old sampling times
-    otime = convert_time(corr_mat['time'])
+    # otime = convert_time(corr_mat['time'])
 
     # new sampling times
     stime = convert_time(start_times)
@@ -514,16 +516,17 @@ def corr_mat_resample(corr_mat, start_times, end_times=[]):
     else:
         if len(start_times) == 1:
             # there is only one start_time given and no end_time => average all
-            etime = [otime[-1]]
+            # etime = [otime[-1]]
+            etime = stats['corr_end'][-1]
         else:
             etime = stime + (stime[1] - stime[0])
 
     # create masked array to avoid nans
-    mm = np.ma.masked_array(corr_mat['corr_data'],
-                    np.isnan(corr_mat['corr_data']))
+    mm = np.ma.masked_array(data,
+                    np.isnan(data))
 
     # new corr_data matrix
-    nmat = np.empty([len(stime), corr_mat['corr_data'].shape[1]])
+    nmat = np.empty([len(stime), data.shape[1]])
     nmat.fill(np.nan)
 
     for ii in range(len(stime)):
@@ -2004,11 +2007,11 @@ def corr_mat_stretch(
     # trim the matrices
     if sides is "single":
         # extract the time>0 part of the matrix
-        corr_mat = corr_mat_trim(data, stats, 0, dte)
+        data, stats = corr_mat_trim(data, stats, 0, dte)
     else:
         # extract the central symmetric part (if dt<0 the trim will fail)
         dt = min(dta, dte)
-        corr_mat = corr_mat_trim(data, stats, dt, dt)
+        data, stats = corr_mat_trim(data, stats, dt, dt)
 
     # create or extract references
     if ref_trc is None:
@@ -2027,7 +2030,8 @@ def corr_mat_stretch(
         return_sim_mat=return_sim_mat)
 
     # add the keys the can directly be transferred from the correlation matrix
-    dv_stats = stats
+    dv['corr_start'] = stats['corr_start']
+    dv['stats'] = stats
 
     return dv
 
@@ -2065,9 +2069,11 @@ def corr_mat_correct_stretch(corr_mat, dv):
     return ccorr_mat
 
 
-def corr_mat_shift(corr_mat, ref_trc=None, tw=None, shift_range=10,
-                          shift_steps=100, sides='both',
-                          return_sim_mat=False):
+def corr_mat_shift(
+    data: np.ndarray, stats: trace.Stats, ref_trc: np.ndarray = None,
+    tw: List[np.ndarray] = None, shift_range: float = 10,
+    shift_steps: int = 100, sides: str = 'both',
+        return_sim_mat: bool = False) -> dict:
     """ Time shift estimate through shifting and comparison.
 
     This function estimates shifting of the time axis of traces as it can
@@ -2131,19 +2137,21 @@ def corr_mat_shift(corr_mat, ref_trc=None, tw=None, shift_range=10,
             values have been obtained.
     """
 
-    # check input
-    if corr_mat_check(corr_mat)['is_incomplete']:
-        raise ValueError("Error: corr_mat is not a valid correlation_matix \
-            dictionary.")
+    # # check input
+    # if corr_mat_check(corr_mat)['is_incomplete']:
+    #     raise ValueError("Error: corr_mat is not a valid correlation_matix \
+    #         dictionary.")
 
-    corr_mat = deepcopy(corr_mat)
+    data = deepcopy(data)
 
-    zerotime = lag0
+    # zerotime = lag0
 
-    starttime = convert_time([corr_mat['stats']['starttime']])[0]
-    endtime = convert_time([corr_mat['stats']['endtime']])[0]
-    dta = zerotime - starttime
-    dte = endtime - zerotime
+    # starttime = convert_time([corr_mat['stats']['starttime']])[0]
+    # endtime = convert_time([corr_mat['stats']['endtime']])[0]
+    # dta = zerotime - starttime
+    dta = stats.start_lag
+    # dte = endtime - zerotime
+    dte = stats.end_lag
 
     # format (trimm) the matrix for zero-time to be either at the beginning
     # or at the center as required by
@@ -2153,30 +2161,31 @@ def corr_mat_shift(corr_mat, ref_trc=None, tw=None, shift_range=10,
     # reference also needs to be trimmed. To do so we append the reference to
     # the matrix, trimm it and remove the reference again
     if ref_trc != None:
-        corr_mat['corr_data'] = np.concatenate((corr_mat['corr_data'],
+        data = np.concatenate((data,
                             np.atleast_2d(ref_trc)), 0)
-        reft = np.tile(convert_time_to_string([datetime(1900, 1, 1)]), (1))
-        corr_mat['time'] = np.concatenate((corr_mat['time'], reft), 0)
+        # not used?
+        # reft = np.tile(convert_time_to_string([datetime(1900, 1, 1)]), (1))
+        # corr_mat['time'] = np.concatenate((corr_mat['time'], reft), 0)
 
     # trim the marices
     if sides is "single":
         # extract the time>0 part of the matrix
-        corr_mat = corr_mat_trim(corr_mat, zerotime, endtime)
+        corr_mat = corr_mat_trim(data, stats, 0, dte)
     else:
         # extract the central symmetric part (if dt<0 the trim will fail)
         dt = min(dta, dte)
-        corr_mat = corr_mat_trim(corr_mat, zerotime - dt, zerotime + dt)
+        corr_mat = corr_mat_trim(data, stats, -dt, dt)
 
     # create or extract references
     if ref_trc == None:
         # ref_trc = np.atleast_2d(np.mean(corr_mat['corr_data'],0))
-        ref_trc = corr_mat_extract_trace(corr_mat)['corr_trace']
+        ref_trc = corr_mat_extract_trace(data, stats)
         # ref_trc = np.mean(corr_mat['corr_data'], 0)
     else:
         # extract and remove references from corr matrix again
-        ref_trc = corr_mat['corr_data'][-1, :]
-        corr_mat['corr_data'] = corr_mat['corr_data'][:-1, :]
-        corr_mat['time'] = corr_mat['time'][:-1]
+        ref_trc = data[-1, :]
+        cdata = data[:-1, :]
+        # corr_mat['time'] = corr_mat['time'][:-1]
 
     # print ref_trc.shape
     
@@ -2198,9 +2207,8 @@ def corr_mat_shift(corr_mat, ref_trc=None, tw=None, shift_range=10,
                       return_sim_mat=return_sim_mat)
 
     # add the keys the can directly be transferred from the correlation matrix
-    dt['time'] = corr_mat['time']
-    dt['stats'] = corr_mat['stats']
-
+    dt['corr_start'] = stats['corr_start']
+    dt['stats'] = stats
     return dt
 
 
