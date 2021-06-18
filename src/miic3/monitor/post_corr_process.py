@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Thursday, 17th June 2021 04:38:22 pm
+Last Modified: Friday, 18th June 2021 03:48:51 pm
 '''
 
 from typing import List, Tuple
@@ -24,13 +24,13 @@ import os
 import h5py
 
 # ETS imports
-# try:
-#     BC_UI = True
-#     from traits.api import HasTraits, Int, Float, Array, Str, Enum, Directory
-#     from traitsui.api import View, Item, VGroup
-# except ImportError:
-#     BC_UI = False
-#     pass
+try:
+    BC_UI = True
+    from traits.api import HasTraits, Int, Float, Array, Str, Enum, Directory
+    from traitsui.api import View, Item, VGroup
+except ImportError:
+    BC_UI = False
+    pass
     
 # Obspy imports
 from obspy.signal.invsim import cosine_taper
@@ -340,9 +340,10 @@ def corr_mat_trim(
     :return: **tdat**: trimmed correlation matrix
     """
 
+    # fetch indices of start and end
     start = int(
-        np.floor((starttime-stats['start_lag'][0])*stats['sampling_rate']))
-    end = int(np.floor((endtime-stats['end_lag'][0])*stats['sampling_rate']))
+        np.floor((starttime-stats['start_lag'])*stats['sampling_rate']))
+    end = int(np.floor((endtime-stats['start_lag'])*stats['sampling_rate']))
 
     # check range
     if start < 0:
@@ -357,8 +358,8 @@ def corr_mat_trim(
     data = data[:, start: end + 1]
 
     # set starttime, endtime and npts of the new stats
-    stats['start_lag'] = [starttime]
-    stats['end_lag'] = [endtime]
+    stats['start_lag'] = starttime
+    stats['end_lag'] = endtime
     stats['starttime'] = lag0 + starttime
     stats['npts'] = data.shape[1]
     return data, stats
@@ -465,7 +466,8 @@ if BC_UI:
     
 
 def corr_mat_resample(
-    data: np.ndarray, stats: trace.Stats, start_times: list, end_times=[]):
+    data: np.ndarray, stats: trace.Stats, start_times: List[UTCDateTime],
+        end_times=[]) -> Tuple[np.ndarray, trace.Stats]:
     """ Function to create correlation matrices with constant sampling
 
     When created with recombine_corr_data the correlation matrix contains all
@@ -508,11 +510,14 @@ def corr_mat_resample(
 
     # old sampling times
     # otime = convert_time(corr_mat['time'])
+    otime = stats['corr_start']
 
     # new sampling times
-    stime = convert_time(start_times)
+    # stime = convert_time(start_times)
+    stime = start_times
     if len(end_times) > 0:
-        etime = convert_time(end_times)
+        # etime = convert_time(end_times)
+        etime = end_times
     else:
         if len(start_times) == 1:
             # there is only one start_time given and no end_time => average all
@@ -522,8 +527,8 @@ def corr_mat_resample(
             etime = stime + (stime[1] - stime[0])
 
     # create masked array to avoid nans
-    mm = np.ma.masked_array(data,
-                    np.isnan(data))
+    mm = np.ma.masked_array(
+        data, np.isnan(data))
 
     # new corr_data matrix
     nmat = np.empty([len(stime), data.shape[1]])
@@ -535,16 +540,18 @@ def corr_mat_resample(
                                                 #  a list(tuple) for dimensions
         if len(ind[0]) == 1:
             # one measurement found
-            nmat[ii, :] = corr_mat['corr_data'][ind[0], :]
+            nmat[ii, :] = data[ind[0], :]
         elif len(ind[0]) > 1:
             # more than one measurement in range
             nmat[ii, :] = np.mean(mm[ind[0], :], 0).filled(np.nan)
 
     # assign new data
-    corr_mat['corr_data'] = nmat
-    corr_mat['time'] = convert_time_to_string(stime)
+    data = nmat
 
-    return corr_mat
+    stats['corr_start'] = [UTCDateTime(st) for st in stime]
+    stats['corr_end'] = [UTCDateTime(et) for et in etime]
+
+    return data, stats
 
 
 if BC_UI:
@@ -839,13 +846,13 @@ def corr_mat_normalize(
     # start
     if starttime:
         # first sample
-        start = starttime - stats[0]['start_lag']
+        start = starttime - stats['start_lag']
         start = int(np.floor(start*stats['sampling_rate']))
     else:
         start = None
 
     if endtime:
-        end = endtime - stats[0]['start_lag']
+        end = endtime - stats['start_lag']
         end = int(np.floor(end*stats['sampling_rate']))
     else:
         end = None
@@ -870,12 +877,9 @@ def corr_mat_normalize(
     else:
         print('Error: Normtype is unknown.')
         return data
-    # print 'norm', norm
     # normalize the matrix
-    # print 'val1', nmat['corr_data'][:,start:end]
     norm[norm == 0] = 1
     data /= np.tile(np.atleast_2d(norm).T, (1, data.shape[1]))
-    # print 'val2', nmat['corr_data'][:,start:end]
     return data
 
 
@@ -1332,7 +1336,6 @@ def corr_mat_decimate(corr_mat, factor):
     fdat['stats']['sampling_rate'] = float(fdat['stats']['sampling_rate'])/factor
     start = convert_time([fdat['stats']['starttime']])[0]
     length = (fdat['stats']['npts'] - 1)/fdat['stats']['sampling_rate']
-    print(start, length)
     fdat['stats']['endtime'] = convert_time_to_string([convert_time([fdat['stats']['starttime']])[0] \
             + timedelta(seconds=(fdat['stats']['npts'] - 1)/fdat['stats']['sampling_rate'])])[0]
     return fdat
@@ -1909,7 +1912,7 @@ def _rotate_corr_dict(cmd,horiz_only=False):
 
 def corr_mat_stretch(
     data: np.ndarray, stats: trace.Stats, ref_trc: np.ndarray = None,
-    tw: List[np.ndarray ] = None, stretch_range: float = 0.1,
+    tw: List[np.ndarray] = None, stretch_range: float = 0.1,
     stretch_steps: int = 100, sides: str = 'both',
         return_sim_mat: bool = False) -> dict:
     """ Time stretch estimate through stretch and comparison.
@@ -1979,12 +1982,10 @@ def corr_mat_stretch(
 
     data = deepcopy(data)
 
-    zerotime = lag0
-
     # starttime = convert_time([corr_mat['stats']['starttime']])[0]
     # endtime = convert_time([corr_mat['stats']['endtime']])[0]
-    dta = -stats['start_lag'][0]
-    dte = stats['end_lag'][0]
+    dta = -stats['start_lag']
+    dte = stats['end_lag']
 
     # format (trimm) the matrix for zero-time to be either at the beginning
     # or at the center as required by
@@ -2002,16 +2003,16 @@ def corr_mat_stretch(
         data = np.concatenate((data,
                             np.atleast_2d(ref_trc)), 0)
         reft = np.tile([UTCDateTime(1900, 1, 1)], (nr))
-        stats['corr_start'] = np.concatenate((stats['corr_start'] , reft), 0)
+        stats['corr_start'] = np.concatenate((stats['corr_start'], reft), 0)
 
     # trim the matrices
-    if sides is "single":
+    if sides == "single":
         # extract the time>0 part of the matrix
         data, stats = corr_mat_trim(data, stats, 0, dte)
     else:
         # extract the central symmetric part (if dt<0 the trim will fail)
         dt = min(dta, dte)
-        data, stats = corr_mat_trim(data, stats, dt, dt)
+        data, stats = corr_mat_trim(data, stats, -dt, dt)
 
     # create or extract references
     if ref_trc is None:
@@ -2022,15 +2023,13 @@ def corr_mat_stretch(
         data = data[:-nr, :]
         stats['corr_start'] = stats['corr_start'][:-nr]
 
-    # print ref_trc.shape
-
     dv = multi_ref_vchange_and_align(
         data, ref_trc, tw=tw, stretch_range=stretch_range,
         stretch_steps=stretch_steps, sides=sides,
         return_sim_mat=return_sim_mat)
 
     # add the keys the can directly be transferred from the correlation matrix
-    dv['corr_start'] = stats['corr_start']
+    # dv['corr_start'] = stats['corr_start']
     dv['stats'] = stats
 
     return dv
@@ -2168,7 +2167,7 @@ def corr_mat_shift(
         # corr_mat['time'] = np.concatenate((corr_mat['time'], reft), 0)
 
     # trim the marices
-    if sides is "single":
+    if sides == "single":
         # extract the time>0 part of the matrix
         corr_mat = corr_mat_trim(data, stats, 0, dte)
     else:

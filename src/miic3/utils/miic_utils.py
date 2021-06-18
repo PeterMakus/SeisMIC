@@ -8,9 +8,9 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Tuesday, 15th June 2021 10:48:02 am
+Last Modified: Friday, 18th June 2021 03:55:17 pm
 '''
-from typing import Tuple
+from typing import List, Tuple
 from warnings import warn
 
 import numpy as np
@@ -345,3 +345,87 @@ def trim_trace_delta(
     return tr.trim(
         starttime=tr.stats.starttime+start, endtime=tr.stats.endtime-end,
         *args, **kwargs)
+
+
+# Time keys
+t_keys = ['starttime', 'endtime', 'corr_start', 'corr_end']
+# No stats, keys that are not in stats but attributes of the respective objects
+no_stats = [
+    'corr', 'value', 'sim_mat', 'second_axis', 'method_array', 'vt_array',
+    'data']
+
+
+def save_header_to_np_array(stats: Stats) -> dict:
+    """
+    Converts an obspy header to a format that allows it to be saved in an
+    npz file (i.e., several gzipped npy files)
+
+    :param stats: input Header
+    :type stats: Stats
+    :return: Dictionary, whose keys are the names of the arrays and the values
+        the arrays themselves. Can be fed into ``np.savez`` as `**kwargs`
+    :rtype: dict
+    """
+    array_dict = {}
+    for k in stats:
+        if k in t_keys:
+            array_dict[k] = convert_utc_to_timestamp(stats[k])
+        else:
+            array_dict[k] = np.array([stats[k]])
+    return array_dict
+
+
+def load_header_from_np_array(array_dict: dict) -> Stats:
+    """
+    Takes the *dictionary-like* return-value of `np.load` and converts the
+    corresponding keywords into an obspy header.
+
+    :param array_dict: Return value of `np.load`
+    :type array_dict: dict
+    :return: The obspy header object
+    :rtype: Stats
+    """
+    d = {}
+    for k in array_dict:
+        if k in no_stats:
+            continue
+        elif k in t_keys:
+            d[k] = convert_timestamp_to_utcdt(array_dict[k])
+        else:
+            d[k] = array_dict[k][0]
+    return Stats(d)
+
+
+def convert_utc_to_timestamp(
+        utcdt: UTCDateTime or List[UTCDateTime]) -> np.ndarray:
+    """
+    Converts :class:`obspy.core.utcdatetime.UTCDateTime` objects to floats.
+
+    :param utcdt: The input times, either a list of utcdatetimes or one
+        utcdatetime
+    :type utcdt: UTCDateTimeorList[UTCDateTime]
+    :return: A numpy array of timestamps
+    :rtype: np.ndarray
+    """
+    if isinstance(utcdt, UTCDateTime):
+        utcdt = [utcdt]
+    timestamp = np.array([t.timestamp for t in utcdt])
+    return timestamp
+
+
+def convert_timestamp_to_utcdt(timestamp: np.ndarray) -> List[UTCDateTime]:
+    """
+    Converts a numpy array holding timestamps (i.e., floats) to a list of
+    UTCDateTime objects
+
+    :param timestamp: numpy array holding timestamps
+    :type timestamp: np.ndarray
+    :return: a list of UTCDateTime objects
+    :rtype: List[UTCDateTime]
+    """
+    timestamp = list(timestamp)
+    for ii, t in enumerate(timestamp):
+        timestamp[ii] = UTCDateTime(t)
+    if len(timestamp) == 1:
+        timestamp = timestamp[0]
+    return timestamp

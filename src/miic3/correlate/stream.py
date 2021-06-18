@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Wednesday, 16th June 2021 04:44:28 pm
+Last Modified: Friday, 18th June 2021 03:54:33 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -17,11 +17,12 @@ from obspy import Stream, Trace, Inventory, UTCDateTime
 from obspy.core import Stats
 
 from miic3.utils.miic_utils import trace_calc_az_baz_dist, \
-    inv_calc_az_baz_dist, lag0
+    inv_calc_az_baz_dist, lag0, save_header_to_np_array, \
+        load_header_from_np_array
 from miic3.plot.plot_utils import plot_correlation
 from miic3.monitor.post_corr_process import corr_mat_normalize, \
     corr_mat_extract_trace, corr_mat_stretch, corr_mat_smooth, \
-        corr_mat_filter, corr_mat_trim
+        corr_mat_filter, corr_mat_trim, corr_mat_resample
 from miic3.monitor.dv import DV
 
 
@@ -141,6 +142,40 @@ class CorrBulk(object):
         self.ref_trc = outdata
         return outdata
 
+    def resample(
+        self, starttimes: List[UTCDateTime],
+            endtimes: List[UTCDateTime] = []):
+        """ Function to create correlation matrices with constant sampling
+
+        When created from a CorrStream the correlation matrix contains all
+        available correlation traces but homogeneous sampling is not guaranteed
+        as correlation functions may be missing due to data gaps. This function
+        restructures the correlation matrix by inserting or averaging
+        correlation functions to provide temporally homogeneous sampling.
+        Inserted correlation functions consist of 'nan' if gaps are present and
+        averaging is done if more than one correlation function falls in a bin
+        between start_times[i] and end_times[i]. If end_time is an empty list
+        (default) end_times[i] is set to
+        start_times[i] + (start_times[1] - start_times[0])
+
+        :type start_times: list of class:`~obspy.core.UTCDateTime` objects
+        :param start_times: list of starting times for the bins of the new
+            sampling
+        :type end_times: list of class:`~obspy.core.UTCDateTime` objects
+        :param end_times: list of end times for the bins of the new
+            sampling
+
+        ..note:: This action is performed **in-place**. If you want to keep
+            the original data use
+            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`
+        """
+        self.data, self.stats = corr_mat_resample(
+            self.data, self.stats, starttimes, endtimes)
+        self.stats.processing_bulk += [
+            'Resampled. Starttimes: %s, Endtimes %s' % (
+                str(starttimes), str(endtimes))]
+        return self
+
     def smooth(
         self, wsize: int, wtype: str = 'flat',
             axis: int = 1) -> np.ndarray:
@@ -187,6 +222,17 @@ class CorrBulk(object):
             sides, return_sim_mat)
         return DV(**dv_dict)
 
+    def save(self, path: str):
+        """
+        Save the object to a numpy binary format (**.npz**)
+
+        :param path: Output path
+        :type path: str
+        """
+        kwargs = save_header_to_np_array(self.stats)
+        np.savez_compressed(
+            path, data=self.data, **kwargs)
+
     def trim(self, starttime: float, endtime: float):
         """
 
@@ -211,6 +257,20 @@ class CorrBulk(object):
         proc = ['trim: %s, %s' % (str(starttime), str(endtime))]
         self.stats.processing_bulk += proc
         return self
+
+
+def read_corr_bulk(path: str) -> CorrBulk:
+    """
+    Reads a CorrBulk object from an **.npz** file.
+
+    :param path: Path to file
+    :type path: str
+    :return: the corresponding and converted CorrBulk object
+    :rtype: CorrBulk
+    """
+    loaded = np.load(path)
+    stats = load_header_from_np_array(loaded)
+    return CorrBulk(loaded['data'], stats=stats)
 
 
 class CorrStream(Stream):
@@ -843,8 +903,13 @@ def convert_statlist_to_bulk_stats(
     :rtype: Stats
     """
     stats = statlist[0].copy()
-    mutables = ['corr_start', 'corr_end', 'start_lag', 'end_lag']
-    immutables = ['npts', 'sampling_rate', 'network', 'station', 'channel']
+    # can change from trace to trace
+    mutables = ['corr_start', 'corr_end']
+    # Should / have to be identical for each trace
+    # Not 100% sure if start and end_lag should be on this list
+    immutables = [
+        'npts', 'sampling_rate', 'network', 'station', 'channel', 'start_lag',
+        'end_lag']
     if varying_loc:
         mutables += ['location']
     else:

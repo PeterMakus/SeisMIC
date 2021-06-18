@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 16th June 2021 04:40:36 pm
+Last Modified: Friday, 18th June 2021 03:22:08 pm
 '''
 import logging
 import os
@@ -110,6 +110,7 @@ and network combinations %s' % str(
         del cst
         # Do the actual processing:
         cb.normalize(normtype='absmax')
+        cb.resample(self.starttimes, self.endtimes)
         cb.filter(
             (self.options['dv']['freq_min'], self.options['dv']['freq_max']))
         cb.trim(

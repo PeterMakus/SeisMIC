@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Thursday, 17th June 2021 10:07:00 am
+Last Modified: Friday, 18th June 2021 10:04:07 am
 '''
 from typing import List, Tuple
 
@@ -400,13 +400,9 @@ def multi_ref_vchange(
     # When there is just 1 reference trace no loop is necessary
     if reftr_count == 1:
         key = "reftr_0"
-        value = time_stretch_estimate(corr_data,
-                                      ref_trc=ref_trs,
-                                      tw=tw,
-                                      stretch_range=stretch_range,
-                                      stretch_steps=stretch_steps,
-                                      sides=sides,
-                                      remove_nans=remove_nans)
+        value = time_stretch_estimate(
+            corr_data, ref_trc=ref_trs, tw=tw, stretch_range=stretch_range,
+            stretch_steps=stretch_steps, sides=sides, remove_nans=remove_nans)
         multi_ref_panel.update({key: value})
     else:  # For multiple-traces loops
         for i in range(reftr_count):
@@ -759,19 +755,15 @@ def multi_ref_vchange_and_align(
                 time windows. Only the first time-window will be used")
         tw = tw[0]
 
-    multi_ref_panel = multi_ref_vchange(corr_data,
-                                        ref_trs,
-                                        tw=tw,
-                                        stretch_range=stretch_range,
-                                        stretch_steps=stretch_steps,
-                                        sides=sides,
-                                        remove_nans=remove_nans)
+    multi_ref_panel = multi_ref_vchange(
+        corr_data, ref_trs, tw=tw, stretch_range=stretch_range,
+        stretch_steps=stretch_steps, sides=sides, remove_nans=remove_nans)
 
     n_ref = len(list(multi_ref_panel.keys()))
 
     if n_ref > 1:
-        dv = estimate_reftr_shifts_from_dt_corr(multi_ref_panel,
-                                                return_sim_mat=return_sim_mat)
+        dv = estimate_reftr_shifts_from_dt_corr(
+            multi_ref_panel, return_sim_mat=return_sim_mat)
     else:
         # changed key here
         dv = multi_ref_panel['reftr_0']
