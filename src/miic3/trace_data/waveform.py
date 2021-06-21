@@ -46,17 +46,15 @@ class Store_Client(object):
         self.fileborder_seconds = 30
         self.fileborder_samples = 5000
         self.sds_root = os.path.join(path, 'mseed')
-        if not os.path.exists(
-                os.path.dirname(self.sds_root)) and not read_only:
-            os.makedirs(os.path.dirname(self.sds_root))
-        self.inv_name = os.path.join(path, "inventory", "inventory.xml")
-        if os.path.exists(self.inv_name):
+        if not read_only:
+            os.makedirs(self.sds_root, exist_ok=True)
+        self.inv_dir = os.path.join(path, "inventory")
+        if os.listdir(self.inv_dir):
             self.inventory = self.read_inventory()
         else:
             self.inventory = Inventory()
-        if not os.path.exists(
-                os.path.dirname(self.inv_name)) and not read_only:
-            os.makedirs(os.path.dirname(self.inv_name))
+        if not read_only:
+            os.makedirs(self.inv_dir, exist_ok=True)
         self.sds_type = "D"
         self.lclient = lClient(
             self.sds_root, sds_type=self.sds_type, format="MSEED",
@@ -101,7 +99,7 @@ class Store_Client(object):
 
         mdl.download(
             domain, restrictions, mseed_storage=self._get_mseed_storage,
-            stationxml_storage=self.inv_name)
+            stationxml_storage=self.inv_dir)
 
     def get_waveforms(
         self, network: str, station: str, location: str, channel: str,
@@ -287,7 +285,7 @@ class Store_Client(object):
         :return: Station Inventory
         :rtype: Inventory
         """
-        self.inventory = read_inventory(self.inv_name)
+        self.inventory = read_inventory(os.path.join(self.inv_dir, '*.xml'))
         return self.inventory
 
     def select_inventory_or_load_remote(
@@ -312,7 +310,6 @@ class Store_Client(object):
                     channel='*', level='response')
             self._write_inventory(inv)
         return inv
-
 
     def _write_local_data(self, st):
         """
@@ -354,7 +351,9 @@ class Store_Client(object):
             self.inventory += ninv
         else:
             self.inventory = ninv
-        self.inventory.write(self.inv_name, format="STATIONXML", validate=True)
+        self.inventory.write(
+            os.path.join(self.inv_dir, 'inventory.xml'),
+            format="STATIONXML", validate=True)
 
 
 class FS_Client(object):

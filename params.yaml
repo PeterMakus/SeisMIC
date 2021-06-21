@@ -68,15 +68,15 @@ co:
                     #{'filter':
                     #    {'kwargs':{'type':'bandpass',
                     #            'freqmin':.01, 'freqmax':9}}}  #0.01 9
-                    {'function':'miic3.utils.miic_utils.stream_filter',
-                      'args':{'ftype':'bandpass',
-                              'filter_option':{'freqmin':0.5, #0.01
-                                               'freqmax':1}}},
+                    {'function':'miic3.utils.miic_utils.detrend_st',
+                    'args':{'type':'simple'}},
                     {'function':'miic3.utils.miic_utils.cos_taper_st',
                       'args':{'taper_len': 10, # seconds
                               'taper_at_masked': True}},
-                    {'function':'miic3.utils.miic_utils.detrend_st',
-                    'args':{'type':'simple'}},
+                    {'function':'miic3.utils.miic_utils.stream_filter',
+                      'args':{'ftype':'bandpass',
+                              'filter_option':{'freqmin':2, #0.01
+                                               'freqmax':8}}}
                      #{'function':'miic.core.stream.stream_mute',
                      # 'args':{'taper_len':100,
                      #         'mute_method':'std_factor',
@@ -134,4 +134,31 @@ co:
     # type: string ['NO', 'ZNE->ZRT', 'NE->RT']
     # Not used yet
     rotation : 'NO'
+
+
+#### parameters for the estimation of time differences
+dv:
+    # subfolder for storage of time difference results
+    subdir : 'vel_change'
+
+    # Plotting
+    plot_vel_change : True
+
+    ### Definition of calender time windows for the time difference measurements
+    start_date : '2015-08-1 00:00:01.0'  # %Y-%m-%dT%H:%M:%S.%fZ'
+    end_date : '2016-01-01 00:00:00.0'
+    win_len : 86400                         # length of window in which EGFs are stacked
+    date_inc : 86400                        # increment of measurements
+
+    ### Frequencies
+    freq_min : 0.1
+    freq_max : 0.5
+
+    ### Definition of lapse time window
+    tw_start : 20     # lapse time of first sample [s]
+    tw_len : 60       # length of window [s]
+    
+    ### Range to try stretching
+    stretch_range : 0.03
+    stretch_steps : 1000
 

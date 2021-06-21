@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 16th June 2021 10:12:38 am
+Last Modified: Monday, 21st June 2021 03:30:20 pm
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -412,7 +412,7 @@ class Correlator(object):
                     win.taper(max_percentage=0.05)
                 if self.rank == 0:
                     self.options['combinations'] = calc_cross_combis(
-                        win, ex_dict)
+                        win, ex_dict, self.options['combination_method'])
                 else:
                     self.options['combinations'] = None
                 self.options['combinations'] = self.comm.bcast(
