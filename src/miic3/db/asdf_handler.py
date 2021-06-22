@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Tuesday, 22nd June 2021 03:37:34 pm
+Last Modified: Tuesday, 22nd June 2021 04:06:05 pm
 '''
 
 from glob import glob
@@ -233,11 +233,11 @@ class NoiseDB(object):
         :rtype: Stream
         """
         with ASDFDataSet(self.loc, mode="r", mpi=False) as ds:
-            st = ds.waveforms[
-                "%s.%s" % (self.network, self.station)].processed.slice(
-                    start, end)
+            st = ds.get_waveforms(
+                self.network, self.station, '*', '*', start, end, 'processed',
+                automerge=True)
             st.merge()  # To return one trace rather than several
-        if not st:
+        if not st.count():
             raise NoDataError('No Data between requested start and end.')
         return st
 

@@ -3,7 +3,7 @@ Module to test the asdf handler.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th March 2021 04:26:31 pm
-Last Modified: Tuesday, 22nd June 2021 03:37:20 pm
+Last Modified: Tuesday, 22nd June 2021 04:05:36 pm
 '''
 import unittest
 from unittest import mock
@@ -11,6 +11,7 @@ from unittest import mock
 import numpy as np
 from obspy import read, read_inventory
 from obspy.core import AttribDict
+from obspy.core.stream import Stream
 
 from miic3.db import asdf_handler
 
@@ -66,49 +67,42 @@ class TestNoiseDB(unittest.TestCase):
 
     @mock.patch('miic3.db.asdf_handler.ASDFDataSet')
     def test_get_time_window(self, asdf_mock):
-        asdf_mock.return_value.__enter__.return_value = AttribDict(
-            waveforms=AttribDict(
-                {'%s.%s' % (self.network, self.station): AttribDict({
-                    'processed': self.st})}),
-            auxiliary_data=AttribDict(
-                PreprocessingParameters=AttribDict(
-                    param=AttribDict(
-                        parameters=self.param))))
+        wf_mock = mock.Mock()
+        start = self.st[0].stats.starttime - 100
+        end = self.st[0].stats.endtime - 5
         start = self.st[0].stats.starttime + np.random.randint(1, 10)
         end = self.st[0].stats.endtime - np.random.randint(1, 10)
+        wf_mock.get_waveforms.return_value = self.st.slice(start, end)
+        asdf_mock.return_value.__enter__.return_value = wf_mock
         st_out = self.ndb.get_time_window(start, end)
         # Check times
         self.assertAlmostEqual(st_out[0].stats.starttime, start)
         self.assertAlmostEqual(st_out[0].stats.endtime, end)
+        wf_mock.get_waveforms.assert_called_once_with(
+            self.network, self.station, '*', '*', start, end, 'processed',
+                automerge=True)
 
     @mock.patch('miic3.db.asdf_handler.ASDFDataSet')
     def test_get_partial_data(self, asdf_mock):
-        asdf_mock.return_value.__enter__.return_value = AttribDict(
-            waveforms=AttribDict(
-                {'%s.%s' % (self.network, self.station): AttribDict({
-                    'processed': self.st})}),
-            auxiliary_data=AttribDict(
-                PreprocessingParameters=AttribDict(
-                    param=AttribDict(
-                        parameters=self.param))))
+        wf_mock = mock.Mock()
         start = self.st[0].stats.starttime - 100
         end = self.st[0].stats.endtime - 5
+        wf_mock.get_waveforms.return_value = self.st.slice(start, end)
+        asdf_mock.return_value.__enter__.return_value = wf_mock
         st_out = self.ndb.get_time_window(start, end)
         # Check times
         self.assertAlmostEqual(
             st_out[0].stats.starttime, self.st[0].stats.starttime)
         self.assertAlmostEqual(st_out[0].stats.endtime, end)
+        wf_mock.get_waveforms.assert_called_once_with(
+            self.network, self.station, '*', '*', start, end, 'processed',
+                automerge=True)
 
     @mock.patch('miic3.db.asdf_handler.ASDFDataSet')
     def test_no_data(self, asdf_mock):
-        asdf_mock.return_value.__enter__.return_value = AttribDict(
-            waveforms=AttribDict(
-                {'%s.%s' % (self.network, self.station): AttribDict({
-                    'processed': self.st})}),
-            auxiliary_data=AttribDict(
-                PreprocessingParameters=AttribDict(
-                    param=AttribDict(
-                        parameters=self.param))))
+        wf_mock = mock.Mock()
+        wf_mock.get_waveforms.return_value = Stream()
+        asdf_mock.return_value.__enter__.return_value = wf_mock
         start = self.st[0].stats.starttime - 100
         end = self.st[0].stats.starttime - 5
         with self.assertRaises(asdf_handler.NoDataError):
