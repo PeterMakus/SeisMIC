@@ -4,7 +4,7 @@ UnitTests for the waveform module.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 15th March 2021 03:33:25 pm
-Last Modified: Friday, 4th June 2021 03:45:41 pm
+Last Modified: Tuesday, 22nd June 2021 01:11:34 pm
 '''
 
 import unittest
@@ -19,9 +19,11 @@ from miic3.trace_data import waveform
 
 
 class TestStoreClient(unittest.TestCase):
+    @mock.patch('miic3.trace_data.waveform.os.listdir')
     @mock.patch('miic3.trace_data.waveform.os.path.isdir')
-    def setUp(self, isdir_mock):
+    def setUp(self, isdir_mock, listdir_mock):
         isdir_mock.return_value = True
+        listdir_mock.return_value = False
         dir = os.path.join('/my', 'random', 'dir')
         self.outdir = os.path.join(dir, 'mseed')
         self.net = 'mynet'

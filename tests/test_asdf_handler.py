@@ -3,7 +3,7 @@ Module to test the asdf handler.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th March 2021 04:26:31 pm
-Last Modified: Thursday, 27th May 2021 12:45:58 pm
+Last Modified: Tuesday, 22nd June 2021 01:03:31 pm
 '''
 import unittest
 from unittest import mock
@@ -44,17 +44,17 @@ class TestNoiseDB(unittest.TestCase):
         """
         Test the result of get_active_times
         """
+        wf_mock = mock.Mock()
+        wf_mock.get_waveform_attributes.return_value = \
+            {'%s.%s__processed' % (self.network, self.station): {
+                'sampling_rate': self.param['sampling_rate'],
+                'starttime': self.st[0].stats.starttime}}
         asdf_mock.return_value.__enter__.return_value = AttribDict(
-            waveforms=AttribDict(
-                {'%s.%s' % (self.network, self.station): AttribDict({
-                    'processed': self.st})}),
-            auxiliary_data=AttribDict(
-                PreprocessingParameters=AttribDict(
-                    param=AttribDict(
-                        parameters=self.param))))
+            waveforms={'%s.%s' % (self.network, self.station): wf_mock})
+ 
         act_times = self.ndb.get_active_times()
         self.assertAlmostEqual(act_times[0], self.st[0].stats.starttime)
-        self.assertAlmostEqual(act_times[1], self.st[0].stats.endtime)
+        self.assertAlmostEqual(act_times[1], self.st[0].stats.starttime+24*3600)
 
     def test_no_file(self):
         """
