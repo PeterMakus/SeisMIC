@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Tuesday, 22nd June 2021 04:06:05 pm
+Last Modified: Tuesday, 22nd June 2021 04:15:14 pm
 '''
 
 from glob import glob
@@ -204,6 +204,8 @@ class NoiseDB(object):
         :type increment: int, optional
         :return: Stream object containing daily traces.
         :rtype: :class:`~obspy.core.Stream`
+
+        .. warning:: This will fail if the dataset is too large.
         """
 
         with ASDFDataSet(self.loc, mode="r", mpi=False) as ds:
@@ -220,10 +222,6 @@ class NoiseDB(object):
         """
         Return a Stream between the requested times.
 
-        .. note:: Will not raise an error if the time is only partly available.
-        However, this will raise an error if there is no data at all.
-
-
         :param start: Starttime
         :type start: UTCDateTime
         :param end: Endtime
@@ -231,6 +229,9 @@ class NoiseDB(object):
         :raises NoDataError: If the stream to be returned is empty
         :return: Stream containing all data in the requested time frame.
         :rtype: Stream
+
+        .. note:: Will not raise an error if the time is only partly available.
+        However, this will raise an error if there is no data at all.
         """
         with ASDFDataSet(self.loc, mode="r", mpi=False) as ds:
             st = ds.get_waveforms(

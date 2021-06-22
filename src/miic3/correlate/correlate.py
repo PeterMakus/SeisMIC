@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 22nd June 2021 03:18:18 pm
+Last Modified: Tuesday, 22nd June 2021 04:34:18 pm
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -154,7 +154,28 @@ class Correlator(object):
                         self.noisedbs[0].network, self.noisedbs[0].station,
                         self.sampling_rate))
 
-    def find_existing_times(self, tag: str, channel: str = '*'):
+    def find_existing_times(self, tag: str, channel: str = '*') -> dict:
+        """
+        Returns the already existing starttimes in form of a dictionary (see
+        below)
+
+        :param tag: The tag that the waveforms are saved under
+        :type tag: str
+        :param channel: Channel Combination Code (e.g., CH0-CH1),
+            wildcards accepted. Defaults to '*'
+        :type channel: str, optional
+        :return: Dictionary that is structured as in the example below
+        :rtype: dict
+
+        Examples
+        --------
+        >>> out_dict = my_correlator.find_existing_times('mytag', 'BHZ-BHH')
+        >>> print(out_dict)
+        {'NET0.STAT0': {
+            'NET1.STAT1': {'BHZ-BHH': [%list of starttimes] ,
+            'NET2.STAT2': {'BHZ-BHH':[%list of starttimes]}}}
+            
+        """
         netcombs, statcombs = compute_network_station_combinations(
             self.netlist, self.statlist)
         ex_dict = {}
@@ -313,27 +334,6 @@ class Correlator(object):
         for ndb in self.noisedbs:
             inv.extend(ndb.get_inventory())
         return inv
-
-    # def _all_data_to_stream(self) -> Stream:
-    #     """
-    #     Moves all the available data into one :class:`~obspy.core.Stream`
-    #     object.
-    #     Also computes all the available station combinations from that data.
-
-    #     :warning: Very RAM hungry, consider using
-    #     :funct:`~miic3.correlate.correlate.Correlator._generate_data()`.
-
-    #     :return: A stream containing all data
-    #     :rtype: :class:`~obspy.core.stream.Stream`
-    #     """
-    #     warn('will be removed soon', DeprecationWarning)
-    #     opt = self.options['subdivision']
-    #     st = Stream()
-    #     for ndb in self.noisedbs:
-    #         st.extend(ndb.get_all_data(
-    #             window_length=opt['corr_len'], increment=opt['corr_inc']))
-    #     self.options['combinations'] = calc_cross_combis(st)
-    #     return st
 
     def _generate_data(self) -> Iterator[Tuple[Stream, bool]]:
         """
