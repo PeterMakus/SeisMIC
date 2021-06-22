@@ -3,11 +3,11 @@
 proj_dir : '/home/pm/Documents/PhD/testdata/'
 # directory for logging information
 log_subdir : 'log'
-debug: True
+debug: False
 # folder for figures
 fig_subdir : 'figures'
 # folder containing preprocessed data
-prepro_subdir: 'testnb_preprocessed_wir_true'
+prepro_subdir: 'testnb_preprocessed'
 
 
 #### parameters that are network specific
@@ -31,7 +31,7 @@ net:
 co:
     # subdirectory of 'proj_dir' to store correlation
     # type: string
-    subdir : 'corr_wir_true'
+    subdir : 'corr_recom_true'
     # times sequences to read for cliping or muting on stream basis
     # These should be long enough for the reference (e.g. the standard
     # deviation) to be rather independent of the parts to remove
@@ -119,7 +119,7 @@ co:
                                     {'function':'miic3.correlate.correlate.spectralWhitening',
                                      'args':{'joint_norm':False}},
                                     {'function':'miic3.correlate.correlate.FDfilter',
-                                     'args':{'freqs':[0.01,0.02,9,10]}}
+                                     'args':{'flimit':[0.01,0.02,9,10]}}
                                     ],
                  'lengthToSave':100,
                  'center_correlation':True,      # make sure zero correlation time is in the center
