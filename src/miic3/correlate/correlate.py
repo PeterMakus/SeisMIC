@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 21st June 2021 03:30:20 pm
+Last Modified: Tuesday, 22nd June 2021 03:18:18 pm
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -398,8 +398,8 @@ class Correlator(object):
             st = self.comm.bcast(st, root=0)
             if st.count() == 0:
                 # No time available at none of the stations
-                self.logger.debug(
-                    'No data found for day %s' % str(UTCDateTime(t)))
+                self.logger.warning(
+                    'No data found for day %s.' % str(UTCDateTime(t)))
                 continue
 
             # Second loop to return the time window in correlation length

@@ -3,7 +3,7 @@ Module to test the asdf handler.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th March 2021 04:26:31 pm
-Last Modified: Tuesday, 22nd June 2021 01:03:31 pm
+Last Modified: Tuesday, 22nd June 2021 03:37:20 pm
 '''
 import unittest
 from unittest import mock
@@ -44,11 +44,12 @@ class TestNoiseDB(unittest.TestCase):
         """
         Test the result of get_active_times
         """
+        asdf_starttime = self.st[0].stats.starttime.timestamp*1e9
         wf_mock = mock.Mock()
         wf_mock.get_waveform_attributes.return_value = \
             {'%s.%s__processed' % (self.network, self.station): {
                 'sampling_rate': self.param['sampling_rate'],
-                'starttime': self.st[0].stats.starttime}}
+                'starttime': asdf_starttime}}
         asdf_mock.return_value.__enter__.return_value = AttribDict(
             waveforms={'%s.%s' % (self.network, self.station): wf_mock})
  

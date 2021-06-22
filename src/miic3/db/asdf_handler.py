@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Tuesday, 22nd June 2021 01:03:45 pm
+Last Modified: Tuesday, 22nd June 2021 03:37:34 pm
 '''
 
 from glob import glob
@@ -189,8 +189,8 @@ class NoiseDB(object):
             except pyasdf.exceptions.WaveformNotInFileException:
                 # This happens when there are no times at all
                 return (None, None)
-        starttime = UTCDateTime(min(st))
-        endtime = UTCDateTime(max(st) + 24*3600)
+        starttime = convert_asdf_time_to_utcdt(min(st))
+        endtime = convert_asdf_time_to_utcdt(max(st)) + 24*3600
         return (starttime, endtime)
 
     def get_all_data(
@@ -282,3 +282,7 @@ def get_available_stations(
     netlist = list(codea[:, 0])
     statlist = list(codea[:, 1])
     return netlist, statlist
+
+
+def convert_asdf_time_to_utcdt(asdf_time: int) -> UTCDateTime:
+    return UTCDateTime(asdf_time*1e-9)
