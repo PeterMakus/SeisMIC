@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Friday, 18th June 2021 03:48:51 pm
+Last Modified: Friday, 25th June 2021 12:31:45 pm
 '''
 
 from typing import List, Tuple
@@ -53,7 +53,9 @@ from miic3.monitor.stretch_mod import multi_ref_vchange_and_align, \
 # from miic.core.stream import _Selector, corr_trace_to_obspy
 
 
-def _smooth(x, window_len=10, window='hanning'):
+def _smooth(
+    x: np.ndarray, window_len: int = 10,
+        window: str = 'hanning') -> np.ndarray:
     """ Smooth the data using a window with requested size.
 
     This method is based on the convolution of a scaled window with the signal.
@@ -163,22 +165,13 @@ def corr_mat_smooth(
     return data
 
 
-if BC_UI:
-    class _corr_mat_smooth_view(HasTraits):
-    
-        wsize = Int(10)
-        wtype = Enum(['flat', 'hanning', 'hamming', 'bartlett', 'blackman'])
-        axis = Enum([0, 1])
-    
-        trait_view = View(Item('wsize'),
-                          Item('wtype'),
-                          Item('axis'))
-
 def unicode_to_string(input):
     """Convert all unicode strings to utf-8 strings
     """
     if isinstance(input, dict):
-        return {unicode_to_string(key): unicode_to_string(value) for key, value in input.items()}
+        return {
+            unicode_to_string(key): unicode_to_string(
+                value) for key, value in input.items()}
     elif isinstance(input, list):
         return [unicode_to_string(element) for element in input]
     elif isinstance(input, str):
@@ -187,38 +180,38 @@ def unicode_to_string(input):
         return input
 
 
-def corr_mat_from_h5(filename):
-    """Load a correlation matrix from hdf5 file
+# def corr_mat_from_h5(filename):
+#     """Load a correlation matrix from hdf5 file
 
-    Load data from an hdf5 file written with :func:`corr_mat_to_h5`
-    into a correlation-matrix-dictionary.
+#     Load data from an hdf5 file written with :func:`corr_mat_to_h5`
+#     into a correlation-matrix-dictionary.
 
-    :type filename: str
-    :param filename: file to load
-    :rtype: dict
-    :return: correlation matrix dictionary
-    """
+#     :type filename: str
+#     :param filename: file to load
+#     :rtype: dict
+#     :return: correlation matrix dictionary
+#     """
 
-    with h5py.File(filename) as hf:
-        keys = list(hf.keys())
-        req_keys = ['stats','stats_tr1','stats_tr2','corr_data']
-        for req_key in req_keys:
-            assert req_key in keys, 'Missing item in %s: %s' % (filename, req_key)
-        for key in keys:
-            assert (key in req_keys) or key == 'time', 'Unrecognized item present in %s: %s' %(filename,key)
-        corr_mat = {'time':[]}
-        for key in ['stats','stats_tr1','stats_tr2']:
-            corr_mat.update({key:recursively_load_dict_contents_from_group(hf, key)})
-        tkeys = sorted(hf['corr_data'].keys())
-        corr_mat.update({'corr_data':np.zeros((len(tkeys),corr_mat['stats']['npts']))})
-        for num,tkey in enumerate(tkeys):
-            # time string modified for consistency with those read from matlab files
-            tkey_mod=tkey.replace('T',' ').replace('Z','')
-            corr_mat['time'].append(tkey_mod)
-            corr_mat['corr_data'][num,:] = hf['corr_data/'+tkey]
-        corr_mat['time']=np.array(corr_mat['time'])
-        corr_mat = unicode_to_string(corr_mat)
-    return corr_mat
+#     with h5py.File(filename) as hf:
+#         keys = list(hf.keys())
+#         req_keys = ['stats','stats_tr1','stats_tr2','corr_data']
+#         for req_key in req_keys:
+#             assert req_key in keys, 'Missing item in %s: %s' % (filename, req_key)
+#         for key in keys:
+#             assert (key in req_keys) or key == 'time', 'Unrecognized item present in %s: %s' %(filename,key)
+#         corr_mat = {'time':[]}
+#         for key in ['stats','stats_tr1','stats_tr2']:
+#             corr_mat.update({key:recursively_load_dict_contents_from_group(hf, key)})
+#         tkeys = sorted(hf['corr_data'].keys())
+#         corr_mat.update({'corr_data':np.zeros((len(tkeys),corr_mat['stats']['npts']))})
+#         for num,tkey in enumerate(tkeys):
+#             # time string modified for consistency with those read from matlab files
+#             tkey_mod=tkey.replace('T',' ').replace('Z','')
+#             corr_mat['time'].append(tkey_mod)
+#             corr_mat['corr_data'][num,:] = hf['corr_data/'+tkey]
+#         corr_mat['time']=np.array(corr_mat['time'])
+#         corr_mat = unicode_to_string(corr_mat)
+#     return corr_mat
 
 
 def corr_mat_filter(
@@ -266,48 +259,48 @@ if BC_UI:
                           Item('order'))
 
 
-def corr_trace_filter(corr_trace, freqs, order=3):
-    """ Filter a correlation trace.
+# def corr_trace_filter(corr_trace, freqs, order=3):
+#     """ Filter a correlation trace.
 
-    Filters the correlation trace corr_trace in the frequency band specified in
-    freqs using a zero phase filter of twice the order given in order.
+#     Filters the correlation trace corr_trace in the frequency band specified in
+#     freqs using a zero phase filter of twice the order given in order.
 
-    :type corr_trace: dictionary of the type correlation trace
-    :param corr_trace: correlation trace to be plotted
-    :type freqs: array-like of length 2
-    :param freqs: lower and upper limits of the pass band in Hertz
-    :type order: int
-    :param order: half the order of the Butterworth filter
+#     :type corr_trace: dictionary of the type correlation trace
+#     :param corr_trace: correlation trace to be plotted
+#     :type freqs: array-like of length 2
+#     :param freqs: lower and upper limits of the pass band in Hertz
+#     :type order: int
+#     :param order: half the order of the Butterworth filter
 
-    :rtype tdat: dictionary of the type correlation trace
-    :return: **fdat**: filtered correlation trace
-    """
+#     :rtype tdat: dictionary of the type correlation trace
+#     :return: **fdat**: filtered correlation trace
+#     """
 
-    # check input
-    if not isinstance(corr_trace, dict):
-        raise TypeError("corr_trace needs to be correlation trace dictionary.")
+#     # check input
+#     if not isinstance(corr_trace, dict):
+#         raise TypeError("corr_trace needs to be correlation trace dictionary.")
 
-#    if corr_mat_check(corr_mat)['is_incomplete']:
-#        raise ValueError("Error: corr_mat is not a valid correlation_matix \
-#            dictionary.")
+# #    if corr_mat_check(corr_mat)['is_incomplete']:
+# #        raise ValueError("Error: corr_mat is not a valid correlation_matix \
+# #            dictionary.")
 
-    if len(freqs) != 2:
-        raise ValueError("freqs needs to be a two element array with the \
-            lower and upper limits of the filter band in Hz.")
+#     if len(freqs) != 2:
+#         raise ValueError("freqs needs to be a two element array with the \
+#             lower and upper limits of the filter band in Hz.")
 
-    # # end check
+#     # # end check
 
-    fe = float(corr_trace['stats']['sampling_rate']) / 2
+#     fe = float(corr_trace['stats']['sampling_rate']) / 2
 
-    (b, a) = butter(order,
-                    np.array(freqs, dtype='float') / fe,
-                    btype='band')
+#     (b, a) = butter(order,
+#                     np.array(freqs, dtype='float') / fe,
+#                     btype='band')
 
-    fdat = copy(corr_trace)
-    fdat['corr_trace'] = lfilter(b, a, fdat['corr_trace'])
-    fdat['corr_trace'] = lfilter(b, a, fdat['corr_trace'][::-1])[::-1]
+#     fdat = copy(corr_trace)
+#     fdat['corr_trace'] = lfilter(b, a, fdat['corr_trace'])
+#     fdat['corr_trace'] = lfilter(b, a, fdat['corr_trace'][::-1])[::-1]
 
-    return fdat
+#     return fdat
 
 
 if BC_UI:
@@ -451,20 +444,6 @@ def corr_mat_merge(corr_mat_list, network=None, station=None,
     return mdat
 
 
-if BC_UI:
-    class _corr_mat_merge_view(HasTraits):
-    
-        network = Str("PF")
-        station = Str("FOR")
-        location = Str("")
-        channel = Str("HLE")
-    
-        trait_view = View(Item('network'),
-                          Item('station'),
-                          Item('location'),
-                          Item('channel'))
-    
-
 def corr_mat_resample(
     data: np.ndarray, stats: trace.Stats, start_times: List[UTCDateTime],
         end_times=[]) -> Tuple[np.ndarray, trace.Stats]:
@@ -480,50 +459,42 @@ def corr_mat_resample(
     and end_times[i]. If end_time is an empty list (default) end_times[i] is
     set to start_times[i] + (start_times[1] - start_times[0])
 
-    :type corr_mat: dictionary
-    :param corr_mat: correlation matrix dictionary as produced by
-        :class:`~miic.core.macro.recombine_corr_data`
-    :type start_times: list of class:`~datetime.datetime` objects or equvalent
-        strings (see :class:`~miic.core.miic_utils.convert_time`)
+    :type data: np.ndarray
+    :param data: 2D matrix holding the correlation data
+    :type Stats: :class:`~obspy.core.Stats`
+    :param Stats: The stats object belonging to the
+        :class:`~miic3.correlate.stream.CorrBulk` object.
+    :type start_times: list of :class:`~obspy.UTCDateTime` objects
     :param start_times: list of starting times for the bins of the new
         sampling
-    :type end_times: list of class:`~datetime.datetime` objects or equvalent
-        strings (see :class:`~miic.core.miic_utils.convert_time`)
+    :type end_times: list of :class:`~obspy.UTCDateTime` objects
     :param end_times: list of starting times for the bins of the new sampling
 
-    :rtype: dictionary
-    :return: **corr_mat**: is the same dictionary as the input but with
-        adopted corr_mat['corr_data'] and corr_mat['time'] keys.
+    :rtype: tuple
+    :return: the new data array and altered stats object.
     """
-
-    # check input
-    # if not isinstance(corr_mat, dict):
-    #     raise TypeError("corr_mat needs to be correlation matrix dictionary.")
-
-    # if corr_mat_check(corr_mat)['is_incomplete']:
-    #     raise ValueError("Error: corr_mat is not a valid correlation_matix \
-    #         dictionary.")
 
     if len(end_times) > 0 and (len(end_times) != len(start_times)):
         raise ValueError("end_times should be empty or of the same length as \
             start_times.")
 
     # old sampling times
-    # otime = convert_time(corr_mat['time'])
-    otime = stats['corr_start']
+    otime = [ii.timestamp for ii in stats['corr_start']]
+    if isinstance(start_times[0], UTCDateTime):
+        start_times = [ii.timestamp for ii in start_times]
 
     # new sampling times
-    # stime = convert_time(start_times)
     stime = start_times
-    if len(end_times) > 0:
-        # etime = convert_time(end_times)
+    if len(end_times):
+        if isinstance(end_times[0], UTCDateTime):
+            end_times = [ii.timestamp for ii in end_times]
         etime = end_times
     else:
         if len(start_times) == 1:
             # there is only one start_time given and no end_time => average all
-            # etime = [otime[-1]]
             etime = stats['corr_end'][-1]
         else:
+            stime = np.array(stime)  # Cannot be a list for this operation
             etime = stime + (stime[1] - stime[0])
 
     # create masked array to avoid nans
@@ -537,7 +508,7 @@ def corr_mat_resample(
     for ii in range(len(stime)):
         # index of measurements between start_time[ii] and end_time[ii]
         ind = np.nonzero((otime >= stime[ii]) * (otime < etime[ii]))  # ind is
-                                                #  a list(tuple) for dimensions
+        # a list(tuple) for dimensions
         if len(ind[0]) == 1:
             # one measurement found
             nmat[ii, :] = data[ind[0], :]
@@ -552,12 +523,6 @@ def corr_mat_resample(
     stats['corr_end'] = [UTCDateTime(et) for et in etime]
 
     return data, stats
-
-
-if BC_UI:
-    class _corr_mat_resample_view(HasTraits):
-    
-        trait_view = View()
 
 
 def corr_mat_reverse(corr_mat):
