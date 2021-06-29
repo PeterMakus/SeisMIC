@@ -8,13 +8,14 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 25th June 2021 09:33:09 am
-Last Modified: Friday, 25th June 2021 12:32:49 pm
+Last Modified: Tuesday, 29th June 2021 04:41:22 pm
 '''
 
 import unittest
 
 import numpy as np
 from obspy import UTCDateTime
+from obspy.core.trace import Stats
 
 from miic3.monitor import post_corr_process as pcp
 
@@ -54,20 +55,59 @@ class TestSmooth(unittest.TestCase):
         self.assertLess(out.max(), win.max())
 
 
+class TestCorrMatTrim(unittest.TestCase):
+    def setUp(self):
+        npts = 501
+        self.data = np.tile(
+            np.sin(np.linspace(0, np.pi, npts, endpoint=True)), (2, 1))
+        self.stats = Stats({
+            'npts': npts, 'start_lag': -125, 'end_lag': 125,
+            'sampling_rate': 2})
+
+    def test_result(self):
+        start = np.random.randint(-124, -1)
+        end = np.random.randint(1, 124)
+        npts_trim = (end-start)*2+1
+        ndata, nstats = pcp.corr_mat_trim(self.data, self.stats, start, end)
+        self.assertEqual(nstats.start_lag, start)
+        self.assertEqual(nstats.end_lag, end)
+        self.assertEqual(nstats.npts, npts_trim)
+        self.assertEqual(ndata.shape, (2, npts_trim))
+
+    def test_before(self):
+        start = -150
+        end = 100
+        ndata, _ = pcp.corr_mat_trim(self.data, self.stats, start, end)
+        self.assertTrue(np.all(ndata==self.data))
+
+    def test_after(self):
+        start = -100
+        end = 150
+        ndata, _ = pcp.corr_mat_trim(self.data, self.stats, start, end)
+        self.assertTrue(np.all(ndata==self.data))
+
+    def test_identical(self):
+        start = -125
+        end = 125
+        ndata, _ = pcp.corr_mat_trim(self.data, self.stats, start, end)
+        self.assertTrue(np.all(ndata==self.data))
+
+
 class TestCorrMatResample(unittest.TestCase):
     def test_wrong_len_end_times(self):
         with self.assertRaises(ValueError):
             pcp.corr_mat_resample([], {}, [0]*25, [1, 2])
 
     def test_result(self):
-        corr_data = np.empty((11, 500))
+        corr_data = np.random.rand(11, 500)
         starts = [UTCDateTime(ii) for ii in np.arange(0, 101, 10)]
         stats = {'corr_start': starts}
         nstarts = [UTCDateTime(ii) for ii in np.arange(0, 101, 20)]
-        outdata, outstats = pcp.corr_mat_resample(corr_data, stats, nstarts)
+        outdata, outstats = pcp.corr_mat_resample(corr_data.copy(), stats, nstarts)
         self.assertEqual(outdata.shape[0], 6)
         self.assertTrue(np.all(outstats['corr_start'] == nstarts))
-        self.assertTrue(np.allclose(np.mean(corr_data[:1, :]), outdata[0]))
+        self.assertTrue(
+            np.allclose(np.mean(corr_data[(0, 1), :], axis=0), outdata[0,]))
 
     def test_gaps(self):
         corr_data = np.empty((10, 500))
@@ -79,6 +119,8 @@ class TestCorrMatResample(unittest.TestCase):
         outdata, outstats = pcp.corr_mat_resample(corr_data, stats, nstarts)
         self.assertEqual(outdata.shape[0], 11)
         self.assertTrue(np.all(np.isnan(outdata[4, :])))
+        self.assertTrue(np.all(outstats['corr_start'] == nstarts))
+
 
 
 

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 24th June 2021 02:23:40 pm
-Last Modified: Tuesday, 29th June 2021 11:43:23 am
+Last Modified: Tuesday, 29th June 2021 03:29:20 pm
 '''
 
 import unittest
@@ -64,9 +64,26 @@ class TestTimeStretchEstimate(unittest.TestCase):
     def test_no_stretch(self):
         corr = np.tile(self.ref, (4, 1))
         dv = sm.time_stretch_estimate(corr, self.ref, stretch_steps=101)
-        print(dv)
-        print(dv['value'])
+        #print(dv)
+        #print(dv['value'])
         self.assertTrue(np.allclose(dv['value'], [0, 0, 0, 0]))
+
+    def test_neg_stretch(self):
+        stretch = np.arange(1, 11, 1)/100  # in per cent
+        # number of points for new
+        nn = ((1+stretch)*self.n).round()
+        corr = np.empty((len(nn), self.n))
+        # inter = interp1d(self.xref, self.ref, kind='cubic')
+        for ii, n in enumerate(nn):
+            x = np.linspace(0, np.pi, int(n), endpoint=True)
+            jj = int(round(abs(len(x)-self.n)/2))
+            corr[ii, :] = np.sin(x)[jj:-jj][:self.n]
+        # make the most stretch trace the ref trace
+        ref = corr[-1, :]
+        dv = sm.time_stretch_estimate(corr[:-1, :], ref, stretch_steps=1000)
+        print(dv['value'])
+        #self.assertTrue(np.allclose(dv['value'], stretch[1:]))
+
 
     
 

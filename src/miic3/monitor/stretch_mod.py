@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Tuesday, 29th June 2021 10:20:06 am
+Last Modified: Tuesday, 29th June 2021 03:35:14 pm
 '''
 from typing import List, Tuple
 
@@ -865,8 +865,8 @@ def time_shift_estimate(
         # if center is in the middle use only half the length for the
         # time window
         else:
-            tw = time_windows_creation([0],
-                                       [int(np.floor(mat.shape[1] / 2.))])
+            tw = time_windows_creation(
+                [0], [int(np.floor(mat.shape[1] / 2.))])
 
     # taper and extend the reference trace to avoid interpolation
     # artefacts at the ends of the trace

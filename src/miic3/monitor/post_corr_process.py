@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Friday, 25th June 2021 12:31:45 pm
+Last Modified: Tuesday, 29th June 2021 04:31:00 pm
 '''
 
 from typing import List, Tuple
@@ -322,15 +322,15 @@ def corr_mat_trim(
     positive and negative. If `starttime` and `endtime` are datetime.datetime
     objects they are taken as absolute start and endtime.
 
-    :type corr_mat: dictionary of the type correlation matrix
+    :type data: np.ndarray
     :param corr_mat: correlation matrix to be trimmed
-    :type starttime: float or datetime.datetime object
+    :type starttime: float
     :param starttime: start time in seconds with respect to the zero position
-    :type endtime: float or datetime.datetime object
+    :type endtime: float
     :param order: end time in seconds with respect to the zero position
 
-    :rtype tdat: dictionary of the type correlation matrix
-    :return: **tdat**: trimmed correlation matrix
+    :rtype tuple: Tuple[np.ndarray, trace.Stats]
+    :return: trimmed correlation matrix and new stats object
     """
 
     # fetch indices of start and end
@@ -353,7 +353,8 @@ def corr_mat_trim(
     # set starttime, endtime and npts of the new stats
     stats['start_lag'] = starttime
     stats['end_lag'] = endtime
-    stats['starttime'] = lag0 + starttime
+    # Not really in use, so why bothering
+    # stats['starttime'] = lag0 + starttime
     stats['npts'] = data.shape[1]
     return data, stats
 
