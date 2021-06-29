@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Friday, 18th June 2021 10:04:07 am
+Last Modified: Thursday, 24th June 2021 03:03:54 pm
 '''
 from typing import List, Tuple
 
@@ -40,6 +40,8 @@ def time_windows_creation(
         if not np.isscalar(t_width) and len(t_width) != len(starting_list):
             raise ValueError("t_width must be a scalar or list of scalars of\
                             the same length as starting_list")
+    if np.any(np.array(t_width) <= 0):
+        raise ValueError('t_width must only contain values greater than 0.')
 
     tw_list = []
 
@@ -497,7 +499,7 @@ def est_shift_from_dt_corr(
     return comb_corr, shift
 
 
-def _create_G(n_ref):
+def _create_G(n_ref: int) -> np.ndarray:
     """ Create the G matrix for the multi-trace alignment
     """
 
