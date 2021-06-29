@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Thursday, 24th June 2021 03:03:54 pm
+Last Modified: Tuesday, 29th June 2021 10:20:06 am
 '''
 from typing import List, Tuple
 
@@ -305,10 +305,9 @@ def time_stretch_estimate(
         ref_stretch[k, :] = ref_tr_spline(time_idx * this_fac)
 
     # search best fit of the crosscorrs to one of the stretched ref_traces
-    dv = velocity_change_estimate(mat, tw, ref_stretch,
-                                  stretchs, sides=sides,
-                                  return_sim_mat=True,
-                                  remove_nans=remove_nans)
+    dv = velocity_change_estimate(
+        mat, tw, ref_stretch, stretchs, sides=sides, return_sim_mat=True,
+        remove_nans=remove_nans)
 
     # TODO: It is not really clear why it it necessary to transpose here so
     # this is the fist point where to look in case of errors.
