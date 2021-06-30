@@ -8,12 +8,12 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Tuesday, 29th June 2021 04:31:00 pm
+Last Modified: Wednesday, 30th June 2021 05:12:02 pm
 '''
 
 from typing import List, Tuple
 import numpy as np
-from copy import copy, deepcopy
+from copy import deepcopy
 from scipy.signal import butter, lfilter, hilbert, resample
 from scipy.io import savemat
 from datetime import datetime, timedelta
@@ -21,7 +21,7 @@ from obspy.core import UTCDateTime
 from glob import glob1
 from os.path import join
 import os
-import h5py
+
 
 # ETS imports
 try:
@@ -250,15 +250,6 @@ def corr_mat_filter(
     return data
 
 
-if BC_UI:
-    class _corr_mat_filter_view(HasTraits):
-        freqs = Array(value=[0.8, 1.5])
-        order = Int(4)
-    
-        trait_view = View(Item('freqs'),
-                          Item('order'))
-
-
 # def corr_trace_filter(corr_trace, freqs, order=3):
 #     """ Filter a correlation trace.
 
@@ -301,15 +292,6 @@ if BC_UI:
 #     fdat['corr_trace'] = lfilter(b, a, fdat['corr_trace'][::-1])[::-1]
 
 #     return fdat
-
-
-if BC_UI:
-    class _corr_trace_filter_view(HasTraits):
-        freqs = Array(value=[0.8, 1.5])
-        order = Int(4)
-    
-        trait_view = View(Item('freqs'),
-                          Item('order'))
 
 
 def corr_mat_trim(
@@ -359,90 +341,80 @@ def corr_mat_trim(
     return data, stats
 
 
-if BC_UI:
-    class _corr_mat_trim_view(HasTraits):
-    
-        starttime = Float(8.0)
-        endtime = Float(20.0)
-    
-        trait_view = View(Item('starttime'),
-                          Item('endtime'))
-    
+# def corr_mat_merge(corr_mat_list, network=None, station=None,
+#                    location=None, channel=None):
+#     """ Merge correlation matrices.
 
-def corr_mat_merge(corr_mat_list, network=None, station=None,
-                   location=None, channel=None):
-    """ Merge correlation matrices.
+#     If different correlation matrices are created for the same station
+#     combination they can be merged with this function. NO CHECK IS PERFORMED
+#     FOR CONSISTENCY OF METADATA. Please check yourself that it makes sense to
+#     merge the data. Timing information is handled. If `network`, `station`,
+#     `location` or `channel` is provided the combined seed ID of the merged
+#     correlation matrix is set to these values. Otherwise the ID of the first
+#     correlation matrix in the list is used for the merged matrix.
 
-    If different correlation matrices are created for the same station
-    combination they can be merged with this function. NO CHECK IS PERFORMED
-    FOR CONSISTENCY OF METADATA. Please check yourself that it makes sense to
-    merge the data. Timing information is handled. If `network`, `station`,
-    `location` or `channel` is provided the combined seed ID of the merged
-    correlation matrix is set to these values. Otherwise the ID of the first
-    correlation matrix in the list is used for the merged matrix.
+#     :type corr_mat_list: list of dictionaries of the type correlation matrix
+#     :param corr_mat: list of correlation matrices to be merged
 
-    :type corr_mat_list: list of dictionaries of the type correlation matrix
-    :param corr_mat: list of correlation matrices to be merged
+#     :rtype mdat: dictionary of the type correlation matrix
+#     :return: **mdat**: merged correlation matrix
+#     """
 
-    :rtype mdat: dictionary of the type correlation matrix
-    :return: **mdat**: merged correlation matrix
-    """
+#     # check input
+#     for corr_mat in corr_mat_list:
 
-    # check input
-    for corr_mat in corr_mat_list:
+#         if not isinstance(corr_mat, dict):
+#             raise TypeError("corr_mat needs to be correlation matrix \
+#                 dictionary.")
 
-        if not isinstance(corr_mat, dict):
-            raise TypeError("corr_mat needs to be correlation matrix \
-                dictionary.")
+#         if corr_mat_check(corr_mat)['is_incomplete']:
+#             raise ValueError("Error: corr_mat is not a valid \
+#                 correlation_matix dictionary.")
 
-        if corr_mat_check(corr_mat)['is_incomplete']:
-            raise ValueError("Error: corr_mat is not a valid \
-                correlation_matix dictionary.")
+#     # estimate required size for the merged correlation matrix
+#     ntrc = 0
+#     starttime = convert_time([corr_mat_list[0]['stats']['starttime']])[0]
+#     sampling_rate = corr_mat_list[0]['stats']['sampling_rate']
+#     endtime = convert_time([corr_mat_list[0]['stats']['starttime']])[0] + \
+#                 timedelta((float(corr_mat_list[0]['stats']['npts']) - 1.) * \
+#                           1. / sampling_rate / 86400.)
 
-    # estimate required size for the merged correlation matrix
-    ntrc = 0
-    starttime = convert_time([corr_mat_list[0]['stats']['starttime']])[0]
-    sampling_rate = corr_mat_list[0]['stats']['sampling_rate']
-    endtime = convert_time([corr_mat_list[0]['stats']['starttime']])[0] + \
-                timedelta((float(corr_mat_list[0]['stats']['npts']) - 1.) * \
-                          1. / sampling_rate / 86400.)
+#     # find the minimum endtime and maximum starttime
+#     for corr_mat in corr_mat_list:
+#         if corr_mat['stats']['sampling_rate'] != sampling_rate:
+#             continue
+#         size = corr_mat['corr_data'].shape
+#         ntrc += size[0]
+#         this_starttime = convert_time([corr_mat['stats']['starttime']])[0]
+#         this_endtime = this_starttime + timedelta(seconds=\
+#                             (float(corr_mat['stats']['npts']) - 1.) * \
+#                             1. / sampling_rate)
+#         starttime = max([starttime, this_starttime])
+#         endtime = min([endtime, this_endtime])
 
-    # find the minimum endtime and maximum starttime
-    for corr_mat in corr_mat_list:
-        if corr_mat['stats']['sampling_rate'] != sampling_rate:
-            continue
-        size = corr_mat['corr_data'].shape
-        ntrc += size[0]
-        this_starttime = convert_time([corr_mat['stats']['starttime']])[0]
-        this_endtime = this_starttime + timedelta(seconds=\
-                            (float(corr_mat['stats']['npts']) - 1.) * \
-                            1. / sampling_rate)
-        starttime = max([starttime, this_starttime])
-        endtime = min([endtime, this_endtime])
+#     # create merged dictionary
+#     mdat = deepcopy(corr_mat_list[0])
+#     # trim the first matrix
+#     mdat = corr_mat_trim(mdat, starttime, endtime)
+#     for corr_mat in corr_mat_list[1:]:
+#         if corr_mat['stats']['sampling_rate'] != sampling_rate:
+#             continue
+#         tdat = corr_mat_trim(corr_mat, starttime, endtime)
+#         mdat['corr_data'] = np.concatenate((mdat['corr_data'],
+#                                             tdat['corr_data']), axis=0)
+#         mdat['time'] = np.concatenate((mdat['time'], corr_mat['time']), axis=0)
 
-    # create merged dictionary
-    mdat = deepcopy(corr_mat_list[0])
-    # trim the first matrix
-    mdat = corr_mat_trim(mdat, starttime, endtime)
-    for corr_mat in corr_mat_list[1:]:
-        if corr_mat['stats']['sampling_rate'] != sampling_rate:
-            continue
-        tdat = corr_mat_trim(corr_mat, starttime, endtime)
-        mdat['corr_data'] = np.concatenate((mdat['corr_data'],
-                                            tdat['corr_data']), axis=0)
-        mdat['time'] = np.concatenate((mdat['time'], corr_mat['time']), axis=0)
+#     # set the combined seed ID
+#     if network:
+#         mdat['stats']['network'] = network
+#     if station:
+#         mdat['stats']['station'] = station
+#     if location:
+#         mdat['stats']['location'] = location
+#     if channel:
+#         mdat['stats']['channel'] = channel
 
-    # set the combined seed ID
-    if network:
-        mdat['stats']['network'] = network
-    if station:
-        mdat['stats']['station'] = station
-    if location:
-        mdat['stats']['location'] = location
-    if channel:
-        mdat['stats']['channel'] = channel
-
-    return mdat
+#     return mdat
 
 
 def corr_mat_resample(
@@ -526,263 +498,216 @@ def corr_mat_resample(
     return data, stats
 
 
-def corr_mat_reverse(corr_mat):
-    """ Reverse the data in a correlation matrix.
+# def corr_mat_reverse(corr_mat):
+#     """ Reverse the data in a correlation matrix.
 
-    If a correlation matrix was calculated for a pair of stations sta1-sta2
-    this function reverses the causal and acausal parts of the correlation
-    matrix as if the correlations were calculated for the pair sta2-sta1.
+#     If a correlation matrix was calculated for a pair of stations sta1-sta2
+#     this function reverses the causal and acausal parts of the correlation
+#     matrix as if the correlations were calculated for the pair sta2-sta1.
 
-    :type corr_mat: dictionary
-    :param corr_mat: correlation matrix dictionary as produced by
-        :class:`~miic.core.macro.recombine_corr_data`
+#     :type corr_mat: dictionary
+#     :param corr_mat: correlation matrix dictionary as produced by
+#         :class:`~miic.core.macro.recombine_corr_data`
 
-    :rtype: dictionary
-    :return: **corr_mat**: is the same dictionary as the input but with
-        reversed order of the station pair.
+#     :rtype: dictionary
+#     :return: **corr_mat**: is the same dictionary as the input but with
+#         reversed order of the station pair.
+#     """
+
+#     # check input
+#     if not isinstance(corr_mat, dict):
+#         raise TypeError("corr_mat needs to be correlation matrix dictionary.")
+
+#     if corr_mat_check(corr_mat)['is_incomplete']:
+#         raise ValueError("Error: corr_mat is not a valid correlation_matix \
+#             dictionary.")
+
+#     # check input
+#     zerotime = lag0
+
+#     # reverse the stats_tr1 and stats_tr2
+#     stats_tr1 = corr_mat['stats_tr1']
+#     corr_mat['stats_tr1'] = corr_mat['stats_tr2']
+#     corr_mat['stats_tr2'] = stats_tr1
+
+#     # reverse the locations in the stats
+#     stla = corr_mat['stats']['stla']
+#     stlo = corr_mat['stats']['stlo']
+#     stel = corr_mat['stats']['stel']
+#     corr_mat['stats']['stla'] = corr_mat['stats']['evla']
+#     corr_mat['stats']['stlo'] = corr_mat['stats']['evlo']
+#     corr_mat['stats']['stel'] = corr_mat['stats']['evel']
+#     corr_mat['stats']['evla'] = stla
+#     corr_mat['stats']['evlo'] = stlo
+#     corr_mat['stats']['evel'] = stel
+
+#     # reverse azimuth and backazimuth
+#     tmp = corr_mat['stats']['az']
+#     corr_mat['stats']['az'] = corr_mat['stats']['baz']
+#     corr_mat['stats']['baz'] = tmp
+
+#     # reverse the matrix
+#     corr_mat['corr_data'] = corr_mat['corr_data'][:, -1::-1]
+
+#     # adopt the starttime and endtime
+#     trace_length = timedelta(seconds=float(corr_mat['stats']['npts'] - 1) / \
+#                              corr_mat['stats']['sampling_rate'])
+#     endtime = convert_time([corr_mat['stats']['starttime']])[0] + trace_length
+#     starttime = zerotime - (endtime - zerotime)
+#     corr_mat['stats']['starttime'] = convert_time_to_string([starttime])[0]
+#     corr_mat['stats']['endtime'] = \
+#         convert_time_to_string([starttime + trace_length])[0]
+
+#     # reverse the seedID
+#     keywords = ['network', 'station', 'location', 'channel']
+#     for key in keywords:
+#         if key in corr_mat['stats_tr1'] and key in corr_mat['stats_tr2']:
+#             # empty loctions show up as empty lists -> convert in empty string
+#             if isinstance(corr_mat['stats_tr1'][key], list):
+#                 corr_mat['stats_tr1'][key] = ''
+#             if isinstance(corr_mat['stats_tr2'][key], list):
+#                 corr_mat['stats_tr2'][key] = ''
+#             corr_mat['stats'][key] = \
+#                 corr_mat['stats_tr1'][key] + '-' + corr_mat['stats_tr2'][key]
+
+#     return corr_mat
+
+
+# def corr_mat_time_select(corr_mat, starttime=None, endtime=None):
+#     """ Select time period from a correlation matrix.
+
+#     Select correlation  traces from a correlation matrix that fall into the
+#     time period `starttime`<= selected times <= `endtime` and return them in
+#     a correlation matrix.
+
+#     :type corr_mat: dictionary
+#     :param corr_mat: correlation matrix dictionary as produced by
+#         :class:`~miic.core.macro.recombine_corr_data`
+#     :type starttime: datetime.datetime object or time string
+#     :param starttime: beginning of the selected time period
+#     :type endtime: datetime.datetime object or time string
+#     :param endtime: end of the selected time period
+
+#     :rtype: dictionary
+#     :return: **corr_mat**: correlation matrix dictionary restricted to the
+#         selected time period.
+#     """
+
+#     # check input
+#     if not isinstance(corr_mat, dict):
+#         raise TypeError("corr_mat needs to be correlation matrix dictionary.")
+
+#     if corr_mat_check(corr_mat)['is_incomplete']:
+#         raise ValueError("Error: corr_mat is not a valid correlation_matix \
+#             dictionary.")
+
+#     smat = deepcopy(corr_mat)
+
+#     # convert time vector
+#     time = convert_time(corr_mat['time'])
+
+#     # convert starttime and endtime input.
+#     # if they are None take the first or last values of the time vector
+#     if starttime == None:
+#         starttime = time[0]
+#     else:
+#         if not isinstance(starttime, datetime):
+#             starttime = convert_time([starttime])[0]
+#     if endtime == None:
+#         endtime = time[-1]
+#     else:
+#         if not isinstance(endtime, datetime):
+#             endtime = convert_time([endtime])[0]
+
+#     # select period
+#     ind = np.nonzero((time >= starttime) * (time < endtime))[0]  # ind is
+#                                                 #  a list(tuple) for dimensions
+
+#     # trim the matrix
+#     smat['corr_data'] = corr_mat['corr_data'][ind, :]
+
+#     # adopt time vector
+#     smat['time'] = corr_mat['time'][ind]
+#     #smat['time'] = np.take(corr_mat['time'],ind)
+
+#     return smat
+
+
+def corr_mat_correct_decay(data: np.ndarray, stats: trace.Stats) -> np.ndarray:
     """
-
-    # check input
-    if not isinstance(corr_mat, dict):
-        raise TypeError("corr_mat needs to be correlation matrix dictionary.")
-
-    if corr_mat_check(corr_mat)['is_incomplete']:
-        raise ValueError("Error: corr_mat is not a valid correlation_matix \
-            dictionary.")
-
-    # check input
-    zerotime = lag0
-
-    # reverse the stats_tr1 and stats_tr2
-    stats_tr1 = corr_mat['stats_tr1']
-    corr_mat['stats_tr1'] = corr_mat['stats_tr2']
-    corr_mat['stats_tr2'] = stats_tr1
-
-    # reverse the locations in the stats
-    stla = corr_mat['stats']['stla']
-    stlo = corr_mat['stats']['stlo']
-    stel = corr_mat['stats']['stel']
-    corr_mat['stats']['stla'] = corr_mat['stats']['evla']
-    corr_mat['stats']['stlo'] = corr_mat['stats']['evlo']
-    corr_mat['stats']['stel'] = corr_mat['stats']['evel']
-    corr_mat['stats']['evla'] = stla
-    corr_mat['stats']['evlo'] = stlo
-    corr_mat['stats']['evel'] = stel
-
-    # reverse azimuth and backazimuth
-    tmp = corr_mat['stats']['az']
-    corr_mat['stats']['az'] = corr_mat['stats']['baz']
-    corr_mat['stats']['baz'] = tmp
-
-    # reverse the matrix
-    corr_mat['corr_data'] = corr_mat['corr_data'][:, -1::-1]
-
-    # adopt the starttime and endtime
-    trace_length = timedelta(seconds=float(corr_mat['stats']['npts'] - 1) / \
-                             corr_mat['stats']['sampling_rate'])
-    endtime = convert_time([corr_mat['stats']['starttime']])[0] + trace_length
-    starttime = zerotime - (endtime - zerotime)
-    corr_mat['stats']['starttime'] = convert_time_to_string([starttime])[0]
-    corr_mat['stats']['endtime'] = \
-        convert_time_to_string([starttime + trace_length])[0]
-
-    # reverse the seedID
-    keywords = ['network', 'station', 'location', 'channel']
-    for key in keywords:
-        if key in corr_mat['stats_tr1'] and key in corr_mat['stats_tr2']:
-            # empty loctions show up as empty lists -> convert in empty string
-            if isinstance(corr_mat['stats_tr1'][key], list):
-                corr_mat['stats_tr1'][key] = ''
-            if isinstance(corr_mat['stats_tr2'][key], list):
-                corr_mat['stats_tr2'][key] = ''
-            corr_mat['stats'][key] = \
-                corr_mat['stats_tr1'][key] + '-' + corr_mat['stats_tr2'][key]
-
-    return corr_mat
-
-
-if BC_UI:
-    class _corr_mat_reverse_view(HasTraits):
-    
-        trait_view = View()
-
-
-def corr_mat_time_select(corr_mat, starttime=None, endtime=None):
-    """ Select time period from a correlation matrix.
-
-    Select correlation  traces from a correlation matrix that fall into the
-    time period `starttime`<= selected times <= `endtime` and return them in
-    a correlation matrix.
-
-    :type corr_mat: dictionary
-    :param corr_mat: correlation matrix dictionary as produced by
-        :class:`~miic.core.macro.recombine_corr_data`
-    :type starttime: datetime.datetime object or time string
-    :param starttime: beginning of the selected time period
-    :type endtime: datetime.datetime object or time string
-    :param endtime: end of the selected time period
-
-    :rtype: dictionary
-    :return: **corr_mat**: correlation matrix dictionary restricted to the
-        selected time period.
-    """
-
-    # check input
-    if not isinstance(corr_mat, dict):
-        raise TypeError("corr_mat needs to be correlation matrix dictionary.")
-
-    if corr_mat_check(corr_mat)['is_incomplete']:
-        raise ValueError("Error: corr_mat is not a valid correlation_matix \
-            dictionary.")
-
-    smat = deepcopy(corr_mat)
-
-    # convert time vector
-    time = convert_time(corr_mat['time'])
-
-    # convert starttime and endtime input.
-    # if they are None take the first or last values of the time vector
-    if starttime == None:
-        starttime = time[0]
-    else:
-        if not isinstance(starttime, datetime):
-            starttime = convert_time([starttime])[0]
-    if endtime == None:
-        endtime = time[-1]
-    else:
-        if not isinstance(endtime, datetime):
-            endtime = convert_time([endtime])[0]
-
-    # select period
-    ind = np.nonzero((time >= starttime) * (time < endtime))[0]  # ind is
-                                                #  a list(tuple) for dimensions
-
-    # trim the matrix
-    smat['corr_data'] = corr_mat['corr_data'][ind, :]
-
-    # adopt time vector
-    smat['time'] = corr_mat['time'][ind]
-    #smat['time'] = np.take(corr_mat['time'],ind)
-
-    return smat
-
-
-if BC_UI:
-    class _corr_mat_time_select_view(HasTraits):
-    
-        starttime = Str('2010-12-10T00:00:00.0')
-        endtime = Str('2011-01-10T00:00:00.0')
-    
-        trait_view = View(Item('starttime'),
-                          Item('endtime'))
-
-
-def corr_mat_correct_decay(corr_mat):
-    """ Correct for the amplitude decay in a correlation matrix.
+    Correct for the amplitude decay in a correlation matrix.
 
     Due to attenuation and geometrical spreading the amplitude of the
     correlations decays with increasing lapse time. This decay is corrected
     by dividing the correlation functions by an exponential function that
     models the decay.
 
-    :type corr_mat: dictionary
-    :param corr_mat: correlation matrix dictionary as produced by
-        :class:`~miic.core.macro.recombine_corr_data`
-
-    :rtype: dictionary
-    :return: **corr_mat**: is the same dictionary as the input but with
-        decay corrected amplitudes.
+    :param data: Matrix holding correlation data
+    :type data: np.ndarray
+    :param stats: Stats object afiliated to a CorrBulk object
+    :type stats: trace.Stats
+    :return: correlations with decay corrected amplitudes
+    :rtype: np.ndarray
     """
-
-    # check input
-    if not isinstance(corr_mat, dict):
-        raise TypeError("corr_mat needs to be correlation matrix dictionary.")
-
-    if corr_mat_check(corr_mat)['is_incomplete']:
-        raise ValueError("Error: corr_mat is not a valid correlation_matix \
-            dictionary.")
-
-    zerotime = lag0
-
     # copy input
-    cmat = deepcopy(corr_mat)
+    # cmat = deepcopy(corr_mat)
 
     # calculate the envelope of the correlation matrix
-    env_mat = corr_mat_envelope(corr_mat)
+    env = corr_mat_envelope(data)
 
     # average causal and acausal part of the correlation matrix
-    menv_mat = corr_mat_mirrow(env_mat)
+    env, stats_mirr = corr_mat_mirror(env, stats)
 
     # average to a single correlation function
-    mean_env = np.nansum(menv_mat['corr_data'], 0)
+    env = np.nansum(env, 0)  # Shouldn't that be a mean or divided by the dim?
 
     # fit the decay
-    t = np.arange(menv_mat['stats']['npts'])
-    le = np.log(mean_env)
+    t = np.arange(stats_mirr['npts'])
+    le = np.log(env)
     K, log_A = np.polyfit(t, le, 1)
     A = np.exp(log_A)
 
     # central sample
-    cs = (zerotime - convert_time([corr_mat['stats']['starttime']])[0]). \
-            total_seconds() * corr_mat['stats']['sampling_rate']
+    # cs = (zerotime - convert_time([corr_mat['stats']['starttime']])[0]). \
+    #         total_seconds() * corr_mat['stats']['sampling_rate']
+    cs = -stats['start_lag']*stats['sampling_rate']
     # time vector
-    t = np.absolute(np.arange(corr_mat['stats']['npts']) - cs)
+    t = np.absolute(np.arange(stats['npts']) - cs)
     # theoretical envelope
     tenv = A * np.exp(K * t)
 
     # correct with theoretical envelope
-    cmat['corr_data'] /= np.tile(tenv, [cmat['corr_data'].shape[0], 1])
+    data /= np.tile(tenv, [data.shape[0], 1])
 
-    return cmat
-
-
-if BC_UI:
-    class _corr_mat_correct_decay_view(HasTraits):
-        trait_view = View()
+    return data
 
 
-def corr_mat_envelope(corr_mat):
+def corr_mat_envelope(data: np.ndarray) -> np.ndarray:
     """ Calculate the envelope of a correlation matrix.
 
     The corrlation data of the correlation matrix are replaced by their
     Hilbert envelopes.
 
-    :type corr_mat: dictionary
-    :param corr_mat: correlation matrix dictionary as produced by
-        :class:`~miic.core.macro.recombine_corr_data`
+    :type data: np.ndarray
+    :param data: correlation matrix.
 
-    :rtype: dictionary
-    :return: **corr_mat**: is the same dictionary as the input but with
-        envelopes of the correlation data.
+    :rtype: np.ndarray
+    :return: **hilb**: The envelope of the correlation data in the same shape
+        as the input array.
     """
 
-    # check input
-    if not isinstance(corr_mat, dict):
-        raise TypeError("corr_mat needs to be correlation matrix dictionary.")
-
-    if corr_mat_check(corr_mat)['is_incomplete']:
-        raise ValueError("Error: corr_mat is not a valid correlation_matix \
-            dictionary.")
-
-    # copy input
-    env_mat = deepcopy(corr_mat)
     # calculate the Hilbert transform of the correlation data
-    hilb = hilbert(env_mat['corr_data'], axis=1)
+    hilb = hilbert(data, axis=1)
 
     # replace corr_data with their envelopes
-    env_mat['corr_data'] = np.absolute(hilb)
+    hilb = np.absolute(hilb)
 
-    return env_mat
-
-
-if BC_UI:
-    class _corr_mat_envelope_view(HasTraits):
-        trait_view = View()
+    return hilb
 
 
 def corr_mat_normalize(
     data: np.ndarray, stats: trace.Stats, starttime: float = None,
-        endtime: float = None, normtype: str = 'energy'):
+        endtime: float = None, normtype: str = 'energy') -> np.ndarray:
     """ Correct amplitude variations with time in a correlation matrix.
 
     Measure the maximum of the absolute value of the correlation matrix in
@@ -790,9 +715,11 @@ def corr_mat_normalize(
     this values. A coherent phase in the respective lapse time window will
     have constant ampitude afterwards..
 
-    :type corr_mat: dictionary
-    :param corr_mat: correlation matrix dictionary as produced by
-        :class:`~miic.core.macro.recombine_corr_data`
+    :type data: np.ndarray
+    :param data: correlation matrix from CorrBulk
+    :type stats: :class:`~obspy.core.trace.Stats`
+    :param stats: The stats object from the
+        :class:`~miic3.correlate.stream.CorrBulk` object.
     :type starttime: float
     :param starttime: beginning of time window in seconds with respect to the
         zero position
@@ -803,21 +730,21 @@ def corr_mat_normalize(
     :param normtype: one of the following 'energy', 'max', 'absmax', 'abssum'
         to decide about the way to calculate the normalization.
 
-    :rtype: dictionary
-    :return: **corr_mat**: is the same dictionary as the input but with
-        normalized ampitudes.
+    :rtype: np.ndarray
+    :return: Correlation matrix with normalized ampitudes.
     """
 
     # calculate indices of the time window
     # start
-    if starttime:
+    # needs to be like this because this condition also has to work when it's 0
+    if starttime is not None:
         # first sample
         start = starttime - stats['start_lag']
         start = int(np.floor(start*stats['sampling_rate']))
     else:
         start = None
 
-    if endtime:
+    if endtime is not None:
         end = endtime - stats['start_lag']
         end = int(np.floor(end*stats['sampling_rate']))
     else:
@@ -841,307 +768,278 @@ def corr_mat_normalize(
     elif normtype == 'absmax':
         norm = np.max(np.abs(data[:, start:end]), axis=1)
     else:
-        print('Error: Normtype is unknown.')
-        return data
+        raise ValueError('Normtype is unknown.')
+
     # normalize the matrix
     norm[norm == 0] = 1
     data /= np.tile(np.atleast_2d(norm).T, (1, data.shape[1]))
     return data
 
 
-if BC_UI:
-    class _corr_mat_normalize_view(HasTraits):
-    
-        starttime = Float(8.0)
-        endtime = Float(20.0)
-        normtype = Enum(['energy', 'max', 'absmax', 'abssum'])
-    
-        trait_view = View(Item('starttime'),
-                          Item('endtime'),
-                          Item('normtype'))
+def corr_mat_mirror(data: np.ndarray, stats: trace.Stats) -> Tuple[
+        np.ndarray, trace.Stats]:
+    """
+    Average the causal and acausal parts of a correlation matrix.
 
-
-def corr_mat_mirrow(corr_mat):
-    """ Average the causal and acausal parts of a correlation matrix.
-
-    :type corr_mat: dictionary
-    :param corr_mat: correlation matrix dictionary as produced by
-        :class:`~miic.core.macro.recombine_corr_data`
-
-    :rtype: dictionary
-    :return: **corr_mat**: is the same dictionary as the input but with
-        avaraged causal and acausal parts of the correlation data.
+    :param data: A matrix holding correlation data
+    :type data: np.ndarray
+    :param stats: the stats object corresponding to a CorrBulk object.
+    :type stats: trace.Stats
+    :return: as the input but with
+        avaraged causal and acausal parts of the correlation data
+    :rtype: Tuple[np.ndarray, trace.Stats]
     """
 
-    # check input
-    if not isinstance(corr_mat, dict):
-        raise TypeError("corr_mat needs to be correlation matrix dictionary.")
+    zero_sample = -(stats['start_lag']*stats['sampling_rate'])
 
-    if corr_mat_check(corr_mat)['is_incomplete']:
-        raise ValueError("Error: corr_mat is not a valid correlation_matix \
-            dictionary.")
-
-    zerotime = lag0
-
-    # copy input
-    mir_mat = deepcopy(corr_mat)
-
-    # check whether there is a sample at the zerotime
-    zero_sample = (zerotime -
-            convert_time([corr_mat['stats']['starttime']])[0]). \
-            total_seconds() * corr_mat['stats']['sampling_rate']
+    # if zero_sample <= 0:
+    #     print('No data present for mirrowing: starttime > zerotime.')
+    #     return corr_mat
+    # if convert_time([corr_mat['stats']['endtime']])[0] <= zerotime:
+    #     print('No data present for mirrowing: endtime < zerotime.')
+    #     return corr_mat
     if zero_sample <= 0:
-        print('No data present for mirrowing: starttime > zerotime.')
-        return corr_mat
-    if convert_time([corr_mat['stats']['endtime']])[0] <= zerotime:
-        print('No data present for mirrowing: endtime < zerotime.')
-        return corr_mat
+        print('No data present for mirroring: starttime > zerotime.')
+        return data, stats
+    if stats['end_lag'] <= 0:
+        print('No data present for mirroring: endtime < zerotime.')
+        return data, stats
     if np.fmod(zero_sample, 1) != 0:
-        print('need to shift for mirrowing')
+        print('need to shift for mirroring')
         return 0
 
-    # estimate size of mirrowed array
-    acausal_samples = int((zerotime -
-            convert_time([corr_mat['stats']['starttime']])[0]). \
-            total_seconds() * corr_mat['stats']['sampling_rate'] + 1)
-    causal_samples = int(corr_mat['stats']['npts'] - acausal_samples + 1)
+    # estimate size of mirrored array
+    # acausal_samples = int((zerotime -
+    #         convert_time([corr_mat['stats']['starttime']])[0]). \
+    #         total_seconds() * corr_mat['stats']['sampling_rate'] + 1)
+    acausal_samples = int(zero_sample + 1)
+    causal_samples = int(stats['npts'] - acausal_samples + 1)
     # +1 because sample a zerotime counts twice
     size = np.max([acausal_samples, causal_samples])
     both = np.min([acausal_samples, causal_samples])
 
     # allocate array
-    mir_mat['corr_data'] = np.zeros([corr_mat['corr_data'].shape[0], size])
+    mir_data = np.zeros([data.shape[0], size])
 
     # fill the array
-    mir_mat['corr_data'][:, 0:causal_samples] = \
-        corr_mat['corr_data'][:, acausal_samples - 1:]
-    mir_mat['corr_data'][:, 0:acausal_samples] += \
-        corr_mat['corr_data'][:, acausal_samples - 1::-1]
+    mir_data[:, 0:causal_samples] = data[:, acausal_samples - 1:]
+    mir_data[:, 0:acausal_samples] += data[:, acausal_samples - 1::-1]
 
     # divide by two where both are present
-    mir_mat['corr_data'][:, 0:both] /= 2.
+    mir_data[:, 0:both] /= 2.
 
     # adopt the stats
-    mir_mat['stats']['starttime'] = convert_time_to_string([zerotime])[0]
-    mir_mat['stats']['npts'] = size
-    mir_mat['stats']['endtime'] = convert_time_to_string([zerotime +
-            timedelta(seconds=float(size) /
-            corr_mat['stats']['sampling_rate'])])[0]
+    mir_stats = stats.copy()
+    mir_stats['start_lag'] = 0
+    mir_stats['npts'] = size
+    # -1 because of zero sample
+    mir_stats['end_lag'] = (size-1)/mir_stats['sampling_rate']
 
-    return mir_mat
-
-
-if BC_UI:
-    class _corr_mat_mirrow_view(HasTraits):
-    
-        trait_view = View()
-
-def corr_trace_prep_aftan(corr_trace,outname) :
-    """ Prepare and write out a SAC file for analysis in aFTAN
-    The b , e and dist headers are set in the sac header
-
-    :type corr_trace: dictionary
-    :param corr_trace: correlation trace dictionary as produced by
-        :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
-    :type outname: string
-    :param outname: string for outputfilename
-    """
-    trace = Stream()
-    trace.append(corr_trace_to_obspy(corr_trace))
-    sacstats=AttribDict({'b':-(trace[0].stats.npts-1)/2,'e':(trace[0].stats.npts-1)/2,
-                        'dist':corr_trace['stats']['dist']})
-    trace[0].stats.sac=sacstats
-    trace.write(outname,format="SAC")
-    return
-
-def corr_trace_to_avg_sac(corr_trace,sacfname) :
-    """ Write a SAC file for FTAN analysis on a
-    one-side correlation trace. 
-    :type corr_trace: dictionary
-    :param corr_trace: correlation trace dictionary as produced by
-        :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
-    :type outname: string
-    :param outname: string for outputfilename
-    """
-    avg_corr_trace = corr_trace_mirrow(corr_trace)
-    trace = Stream()
-    trace.append(corr_trace_to_obspy(avg_corr_trace))
-    sacstats=AttribDict({'dist':corr_trace['stats']['dist']})
-    trace[0].stats.sac=sacstats
-    trace.write(sacfname,format="SAC")
-    return
-
-def corr_trace_to_full_sac(corr_trace,sacfname) :
-    """ Write a SAC file for FTAN analysis on a
-    two-sided correlation trace. 
-    :type corr_trace: dictionary
-    :param corr_trace: correlation trace dictionary as produced by
-        :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
-    :type outname: string
-    :param outname: string for outputfilename
-    """
-    trace = Stream()
-    trace.append(corr_trace_to_obspy(corr_trace))
-    sacstats=AttribDict({'dist':corr_trace['stats']['dist']})
-    trace[0].stats.sac=sacstats
-    trace.write(sacfname,format="SAC")
-    return
-
-def corr_trace_mirrow(corr_tr):
-    """ Average the causal and acausal parts of a correlation trace.
-
-    :type corr_tr: dictionary
-    :param corr_tr: correlation trace dictionary as produced by
-        :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
-
-    :rtype: dictionary
-    :return: **corr_tr**: is the same dictionary as the input but with
-        averaged causal and acausal parts of the correlation data.
-    """
-
-    zerotime = lag0
-
-    # copy input
-    mir_tr = deepcopy(corr_tr)
-
-    # check whether there is a sample at the zerotime
-    zero_sample = (zerotime -
-            convert_time([corr_tr['stats']['starttime']])[0]). \
-            total_seconds() * corr_tr['stats']['sampling_rate']
-    if zero_sample <= 0:
-        print('No data present for mirrowing: starttime > zerotime.')
-        return corr_tr
-    if convert_time([corr_tr['stats']['endtime']])[0] <= zerotime:
-        print('No data present for mirrowing: endtime < zerotime.')
-        return corr_tr
-    if np.fmod(zero_sample, 1) != 0:
-        print('need to shift for mirrowing')
-        return 0
-
-    # estimate size of mirrowed array
-    acausal_samples = int((zerotime -
-            convert_time([corr_tr['stats']['starttime']])[0]). \
-            total_seconds() * corr_tr['stats']['sampling_rate'] + 1)
-    causal_samples = int(corr_tr['stats']['npts'] - acausal_samples + 1)
-    # +1 because sample a zerotime counts twice
-    size = np.max([acausal_samples, causal_samples])
-    both = np.min([acausal_samples, causal_samples])
-
-    # allocate array
-    mir_tr['corr_trace'] = np.zeros(size)
-
-    # fill the array
-    mir_tr['corr_trace'][0:causal_samples] = \
-        corr_tr['corr_trace'][acausal_samples - 1:]
-    mir_tr['corr_trace'][0:acausal_samples] += \
-        corr_tr['corr_trace'][acausal_samples - 1::-1]
-
-    # divide by two where both are present
-    mir_tr['corr_trace'][0:both] /= 2.
-
-    # adopt the stats
-    mir_tr['stats']['starttime'] = convert_time_to_string([zerotime])[0]
-    mir_tr['stats']['npts'] = size
-    mir_tr['stats']['endtime'] = convert_time_to_string([zerotime +
-            timedelta(seconds=float(size) /
-            corr_tr['stats']['sampling_rate'])])[0]
-
-    return mir_tr
+    return mir_data, mir_stats
 
 
-def corr_trace_mirror_one_side(corr_tr,method) :
-    """ Mirror the causal or acausal parts of a correlation trace
-        to the other side
+# def corr_trace_prep_aftan(corr_trace,outname) :
+#     """ Prepare and write out a SAC file for analysis in aFTAN
+#     The b , e and dist headers are set in the sac header
 
-    :type corr_tr: dictionary
-    :param corr_tr: correlation trace dictionary as produced by
-        :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
-
-    :rtype: dictionary
-    :return: **corr_tr**: is the same dictionary as the input but with
-        averaged causal and acausal parts of the correlation data.
-    """
-
-    zerotime = lag0
-
-    # copy input
-    mir_tr = deepcopy(corr_tr)
-
-    # check whether there is a sample at the zerotime
-    zero_sample = (zerotime -
-            convert_time([corr_tr['stats']['starttime']])[0]). \
-            total_seconds() * corr_tr['stats']['sampling_rate']
-    if zero_sample <= 0:
-        print('No data present for mirrowing: starttime > zerotime.')
-        return corr_tr
-    if convert_time([corr_tr['stats']['endtime']])[0] <= zerotime:
-        print('No data present for mirrowing: endtime < zerotime.')
-        return corr_tr
-    if np.fmod(zero_sample, 1) != 0:
-        print('need to shift for mirrowing')
-        return 0
-
-    # estimate size of mirrowed array
-    acausal_samples = int((zerotime -
-            convert_time([corr_tr['stats']['starttime']])[0]). \
-            total_seconds() * corr_tr['stats']['sampling_rate'] + 1)
-    causal_samples = int(corr_tr['stats']['npts'] - acausal_samples + 1)
-    # +1 because sample a zerotime counts twice
-    size = np.max([acausal_samples, causal_samples])
-    both = np.min([acausal_samples, causal_samples])
-
-    # Fill array, mirroring one side to the other
-    mir_tr['corr_trace'] = np.zeros(corr_tr['corr_trace'].size)
-    if method=='causal' :
-        mir_tr['corr_trace'][causal_samples-1:]=corr_tr['corr_trace'][causal_samples-1:]
-        mir_tr['corr_trace'][:causal_samples]=corr_tr['corr_trace'][causal_samples-1:][::-1]
-    elif method=='acausal' :
-        mir_tr['corr_trace'][:acausal_samples]=corr_tr['corr_trace'][:acausal_samples]
-        mir_tr['corr_trace'][acausal_samples-1:]=corr_tr['corr_trace'][:acausal_samples][::-1]
-    return mir_tr
+#     :type corr_trace: dictionary
+#     :param corr_trace: correlation trace dictionary as produced by
+#         :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
+#     :type outname: string
+#     :param outname: string for outputfilename
+#     """
+#     trace = Stream()
+#     trace.append(corr_trace_to_obspy(corr_trace))
+#     sacstats=AttribDict({'b':-(trace[0].stats.npts-1)/2,'e':(trace[0].stats.npts-1)/2,
+#                         'dist':corr_trace['stats']['dist']})
+#     trace[0].stats.sac=sacstats
+#     trace.write(outname,format="SAC")
+#     return
 
 
-def corr_mat_taper(corr_mat, width):
+# def corr_trace_to_avg_sac(corr_trace,sacfname) :
+#     """ Write a SAC file for FTAN analysis on a
+#     one-side correlation trace. 
+#     :type corr_trace: dictionary
+#     :param corr_trace: correlation trace dictionary as produced by
+#         :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
+#     :type outname: string
+#     :param outname: string for outputfilename
+#     """
+#     avg_corr_trace = corr_trace_mirrow(corr_trace)
+#     trace = Stream()
+#     trace.append(corr_trace_to_obspy(avg_corr_trace))
+#     sacstats=AttribDict({'dist':corr_trace['stats']['dist']})
+#     trace[0].stats.sac=sacstats
+#     trace.write(sacfname,format="SAC")
+#     return
+
+# def corr_trace_to_full_sac(corr_trace,sacfname) :
+#     """ Write a SAC file for FTAN analysis on a
+#     two-sided correlation trace. 
+#     :type corr_trace: dictionary
+#     :param corr_trace: correlation trace dictionary as produced by
+#         :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
+#     :type outname: string
+#     :param outname: string for outputfilename
+#     """
+#     trace = Stream()
+#     trace.append(corr_trace_to_obspy(corr_trace))
+#     sacstats=AttribDict({'dist':corr_trace['stats']['dist']})
+#     trace[0].stats.sac=sacstats
+#     trace.write(sacfname,format="SAC")
+#     return
+
+# def corr_trace_mirrow(corr_tr):
+#     """ Average the causal and acausal parts of a correlation trace.
+
+#     :type corr_tr: dictionary
+#     :param corr_tr: correlation trace dictionary as produced by
+#         :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
+
+#     :rtype: dictionary
+#     :return: **corr_tr**: is the same dictionary as the input but with
+#         averaged causal and acausal parts of the correlation data.
+#     """
+
+#     zerotime = lag0
+
+#     # copy input
+#     mir_tr = deepcopy(corr_tr)
+
+#     # check whether there is a sample at the zerotime
+#     zero_sample = (zerotime -
+#             convert_time([corr_tr['stats']['starttime']])[0]). \
+#             total_seconds() * corr_tr['stats']['sampling_rate']
+#     if zero_sample <= 0:
+#         print('No data present for mirrowing: starttime > zerotime.')
+#         return corr_tr
+#     if convert_time([corr_tr['stats']['endtime']])[0] <= zerotime:
+#         print('No data present for mirrowing: endtime < zerotime.')
+#         return corr_tr
+#     if np.fmod(zero_sample, 1) != 0:
+#         print('need to shift for mirrowing')
+#         return 0
+
+#     # estimate size of mirrowed array
+#     acausal_samples = int((zerotime -
+#             convert_time([corr_tr['stats']['starttime']])[0]). \
+#             total_seconds() * corr_tr['stats']['sampling_rate'] + 1)
+#     causal_samples = int(corr_tr['stats']['npts'] - acausal_samples + 1)
+#     # +1 because sample a zerotime counts twice
+#     size = np.max([acausal_samples, causal_samples])
+#     both = np.min([acausal_samples, causal_samples])
+
+#     # allocate array
+#     mir_tr['corr_trace'] = np.zeros(size)
+
+#     # fill the array
+#     mir_tr['corr_trace'][0:causal_samples] = \
+#         corr_tr['corr_trace'][acausal_samples - 1:]
+#     mir_tr['corr_trace'][0:acausal_samples] += \
+#         corr_tr['corr_trace'][acausal_samples - 1::-1]
+
+#     # divide by two where both are present
+#     mir_tr['corr_trace'][0:both] /= 2.
+
+#     # adopt the stats
+#     mir_tr['stats']['starttime'] = convert_time_to_string([zerotime])[0]
+#     mir_tr['stats']['npts'] = size
+#     mir_tr['stats']['endtime'] = convert_time_to_string([zerotime +
+#             timedelta(seconds=float(size) /
+#             corr_tr['stats']['sampling_rate'])])[0]
+
+#     return mir_tr
+
+
+# def corr_trace_mirror_one_side(corr_tr,method) :
+#     """ Mirror the causal or acausal parts of a correlation trace
+#         to the other side
+
+#     :type corr_tr: dictionary
+#     :param corr_tr: correlation trace dictionary as produced by
+#         :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
+
+#     :rtype: dictionary
+#     :return: **corr_tr**: is the same dictionary as the input but with
+#         averaged causal and acausal parts of the correlation data.
+#     """
+
+#     zerotime = lag0
+
+#     # copy input
+#     mir_tr = deepcopy(corr_tr)
+
+#     # check whether there is a sample at the zerotime
+#     zero_sample = (zerotime -
+#             convert_time([corr_tr['stats']['starttime']])[0]). \
+#             total_seconds() * corr_tr['stats']['sampling_rate']
+#     if zero_sample <= 0:
+#         print('No data present for mirrowing: starttime > zerotime.')
+#         return corr_tr
+#     if convert_time([corr_tr['stats']['endtime']])[0] <= zerotime:
+#         print('No data present for mirrowing: endtime < zerotime.')
+#         return corr_tr
+#     if np.fmod(zero_sample, 1) != 0:
+#         print('need to shift for mirrowing')
+#         return 0
+
+#     # estimate size of mirrowed array
+#     acausal_samples = int((zerotime -
+#             convert_time([corr_tr['stats']['starttime']])[0]). \
+#             total_seconds() * corr_tr['stats']['sampling_rate'] + 1)
+#     causal_samples = int(corr_tr['stats']['npts'] - acausal_samples + 1)
+#     # +1 because sample a zerotime counts twice
+#     size = np.max([acausal_samples, causal_samples])
+#     both = np.min([acausal_samples, causal_samples])
+
+#     # Fill array, mirroring one side to the other
+#     mir_tr['corr_trace'] = np.zeros(corr_tr['corr_trace'].size)
+#     if method=='causal' :
+#         mir_tr['corr_trace'][causal_samples-1:]=corr_tr['corr_trace'][causal_samples-1:]
+#         mir_tr['corr_trace'][:causal_samples]=corr_tr['corr_trace'][causal_samples-1:][::-1]
+#     elif method=='acausal' :
+#         mir_tr['corr_trace'][:acausal_samples]=corr_tr['corr_trace'][:acausal_samples]
+#         mir_tr['corr_trace'][acausal_samples-1:]=corr_tr['corr_trace'][:acausal_samples][::-1]
+#     return mir_tr
+
+
+def corr_mat_taper(
+        data: np.ndarray, stats: trace.Stats, width: float) -> np.ndarray:
     """ Taper a correlation matrix.
 
     Apply a taper to all traces in the correlation matrix.
 
-    :type corr_mat: dictionary
-    :param corr_mat: correlation matrix dictionary as produced by
-        :class:`~miic.core.macro.recombine_corr_data`
+    :type data: np.ndarray
+    :param data: correlation matrix`
     :type width: float
-    :param width: width to be tapered in seconds
+    :param width: width to be tapered in seconds (per side)
 
-    :rtype: dictionary
-    :return: **corr_mat**: is the same dictionary as the input but with
-        tapered central part of the correlation data.
+    :rtype: np.ndarray
+    :return: The tapered matrix
+
+    ..note:: **In-place operation**
     """
-    # check input
-    if not isinstance(corr_mat, dict):
-        raise TypeError("corr_mat needs to be correlation matrix dictionary.")
-
-    if corr_mat_check(corr_mat)['is_incomplete']:
-        raise ValueError("Error: corr_mat is not a valid correlation_matix \
-            dictionary.")
-
-    # definition of the source time of a Green's function (ie. zero correlation
-    # time)
-    zerotime = datetime(1971, 1, 1, 0, 0, 0)
-
-    # copy input
-    tmat = deepcopy(corr_mat)
-
+    if width == 0:
+        return data
+    elif width > stats['npts']/stats['sampling_rate']:
+        raise ValueError('Taper longer than signal.')
+    width *= 2
     # calculate taper
-    tap = cosine_taper(corr_mat['stats']['npts'],width*corr_mat['stats']['sampling_rate']/(corr_mat['stats']['npts']))
+    tap = cosine_taper(
+        stats['npts'], width*stats['sampling_rate']/stats['npts'])
 
     # apply taper
-    tmat['corr_data'] *= np.tile(np.atleast_2d(tap), (tmat['corr_data'].shape[0], 1))
+    data *= np.tile(np.atleast_2d(tap), (data.shape[0], 1))
 
-    return tmat
+    return data
 
 
-def corr_mat_taper_center(corr_mat, width, slope_frac=0.05):
-    """ Taper the central part of a correlation matrix.
+def corr_mat_taper_center(
+    data: np.ndarray, stats: trace.Stats, width: float,
+        slope_frac: float = 0.05) -> np.ndarray:
+    """
+    Taper the central part of a correlation matrix.
 
     Due to electromagnetic cross-talk, signal processing or other effects the
     correlaton matrices are often contaminated around the zero lag time. This
@@ -1149,37 +1047,29 @@ def corr_mat_taper_center(corr_mat, width, slope_frac=0.05):
     avoid problems with interpolation and filtering later on this is done with
     cosine taper
 
-    :type corr_mat: dictionary
-    :param corr_mat: correlation matrix dictionary as produced by
-        :class:`~miic.core.macro.recombine_corr_data`
-    :type width: float
+    :param data: Correlation data from CorrBulk object
+    :type data: np.ndarray
+    :param stats: Stats object from CorrBulk
+    :type stats: trace.Stats
     :param width: width of the central window to be tapered in seconds
-    :type slope_frac: float
-    :param slope_frac: fraction of `width` used for soothing of edges
-
-    :rtype: dictionary
-    :return: **corr_mat**: is the same dictionary as the input but with
-        tapered central part of the correlation data.
+        (in total, i.e. not per taper side)
+    :type width: float
+    :param slope_frac: fraction of `width` used for soothing of edges,
+        defaults to 0.05
+    :type slope_frac: float, optional
+    :return: The tapered matrix
+    :rtype: np.ndarray
     """
-
-    # check input
-    if not isinstance(corr_mat, dict):
-        raise TypeError("corr_mat needs to be correlation matrix dictionary.")
-
-    if corr_mat_check(corr_mat)['is_incomplete']:
-        raise ValueError("Error: corr_mat is not a valid correlation_matix \
-            dictionary.")
-
-    # definition of the source time of a Green's function (ie. zero correlation
-    # time)
-    zerotime = datetime(1971, 1, 1, 0, 0, 0)
-
-    # copy input
-    tmat = deepcopy(corr_mat)
+    if width == 0:
+        return data
+    elif width < 0:
+        raise ValueError('Taper Width must not be negative.')
+    elif width > stats['npts']/stats['sampling_rate']:
+        raise ValueError('Taper width longer than signal.')
 
     # calculate size of taper (should be an even number)
-    length = 2. * np.ceil(width * tmat['stats']['sampling_rate'] / 2.)
-    slope_length = np.ceil(length * slope_frac / 2.)
+    length = int(2. * np.ceil(width * stats['sampling_rate'] / 2.))
+    slope_length = int(np.ceil(length * slope_frac / 2.))
 
     # calculate inverse taper
     taper = np.zeros(length + 1)
@@ -1188,33 +1078,25 @@ def corr_mat_taper_center(corr_mat, width, slope_frac=0.05):
     taper[-slope_length:] = tap[:slope_length]
 
     # calculate start end end points of the taper
-    start = (zerotime - \
-        convert_time([tmat['stats']['starttime']])[0]).total_seconds() * \
-            tmat['stats']['sampling_rate'] - length / 2
+    # start = (zerotime - \
+    #     convert_time([tmat['stats']['starttime']])[0]).total_seconds() * \
+    #         tmat['stats']['sampling_rate'] - length / 2
+    start = int(-stats['start_lag']*stats['sampling_rate'] - length/2)
     if start < 0:
         taper = taper[np.absolute(start):]
         start = 0
-    end = (zerotime - \
-           convert_time([tmat['stats']['starttime']])[0]).total_seconds() * \
-                tmat['stats']['sampling_rate'] + length / 2
-    if end > tmat['stats']['npts']:
-        end = tmat['stats']['npts']
+    # end = (zerotime - \
+    #        convert_time([tmat['stats']['starttime']])[0]).total_seconds() * \
+    #             tmat['stats']['sampling_rate'] + length / 2
+    end = start + length
+    if end > stats['npts']:
+        end = stats['npts']
         taper = taper[0:end - start]
     # apply taper
-    tmat['corr_data'][:, start:end + 1] *= \
-        np.tile(np.atleast_2d(taper), (tmat['corr_data'].shape[0], 1))
+    data[:, start:end + 1] *= \
+        np.tile(np.atleast_2d(taper), (data.shape[0], 1))
 
-    return tmat
-
-
-if BC_UI:
-    class _corr_mat_taper_center_view(HasTraits):
-    
-        width = Float(100.0)
-        slope_frac = Float(0.05)
-    
-        trait_view = View(Item('width'),
-                          Item('slope_frac'))
+    return data
 
 
 def corr_mat_resample_time(data: np.ndarray, stats: trace.Stats, freq: float):

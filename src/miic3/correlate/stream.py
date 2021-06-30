@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Friday, 18th June 2021 03:54:33 pm
+Last Modified: Wednesday, 30th June 2021 04:59:34 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -20,9 +20,7 @@ from miic3.utils.miic_utils import trace_calc_az_baz_dist, \
     inv_calc_az_baz_dist, lag0, save_header_to_np_array, \
         load_header_from_np_array
 from miic3.plot.plot_utils import plot_correlation
-from miic3.monitor.post_corr_process import corr_mat_normalize, \
-    corr_mat_extract_trace, corr_mat_stretch, corr_mat_smooth, \
-        corr_mat_filter, corr_mat_trim, corr_mat_resample
+import miic3.monitor.post_corr_process as pcp
 from miic3.monitor.dv import DV
 
 
@@ -71,7 +69,7 @@ class CorrBulk(object):
             keep the original data use
             :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`.
         """
-        self.data = corr_mat_normalize(
+        self.data = pcp.corr_mat_normalize(
             self.data, self.stats, starttime, endtime, normtype)
         proc_str = 'normalize; normtype: %s' % normtype
         if starttime and endtime:
@@ -87,6 +85,43 @@ class CorrBulk(object):
         :return: A copy of self
         """
         return deepcopy(self)
+
+    def correct_decay(self):
+        """
+        Correct for the amplitude decay in a correlation matrix.
+
+        Due to attenuation and geometrical spreading the amplitude of the
+        correlations decays with increasing lapse time. This decay is corrected
+        by dividing the correlation functions by an exponential function that
+        models the decay.
+
+        :return: Self but with data corrected for amplitude decay
+
+        ..note:: This action is performed **in-place**. If you would like to
+            keep the original data use
+            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`.
+        """
+        self.data = pcp.corr_mat_correct_decay(self.data, self.stats)
+        self.stats.processing_bulk += ['Corrected for Amplitude Decay']
+        return self
+
+    def envelope(self):
+        """
+        Calculate the envelope of a correlation matrix.
+
+        The corrlation data of the correlation matrix are replaced by their
+        Hilbert envelopes.
+
+
+        :return: self with the envelope in data
+
+        ..note:: This action is performed **in-place**. If you would like to
+            keep the original data use
+            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`.
+        """
+        self.data = pcp.corr_mat_envelope(self.data)
+        self.stats.processing_bulk += ['Computed Envelope']
+        return self
 
     def filter(self, freqs: Tuple[float, float], order: int = 3):
         """
@@ -104,7 +139,7 @@ class CorrBulk(object):
             keep the original data use
             :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`.
         """
-        self.data = corr_mat_filter(self.data, self.stats, freqs, order)
+        self.data = pcp.corr_mat_filter(self.data, self.stats, freqs, order)
         proc = ['filter; freqs: %s, order: %s' % (str(freqs), str(order))]
         self.stats.processing_bulk += proc
         return self
@@ -137,10 +172,23 @@ class CorrBulk(object):
 
         ..note:: the extracted trace will also be saved in self.ref_trc
         """
-        outdata = corr_mat_extract_trace(
+        outdata = pcp.corr_mat_extract_trace(
             self.data, self.stats, method, percentile)
         self.ref_trc = outdata
         return outdata
+
+    def mirror(self):
+        """
+        Average the causal and acausal (i.e., right and left) parts of the
+        correlation.
+
+        ..note:: This action is performed **in-place**. If you would like to
+            keep the original data use
+            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`.
+        """
+        self.data, self.stats = pcp.corr_mat_mirror(self.data, self.stats)
+        self.stats.processing_bulk += ['Mirrored.']
+        return self
 
     def resample(
         self, starttimes: List[UTCDateTime],
@@ -169,7 +217,7 @@ class CorrBulk(object):
             the original data use
             :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`
         """
-        self.data, self.stats = corr_mat_resample(
+        self.data, self.stats = pcp.corr_mat_resample(
             self.data, self.stats, starttimes, endtimes)
         self.stats.processing_bulk += [
             'Resampled. Starttimes: %s, Endtimes %s' % (
@@ -205,7 +253,7 @@ class CorrBulk(object):
             the original data use
             :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`
         """
-        self.data = corr_mat_smooth(self.data, wsize, wtype, axis)
+        self.data = pcp.corr_mat_smooth(self.data, wsize, wtype, axis)
         self.stats.processing_bulk += [
             'smooth. wsize: %s, wtype: %s, axis: %s'
             % (str(wsize), wtype, str(axis))]
@@ -217,7 +265,7 @@ class CorrBulk(object):
             sides: str = 'both', return_sim_mat: bool = False) -> DV:
         if ref_trc is None:
             ref_trc = self.ref_trc
-        dv_dict = corr_mat_stretch(
+        dv_dict = pcp.corr_mat_stretch(
             self.data, self.stats, ref_trc, tw, stretch_range, stretch_steps,
             sides, return_sim_mat)
         return DV(**dv_dict)
@@ -232,6 +280,50 @@ class CorrBulk(object):
         kwargs = save_header_to_np_array(self.stats)
         np.savez_compressed(
             path, data=self.data, **kwargs)
+
+    def taper(self, width: float):
+        """
+        Taper the data.
+
+        :param width: width to be tapered in seconds (per side)
+        :type width: float
+
+        ..note:: This action is performed **in-place**. If you want to keep
+            the original data use
+            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`
+        """
+        self.data = pcp.corr_mat_taper(self.data, self.stats, width)
+        proc = ['tapered: width=%ss' % width]
+        self.stats.processing_bulk += proc
+
+    def taper_center(self, width: float, slope_frac: float = 0.05):
+        """
+        Taper the central part of a correlation matrix.
+
+        Due to electromagnetic cross-talk, signal processing or other effects
+        the correlaton matrices are often contaminated around the zero lag
+        time. This function tapers (multiples by zero) the central part of
+        width `width`. To avoid problems with interpolation and filtering later
+        on this is done with cosine taper.
+
+        :param width: width of the central window to be tapered in seconds
+            (**total length i.e., not per side**).
+        :type width: float
+        :param slope_frac: fraction of `width` used for soothing of edges,
+            defaults to 0.05
+        :type slope_frac: float, optional
+        :return: The tapered matrix
+        :rtype: np.ndarray
+
+        ..note:: This action is performed **in-place**. If you want to keep
+            the original data use
+            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`
+        """
+        self.data = pcp.corr_mat_taper_center(
+            self.data, self.stats, width, slope_frac=slope_frac)
+        proc = [
+            'tapered-centre: width=%ss, slope_frac=%s' % (width, slope_frac)]
+        self.stats.processing_bulk += proc
 
     def trim(self, starttime: float, endtime: float):
         """
@@ -252,7 +344,7 @@ class CorrBulk(object):
             the original data use
             :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`
         """
-        self.data, self.stats = corr_mat_trim(
+        self.data, self.stats = pcp.corr_mat_trim(
             self.data, self.stats, starttime, endtime)
         proc = ['trim: %s, %s' % (str(starttime), str(endtime))]
         self.stats.processing_bulk += proc
