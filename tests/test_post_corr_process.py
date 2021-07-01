@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 25th June 2021 09:33:09 am
-Last Modified: Wednesday, 30th June 2021 05:12:13 pm
+Last Modified: Thursday, 1st July 2021 11:31:21 am
 '''
 
 import unittest
@@ -174,17 +174,23 @@ class TestCorrMatResample(unittest.TestCase):
 class CorrMatCorrectDecay(unittest.TestCase):
     def setUp(self):
         # acausal part
-        datal = np.exp(np.arange(0, 51, 1))
+        datal = np.exp(np.linspace(-5, 0, 251, endpoint=True))
         self.data = np.tile(
-            np.hstack((datal, np.flip(datal[0:-1]))), (2, 1))
+            np.hstack((datal, np.flip(datal[0:-1])))*np.cos(np.linspace(0, 40*np.pi, 501)), (2, 1))
         self.stats = Stats({
-            'sampling_rate': 1, 'npts': 101, 'start_lag': -50, 'end_lag': 50})
+            'sampling_rate': 1, 'npts': 501, 'start_lag': -50, 'end_lag': 50})
 
     def test_result(self):
         corrected = pcp.corr_mat_correct_decay(
             self.data.copy(), self.stats.copy())
         # Check that signal is still symmetric
-        self.assertTrue(np.all(corrected[:50] == np.flip(corrected[-50:])))
+        # print(corrected[0])
+        # print(self.data[0])
+        # print(np.sin(np.linspace(0, 40*np.pi, 501)))
+        # This undercorrects
+        # Should maybe be adapted, we leave it failing for now as a reminder
+        self.assertTrue(np.allclose(
+            corrected, np.cos(np.linspace(0, 40*np.pi, 501)), atol=0.1))
     # ask CSS how this actually works
         
 
@@ -339,6 +345,83 @@ class TestCorrMatTaperCenter(unittest.TestCase):
     def test_tap_too_long(self):
         with self.assertRaises(ValueError):
             _ = pcp.corr_mat_taper_center(self.data.copy(), self.stats, 20)
+
+
+class CorrMatResampleTime(unittest.TestCase):
+    def setUp(self):
+        self.stats = Stats({
+            'npts': 201, 'sampling_rate': 10, 'start_lag': -10, 'end_lag': 10})
+
+    def test_resample(self):
+        data = np.ones((2, 201))
+        datars, statsrs = pcp.corr_mat_resample_time(
+            data.copy(), self.stats.copy(), 5)
+        self.assertEqual(5, statsrs['sampling_rate'])
+        self.assertEqual(self.stats['start_lag'], statsrs['start_lag'])
+        self.assertEqual(100, statsrs['npts'])
+        self.assertEqual(100, datars.shape[1])
+
+    def test_aafilter(self):
+        data = np.tile(np.sin(
+            np.linspace(0, 150*np.pi, 201, endpoint=True)), (2,1))
+        datars, statsrs = pcp.corr_mat_resample_time(
+            data.copy(), self.stats.copy(), 2.5)
+        self.assertTrue(np.allclose(datars, np.zeros(datars.shape), atol=0.03))
+        self.assertEqual(2.5, statsrs['sampling_rate'])
+        self.assertEqual(self.stats['start_lag'], statsrs['start_lag'])
+        self.assertEqual(50, statsrs['npts'])
+        self.assertEqual(50, datars.shape[1])
+
+    def test_f_higher(self):
+        data = np.ones((2, 201))
+        with self.assertRaises(ValueError):
+            _ = pcp.corr_mat_resample_time(data.copy(), self.stats.copy(), 20)
+
+    def test_f_identical(self):
+        data = np.ones((2, 201))
+        datars, statsrs = pcp.corr_mat_resample_time(
+            data.copy(), self.stats.copy(), 10)
+        self.assertTrue(np.all(data == datars))
+        self.assertEqual(statsrs, self.stats)
+
+
+class TestCorrMatDecimate(unittest.TestCase):
+    def setUp(self):
+        self.stats = Stats({
+            'npts': 201, 'sampling_rate': 10, 'start_lag': -10, 'end_lag': 10})
+
+    def test_resample(self):
+        data = np.ones((2, 201))
+        datars, statsrs = pcp.corr_mat_decimate(
+            data.copy(), self.stats.copy(), 2)
+        self.assertEqual(5, statsrs['sampling_rate'])
+        self.assertEqual(self.stats['start_lag'], statsrs['start_lag'])
+        self.assertEqual(100, statsrs['npts'])
+        self.assertEqual(100, datars.shape[1])
+
+    def test_aafilter(self):
+        data = np.tile(np.sin(
+            np.linspace(0, 150*np.pi, 201, endpoint=True)), (2,1))
+        datars, statsrs = pcp.corr_mat_decimate(
+            data.copy(), self.stats.copy(), 4)
+        self.assertTrue(np.allclose(datars, np.zeros(datars.shape), atol=0.06))
+        self.assertEqual(2.5, statsrs['sampling_rate'])
+        self.assertEqual(self.stats['start_lag'], statsrs['start_lag'])
+        self.assertEqual(50, statsrs['npts'])
+        self.assertEqual(50, datars.shape[1])
+
+    def test_f_higher(self):
+        data = np.ones((2, 201))
+        with self.assertRaises(ValueError):
+            _ = pcp.corr_mat_decimate(data.copy(), self.stats.copy(), .5)
+
+    def test_f_identical(self):
+        data = np.ones((2, 201))
+        datars, statsrs = pcp.corr_mat_decimate(
+            data.copy(), self.stats.copy(), 1)
+        self.assertTrue(np.all(data == datars))
+        self.assertEqual(statsrs, self.stats)
+
 
 
 if __name__ == "__main__":

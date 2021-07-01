@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Tuesday, 29th June 2021 03:35:14 pm
+Last Modified: Thursday, 1st July 2021 11:01:08 am
 '''
 from typing import List, Tuple
 
@@ -136,8 +136,14 @@ def velocity_change_estimate(
     for (ii, ctw) in enumerate(tw):
 
         if sides == 'both':
-            ctw = np.hstack((center_p - ctw[::-1],
-                             center_p + ctw)).astype(np.int32)
+            # ctw = np.hstack((center_p - ctw[::-1],
+            #                  center_p + ctw)).astype(np.int32)
+            if ctw[0] == 0:
+                ctw = np.hstack((center_p - ctw[::-1],
+                center_p + ctw[1:])).astype(np.int32)
+            else:
+                ctw = np.hstack((center_p - ctw[::-1],
+                center_p + ctw)).astype(np.int32)
         elif sides == 'left':
             ctw = (center_p - ctw[::-1]).astype(np.int32)
         elif sides == 'right':
@@ -280,8 +286,11 @@ def time_stretch_estimate(
 
     # taper and extend the reference trace to avoid interpolation
     # artefacts at the ends of the trace
-    taper = cosine_taper(len(ref_trc), 0.05)
-    ref_trc *= taper
+    # 01.07.21
+    # This taper decreases the correlation between the traces,
+    # just don't permit extrapolation
+    # taper = cosine_taper(len(ref_trc), 0.05)
+    # ref_trc *= taper
 
     # different values of shifting to be tested
     stretchs = np.linspace(-stretch_range, stretch_range, stretch_steps)
@@ -297,7 +306,9 @@ def time_stretch_estimate(
     ref_stretch = np.zeros((len(stretchs), len(ref_trc)))
 
     # create a spline object for the reference trace
-    ref_tr_spline = UnivariateSpline(time_idx, ref_trc, s=0)
+    # ref_tr_spline = UnivariateSpline(time_idx, ref_trc, s=0)
+    # 01.07.21 No extrapolation
+    ref_tr_spline = UnivariateSpline(time_idx, ref_trc, s=0, ext='const')
 
     # evaluate the spline object at different points and put in the prepared
     # array

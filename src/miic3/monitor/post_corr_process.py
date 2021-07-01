@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Wednesday, 30th June 2021 05:12:02 pm
+Last Modified: Thursday, 1st July 2021 11:41:49 am
 '''
 
 from typing import List, Tuple
@@ -222,15 +222,17 @@ def corr_mat_filter(
     Filters the correlation matrix corr_mat in the frequency band specified in
     freqs using a zero phase filter of twice the order given in order.
 
-    :type corr_mat: dictionary of the type correlation matrix
-    :param corr_mat: correlation matrix to be plotted
+    :type data: np.ndarray
+    :param data: correlation matrix
+    :type stats: :class:`~obspy.core.trace.Stats`
+    :param stats: The stats object corresponding to the CorrBulk object
     :type freqs: array-like of length 2
     :param freqs: lower and upper limits of the pass band in Hertz
     :type order: int
     :param order: half the order of the Butterworth filter
 
-    :rtype tdat: dictionary of the type correlation matrix
-    :return: **fdat**: filtered correlation matrix
+    :rtype: np.ndarray
+    :return: filtered correlation matrix
     """
 
     if len(freqs) != 2:
@@ -633,6 +635,7 @@ def corr_mat_resample(
 #     return smat
 
 
+# Probably not necessary
 def corr_mat_correct_decay(data: np.ndarray, stats: trace.Stats) -> np.ndarray:
     """
     Correct for the amplitude decay in a correlation matrix.
@@ -659,7 +662,8 @@ def corr_mat_correct_decay(data: np.ndarray, stats: trace.Stats) -> np.ndarray:
     env, stats_mirr = corr_mat_mirror(env, stats)
 
     # average to a single correlation function
-    env = np.nansum(env, 0)  # Shouldn't that be a mean or divided by the dim?
+    env = np.nanmean(env, 0)  # Shouldn't that be a mean or divided by the dim?
+    # env = np.nansum(env, 0)
 
     # fit the decay
     t = np.arange(stats_mirr['npts'])
@@ -1099,23 +1103,36 @@ def corr_mat_taper_center(
     return data
 
 
-def corr_mat_resample_time(data: np.ndarray, stats: trace.Stats, freq: float):
-    """Resample the lapse time axis of a correlation matrix.
+def corr_mat_resample_time(
+    data: np.ndarray, stats: trace.Stats, freq: float) -> Tuple[
+        np.ndarray, trace.Stats]:
+    """
+    Resample the lapse time axis of a correlation matrix. The correlations are
+    automatically filtered with a highpass filter of 0.4*sampling frequency to
+    avoid aliasing.
 
-    :type corr_mat: dict
-    :param corr_mat: correlation matrix dictionary
+    :type data: np.ndarray
+    :param data: correlation matrix
+    :type stats: :class:`~obspy.core.trace.Stats`
+    :param stats: The stats object associated to the
+        :class:`~miic3.correlate.stream.CorrBulk` object.
     :type freq: float
     :param freq: new sampling frequency
 
-    :rtype: dict
-    :return: **corr_mat**: is the same dictionary as the input but with
-        resampled data.
+    :rtype: Tuple[np.ndarray, trace.Stats]
+    :return: Resampled data and changed stats object.
+
+    ..note:: This action is performed **in-place**.
     """
+    if freq > stats['sampling_rate']:
+        raise ValueError('New sampling frequency higher than original f.')
+    elif freq == stats['sampling_rate']:
+        return data, stats
 
     # make last samples
     # x1 = n2*f1/f2-n1 + x2*f1/f2
     otime = float(stats['npts'])/stats['sampling_rate']
-    num = np.floor(otime * freq)
+    num = int(np.floor(otime * freq))
     ntime = num/freq
     n1 = 0.
     n2 = 0.
@@ -1131,389 +1148,430 @@ def corr_mat_resample_time(data: np.ndarray, stats: trace.Stats, freq: float):
             raise TypeError("No matching trace length found. Resampling not \
 possible.")
             break
-    corr_mat = corr_mat_filter(corr_mat,[0.001,0.8*freq/2])
-    rmat = {'stats':deepcopy(corr_mat['stats']),
-            'stats_tr1':deepcopy(corr_mat['stats_tr1']),
-            'stats_tr2':deepcopy(corr_mat['stats_tr2']),
-            'time':deepcopy(corr_mat['time'])}
-    mat = np.concatenate((corr_mat['corr_data'],np.zeros((corr_mat['corr_data'].shape[0],corr_mat['corr_data'].shape[1]+int(2*n2)))),axis=1)
-    trmat = resample(mat,int(2*(num+n1)),axis=1)
-    rmat.update({'corr_data':deepcopy(trmat[:,:num])})
-    rmat['stats']['npts'] = rmat['corr_data'].shape[1]
-    rmat['stats']['sampling_rate'] = freq
-    endtime = convert_time([rmat['stats']['starttime']])[0]+timedelta(seconds=float(rmat['stats']['npts']-1)/freq)
-    rmat['stats']['endtime'] = convert_time_to_string([endtime])[0]
-    return rmat
+    data = corr_mat_filter(data, stats,[0.001,0.8*freq/2])
+    # rmat = {'stats':deepcopy(corr_mat['stats']),
+    #         'stats_tr1':deepcopy(corr_mat['stats_tr1']),
+    #         'stats_tr2':deepcopy(corr_mat['stats_tr2']),
+    #         'time':deepcopy(corr_mat['time'])}
+    data = np.concatenate(
+        (data, np.zeros((data.shape[0], data.shape[1] + int(2*n2)))), axis=1)
+    data = resample(data, int(2*(num + n1)), axis=1)[:,:num]
+    # rmat.update({'corr_data':deepcopy(trmat[:,:num])})
+    stats['npts'] = data.shape[1]
+    stats['sampling_rate'] = freq
+    stats['end_lag'] = stats['start_lag'] + (stats['npts']-1)/freq
+    # rmat['stats']['npts'] = rmat['corr_data'].shape[1]
+    # rmat['stats']['sampling_rate'] = freq
+    # endtime = convert_time([rmat['stats']['starttime']])[0]+timedelta(seconds=float(rmat['stats']['npts']-1)/freq)
+    # rmat['stats']['endtime'] = convert_time_to_string([endtime])[0]
+    return data, stats
 
 
-def corr_mat_decimate(corr_mat, factor):
-    """Downsample a correlation matrix by an integer sample
-    
-    :type corr_mat: dict
-    :param corr_mat: correlation matrix dictionary
-    :type factor: int
-    :param factor: decimation factor
-
-    :rtype: dict
-    :return: **corr_mat**: is the same dictionary as the input but with
-        decimated sampling rate.
+def corr_mat_decimate(
+    data: np.ndarray, stats: trace.Stats, factor: int) -> Tuple[
+        np.ndarray, trace.Stats]:
     """
+    Downsample a correlation matrix by an integer sample. A low-pass filter
+    is applied before decimating.
+    
+    :type data: np.ndarray
+    :param data: correlation matrix
+    :type stats: :class:`~obspy.core.trace.Stats`
+    :param stats: The stats object associated to the
+        :class:`~miic3.correlate.stream.CorrBulk` object.
+    :type factor: int
+    :param factor: The factor to reduce the sampling frequency by
 
-    # check input
-    if not isinstance(corr_mat, dict):
-        raise TypeError("corr_mat needs to be correlation matrix dictionary.")
+    :rtype: Tuple[np.ndarray, trace.Stats]
+    :return: Decimated data and changed stats object.
 
-    if corr_mat_check(corr_mat)['is_incomplete']:
-        raise ValueError("Error: corr_mat is not a valid correlation_matix \
-            dictionary.")
-
+    ..note:: This action is performed **in-place**.
+    """
+    if factor  < 1:
+        raise ValueError('Factor has to be larger than 1')
+    elif factor == 1:
+        return data, stats
     # apply low pass filter
-    freq = corr_mat['stats']['sampling_rate'] * 0.5 / float(factor)
+    freq = stats['sampling_rate'] * 0.5 / float(factor)
 
-    fe = float(corr_mat['stats']['sampling_rate']) / 2
+    fe = float(stats['sampling_rate']) / 2
 
     (b, a) = butter(4, freq / fe, btype='lowpass')
 
-    fdat = deepcopy(corr_mat)
-    fdat['corr_data'] = lfilter(b, a, fdat['corr_data'], axis=1)
-    fdat['corr_data'] = lfilter(b, a, fdat['corr_data'][:, ::-1],
-                                        axis=1)[:,::-1]
+    # fdat = deepcopy(corr_mat)
+    # fdat['corr_data'] = lfilter(b, a, fdat['corr_data'], axis=1)
+    # fdat['corr_data'] = lfilter(b, a, fdat['corr_data'][:, ::-1],
+    #                                     axis=1)[:,::-1]
+    # forward
+    data = lfilter(b, a, data, axis=1)
+    # backwards
+    data = lfilter(b, a, data[:, ::-1], axis=1)[:, ::-factor][:, :-1]
+    # For some reason it includes the last sample
+    stats['npts'] = data.shape[1]
+    stats['sampling_rate'] = float(stats['sampling_rate'])/factor
+    stats['end_lag'] = stats['start_lag'] + (stats['npts']-1)/freq
 
-    fdat['corr_data'] = deepcopy(fdat['corr_data'][:,::factor])
-    fdat['stats']['npts'] = fdat['corr_data'].shape[1]
-    fdat['stats']['sampling_rate'] = float(fdat['stats']['sampling_rate'])/factor
-    start = convert_time([fdat['stats']['starttime']])[0]
-    length = (fdat['stats']['npts'] - 1)/fdat['stats']['sampling_rate']
-    fdat['stats']['endtime'] = convert_time_to_string([convert_time([fdat['stats']['starttime']])[0] \
-            + timedelta(seconds=(fdat['stats']['npts'] - 1)/fdat['stats']['sampling_rate'])])[0]
-    return fdat
+    # fdat['corr_data'] = deepcopy(fdat['corr_data'][:,::factor])
+    # fdat['stats']['npts'] = fdat['corr_data'].shape[1]
+    # fdat['stats']['sampling_rate'] = float(fdat['stats']['sampling_rate'])/factor
+    # start = convert_time([fdat['stats']['starttime']])[0]
+    # length = (fdat['stats']['npts'] - 1)/fdat['stats']['sampling_rate']
+    # fdat['stats']['endtime'] = convert_time_to_string([convert_time([fdat['stats']['starttime']])[0] \
+    #         + timedelta(seconds=(fdat['stats']['npts'] - 1)/fdat['stats']['sampling_rate'])])[0]
+    return data, stats
 
 
-
-
-
-def corr_mat_import_US_stream(st, pretrigger=0):
-    """ Convert a stream with multiple traces from an active measurement
-    in a correlation matrix structure.
-
-    This functions takes a stream with multiple traces and puts them
-    in a correlation_matrix_structure to facilitate monitoring. It is
-    assumed that:
-    - traces are recorded by the same sensor
-    - signals are emitted from the same source
-    - stats['starttime'] is the time of the measurement
-    - the source time starts ``pretrigger`` seconds before starttime
-    - traces have the same length.
-    Metainformation are taken from st[0] only.
-
-    :type st: :class:`~obspy.core.stream.Stream`
-    :param st: data stream
-    :type pretrigger: float
-    :param pretrigger: time of source excitation in seconds after
-        st[0].stats['starttime']
-
-    :rtype: correlation matrix dictionary
-    :return: **corr_mat**: is the same dictionary as the input but with
-        normalized ampitudes.
+def corr_mat_resample_or_decimate(
+    data:np.ndarray, stats: trace.Stats, freq: float) -> Tuple[
+        np.ndarray, trace.Stats]:
     """
-
-    zerotime = lag0
-    pretrig = timedelta(seconds=pretrigger)
-    tr = st[0]
-
-    dt = timedelta(seconds=1. / tr.stats['sampling_rate'])
-    corr_mat = {}
-    corr_mat['corr_data'] = np.zeros((len(st), st[0].stats['npts']))
-    time = []
-    if hasattr(tr, 'stats'):
-
-        _stats = {'network': tr.stats.network,
-                      'station': tr.stats.station,
-                      'location': tr.stats.location,
-                      'channel': tr.stats.channel,
-                      'sampling_rate': tr.stats.sampling_rate,
-                      'starttime': '%s' % tr.stats.starttime,
-                      'endtime': '%s' % tr.stats.endtime,
-                      'npts': tr.stats.npts}
-        _stats_tr1 = deepcopy(_stats)
-        _stats_tr2 = deepcopy(_stats)
-        _stats_tr1['network'] = 'SRC'
-        _stats_tr1['station'] = 'SRC'
-
-        if 'sac' in tr.stats:
-            _stats['stla'] = tr.stats.sac.stla
-            _stats['stlo'] = tr.stats.sac.stlo
-            _stats['stel'] = tr.stats.sac.stel
-            if np.all([x in tr.stats.sac for x in ['evla', 'evlo', 'evel', 'az', 'baz', 'dist']]):
-                _stats['evla'] = tr.stats.sac.evla
-                _stats['evlo'] = tr.stats.sac.evlo
-                _stats['evel'] = tr.stats.sac.evel
-                _stats['az'] = tr.stats.sac.az
-                _stats['baz'] = tr.stats.sac.baz
-                _stats['dist'] = tr.stats.sac.dist
-
-        corr_mat['stats'] = _stats
-        corr_mat['stats']['starttime'] = convert_time_to_string([zerotime -
-                pretrig])[0]
-        corr_mat['stats']['endtime'] = convert_time_to_string([(zerotime -
-                pretrig) + (tr.stats['npts'] - 1) * dt])[0]
-
-    for ind, tr in enumerate(st):
-        corr_mat['corr_data'][ind, :] = tr.data
-        time.append('%s' % tr.stats.starttime)
-
-    corr_mat['stats_tr1'] = corr_mat['stats']
-    corr_mat['stats_tr2'] = corr_mat['stats']
-
-    corr_mat['time'] = np.array(time)
-
-    return corr_mat
-
-
-def corr_mat_from_stream(st):
-    """ Create a correlation matrix from repeating source observations.
-
-    Given an obspy stream that contains traces of repeating events
-    it combines the traces in a corr_mat dictionary.
-
-    :type st: obspy.core.stream
-    :param st: stream that contains the data
-
-    :rtype: dictionary of type correlation matrix
-    :return: **corr_mat**
-
-    """
-
-    ID = st[0].stats['network']+'.'+st[0].stats['station']+'.'+st[0].stats['location']+'.'+st[0].stats['channel']
-    sampling_rate = st[0].stats['sampling_rate']
-    corr_mat = {'stats':_stats_dict_from_obj(st[0].stats),
-                'stats_tr1':_stats_dict_from_obj(st[0].stats),
-                'stats_tr2':_stats_dict_from_obj(st[0].stats),
-                'corr_data':np.zeros((len(st),len(st[0].data))),
-                'time':np.zeros(len(st),dtype=datetime)}
-
-    length = np.min([tr.stats.npts for tr in st])
-    # make it an odd number
-    length = int(2*np.floor(length/2) + 1)
-    starttime = zerotime
-    corr_mat['stats']['starttime'] = str(starttime)
-    corr_mat['stats']['npts'] = length
-    corr_mat['stats']['endtime'] = str(starttime + 1./sampling_rate*(length-1))
-    for ind,tr in enumerate(st):
-        corr_mat['time'][ind] = '%s' % tr.stats['starttime']
-        tID = tr.stats['network']+'.'+tr.stats['station']+'.'+tr.stats['location']+'.'+tr.stats['channel']
-        if tID != ID:
-            print("ID %s of trace %d does not match the first trace %s." % (tID, ind, ID))
-            continue
-        tsampling_rate = tr.stats['sampling_rate']
-        if tsampling_rate != sampling_rate:
-            print("Sampling rate of trace %d does not match the first trace %s." % (ind, sampling_rate))
-            continue
-
-        corr_mat['corr_data'][ind,:] = tr.data[:length]
-
-    return corr_mat
-
-
-def corr_mat_from_corr_stream(st):
-    """ Create a correlation matrix from an obspy stream.
-
-    Given an obspy stream that contains traces with the same geometrical
-    properties (i.e. location of source and receiver) usually obtained from
-    repeated measurements or seismic noise it combines the traces in a 
-    corr_mat dictionary.
-
-    :type st: obspy.core.stream
-    :param st: stream that contains the data
-
-    :rtype: dictionary of type correlation matrix
-    :return: **corr_mat**
+    Downsample a correlation matrix. Decides automatically whether to decimate
+    or downsampled depneding on the target frequency. A low-pass filter
+    is applied to avoid aliasing.
     
+    :type data: np.ndarray
+    :param data: correlation matrix
+    :type stats: :class:`~obspy.core.trace.Stats`
+    :param stats: The stats object associated to the
+        :class:`~miic3.correlate.stream.CorrBulk` object.
+    :type freq: float
+    :param freq: new sampling frequency
+
+    :rtype: Tuple[np.ndarray, trace.Stats]
+    :return: Decimated data and changed stats object.
+
+    ..note:: This action is performed **in-place**.
     """
-    
-    ID = st[0].stats['network']+'.'+st[0].stats['station']+'.'+st[0].stats['location']+'.'+st[0].stats['channel']
-    starttime = st[0].stats['starttime']
-    sampling_rate = st[0].stats['sampling_rate']
-    npts = st[0].stats['npts']
-    corr_mat = {'stats':_stats_dict_from_obj(st[0].stats),
-                'stats_tr1':_stats_dict_from_obj(st[0].stats_tr1),
-                'stats_tr2':_stats_dict_from_obj(st[0].stats_tr2),
-                'corr_data':np.zeros((len(st),len(st[0].data))),
-                'time':np.zeros(len(st),dtype=datetime)}
-    for ind,tr in enumerate(st):
-        corr_mat['time'][ind] = '%s' % tr.stats_tr1['starttime']
-        tID = tr.stats['network']+'.'+tr.stats['station']+'.'+tr.stats['location']+'.'+tr.stats['channel']
-        if tID != ID:
-            print("ID %s of trace %d does not match the first trace %s." % (tID, ind, ID))
-            continue
-        tstarttime = tr.stats['starttime']
-        if tstarttime != starttime:
-            print("Starttime %s of trace %d does not match the first trace %s." % (tstarttime, ind, starttime))
-            continue
-        tsampling_rate = tr.stats['sampling_rate']
-        if tsampling_rate != sampling_rate:
-            print("Sampling rate of trace %d does not match the first trace %s." % (ind, sampling_rate))
-            continue
-        
-        corr_mat['corr_data'][ind,:] = tr.data
-    
-    return corr_mat
+    sr = stats['sampling_rate']
 
-
-def corr_mat_extract_trace(
-    data: np.ndarray, stats: trace.Stats, method: str = 'mean',
-        percentile: float = 50.) -> np.ndarray:
-    """ Extract a representative trace from a correlation matrix.
-
-    Extract a correlation trace from the that best represents the correlation
-    matrix. ``Method`` decides about method to extract the trace. The following
-    possibilities are available
-
-    * ``mean`` averages all traces in the matrix
-    * ``norm_mean`` averages the traces normalized after normalizing for maxima
-    * ``similarity_percentile`` averages the ``percentile`` % of traces that
-        best correlate with the mean of all traces. This will exclude abnormal
-        traces. ``percentile`` = 50 will return an average of traces with
-        correlation (with mean trace) above the median.
-
-    :type corr_mat: dictionary
-    :param corr_mat: correlation matrix dictionary
-    :type method: string
-    :param method: method to extract the trace
-    :type percentile: float
-    :param percentile: only used for method=='similarity_percentile'
-
-    :rtype: trace dictionary of type correlation trace
-    :return **trace**: extracted trace
-    """
-
-    # trace = deepcopy(corr_mat)
-    # # adjust starts_tr1 and tr2
-    # trace['stats_tr1']['starttime'] = \
-    #     convert_time_to_string([min(convert_time(trace['time']))])[0]
-    # trace['stats_tr2']['starttime'] = trace['stats_tr1']['starttime']
-    # trace['stats_tr1']['endtime'] = \
-    #     convert_time_to_string([max(convert_time(trace['time']))])[0]
-    # trace['stats_tr2']['endtime'] = trace['stats_tr1']['endtime']
-    data = deepcopy(data)
-
-    if method == 'mean':
-        mm = np.ma.masked_array(
-            data, np.isnan(data))
-        out = np.mean(mm, 0).filled(np.nan)
-    elif method == 'norm_mean':
-        # normalize the matrix
-        data = corr_mat_normalize(data, stats, normtype='absmax')
-        mm = np.ma.masked_array(
-            data, np.isnan(data))
-        out = (np.mean(mm, 0).filled(np.nan))
-    elif method == 'similarity_percentile':
-        # normalize the matrix
-        data = corr_mat_normalize(data, stats, normtype='absmax')
-        mm = np.ma.masked_array(
-            data['corr_data'], np.isnan(data['corr_data']))
-        # calc mean  trace
-        mean_tr = np.mean(mm, 0).filled(np.nan)
-        # calc similarity with mean trace
-        tm_sq = np.sum(mean_tr ** 2)
-        cm_sq = np.sum(data ** 2, axis=1)
-        # cm_sq = np.sum(data ** 2, axis=1).filled(np.nan)
-        cor = np.zeros(data.shape[0])
-        for ind in range(mm.shape[0]):
-            cor[ind] = (
-                np.dot(data[ind, :], mean_tr) / np.sqrt(cm_sq[ind] * tm_sq))
-        # estimate the percentile excluding nans
-        tres = np.percentile(cor[~np.isnan(cor)], percentile)
-        # find the traces that agree with the requested percentile and calc
-        # their mean
-        ind = cor > tres
-        out = np.mean(data[ind, :], 0)
+    if sr/freq == sr//freq:
+        return corr_mat_decimate(data, stats, int(sr//freq))
     else:
-        raise ValueError("Method '%s' not defined." % method)
+        return corr_mat_resample_time(data, stats, freq)
 
-    return out
 
-def corr_trace_maskband(corr_trace,method='all',side='both') :
-    """ Mask a corr trace by applying nans to isolate specific
-    bands of the correlation function trace. 
-    Available methods:
-    'ballistic' - Isolate just the ballistic wave arrivals
-    'coda' - Leave just the coda (long time lag) 
-    'zero' - Leave just the band around zero time lag. 
-    Available side methods:
-    'causal' -  Isolate just causal side (+ve time lag)
-    'acausal' -  Isolate just acausal side (-ve time lag)
-    'both' - use both sides of corr trace
+# def corr_mat_import_US_stream(st, pretrigger=0):
+#     """ Convert a stream with multiple traces from an active measurement
+#     in a correlation matrix structure.
 
-    :type corr_trace: dictionary
-    :param corr_trace: trace dictionary of type correlation trace
-    :type method: string
-    :param method: method to extract the trace
-    :type side: string
-    :param side: method for causal/acausal/both sided 
+#     This functions takes a stream with multiple traces and puts them
+#     in a correlation_matrix_structure to facilitate monitoring. It is
+#     assumed that:
+#     - traces are recorded by the same sensor
+#     - signals are emitted from the same source
+#     - stats['starttime'] is the time of the measurement
+#     - the source time starts ``pretrigger`` seconds before starttime
+#     - traces have the same length.
+#     Metainformation are taken from st[0] only.
 
-    :rtype: trace dictionary of type correlation trace
-    :return **trace**: trace with nans 
-    """
-    # Sample points for definitions of arrival time bands
-    c=(len(corr_trace['corr_trace'])-1)/2
-    w1=(corr_trace['stats']['dist']/5.0)*corr_trace['stats']['sampling_rate']
-    w2=(corr_trace['stats']['dist']/1.0)*corr_trace['stats']['sampling_rate']
-    w3=(corr_trace['stats']['dist']/0.75)*corr_trace['stats']['sampling_rate']
-    cd=np.max((w3,corr_trace['stats']['sampling_rate']*100))
-    z=np.min((20*corr_trace['stats']['sampling_rate'],w1))
-    masktrace=deepcopy(corr_trace['corr_trace'])
-    if method == 'ballistic' :
-        # Masked array for ballistic wave band
-        masktrace[:int(c-w2)]=np.nan
-        masktrace[int(c-w1):int(c+w1)]=np.nan
-        masktrace[int(c+w2):]=np.nan
-    elif method ==  'zero' :
-        # Masked array for zero band
-        masktrace[:int(c-z)]=np.nan
-        masktrace[int(c+z):]=np.nan
-    elif method == 'coda' :
-        # Masked array for coda band
-        masktrace[int(c-cd):int(c+cd)]=np.nan
-    elif method == 'all' :
-        pass
+#     :type st: :class:`~obspy.core.stream.Stream`
+#     :param st: data stream
+#     :type pretrigger: float
+#     :param pretrigger: time of source excitation in seconds after
+#         st[0].stats['starttime']
 
-    # Restrict to one side if appropriate
-    if side=='causal':
-        masktrace[:c]=np.nan
-    elif side=='acausal':
-        masktrace[c:]=np.nan
-    elif side=='both':
-        pass
+#     :rtype: correlation matrix dictionary
+#     :return: **corr_mat**: is the same dictionary as the input but with
+#         normalized ampitudes.
+#     """
 
-    mask_corr_trace=deepcopy(corr_trace)
-    mask_corr_trace['corr_trace']=masktrace
-    return mask_corr_trace
+#     zerotime = lag0
+#     pretrig = timedelta(seconds=pretrigger)
+#     tr = st[0]
 
-def corr_trace_snrs(corr_trace,method='both'):
-    """ Measures the snr of the ballistic arrival relative to the
-    coda noise level (coda snr) and relative to the noise level at
-    zero time-lag (zero snr)
+#     dt = timedelta(seconds=1. / tr.stats['sampling_rate'])
+#     corr_mat = {}
+#     corr_mat['corr_data'] = np.zeros((len(st), st[0].stats['npts']))
+#     time = []
+#     if hasattr(tr, 'stats'):
 
-    :type corr_trace: dictionary
-    :param corr_trace: trace dictionary of type correlation trace
-    :type method: string
-    :param method: method for causal/acausal/both sided snr
-    :rtype: tuple
-    :return **(coda_snr,zero_snr)**: signal-to-noise ratios
-    """
-    bal_trace=corr_trace_maskband(corr_trace,method='ballistic',side=method)
-    coda_trace=corr_trace_maskband(corr_trace,method='coda',side=method)
-    zero_trace=corr_trace_maskband(corr_trace,method='zero',side=method)
+#         _stats = {'network': tr.stats.network,
+#                       'station': tr.stats.station,
+#                       'location': tr.stats.location,
+#                       'channel': tr.stats.channel,
+#                       'sampling_rate': tr.stats.sampling_rate,
+#                       'starttime': '%s' % tr.stats.starttime,
+#                       'endtime': '%s' % tr.stats.endtime,
+#                       'npts': tr.stats.npts}
+#         _stats_tr1 = deepcopy(_stats)
+#         _stats_tr2 = deepcopy(_stats)
+#         _stats_tr1['network'] = 'SRC'
+#         _stats_tr1['station'] = 'SRC'
 
-    # Find snrs and record in dictionary
-    bal_peak=np.nanmax(np.abs(bal_trace['corr_trace']))
-    coda_rms=np.power(np.nanmean(np.power(coda_trace['corr_trace'],2)),0.5)
-    zero_rms=np.power(np.nanmean(np.power(zero_trace['corr_trace'],2)),0.5)
-    coda_snr=bal_peak/coda_rms
-    zero_snr=bal_peak/zero_rms
+#         if 'sac' in tr.stats:
+#             _stats['stla'] = tr.stats.sac.stla
+#             _stats['stlo'] = tr.stats.sac.stlo
+#             _stats['stel'] = tr.stats.sac.stel
+#             if np.all([x in tr.stats.sac for x in ['evla', 'evlo', 'evel', 'az', 'baz', 'dist']]):
+#                 _stats['evla'] = tr.stats.sac.evla
+#                 _stats['evlo'] = tr.stats.sac.evlo
+#                 _stats['evel'] = tr.stats.sac.evel
+#                 _stats['az'] = tr.stats.sac.az
+#                 _stats['baz'] = tr.stats.sac.baz
+#                 _stats['dist'] = tr.stats.sac.dist
 
-    return coda_snr,zero_snr
+#         corr_mat['stats'] = _stats
+#         corr_mat['stats']['starttime'] = convert_time_to_string([zerotime -
+#                 pretrig])[0]
+#         corr_mat['stats']['endtime'] = convert_time_to_string([(zerotime -
+#                 pretrig) + (tr.stats['npts'] - 1) * dt])[0]
+
+#     for ind, tr in enumerate(st):
+#         corr_mat['corr_data'][ind, :] = tr.data
+#         time.append('%s' % tr.stats.starttime)
+
+#     corr_mat['stats_tr1'] = corr_mat['stats']
+#     corr_mat['stats_tr2'] = corr_mat['stats']
+
+#     corr_mat['time'] = np.array(time)
+
+#     return corr_mat
+
+
+# def corr_mat_from_stream(st):
+#     """ Create a correlation matrix from repeating source observations.
+
+#     Given an obspy stream that contains traces of repeating events
+#     it combines the traces in a corr_mat dictionary.
+
+#     :type st: obspy.core.stream
+#     :param st: stream that contains the data
+
+#     :rtype: dictionary of type correlation matrix
+#     :return: **corr_mat**
+
+#     """
+
+#     ID = st[0].stats['network']+'.'+st[0].stats['station']+'.'+st[0].stats['location']+'.'+st[0].stats['channel']
+#     sampling_rate = st[0].stats['sampling_rate']
+#     corr_mat = {'stats':_stats_dict_from_obj(st[0].stats),
+#                 'stats_tr1':_stats_dict_from_obj(st[0].stats),
+#                 'stats_tr2':_stats_dict_from_obj(st[0].stats),
+#                 'corr_data':np.zeros((len(st),len(st[0].data))),
+#                 'time':np.zeros(len(st),dtype=datetime)}
+
+#     length = np.min([tr.stats.npts for tr in st])
+#     # make it an odd number
+#     length = int(2*np.floor(length/2) + 1)
+#     starttime = zerotime
+#     corr_mat['stats']['starttime'] = str(starttime)
+#     corr_mat['stats']['npts'] = length
+#     corr_mat['stats']['endtime'] = str(starttime + 1./sampling_rate*(length-1))
+#     for ind,tr in enumerate(st):
+#         corr_mat['time'][ind] = '%s' % tr.stats['starttime']
+#         tID = tr.stats['network']+'.'+tr.stats['station']+'.'+tr.stats['location']+'.'+tr.stats['channel']
+#         if tID != ID:
+#             print("ID %s of trace %d does not match the first trace %s." % (tID, ind, ID))
+#             continue
+#         tsampling_rate = tr.stats['sampling_rate']
+#         if tsampling_rate != sampling_rate:
+#             print("Sampling rate of trace %d does not match the first trace %s." % (ind, sampling_rate))
+#             continue
+
+#         corr_mat['corr_data'][ind,:] = tr.data[:length]
+
+#     return corr_mat
+
+
+# def corr_mat_from_corr_stream(st):
+#     """ Create a correlation matrix from an obspy stream.
+
+#     Given an obspy stream that contains traces with the same geometrical
+#     properties (i.e. location of source and receiver) usually obtained from
+#     repeated measurements or seismic noise it combines the traces in a 
+#     corr_mat dictionary.
+
+#     :type st: obspy.core.stream
+#     :param st: stream that contains the data
+
+#     :rtype: dictionary of type correlation matrix
+#     :return: **corr_mat**
+    
+#     """
+    
+#     ID = st[0].stats['network']+'.'+st[0].stats['station']+'.'+st[0].stats['location']+'.'+st[0].stats['channel']
+#     starttime = st[0].stats['starttime']
+#     sampling_rate = st[0].stats['sampling_rate']
+#     npts = st[0].stats['npts']
+#     corr_mat = {'stats':_stats_dict_from_obj(st[0].stats),
+#                 'stats_tr1':_stats_dict_from_obj(st[0].stats_tr1),
+#                 'stats_tr2':_stats_dict_from_obj(st[0].stats_tr2),
+#                 'corr_data':np.zeros((len(st),len(st[0].data))),
+#                 'time':np.zeros(len(st),dtype=datetime)}
+#     for ind,tr in enumerate(st):
+#         corr_mat['time'][ind] = '%s' % tr.stats_tr1['starttime']
+#         tID = tr.stats['network']+'.'+tr.stats['station']+'.'+tr.stats['location']+'.'+tr.stats['channel']
+#         if tID != ID:
+#             print("ID %s of trace %d does not match the first trace %s." % (tID, ind, ID))
+#             continue
+#         tstarttime = tr.stats['starttime']
+#         if tstarttime != starttime:
+#             print("Starttime %s of trace %d does not match the first trace %s." % (tstarttime, ind, starttime))
+#             continue
+#         tsampling_rate = tr.stats['sampling_rate']
+#         if tsampling_rate != sampling_rate:
+#             print("Sampling rate of trace %d does not match the first trace %s." % (ind, sampling_rate))
+#             continue
+        
+#         corr_mat['corr_data'][ind,:] = tr.data
+    
+#     return corr_mat
+
+
+# def corr_mat_extract_trace(
+#     data: np.ndarray, stats: trace.Stats, method: str = 'mean',
+#         percentile: float = 50.) -> np.ndarray:
+#     """ Extract a representative trace from a correlation matrix.
+
+#     Extract a correlation trace from the that best represents the correlation
+#     matrix. ``Method`` decides about method to extract the trace. The following
+#     possibilities are available
+
+#     * ``mean`` averages all traces in the matrix
+#     * ``norm_mean`` averages the traces normalized after normalizing for maxima
+#     * ``similarity_percentile`` averages the ``percentile`` % of traces that
+#         best correlate with the mean of all traces. This will exclude abnormal
+#         traces. ``percentile`` = 50 will return an average of traces with
+#         correlation (with mean trace) above the median.
+
+#     :type corr_mat: dictionary
+#     :param corr_mat: correlation matrix dictionary
+#     :type method: string
+#     :param method: method to extract the trace
+#     :type percentile: float
+#     :param percentile: only used for method=='similarity_percentile'
+
+#     :rtype: trace dictionary of type correlation trace
+#     :return **trace**: extracted trace
+#     """
+
+#     # trace = deepcopy(corr_mat)
+#     # # adjust starts_tr1 and tr2
+#     # trace['stats_tr1']['starttime'] = \
+#     #     convert_time_to_string([min(convert_time(trace['time']))])[0]
+#     # trace['stats_tr2']['starttime'] = trace['stats_tr1']['starttime']
+#     # trace['stats_tr1']['endtime'] = \
+#     #     convert_time_to_string([max(convert_time(trace['time']))])[0]
+#     # trace['stats_tr2']['endtime'] = trace['stats_tr1']['endtime']
+#     data = deepcopy(data)
+
+#     if method == 'mean':
+#         mm = np.ma.masked_array(
+#             data, np.isnan(data))
+#         out = np.mean(mm, 0).filled(np.nan)
+#     elif method == 'norm_mean':
+#         # normalize the matrix
+#         data = corr_mat_normalize(data, stats, normtype='absmax')
+#         mm = np.ma.masked_array(
+#             data, np.isnan(data))
+#         out = (np.mean(mm, 0).filled(np.nan))
+#     elif method == 'similarity_percentile':
+#         # normalize the matrix
+#         data = corr_mat_normalize(data, stats, normtype='absmax')
+#         mm = np.ma.masked_array(
+#             data['corr_data'], np.isnan(data['corr_data']))
+#         # calc mean  trace
+#         mean_tr = np.mean(mm, 0).filled(np.nan)
+#         # calc similarity with mean trace
+#         tm_sq = np.sum(mean_tr ** 2)
+#         cm_sq = np.sum(data ** 2, axis=1)
+#         # cm_sq = np.sum(data ** 2, axis=1).filled(np.nan)
+#         cor = np.zeros(data.shape[0])
+#         for ind in range(mm.shape[0]):
+#             cor[ind] = (
+#                 np.dot(data[ind, :], mean_tr) / np.sqrt(cm_sq[ind] * tm_sq))
+#         # estimate the percentile excluding nans
+#         tres = np.percentile(cor[~np.isnan(cor)], percentile)
+#         # find the traces that agree with the requested percentile and calc
+#         # their mean
+#         ind = cor > tres
+#         out = np.mean(data[ind, :], 0)
+#     else:
+#         raise ValueError("Method '%s' not defined." % method)
+
+#     return out
+
+# def corr_trace_maskband(corr_trace,method='all',side='both') :
+#     """ Mask a corr trace by applying nans to isolate specific
+#     bands of the correlation function trace. 
+#     Available methods:
+#     'ballistic' - Isolate just the ballistic wave arrivals
+#     'coda' - Leave just the coda (long time lag) 
+#     'zero' - Leave just the band around zero time lag. 
+#     Available side methods:
+#     'causal' -  Isolate just causal side (+ve time lag)
+#     'acausal' -  Isolate just acausal side (-ve time lag)
+#     'both' - use both sides of corr trace
+
+#     :type corr_trace: dictionary
+#     :param corr_trace: trace dictionary of type correlation trace
+#     :type method: string
+#     :param method: method to extract the trace
+#     :type side: string
+#     :param side: method for causal/acausal/both sided 
+
+#     :rtype: trace dictionary of type correlation trace
+#     :return **trace**: trace with nans 
+#     """
+#     # Sample points for definitions of arrival time bands
+#     c=(len(corr_trace['corr_trace'])-1)/2
+#     w1=(corr_trace['stats']['dist']/5.0)*corr_trace['stats']['sampling_rate']
+#     w2=(corr_trace['stats']['dist']/1.0)*corr_trace['stats']['sampling_rate']
+#     w3=(corr_trace['stats']['dist']/0.75)*corr_trace['stats']['sampling_rate']
+#     cd=np.max((w3,corr_trace['stats']['sampling_rate']*100))
+#     z=np.min((20*corr_trace['stats']['sampling_rate'],w1))
+#     masktrace=deepcopy(corr_trace['corr_trace'])
+#     if method == 'ballistic' :
+#         # Masked array for ballistic wave band
+#         masktrace[:int(c-w2)]=np.nan
+#         masktrace[int(c-w1):int(c+w1)]=np.nan
+#         masktrace[int(c+w2):]=np.nan
+#     elif method ==  'zero' :
+#         # Masked array for zero band
+#         masktrace[:int(c-z)]=np.nan
+#         masktrace[int(c+z):]=np.nan
+#     elif method == 'coda' :
+#         # Masked array for coda band
+#         masktrace[int(c-cd):int(c+cd)]=np.nan
+#     elif method == 'all' :
+#         pass
+
+#     # Restrict to one side if appropriate
+#     if side=='causal':
+#         masktrace[:c]=np.nan
+#     elif side=='acausal':
+#         masktrace[c:]=np.nan
+#     elif side=='both':
+#         pass
+
+#     mask_corr_trace=deepcopy(corr_trace)
+#     mask_corr_trace['corr_trace']=masktrace
+#     return mask_corr_trace
+
+# def corr_trace_snrs(corr_trace,method='both'):
+#     """ Measures the snr of the ballistic arrival relative to the
+#     coda noise level (coda snr) and relative to the noise level at
+#     zero time-lag (zero snr)
+
+#     :type corr_trace: dictionary
+#     :param corr_trace: trace dictionary of type correlation trace
+#     :type method: string
+#     :param method: method for causal/acausal/both sided snr
+#     :rtype: tuple
+#     :return **(coda_snr,zero_snr)**: signal-to-noise ratios
+#     """
+#     bal_trace=corr_trace_maskband(corr_trace,method='ballistic',side=method)
+#     coda_trace=corr_trace_maskband(corr_trace,method='coda',side=method)
+#     zero_trace=corr_trace_maskband(corr_trace,method='zero',side=method)
+
+#     # Find snrs and record in dictionary
+#     bal_peak=np.nanmax(np.abs(bal_trace['corr_trace']))
+#     coda_rms=np.power(np.nanmean(np.power(coda_trace['corr_trace'],2)),0.5)
+#     zero_rms=np.power(np.nanmean(np.power(zero_trace['corr_trace'],2)),0.5)
+#     coda_snr=bal_peak/coda_rms
+#     zero_snr=bal_peak/zero_rms
+
+#     return coda_snr,zero_snr
 
 
 class Error(Exception):
@@ -2091,349 +2149,316 @@ def corr_mat_correct_shift(corr_mat, dt):
 
     return ccorr_mat
 
-def corr_mat_add_lat_lon_ele(corr_mat, coord_df):
-    """ Add coordinates to correlation matrix.
+# def corr_mat_add_lat_lon_ele(corr_mat, coord_df):
+#     """ Add coordinates to correlation matrix.
 
-    Add the geographical information provided in ``coord_df`` as a
-    :class:`~pandas.DataFrame` and add it to the correlation matrix. It also
-    accepts input of a correlation trace dictionary.
+#     Add the geographical information provided in ``coord_df`` as a
+#     :class:`~pandas.DataFrame` and add it to the correlation matrix. It also
+#     accepts input of a correlation trace dictionary.
 
-    :type corr_data: dictionay
-    :param: corr_data: correlation matrix
-    :type coord_df: :class:`~pandas.DataFrame`
-    :param coord_df: dataframe containing seedID as index and columns with
-        latitude, longitude and elevation
+#     :type corr_data: dictionay
+#     :param: corr_data: correlation matrix
+#     :type coord_df: :class:`~pandas.DataFrame`
+#     :param coord_df: dataframe containing seedID as index and columns with
+#         latitude, longitude and elevation
 
-    :rtype: dictionay
-    :return: **corr_mat_geo**: correlation matrix with the added information
-    """
+#     :rtype: dictionay
+#     :return: **corr_mat_geo**: correlation matrix with the added information
+#     """
 
-    # check input
-    if (_check_stats(corr_mat['stats'])):
-        raise ValueError("Error: corr_mat has incomplete stats.")
+#     # check input
+#     if (_check_stats(corr_mat['stats'])):
+#         raise ValueError("Error: corr_mat has incomplete stats.")
 
-    # fill stats_tr1 and stats_tr2
-    stats_names = ['stats_tr1', 'stats_tr2']
-    for stats_name in stats_names:
-        if corr_mat[stats_name]['location'] == []:
-            corr_mat[stats_name]['location'] = ''
-        if corr_mat[stats_name]['channel'] == []:
-            corr_mat[stats_name]['channel'] = ''
-        tr1_id = corr_mat[stats_name]['network'] + '.' + \
-            corr_mat[stats_name]['station'] + '.' + \
-            corr_mat[stats_name]['location'] + '.' + \
-            corr_mat[stats_name]['channel']
-        selector = _Selector(tr1_id)
-        geo_info = coord_df.select(selector, axis=0)
+#     # fill stats_tr1 and stats_tr2
+#     stats_names = ['stats_tr1', 'stats_tr2']
+#     for stats_name in stats_names:
+#         if corr_mat[stats_name]['location'] == []:
+#             corr_mat[stats_name]['location'] = ''
+#         if corr_mat[stats_name]['channel'] == []:
+#             corr_mat[stats_name]['channel'] = ''
+#         tr1_id = corr_mat[stats_name]['network'] + '.' + \
+#             corr_mat[stats_name]['station'] + '.' + \
+#             corr_mat[stats_name]['location'] + '.' + \
+#             corr_mat[stats_name]['channel']
+#         selector = _Selector(tr1_id)
+#         geo_info = coord_df.select(selector, axis=0)
 
-        corr_mat[stats_name]['stla'] = geo_info['latitude'][0]
-        corr_mat[stats_name]['stlo'] = geo_info['longitude'][0]
-        corr_mat[stats_name]['stel'] = geo_info['elevation'][0]
+#         corr_mat[stats_name]['stla'] = geo_info['latitude'][0]
+#         corr_mat[stats_name]['stlo'] = geo_info['longitude'][0]
+#         corr_mat[stats_name]['stel'] = geo_info['elevation'][0]
 
-    # copy to stats dict
-    corr_mat['stats']['stla'] = corr_mat[stats_names[0]]['stla']
-    corr_mat['stats']['stlo'] = corr_mat[stats_names[0]]['stlo']
-    corr_mat['stats']['stel'] = corr_mat[stats_names[0]]['stel']
-    corr_mat['stats']['evla'] = corr_mat[stats_names[1]]['stla']
-    corr_mat['stats']['evlo'] = corr_mat[stats_names[1]]['stlo']
-    corr_mat['stats']['evel'] = corr_mat[stats_names[1]]['stel']
+#     # copy to stats dict
+#     corr_mat['stats']['stla'] = corr_mat[stats_names[0]]['stla']
+#     corr_mat['stats']['stlo'] = corr_mat[stats_names[0]]['stlo']
+#     corr_mat['stats']['stel'] = corr_mat[stats_names[0]]['stel']
+#     corr_mat['stats']['evla'] = corr_mat[stats_names[1]]['stla']
+#     corr_mat['stats']['evlo'] = corr_mat[stats_names[1]]['stlo']
+#     corr_mat['stats']['evel'] = corr_mat[stats_names[1]]['stel']
 
-    # calculate relative information
-    try:
-        from obspy.geodetics import gps2dist_azimuth
-    except ImportError:
-        print("Missed obspy funciton gps2dist_azimuth")
-        print("Update obspy.")
-        return
+#     # calculate relative information
+#     try:
+#         from obspy.geodetics import gps2dist_azimuth
+#     except ImportError:
+#         print("Missed obspy funciton gps2dist_azimuth")
+#         print("Update obspy.")
+#         return
 
-    dist, az, baz = gps2dist_azimuth(corr_mat['stats']['stla'], \
-                                    corr_mat['stats']['stlo'], \
-                                    corr_mat['stats']['evla'], \
-                                    corr_mat['stats']['evlo'])
-    corr_mat['stats']['az'] = az
-    corr_mat['stats']['baz'] = baz
-    corr_mat['stats']['dist'] = dist / 1000  # conversion to km
+#     dist, az, baz = gps2dist_azimuth(corr_mat['stats']['stla'], \
+#                                     corr_mat['stats']['stlo'], \
+#                                     corr_mat['stats']['evla'], \
+#                                     corr_mat['stats']['evlo'])
+#     corr_mat['stats']['az'] = az
+#     corr_mat['stats']['baz'] = baz
+#     corr_mat['stats']['dist'] = dist / 1000  # conversion to km
 
-    corr_mat_geo = corr_mat
+#     corr_mat_geo = corr_mat
 
-    return corr_mat_geo
-
-
-if BC_UI:
-    class _corr_mat_add_lat_lon_ele_view(HasTraits):
-        trait_view = View()
+#     return corr_mat_geo
     
 
-def corr_mat_create_from_traces(base_dir, save_dir, corr_length=0,
-                                basename='trace', suffix='',
-                                networks='*', stations='*',
-                                locations='*', channels='*',
-                                delete_trace_files=False):
-    """ Create correlation matrix files from a set or correlation trace files
+# def corr_mat_create_from_traces(base_dir, save_dir, corr_length=0,
+#                                 basename='trace', suffix='',
+#                                 networks='*', stations='*',
+#                                 locations='*', channels='*',
+#                                 delete_trace_files=False):
+#     """ Create correlation matrix files from a set or correlation trace files
 
-    Search the directory ``base_dir`` for files matching the following pattern
-    ``time_basename_stations.networks.locations.channels_suffix.mat``
-    where time is a string indicating the time used to construct the
-    respective correlation trace and the other parts refer to the seedID and
-    can be resticted by setting the keyword arguments according to glob. If
-    the default ``*`` is used every network, station, location, channel
-    combination will be used. If files are found that differ only in the
-    ``time`` part of the filename the are grouped together and put in a
-    correlation matrix which is saved in ``save_dir``. The length of the
-    traces in the correlation matrix to be saved can be set to
-    ``corr_length``. This function returns nothing it saves the date in files.
+#     Search the directory ``base_dir`` for files matching the following pattern
+#     ``time_basename_stations.networks.locations.channels_suffix.mat``
+#     where time is a string indicating the time used to construct the
+#     respective correlation trace and the other parts refer to the seedID and
+#     can be resticted by setting the keyword arguments according to glob. If
+#     the default ``*`` is used every network, station, location, channel
+#     combination will be used. If files are found that differ only in the
+#     ``time`` part of the filename the are grouped together and put in a
+#     correlation matrix which is saved in ``save_dir``. The length of the
+#     traces in the correlation matrix to be saved can be set to
+#     ``corr_length``. This function returns nothing it saves the date in files.
 
-    :type base_dir: string
-    :param base_dir: Where the corr traces are stored
-    :type save_dir: string
-    :param save_dir: Where all the corr matrices will be saved
-    :type corr_length: float
-    :param corr_length: length of correlation traces to be saves in seconds
-    :type basename: string
-    :param basename: Common "root" for every generated filename. It must not
-        include underscores
-    :type suffix: string
-    :param suffix: Optional suffix for the filename
-
-
-    :type networks: string
-    :param networks: identification of the network combination e.g. 'LT-LT'
-    :type stations: string
-    :param stations: identification of the station combination e.g. 'LT01-LT02'
-    :type locations: string
-    :param locations: identification of the location combination e.g. '0-0'
-    :type channels: string
-    :param channels: identification of the channel combination e.g. 'HHZ-HHZ'
-
-    :type delete_trace_files: Bool
-    :param delete_trace_files: if True all files whos tarces are put in matrices
-        are deleted.
-
-    """
-    default_var_name = 'corr_trace'
-    out_file_tag = 'mat'
-
-    print_time_format = "%Y-%m-%d %H:%M:%S.%f"
-
-    # filename pattern matching the input parameters
-    if suffix != '':
-        fpattern = '*' + '_' + basename + '_' + \
-        stations + '.' + networks + '.' + locations + '.' + channels + \
-        '_' + suffix + '.mat'
-    else:
-        fpattern = '*' + '_' + basename + '_' + \
-        stations + '.' + networks + '.' + locations + '.' + channels + '.mat'
-
-    print('Searching for %s' % fpattern)
-    # find the file list matching the pattern
-    flist = sorted(glob1(base_dir, fpattern))
-    # split the filenames in the list into a variable part (time) and a
-    # constant part (base_name_ID_suffix)
-    IDstr = []
-    timestr = []
-    for tfname in flist:
-        ttimestr, tIDstr = tfname.split('_', 1)
-        IDstr.append(tIDstr)
-        timestr.append(ttimestr)
-    # find list with unique entries of IDs
-    combinations = sorted(list(set(IDstr)))
-    # construct output file name
-    ofname = []
-    for tcombination in combinations:
-        spl = tcombination.split('_')
-        ID = ''
-        for tmp in spl[1:-1]:
-            ID += tmp
-        ofname.append(out_file_tag + '_' + ID + '_' + spl[-1])
-
-    # check file name type
-    # old_style: YYYY-MM-DD_basename_STA1-STA1_CHAN1-CHAN2_suffix.mat
-    # new_style:
-    #    YYYYMMDDThhmmssssssZ_basename_networks.stations.locations.channels_suffix.mat
-
-    if flist == []:  # try old_style filename
-        print('Assume old style filename')
-        # filename pattern matching the input parameters for old style
-        # file names
-        fpattern = '*' + '_' + basename + '_' + stations + '_' + channels + \
-            '_' + suffix + '.mat'
-        # find the file list matching the pattern
-        flist = sorted(glob1(base_dir, fpattern))
-        var_name = []
-        for tfname in flist:
-            ttimestr, tIDstr = flist[0].split('_', 1)
-            IDstr.append(tIDstr)
-            timestr.append(ttimestr)
-            # in the old style the variable was named according to the
-            # combination. To chop the last
-            var_name.append(tIDstr[-1::-1].split('_', 1)[1][-1::-1])
-        # find list with unique entries of IDs
-        combinations = sorted(list(set(IDstr)))
-        for tcombination in combinations:
-            spl = tcombination.split('_')
-            stat = ''
-            for tmp in spl[1:-2]:
-                stat += tmp
-            ofname.append(out_file_tag + '_.' + stat.replace('-', '') + \
-                          '..' + spl[-2].replace('-', '') + '_' + spl[-1])
-
-    # Collect the files
-    # loop over all the combinations that match the conditions (different IDs)
-    for comb_idx, tcombination in enumerate(combinations):
-        X = None
-        time_vect = []
-        sampling_rate = None
-        files_used = []
-        # loop over all the files found in base_dir
-        for ii, tIDstr in enumerate(IDstr):
-
-            # if the file belongs to the current combination
-            if tIDstr == tcombination:
-
-                # load the file
-                cfilename = join(base_dir,timestr[ii] + '_' + tIDstr)
-                dat = mat_to_ndarray(cfilename)
-                dat['stats'] = flatten_recarray(dat['stats'])
-
-                # check for consistent sampling rates
-                checkflag = 0
-                # initialize meta data when treating the first trace
-                if sampling_rate == None:
-                    sampling_rate = dat['stats']['sampling_rate']
-                    stats = dat['stats']  # this (starttime, npts) needs to be
-                                          # adopted if the trace length
-                                          # changes
-                    stats_tr1 = dat['stats_tr1']
-                    stats_tr2 = dat['stats_tr2']
-                    starttime = dat['stats']['starttime']
-                    npts = dat['stats']['npts']
-                    # trace_length = int(corr_length*sampling_rate)
-                    # ctime = (arange(0,trace_length,1,dtype=np.float)- \
-                    #    (np.float(trace_length)-1)/2.)/sampling_rate
-                    # print sampling_rate, trace_length
-                # check sampling rates
-                if sampling_rate != dat['stats']['sampling_rate']:
-                    checkflag += 1
-                    print('Sampling rate of %s does not match. \
-                        Trace not included.' % timestr[ii] + '_' + tIDstr)
-
-                # check correlation times
-                # this need to be changed because the zero lag time should be
-                # in the at the 1 1 1971
-                if starttime != dat['stats']['starttime']:
-                    checkflag += 1
-                    print('Time base of %s does not match. \
-                        Trace not included.' % timestr[ii] + '_' + tIDstr)
-
-                # print dat['stats']['sampling_rate'], starttime, \
-                    dat['stats']['starttime'], \
-                    dat['stats_tr1']['starttime'], \
-                    npts, dat['stats']['npts']
-
-                if npts != dat['stats']['npts']:
-                    checkflag += 1
-                    print('Trace length of %s does not match. \
-                        Trace not included.' % timestr[ii] + '_' + tIDstr)
-                # more checks possible but we believe it is covered by the
-                # filename
-
-                if checkflag == 0:
-                    # extract the trace variable
-                    # tr_pattern = 'trace_' + fpattern + '_' + \
-                    # self.channels_pair
-                    # if tr_pattern in load_var1:
-                    #    result1 = dict_sel(load_var1, tr_pattern)
-                    if default_var_name in dat:
-                        result1 = select_var_from_dict(dat, default_var_name)
-                    else:
-                        try:
-                            result1 = select_var_from_dict(dat, var_name[ii])
-                        except:
-                            print('Variable not found')
-                            pass
-
-                    # keep only central part of length if given
-                    if corr_length != 0:
-                        print('stats time', stats['sampling_rate'])
-                        trace_length = int(corr_length * sampling_rate)
-                        print('tra len', trace_length)
-                        result1 = nd_mat_center_part(result1, trace_length,
-                                                     axis=0)
-                        timeOffset = timedelta(np.ceil(
-                                      np.float(npts - trace_length) / 2.) / \
-                                               sampling_rate / 86400)
-                        print('tO', timeOffset)
-                        stats['starttime'] = convert_time_to_string([timeOffset
-                                + convert_time([stats['starttime']])[0]])[0]
-                        stats['npts'] = trace_length
-                        print('stats time2', stats['starttime'])
-                    # estimate time variable
-                    t1 = dat['stats_tr1']['starttime']
-                    time_tr1 = convert_time([t1])[0]
-
-                    t2 = dat['stats_tr2']['starttime']
-                    time_tr2 = convert_time([t2])[0]
-
-                    mtime = '%s' % (max(time_tr1,
-                                        time_tr2).strftime(print_time_format))
-
-                    time_vect.append(mtime)
-
-                    if not isinstance(X,np.ndarray):
-                        X = np.atleast_2d(result1).T
-                    else:
-                        X = np.vstack((X, np.atleast_2d(result1).T))
-
-                    files_used.append(cfilename)
-
-        corr_mat = {'corr_data': X,
-                    'time': time_vect,
-                    'stats': stats,
-                    'stats_tr1': stats_tr1,
-                    'stats_tr2': stats_tr2}
-
-        # keep only central part of the correlation matrix
-        # (this is better done during stacking above)
-        # if not corr_length == 0:
-        #    corr_mat = corr_mat_trim(corr_mat,-corr_length,corr_length)
-
-        # save the matlab variable
-
-        #print 'saving file %s of size %d x %d' % \
-        #    (ofname[comb_idx], corr_mat['corr_data'].shape[0],
-        #     corr_mat['corr_data'].shape[1])
-
-        savemat(join(save_dir, ofname[comb_idx]), corr_mat, oned_as='row')
-
-        # delete files
-        if delete_trace_files:
-            for del_file in files_used:
-                os.remove(del_file)
+#     :type base_dir: string
+#     :param base_dir: Where the corr traces are stored
+#     :type save_dir: string
+#     :param save_dir: Where all the corr matrices will be saved
+#     :type corr_length: float
+#     :param corr_length: length of correlation traces to be saves in seconds
+#     :type basename: string
+#     :param basename: Common "root" for every generated filename. It must not
+#         include underscores
+#     :type suffix: string
+#     :param suffix: Optional suffix for the filename
 
 
-if BC_UI:
-    class _corr_mat_create_from_traces_view(HasTraits):
-        base_dir = Directory()
-        save_dir = Directory()
-        corr_length = Float(0.)
-        basename = Str('trace')
-        suffix = Str('')
-        networks = Str('*')
-        stations = Str('*')
-        locations = Str('*')
-        channels = Str('*')
-    
-        trait_view = View(VGroup(Item('base_dir'),
-                                 Item('save_dir'),
-                                 Item('corr_length'),
-                                 Item('basename'),
-                                 Item('suffix'),
-                                 label='Config'
-                                 ),
-                          VGroup(Item('networks',
-                                      label='Network pair [e.g.LT-LT]'),
-                                 Item('stations'),
-                                 Item('locations'),
-                                 Item('channels')))
-    
-# EOF
+#     :type networks: string
+#     :param networks: identification of the network combination e.g. 'LT-LT'
+#     :type stations: string
+#     :param stations: identification of the station combination e.g. 'LT01-LT02'
+#     :type locations: string
+#     :param locations: identification of the location combination e.g. '0-0'
+#     :type channels: string
+#     :param channels: identification of the channel combination e.g. 'HHZ-HHZ'
+
+#     :type delete_trace_files: Bool
+#     :param delete_trace_files: if True all files whos tarces are put in matrices
+#         are deleted.
+
+#     """
+#     default_var_name = 'corr_trace'
+#     out_file_tag = 'mat'
+
+#     print_time_format = "%Y-%m-%d %H:%M:%S.%f"
+
+#     # filename pattern matching the input parameters
+#     if suffix != '':
+#         fpattern = '*' + '_' + basename + '_' + \
+#         stations + '.' + networks + '.' + locations + '.' + channels + \
+#         '_' + suffix + '.mat'
+#     else:
+#         fpattern = '*' + '_' + basename + '_' + \
+#         stations + '.' + networks + '.' + locations + '.' + channels + '.mat'
+
+#     print('Searching for %s' % fpattern)
+#     # find the file list matching the pattern
+#     flist = sorted(glob1(base_dir, fpattern))
+#     # split the filenames in the list into a variable part (time) and a
+#     # constant part (base_name_ID_suffix)
+#     IDstr = []
+#     timestr = []
+#     for tfname in flist:
+#         ttimestr, tIDstr = tfname.split('_', 1)
+#         IDstr.append(tIDstr)
+#         timestr.append(ttimestr)
+#     # find list with unique entries of IDs
+#     combinations = sorted(list(set(IDstr)))
+#     # construct output file name
+#     ofname = []
+#     for tcombination in combinations:
+#         spl = tcombination.split('_')
+#         ID = ''
+#         for tmp in spl[1:-1]:
+#             ID += tmp
+#         ofname.append(out_file_tag + '_' + ID + '_' + spl[-1])
+
+#     # check file name type
+#     # old_style: YYYY-MM-DD_basename_STA1-STA1_CHAN1-CHAN2_suffix.mat
+#     # new_style:
+#     #    YYYYMMDDThhmmssssssZ_basename_networks.stations.locations.channels_suffix.mat
+
+#     if flist == []:  # try old_style filename
+#         print('Assume old style filename')
+#         # filename pattern matching the input parameters for old style
+#         # file names
+#         fpattern = '*' + '_' + basename + '_' + stations + '_' + channels + \
+#             '_' + suffix + '.mat'
+#         # find the file list matching the pattern
+#         flist = sorted(glob1(base_dir, fpattern))
+#         var_name = []
+#         for tfname in flist:
+#             ttimestr, tIDstr = flist[0].split('_', 1)
+#             IDstr.append(tIDstr)
+#             timestr.append(ttimestr)
+#             # in the old style the variable was named according to the
+#             # combination. To chop the last
+#             var_name.append(tIDstr[-1::-1].split('_', 1)[1][-1::-1])
+#         # find list with unique entries of IDs
+#         combinations = sorted(list(set(IDstr)))
+#         for tcombination in combinations:
+#             spl = tcombination.split('_')
+#             stat = ''
+#             for tmp in spl[1:-2]:
+#                 stat += tmp
+#             ofname.append(out_file_tag + '_.' + stat.replace('-', '') + \
+#                           '..' + spl[-2].replace('-', '') + '_' + spl[-1])
+
+#     # Collect the files
+#     # loop over all the combinations that match the conditions (different IDs)
+#     for comb_idx, tcombination in enumerate(combinations):
+#         X = None
+#         time_vect = []
+#         sampling_rate = None
+#         files_used = []
+#         # loop over all the files found in base_dir
+#         for ii, tIDstr in enumerate(IDstr):
+
+#             # if the file belongs to the current combination
+#             if tIDstr == tcombination:
+
+#                 # load the file
+#                 cfilename = join(base_dir,timestr[ii] + '_' + tIDstr)
+#                 dat = mat_to_ndarray(cfilename)
+#                 dat['stats'] = flatten_recarray(dat['stats'])
+
+#                 # check for consistent sampling rates
+#                 checkflag = 0
+#                 # initialize meta data when treating the first trace
+#                 if sampling_rate == None:
+#                     sampling_rate = dat['stats']['sampling_rate']
+#                     stats = dat['stats']  # this (starttime, npts) needs to be
+#                                           # adopted if the trace length
+#                                           # changes
+#                     stats_tr1 = dat['stats_tr1']
+#                     stats_tr2 = dat['stats_tr2']
+#                     starttime = dat['stats']['starttime']
+#                     npts = dat['stats']['npts']
+#                     # trace_length = int(corr_length*sampling_rate)
+#                     # ctime = (arange(0,trace_length,1,dtype=np.float)- \
+#                     #    (np.float(trace_length)-1)/2.)/sampling_rate
+#                     # print sampling_rate, trace_length
+#                 # check sampling rates
+#                 if sampling_rate != dat['stats']['sampling_rate']:
+#                     checkflag += 1
+#                     print('Sampling rate of %s does not match. \
+#                         Trace not included.' % timestr[ii] + '_' + tIDstr)
+
+#                 # check correlation times
+#                 # this need to be changed because the zero lag time should be
+#                 # in the at the 1 1 1971
+#                 if starttime != dat['stats']['starttime']:
+#                     checkflag += 1
+#                     print('Time base of %s does not match. \
+#                         Trace not included.' % timestr[ii] + '_' + tIDstr)
+
+#                 # print dat['stats']['sampling_rate'], starttime, \
+#                     dat['stats']['starttime'], \
+#                     dat['stats_tr1']['starttime'], \
+#                     npts, dat['stats']['npts']
+
+#                 if npts != dat['stats']['npts']:
+#                     checkflag += 1
+#                     print('Trace length of %s does not match. \
+#                         Trace not included.' % timestr[ii] + '_' + tIDstr)
+#                 # more checks possible but we believe it is covered by the
+#                 # filename
+
+#                 if checkflag == 0:
+#                     # extract the trace variable
+#                     # tr_pattern = 'trace_' + fpattern + '_' + \
+#                     # self.channels_pair
+#                     # if tr_pattern in load_var1:
+#                     #    result1 = dict_sel(load_var1, tr_pattern)
+#                     if default_var_name in dat:
+#                         result1 = select_var_from_dict(dat, default_var_name)
+#                     else:
+#                         try:
+#                             result1 = select_var_from_dict(dat, var_name[ii])
+#                         except:
+#                             print('Variable not found')
+#                             pass
+
+#                     # keep only central part of length if given
+#                     if corr_length != 0:
+#                         print('stats time', stats['sampling_rate'])
+#                         trace_length = int(corr_length * sampling_rate)
+#                         print('tra len', trace_length)
+#                         result1 = nd_mat_center_part(result1, trace_length,
+#                                                      axis=0)
+#                         timeOffset = timedelta(np.ceil(
+#                                       np.float(npts - trace_length) / 2.) / \
+#                                                sampling_rate / 86400)
+#                         print('tO', timeOffset)
+#                         stats['starttime'] = convert_time_to_string([timeOffset
+#                                 + convert_time([stats['starttime']])[0]])[0]
+#                         stats['npts'] = trace_length
+#                         print('stats time2', stats['starttime'])
+#                     # estimate time variable
+#                     t1 = dat['stats_tr1']['starttime']
+#                     time_tr1 = convert_time([t1])[0]
+
+#                     t2 = dat['stats_tr2']['starttime']
+#                     time_tr2 = convert_time([t2])[0]
+
+#                     mtime = '%s' % (max(time_tr1,
+#                                         time_tr2).strftime(print_time_format))
+
+#                     time_vect.append(mtime)
+
+#                     if not isinstance(X,np.ndarray):
+#                         X = np.atleast_2d(result1).T
+#                     else:
+#                         X = np.vstack((X, np.atleast_2d(result1).T))
+
+#                     files_used.append(cfilename)
+
+#         corr_mat = {'corr_data': X,
+#                     'time': time_vect,
+#                     'stats': stats,
+#                     'stats_tr1': stats_tr1,
+#                     'stats_tr2': stats_tr2}
+
+#         # keep only central part of the correlation matrix
+#         # (this is better done during stacking above)
+#         # if not corr_length == 0:
+#         #    corr_mat = corr_mat_trim(corr_mat,-corr_length,corr_length)
+
+#         # save the matlab variable
+
+#         #print 'saving file %s of size %d x %d' % \
+#         #    (ofname[comb_idx], corr_mat['corr_data'].shape[0],
+#         #     corr_mat['corr_data'].shape[1])
+
+#         savemat(join(save_dir, ofname[comb_idx]), corr_mat, oned_as='row')
+
+#         # delete files
+#         if delete_trace_files:
+#             for del_file in files_used:
+#                 os.remove(del_file)

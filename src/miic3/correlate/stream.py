@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Wednesday, 30th June 2021 04:59:34 pm
+Last Modified: Thursday, 1st July 2021 11:38:54 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -40,6 +40,12 @@ class CorrBulk(object):
             self.stats = Stats()
             self.stats['n_traces'], self.stats['npts'] = A.shape
         self.stats['processing_bulk'] = []
+        # So if one is changed the other one will be adapted as well
+        # hopefully, at least
+        # If the stats behave weirdly, I should review this
+        self.stats['delta'] = 1/self.stats['sampling_rate']
+        self.stats['end_lag'] = self.stats['start_lag'] + \
+            self.stats['npts']/self.stats['sampling_rate']
 
     def normalize(
         self, starttime: float = None, endtime: float = None,
@@ -222,6 +228,26 @@ class CorrBulk(object):
         self.stats.processing_bulk += [
             'Resampled. Starttimes: %s, Endtimes %s' % (
                 str(starttimes), str(endtimes))]
+        return self
+
+    def resample_time_axis(self, freq: float):
+        """
+        Resample the lapse time axis of a correlation matrix. The correlations
+        are automatically filtered with a highpass filter of 0.4*sampling
+        frequency to avoid aliasing. The function decides automatically whether
+        to decimate or resample depending on the desired frequency
+
+        :param freq: new sampling frequency
+        :type freq: float
+
+        ..note:: This action is performed **in-place**. If you want to keep
+            the original data use
+            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`
+        """
+        self.data, self.stats = pcp.corr_mat_resample_or_decimate(
+            self.data, self.stats, freq)
+        self.stats.processing_bulk += [
+            'Resampled time axis. New sampling rate: %s' % freq]
         return self
 
     def smooth(
