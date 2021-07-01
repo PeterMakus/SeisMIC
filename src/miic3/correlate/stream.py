@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Thursday, 1st July 2021 04:14:50 pm
+Last Modified: Thursday, 1st July 2021 04:34:14 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -29,14 +29,15 @@ from miic3.monitor.dv import DV
 class CorrStats(AttribDict):
     """
     From Obspy, but with the difference that some items can be lists and that
-    corr_start and corr_end are introduced.
+    corr_start and corr_end are introduced, some other differences only for
+    correlations.
 
     A container for additional header information of a ObsPy Trace object.
 
     A ``Stats`` object may contain all header information (also known as meta
-    data) of a :class:`~obspy.core.trace.Trace` object. Those headers may be
-    accessed or modified either in the dictionary style or directly via a
-    corresponding attribute. There are various default attributes which are
+    data) of a :class:`~miic3.correlate.stream.CorrTrace` object. Those headers
+    may be accessed or modified either in the dictionary style or directly via
+    a corresponding attribute. There are various default attributes which are
     required by every waveform import and export modules within ObsPy such as
     :mod:`obspy.io.mseed`.
 
@@ -47,7 +48,7 @@ class CorrStats(AttribDict):
 
     .. rubric:: Basic Usage
 
-    >>> stats = Stats()
+    >>> stats = CorrStats()
     >>> stats.network = 'BW'
     >>> print(stats['network'])
     BW
@@ -75,11 +76,21 @@ class CorrStats(AttribDict):
     ``channel`` : string, optional
         Channel code (default is an empty string).
     ``starttime`` : :class:`~obspy.core.utcdatetime.UTCDateTime`, optional
-        Date and time of the first data sample given in UTC (default value is
-        "1970-01-01T00:00:00.0Z").
-    ``endtime`` : :class:`~obspy.core.utcdatetime.UTCDateTime`, optional
-        Date and time of the last data sample given in UTC
+        Date and time of the first data sample used for correlation in UTC
         (default value is "1970-01-01T00:00:00.0Z").
+    ``endtime`` : :class:`~obspy.core.utcdatetime.UTCDateTime`, optional
+        Date and time of the last data sample used for correlation in UTC
+        (default value is "1970-01-01T00:00:00.0Z").
+    ``corr_start``: :class:`~obspy.core.utcdatetime.UTCDateTime`, optional
+        Date and time of the first data sample used for correlation in UTC
+        (default value is "1970-01-01T00:00:00.0Z").
+    ``corr_end``: :class:`~obspy.core.utcdatetime.UTCDateTime`, optional
+        Date and time of the last data sample used for correlation in UTC
+        (default value is "1970-01-01T00:00:00.0Z").
+    ``start_lag``: float, optional
+        Lag of the first sample in seconds (usually negative)
+    ``end_lag``: float, optional
+        Lag of the last sample in seconds.
 
     .. rubric:: Notes
 
@@ -94,20 +105,22 @@ class CorrStats(AttribDict):
         >>> stats.sampling_rate
         200.0
 
-    (2) The attributes ``starttime``, ``npts``, ``sampling_rate`` and ``delta``
-        are monitored and used to automatically calculate the ``endtime``.
+    (2) The attributes ``start_lag``, ``npts``, ``sampling_rate`` and ``delta``
+        are monitored and used to automatically calculate the ``end_lag``.
 
         >>> stats = Stats()
-        >>> stats.npts = 60
+        >>> stats.npts = 61
         >>> stats.delta = 1.0
-        >>> stats.starttime = UTCDateTime(2009, 1, 1, 12, 0, 0)
-        >>> stats.endtime
-        UTCDateTime(2009, 1, 1, 12, 0, 59)
+        >>> stats.start_lag = -30
+        >>> stats.end_lag
+        30
         >>> stats.delta = 0.5
-        >>> stats.endtime
-        UTCDateTime(2009, 1, 1, 12, 0, 29, 500000)
+        >>> stats.end_lag
+        0
 
-    (3) The attribute ``endtime`` is read only and can not be modified.
+    (3) The attribute ``endtime``, ``end_lag``, and ``starttime`` are 
+        read only and cannot be modified. ``starttime`` and ``endtime`` are
+        just simply aliases of ``corr_start`` and ``corr_end``.
 
         >>> stats = Stats()
         >>> stats.endtime = UTCDateTime(2009, 1, 1, 12, 0, 0)
@@ -121,9 +134,9 @@ class CorrStats(AttribDict):
 
     (4)
         The attribute ``npts`` will be automatically updated from the
-        :class:`~obspy.core.trace.Trace` object.
+        :class:`~miic3.correlate.stream.CorrTrace` object.
 
-        >>> trace = Trace()
+        >>> trace = CorrTrace()
         >>> trace.stats.npts
         0
         >>> trace.data = np.array([1, 2, 3, 4])
@@ -222,6 +235,7 @@ class CorrStats(AttribDict):
                 msg = 'Component must be set with single character'
                 raise ValueError(msg)
             value = self.channel[:-1] + value
+            value[3] = value[-1]
         # prevent a calibration factor of 0
         if key == 'calib' and value == 0:
             msg = 'Calibration factor set to 0.0!'
