@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 24th June 2021 02:23:40 pm
-Last Modified: Tuesday, 29th June 2021 03:29:20 pm
+Last Modified: Thursday, 1st July 2021 01:28:45 pm
 '''
 
 import unittest
@@ -41,48 +41,42 @@ class TestTimeWindowsCreation(unittest.TestCase):
 # This is a little more like an integral test
 class TestTimeStretchEstimate(unittest.TestCase):
     def setUp(self):
-        self.n = 1001
-        self.ref = np.sin(np.linspace(0, np.pi, self.n, endpoint=True))
-        self.xref = np.linspace(0, np.pi, self.n, endpoint=True)
-        # self.t = np.arange(0, 0 + 200, 1)
+        self.n = 1000
+        self.ref = np.cos(np.linspace(0, 40*np.pi, self.n, endpoint=True))
+
 
     def test_result(self):
         stretch = np.arange(1, 11, 1)/100  # in per cent
         # number of points for new
-        nn = ((1+stretch)*self.n).round()
+        nn = ((1+stretch)*self.n)
         corr = np.empty((len(nn), self.n))
-        # inter = interp1d(self.xref, self.ref, kind='cubic')
         for ii, n in enumerate(nn):
-            x = np.linspace(0, np.pi, int(n), endpoint=True)
+            x = np.linspace(0, 40*np.pi, int(n), endpoint=True)
             jj = int(round(abs(len(x)-self.n)/2))
-            corr[ii, :] = np.sin(x)[jj:-jj][:self.n]
-            #corr[ii, :] = inter(x[jj:-jj][:1001])
-        dv = sm.time_stretch_estimate(corr, self.ref, stretch_steps=1000)
-        # print(dv['value'])
-        self.assertTrue(np.allclose(dv['value'], stretch))
+            corr[ii, :] = np.cos(x)[jj:-jj][:self.n]
+        dv = sm.time_stretch_estimate(corr, self.ref, stretch_steps=101)
+        self.assertTrue(np.allclose(dv['value'], stretch, atol=0.004))
 
     def test_no_stretch(self):
         corr = np.tile(self.ref, (4, 1))
         dv = sm.time_stretch_estimate(corr, self.ref, stretch_steps=101)
-        #print(dv)
-        #print(dv['value'])
-        self.assertTrue(np.allclose(dv['value'], [0, 0, 0, 0]))
+        self.assertTrue(np.all(dv['value'] == [0, 0, 0, 0]))
 
     def test_neg_stretch(self):
         stretch = np.arange(1, 11, 1)/100  # in per cent
         # number of points for new
-        nn = ((1+stretch)*self.n).round()
+        nn = ((1+stretch)*self.n)
         corr = np.empty((len(nn), self.n))
         # inter = interp1d(self.xref, self.ref, kind='cubic')
         for ii, n in enumerate(nn):
-            x = np.linspace(0, np.pi, int(n), endpoint=True)
+            x = np.linspace(0, 40*np.pi, int(n), endpoint=True)
             jj = int(round(abs(len(x)-self.n)/2))
-            corr[ii, :] = np.sin(x)[jj:-jj][:self.n]
+            corr[ii, :] = np.cos(x)[jj:-jj][:self.n]
         # make the most stretch trace the ref trace
         ref = corr[-1, :]
-        dv = sm.time_stretch_estimate(corr[:-1, :], ref, stretch_steps=1000)
-        print(dv['value'])
-        #self.assertTrue(np.allclose(dv['value'], stretch[1:]))
+        dv = sm.time_stretch_estimate(corr[:-1, :], ref, stretch_steps=101)
+        self.assertTrue(
+            np.allclose(dv['value'], -np.flip(stretch[:-1]), atol=0.004))
 
 
     

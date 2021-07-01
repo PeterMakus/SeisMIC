@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Tuesday, 15th June 2021 04:28:53 pm
+Last Modified: Thursday, 1st July 2021 04:17:10 pm
 '''
 
 import unittest
@@ -16,6 +16,7 @@ from unittest.mock import patch
 import numpy as np
 from obspy import read, read_inventory, Stream
 from obspy.core import Stats
+from obspy.core.utcdatetime import UTCDateTime
 
 from miic3.correlate import stream
 
@@ -30,7 +31,7 @@ class TestCombineStats(unittest.TestCase):
         st0 = self.st[0].stats
         st1 = self.st[1].stats
         lag = np.random.randint(80, 120)
-        stc = stream.combine_stats(st0, st1, -lag, lag, inv=self.inv)
+        stc = stream.combine_stats(st0, st1, -lag, inv=self.inv)
         self.assertEqual(stc.dist, 0)
         keys = ['network', 'station', 'channel', 'location']
         for k in keys:
@@ -38,7 +39,8 @@ class TestCombineStats(unittest.TestCase):
         self.assertEqual(stc.corr_start, st1.starttime)
         self.assertEqual(stc.corr_end, st1.endtime)
         self.assertEqual(stc.start_lag, -lag)
-        self.assertEqual(stc.end_lag, lag)
+
+        self.assertEqual(stc.end_lag, -lag+(st0.npts-1)*st0.delta)
 
     def test_wrong_input(self):
         with self.assertRaises(TypeError):
@@ -142,21 +144,24 @@ class TestAlphabeticalCorrelation(unittest.TestCase):
 
     def test_no_modification(self):
         header, data_out = stream.alphabetical_correlation(
-            self.st0, self.st1, -10, 10, self.data.copy(), None)
+            self.st0, self.st1, -10, 11, self.data.copy(), None)
         self.assertEqual(header.station, 'AA-ZZ')
         self.assertTrue(np.all(data_out == self.data))
+        self.assertEqual(header.start_lag, -10)
 
     def test_modified(self):
         header, data_out = stream.alphabetical_correlation(
-            self.st1, self.st0, -10, 10, self.data.copy(), None)
+            self.st1, self.st0, -10, 11, self.data.copy(), None)
         self.assertEqual(header.station, 'AA-ZZ')
         self.assertTrue(np.all(data_out == np.flip(self.data)))
+        self.assertEqual(header.start_lag, -11)
 
     def test_priority(self):
         self.st0.network = 'ZZ'
         header, _ = stream.alphabetical_correlation(
-            self.st1, self.st0, -10, 10, self.data.copy(), None)
+            self.st1, self.st0, -10, 11, self.data.copy(), None)
         self.assertEqual(header.station, 'ZZ-AA')
+        self.assertEqual(header.start_lag, -10)
 
 
 class TestCorrTrace(unittest.TestCase):
@@ -172,7 +177,7 @@ class TestCorrTrace(unittest.TestCase):
 
     def test_provide_header(self):
         ctr = stream.CorrTrace(self.st[0].data, _header=self.st[0].stats)
-        self.assertEqual(ctr.stats, self.st[0].stats)
+        self.assertEqual(ctr.stats, stream.CorrStats(self.st[0].stats))
 
     def test_combine_headers(self):
         ctr = stream.CorrTrace(
@@ -181,16 +186,14 @@ class TestCorrTrace(unittest.TestCase):
         exp_res, _ = stream.alphabetical_correlation(
             self.st[0].stats, self.st[1].stats, -10, 10, np.empty(25), None)
         exp_res.npts = 25
-        for k in exp_res:
-            self.assertEqual(ctr.stats[k], exp_res[k])
+        self.assertEqual(ctr.stats, exp_res)
 
     def test_no_header(self):
         ctr = stream.CorrTrace(
             np.empty(25))
-        exp_res = Stats()
+        exp_res = stream.CorrStats()
         exp_res['npts'] = 25
-        for k in exp_res:
-            self.assertEqual(ctr.stats[k], exp_res[k])
+        self.assertEqual(ctr.stats, exp_res)
 
 
 class TestCorrStream(unittest.TestCase):
@@ -326,6 +329,61 @@ class TestCorrStream(unittest.TestCase):
         #     # The last three could be shorter
         tr = out[4]
         self.assertEqual(stacklen, tr.stats.corr_end-tr.stats.corr_start)
+
+
+class TestConvertStatlistToBulkStats(unittest.TestCase):
+    def setUp(self):
+        self.stats = read()[0].stats
+        self.stats['corr_start'] = UTCDateTime(0)
+        self.stats['corr_end'] = UTCDateTime(3600)
+        self.stats['dist'] = 1000
+        self.stats['az'] = 30
+        self.stats['baz'] = 330
+        self.stats['start_lag'] = -100
+        self.stats['end_lag'] = 100
+        self.stats['stla'] = 55
+        self.stats['evla'] = 54.5
+        self.stats['stlo'] = 0
+        self.stats['evlo'] = 0
+        self.stats['stel'] = 0
+        self.stats['evel'] = 0
+        # Note that starttime and endtime are just copies of corr_start and
+        # corr_end
+        self.mutables = ['corr_start', 'corr_end', 'starttime', 'endtime']
+        self.immutables = [
+            'npts', 'sampling_rate', 'network', 'station', 'channel',
+            'start_lag', 'end_lag', 'stla', 'stlo', 'stel','evla', 'evlo',
+            'evel', 'dist', 'az', 'baz', 'location']
+        self.stats = stream.CorrStats(self.stats)
+
+    def test_result(self):
+        stats1 = self.stats.copy()
+        stats1['corr_start'] += 3600
+        stats1['corr_end'] += 3600
+        stcomb = stream.convert_statlist_to_bulk_stats([self.stats, stats1])
+        for key in stcomb:
+            if key in self.mutables:
+                self.assertEqual(len(stcomb[key]), 2)
+                self.assertEqual(stcomb[key][0], self.stats[key])
+                self.assertEqual(stcomb[key][1], stats1[key])
+            elif key == 'ntrcs':
+                self.assertEqual(stcomb[key], 2)
+            else:
+                self.assertEqual(stcomb[key], self.stats[key])
+
+    def test_differing_immutables(self):
+        stats1 = self.stats.copy()
+        change = np.random.randint(0, len(self.immutables)-1)
+        chkey = self.immutables[change]
+        stats1[chkey] = '3'
+        with self.assertRaises(ValueError):
+            _ = stream.convert_statlist_to_bulk_stats([self.stats, stats1])
+
+    def test_loc_mutable(self):
+        stats1 = self.stats.copy()
+        stats1['location'] = 'bla'
+        stcomb = stream.convert_statlist_to_bulk_stats(
+            [self.stats, stats1], True)
 
 
 if __name__ == "__main__":

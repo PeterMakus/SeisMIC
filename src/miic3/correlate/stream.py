@@ -7,14 +7,17 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Thursday, 1st July 2021 11:38:54 am
+Last Modified: Thursday, 1st July 2021 04:14:50 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
+from future.utils import native_str
+import warnings
 
 import numpy as np
 from obspy import Stream, Trace, Inventory, UTCDateTime
 from obspy.core import Stats
+from obspy.core.util import AttribDict
 
 from miic3.utils.miic_utils import trace_calc_az_baz_dist, \
     inv_calc_az_baz_dist, lag0, save_header_to_np_array, \
@@ -23,6 +26,233 @@ from miic3.plot.plot_utils import plot_correlation
 import miic3.monitor.post_corr_process as pcp
 from miic3.monitor.dv import DV
 
+class CorrStats(AttribDict):
+    """
+    From Obspy, but with the difference that some items can be lists and that
+    corr_start and corr_end are introduced.
+
+    A container for additional header information of a ObsPy Trace object.
+
+    A ``Stats`` object may contain all header information (also known as meta
+    data) of a :class:`~obspy.core.trace.Trace` object. Those headers may be
+    accessed or modified either in the dictionary style or directly via a
+    corresponding attribute. There are various default attributes which are
+    required by every waveform import and export modules within ObsPy such as
+    :mod:`obspy.io.mseed`.
+
+    :type header: dict or :class:`~obspy.core.trace.Stats`, optional
+    :param header: Dictionary containing meta information of a single
+        :class:`~obspy.core.trace.Trace` object. Possible keywords are
+        summarized in the following `Default Attributes`_ section.
+
+    .. rubric:: Basic Usage
+
+    >>> stats = Stats()
+    >>> stats.network = 'BW'
+    >>> print(stats['network'])
+    BW
+    >>> stats['station'] = 'MANZ'
+    >>> print(stats.station)
+    MANZ
+
+    .. rubric:: _`Default Attributes`
+
+    ``sampling_rate`` : float, optional
+        Sampling rate in hertz (default value is 1.0).
+    ``delta`` : float, optional
+        Sample distance in seconds (default value is 1.0).
+    ``calib`` : float, optional
+        Calibration factor (default value is 1.0).
+    ``npts`` : int, optional
+        Number of sample points (default value is 0, which implies that no data
+        is present).
+    ``network`` : string, optional
+        Network code (default is an empty string).
+    ``location`` : string, optional
+        Location code (default is an empty string).
+    ``station`` : string, optional
+        Station code (default is an empty string).
+    ``channel`` : string, optional
+        Channel code (default is an empty string).
+    ``starttime`` : :class:`~obspy.core.utcdatetime.UTCDateTime`, optional
+        Date and time of the first data sample given in UTC (default value is
+        "1970-01-01T00:00:00.0Z").
+    ``endtime`` : :class:`~obspy.core.utcdatetime.UTCDateTime`, optional
+        Date and time of the last data sample given in UTC
+        (default value is "1970-01-01T00:00:00.0Z").
+
+    .. rubric:: Notes
+
+    (1) The attributes ``sampling_rate`` and ``delta`` are linked to each
+        other. If one of the attributes is modified the other will be
+        recalculated.
+
+        >>> stats = Stats()
+        >>> stats.sampling_rate
+        1.0
+        >>> stats.delta = 0.005
+        >>> stats.sampling_rate
+        200.0
+
+    (2) The attributes ``starttime``, ``npts``, ``sampling_rate`` and ``delta``
+        are monitored and used to automatically calculate the ``endtime``.
+
+        >>> stats = Stats()
+        >>> stats.npts = 60
+        >>> stats.delta = 1.0
+        >>> stats.starttime = UTCDateTime(2009, 1, 1, 12, 0, 0)
+        >>> stats.endtime
+        UTCDateTime(2009, 1, 1, 12, 0, 59)
+        >>> stats.delta = 0.5
+        >>> stats.endtime
+        UTCDateTime(2009, 1, 1, 12, 0, 29, 500000)
+
+    (3) The attribute ``endtime`` is read only and can not be modified.
+
+        >>> stats = Stats()
+        >>> stats.endtime = UTCDateTime(2009, 1, 1, 12, 0, 0)
+        Traceback (most recent call last):
+        ...
+        AttributeError: Attribute "endtime" in Stats object is read only!
+        >>> stats['endtime'] = UTCDateTime(2009, 1, 1, 12, 0, 0)
+        Traceback (most recent call last):
+        ...
+        AttributeError: Attribute "endtime" in Stats object is read only!
+
+    (4)
+        The attribute ``npts`` will be automatically updated from the
+        :class:`~obspy.core.trace.Trace` object.
+
+        >>> trace = Trace()
+        >>> trace.stats.npts
+        0
+        >>> trace.data = np.array([1, 2, 3, 4])
+        >>> trace.stats.npts
+        4
+
+    (5)
+        The attribute ``component`` can be used to get or set the component,
+        i.e. the last character of the ``channel`` attribute.
+
+        >>> stats = Stats()
+        >>> stats.channel = 'HHZ'
+        >>> stats.component  # doctest: +SKIP
+        'Z'
+        >>> stats.component = 'L'
+        >>> stats.channel  # doctest: +SKIP
+        'HHL'
+
+    """
+    # set of read only attrs
+    readonly = ['endtime', 'end_lag', 'starttime']
+    # default values
+    defaults = {
+        'sampling_rate': 1.0,
+        'delta': 1.0,
+        'starttime': UTCDateTime(0),
+        'endtime': UTCDateTime(0),
+        'corr_start': UTCDateTime(0),
+        'corr_end': UTCDateTime(0),
+        'start_lag': 0,
+        'end_lag': 0,
+        'npts': 0,
+        'calib': 1.0,
+        'network': '',
+        'station': '',
+        'location': '',
+        'channel': '',
+    }
+    # keys which need to refresh derived values
+    _refresh_keys = {
+        'delta', 'sampling_rate', 'corr_start', 'corr_end', 'npts',
+        'start_lag'}
+    # dict of required types for certain attrs
+    _types = {
+        'network': (str, native_str),
+        'station': (str, native_str),
+        'channel': (str, native_str),
+    }
+
+    def __init__(self, header={}):
+        """
+        """
+        super(CorrStats, self).__init__(header)
+
+    def __setitem__(self, key, value):
+        """
+        """
+        if key in self._refresh_keys:
+            # ensure correct data type
+            if key == 'delta':
+                key = 'sampling_rate'
+                try:
+                    value = 1.0 / float(value)
+                except ZeroDivisionError:
+                    value = 0.0
+            elif key == 'sampling_rate':
+                value = float(value)
+            # elif key == 'corr_start':
+            #     value = UTCDateTime(value)
+            # elif key == 'corr_end':
+            #     value = UTCDateTime(value)
+            elif key == 'npts':
+                if not isinstance(value, int):
+                    value = int(value)
+            # set current key
+            super(CorrStats, self).__setitem__(key, value)
+            # set derived value: delta
+            try:
+                delta = 1.0 / float(self.sampling_rate)
+            except ZeroDivisionError:
+                delta = 0
+            self.__dict__['delta'] = delta
+            # set derived value: endtime
+            if self.npts == 0:
+                timediff = 0
+            else:
+                timediff = float(self.npts - 1) * delta
+            self.__dict__['end_lag'] = self.start_lag + timediff
+            self.__dict__['endtime'] = self.corr_end
+            self.__dict__['starttime'] = self.corr_start
+            return
+        if key == 'component':
+            key = 'channel'
+            value = str(value)
+            if len(value) != 1:
+                msg = 'Component must be set with single character'
+                raise ValueError(msg)
+            value = self.channel[:-1] + value
+        # prevent a calibration factor of 0
+        if key == 'calib' and value == 0:
+            msg = 'Calibration factor set to 0.0!'
+            warnings.warn(msg, UserWarning)
+        # all other keys
+        if isinstance(value, dict):
+            super(CorrStats, self).__setitem__(key, AttribDict(value))
+        else:
+            super(CorrStats, self).__setitem__(key, value)
+
+    __setattr__ = __setitem__
+
+    def __getitem__(self, key, default=None):
+        """
+        """
+        if key == 'component':
+            return super(CorrStats, self).__getitem__('channel', default)[-1:]
+        else:
+            return super(CorrStats, self).__getitem__(key, default)
+
+    def __str__(self):
+        """
+        Return better readable string representation of Stats object.
+        """
+        priorized_keys = ['network', 'station', 'location', 'channel',
+                          'corr_start', 'corr_end', 'start_lag', 'end_lag',
+                          'sampling_rate', 'delta', 'npts', 'calib']
+        return self._pretty_str(priorized_keys)
+
+    def _repr_pretty_(self, p, cycle):
+        p.text(str(self))
 
 class CorrBulk(object):
     """
@@ -30,22 +260,18 @@ class CorrBulk(object):
     correlation contain data from only one Station-Channel pair.
     """
     def __init__(
-            self, A: np.ndarray, stats: Stats = None, statlist: list = None):
+        self, A: np.ndarray, stats: CorrStats = None,
+            statlist: List[CorrStats] = None):
         self.data = A
         if stats:
             self.stats = stats
         elif statlist:
             self.stats = convert_statlist_to_bulk_stats(statlist)
         else:
-            self.stats = Stats()
-            self.stats['n_traces'], self.stats['npts'] = A.shape
+            self.stats = CorrStats()
+            self.stats['ntrcs'], self.stats['npts'] = A.shape
         self.stats['processing_bulk'] = []
-        # So if one is changed the other one will be adapted as well
-        # hopefully, at least
-        # If the stats behave weirdly, I should review this
-        self.stats['delta'] = 1/self.stats['sampling_rate']
-        self.stats['end_lag'] = self.stats['start_lag'] + \
-            self.stats['npts']/self.stats['sampling_rate']
+
 
     def normalize(
         self, starttime: float = None, endtime: float = None,
@@ -695,19 +921,19 @@ class CorrTrace(Trace):
         :type _header: dict, optional
         """
         if _header:
-            header = Stats(_header)
+            header = CorrStats(_header)
         elif not header1 and not header2:
-            header = None
-            if start_lag and end_lag:
-                header = Stats()
+            header = CorrStats()
+            if start_lag:
                 header['start_lag'] = start_lag
-                header['end_lag'] = end_lag
         else:
             header, data = alphabetical_correlation(
                 header1, header2, start_lag, end_lag, data, inv)
 
-        super(CorrTrace, self).__init__(data=data, header=header)
+        super(CorrTrace, self).__init__(data=data)
+        self.stats = header
         self.stats['npts'] = len(data)
+
 
     def __str__(self, id_length: int = None) -> str:
         """
@@ -763,7 +989,7 @@ class CorrTrace(Trace):
 
 def alphabetical_correlation(
     header1: Stats, header2: Stats, start_lag: float, end_lag: float,
-        data: np.ndarray, inv: Inventory) -> Tuple[Stats, np.ndarray]:
+        data: np.ndarray, inv: Inventory) -> Tuple[CorrStats, np.ndarray]:
     """
     Make sure that Correlations are always created in alphabetical order,
     so that we won't have both a correlation for AB-CD and CD-AB.
@@ -796,20 +1022,20 @@ def alphabetical_correlation(
     sorted.sort()
     if sort != sorted:
         header = combine_stats(
-            header2, header1, end_lag,
-            start_lag, inv=inv)
+            header2, header1, -end_lag,
+            inv=inv)
         # reverse array and lag times
         data = np.flip(data)
     else:
         header = combine_stats(
             header1, header2, start_lag,
-            end_lag, inv=inv)
+            inv=inv)
     return header, data
 
 
 def combine_stats(
     stats1: Stats, stats2: Stats, start_lag: float,
-        end_lag: float, inv: Inventory = None) -> Stats:
+        inv: Inventory = None) -> CorrStats:
     """ Combine the meta-information of two ObsPy Trace.Stats objects
 
     This function returns a ObsPy :class:`~obspy.core.trace.Stats` object
@@ -854,7 +1080,7 @@ def combine_stats(
     tr1_keys = list(stats1.keys())
     tr2_keys = list(stats2.keys())
 
-    stats = Stats()
+    stats = CorrStats()
     # actual correlation times
     stats['corr_start'] = max(stats1.starttime, stats2.starttime)
     stats['corr_end'] = min(stats1.endtime, stats2.endtime)
@@ -920,8 +1146,9 @@ def combine_stats(
     # note that those have to be adapted whenever several correlations are
     # stacked
     stats['start_lag'] = start_lag
-    stats['end_lag'] = end_lag
-    stats['starttime'] = lag0 + start_lag
+    # Now changed automatically & read only
+    # stats['end_lag'] = end_lag
+    # stats['starttime'] = lag0 + start_lag
     return stats
 
 
@@ -1006,7 +1233,7 @@ def stack_st(st: CorrStream, weight: str) -> CorrTrace:
 
 
 def convert_statlist_to_bulk_stats(
-        statlist: List[Stats], varying_loc: bool = False) -> Stats:
+        statlist: List[CorrStats], varying_loc: bool = False) -> CorrStats:
     """
     Converts a list of :class:`~miic3.correlate.stream.CorrTrace` stats objects
     to a single stats object that can be used for the creation of a
@@ -1023,11 +1250,13 @@ def convert_statlist_to_bulk_stats(
     stats = statlist[0].copy()
     # can change from trace to trace
     mutables = ['corr_start', 'corr_end']
+
     # Should / have to be identical for each trace
     # Not 100% sure if start and end_lag should be on this list
     immutables = [
         'npts', 'sampling_rate', 'network', 'station', 'channel', 'start_lag',
-        'end_lag']
+        'end_lag', 'stla', 'stlo', 'stel','evla', 'evlo', 'evel',
+        'dist', 'az', 'baz']
     if varying_loc:
         mutables += ['location']
     else:
@@ -1043,4 +1272,3 @@ def convert_statlist_to_bulk_stats(
 properties. The differing property is %s' % key)
     stats['ntrcs'] = len(statlist)
     return stats
-
