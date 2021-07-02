@@ -205,6 +205,7 @@ class Store_Client(object):
                 self.sds_root, dirlist, network, station, '*', 'end')
         except FileNotFoundError as e:
             warnings.warn(e, UserWarning)
+            return (None, None)
 
         # startjul = [i.split('.')[-1] for i in glob.glob(
         #     os.path.join(
