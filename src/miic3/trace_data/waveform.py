@@ -2,7 +2,7 @@ import fnmatch
 import os
 import datetime
 import glob
-from typing import Tuple
+from typing import List, Tuple
 import warnings
 import re
 
@@ -198,28 +198,37 @@ class Store_Client(object):
             return (None, None)
         dirlist.sort()  # sort by time
 
-        startjul = [i.split('.')[-1] for i in glob.glob(
-            os.path.join(
-                self.sds_root, dirlist[0], network, station, '*', '*'))]
-        if not startjul:
-            warnings.warn(
-                'Station %s.%s not in database' % (network, station),
-                UserWarning)
-            return (None, None)
-        # the keys here make sure that 200 comes after 3, but before 300
-        startjul.sort(key=lambda l: (len(l), l))
-        starttime = UTCDateTime(year=int(dirlist[0]), julday=startjul[0])
+        try:
+            starttime = get_day_in_folder(
+                self.sds_root, dirlist, network, station, '*', 'start')
+            endtime = get_day_in_folder(
+                self.sds_root, dirlist, network, station, '*', 'end')
+        except FileNotFoundError as e:
+            warnings.warn(e, UserWarning)
 
-        endjul = [i.split('.')[-1] for i in glob.glob(
-            os.path.join(
-                self.sds_root, dirlist[-1], network, station, '*', '*'))]
-        endjul.sort(key=lambda l: (len(l), l))
-        # This is of course not the latest endtime, but the latest starttime!
-        # Hence, add + 1 (PM 06/05/21)
-        endtime = UTCDateTime(year=int(dirlist[-1]), julday=int(endjul[-1]))
-        # More complicated than that. If day=365 we have to do year+1
-        # Let's add the day to the endtime instead of to the kwarg
-        endtime += 24*3600
+        # startjul = [i.split('.')[-1] for i in glob.glob(
+        #     os.path.join(
+        #         self.sds_root, dirlist[0], network, station, '*', '*'))]
+
+        # if not startjul:
+        #     warnings.warn(
+        #         'Station %s.%s not in database' % (network, station),
+        #         UserWarning)
+        #     return (None, None)
+        # # the keys here make sure that 200 comes after 3, but before 300
+        # startjul.sort(key=lambda l: (len(l), l))
+        # starttime = UTCDateTime(year=int(dirlist[0]), julday=startjul[0])
+
+        # endjul = [i.split('.')[-1] for i in glob.glob(
+        #     os.path.join(
+        #         self.sds_root, dirlist[-1], network, station, '*', '*'))]
+        # endjul.sort(key=lambda l: (len(l), l))
+        # # This is of course not the latest endtime, but the latest starttime!
+        # # Hence, add + 1 (PM 06/05/21)
+        # endtime = UTCDateTime(year=int(dirlist[-1]), julday=int(endjul[-1]))
+        # # More complicated than that. If day=365 we have to do year+1
+        # # Let's add the day to the endtime instead of to the kwarg
+        # endtime += 24*3600
         return (starttime, endtime)
 
     def _load_remote(
@@ -657,3 +666,58 @@ def _fs_translate(part: str, ID: str, starttime: datetime.datetime) -> str:
         res = res.replace(
             transl[0].replace("'", ""), transl[1].replace("'", ""))
     return res
+
+
+def get_day_in_folder(
+    root: str, dirlist: List[str], network: str, station: str,
+        channel: str, type: str) -> UTCDateTime:
+    """
+    Assuming that mseed files are by day (i.e., one file per day), this
+    function will return the earliest or the latest day available (depending
+    upon the argument passed as ``type``).
+
+    :param root: The path to the sds root folder
+    :type root: str
+    :param dirlist: alphabetically sorted list of available years
+    :type dirlist: List[str]
+    :param network: The queried network code
+    :type network: str
+    :param station: The queried station code
+    :type station: str
+    :param channel: The queried channel code (wildcards allowed)
+    :type channel: str
+    :param type: either ``start`` or ``end``
+    :type type: str
+    :raises NotImplementedError: Unknown argument for type
+    :raises FileNotFoundError: No files in db
+    :return: The earliest starttime or latest endtime in utc
+    :rtype: UTCDateTime
+    """
+    if type == 'start':
+        i0 = 0
+        ii = 1
+    elif type == 'end':
+        i0 = -1
+        ii = -1
+    else:
+        raise NotImplementedError('Type has to be either start or end.')
+    julday = None
+    while not julday:
+        # if the folder is empty julday will stay False
+        year = dirlist[i0]
+        julday = [i.split('.')[-1] for i in glob.glob(
+                os.path.join(
+                    root, year, network, station, channel, '*'))]
+        i0 += ii
+    if not julday:
+        raise FileNotFoundError(
+            'Station %s.%s not in database' % (network, station))
+    # make sure that 200 comes after 3, but before 300
+    julday.sort(key=lambda l: (len(l), l))
+    if type == 'start':
+        return UTCDateTime(year=int(year), julday=julday[0])
+    if type == 'end':
+        # +24*3600 because else it's the starttime of latest day
+        return UTCDateTime(year=int(year), julday=int(julday[-1])) + 24*3600
+
+    
