@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 22nd June 2021 04:34:18 pm
+Last Modified: Friday, 2nd July 2021 11:54:31 am
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -174,7 +174,6 @@ class Correlator(object):
         {'NET0.STAT0': {
             'NET1.STAT1': {'BHZ-BHH': [%list of starttimes] ,
             'NET2.STAT2': {'BHZ-BHH':[%list of starttimes]}}}
-            
         """
         netcombs, statcombs = compute_network_station_combinations(
             self.netlist, self.statlist)
@@ -970,31 +969,40 @@ def _rotate_corr_stream(st: Stream) -> Stream:
 
 
 def set_sample_options() -> dict:
-    args = {'TDpreProcessing': [{'function': detrend,
-                                'args': {'type': 'linear'}},
-                                {'function': taper,
-                                'args': {'type': 'cosine_taper', 'p': 0.01}},
-                                {'function': mute,
-                                'args': {'filter': {
-                                    'type': 'bandpass',
-                                    'freqmin': 1., 'freqmax': 6.},
-                                    'taper_len': 1., 'std_factor': 1,
-                                    'extend_gaps': True}},
-                                {'function': TDfilter,
-                                'args': {
-                                    'type': 'bandpass',
-                                    'freqmin': 1., 'freqmax': 3.}},
-                                {'function': TDnormalization,
-                                'args': {'filter': {
-                                    'type': 'bandpass', 'freqmin': 0.5,
-                                    'freqmax': 2.}, 'windowLength': 1.}},
-                                {'function': signBitNormalization,
-                                'args': {}}
+    args = {'TDpreProcessing': [
+        {
+            'function': detrend,
+            'args': {'type': 'linear'}},
+        {
+            'function': taper,
+            'args': {'type': 'cosine_taper', 'p': 0.01}},
+        {
+            'function': mute,
+            'args': {'filter': {
+                'type': 'bandpass',
+                'freqmin': 1., 'freqmax': 6.},
+                'taper_len': 1., 'std_factor': 1,
+                'extend_gaps': True}},
+        {
+            'function': TDfilter,
+            'args': {
+                'type': 'bandpass',
+                'freqmin': 1., 'freqmax': 3.}},
+        {
+            'function': TDnormalization,
+            'args': {'filter': {
+                'type': 'bandpass', 'freqmin': 0.5,
+                'freqmax': 2.}, 'windowLength': 1.}},
+        {
+            'function': signBitNormalization,
+            'args': {}
+        }
                                  ],
-            'FDpreProcessing': [{'function': spectralWhitening,
-                                'args': {}},
-                               {'function': FDfilter,
-                                'args': {'flimit': [0.5, 1., 5., 7.]}}],
+            'FDpreProcessing': [
+                {'function': spectralWhitening,
+                    'args': {}},
+                {'function': FDfilter,
+                    'args': {'flimit': [0.5, 1., 5., 7.]}}],
             'lengthToSave': 20,
             'center_correlation': True,
             # make sure zero correlation time is in the center

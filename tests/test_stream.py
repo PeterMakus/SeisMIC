@@ -7,18 +7,93 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Thursday, 1st July 2021 04:17:10 pm
+Last Modified: Friday, 2nd July 2021 11:51:46 am
 '''
 
 import unittest
-from unittest.mock import patch
+import warnings
 
 import numpy as np
 from obspy import read, read_inventory, Stream
-from obspy.core import Stats
 from obspy.core.utcdatetime import UTCDateTime
 
 from miic3.correlate import stream
+
+
+class TestCorrStats(unittest.TestCase):
+    def setUp(self):
+        self.cst = stream.CorrStats()
+
+    def test_defaults(self):
+        defaults = {
+            'sampling_rate': 1.0,
+            'delta': 1.0,
+            'starttime': UTCDateTime(0),
+            'endtime': UTCDateTime(0),
+            'corr_start': UTCDateTime(0),
+            'corr_end': UTCDateTime(0),
+            'start_lag': 0,
+            'end_lag': 0,
+            'npts': 0,
+            'calib': 1.0,
+            'network': '',
+            'station': '',
+            'location': '',
+            'channel': '',
+        }
+        for k in defaults:
+            self.assertEqual(defaults[k], self.cst[k])
+
+    def test_native_types(self):
+        # network, station, and channel are strings and do allow nothing but
+        # strings (convertibles types will be converted to str)
+        keys = ['network', 'station', 'channel']
+        for k in keys:
+            with warnings.catch_warnings(record=True) as w:
+                self.cst[k] = [1, 2, 3]
+                self.assertEqual(len(w), 1)
+                self.assertIsInstance(self.cst[k], str)
+        # In the original obspy version this is the case for location, too.
+        # Should not be here though
+        self.cst['location'] = [1, 2, 3]
+        self.assertIsInstance(self.cst['location'], list)
+
+    def test_read_only(self):
+        readonly = ['endtime', 'end_lag', 'starttime']
+        for k in readonly:
+            with self.assertRaises(AttributeError):
+                self.cst[k] = 'test'
+
+    def test_link_corr_start_starttime(self):
+        # corr_start and starttime are just aliases
+        st = np.random.random(10)*3600
+        for t in st:
+            self.cst['corr_start'] = UTCDateTime(t)
+            self.assertEqual(self.cst['corr_start'], self.cst['starttime'])
+
+    def test_link_corr_end_endtime(self):
+        # corr_start and starttime are just aliases
+        st = np.random.random(10)*3600
+        for t in st:
+            self.cst['corr_end'] = UTCDateTime(t)
+            self.assertEqual(self.cst['corr_end'], self.cst['endtime'])
+
+    def test_link_sampling(self):
+        # sampling is linked (the parameters npts, sampling_rate, delta,
+        # start_lag, end_lag)
+        self.cst.npts = np.random.randint(2, 250)
+        self.assertEqual(
+            self.cst.end_lag, self.cst.start_lag+self.cst.delta*float(
+                self.cst.npts-1))
+        self.cst.sampling_rate = np.random.randint(2, 10)
+        self.assertAlmostEqual(self.cst.delta, 1/self.cst.sampling_rate)
+        self.assertEqual(
+            self.cst.end_lag, self.cst.start_lag+self.cst.delta*float(
+                self.cst.npts-1))
+        self.cst.start_lag += np.random.randint(1, 500)
+        self.assertEqual(
+            self.cst.end_lag, self.cst.start_lag+self.cst.delta*float(
+                self.cst.npts-1))
 
 
 class TestCombineStats(unittest.TestCase):
@@ -78,8 +153,8 @@ class TestStackSt(unittest.TestCase):
         for ii in range(np.random.randint(3, 12)):
             ntr = tr.copy()
             ntr.data = tr.data*(ii+2)
-            ntr.stats['corr_start'] += delta
-            ntr.stats['corr_end'] += delta
+            ntr.stats['corr_start'] += (ii+1) * delta
+            ntr.stats['corr_end'] += (ii+1) * delta
             # Shorten correlation with every iteration
             ntr.stats['corr_end'] -= self.corr_len*(ii+1)*.05
             self.st.append(ntr)
@@ -352,7 +427,7 @@ class TestConvertStatlistToBulkStats(unittest.TestCase):
         self.mutables = ['corr_start', 'corr_end', 'starttime', 'endtime']
         self.immutables = [
             'npts', 'sampling_rate', 'network', 'station', 'channel',
-            'start_lag', 'end_lag', 'stla', 'stlo', 'stel','evla', 'evlo',
+            'start_lag', 'stla', 'stlo', 'stel', 'evla', 'evlo',
             'evel', 'dist', 'az', 'baz', 'location']
         self.stats = stream.CorrStats(self.stats)
 
@@ -384,6 +459,7 @@ class TestConvertStatlistToBulkStats(unittest.TestCase):
         stats1['location'] = 'bla'
         stcomb = stream.convert_statlist_to_bulk_stats(
             [self.stats, stats1], True)
+        self.assertIsInstance(stcomb['location'], list)
 
 
 if __name__ == "__main__":

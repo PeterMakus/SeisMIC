@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Thursday, 1st July 2021 04:34:14 pm
+Last Modified: Friday, 2nd July 2021 11:47:16 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -19,12 +19,11 @@ from obspy import Stream, Trace, Inventory, UTCDateTime
 from obspy.core import Stats
 from obspy.core.util import AttribDict
 
-from miic3.utils.miic_utils import trace_calc_az_baz_dist, \
-    inv_calc_az_baz_dist, lag0, save_header_to_np_array, \
-        load_header_from_np_array
+from miic3.utils import miic_utils as m3ut
 from miic3.plot.plot_utils import plot_correlation
 import miic3.monitor.post_corr_process as pcp
 from miic3.monitor.dv import DV
+
 
 class CorrStats(AttribDict):
     """
@@ -118,7 +117,7 @@ class CorrStats(AttribDict):
         >>> stats.end_lag
         0
 
-    (3) The attribute ``endtime``, ``end_lag``, and ``starttime`` are 
+    (3) The attribute ``endtime``, ``end_lag``, and ``starttime`` are
         read only and cannot be modified. ``starttime`` and ``endtime`` are
         just simply aliases of ``corr_start`` and ``corr_end``.
 
@@ -268,6 +267,7 @@ class CorrStats(AttribDict):
     def _repr_pretty_(self, p, cycle):
         p.text(str(self))
 
+
 class CorrBulk(object):
     """
     An object for faster computations on several correlations. The input
@@ -285,7 +285,6 @@ class CorrBulk(object):
             self.stats = CorrStats()
             self.stats['ntrcs'], self.stats['npts'] = A.shape
         self.stats['processing_bulk'] = []
-
 
     def normalize(
         self, starttime: float = None, endtime: float = None,
@@ -543,7 +542,7 @@ class CorrBulk(object):
         :param path: Output path
         :type path: str
         """
-        kwargs = save_header_to_np_array(self.stats)
+        kwargs = m3ut.save_header_to_np_array(self.stats)
         np.savez_compressed(
             path, data=self.data, **kwargs)
 
@@ -627,7 +626,7 @@ def read_corr_bulk(path: str) -> CorrBulk:
     :rtype: CorrBulk
     """
     loaded = np.load(path)
-    stats = load_header_from_np_array(loaded)
+    stats = m3ut.load_header_from_np_array(loaded)
     return CorrBulk(loaded['data'], stats=stats)
 
 
@@ -948,7 +947,6 @@ class CorrTrace(Trace):
         self.stats = header
         self.stats['npts'] = len(data)
 
-
     def __str__(self, id_length: int = None) -> str:
         """
         Return short summary string of the current trace.
@@ -1128,7 +1126,7 @@ def combine_stats(
         stats['evlo'] = stats2.sac.stlo
         stats['evel'] = stats2.sac.stel
 
-        az, baz, dist = trace_calc_az_baz_dist(stats1, stats2)
+        az, baz, dist = m3ut.trace_calc_az_baz_dist(stats1, stats2)
 
         stats['dist'] = dist / 1000
         stats['az'] = az
@@ -1146,7 +1144,7 @@ def combine_stats(
             stats['evlo'] = inv2[0][0].longitude
             stats['evel'] = inv2[0][0].elevation
 
-            az, baz, dist = inv_calc_az_baz_dist(inv1, inv2)
+            az, baz, dist = m3ut.inv_calc_az_baz_dist(inv1, inv2)
 
             stats['dist'] = dist / 1000
             stats['az'] = az
@@ -1269,7 +1267,7 @@ def convert_statlist_to_bulk_stats(
     # Not 100% sure if start and end_lag should be on this list
     immutables = [
         'npts', 'sampling_rate', 'network', 'station', 'channel', 'start_lag',
-        'end_lag', 'stla', 'stlo', 'stel','evla', 'evlo', 'evel',
+        'end_lag', 'stla', 'stlo', 'stel', 'evla', 'evlo', 'evel',
         'dist', 'az', 'baz']
     if varying_loc:
         mutables += ['location']

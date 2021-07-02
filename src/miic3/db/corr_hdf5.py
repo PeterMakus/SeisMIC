@@ -9,7 +9,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Wednesday, 16th June 2021 02:52:30 pm
+Last Modified: Friday, 2nd July 2021 11:56:17 am
 '''
 import fnmatch
 import os
@@ -338,4 +338,3 @@ def read_hdf5_header(dataset: h5py.Dataset) -> Stats:
         else:
             header[key] = attrs[key]
     return Stats(header)
-

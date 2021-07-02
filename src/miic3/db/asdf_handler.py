@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Tuesday, 22nd June 2021 04:15:14 pm
+Last Modified: Friday, 2nd July 2021 11:55:56 am
 '''
 
 from glob import glob
@@ -150,10 +150,10 @@ class NoiseDB(object):
 
         if os.path.exists(out_spct):
             with np.load(out_spct) as A:
-                l = []
+                specl = []
                 for item in A.files:
-                    l.append(A[item])
-                f, t, S = l
+                    specl.append(A[item])
+                f, t, S = specl
         else:
             with ASDFDataSet(self.loc) as ds:
                 for station in ds.ifilter(
@@ -180,9 +180,9 @@ class NoiseDB(object):
         with ASDFDataSet(self.loc, mode="r", mpi=False) as ds:
             try:
                 st = []
-                for k, v in ds.waveforms[
-                    "%s.%s" % (
-                        self.network, self.station)].get_waveform_attributes().items():
+                for k, v in ds.waveforms["%s.%s" % (
+                        self.network, self.station)].get_waveform_attributes(
+                            ).items():
                     if 'processed' not in k:
                         continue
                     st.append(v['starttime'])

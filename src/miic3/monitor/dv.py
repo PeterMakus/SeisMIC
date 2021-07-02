@@ -8,14 +8,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Friday, 18th June 2021 03:40:18 pm
+Last Modified: Friday, 2nd July 2021 11:56:43 am
 '''
-
-from typing import List
 
 import numpy as np
 from obspy.core.trace import Stats
-from obspy.core.utcdatetime import UTCDateTime
 
 from miic3.utils.miic_utils import save_header_to_np_array, \
     load_header_from_np_array

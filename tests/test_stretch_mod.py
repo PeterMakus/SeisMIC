@@ -8,13 +8,12 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 24th June 2021 02:23:40 pm
-Last Modified: Thursday, 1st July 2021 01:28:45 pm
+Last Modified: Friday, 2nd July 2021 11:52:18 am
 '''
 
 import unittest
 
 import numpy as np
-from scipy.interpolate import interp1d
 
 from miic3.monitor import stretch_mod as sm
 
@@ -35,7 +34,7 @@ class TestTimeWindowsCreation(unittest.TestCase):
         out = sm.time_windows_creation([st], win_len)
         self.assertEqual(win_len, len(out[0]))
         self.assertEqual(out[0][0], st)
-        
+
 
 # pretty complex to test
 # This is a little more like an integral test
@@ -43,7 +42,6 @@ class TestTimeStretchEstimate(unittest.TestCase):
     def setUp(self):
         self.n = 1000
         self.ref = np.cos(np.linspace(0, 40*np.pi, self.n, endpoint=True))
-
 
     def test_result(self):
         stretch = np.arange(1, 11, 1)/100  # in per cent
@@ -77,10 +75,6 @@ class TestTimeStretchEstimate(unittest.TestCase):
         dv = sm.time_stretch_estimate(corr[:-1, :], ref, stretch_steps=101)
         self.assertTrue(
             np.allclose(dv['value'], -np.flip(stretch[:-1]), atol=0.004))
-
-
-    
-
 
 
 if __name__ == "__main__":

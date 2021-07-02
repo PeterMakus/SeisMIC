@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 25th June 2021 09:33:09 am
-Last Modified: Thursday, 1st July 2021 11:31:21 am
+Last Modified: Friday, 2nd July 2021 11:48:52 am
 '''
 
 import unittest
@@ -176,7 +176,12 @@ class CorrMatCorrectDecay(unittest.TestCase):
         # acausal part
         datal = np.exp(np.linspace(-5, 0, 251, endpoint=True))
         self.data = np.tile(
-            np.hstack((datal, np.flip(datal[0:-1])))*np.cos(np.linspace(0, 40*np.pi, 501)), (2, 1))
+            np.hstack(
+                (datal,
+                    np.flip(datal[0:-1])))*np.cos(
+                        np.linspace(0, 40*np.pi, 501)),
+                (2, 1)
+                )
         self.stats = Stats({
             'sampling_rate': 1, 'npts': 501, 'start_lag': -50, 'end_lag': 50})
 
@@ -192,7 +197,7 @@ class CorrMatCorrectDecay(unittest.TestCase):
         self.assertTrue(np.allclose(
             corrected, np.cos(np.linspace(0, 40*np.pi, 501)), atol=0.1))
     # ask CSS how this actually works
-        
+
 
 class TestCorrMatNormalize(unittest.TestCase):
     # Don't feel like it's necessary or even helpful to test the result here
@@ -363,7 +368,7 @@ class CorrMatResampleTime(unittest.TestCase):
 
     def test_aafilter(self):
         data = np.tile(np.sin(
-            np.linspace(0, 150*np.pi, 201, endpoint=True)), (2,1))
+            np.linspace(0, 150*np.pi, 201, endpoint=True)), (2, 1))
         datars, statsrs = pcp.corr_mat_resample_time(
             data.copy(), self.stats.copy(), 2.5)
         self.assertTrue(np.allclose(datars, np.zeros(datars.shape), atol=0.03))
@@ -401,7 +406,7 @@ class TestCorrMatDecimate(unittest.TestCase):
 
     def test_aafilter(self):
         data = np.tile(np.sin(
-            np.linspace(0, 150*np.pi, 201, endpoint=True)), (2,1))
+            np.linspace(0, 150*np.pi, 201, endpoint=True)), (2, 1))
         datars, statsrs = pcp.corr_mat_decimate(
             data.copy(), self.stats.copy(), 4)
         self.assertTrue(np.allclose(datars, np.zeros(datars.shape), atol=0.06))
@@ -421,7 +426,6 @@ class TestCorrMatDecimate(unittest.TestCase):
             data.copy(), self.stats.copy(), 1)
         self.assertTrue(np.all(data == datars))
         self.assertEqual(statsrs, self.stats)
-
 
 
 if __name__ == "__main__":

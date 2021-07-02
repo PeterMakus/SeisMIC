@@ -8,13 +8,14 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 17th May 2021 12:25:54 pm
-Last Modified: Friday, 4th June 2021 03:03:05 pm
+Last Modified: Friday, 2nd July 2021 11:57:22 am
 '''
 
 import os
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+
 
 def set_mpl_params():
     params = {

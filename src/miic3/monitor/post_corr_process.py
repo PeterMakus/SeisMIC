@@ -8,49 +8,21 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Thursday, 1st July 2021 11:41:49 am
+Last Modified: Friday, 2nd July 2021 11:46:32 am
 '''
 
 from typing import List, Tuple
 import numpy as np
 from copy import deepcopy
 from scipy.signal import butter, lfilter, hilbert, resample
-from scipy.io import savemat
-from datetime import datetime, timedelta
 from obspy.core import UTCDateTime
-from glob import glob1
-from os.path import join
-import os
-
-
-# ETS imports
-try:
-    BC_UI = True
-    from traits.api import HasTraits, Int, Float, Array, Str, Enum, Directory
-    from traitsui.api import View, Item, VGroup
-except ImportError:
-    BC_UI = False
-    pass
     
 # Obspy imports
 from obspy.signal.invsim import cosine_taper
-from obspy.core import trace, stream
-from obspy.core import Stream, AttribDict
+from obspy.core import trace
 
-from miic3.utils.miic_utils import lag0
 from miic3.monitor.stretch_mod import multi_ref_vchange_and_align, \
     time_shift_estimate
-
-# Local imports
-# from miic.core.miic_utils import convert_time, convert_time_to_string, zerotime, \
-#     corr_mat_check, dv_check, flatten_recarray, nd_mat_center_part, mat_to_ndarray, \
-#     select_var_from_dict, _check_stats, _stats_dict_from_obj, save_dict_to_hdf5, \
-#     recursively_save_dict_contents_to_group, load_dict_from_hdf5,  \
-#     recursively_load_dict_contents_from_group
-
-# from miic.core.stretch_mod import multi_ref_vchange_and_align, time_shift_estimate, \
-#     time_stretch_apply, time_shift_apply
-# from miic.core.stream import _Selector, corr_trace_to_obspy
 
 
 def _smooth(
@@ -180,40 +152,6 @@ def unicode_to_string(input):
         return input
 
 
-# def corr_mat_from_h5(filename):
-#     """Load a correlation matrix from hdf5 file
-
-#     Load data from an hdf5 file written with :func:`corr_mat_to_h5`
-#     into a correlation-matrix-dictionary.
-
-#     :type filename: str
-#     :param filename: file to load
-#     :rtype: dict
-#     :return: correlation matrix dictionary
-#     """
-
-#     with h5py.File(filename) as hf:
-#         keys = list(hf.keys())
-#         req_keys = ['stats','stats_tr1','stats_tr2','corr_data']
-#         for req_key in req_keys:
-#             assert req_key in keys, 'Missing item in %s: %s' % (filename, req_key)
-#         for key in keys:
-#             assert (key in req_keys) or key == 'time', 'Unrecognized item present in %s: %s' %(filename,key)
-#         corr_mat = {'time':[]}
-#         for key in ['stats','stats_tr1','stats_tr2']:
-#             corr_mat.update({key:recursively_load_dict_contents_from_group(hf, key)})
-#         tkeys = sorted(hf['corr_data'].keys())
-#         corr_mat.update({'corr_data':np.zeros((len(tkeys),corr_mat['stats']['npts']))})
-#         for num,tkey in enumerate(tkeys):
-#             # time string modified for consistency with those read from matlab files
-#             tkey_mod=tkey.replace('T',' ').replace('Z','')
-#             corr_mat['time'].append(tkey_mod)
-#             corr_mat['corr_data'][num,:] = hf['corr_data/'+tkey]
-#         corr_mat['time']=np.array(corr_mat['time'])
-#         corr_mat = unicode_to_string(corr_mat)
-#     return corr_mat
-
-
 def corr_mat_filter(
     data: np.ndarray, stats: trace.Stats, freqs: Tuple[float, float],
         order=3) -> np.ndarray:
@@ -250,50 +188,6 @@ def corr_mat_filter(
     data = lfilter(b, a, data[:, ::-1], axis=1)[:, ::-1]
 
     return data
-
-
-# def corr_trace_filter(corr_trace, freqs, order=3):
-#     """ Filter a correlation trace.
-
-#     Filters the correlation trace corr_trace in the frequency band specified in
-#     freqs using a zero phase filter of twice the order given in order.
-
-#     :type corr_trace: dictionary of the type correlation trace
-#     :param corr_trace: correlation trace to be plotted
-#     :type freqs: array-like of length 2
-#     :param freqs: lower and upper limits of the pass band in Hertz
-#     :type order: int
-#     :param order: half the order of the Butterworth filter
-
-#     :rtype tdat: dictionary of the type correlation trace
-#     :return: **fdat**: filtered correlation trace
-#     """
-
-#     # check input
-#     if not isinstance(corr_trace, dict):
-#         raise TypeError("corr_trace needs to be correlation trace dictionary.")
-
-# #    if corr_mat_check(corr_mat)['is_incomplete']:
-# #        raise ValueError("Error: corr_mat is not a valid correlation_matix \
-# #            dictionary.")
-
-#     if len(freqs) != 2:
-#         raise ValueError("freqs needs to be a two element array with the \
-#             lower and upper limits of the filter band in Hz.")
-
-#     # # end check
-
-#     fe = float(corr_trace['stats']['sampling_rate']) / 2
-
-#     (b, a) = butter(order,
-#                     np.array(freqs, dtype='float') / fe,
-#                     btype='band')
-
-#     fdat = copy(corr_trace)
-#     fdat['corr_trace'] = lfilter(b, a, fdat['corr_trace'])
-#     fdat['corr_trace'] = lfilter(b, a, fdat['corr_trace'][::-1])[::-1]
-
-#     return fdat
 
 
 def corr_mat_trim(
@@ -341,82 +235,6 @@ def corr_mat_trim(
     # stats['starttime'] = lag0 + starttime
     stats['npts'] = data.shape[1]
     return data, stats
-
-
-# def corr_mat_merge(corr_mat_list, network=None, station=None,
-#                    location=None, channel=None):
-#     """ Merge correlation matrices.
-
-#     If different correlation matrices are created for the same station
-#     combination they can be merged with this function. NO CHECK IS PERFORMED
-#     FOR CONSISTENCY OF METADATA. Please check yourself that it makes sense to
-#     merge the data. Timing information is handled. If `network`, `station`,
-#     `location` or `channel` is provided the combined seed ID of the merged
-#     correlation matrix is set to these values. Otherwise the ID of the first
-#     correlation matrix in the list is used for the merged matrix.
-
-#     :type corr_mat_list: list of dictionaries of the type correlation matrix
-#     :param corr_mat: list of correlation matrices to be merged
-
-#     :rtype mdat: dictionary of the type correlation matrix
-#     :return: **mdat**: merged correlation matrix
-#     """
-
-#     # check input
-#     for corr_mat in corr_mat_list:
-
-#         if not isinstance(corr_mat, dict):
-#             raise TypeError("corr_mat needs to be correlation matrix \
-#                 dictionary.")
-
-#         if corr_mat_check(corr_mat)['is_incomplete']:
-#             raise ValueError("Error: corr_mat is not a valid \
-#                 correlation_matix dictionary.")
-
-#     # estimate required size for the merged correlation matrix
-#     ntrc = 0
-#     starttime = convert_time([corr_mat_list[0]['stats']['starttime']])[0]
-#     sampling_rate = corr_mat_list[0]['stats']['sampling_rate']
-#     endtime = convert_time([corr_mat_list[0]['stats']['starttime']])[0] + \
-#                 timedelta((float(corr_mat_list[0]['stats']['npts']) - 1.) * \
-#                           1. / sampling_rate / 86400.)
-
-#     # find the minimum endtime and maximum starttime
-#     for corr_mat in corr_mat_list:
-#         if corr_mat['stats']['sampling_rate'] != sampling_rate:
-#             continue
-#         size = corr_mat['corr_data'].shape
-#         ntrc += size[0]
-#         this_starttime = convert_time([corr_mat['stats']['starttime']])[0]
-#         this_endtime = this_starttime + timedelta(seconds=\
-#                             (float(corr_mat['stats']['npts']) - 1.) * \
-#                             1. / sampling_rate)
-#         starttime = max([starttime, this_starttime])
-#         endtime = min([endtime, this_endtime])
-
-#     # create merged dictionary
-#     mdat = deepcopy(corr_mat_list[0])
-#     # trim the first matrix
-#     mdat = corr_mat_trim(mdat, starttime, endtime)
-#     for corr_mat in corr_mat_list[1:]:
-#         if corr_mat['stats']['sampling_rate'] != sampling_rate:
-#             continue
-#         tdat = corr_mat_trim(corr_mat, starttime, endtime)
-#         mdat['corr_data'] = np.concatenate((mdat['corr_data'],
-#                                             tdat['corr_data']), axis=0)
-#         mdat['time'] = np.concatenate((mdat['time'], corr_mat['time']), axis=0)
-
-#     # set the combined seed ID
-#     if network:
-#         mdat['stats']['network'] = network
-#     if station:
-#         mdat['stats']['station'] = station
-#     if location:
-#         mdat['stats']['location'] = location
-#     if channel:
-#         mdat['stats']['channel'] = channel
-
-#     return mdat
 
 
 def corr_mat_resample(

@@ -3,7 +3,7 @@ Module to test the asdf handler.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th March 2021 04:26:31 pm
-Last Modified: Tuesday, 22nd June 2021 04:05:36 pm
+Last Modified: Friday, 2nd July 2021 11:49:21 am
 '''
 import unittest
 from unittest import mock
@@ -53,10 +53,11 @@ class TestNoiseDB(unittest.TestCase):
                 'starttime': asdf_starttime}}
         asdf_mock.return_value.__enter__.return_value = AttribDict(
             waveforms={'%s.%s' % (self.network, self.station): wf_mock})
- 
+
         act_times = self.ndb.get_active_times()
         self.assertAlmostEqual(act_times[0], self.st[0].stats.starttime)
-        self.assertAlmostEqual(act_times[1], self.st[0].stats.starttime+24*3600)
+        self.assertAlmostEqual(
+            act_times[1], self.st[0].stats.starttime+24*3600)
 
     def test_no_file(self):
         """
@@ -80,7 +81,7 @@ class TestNoiseDB(unittest.TestCase):
         self.assertAlmostEqual(st_out[0].stats.endtime, end)
         wf_mock.get_waveforms.assert_called_once_with(
             self.network, self.station, '*', '*', start, end, 'processed',
-                automerge=True)
+            automerge=True)
 
     @mock.patch('miic3.db.asdf_handler.ASDFDataSet')
     def test_get_partial_data(self, asdf_mock):
@@ -96,7 +97,7 @@ class TestNoiseDB(unittest.TestCase):
         self.assertAlmostEqual(st_out[0].stats.endtime, end)
         wf_mock.get_waveforms.assert_called_once_with(
             self.network, self.station, '*', '*', start, end, 'processed',
-                automerge=True)
+            automerge=True)
 
     @mock.patch('miic3.db.asdf_handler.ASDFDataSet')
     def test_no_data(self, asdf_mock):

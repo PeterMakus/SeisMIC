@@ -4,9 +4,8 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Wednesday, 16th June 2021 02:43:42 pm
+Last Modified: Friday, 2nd July 2021 11:58:01 am
 '''
-from glob import glob
 import os
 from typing import Tuple
 from warnings import warn
@@ -419,7 +418,7 @@ sample rate (%s Hz).' % (str(self.sampling_rate), str(
                 st.remove_response(taper=False)
                 self.store_client._write_inventory(ninv)
 
-        #st.detrend()
+        # st.detrend()
         for tr in st:
             # !Last operation before saving!
             # The actual data in the mseeds was changed from int to float64
