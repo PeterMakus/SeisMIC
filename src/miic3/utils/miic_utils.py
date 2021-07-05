@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Monday, 21st June 2021 04:04:03 pm
+Last Modified: Monday, 5th July 2021 02:43:11 pm
 '''
 from typing import List, Tuple
 from warnings import warn
@@ -394,7 +394,7 @@ def load_header_from_np_array(array_dict: dict) -> Stats:
             d[k] = convert_timestamp_to_utcdt(array_dict[k])
         else:
             d[k] = array_dict[k][0]
-    return Stats(d)
+    return d
 
 
 def convert_utc_to_timestamp(

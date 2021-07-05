@@ -8,16 +8,16 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 25th June 2021 09:33:09 am
-Last Modified: Friday, 2nd July 2021 11:48:52 am
+Last Modified: Monday, 5th July 2021 05:12:56 pm
 '''
 
 import unittest
 
 import numpy as np
 from obspy import UTCDateTime
-from obspy.core.trace import Stats
 
 from miic3.monitor import post_corr_process as pcp
+from miic3.correlate.stats import CorrStats
 
 
 class TestSmooth(unittest.TestCase):
@@ -63,7 +63,7 @@ class TestCorrMatFilter(unittest.TestCase):
             np.cos(np.linspace(0, 200*np.pi, 512))], (2, 1))  # 3.125 Hz
         self.dataft = abs(np.fft.rfft(self.data, axis=1))
         self.f = np.fft.rfftfreq(512, 1/16)
-        self.stats = Stats({'sampling_rate': 16})
+        self.stats = CorrStats({'sampling_rate': 16})
 
     def test_result(self):
         datafilt = pcp.corr_mat_filter(self.data.copy(), self.stats, (2, 4))
@@ -107,7 +107,7 @@ class TestCorrMatTrim(unittest.TestCase):
         npts = 501
         self.data = np.tile(
             np.sin(np.linspace(0, np.pi, npts, endpoint=True)), (2, 1))
-        self.stats = Stats({
+        self.stats = CorrStats({
             'npts': npts, 'start_lag': -125, 'end_lag': 125,
             'sampling_rate': 2})
 
@@ -182,7 +182,7 @@ class CorrMatCorrectDecay(unittest.TestCase):
                         np.linspace(0, 40*np.pi, 501)),
                 (2, 1)
                 )
-        self.stats = Stats({
+        self.stats = CorrStats({
             'sampling_rate': 1, 'npts': 501, 'start_lag': -50, 'end_lag': 50})
 
     def test_result(self):
@@ -226,7 +226,7 @@ class TestCorrMatNormalize(unittest.TestCase):
 
     def test_start_time(self):
         data = np.hstack((np.ones((2, 10)), 5*np.ones((2, 11))))
-        stats = Stats({
+        stats = CorrStats({
             'sampling_rate': 1, 'start_lag': -10, 'end_lag': 10, 'npts': 21})
         normtypes = ['energy', 'abssum', 'max', 'absmax']
         for n in normtypes:
@@ -236,7 +236,7 @@ class TestCorrMatNormalize(unittest.TestCase):
 
     def test_end_time(self):
         data = np.hstack((5*np.ones((2, 11)), np.ones((2, 10))))
-        stats = Stats({
+        stats = CorrStats({
             'sampling_rate': 1, 'start_lag': -10, 'end_lag': 10, 'npts': 21})
         normtypes = ['energy', 'abssum', 'max', 'absmax']
         for n in normtypes:
@@ -247,8 +247,8 @@ class TestCorrMatNormalize(unittest.TestCase):
 
 class TestCorrMatMirror(unittest.TestCase):
     def test_symmetric(self):
-        stats = Stats({
-            'start_lag': -25, 'end_lag': 25, 'sampling_rate': 10, 'npts': 501})
+        stats = CorrStats({
+            'start_lag': -25, 'sampling_rate': 10, 'npts': 501})
         data = np.random.rand(2, 501)
         mdata, mstats = pcp.corr_mat_mirror(data.copy(), stats.copy())
         self.assertEqual(mstats['start_lag'], 0)
@@ -260,23 +260,23 @@ class TestCorrMatMirror(unittest.TestCase):
         self.assertTrue(np.allclose(exp_res, mdata))
 
     def test_right_side(self):
-        stats = Stats({
-            'start_lag': 0, 'end_lag': 25, 'sampling_rate': 10, 'npts': 251})
+        stats = CorrStats({
+            'start_lag': 0, 'sampling_rate': 10, 'npts': 251})
         data = np.empty((2, 251))
         mdata, mstats = pcp.corr_mat_mirror(data.copy(), stats.copy())
         self.assertEqual(mstats, stats)
         self.assertTrue(np.all(mdata == data))
 
     def test_left_side(self):
-        stats = Stats({
-            'start_lag': -25, 'end_lag': 0, 'sampling_rate': 10, 'npts': 251})
+        stats = CorrStats({
+            'start_lag': -25, 'sampling_rate': 10, 'npts': 251})
         data = np.empty((2, 251))
         mdata, mstats = pcp.corr_mat_mirror(data.copy(), stats.copy())
         self.assertEqual(mstats, stats)
         self.assertTrue(np.all(mdata == data))
 
     def test_asymmetric_left(self):
-        stats = Stats({
+        stats = CorrStats({
             'start_lag': -10, 'end_lag': 25, 'sampling_rate': 10, 'npts': 351})
         data = np.random.rand(2, 351)
         mdata, mstats = pcp.corr_mat_mirror(data.copy(), stats.copy())
@@ -289,7 +289,7 @@ class TestCorrMatMirror(unittest.TestCase):
         self.assertTrue(np.allclose(exp_res, mdata))
 
     def test_asymmetric_right(self):
-        stats = Stats({
+        stats = CorrStats({
             'start_lag': -25, 'end_lag': 10, 'sampling_rate': 10, 'npts': 351})
         data = np.random.rand(2, 351)
         mdata, mstats = pcp.corr_mat_mirror(data.copy(), stats.copy())
@@ -305,7 +305,7 @@ class TestCorrMatMirror(unittest.TestCase):
 
 class TestCorrMatTaper(unittest.TestCase):
     def setUp(self):
-        self.stats = Stats({'npts': 101, 'sampling_rate': 10})
+        self.stats = CorrStats({'npts': 101, 'sampling_rate': 10})
         self.data = np.ones((2, 101))
 
     def test_result(self):
@@ -329,7 +329,7 @@ class TestCorrMatTaper(unittest.TestCase):
 
 class TestCorrMatTaperCenter(unittest.TestCase):
     def setUp(self):
-        self.stats = Stats({
+        self.stats = CorrStats({
             'npts': 101, 'sampling_rate': 10, 'start_lag': -5, 'end_lag': 5})
         self.data = np.ones((2, 101))
 
@@ -354,7 +354,7 @@ class TestCorrMatTaperCenter(unittest.TestCase):
 
 class CorrMatResampleTime(unittest.TestCase):
     def setUp(self):
-        self.stats = Stats({
+        self.stats = CorrStats({
             'npts': 201, 'sampling_rate': 10, 'start_lag': -10, 'end_lag': 10})
 
     def test_resample(self):
@@ -392,7 +392,7 @@ class CorrMatResampleTime(unittest.TestCase):
 
 class TestCorrMatDecimate(unittest.TestCase):
     def setUp(self):
-        self.stats = Stats({
+        self.stats = CorrStats({
             'npts': 201, 'sampling_rate': 10, 'start_lag': -10, 'end_lag': 10})
 
     def test_resample(self):
@@ -426,6 +426,44 @@ class TestCorrMatDecimate(unittest.TestCase):
             data.copy(), self.stats.copy(), 1)
         self.assertTrue(np.all(data == datars))
         self.assertEqual(statsrs, self.stats)
+
+
+class TestCorrMatExtractTrace(unittest.TestCase):
+    def setUp(self):
+        self.data = np.tile(np.arange(1, 10.1, step=1), (21, 1)).T
+        self.stats = CorrStats({
+            'start_lag': -10, 'sampling_rate': 1, 'npts': self.data.shape[1]})
+
+    def test_mean(self):
+        out = pcp.corr_mat_extract_trace(self.data, self.stats, method='mean')
+        exp = np.mean(self.data, axis=0)
+        self.assertTrue(np.allclose(out, exp))
+
+    def test_norm_mean(self):
+        out = pcp.corr_mat_extract_trace(
+            self.data, self.stats, 'norm_mean')
+        exp = np.ones(21)
+        self.assertTrue(np.allclose(out, exp))
+
+    def test_sim_perc0(self):
+        out = pcp.corr_mat_extract_trace(
+            self.data, self.stats, 'norm_mean')
+        exp = np.ones(21)
+        self.assertTrue(np.allclose(out, exp))
+
+    # def test_sim_perc1(self):
+    #     # Let's chevck back at some point
+    #     indata = np.ones_like(self.data)
+    #     randi = np.random.rand(1, 21)
+    #     indata += (
+    #         np.tile(randi, (10, 1)).T *
+    #         np.arange(1, 10.1)).T
+    #     out = pcp.corr_mat_extract_trace(
+    #         indata, self.stats, 'norm_mean')
+    #     print(out)
+    #     print(randi)
+    #     exp = np.ones(21)
+    #     self.assertTrue(np.allclose(out, exp))
 
 
 if __name__ == "__main__":

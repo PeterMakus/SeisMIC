@@ -8,14 +8,14 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Friday, 2nd July 2021 11:56:43 am
+Last Modified: Monday, 5th July 2021 02:55:57 pm
 '''
 
 import numpy as np
-from obspy.core.trace import Stats
 
 from miic3.utils.miic_utils import save_header_to_np_array, \
     load_header_from_np_array
+from miic3.correlate.stats import CorrStats
 
 
 class DV(object):
@@ -25,7 +25,7 @@ class DV(object):
     def __init__(
         self, corr: np.ndarray, value: np.ndarray, value_type: str,
         sim_mat: np.ndarray, second_axis: np.ndarray, method: str,
-            stats: Stats):
+            stats: CorrStats):
         # Allocate attributes
         self.value_type = value_type
         self.corr = corr
@@ -63,7 +63,7 @@ def read_dv(path: str) -> DV:
     :rtype: DV
     """
     loaded = np.load(path)
-    stats = load_header_from_np_array(loaded)
+    stats = CorrStats(load_header_from_np_array(loaded))
     return DV(
         loaded['corr'], loaded['value'], loaded['vt_array'][0],
         loaded['sim_mat'], loaded['second_axis'], loaded['method_array'][0],

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Friday, 2nd July 2021 11:46:32 am
+Last Modified: Monday, 5th July 2021 04:39:23 pm
 '''
 
 from typing import List, Tuple
@@ -16,13 +16,13 @@ import numpy as np
 from copy import deepcopy
 from scipy.signal import butter, lfilter, hilbert, resample
 from obspy.core import UTCDateTime
-    
+
 # Obspy imports
 from obspy.signal.invsim import cosine_taper
-from obspy.core import trace
 
 from miic3.monitor.stretch_mod import multi_ref_vchange_and_align, \
     time_shift_estimate
+from miic3.correlate.stats import CorrStats
 
 
 def _smooth(
@@ -153,7 +153,7 @@ def unicode_to_string(input):
 
 
 def corr_mat_filter(
-    data: np.ndarray, stats: trace.Stats, freqs: Tuple[float, float],
+    data: np.ndarray, stats: CorrStats, freqs: Tuple[float, float],
         order=3) -> np.ndarray:
     """ Filter a correlation matrix.
 
@@ -162,7 +162,7 @@ def corr_mat_filter(
 
     :type data: np.ndarray
     :param data: correlation matrix
-    :type stats: :class:`~obspy.core.trace.Stats`
+    :type stats: :class:`~miic3.correlate.stats.CorrStats`
     :param stats: The stats object corresponding to the CorrBulk object
     :type freqs: array-like of length 2
     :param freqs: lower and upper limits of the pass band in Hertz
@@ -191,8 +191,8 @@ def corr_mat_filter(
 
 
 def corr_mat_trim(
-    data: np.ndarray, stats: trace.Stats, starttime: float,
-        endtime: float) -> Tuple[np.ndarray, trace.Stats]:
+    data: np.ndarray, stats: CorrStats, starttime: float,
+        endtime: float) -> Tuple[np.ndarray, CorrStats]:
     """ Trim the correlation matrix to a given period.
 
     Trim the correlation matrix `corr_mat` to the period from `starttime` to
@@ -207,7 +207,7 @@ def corr_mat_trim(
     :type endtime: float
     :param order: end time in seconds with respect to the zero position
 
-    :rtype tuple: Tuple[np.ndarray, trace.Stats]
+    :rtype tuple: Tuple[np.ndarray, CorrStats]
     :return: trimmed correlation matrix and new stats object
     """
 
@@ -230,7 +230,8 @@ def corr_mat_trim(
 
     # set starttime, endtime and npts of the new stats
     stats['start_lag'] = starttime
-    stats['end_lag'] = endtime
+    # This should change automatically
+    # stats['end_lag'] = endtime
     # Not really in use, so why bothering
     # stats['starttime'] = lag0 + starttime
     stats['npts'] = data.shape[1]
@@ -238,8 +239,8 @@ def corr_mat_trim(
 
 
 def corr_mat_resample(
-    data: np.ndarray, stats: trace.Stats, start_times: List[UTCDateTime],
-        end_times=[]) -> Tuple[np.ndarray, trace.Stats]:
+    data: np.ndarray, stats: CorrStats, start_times: List[UTCDateTime],
+        end_times=[]) -> Tuple[np.ndarray, CorrStats]:
     """ Function to create correlation matrices with constant sampling
 
     When created with recombine_corr_data the correlation matrix contains all
@@ -454,7 +455,7 @@ def corr_mat_resample(
 
 
 # Probably not necessary
-def corr_mat_correct_decay(data: np.ndarray, stats: trace.Stats) -> np.ndarray:
+def corr_mat_correct_decay(data: np.ndarray, stats: CorrStats) -> np.ndarray:
     """
     Correct for the amplitude decay in a correlation matrix.
 
@@ -466,7 +467,7 @@ def corr_mat_correct_decay(data: np.ndarray, stats: trace.Stats) -> np.ndarray:
     :param data: Matrix holding correlation data
     :type data: np.ndarray
     :param stats: Stats object afiliated to a CorrBulk object
-    :type stats: trace.Stats
+    :type stats: CorrStats
     :return: correlations with decay corrected amplitudes
     :rtype: np.ndarray
     """
@@ -528,7 +529,7 @@ def corr_mat_envelope(data: np.ndarray) -> np.ndarray:
 
 
 def corr_mat_normalize(
-    data: np.ndarray, stats: trace.Stats, starttime: float = None,
+    data: np.ndarray, stats: CorrStats, starttime: float = None,
         endtime: float = None, normtype: str = 'energy') -> np.ndarray:
     """ Correct amplitude variations with time in a correlation matrix.
 
@@ -539,7 +540,7 @@ def corr_mat_normalize(
 
     :type data: np.ndarray
     :param data: correlation matrix from CorrBulk
-    :type stats: :class:`~obspy.core.trace.Stats`
+    :type stats: :class:`~miic3.correlate.stats.CorrStats`
     :param stats: The stats object from the
         :class:`~miic3.correlate.stream.CorrBulk` object.
     :type starttime: float
@@ -598,18 +599,18 @@ def corr_mat_normalize(
     return data
 
 
-def corr_mat_mirror(data: np.ndarray, stats: trace.Stats) -> Tuple[
-        np.ndarray, trace.Stats]:
+def corr_mat_mirror(data: np.ndarray, stats: CorrStats) -> Tuple[
+        np.ndarray, CorrStats]:
     """
     Average the causal and acausal parts of a correlation matrix.
 
     :param data: A matrix holding correlation data
     :type data: np.ndarray
     :param stats: the stats object corresponding to a CorrBulk object.
-    :type stats: trace.Stats
+    :type stats: CorrStats
     :return: as the input but with
         avaraged causal and acausal parts of the correlation data
-    :rtype: Tuple[np.ndarray, trace.Stats]
+    :rtype: Tuple[np.ndarray, CorrStats]
     """
 
     zero_sample = -(stats['start_lag']*stats['sampling_rate'])
@@ -655,7 +656,7 @@ def corr_mat_mirror(data: np.ndarray, stats: trace.Stats) -> Tuple[
     mir_stats['start_lag'] = 0
     mir_stats['npts'] = size
     # -1 because of zero sample
-    mir_stats['end_lag'] = (size-1)/mir_stats['sampling_rate']
+    # mir_stats['end_lag'] = (size-1)/mir_stats['sampling_rate']
 
     return mir_data, mir_stats
 
@@ -827,7 +828,7 @@ def corr_mat_mirror(data: np.ndarray, stats: trace.Stats) -> Tuple[
 
 
 def corr_mat_taper(
-        data: np.ndarray, stats: trace.Stats, width: float) -> np.ndarray:
+        data: np.ndarray, stats: CorrStats, width: float) -> np.ndarray:
     """ Taper a correlation matrix.
 
     Apply a taper to all traces in the correlation matrix.
@@ -858,7 +859,7 @@ def corr_mat_taper(
 
 
 def corr_mat_taper_center(
-    data: np.ndarray, stats: trace.Stats, width: float,
+    data: np.ndarray, stats: CorrStats, width: float,
         slope_frac: float = 0.05) -> np.ndarray:
     """
     Taper the central part of a correlation matrix.
@@ -872,7 +873,7 @@ def corr_mat_taper_center(
     :param data: Correlation data from CorrBulk object
     :type data: np.ndarray
     :param stats: Stats object from CorrBulk
-    :type stats: trace.Stats
+    :type stats: CorrStats
     :param width: width of the central window to be tapered in seconds
         (in total, i.e. not per taper side)
     :type width: float
@@ -922,8 +923,8 @@ def corr_mat_taper_center(
 
 
 def corr_mat_resample_time(
-    data: np.ndarray, stats: trace.Stats, freq: float) -> Tuple[
-        np.ndarray, trace.Stats]:
+    data: np.ndarray, stats: CorrStats, freq: float) -> Tuple[
+        np.ndarray, CorrStats]:
     """
     Resample the lapse time axis of a correlation matrix. The correlations are
     automatically filtered with a highpass filter of 0.4*sampling frequency to
@@ -931,13 +932,13 @@ def corr_mat_resample_time(
 
     :type data: np.ndarray
     :param data: correlation matrix
-    :type stats: :class:`~obspy.core.trace.Stats`
+    :type stats: :class:`~miic3.correlate.stats.CorrStats`
     :param stats: The stats object associated to the
         :class:`~miic3.correlate.stream.CorrBulk` object.
     :type freq: float
     :param freq: new sampling frequency
 
-    :rtype: Tuple[np.ndarray, trace.Stats]
+    :rtype: Tuple[np.ndarray, CorrStats]
     :return: Resampled data and changed stats object.
 
     ..note:: This action is performed **in-place**.
@@ -977,7 +978,7 @@ possible.")
     # rmat.update({'corr_data':deepcopy(trmat[:,:num])})
     stats['npts'] = data.shape[1]
     stats['sampling_rate'] = freq
-    stats['end_lag'] = stats['start_lag'] + (stats['npts']-1)/freq
+    # stats['end_lag'] = stats['start_lag'] + (stats['npts']-1)/freq
     # rmat['stats']['npts'] = rmat['corr_data'].shape[1]
     # rmat['stats']['sampling_rate'] = freq
     # endtime = convert_time([rmat['stats']['starttime']])[0]+timedelta(seconds=float(rmat['stats']['npts']-1)/freq)
@@ -986,21 +987,21 @@ possible.")
 
 
 def corr_mat_decimate(
-    data: np.ndarray, stats: trace.Stats, factor: int) -> Tuple[
-        np.ndarray, trace.Stats]:
+    data: np.ndarray, stats: CorrStats, factor: int) -> Tuple[
+        np.ndarray, CorrStats]:
     """
     Downsample a correlation matrix by an integer sample. A low-pass filter
     is applied before decimating.
     
     :type data: np.ndarray
     :param data: correlation matrix
-    :type stats: :class:`~obspy.core.trace.Stats`
+    :type stats: :class:`~miic3.correlate.stats.CorrStats`
     :param stats: The stats object associated to the
         :class:`~miic3.correlate.stream.CorrBulk` object.
     :type factor: int
     :param factor: The factor to reduce the sampling frequency by
 
-    :rtype: Tuple[np.ndarray, trace.Stats]
+    :rtype: Tuple[np.ndarray, CorrStats]
     :return: Decimated data and changed stats object.
 
     ..note:: This action is performed **in-place**.
@@ -1027,7 +1028,7 @@ def corr_mat_decimate(
     # For some reason it includes the last sample
     stats['npts'] = data.shape[1]
     stats['sampling_rate'] = float(stats['sampling_rate'])/factor
-    stats['end_lag'] = stats['start_lag'] + (stats['npts']-1)/freq
+    # stats['end_lag'] = stats['start_lag'] + (stats['npts']-1)/freq
 
     # fdat['corr_data'] = deepcopy(fdat['corr_data'][:,::factor])
     # fdat['stats']['npts'] = fdat['corr_data'].shape[1]
@@ -1040,8 +1041,8 @@ def corr_mat_decimate(
 
 
 def corr_mat_resample_or_decimate(
-    data:np.ndarray, stats: trace.Stats, freq: float) -> Tuple[
-        np.ndarray, trace.Stats]:
+    data:np.ndarray, stats: CorrStats, freq: float) -> Tuple[
+        np.ndarray, CorrStats]:
     """
     Downsample a correlation matrix. Decides automatically whether to decimate
     or downsampled depneding on the target frequency. A low-pass filter
@@ -1049,13 +1050,13 @@ def corr_mat_resample_or_decimate(
     
     :type data: np.ndarray
     :param data: correlation matrix
-    :type stats: :class:`~obspy.core.trace.Stats`
+    :type stats: :class:`~miic3.correlate.stats.CorrStats`
     :param stats: The stats object associated to the
         :class:`~miic3.correlate.stream.CorrBulk` object.
     :type freq: float
     :param freq: new sampling frequency
 
-    :rtype: Tuple[np.ndarray, trace.Stats]
+    :rtype: Tuple[np.ndarray, CorrStats]
     :return: Decimated data and changed stats object.
 
     ..note:: This action is performed **in-place**.
@@ -1236,78 +1237,70 @@ def corr_mat_resample_or_decimate(
 #     return corr_mat
 
 
-# def corr_mat_extract_trace(
-#     data: np.ndarray, stats: trace.Stats, method: str = 'mean',
-#         percentile: float = 50.) -> np.ndarray:
-#     """ Extract a representative trace from a correlation matrix.
+def corr_mat_extract_trace(
+    data: np.ndarray, stats: CorrStats, method: str = 'mean',
+        percentile: float = 50.) -> np.ndarray:
+    """ Extract a representative trace from a correlation matrix.
 
-#     Extract a correlation trace from the that best represents the correlation
-#     matrix. ``Method`` decides about method to extract the trace. The following
-#     possibilities are available
+    Extract a correlation trace from the that best represents the correlation
+    matrix. ``Method`` decides about method to extract the trace. The following
+    possibilities are available
 
-#     * ``mean`` averages all traces in the matrix
-#     * ``norm_mean`` averages the traces normalized after normalizing for maxima
-#     * ``similarity_percentile`` averages the ``percentile`` % of traces that
-#         best correlate with the mean of all traces. This will exclude abnormal
-#         traces. ``percentile`` = 50 will return an average of traces with
-#         correlation (with mean trace) above the median.
+    * ``mean`` averages all traces in the matrix
+    * ``norm_mean`` averages the traces normalized after normalizing for maxima
+    * ``similarity_percentile`` averages the ``percentile`` % of traces that
+        best correlate with the mean of all traces. This will exclude abnormal
+        traces. ``percentile`` = 50 will return an average of traces with
+        correlation (with mean trace) above the median.
 
-#     :type corr_mat: dictionary
-#     :param corr_mat: correlation matrix dictionary
-#     :type method: string
-#     :param method: method to extract the trace
-#     :type percentile: float
-#     :param percentile: only used for method=='similarity_percentile'
+    :type corr_mat: dictionary
+    :param corr_mat: correlation matrix dictionary
+    :type method: string
+    :param method: method to extract the trace
+    :type percentile: float
+    :param percentile: only used for method=='similarity_percentile'
 
-#     :rtype: trace dictionary of type correlation trace
-#     :return **trace**: extracted trace
-#     """
+    :rtype: trace dictionary of type correlation trace
+    :return **trace**: extracted trace
+    """
 
-#     # trace = deepcopy(corr_mat)
-#     # # adjust starts_tr1 and tr2
-#     # trace['stats_tr1']['starttime'] = \
-#     #     convert_time_to_string([min(convert_time(trace['time']))])[0]
-#     # trace['stats_tr2']['starttime'] = trace['stats_tr1']['starttime']
-#     # trace['stats_tr1']['endtime'] = \
-#     #     convert_time_to_string([max(convert_time(trace['time']))])[0]
-#     # trace['stats_tr2']['endtime'] = trace['stats_tr1']['endtime']
-#     data = deepcopy(data)
+    ndata = deepcopy(data)
 
-#     if method == 'mean':
-#         mm = np.ma.masked_array(
-#             data, np.isnan(data))
-#         out = np.mean(mm, 0).filled(np.nan)
-#     elif method == 'norm_mean':
-#         # normalize the matrix
-#         data = corr_mat_normalize(data, stats, normtype='absmax')
-#         mm = np.ma.masked_array(
-#             data, np.isnan(data))
-#         out = (np.mean(mm, 0).filled(np.nan))
-#     elif method == 'similarity_percentile':
-#         # normalize the matrix
-#         data = corr_mat_normalize(data, stats, normtype='absmax')
-#         mm = np.ma.masked_array(
-#             data['corr_data'], np.isnan(data['corr_data']))
-#         # calc mean  trace
-#         mean_tr = np.mean(mm, 0).filled(np.nan)
-#         # calc similarity with mean trace
-#         tm_sq = np.sum(mean_tr ** 2)
-#         cm_sq = np.sum(data ** 2, axis=1)
-#         # cm_sq = np.sum(data ** 2, axis=1).filled(np.nan)
-#         cor = np.zeros(data.shape[0])
-#         for ind in range(mm.shape[0]):
-#             cor[ind] = (
-#                 np.dot(data[ind, :], mean_tr) / np.sqrt(cm_sq[ind] * tm_sq))
-#         # estimate the percentile excluding nans
-#         tres = np.percentile(cor[~np.isnan(cor)], percentile)
-#         # find the traces that agree with the requested percentile and calc
-#         # their mean
-#         ind = cor > tres
-#         out = np.mean(data[ind, :], 0)
-#     else:
-#         raise ValueError("Method '%s' not defined." % method)
+    if method == 'mean':
+        mm = np.ma.masked_array(
+            ndata, np.isnan(ndata))
+        out = np.mean(mm, 0).filled(np.nan)
+    elif method == 'norm_mean':
+        # normalize the matrix
+        ndata = corr_mat_normalize(ndata, stats, normtype='absmax')
+        mm = np.ma.masked_array(
+            ndata, np.isnan(ndata))
+        out = (np.mean(mm, 0).filled(np.nan))
+    elif method == 'similarity_percentile':
+        # normalize the matrix
+        ndata = corr_mat_normalize(ndata, stats, normtype='absmax')
+        mm = np.ma.masked_array(
+            ndata, np.isnan(ndata))
+        # calc mean  trace
+        mean_tr = np.mean(mm, 0).filled(np.nan)
+        # calc similarity with mean trace
+        tm_sq = np.sum(mean_tr ** 2)
+        cm_sq = np.sum(ndata ** 2, axis=1)
+        # cm_sq = np.sum(data ** 2, axis=1).filled(np.nan)
+        cor = np.zeros(ndata.shape[0])
+        for ind in range(mm.shape[0]):
+            cor[ind] = (
+                np.dot(ndata[ind, :], mean_tr) / np.sqrt(cm_sq[ind] * tm_sq))
+        # estimate the percentile excluding nans
+        tres = np.percentile(cor[~np.isnan(cor)], percentile)
+        # find the traces that agree with the requested percentile and calc
+        # their mean
+        ind = cor > tres
+        out = np.mean(ndata[ind, :], 0)
+    else:
+        raise ValueError("Method '%s' not defined." % method)
 
-#     return out
+    return out
 
 # def corr_trace_maskband(corr_trace,method='all',side='both') :
 #     """ Mask a corr trace by applying nans to isolate specific
@@ -1635,7 +1628,7 @@ def _rotate_corr_dict(cmd,horiz_only=False):
 
 
 def corr_mat_stretch(
-    data: np.ndarray, stats: trace.Stats, ref_trc: np.ndarray = None,
+    data: np.ndarray, stats: CorrStats, ref_trc: np.ndarray = None,
     tw: List[np.ndarray] = None, stretch_range: float = 0.1,
     stretch_steps: int = 100, sides: str = 'both',
         return_sim_mat: bool = False) -> dict:
@@ -1793,7 +1786,7 @@ def corr_mat_correct_stretch(corr_mat, dv):
 
 
 def corr_mat_shift(
-    data: np.ndarray, stats: trace.Stats, ref_trc: np.ndarray = None,
+    data: np.ndarray, stats: CorrStats, ref_trc: np.ndarray = None,
     tw: List[np.ndarray] = None, shift_range: float = 10,
     shift_steps: int = 100, sides: str = 'both',
         return_sim_mat: bool = False) -> dict:
