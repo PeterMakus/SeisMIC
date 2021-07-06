@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Monday, 5th July 2021 02:45:04 pm
+Last Modified: Tuesday, 6th July 2021 01:05:04 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -970,13 +970,18 @@ def stack_st_by_group(st: Stream, regard_loc: bool, weight: str) -> CorrStream:
     return stackst
 
 
-def stack_st(st: CorrStream, weight: str) -> CorrTrace:
+def stack_st(st: CorrStream, weight: str, norm: bool = True) -> CorrTrace:
     """
     Returns an average of the data of all traces in the stream. Also adjusts
     the corr_start and corr_end parameters in the header.
 
     :param st: input Stream
     :type st: CorrStream
+    :param weight: type of weigthing to use. Either `mean` or `by_length`
+    :type weigth: str
+    :param norm: Should the traces be normalised by their absolute maximum
+        prior to stacking?
+    :type norm: bool
     :return: Single trace with stacked data
     :rtype: CorrTrace
     """
@@ -991,6 +996,9 @@ def stack_st(st: CorrStream, weight: str) -> CorrTrace:
         stack.append(tr.data)
         dur.append(tr.stats.corr_end-tr.stats.corr_start)
     A = np.array(stack)
+    if norm:
+        norm = np.max(np.abs(A), axis=1)
+        A /= np.tile(np.atleast_2d(norm).T, (1, A.shape[1]))
     if weight == 'mean' or weight == 'average':
         return CorrTrace(data=np.average(A, axis=0), _header=stats)
     elif weight == 'by_length':

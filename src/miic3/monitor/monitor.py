@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 18th June 2021 03:22:08 pm
+Last Modified: Tuesday, 6th July 2021 09:55:10 am
 '''
 import logging
 import os
@@ -52,8 +52,8 @@ class Monitor(object):
         else:
             tstr = None
         tstr = self.comm.bcast(tstr, root=0)
-
-        self.logger = logging.Logger("miic3.Monitor0%s" % str(self.rank))
+        self.logger = logging.getLogger(
+            "miic3.monitor.Monitor0%s" % str(self.rank))
         self.logger.setLevel(logging.WARNING)
         if options['debug']:
             self.logger.setLevel(logging.DEBUG)
@@ -70,16 +70,29 @@ class Monitor(object):
         fmt = logging.Formatter(
             fmt='%(asctime)s - %(levelname)s - %(message)s')
         fh.setFormatter(fmt)
+        consoleHandler = logging.StreamHandler()
+        consoleHandler.setFormatter(fmt)
+        self.logger.addHandler(consoleHandler)
+
         # Find available stations and network
         self.netlist, self.statlist, self.infiles = self._find_available_corrs(
             )
 
     def _starttimes_list(self) -> Tuple[np.ndarray, np.ndarray]:
-        start = UTCDateTime(self.options['dv']['start_date']).timestamp
-        end = UTCDateTime(self.options['dv']['end_date']).timestamp
-        inc = self.options['dv']['date_inc']
-        starttimes = np.arange(start, end, inc)
-        endtimes = starttimes + self.options['dv']['win_len']
+        """
+        Returns numpy array of starttimes and endtimes, for which each data
+        point of velocity change should be computed.
+
+        :return: A numpy array holding the starttimes and endtimes of the
+            computing time windows in seconds (as UTC timestamps).
+        :rtype: Tuple[np.ndarray, np.ndarray]
+
+        ..seealso:: For complete description,
+            :func:`~miic3.monitor.monitor.make_time_list`
+        """
+        starttimes, endtimes = make_time_list(
+            self.options['dv']['start_date'], self.options['dv']['end_date'],
+            self.options['dv']['date_inc'], self.options['dv']['win_len'])
         return starttimes, endtimes
 
     def _find_available_corrs(self):
@@ -154,3 +167,38 @@ and network combinations %s' % str(
             # There should be other options than using recombined in the future
             self.compute_velocity_change(
                 corr_file, 'recombined', net, stat, cha)
+
+
+def make_time_list(
+    start_date: str, end_date: str, date_inc: int, win_len: int) -> Tuple[
+        np.ndarray, np.ndarray]:
+    """
+    Returns numpy array of starttimes and endtimes, for which each data point
+    of velocity change should be computed.
+
+    :param start_date: Date (including time) to start monitoring
+    :type start_date: str
+    :param end_date: Last date (including time) of monitoring
+    :type end_date: str
+    :param date_inc: Increment in seconds between each datapoint
+    :type date_inc: int
+    :param win_len: Window Length, for which each data point is computed.
+    :type win_len: int
+    :return: A numpy array holding the starttimes and endtimes of the computing
+        time windows in seconds (as UTC timestamps)
+    :rtype: Tuple[ np.ndarray, np.ndarray]
+
+    ..note:: see `obspy's documentation <https://docs.obspy.org/packages/autogen/obspy.core.utcdatetime.UTCDateTime.html>`
+    for compatible input strings.
+    """
+    if date_inc <= 0 or win_len <= 0:
+        raise ValueError(
+            'Negative increments or window length are not allowed.')
+    start = UTCDateTime(start_date).timestamp
+    end = UTCDateTime(end_date).timestamp
+    if start >= end:
+        raise ValueError('Start Date should be earlier than end date.')
+    inc = date_inc
+    starttimes = np.arange(start, end, inc)
+    endtimes = starttimes + win_len
+    return starttimes, endtimes

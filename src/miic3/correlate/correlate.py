@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 2nd July 2021 11:54:31 am
+Last Modified: Tuesday, 6th July 2021 10:11:32 am
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -93,6 +93,9 @@ class Correlator(object):
         fmt = logging.Formatter(
             fmt='%(asctime)s - %(levelname)s - %(message)s')
         fh.setFormatter(fmt)
+        consoleHandler = logging.StreamHandler()
+        consoleHandler.setFormatter(fmt)
+        self.logger.addHandler(consoleHandler)
 
         # Write the options dictionary to the log file
         if self.rank == 0:
