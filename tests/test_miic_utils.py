@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Thursday, 10th June 2021 04:16:08 pm
+Last Modified: Tuesday, 6th July 2021 05:55:22 pm
 '''
 import unittest
 import math as mathematics
@@ -92,6 +92,12 @@ class TestResampleOrDecimate(unittest.TestCase):
         self.assertEqual(st_filt[0].stats.sampling_rate, freq_new)
         self.assertIn('resample', st_filt[0].stats.processing[-1])
         self.assertIn('no_filter=True', st_filt[0].stats.processing[-1])
+
+    def test_new_freq_higher_than_native(self):
+        st = read()
+        freq_new = st[0].stats.sampling_rate+5
+        with self.assertRaises(ValueError):
+            _ = resample_or_decimate(st, freq_new, filter=False)
 
 
 class TestCosTaper(unittest.TestCase):

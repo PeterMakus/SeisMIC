@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Monday, 5th July 2021 02:43:11 pm
+Last Modified: Tuesday, 6th July 2021 05:54:19 pm
 '''
 from typing import List, Tuple
 from warnings import warn
@@ -125,6 +125,11 @@ def resample_or_decimate(
         raise TypeError('Data has to be an obspy Stream or Trace.')
 
     srn = sampling_rate_new
+    if srn > sr:
+        raise ValueError('New sampling rate greater than old. This function \
+            is only intended for downsampling.')
+    elif srn == sr:
+        return data
 
     # Chosen this filter design as it's exactly the same as
     # obspy.Stream.decimate uses
