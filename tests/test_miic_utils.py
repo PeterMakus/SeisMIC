@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Tuesday, 6th July 2021 05:55:22 pm
+Last Modified: Thursday, 8th July 2021 05:17:18 pm
 '''
 import unittest
 import math as mathematics
@@ -41,9 +41,9 @@ class TestBazCalc(unittest.TestCase):
         self.dist, self.az, self.baz = gps2dist_azimuth(
             self.latitude1, self.longitude1, self.latitude2, self.longitude2)
         self.st1 = AttribDict(
-            sac={'stla': self.latitude1, 'stlo': self.longitude1})
+            {'stla': self.latitude1, 'stlo': self.longitude1})
         self.st2 = AttribDict(
-            sac={'stla': self.latitude2, 'stlo': self.longitude2})
+            {'stla': self.latitude2, 'stlo': self.longitude2})
 
     def test_result_inv(self):
         az, baz, dist = inv_calc_az_baz_dist(self.inv1, self.inv2)

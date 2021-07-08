@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 5th July 2021 02:44:13 pm
-Last Modified: Monday, 5th July 2021 02:45:31 pm
+Last Modified: Thursday, 8th July 2021 05:21:21 pm
 '''
 
 from future.utils import native_str
@@ -194,6 +194,8 @@ class CorrStats(AttribDict):
                 except ZeroDivisionError:
                     value = 0.0
             elif key == 'sampling_rate':
+                value = float(value)
+            elif key == 'start_lag':
                 value = float(value)
             # elif key == 'corr_start':
             #     value = UTCDateTime(value)

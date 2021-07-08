@@ -7,10 +7,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Tuesday, 6th July 2021 01:05:04 pm
+Last Modified: Thursday, 8th July 2021 04:51:58 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
+import warnings
 
 
 import numpy as np
@@ -20,8 +21,10 @@ from obspy.core import Stats
 from miic3.utils import miic_utils as m3ut
 from miic3.plot.plot_utils import plot_correlation
 import miic3.monitor.post_corr_process as pcp
+from miic3.monitor.stretch_mod import time_stretch_apply
 from miic3.monitor.dv import DV
 from miic3.correlate.stats import CorrStats
+
 
 class CorrBulk(object):
     """
@@ -40,6 +43,7 @@ class CorrBulk(object):
             self.stats = CorrStats()
             self.stats['ntrcs'], self.stats['npts'] = A.shape
         self.stats['processing_bulk'] = []
+        self.ref_trc = None
 
     def normalize(
         self, starttime: float = None, endtime: float = None,
@@ -103,6 +107,26 @@ class CorrBulk(object):
         """
         self.data = pcp.corr_mat_correct_decay(self.data, self.stats)
         self.stats.processing_bulk += ['Corrected for Amplitude Decay']
+        return self
+
+    def correct_stretch(self, dv: DV):
+        """
+        Correct stretching of correlation matrix
+
+        In the case of a homogeneous subsurface velocity change the correlation
+        traces are stretched or compressed. This stretching can be measured
+        with `self.stretch`. The resulting `DV` object can be passed to
+        this function to remove the stretching from the correlation matrix.
+
+        :param dv: Velocity Change object
+        :type dv: DV
+
+        ..note:: This action is performed **in-place**. If you would like to
+            keep the original data use
+            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`.
+        """
+        self.data = time_stretch_apply(self.data, -1.*dv.value)
+        self.stats.processing_bulk += ['Applied time stretch']
         return self
 
     def envelope(self):
@@ -821,11 +845,8 @@ def combine_stats(
     :type stats2: :class:`~obspy.core.trace.Stats`
     :param stats2: Second Trace's stats
     :param start_lag: The lag of the first sample of the correlation given
-    in seconds.
+        in seconds (usually negative).
     :type start_lag: float
-    :param end_lag: The lag of the last sample of the correlation given
-    in seconds.
-    :type end_lag: float
     :type inv: :class:`~obspy.core.inventory.Inventory`, optional
     :param inv: Inventory containing the station coordinates. Only needed if
         station coordinates are not in Trace.Stats. Defaults to None.
@@ -870,23 +891,33 @@ def combine_stats(
                     # in the stats object there are read only objects
                     try:
                         stats[key] = stats1[key]
-                    except AttributeError:
+                    except (AttributeError, KeyError):
                         pass
 
     try:
-        stats['stla'] = stats1.sac.stla
-        stats['stlo'] = stats1.sac.stlo
-        stats['stel'] = stats1.sac.stel
-        stats['evla'] = stats2.sac.stla
-        stats['evlo'] = stats2.sac.stlo
-        stats['evel'] = stats2.sac.stel
+        if ('stla' and 'stlo' and 'stel') in stats1:
+            stats['stla'] = stats1.stla
+            stats['stlo'] = stats1.stlo
+            stats['stel'] = stats1.stel
+            stats['evla'] = stats2.stla
+            stats['evlo'] = stats2.stlo
+            stats['evel'] = stats2.stel
+        else:
+            stats['stla'] = stats1.sac.stla
+            stats['stlo'] = stats1.sac.stlo
+            stats['stel'] = stats1.sac.stel
+            stats['evla'] = stats2.sac.stla
+            stats['evlo'] = stats2.sac.stlo
+            stats['evel'] = stats2.sac.stel
+            stats1.update(stats1['sac'])
+            stats2.update(stats2['sac'])
 
         az, baz, dist = m3ut.trace_calc_az_baz_dist(stats1, stats2)
 
         stats['dist'] = dist / 1000
         stats['az'] = az
         stats['baz'] = baz
-    except AttributeError:
+    except (AttributeError, KeyError):
         if inv:
             inv1 = inv.select(
                 network=stats1.network, station=stats1.station)
@@ -905,7 +936,7 @@ def combine_stats(
             stats['az'] = az
             stats['baz'] = baz
         else:
-            print("No station coordinates provided.")
+            warnings.warn("No station coordinates provided.")
     stats.pop('sac', None)
     stats.pop('response', None)
     stats['_format'] = 'hdf5'
@@ -913,9 +944,6 @@ def combine_stats(
     # note that those have to be adapted whenever several correlations are
     # stacked
     stats['start_lag'] = start_lag
-    # Now changed automatically & read only
-    # stats['end_lag'] = end_lag
-    # stats['starttime'] = lag0 + start_lag
     return stats
 
 

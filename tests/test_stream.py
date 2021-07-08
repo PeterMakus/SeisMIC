@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Friday, 2nd July 2021 11:51:46 am
+Last Modified: Thursday, 8th July 2021 05:22:54 pm
 '''
 
 import unittest
@@ -160,7 +160,7 @@ class TestStackSt(unittest.TestCase):
             self.st.append(ntr)
 
     def test_result_mean(self):
-        stack = stream.stack_st(self.st, 'mean')
+        stack = stream.stack_st(self.st, 'mean', norm=False)
         self.assertEqual(len(stack), self.st[0].stats.npts)
         self.assertEqual(self.st[0].stats.corr_start, stack.stats.corr_start)
         self.assertEqual(self.st[-1].stats.corr_end, stack.stats.corr_end)
@@ -169,7 +169,7 @@ class TestStackSt(unittest.TestCase):
         self.assertTrue(np.all(stack.data == exp_res))
 
     def test_weighting(self):
-        stack = stream.stack_st(self.st, 'by_length')
+        stack = stream.stack_st(self.st, 'by_length', norm=False)
         self.assertEqual(self.st[0].stats.corr_start, stack.stats.corr_start)
         self.assertEqual(self.st[-1].stats.corr_end, stack.stats.corr_end)
         lengths = self.corr_len*np.linspace(

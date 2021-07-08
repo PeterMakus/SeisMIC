@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Tuesday, 6th July 2021 05:54:19 pm
+Last Modified: Thursday, 8th July 2021 11:19:51 am
 '''
 from typing import List, Tuple
 from warnings import warn
@@ -16,7 +16,6 @@ from warnings import warn
 import numpy as np
 from obspy import Inventory, Stream, Trace, UTCDateTime
 from obspy.core import Stats, AttribDict
-
 
 # zero lag time
 lag0 = UTCDateTime(0)
@@ -57,10 +56,8 @@ def trace_calc_az_baz_dist(stats1: Stats, stats2: Stats) -> Tuple[
         print("Update obspy.")
         return
 
-    dist, az, baz = gps2dist_azimuth(stats1.sac.stla,
-                                     stats1.sac.stlo,
-                                     stats2.sac.stla,
-                                     stats2.sac.stlo)
+    dist, az, baz = gps2dist_azimuth(
+        stats1['stla'], stats1['stlo'], stats2['stla'], stats2['stlo'])
 
     return az, baz, dist
 

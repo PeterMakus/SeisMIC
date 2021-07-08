@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Thursday, 1st July 2021 01:15:58 pm
+Last Modified: Thursday, 8th July 2021 05:10:40 pm
 '''
 from typing import List, Tuple
 
@@ -306,6 +306,8 @@ def time_stretch_estimate(
     ref_stretch = np.zeros((len(stretchs), len(ref_trc)))
 
     # create a spline object for the reference trace
+    # :NOTE: This change can give very different results and should
+    # **definitely** be discussed!
     # ref_tr_spline = UnivariateSpline(time_idx, ref_trc, s=0)
     # 01.07.21 No extrapolation
     ref_tr_spline = UnivariateSpline(time_idx, ref_trc, s=0, ext='const')
@@ -960,3 +962,65 @@ def time_shift_estimate(
         dt.update({'sim_mat': np.squeeze(sim_mat)})
 
     return dt
+
+
+def time_stretch_apply(
+    corr_data: np.ndarray, stretch: np.ndarray,
+        single_sided: bool = False) -> np.ndarray:
+    """ Apply time axis stretch to traces.
+
+    Stretch the time axis of traces e.g. to compensate a velocity shift in the
+    propagation medium.
+    Such shifts can occur in corrlation traces in case of a drifting clock.
+    This function ``applies`` the stretches. To correct for stretching
+    estimated with :class:`~miic.core.stretch_mod.time_stretch_estimate`you
+    need to apply negative stretching.
+
+    :type corr_data: :class:`~numpy.ndarray`
+    :param corr_data: 2d ndarray containing the correlation functions that are
+        to be shifted.
+        One for each row.
+    :type stretch: :class:`~numpy.ndarray`
+    :param stretch: ndarray with stretch.shape[0] = corr_data.shape[0]
+        containing the stretches relative units.
+
+    :rtype: :class:`~numpy.ndarray`
+    :return: **stretched_mat**: stretched version of the input matrix
+    """
+
+    # Mat must be a 2d vector in every case so
+    mat = np.atleast_2d(corr_data)
+    # check input
+    # stretch is just a 1d array
+    if len(stretch.shape) == 1:
+        t_stretch = np.zeros([stretch.shape[0], 1])
+        t_stretch[:, 0] = stretch
+        stretch = t_stretch
+    # stretch has the wrong length
+    elif stretch.shape[0] != mat.shape[0]:
+        raise ValueError('shift.shape[0] must be equal corr_data.shape[0]')
+
+    # shift has multiple columns (multiple measurements for the same time)
+    if stretch.shape[1] > 1:
+        stretch = np.delete(stretch, np.arange(1, stretch.shape[1]), axis=1)
+
+    # taper and extend the reference trace to avoid interpolation
+    # artefacts at the ends of the trace
+    taper = cosine_taper(mat.shape[1], 0.05)
+    mat *= np.tile(taper, [mat.shape[0], 1])
+
+    # time axis
+    if single_sided:
+        time_idx = np.arange(mat.shape[1])
+    else:
+        time_idx = np.arange(mat.shape[1]) - (mat.shape[1] - 1.) / 2.
+
+    # allocate space for the result
+    stretched_mat = np.zeros_like(mat)
+
+    # stretch every line
+    for (ii, line) in enumerate(mat):
+        s = UnivariateSpline(time_idx, line, s=0)
+        stretched_mat[ii, :] = s(time_idx * np.exp(-stretch[ii]))
+
+    return stretched_mat

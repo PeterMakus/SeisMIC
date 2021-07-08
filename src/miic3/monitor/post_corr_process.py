@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Monday, 5th July 2021 04:39:23 pm
+Last Modified: Thursday, 8th July 2021 04:55:05 pm
 '''
 
 from typing import List, Tuple
@@ -967,7 +967,7 @@ def corr_mat_resample_time(
             raise TypeError("No matching trace length found. Resampling not \
 possible.")
             break
-    data = corr_mat_filter(data, stats,[0.001,0.8*freq/2])
+    data = corr_mat_filter(data, stats, [0.001, 0.8*freq/2])
     # rmat = {'stats':deepcopy(corr_mat['stats']),
     #         'stats_tr1':deepcopy(corr_mat['stats_tr1']),
     #         'stats_tr2':deepcopy(corr_mat['stats_tr2']),
@@ -1628,7 +1628,7 @@ def _rotate_corr_dict(cmd,horiz_only=False):
 
 
 def corr_mat_stretch(
-    data: np.ndarray, stats: CorrStats, ref_trc: np.ndarray = None,
+    cdata: np.ndarray, stats: CorrStats, ref_trc: np.ndarray = None,
     tw: List[np.ndarray] = None, stretch_range: float = 0.1,
     stretch_steps: int = 100, sides: str = 'both',
         return_sim_mat: bool = False) -> dict:
@@ -1697,7 +1697,7 @@ def corr_mat_stretch(
             values have been obtained.
     """
 
-    data = deepcopy(data)
+    data = deepcopy(cdata)
 
     # starttime = convert_time([corr_mat['stats']['starttime']])[0]
     # endtime = convert_time([corr_mat['stats']['endtime']])[0]
@@ -1717,8 +1717,8 @@ def corr_mat_stretch(
             nr = 1
         else:
             nr = rts[0]
-        data = np.concatenate((data,
-                            np.atleast_2d(ref_trc)), 0)
+        data = np.concatenate((
+            data, np.atleast_2d(ref_trc)), 0)
         reft = np.tile([UTCDateTime(1900, 1, 1)], (nr))
         stats['corr_start'] = np.concatenate((stats['corr_start'], reft), 0)
 
