@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Thursday, 8th July 2021 05:11:54 pm
+Last Modified: Friday, 9th July 2021 01:51:02 pm
 '''
 import logging
 import os
@@ -165,13 +165,20 @@ and network combinations %s' % str(
         dv.save(outf)
 
     def compute_velocity_change_bulk(self):
+        # Decide whether to use already stacked data
+        if self.options['co']['subdivision']['recombine_subdivision'] and\
+            self.options['co']['read_inc'] \
+                <= self.options['dv']['date_inc']:
+            tag = 'recombined'
+        else:
+            tag = 'subdivision'
         # get number of available channel combis
         if self.rank == 0:
             plist = []
             for f, n, s in zip(self.infiles, self.netlist, self.statlist):
                 with CorrelationDataBase(f, 'r') as cdb:
                     ch = cdb.get_available_channels(
-                        'recombined', n, s)
+                        tag, n, s)
                     plist.extend([f, n, s, c] for c in ch)
         else:
             plist = None
@@ -186,7 +193,7 @@ and network combinations %s' % str(
             corr_file, net, stat, cha = plist[ii]
             # There should be other options than using recombined in the future
             self.compute_velocity_change(
-                corr_file, 'recombined', net, stat, cha)
+                corr_file, tag, net, stat, cha)
 
 
 def make_time_list(

@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Friday, 2nd July 2021 11:58:01 am
+Last Modified: Friday, 9th July 2021 01:31:17 pm
 '''
 import os
 from typing import Tuple
@@ -344,11 +344,12 @@ been preprocessed?')
                     'No data found for station %s.%s and times %s-%s'
                     % (network, station, starttime, endtime))
                 continue
-            try:
-                st = trim_stream_delta(st, tl, tl, nearest_sample=False)
-            except ValueError:
-                # very short traces
-                pass
+            if tl:
+                try:
+                    st = trim_stream_delta(st, tl, tl, nearest_sample=False)
+                except ValueError:
+                    # very short traces
+                    pass
 
             with ASDFDataSet(outfile, mpi=False) as ds:
                 ds.add_waveforms(st, tag='processed')  # st_proc

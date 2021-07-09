@@ -7,9 +7,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Thursday, 8th July 2021 05:10:40 pm
+Last Modified: Friday, 9th July 2021 09:11:27 am
 '''
 from typing import List, Tuple
+import warnings
 
 import numpy as np
 from obspy.signal.invsim import cosine_taper
@@ -139,11 +140,13 @@ def velocity_change_estimate(
             # ctw = np.hstack((center_p - ctw[::-1],
             #                  center_p + ctw)).astype(np.int32)
             if ctw[0] == 0:
-                ctw = np.hstack((center_p - ctw[::-1],
-                center_p + ctw[1:])).astype(np.int32)
+                ctw = np.hstack((
+                    center_p - ctw[::-1],
+                    center_p + ctw[1:])).astype(np.int32)
             else:
-                ctw = np.hstack((center_p - ctw[::-1],
-                center_p + ctw)).astype(np.int32)
+                ctw = np.hstack((
+                    center_p - ctw[::-1],
+                    center_p + ctw)).astype(np.int32)
         elif sides == 'left':
             ctw = (center_p - ctw[::-1]).astype(np.int32)
         elif sides == 'right':
@@ -151,8 +154,8 @@ def velocity_change_estimate(
         elif sides == 'single':
             ctw = ctw.astype(np.int32)
         else:
-            print(
-                'sides = %s not a valid option. Using sides = single' % sides)
+            raise ValueError(
+                'sides = %s not a valid option.' % sides)
 
         mask = np.zeros((mat.shape[1],))
         mask[ctw] = 1
