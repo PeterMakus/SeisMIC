@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Friday, 9th July 2021 01:31:17 pm
+Last Modified: Monday, 12th July 2021 05:34:21 pm
 '''
 import os
 from typing import Tuple
@@ -335,7 +335,9 @@ been preprocessed?')
                 warn('Data segments too short. Stream is skipped.')
                 continue
             try:
-                st, resp = self._preprocess(st, resp, tl)
+                st, resp = _preprocess(
+                    st, self.store_client, self.sampling_rate, resp,
+                    self.remove_response, tl)
             except FrequencyError as e:
                 warn(e + ' Trace is skipped.')
                 continue
@@ -378,62 +380,60 @@ been preprocessed?')
         """
         return self.store_client.get_available_stations(network)
 
-    def _preprocess(
-        self, st: Stream, inv: Inventory or None,
-            taper_len: float) -> Tuple[Stream, Inventory]:
-        """
-        Private method that executes the preprocessing steps on a *per Stream*
-        basis.
-        """
-        st.sort(keys=['starttime'])
-        # Check sampling frequency
-        if self.sampling_rate > st[0].stats.sampling_rate:
-            raise FrequencyError(
-                'The new sample rate (%sHz) is higher than the trace\'s native\
-sample rate (%s Hz).' % (str(self.sampling_rate), str(
-                        st[0].stats.sampling_rate)))
 
-        # Downsample
-        # AA-Filter is done in this function as well
-        st = resample_or_decimate(st, self.sampling_rate)
+def _preprocess(
+    st: Stream, store_client: Store_Client, sampling_rate: float,
+    inv: Inventory or None, remove_response: bool,
+        taper_len: float) -> Tuple[Stream, Inventory]:
+    """
+    Private method that executes the preprocessing steps on a *per Stream*
+    basis.
+    """
+    if not st:
+        return st
 
-        if inv:
-            ninv = inv
-            st.attach_response(ninv)
-        if self.remove_response:
-            # taper before instrument response removal
-            if taper_len:
-                # st.taper(None, max_length=taper_len)
-                st = cos_taper_st(st, taper_len, False)
-            try:
-                pass
-                st.remove_response(taper=False)  # Changed for testing purposes
-            except ValueError:
-                print('Station response not found ... loading from remote.')
-                # missing station response
-                ninv = self.store_client.rclient.get_stations(
-                    network=st[0].stats.network, station=st[0].stats.station,
-                    channel='*', starttime=st[0].stats.starttime,
-                    endtime=st[-1].stats.endtime, level='response')
-                st.attach_response(ninv)
-                st.remove_response(taper=False)
-                self.store_client._write_inventory(ninv)
+    st.sort(keys=['starttime'])
+    # Check sampling frequency
+    if sampling_rate > st[0].stats.sampling_rate:
+        raise FrequencyError(
+            'The new sample rate (%sHz) is higher than the trace\'s native\
+sample rate (%s Hz).' % (str(sampling_rate), str(
+                    st[0].stats.sampling_rate)))
 
-        # st.detrend()
-        for tr in st:
-            # !Last operation before saving!
-            # The actual data in the mseeds was changed from int to float64
-            # now,
-            # Save some space by changing it back to 32 bit (most of the
-            # digitizers work at 24 bit anyways)
-            tr.data = np.require(tr.data, np.float32)
+    # Downsample
+    # AA-Filter is done in this function as well
+    st = resample_or_decimate(st, sampling_rate)
+
+    if remove_response:
+        # taper before instrument response removal
+        if taper_len:
+            # st.taper(None, max_length=taper_len)
+            st = cos_taper_st(st, taper_len, False)
         try:
-            return st, ninv
-        except (UnboundLocalError, NameError):
-            # read inventory
-            ninv = self.store_client.read_inventory().select(
-                network=tr.stats.network, station=tr.stats.station)
-            return st, ninv
+            if inv:
+                ninv = inv
+                st.attach_response(ninv)
+            st.remove_response(taper=False)  # Changed for testing purposes
+        except ValueError:
+            print('Station response not found ... loading from remote.')
+            # missing station response
+            ninv = store_client.rclient.get_stations(
+                network=st[0].stats.network, station=st[0].stats.station,
+                channel='*', starttime=st[0].stats.starttime,
+                endtime=st[-1].stats.endtime, level='response')
+            st.attach_response(ninv)
+            st.remove_response(taper=False)
+            store_client._write_inventory(ninv)
+
+    # st.detrend()
+    for tr in st:
+        # !Last operation before saving!
+        # The actual data in the mseeds was changed from int to float64
+        # now,
+        # Save some space by changing it back to 32 bit (most of the
+        # digitizers work at 24 bit anyways)
+        tr.data = np.require(tr.data, np.float32)
+    return st
 
 
 def detrend(data: np.ndarray) -> np.ndarray:

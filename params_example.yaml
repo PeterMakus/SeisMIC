@@ -43,6 +43,13 @@ co:
     read_len : 86398
     read_inc : 86400
 
+    # New sampling rate in Hz. Note that it will try to decimate
+    # if possible (i.e., there is an integer factor from the
+    # native sampling_rate)
+    sampling_rate: 25
+    # Remove the instrument response, will take substantially more time
+    remove_response: False
+
     # Method to combine different traces
     combination_method : 'betweenStations'
 

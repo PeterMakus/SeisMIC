@@ -208,30 +208,6 @@ class Store_Client(object):
         except FileNotFoundError as e:
             warnings.warn(e, UserWarning)
             return (None, None)
-
-        # startjul = [i.split('.')[-1] for i in glob.glob(
-        #     os.path.join(
-        #         self.sds_root, dirlist[0], network, station, '*', '*'))]
-
-        # if not startjul:
-        #     warnings.warn(
-        #         'Station %s.%s not in database' % (network, station),
-        #         UserWarning)
-        #     return (None, None)
-        # # the keys here make sure that 200 comes after 3, but before 300
-        # startjul.sort(key=lambda l: (len(l), l))
-        # starttime = UTCDateTime(year=int(dirlist[0]), julday=startjul[0])
-
-        # endjul = [i.split('.')[-1] for i in glob.glob(
-        #     os.path.join(
-        #         self.sds_root, dirlist[-1], network, station, '*', '*'))]
-        # endjul.sort(key=lambda l: (len(l), l))
-        # # This is of course not the latest endtime, but the latest starttime!
-        # # Hence, add + 1 (PM 06/05/21)
-        # endtime = UTCDateTime(year=int(dirlist[-1]), julday=int(endjul[-1]))
-        # # More complicated than that. If day=365 we have to do year+1
-        # # Let's add the day to the endtime instead of to the kwarg
-        # endtime += 24*3600
         return (starttime, endtime)
 
     def _load_remote(

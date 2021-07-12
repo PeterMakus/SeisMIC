@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 9th July 2021 01:51:02 pm
+Last Modified: Monday, 12th July 2021 03:51:13 pm
 '''
 import logging
 import os
@@ -19,7 +19,9 @@ import numpy as np
 from obspy import UTCDateTime
 
 from miic3.db.corr_hdf5 import CorrelationDataBase
-from miic3.utils.io import corrmat_to_corrbulk, load_corrbulk_from_mat
+# 12.07 Not needed here anymore, I am 100% sure that this produces exactly
+# the same results as the old miic
+# from miic3.utils.io import corrmat_to_corrbulk, load_corrbulk_from_mat
 
 
 class Monitor(object):
@@ -137,25 +139,25 @@ and network combinations %s' % str(
 
         # Compute time window
         tw = [np.arange(
-            self.options['dv']['tw_start']*cb.stats['sampling_rate'],
+            self.options['dv']['tw_start']*cbt.stats['sampling_rate'],
             (self.options['dv']['tw_start']+self.options[
-                'dv']['tw_len'])*cb.stats['sampling_rate'], 1)]
+                'dv']['tw_len'])*cbt.stats['sampling_rate'], 1)]
         dv = cbt.stretch(
             ref_trc=tr, return_sim_mat=True,
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],
             tw=tw)
-        cb.correct_stretch(dv)
+        ccb = cb.correct_stretch(dv)
 
-        cb.trim(
+        ccb.trim(
             -(self.options['dv']['tw_start']+self.options['dv']['tw_len']),
             (self.options['dv']['tw_start']+self.options['dv']['tw_len']))
 
         # extract the final reference trace (mean excluding very different
         # traces)
-        tr = cb.extract_trace(method='mean')
+        tr = ccb.extract_trace(method='mean')
         # obtain an improved time shift measurement
-        dv = cb.stretch(
+        dv = cbt.stretch(
             ref_trc=tr, return_sim_mat=True,
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],

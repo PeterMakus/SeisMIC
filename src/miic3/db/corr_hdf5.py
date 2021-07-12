@@ -9,7 +9,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Friday, 2nd July 2021 11:56:17 am
+Last Modified: Monday, 12th July 2021 03:21:44 pm
 '''
 import fnmatch
 import os
@@ -102,7 +102,7 @@ class DBHandler(h5py.File):
             except ValueError as e:
                 print(e)
                 warnings.warn("The dataset %s is already in file and will be \
-                omitted." % path, category=UserWarning)
+omitted." % path, category=UserWarning)
 
     def get_data(
         self, network: str, station: str, channel: str, tag: str,

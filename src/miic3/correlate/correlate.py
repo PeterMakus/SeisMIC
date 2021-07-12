@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 6th July 2021 10:11:32 am
+Last Modified: Monday, 12th July 2021 05:32:56 pm
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -27,9 +27,12 @@ from scipy.signal.signaltools import detrend as sp_detrend
 
 # from miic3.utils.nextpowof2 import nextpowerof2
 from miic3.correlate.stream import CorrTrace, CorrStream
+from miic3.trace_data.preprocess import _preprocess
 from miic3.db.asdf_handler import get_available_stations, NoiseDB, NoDataError
 from miic3.db.corr_hdf5 import CorrelationDataBase
+from miic3.trace_data.waveform import Store_Client
 from miic3.utils.fetch_func_from_str import func_from_str
+from miic3.utils.miic_utils import discard_short_traces, get_valid_traces
 
 
 class Correlator(object):
@@ -37,7 +40,7 @@ class Correlator(object):
     Object to manage the actual Correlation (i.e., Green's function retrieval)
     for the database.
     """
-    def __init__(self, options: dict or str):
+    def __init__(self, store_client: Store_Client, options: dict or str):
         """
         Initiates the Correlator object. When executing
         :func:`~miic3.correlate.correlate.Correlator.pxcorr()`, it will
@@ -105,57 +108,54 @@ class Correlator(object):
 
         self.options = options['co']
 
-        # find the available noise dbs
+        # find the available data
         network = options['net']['network']
         station = options['net']['station']
-        if isinstance(network, str):
-            network = [network]
-        if isinstance(station, str):
-            station = [station]
-        if len(station) != len(network):
-            if len(station) == 1:
-                station = station*len(network)
-            elif len(network) == 1:
-                network = network*len(station)
-            else:
-                raise ValueError("""The lists containing network and station
-                codes must either have the same length or one of them can have
-                the length 1""")
-        # Resolve patterns
-        self.netlist = []
-        self.statlist = []
-        for net, stat in zip(network, station):
-            if '*' in network+station or '?' in net+stat:
-                net, stat = get_available_stations(
-                    os.path.join(self.proj_dir, options['prepro_subdir']),
-                    net, stat)
-                self.netlist.extend(net)
-                self.statlist.extend(stat)
-            else:
-                self.netlist.append(net)
-                self.statlist.append(stat)
+
+        # Store_Client
+        self.store_client = store_client
+
+        if isinstance(station, list) and len(station) == 1:
+            station = station[0]
+        if isinstance(network, list) and len(network) == 1:
+            network = network[0]
+
+        if network == '*':
+            station = store_client.get_available_stations()
+        elif station == '*' and isinstance(network, str):
+            station = store_client.get_available_stations(network)
+        elif isinstance(station, str) and isinstance(network, str):
+            station = [[network, station]]
+        elif station == '*' and isinstance(network, list):
+            station = []
+            for net in network:
+                station.extend(store_client.get_available_stations(net))
+        elif isinstance(network, list) and isinstance(station, list):
+            if len(network) != len(station):
+                raise ValueError(
+                    'Stations has to be either: \n' +
+                    '1. A list of the same length as the list of networks.\n' +
+                    '2. \'*\' That is, a wildcard (string).\n' +
+                    '3. A list and network is a string describing one ' +
+                    'station code.')
+            station = list([n, s] for n, s in zip(network, station))
+        elif isinstance(station, str):
+            raise ValueError(
+                'Stations has to be either: \n' +
+                '1. A list of the same length as the list of networks.\n' +
+                '2. \'*\' That is, a wildcard (string).\n' +
+                '3. A list and network is a string describing one ' +
+                'station code.')
+        else:
+            for ii, stat in enumerate(station):
+                station[ii] = [network, stat]
+        self.station = station
 
         self.logger.debug(
             'Fetching data from the following stations:\n%s' % str(
-                ['{n}.{s}'.format(n=n, s=s) for n, s in zip(
-                    self.netlist, self.statlist)]))
+                ['{n}.{s}'.format(n=n, s=s) for n, s in station]))
 
-        # and, finally, find the hdf5 files associated to each of them
-        self.noisedbs = [NoiseDB(
-            os.path.join(self.proj_dir, options['prepro_subdir']), net, stat)
-            for net, stat in zip(self.netlist, self.statlist)]
-        # note that the indexing in the noisedb list and in the statlist
-        # are identical, which could be useful to find them easily
-        # Check whether all the data has the same sampling rate
-        self.sampling_rate = self.noisedbs[0].sampling_rate
-        for ndb in self.noisedbs:
-            if ndb.sampling_rate != self.sampling_rate:
-                raise ValueError(
-                    'Station %s.%s has a different sampling rate with %s Hz.\
-                The sampling rate taken from station %s.%s is %s Hz.'
-                    % (ndb.network, ndb.station, ndb.sampling_rate,
-                        self.noisedbs[0].network, self.noisedbs[0].station,
-                        self.sampling_rate))
+        self.sampling_rate = self.options['sampling_rate']
 
     def find_existing_times(self, tag: str, channel: str = '*') -> dict:
         """
@@ -178,8 +178,9 @@ class Correlator(object):
             'NET1.STAT1': {'BHZ-BHH': [%list of starttimes] ,
             'NET2.STAT2': {'BHZ-BHH':[%list of starttimes]}}}
         """
+        netlist, statlist = list(zip(*self.station))
         netcombs, statcombs = compute_network_station_combinations(
-            self.netlist, self.statlist)
+            netlist, statlist)
         ex_dict = {}
         for (n0, n1), (s0, s1) in zip(netcombs, statcombs):
             nc = '%s-%s' % (n0, n1)
@@ -202,7 +203,7 @@ class Correlator(object):
         cst = CorrStream()
         # Fetch station coordinates
         if self.rank == 0:
-            inv = self._get_inventory()
+            inv = self.store_client.read_inventory()
         else:
             inv = None
         inv = self.comm.bcast(inv, root=0)
@@ -245,18 +246,20 @@ class Correlator(object):
                 npts.append(tr.stats['npts'])
             npts = np.max(np.array(npts))
             # create numpy array - Do a QR detrend here?
+            # st = st.split()
+            # st.write('/home/pm/Documents/PhD/Chaku/input.mseed')
+
             A, st = st_to_np_array(st, npts)
-            # A = qr_detrend(A)
-            # detrend is done earlier now
+            # np.save('/home/pm/Documents/PhD/Chaku/input', A)
             As = A.shape
         else:
             starttime = None
             npts = None
             As = None
-        # del st  # save some memory
         starttime = self.comm.bcast(starttime, root=0)
         npts = self.comm.bcast(npts, root=0)
         st = self.comm.bcast(st, root=0)
+        # raise ValueError
 
         # Tell the other processes the shape of A
         As = self.comm.bcast(As, root=0)
@@ -324,18 +327,6 @@ class Correlator(object):
             with CorrelationDataBase(outf) as cdb:
                 cdb.add_correlation(cstlist[ii], tag)
 
-    def _get_inventory(self) -> Inventory:
-        """
-        Returns an :class:`~obspy.core.inventory.Inventory` object containing
-        information about all stations that are used for this correlation
-
-        :return: :class:`~obspy.core.inventory.Inventory`
-        :rtype: Inventory
-        """
-        inv = Inventory()
-        for ndb in self.noisedbs:
-            inv.extend(ndb.get_inventory())
-        return inv
 
     def _generate_data(self) -> Iterator[Tuple[Stream, bool]]:
         """
@@ -357,10 +348,15 @@ class Correlator(object):
         if self.rank == 0:
             starts = []  # start of each time window
             ends = []
-            for ndb in self.noisedbs:
-                start, end = ndb.get_active_times()
+            for n, s in self.station:
+                start, end = self.store_client._get_times(n, s)
+                if not start:
+                    warn(
+                        'No mseed files found in database for station %s.%s.'
+                        % (n, s))
                 starts.append(start)
                 ends.append(end)
+
             # find already available times
             ex_dict = self.find_existing_times('subdivision')
             self.logger.debug('Already existing data: %s' % str(ex_dict))
@@ -373,31 +369,44 @@ class Correlator(object):
         t1 = UTCDateTime(self.options['read_end']).timestamp
         loop_window = np.arange(t0, t1, self.options['read_inc'])
 
+        # Taper ends for the deconvolution
+        if self.options['remove_response']:
+            tl = 300
+        else:
+            tl = 0
+
         for t in loop_window:
             write_flag = True  # Write length is same as read length
             if self.rank == 0:
                 st = Stream()
-                startt = UTCDateTime(t)
-                endt = startt + self.options['read_len']
-                for ii, ndb in enumerate(self.noisedbs):
-                    # Skip if time window is not available for this station
-                    # Note that this will return shorter time windows if
-                    # the requested time is only partly available
-                    if endt < starts[ii] or startt > ends[ii]:
+                startt = UTCDateTime(t) - tl
+                endt = startt + self.options['read_len'] + tl
+                for net, stat in self.station:
+                    # I might want only this part to be done on rank 0
+                    resp = self.store_client.select_inventory_or_load_remote(
+                        net, stat)
+                    stext = self.store_client._load_local(
+                        net, stat, '*', '*', startt, endt, True, False)
+                    get_valid_traces(stext)
+                    if stext is None or not len(stext):
                         continue
-                    try:
-                        st.extend(ndb.get_time_window(startt, endt))
-                    except NoDataError as e:
-                        warn('%s for %s.%s.' % (e, ndb.network, ndb.station))
+                    st.extend(_preprocess(
+                        stext, self.store_client, self.sampling_rate,
+                        resp, self.options['remove_response'], tl))
                 # preprocessing on stream basis
                 # Maybe a bad place to do that?
+                discard_short_traces(st)
+                st.taper(5)
                 if 'preProcessing' in self.options.keys():
                     for procStep in self.options['preProcessing']:
                         func = func_from_str(procStep['function'])
                         st = func(st, **procStep['args'])
+                st.merge()
+                st.trim(startt, endt, pad=True)
             else:
                 st = None
             st = self.comm.bcast(st, root=0)
+            # raise ValueError
             if st.count() == 0:
                 # No time available at none of the stations
                 self.logger.warning(
@@ -405,9 +414,18 @@ class Correlator(object):
                 continue
 
             # Second loop to return the time window in correlation length
-            for win in st.slide(
+            for ii, win in enumerate(st.slide(
                 opt['corr_len']-st[0].stats.delta, opt['corr_inc'],
-                    include_partial_windows=True):
+                    include_partial_windows=True)):
+
+                # We use trim so the windows have the right time and
+                # are filled with masked arrays for places without values
+                starttrim = st[0].stats.starttime + ii*opt['corr_inc']
+                endtrim = st[0].stats.starttime + ii*opt['corr_inc'] +\
+                    opt['corr_len']-st[0].stats.delta
+                win = win.trim(starttrim, endtrim, pad=True)
+                get_valid_traces(win)
+
                 if self.options['taper']:
                     # This could be done in the main script with several cores
                     # to speed up things a tiny bit
@@ -585,11 +603,6 @@ def st_to_np_array(st: Stream, npts: int) -> Tuple[np.ndarray, Stream]:
     for ii, tr in enumerate(st):
         A[:tr.stats.npts, ii] = tr.data
         del tr.data  # Not needed any more, just uses up RAM
-    # Transferring the trace data to this array introduces NaNs?
-    # I don't really understand why. Should find out. For now, set them to 0
-    # I guess it's because of missing samples (masked data)
-    # A = np.nan_to_num(A)
-    # This should be done later definitely after TDpreprocessing
     return A, st
 
 

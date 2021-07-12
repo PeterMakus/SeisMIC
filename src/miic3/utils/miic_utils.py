@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Thursday, 8th July 2021 11:19:51 am
+Last Modified: Monday, 12th July 2021 04:53:58 pm
 '''
 from typing import List, Tuple
 from warnings import warn
@@ -248,7 +248,7 @@ def cos_taper_st(
     # out = Stream()
     for tr in st:
         try:
-            cos_taper(tr, taper_len, taper_at_masked)
+            tr = cos_taper(tr, taper_len, taper_at_masked)
         except ValueError as e:
             warn('%s, corresponding trace will be removed.' % e)
             st.remove(tr)
@@ -432,3 +432,27 @@ def convert_timestamp_to_utcdt(timestamp: np.ndarray) -> List[UTCDateTime]:
     if len(timestamp) == 1:
         timestamp = timestamp[0]
     return timestamp
+
+
+def get_valid_traces(st: Stream):
+    """Return only valid traces of a stream.
+
+    Remove traces that are 100% masked from a stream. This happens when 
+    a masked trace is trimmed within a gap. The function works in place.
+
+    :type st: obspy.Stream
+    :param st: stream to work on
+
+    """
+    for tr in st:
+        if isinstance(tr.data, np.ma.MaskedArray):
+            if tr.data.mask.all():
+                st.remove(tr)
+    return
+
+
+def discard_short_traces(st: Stream):
+    for tr in st:
+        if tr.stats.npts/tr.stats.sampling_rate <= 30:
+            st.remove(tr)
+    return
