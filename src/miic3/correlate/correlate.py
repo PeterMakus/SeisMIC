@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 12th July 2021 05:32:56 pm
+Last Modified: Tuesday, 13th July 2021 12:12:06 pm
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -395,8 +395,9 @@ class Correlator(object):
                         resp, self.options['remove_response'], tl))
                 # preprocessing on stream basis
                 # Maybe a bad place to do that?
-                discard_short_traces(st)
-                st.taper(5)
+                # Discard traces that are less then 5% of correlation length
+                discard_short_traces(st, opt['corr_len']/20)
+                st.taper(max_percentage=0.05)
                 if 'preProcessing' in self.options.keys():
                     for procStep in self.options['preProcessing']:
                         func = func_from_str(procStep['function'])
@@ -414,7 +415,7 @@ class Correlator(object):
                 continue
 
             # Second loop to return the time window in correlation length
-            for ii, win in enumerate(st.slide(
+            for ii, win0 in enumerate(st.slide(
                 opt['corr_len']-st[0].stats.delta, opt['corr_inc'],
                     include_partial_windows=True)):
 
@@ -423,9 +424,8 @@ class Correlator(object):
                 starttrim = st[0].stats.starttime + ii*opt['corr_inc']
                 endtrim = st[0].stats.starttime + ii*opt['corr_inc'] +\
                     opt['corr_len']-st[0].stats.delta
-                win = win.trim(starttrim, endtrim, pad=True)
+                win = win0.trim(starttrim, endtrim, pad=True)
                 get_valid_traces(win)
-
                 if self.options['taper']:
                     # This could be done in the main script with several cores
                     # to speed up things a tiny bit
@@ -440,8 +440,8 @@ class Correlator(object):
                 if not len(self.options['combinations']):
                     # no new combinations for this time period
                     self.logger.debug('no new data for times %s-%s' % (
-                        str(win[0].stats.starttime),
-                        str(win[0].stats.endtime)))
+                        str(starttrim),
+                        str(endtrim)))
                     continue
                 self.logger.debug('Working on correlation times %s-%s' % (
                     str(win[0].stats.starttime), str(win[0].stats.endtime)))

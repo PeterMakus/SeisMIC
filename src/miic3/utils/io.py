@@ -6,19 +6,16 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 8th July 2021 10:37:21 am
-Last Modified: Thursday, 8th July 2021 04:04:52 pm
+Last Modified: Tuesday, 13th July 2021 03:01:51 pm
 '''
 from collections import Iterable
-import os
-from warnings import warn
 
 from obspy.core.utcdatetime import UTCDateTime
 from obspy.core.trace import Stats
 from scipy.io import loadmat
 from miic3.correlate.stats import CorrStats
 
-from miic3.correlate.stream import CorrTrace, CorrStream,\
-    CorrBulk
+from miic3.correlate.stream import CorrTrace, CorrBulk
 
 
 def flatten(x):
@@ -70,6 +67,16 @@ zerotime = UTCDateTime(1971, 1, 1)
 
 
 def mat_to_corrtrace(mat: dict) -> CorrTrace:
+    """
+    Reads in a correlation dictionary created with the old (i.e., python2)
+    miic and translates it into a :class:`~miic3.correlate.stream.CorrTrace`
+    object.
+
+    :param mat: dictionary as produced by :func:`scipy.io.loadmat`
+    :type mat: dict
+    :return: A Correlation Trace
+    :rtype: CorrTrace
+    """
     for key in mat:
         if mat[key] is not None:
             flat_var = flatten_recarray(mat[key])
@@ -86,25 +93,19 @@ def mat_to_corrtrace(mat: dict) -> CorrTrace:
     return ctr
 
 
-def load_corrbulk_from_mat(
-        dir: str, net: str, station: str, channel: str) -> CorrBulk:
-    ctrl = []  # list of correlation traces
-    for path, _, fi in os.walk(dir):
-        for f in fi:
-            if (net and station and channel) not in f:
-                continue
-            try:
-                ctrl.append(mat_to_corrtrace(loadmat(os.path.join(path, f))))
-            except KeyError:
-                warn('No data for %s/%s' % (path, f))
-                continue
-    if not len(ctrl):
-        raise FileNotFoundError('No Correlations found.')
-    cst = CorrStream(ctrl)
-    return cst.create_corr_bulk()
-
-
 def corrmat_to_corrbulk(path: str) -> CorrBulk:
+    """
+    Reads in a correlation .mat file created with the old (i.e., python2)
+    miic and translates it into a :class:`~miic3.correlate.stream.CorrTrace`
+    object.
+
+    :param path: Path to file
+    :type path: str
+    :return: A Correlation Bulk object
+    :rtype: CorrBulk
+
+    :warning: This reads both stacks and subdivisions into the same object.
+    """
     mat = loadmat(path)
     for key in mat:
         if mat[key] is not None:

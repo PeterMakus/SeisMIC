@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Monday, 12th July 2021 04:53:58 pm
+Last Modified: Tuesday, 13th July 2021 03:03:21 pm
 '''
 from typing import List, Tuple
 from warnings import warn
@@ -437,7 +437,7 @@ def convert_timestamp_to_utcdt(timestamp: np.ndarray) -> List[UTCDateTime]:
 def get_valid_traces(st: Stream):
     """Return only valid traces of a stream.
 
-    Remove traces that are 100% masked from a stream. This happens when 
+    Remove traces that are 100% masked from a stream. This happens when
     a masked trace is trimmed within a gap. The function works in place.
 
     :type st: obspy.Stream
@@ -451,8 +451,18 @@ def get_valid_traces(st: Stream):
     return
 
 
-def discard_short_traces(st: Stream):
+def discard_short_traces(st: Stream, length: float):
+    """
+    Discard all traces from stream that are shorter than length.
+
+    :param st: inputer obspy Stream
+    :type st: Stream
+    :param length: Maxixmum Length that should be discarded (in seconds).
+    :type length: float
+
+    :Note: Action is performed in place.
+    """
     for tr in st:
-        if tr.stats.npts/tr.stats.sampling_rate <= 30:
+        if tr.stats.npts/tr.stats.sampling_rate <= length:
             st.remove(tr)
     return
