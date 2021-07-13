@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Tuesday, 13th July 2021 03:03:21 pm
+Last Modified: Tuesday, 13th July 2021 04:16:47 pm
 '''
 from typing import List, Tuple
 from warnings import warn
@@ -214,14 +214,28 @@ def stream_filter(st: Stream, ftype: str, filter_option: dict) -> Stream:
     return st_filtered
 
 
-def detrend_st(st, *args, **kwargs):
-    out = Stream()
+def detrend_st(st: Stream, *args, **kwargs) -> Stream:
+    """
+    Detrends a stream while dealing with data gaps
+
+    :param st: input Stream
+    :type st: Stream
+    :return: the obspy Stream detrended
+    :rtype: Stream
+
+    .. note::
+        This action is performed in place. If you want to keep the
+        original data use :func:`~obspy.core.stream.Stream.copy`.
+
+    .. seealso:
+        For accepted parameters consult the documentation of
+        :func:`obspy.core.trace.Trace.detrend`
+    """
     for tr in st:
         sst = tr.split()
         sst.detrend(*args, **kwargs)
-        out.extend(sst.merge())
-        st.remove(tr)
-    return out
+        tr.data = sst.merge()[0].data
+    return st
 
 
 def cos_taper_st(
@@ -270,7 +284,6 @@ def cos_taper(tr: Trace, taper_len: float, taper_at_masked: bool) -> Trace:
     :rtype: Trace
 
     .. note::
-
         This action is performed in place. If you want to keep the
         original data use :func:`~obspy.core.trace.Trace.copy`.
     """
@@ -281,7 +294,8 @@ def cos_taper(tr: Trace, taper_len: float, taper_at_masked: bool) -> Trace:
         st = cos_taper_st(st, taper_len, False)
         st = st.merge()
         if st.count():
-            return st[0]
+            tr.data = st[0].data
+            return tr
         else:
             raise ValueError('Taper length must be larger than 0 s')
     taper = np.ones_like(tr.data)
@@ -460,7 +474,7 @@ def discard_short_traces(st: Stream, length: float):
     :param length: Maxixmum Length that should be discarded (in seconds).
     :type length: float
 
-    :Note: Action is performed in place.
+    .. note:: Action is performed in place.
     """
     for tr in st:
         if tr.stats.npts/tr.stats.sampling_rate <= length:

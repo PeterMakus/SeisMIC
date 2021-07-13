@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 13th July 2021 12:12:06 pm
+Last Modified: Tuesday, 13th July 2021 03:28:54 pm
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -397,7 +397,7 @@ class Correlator(object):
                 # Maybe a bad place to do that?
                 # Discard traces that are less then 5% of correlation length
                 discard_short_traces(st, opt['corr_len']/20)
-                st.taper(max_percentage=0.05)
+                # st.taper(max_percentage=0.05)
                 if 'preProcessing' in self.options.keys():
                     for procStep in self.options['preProcessing']:
                         func = func_from_str(procStep['function'])
