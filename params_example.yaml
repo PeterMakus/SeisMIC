@@ -8,8 +8,6 @@ log_subdir : 'log'
 debug: False
 # folder for figures
 fig_subdir : 'figures'  # not in use yet
-# subfolder containing preprocessed data
-prepro_subdir: 'preprocessed'
 
 
 #### parameters that are network specific
@@ -87,19 +85,18 @@ co:
     # Taper the time windows with a 5% Hann taper on each side. If this is True,
     # the time windows will just simply be prolonged by the length of the taper,
     # so that no data is lost
+    # This taper is probably obsolete
     taper: False
 
     # parameters for correlation preprocessing
     corr_args : {'TDpreProcessing':[
-                                    #{'function':'miic3.correlate.correlate.detrend',
-                                    # 'args':{'type':'constant'}},
-                                   #{'function':'miic.core.pxcorr_func.TDfilter',
-                                   # 'args':{'type':'bandpass','freqmin':0.01,'freqmax':4}},
-                                    #{'function':'miic.core.pxcorr_func.mute',
+                                    {'function':'miic3.correlate.correlate.detrend',
+                                    'args':{'type':'constant'}},
+                                  #  {'function':'miic.core.pxcorr_func.TDfilter',
+                                  #  'args':{'type':'bandpass','freqmin':0.01,'freqmax':4}},
+                                    # {'function':'miic.core.pxcorr_func.mute',
                                     # 'args':{'taper_len':100.,
-                                           # 'threshold':10                 # Not used in miic3
-                 'direct_output':{'function':'convert_to_matlab',
-                                  'base_name':'trace'}00, absolute threshold
+                                    #        'threshold':1000, absolute threshold
                                     #         'std_factor':3,
                                     #         'filter':{'type':'bandpass','freqmin':2,'freqmax':4},
                                     #         'extend_gaps':True}},
