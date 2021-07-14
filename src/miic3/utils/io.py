@@ -6,7 +6,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 8th July 2021 10:37:21 am
-Last Modified: Tuesday, 13th July 2021 03:01:51 pm
+Last Modified: Wednesday, 14th July 2021 11:31:14 am
 '''
 from collections import Iterable
 
@@ -38,8 +38,7 @@ def flatten(x):
     """
     result = []
     for el in x:
-        if isinstance(el, Iterable) and \
-            not isinstance(el, str):
+        if isinstance(el, Iterable) and not isinstance(el, str):
             result.extend(flatten(el))
         else:
             result.append(el)

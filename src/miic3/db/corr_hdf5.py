@@ -9,13 +9,15 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Monday, 12th July 2021 03:21:44 pm
+Last Modified: Wednesday, 14th July 2021 11:39:40 am
 '''
+import ast
 import fnmatch
 import os
 import re
 from typing import List
 import warnings
+from copy import deepcopy
 
 import numpy as np
 # from numpy.core.fromnumeric import compress
@@ -40,7 +42,7 @@ class DBHandler(h5py.File):
     functions in addition to functions that are particularly useful for noise
     correlations.
     """
-    def __init__(self, path, mode, compression):
+    def __init__(self, path, mode, compression, co):
         super(DBHandler, self).__init__(path, mode=mode)
         if isinstance(compression, str):
             self.compression = re.findall(r'(\w+?)(\d+)', compression)[0][0]
@@ -62,8 +64,25 @@ class DBHandler(h5py.File):
             self.compression = None
             self.compression_opts = None
 
+        # check out the processing that was done on the correlations. Different
+        # data will not be allowed
+        if co is not None:
+            try:
+                co_old = self.get_corr_options()
+                if co_old != co_to_hdf5(co):
+                    raise PermissionError('The output file already exists and \
+contains data with different processing parameters. Those parameters are:\n\
+    %s.' % str(co_old))
+            except KeyError:
+                self.add_corr_options(co)
+
     def _close(self):
         self.close()
+
+    def add_corr_options(self, co: dict):
+        sco = str(co_to_hdf5(co))
+        ds = self.create_dataset('co', data=np.empty(1))
+        ds.attrs['co'] = sco
 
     def add_correlation(
             self, data: CorrTrace or CorrStream, tag='subdivision'):
@@ -72,10 +91,14 @@ class DBHandler(h5py.File):
         :func:`~miic3.db.corr_hdf5.DBHandler.get_data()` method.
 
         :param data: Data to save. Either a
-        :class:`miic3.correlate.correlate.CorrTrace` object or a
-        :class:`miic3.correlate.correlate.CorrStream` holding one or several
-        traces.
-        :type data: CorrTraceorCorrStream
+            :class:`~miic3.correlate.correlate.CorrTrace` object or a
+            :class:`~miic3.correlate.correlate.CorrStream` holding one or
+            several traces.
+        :type data: CorrTrace or CorrStream
+        :param tag: The tag that the data should be saved under. By convention,
+            unstacked correlations are saved with the tag `'subdivision'`,
+            whereas stacks are saved with the tag `stack_$stacklen$`, where
+            $stacklen$ is to be replaced by the length of the stack in seconds.
         :raises TypeError: for wrong data type.
         """
         if not isinstance(data, CorrTrace) and\
@@ -103,6 +126,14 @@ class DBHandler(h5py.File):
                 print(e)
                 warnings.warn("The dataset %s is already in file and will be \
 omitted." % path, category=UserWarning)
+
+    def get_corr_options(self) -> dict:
+        try:
+            sco = str(self['co'].attrs['co'])
+            co = ast.literal_eval(sco)
+        except KeyError:
+            raise KeyError('No correlation options in file')
+        return co
 
     def get_data(
         self, network: str, station: str, channel: str, tag: str,
@@ -216,6 +247,19 @@ omitted." % path, category=UserWarning)
 
     def get_available_channels(
             self, tag: str, network: str, station: str) -> List[str]:
+        """
+        Returns a list of all available channels (i.e., their combination
+        codes) in this file.
+
+        :param tag: The tag that this data was save as.
+        :type tag: str
+        :param network: Network combination code in the form `net0-net1`
+        :type network: str
+        :param station: Network combination code in the form `stat0-stat1`
+        :type station: str
+        :return: A list of all channel combinations.
+        :rtype: List[str]
+        """
         path = hierarchy.format(
             tag=tag, network=network, station=station, channel='*',
             corr_st='*', corr_et='*')
@@ -227,17 +271,20 @@ class CorrelationDataBase(object):
     """
     Base class to handle the hdf5 files that contain noise correlations.
     """
-    def __init__(self, path: str, mode: str = 'a', compression: str = 'gzip3'):
+    def __init__(
+        self, path: str, corr_options: dict = None, mode: str = 'a',
+            compression: str = 'gzip3'):
         """
-        Access an hdf5 file holding correlations.
-
-        :warning: **Only access through a context manager (see below):**
-
-        >>> with CorrelationDataBase(myfile.h5) as cdb:
-        >>>     type(cdb)  # This is a DBHandler
+        Access an hdf5 file holding correlations. The resulting file can be
+        accessed using all functionalities of
+        `pyasdf <https://seismicdata.github.io/pyasdf>` (for example as a dict)
 
         :param path: Full path to the file
         :type path: str
+        :param corr_options: The dictionary holding the parameters for the
+            correlation. If set to `None`. The mode will be set to read-only
+            `= 'r'`. Defaults to None.
+        :type corr_options: dict or None
         :param mode: Mode to access the file. Options are: 'a' for all, 'w' for
         write, 'r+' for writing in an already existing file, or 'r' for
         read-only , defaults to 'a'.
@@ -248,16 +295,45 @@ class CorrelationDataBase(object):
         9 is the highest compression) or None for fastest perfomance,
         defaults to 'gzip3'.
         :type compression: str, optional
+
+        .. warning::
+            **Access only through a context manager (see below):**
+            >>> with CorrelationDataBase(myfile.h5) as cdb:
+            >>>     type(cdb)  # This is a DBHandler
+
+        .. Example::
+            >>> with CorrelationDataBase(
+                        '/path/to/db/XN-XN.NEP06-NEP06.h5') as cdb:
+            >>>     # find the available tags for existing db
+            >>>     print(list(cdb.keys()))
+            >>>     # find available channels with tag subdivision
+            >>>     print(cdb.get_available_channels(
+                        'subdivision', 'XN-XN', 'NEP06-NEP06'))
+            >>>     # Get Data from all times, specific channel and tag
+            >>>     st = cdb.get_data(
+                        'XN-XN', 'NEP06-NEP06', 'HHE-HHN', 'subdivision')
+            >>> print(st.count())
+            ['co', 'recombined', 'stack_86398', 'subdivision']
+            ['HHE-HHN', 'HHE-HHZ', 'HHN-HHZ']
+            250
         """
+
+        if corr_options is None and mode != 'r':
+            mode = 'r'
+            warnings.warn('Opening Correlation Databases without providing a \
+correlation options dictionary is only allowed in read only mode.\n\
+Setting mode read only `r`....')
         # Create / read file
         if not path.split('.')[-1] == 'h5':
             path += '.h5'
         self.path = path
         self.mode = mode
         self.compression = compression
+        self.co = corr_options
 
     def __enter__(self) -> DBHandler:
-        self.db_handler = DBHandler(self.path, self.mode, self.compression)
+        self.db_handler = DBHandler(
+            self.path, self.mode, self.compression, self.co)
         return self.db_handler
 
     def __exit__(self, exc_type, exc_value, tb) -> None or bool:
@@ -338,3 +414,17 @@ def read_hdf5_header(dataset: h5py.Dataset) -> Stats:
         else:
             header[key] = attrs[key]
     return Stats(header)
+
+
+def co_to_hdf5(co: dict) -> dict:
+    coc = deepcopy(co)
+    remk = [
+        'subdir', 'read_start', 'read_end', 'read_len', 'read_inc',
+        'combination_method', 'combinations', 'starttime'
+        ]
+    for key in remk:
+        coc.pop(key, None)
+    coc['corr_args'].pop('combinations')
+    coc['subdivision'].pop('recombine_subdivision')
+    coc['subdivision'].pop('delete_subdivision')
+    return coc

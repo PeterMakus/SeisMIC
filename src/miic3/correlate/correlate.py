@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 14th July 2021 09:07:14 am
+Last Modified: Wednesday, 14th July 2021 11:23:11 am
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -187,7 +187,8 @@ class Correlator(object):
                 self.corr_dir, '%s.%s.h5' % (nc, sc))
             if not os.path.isfile(outf):
                 continue
-            with CorrelationDataBase(outf, 'r+') as cdb:
+            with CorrelationDataBase(
+                    outf, corr_options=self.options, mode='r') as cdb:
                 d = cdb.get_available_starttimes(nc, sc, tag, channel)
             ex_dict.setdefault('%s.%s' % (n0, s0), {})
             ex_dict['%s.%s' % (n0, s0)]['%s.%s' % (n1, s1)] = d
@@ -214,7 +215,8 @@ class Correlator(object):
                 if self.options['subdivision']['recombine_subdivision'] and \
                         cst.count():
                     stack = cst.stack(regard_location=False)
-                    self._write(stack, 'recombined')
+                    tag = 'stack_%s' % str(self.options['read_len'])
+                    self._write(stack, tag)
                 if self.options['subdivision']['delete_subdivision']:
                     cst.clear()
                 elif cst.count():
@@ -248,7 +250,6 @@ class Correlator(object):
             # st.write('/home/pm/Documents/PhD/Chaku/input.mseed')
 
             A, st = st_to_np_array(st, npts)
-            # np.save('/home/pm/Documents/PhD/Chaku/input', A)
             As = A.shape
         else:
             starttime = None
@@ -257,13 +258,12 @@ class Correlator(object):
         starttime = self.comm.bcast(starttime, root=0)
         npts = self.comm.bcast(npts, root=0)
         st = self.comm.bcast(st, root=0)
-        # raise ValueError
 
         # Tell the other processes the shape of A
         As = self.comm.bcast(As, root=0)
         if self.rank != 0:
-            A = np.empty(As, dtype=np.float32)  # np.float32
-        self.comm.Bcast([A, MPI.FLOAT], root=0)  # MPI.FLOAT
+            A = np.empty(As, dtype=np.float32)
+        self.comm.Bcast([A, MPI.FLOAT], root=0)
 
         self.options.update(
             {'starttime': starttime,
@@ -322,7 +322,7 @@ class Correlator(object):
             outf = os.path.join(self.corr_dir, '%s.%s.h5' % (
                     cstlist[ii][0].stats.network,
                     cstlist[ii][0].stats.station))
-            with CorrelationDataBase(outf) as cdb:
+            with CorrelationDataBase(outf, corr_options=self.options) as cdb:
                 cdb.add_correlation(cstlist[ii], tag)
 
     def _generate_data(self) -> Iterator[Tuple[Stream, bool]]:
@@ -357,9 +357,6 @@ class Correlator(object):
             # find already available times
             ex_dict = self.find_existing_times('subdivision')
             self.logger.debug('Already existing data: %s' % str(ex_dict))
-        # else:
-        #     ex_dict = None
-        # ex_dict = self.comm.bcast(ex_dict, root=0)
 
         # the time window that the loop will go over
         t0 = UTCDateTime(self.options['read_start']).timestamp
@@ -395,7 +392,6 @@ class Correlator(object):
                 # Maybe a bad place to do that?
                 # Discard traces that are less then 5% of correlation length
                 discard_short_traces(st, opt['corr_len']/20)
-                # st.taper(max_percentage=0.05)
                 if 'preProcessing' in self.options.keys():
                     for procStep in self.options['preProcessing']:
                         func = func_from_str(procStep['function'])
@@ -405,7 +401,7 @@ class Correlator(object):
             else:
                 st = None
             st = self.comm.bcast(st, root=0)
-            # raise ValueError
+
             if st.count() == 0:
                 # No time available at none of the stations
                 self.logger.warning(
