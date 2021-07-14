@@ -12,3 +12,4 @@ Routines working with seismic traces
    
    trace_data/waveform
    trace_data/amplitudes
+   trace_data/API

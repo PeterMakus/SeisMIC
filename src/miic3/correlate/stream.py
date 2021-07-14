@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Thursday, 8th July 2021 04:51:58 pm
+Last Modified: Wednesday, 14th July 2021 04:23:23 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -71,7 +71,7 @@ class CorrBulk(object):
 
         ..note:: This action is performed **in-place**. If you would like to
             keep the original data use
-            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`.
+            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`.
         """
         self.data = pcp.corr_mat_normalize(
             self.data, self.stats, starttime, endtime, normtype)
@@ -103,7 +103,7 @@ class CorrBulk(object):
 
         ..note:: This action is performed **in-place**. If you would like to
             keep the original data use
-            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`.
+            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`.
         """
         self.data = pcp.corr_mat_correct_decay(self.data, self.stats)
         self.stats.processing_bulk += ['Corrected for Amplitude Decay']
@@ -123,7 +123,7 @@ class CorrBulk(object):
 
         ..note:: This action is performed **in-place**. If you would like to
             keep the original data use
-            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`.
+            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`.
         """
         self.data = time_stretch_apply(self.data, -1.*dv.value)
         self.stats.processing_bulk += ['Applied time stretch']
@@ -141,7 +141,7 @@ class CorrBulk(object):
 
         ..note:: This action is performed **in-place**. If you would like to
             keep the original data use
-            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`.
+            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`.
         """
         self.data = pcp.corr_mat_envelope(self.data)
         self.stats.processing_bulk += ['Computed Envelope']
@@ -161,7 +161,7 @@ class CorrBulk(object):
 
         ..note:: This action is performed **in-place**. If you would like to
             keep the original data use
-            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`.
+            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`.
         """
         self.data = pcp.corr_mat_filter(self.data, self.stats, freqs, order)
         proc = ['filter; freqs: %s, order: %s' % (str(freqs), str(order))]
@@ -208,7 +208,7 @@ class CorrBulk(object):
 
         ..note:: This action is performed **in-place**. If you would like to
             keep the original data use
-            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`.
+            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`.
         """
         self.data, self.stats = pcp.corr_mat_mirror(self.data, self.stats)
         self.stats.processing_bulk += ['Mirrored.']
@@ -239,7 +239,7 @@ class CorrBulk(object):
 
         ..note:: This action is performed **in-place**. If you want to keep
             the original data use
-            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`
+            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`
         """
         self.data, self.stats = pcp.corr_mat_resample(
             self.data, self.stats, starttimes, endtimes)
@@ -260,7 +260,7 @@ class CorrBulk(object):
 
         ..note:: This action is performed **in-place**. If you want to keep
             the original data use
-            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`
+            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`
         """
         self.data, self.stats = pcp.corr_mat_resample_or_decimate(
             self.data, self.stats, freq)
@@ -295,7 +295,7 @@ class CorrBulk(object):
 
         ..note:: This action is performed **in-place**. If you want to keep
             the original data use
-            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`
+            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`
         """
         self.data = pcp.corr_mat_smooth(self.data, wsize, wtype, axis)
         self.stats.processing_bulk += [
@@ -334,7 +334,7 @@ class CorrBulk(object):
 
         ..note:: This action is performed **in-place**. If you want to keep
             the original data use
-            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`
+            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`
         """
         self.data = pcp.corr_mat_taper(self.data, self.stats, width)
         proc = ['tapered: width=%ss' % width]
@@ -361,7 +361,7 @@ class CorrBulk(object):
 
         ..note:: This action is performed **in-place**. If you want to keep
             the original data use
-            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`
+            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`
         """
         self.data = pcp.corr_mat_taper_center(
             self.data, self.stats, width, slope_frac=slope_frac)
@@ -386,7 +386,7 @@ class CorrBulk(object):
 
         ..note:: This action is performed **in-place**. If you want to keep
             the original data use
-            :funct:`~miic3.correlate.stream.CorrelationBulk.copy()`
+            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`
         """
         self.data, self.stats = pcp.corr_mat_trim(
             self.data, self.stats, starttime, endtime)
@@ -468,20 +468,20 @@ class CorrStream(Stream):
         Location codes will only optionally be regarded.
 
         :param starttime: starttime of the stacking time windows. If None, the
-        earliest available is chosen, defaults to None
+            earliest available is chosen, defaults to None.
         :type starttime: UTCDateTime, optional
         :param endtime: endtime of the stacking time windows. If None, the
-        latest available is chosen,, defaults to None
+            latest available is chosen, defaults to None
         :type endtime: UTCDateTime, optional
         :param stack_len: Length of one stack. Is either a value in seconds,
-        the special option "daily" (creates 24h stacks that always start at
-        midnight), or 0 for a single stack over the whole time period,
-        defaults to 0
+            the special option "daily" (creates 24h stacks that always start at
+            midnight), or 0 for a single stack over the whole time period,
+            defaults to 0.
         :type stack_len: intorstr, optional
         :param regard_location: Don't stack correlations with varying location
-        code combinations, defaults to True
+            code combinations, defaults to True.
         :type regard_location: bool, optional
-        :return: [description]
+        :return: A stream holding the stacks.
         :rtype: :class`~miic3.correlate.stream.CorrStream`
         """
 
@@ -543,9 +543,10 @@ class CorrStream(Stream):
 
                 |         |A        |         |       B |         |
                 1         2         3         4         5         6
+
             ``include_partially_selected=True`` will select samples 2-4,
             ``include_partially_selected=False`` will select samples 3-4 only.
-            Defaults to True
+            Defaults to True.
         :type include_partially_selected: bool, optional
         :param starttime: Start the sequence at this time instead of the
             earliest available starttime.
@@ -606,6 +607,7 @@ class CorrStream(Stream):
 
                 |         |A        |         |       B |         |
                 1         2         3         4         5         6
+
             ``include_partially_selected=True`` will select samples 2-4,
             ``include_partially_selected=False`` will select samples 3-4 only.
             Defaults to True
@@ -703,10 +705,10 @@ class CorrTrace(Trace):
         :param inv: Inventory object for the stations, defaults to None
         :type inv: Inventory, optional
         :param start_lag: The lag of the first sample of the correlation given
-        in seconds.
+            in seconds.
         :type start_lag: float
         :param end_lag: The lag of the last sample of the correlation
-        in seconds.
+            in seconds.
         :type end_lag: float
         :param _header: Already combined header, used when reading correlations
             from a file, defaults to None
@@ -772,10 +774,10 @@ class CorrTrace(Trace):
             out += ' (masked)'
         return trace_id + out % (self.stats)
 
-    def plot(
-        self, tlim: list = None, ax=None, outputdir: str = None,
-            clean=False):
-        plot_correlation(self, tlim, ax, outputdir, clean)
+    # def plot(
+    #     self, tlim: list = None, ax=None, outputdir: str = None,
+    #         clean=False):
+    #     plot_correlation(self, tlim, ax, outputdir, clean)
 
 
 def alphabetical_correlation(

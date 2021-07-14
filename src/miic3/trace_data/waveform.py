@@ -127,11 +127,11 @@ class Store_Client(object):
         :func:`~obspy.clients.filesystem.sds.get_all_stations()` method with
         the difference that this one allows to filter for particular networks.
 
-        :param network: Only return stations from this network. `network==None`
-        is similar to using a wildcard. Defaults to None
-        :type network: strorNone, optional
+        :param network: Only return stations from this network.
+            ``network==None`` is same as a wildcard. Defaults to None.
+        :type network: str or None, optional
         :return: List of network and station codes in the form:
-        `[[net0,stat0], [net1,stat1]]`.
+            `[[net0,stat0], [net1,stat1]]`.
         :rtype: list
         """
         # If no network is defined use all
@@ -435,20 +435,19 @@ def read_from_filesystem(
     This usage should be equvalent to obspy.clients.filesystem.sds client.
 
 
-    :Exapmple:
+    :Example:
+        Example for a station 'GJE' in network 'HEJSL' with channel 'BHZ' and
+        location '00' with the start time 2010-12-24_11:36:30 and \\
+        ``fs =
+        ['base_dir','%Y','%b','%NET,['%j','_','%STA'','_T_',"%CHA('BH','')",
+            '.mseed']]``
+        will be translated in a linux filename
+        ``base_dir/2010/Nov/HEJSL/317_GJE_T_Z.mseed``
 
-    Example for a station 'GJE' in network 'HEJSL' with channel 'BHZ' and
-    location '00' with the start time 2010-12-24_11:36:30 and \\
-    ``fs = ['base_dir','%Y','%b','%NET,['%j','_','%STA'','_T_',"%CHA('BH','')",
-        '.mseed']]``
-    will be translated in a linux filename
-    ``base_dir/2010/Nov/HEJSL/317_GJE_T_Z.mseed``
-
-    :Note:
-
-    If the data contain traces of different channels in the same file with
-    different start and endtimes the routine will not work properly when the
-    period spans multiple files.
+    .. note::
+        If the data contain traces of different channels in the same file with
+        different start and endtimes the routine will not work properly when a
+        period spans multiple files.
     """
 
     # check input

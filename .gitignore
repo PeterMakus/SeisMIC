@@ -3,5 +3,5 @@ __pycache__
 tests/data/
 autogen/*.rst
 .vscode/settings.json
-*.egg-info
+*.egg-info*
 params.yaml

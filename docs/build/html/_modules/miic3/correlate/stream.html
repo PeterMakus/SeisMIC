@@ -1,0 +1,1280 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>miic3.correlate.stream &mdash; MIIC3 0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> MIIC3
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trace_data.html">Trace data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/correlate.html">Correlate</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">MIIC3</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>miic3.correlate.stream</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for miic3.correlate.stream</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">:copyright:</span>
+<span class="sd">:license:</span>
+<span class="sd">   GNU Lesser General Public License, Version 3</span>
+<span class="sd">   (https://www.gnu.org/copyleft/lesser.html)</span>
+<span class="sd">:author:</span>
+<span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
+
+<span class="sd">Created: Tuesday, 20th April 2021 04:19:35 pm</span>
+<span class="sd">Last Modified: Wednesday, 14th July 2021 04:23:23 pm</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">Inventory</span><span class="p">,</span> <span class="n">UTCDateTime</span>
+<span class="kn">from</span> <span class="nn">obspy.core</span> <span class="kn">import</span> <span class="n">Stats</span>
+
+<span class="kn">from</span> <span class="nn">miic3.utils</span> <span class="kn">import</span> <span class="n">miic_utils</span> <span class="k">as</span> <span class="n">m3ut</span>
+<span class="kn">from</span> <span class="nn">miic3.plot.plot_utils</span> <span class="kn">import</span> <span class="n">plot_correlation</span>
+<span class="kn">import</span> <span class="nn">miic3.monitor.post_corr_process</span> <span class="k">as</span> <span class="nn">pcp</span>
+<span class="kn">from</span> <span class="nn">miic3.monitor.stretch_mod</span> <span class="kn">import</span> <span class="n">time_stretch_apply</span>
+<span class="kn">from</span> <span class="nn">miic3.monitor.dv</span> <span class="kn">import</span> <span class="n">DV</span>
+<span class="kn">from</span> <span class="nn">miic3.correlate.stats</span> <span class="kn">import</span> <span class="n">CorrStats</span>
+
+
+<div class="viewcode-block" id="CorrBulk"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk">[docs]</a><span class="k">class</span> <span class="nc">CorrBulk</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An object for faster computations on several correlations. The input</span>
+<span class="sd">    correlation contain data from only one Station-Channel pair.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">statlist</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">CorrStats</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">A</span>
+        <span class="k">if</span> <span class="n">stats</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="n">stats</span>
+        <span class="k">elif</span> <span class="n">statlist</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="n">convert_statlist_to_bulk_stats</span><span class="p">(</span><span class="n">statlist</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="n">CorrStats</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;ntrcs&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;npts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;processing_bulk&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ref_trc</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="CorrBulk.normalize"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.normalize">[docs]</a>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">normtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;energy&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Correct amplitude variations with time.</span>
+
+<span class="sd">        Measure the maximum of the absolute value of the correlation matrix in</span>
+<span class="sd">        a specified lapse time window and normalize the correlation traces by</span>
+<span class="sd">        this values. A coherent phase in the respective lapse time window will</span>
+<span class="sd">        have constant ampitude afterwards..</span>
+
+<span class="sd">        :type starttime: float</span>
+<span class="sd">        :param starttime: Beginning of time window in seconds with respect to</span>
+<span class="sd">            the zero position.</span>
+<span class="sd">        :type endtime: float</span>
+<span class="sd">        :param endtime: end time window in seconds with respect to the zero</span>
+<span class="sd">            position.</span>
+<span class="sd">        :type normtype: string</span>
+<span class="sd">        :param normtype: one of the following &#39;energy&#39;, &#39;max&#39;, &#39;absmax&#39;,</span>
+<span class="sd">            &#39;abssum&#39; to decide about the way to calculate the normalization.</span>
+
+<span class="sd">        :rtype: CorrBulk</span>
+<span class="sd">        :return: Same object as in self, but normalised.</span>
+
+<span class="sd">        ..note:: This action is performed **in-place**. If you would like to</span>
+<span class="sd">            keep the original data use</span>
+<span class="sd">            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_normalize</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span> <span class="n">normtype</span><span class="p">)</span>
+        <span class="n">proc_str</span> <span class="o">=</span> <span class="s1">&#39;normalize; normtype: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">normtype</span>
+        <span class="k">if</span> <span class="n">starttime</span> <span class="ow">and</span> <span class="n">endtime</span><span class="p">:</span>
+            <span class="n">proc_str</span> <span class="o">+=</span> <span class="s1">&#39;, starttime: </span><span class="si">%s</span><span class="s1">, endtime: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">starttime</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">endtime</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="n">proc_str</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="CorrBulk.copy"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a copy of self</span>
+
+<span class="sd">        :return: A copy of self</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CorrBulk.correct_decay"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.correct_decay">[docs]</a>    <span class="k">def</span> <span class="nf">correct_decay</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Correct for the amplitude decay in a correlation matrix.</span>
+
+<span class="sd">        Due to attenuation and geometrical spreading the amplitude of the</span>
+<span class="sd">        correlations decays with increasing lapse time. This decay is corrected</span>
+<span class="sd">        by dividing the correlation functions by an exponential function that</span>
+<span class="sd">        models the decay.</span>
+
+<span class="sd">        :return: Self but with data corrected for amplitude decay</span>
+
+<span class="sd">        ..note:: This action is performed **in-place**. If you would like to</span>
+<span class="sd">            keep the original data use</span>
+<span class="sd">            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_correct_decay</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;Corrected for Amplitude Decay&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="CorrBulk.correct_stretch"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.correct_stretch">[docs]</a>    <span class="k">def</span> <span class="nf">correct_stretch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dv</span><span class="p">:</span> <span class="n">DV</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Correct stretching of correlation matrix</span>
+
+<span class="sd">        In the case of a homogeneous subsurface velocity change the correlation</span>
+<span class="sd">        traces are stretched or compressed. This stretching can be measured</span>
+<span class="sd">        with `self.stretch`. The resulting `DV` object can be passed to</span>
+<span class="sd">        this function to remove the stretching from the correlation matrix.</span>
+
+<span class="sd">        :param dv: Velocity Change object</span>
+<span class="sd">        :type dv: DV</span>
+
+<span class="sd">        ..note:: This action is performed **in-place**. If you would like to</span>
+<span class="sd">            keep the original data use</span>
+<span class="sd">            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">time_stretch_apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span><span class="o">*</span><span class="n">dv</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;Applied time stretch&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="CorrBulk.envelope"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.envelope">[docs]</a>    <span class="k">def</span> <span class="nf">envelope</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the envelope of a correlation matrix.</span>
+
+<span class="sd">        The corrlation data of the correlation matrix are replaced by their</span>
+<span class="sd">        Hilbert envelopes.</span>
+
+
+<span class="sd">        :return: self with the envelope in data</span>
+
+<span class="sd">        ..note:: This action is performed **in-place**. If you would like to</span>
+<span class="sd">            keep the original data use</span>
+<span class="sd">            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_envelope</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;Computed Envelope&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="CorrBulk.filter"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.filter">[docs]</a>    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freqs</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Filters the correlation matrix in the frequency band specified in</span>
+<span class="sd">        freqs using a zero phase filter of twice the order given in order.</span>
+
+<span class="sd">        :type freqs: Tuple</span>
+<span class="sd">        :param freqs: lower and upper limits of the pass band in Hertz</span>
+<span class="sd">        :type order: int</span>
+<span class="sd">        :param order: half the order of the Butterworth filter</span>
+
+<span class="sd">        :return: self</span>
+
+<span class="sd">        ..note:: This action is performed **in-place**. If you would like to</span>
+<span class="sd">            keep the original data use</span>
+<span class="sd">            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_filter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="n">freqs</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
+        <span class="n">proc</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;filter; freqs: </span><span class="si">%s</span><span class="s1">, order: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">freqs</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">order</span><span class="p">))]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="n">proc</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="CorrBulk.extract_trace"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.extract_trace">[docs]</a>    <span class="k">def</span> <span class="nf">extract_trace</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span>
+            <span class="n">percentile</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">50.</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract a representative trace from a correlation matrix.</span>
+
+<span class="sd">        Extract a correlation trace from the that best represents the</span>
+<span class="sd">        correlation matrix. ``Method`` decides about method to extract the</span>
+<span class="sd">        trace. The following possibilities are available</span>
+
+<span class="sd">        * ``mean`` averages all traces in the matrix</span>
+<span class="sd">        * ``norm_mean`` averages the traces normalized after normalizing for</span>
+<span class="sd">            maxima</span>
+<span class="sd">        * ``similarity_percentile`` averages the ``percentile`` % of traces</span>
+<span class="sd">            that best correlate with the mean of all traces. This will exclude</span>
+<span class="sd">            abnormal traces. ``percentile`` = 50 will return an average of</span>
+<span class="sd">            traces with correlation (with mean trace) above the median.</span>
+
+<span class="sd">        :type method: string</span>
+<span class="sd">        :param method: method to extract the trace</span>
+<span class="sd">        :type percentile: float</span>
+<span class="sd">        :param percentile: only used for method==&#39;similarity_percentile&#39;</span>
+
+<span class="sd">        :rtype: np.ndarray</span>
+<span class="sd">        :return: extracted trace</span>
+
+<span class="sd">        ..note:: the extracted trace will also be saved in self.ref_trc</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">outdata</span> <span class="o">=</span> <span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_extract_trace</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">percentile</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ref_trc</span> <span class="o">=</span> <span class="n">outdata</span>
+        <span class="k">return</span> <span class="n">outdata</span></div>
+
+<div class="viewcode-block" id="CorrBulk.mirror"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.mirror">[docs]</a>    <span class="k">def</span> <span class="nf">mirror</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Average the causal and acausal (i.e., right and left) parts of the</span>
+<span class="sd">        correlation.</span>
+
+<span class="sd">        ..note:: This action is performed **in-place**. If you would like to</span>
+<span class="sd">            keep the original data use</span>
+<span class="sd">            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_mirror</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;Mirrored.&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="CorrBulk.resample"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.resample">[docs]</a>    <span class="k">def</span> <span class="nf">resample</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">starttimes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">],</span>
+            <span class="n">endtimes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]):</span>
+        <span class="sd">&quot;&quot;&quot; Function to create correlation matrices with constant sampling</span>
+
+<span class="sd">        When created from a CorrStream the correlation matrix contains all</span>
+<span class="sd">        available correlation traces but homogeneous sampling is not guaranteed</span>
+<span class="sd">        as correlation functions may be missing due to data gaps. This function</span>
+<span class="sd">        restructures the correlation matrix by inserting or averaging</span>
+<span class="sd">        correlation functions to provide temporally homogeneous sampling.</span>
+<span class="sd">        Inserted correlation functions consist of &#39;nan&#39; if gaps are present and</span>
+<span class="sd">        averaging is done if more than one correlation function falls in a bin</span>
+<span class="sd">        between start_times[i] and end_times[i]. If end_time is an empty list</span>
+<span class="sd">        (default) end_times[i] is set to</span>
+<span class="sd">        start_times[i] + (start_times[1] - start_times[0])</span>
+
+<span class="sd">        :type start_times: list of class:`~obspy.core.UTCDateTime` objects</span>
+<span class="sd">        :param start_times: list of starting times for the bins of the new</span>
+<span class="sd">            sampling</span>
+<span class="sd">        :type end_times: list of class:`~obspy.core.UTCDateTime` objects</span>
+<span class="sd">        :param end_times: list of end times for the bins of the new</span>
+<span class="sd">            sampling</span>
+
+<span class="sd">        ..note:: This action is performed **in-place**. If you want to keep</span>
+<span class="sd">            the original data use</span>
+<span class="sd">            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_resample</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="n">starttimes</span><span class="p">,</span> <span class="n">endtimes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span>
+            <span class="s1">&#39;Resampled. Starttimes: </span><span class="si">%s</span><span class="s1">, Endtimes </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">starttimes</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">endtimes</span><span class="p">))]</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="CorrBulk.resample_time_axis"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.resample_time_axis">[docs]</a>    <span class="k">def</span> <span class="nf">resample_time_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resample the lapse time axis of a correlation matrix. The correlations</span>
+<span class="sd">        are automatically filtered with a highpass filter of 0.4*sampling</span>
+<span class="sd">        frequency to avoid aliasing. The function decides automatically whether</span>
+<span class="sd">        to decimate or resample depending on the desired frequency</span>
+
+<span class="sd">        :param freq: new sampling frequency</span>
+<span class="sd">        :type freq: float</span>
+
+<span class="sd">        ..note:: This action is performed **in-place**. If you want to keep</span>
+<span class="sd">            the original data use</span>
+<span class="sd">            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_resample_or_decimate</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="n">freq</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span>
+            <span class="s1">&#39;Resampled time axis. New sampling rate: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">freq</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="CorrBulk.smooth"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.smooth">[docs]</a>    <span class="k">def</span> <span class="nf">smooth</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">wsize</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">wtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;flat&#39;</span><span class="p">,</span>
+            <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Smoothes the correlation matrix with a given window function of the</span>
+<span class="sd">        given width along the given axis. This method is based on the</span>
+<span class="sd">        convolution of a scaled window with the signal. Each row/col</span>
+<span class="sd">        (i.e. depending on the selected ``axis``) is &quot;prepared&quot; by introducing</span>
+<span class="sd">        reflected copies of it (with the window size) in both ends so that</span>
+<span class="sd">        transient parts are minimized in the beginning and end part of the</span>
+<span class="sd">        resulting array.</span>
+
+<span class="sd">        :type wsize: int</span>
+<span class="sd">        :param wsize: Window size</span>
+<span class="sd">        :type wtype: string</span>
+<span class="sd">        :param wtype: Window type. It can be one of:</span>
+<span class="sd">            [&#39;flat&#39;, &#39;hanning&#39;, &#39;hamming&#39;, &#39;bartlett&#39;, &#39;blackman&#39;] defaults to</span>
+<span class="sd">            &#39;flat&#39;</span>
+<span class="sd">        :type axis: int</span>
+<span class="sd">        :param axis: Axis along with apply the filter. O: smooth along</span>
+<span class="sd">            correlation lag time axis 1: smooth along time axis</span>
+
+<span class="sd">        :rtype: :class:`~numpy.ndarray`</span>
+<span class="sd">        :return: Filtered matrix</span>
+
+<span class="sd">        ..note:: This action is performed **in-place**. If you want to keep</span>
+<span class="sd">            the original data use</span>
+<span class="sd">            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_smooth</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">wsize</span><span class="p">,</span> <span class="n">wtype</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span>
+            <span class="s1">&#39;smooth. wsize: </span><span class="si">%s</span><span class="s1">, wtype: </span><span class="si">%s</span><span class="s1">, axis: </span><span class="si">%s</span><span class="s1">&#39;</span>
+            <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">wsize</span><span class="p">),</span> <span class="n">wtype</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">axis</span><span class="p">))]</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="CorrBulk.stretch"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.stretch">[docs]</a>    <span class="k">def</span> <span class="nf">stretch</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">tw</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">stretch_range</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">stretch_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+            <span class="n">sides</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">ref_trc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ref_trc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_trc</span>
+        <span class="n">dv_dict</span> <span class="o">=</span> <span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_stretch</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">,</span> <span class="n">tw</span><span class="p">,</span> <span class="n">stretch_range</span><span class="p">,</span> <span class="n">stretch_steps</span><span class="p">,</span>
+            <span class="n">sides</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">DV</span><span class="p">(</span><span class="o">**</span><span class="n">dv_dict</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CorrBulk.save"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save the object to a numpy binary format (**.npz**)</span>
+
+<span class="sd">        :param path: Output path</span>
+<span class="sd">        :type path: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="n">m3ut</span><span class="o">.</span><span class="n">save_header_to_np_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span>
+            <span class="n">path</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CorrBulk.taper"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.taper">[docs]</a>    <span class="k">def</span> <span class="nf">taper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Taper the data.</span>
+
+<span class="sd">        :param width: width to be tapered in seconds (per side)</span>
+<span class="sd">        :type width: float</span>
+
+<span class="sd">        ..note:: This action is performed **in-place**. If you want to keep</span>
+<span class="sd">            the original data use</span>
+<span class="sd">            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_taper</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+        <span class="n">proc</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;tapered: width=</span><span class="si">%s</span><span class="s1">s&#39;</span> <span class="o">%</span> <span class="n">width</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="n">proc</span></div>
+
+<div class="viewcode-block" id="CorrBulk.taper_center"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.taper_center">[docs]</a>    <span class="k">def</span> <span class="nf">taper_center</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">slope_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Taper the central part of a correlation matrix.</span>
+
+<span class="sd">        Due to electromagnetic cross-talk, signal processing or other effects</span>
+<span class="sd">        the correlaton matrices are often contaminated around the zero lag</span>
+<span class="sd">        time. This function tapers (multiples by zero) the central part of</span>
+<span class="sd">        width `width`. To avoid problems with interpolation and filtering later</span>
+<span class="sd">        on this is done with cosine taper.</span>
+
+<span class="sd">        :param width: width of the central window to be tapered in seconds</span>
+<span class="sd">            (**total length i.e., not per side**).</span>
+<span class="sd">        :type width: float</span>
+<span class="sd">        :param slope_frac: fraction of `width` used for soothing of edges,</span>
+<span class="sd">            defaults to 0.05</span>
+<span class="sd">        :type slope_frac: float, optional</span>
+<span class="sd">        :return: The tapered matrix</span>
+<span class="sd">        :rtype: np.ndarray</span>
+
+<span class="sd">        ..note:: This action is performed **in-place**. If you want to keep</span>
+<span class="sd">            the original data use</span>
+<span class="sd">            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_taper_center</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">slope_frac</span><span class="o">=</span><span class="n">slope_frac</span><span class="p">)</span>
+        <span class="n">proc</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;tapered-centre: width=</span><span class="si">%s</span><span class="s1">s, slope_frac=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">slope_frac</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="n">proc</span></div>
+
+<div class="viewcode-block" id="CorrBulk.trim"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.trim">[docs]</a>    <span class="k">def</span> <span class="nf">trim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Trim the correlation matrix to the period from `starttime` to</span>
+<span class="sd">        `endtime` given in seconds from the zero position, so both can be</span>
+<span class="sd">        positive and negative.</span>
+
+<span class="sd">        :type starttime: float</span>
+<span class="sd">        :param starttime: start time in seconds with respect to the zero</span>
+<span class="sd">            position</span>
+<span class="sd">        :type endtime: float</span>
+<span class="sd">        :param order: end time in seconds with respect to the zero position</span>
+
+<span class="sd">        :return: self</span>
+
+<span class="sd">        ..note:: This action is performed **in-place**. If you want to keep</span>
+<span class="sd">            the original data use</span>
+<span class="sd">            :func:`~miic3.correlate.stream.CorrelationBulk.copy()`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_trim</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">)</span>
+        <span class="n">proc</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;trim: </span><span class="si">%s</span><span class="s1">, </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">starttime</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">endtime</span><span class="p">))]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="n">proc</span>
+        <span class="k">return</span> <span class="bp">self</span></div></div>
+
+
+<div class="viewcode-block" id="read_corr_bulk"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.read_corr_bulk">[docs]</a><span class="k">def</span> <span class="nf">read_corr_bulk</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrBulk</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reads a CorrBulk object from an **.npz** file.</span>
+
+<span class="sd">    :param path: Path to file</span>
+<span class="sd">    :type path: str</span>
+<span class="sd">    :return: the corresponding and converted CorrBulk object</span>
+<span class="sd">    :rtype: CorrBulk</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">loaded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">stats</span> <span class="o">=</span> <span class="n">m3ut</span><span class="o">.</span><span class="n">load_header_from_np_array</span><span class="p">(</span><span class="n">loaded</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">CorrBulk</span><span class="p">(</span><span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">],</span> <span class="n">stats</span><span class="o">=</span><span class="n">stats</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CorrStream"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrStream">[docs]</a><span class="k">class</span> <span class="nc">CorrStream</span><span class="p">(</span><span class="n">Stream</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Baseclass to hold correlation traces. Basically just a list of the</span>
+<span class="sd">    correlation traces.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">traces</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">traces</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">traces</span><span class="p">,</span> <span class="n">CorrTrace</span><span class="p">):</span>
+            <span class="n">traces</span> <span class="o">=</span> <span class="p">[</span><span class="n">traces</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">traces</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">traces</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">CorrTrace</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Traces have to be of type </span><span class="se">\</span>
+<span class="s1">                        :class:`~miic3.correlate.correlate.CorrTrace`.&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extended</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return short summary string of the current stream.</span>
+
+<span class="sd">        It will contain the number of Traces in the Stream and the return value</span>
+<span class="sd">        of each Trace&#39;s :meth:`~obspy.core.trace.Trace.__str__` method.</span>
+
+<span class="sd">        :type extended: bool, optional</span>
+<span class="sd">        :param extended: This method will show only 20 traces by default.</span>
+<span class="sd">            Enable this option to show all entries.</span>
+
+<span class="sd">        .. rubric:: Example</span>
+
+<span class="sd">        &gt;&gt;&gt; stream = Stream([Trace(), Trace()])</span>
+<span class="sd">        &gt;&gt;&gt; print(stream)  # doctest: +ELLIPSIS</span>
+<span class="sd">        2 Trace(s) in Stream:</span>
+<span class="sd">        ...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># get longest id</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">:</span>
+            <span class="n">id_length</span> <span class="o">=</span> <span class="bp">self</span> <span class="ow">and</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">id</span><span class="p">)</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">id_length</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">))</span> <span class="o">+</span> <span class="s1">&#39; Correlation(s) in Stream:</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">20</span> <span class="ow">or</span> <span class="n">extended</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">out</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">_i</span><span class="o">.</span><span class="fm">__str__</span><span class="p">(</span><span class="n">id_length</span><span class="p">)</span> <span class="k">for</span> <span class="n">_i</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">out</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> \
+                <span class="s1">&#39;...</span><span class="se">\n</span><span class="s1">(</span><span class="si">%i</span><span class="s1"> other correlations)</span><span class="se">\n</span><span class="s1">...</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>\
+                <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">traces</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">[Use &quot;print(&#39;</span> <span class="o">+</span> \
+                <span class="s1">&#39;Stream.__str__(extended=True))&quot; to print all correlaitons]&#39;</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+<div class="viewcode-block" id="CorrStream.stack"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrStream.stack">[docs]</a>    <span class="k">def</span> <span class="nf">stack</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">weight</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;by_length&#39;</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">stack_len</span><span class="p">:</span> <span class="nb">int</span> <span class="ow">or</span> <span class="nb">str</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="n">regard_location</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Average the data of all traces in the given time windows.</span>
+<span class="sd">        Will only stack data from the same network/channel/station combination.</span>
+<span class="sd">        Location codes will only optionally be regarded.</span>
+
+<span class="sd">        :param starttime: starttime of the stacking time windows. If None, the</span>
+<span class="sd">            earliest available is chosen, defaults to None.</span>
+<span class="sd">        :type starttime: UTCDateTime, optional</span>
+<span class="sd">        :param endtime: endtime of the stacking time windows. If None, the</span>
+<span class="sd">            latest available is chosen, defaults to None</span>
+<span class="sd">        :type endtime: UTCDateTime, optional</span>
+<span class="sd">        :param stack_len: Length of one stack. Is either a value in seconds,</span>
+<span class="sd">            the special option &quot;daily&quot; (creates 24h stacks that always start at</span>
+<span class="sd">            midnight), or 0 for a single stack over the whole time period,</span>
+<span class="sd">            defaults to 0.</span>
+<span class="sd">        :type stack_len: intorstr, optional</span>
+<span class="sd">        :param regard_location: Don&#39;t stack correlations with varying location</span>
+<span class="sd">            code combinations, defaults to True.</span>
+<span class="sd">        :type regard_location: bool, optional</span>
+<span class="sd">        :return: A stream holding the stacks.</span>
+<span class="sd">        :rtype: :class`~miic3.correlate.stream.CorrStream`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Seperate if there are different stations channel and or locations</span>
+        <span class="c1"># involved</span>
+        <span class="k">if</span> <span class="n">stack_len</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">stack_st_by_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">regard_location</span><span class="p">,</span> <span class="n">weight</span><span class="p">)</span>
+
+        <span class="c1"># else</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;corr_start&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">starttime</span><span class="p">:</span>
+            <span class="n">starttime</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">endtime</span><span class="p">:</span>
+            <span class="n">endtime</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span>
+        <span class="n">outst</span> <span class="o">=</span> <span class="n">CorrStream</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">stack_len</span> <span class="o">==</span> <span class="s1">&#39;daily&#39;</span><span class="p">:</span>
+            <span class="n">starttime</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span>
+                <span class="n">year</span><span class="o">=</span><span class="n">starttime</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="n">julday</span><span class="o">=</span><span class="n">starttime</span><span class="o">.</span><span class="n">julday</span><span class="p">)</span>
+            <span class="n">stack_len</span> <span class="o">=</span> <span class="mi">3600</span><span class="o">*</span><span class="mi">24</span>
+        <span class="k">for</span> <span class="n">st</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">slide</span><span class="p">(</span>
+                <span class="n">stack_len</span><span class="p">,</span> <span class="n">stack_len</span><span class="p">,</span> <span class="n">include_partially_selected</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">starttime</span><span class="o">=</span><span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="o">=</span><span class="n">endtime</span><span class="p">):</span>
+            <span class="n">outst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">stack_st_by_group</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">regard_location</span><span class="p">,</span> <span class="n">weight</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">outst</span></div>
+
+<div class="viewcode-block" id="CorrStream.slide"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrStream.slide">[docs]</a>    <span class="k">def</span> <span class="nf">slide</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">window_length</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">include_partially_selected</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generator yielding correlations that are inside of each requested time</span>
+<span class="sd">        window and inside of this stream.</span>
+
+<span class="sd">        Please keep in mind that it only returns a new view of the original</span>
+<span class="sd">        data. Any modifications are applied to the original data as well. If</span>
+<span class="sd">        you don&#39;t want this you have to create a copy of the yielded</span>
+<span class="sd">        windows. Also be aware that if you modify the original data and you</span>
+<span class="sd">        have overlapping windows, all following windows are affected as well.</span>
+
+<span class="sd">        Not all yielded windows must have the same number of traces. The</span>
+<span class="sd">        algorithm will determine the maximal temporal extents by analysing</span>
+<span class="sd">        all Traces and then creates windows based on these times.</span>
+
+
+<span class="sd">        :param window_length: The length of the requested time window in</span>
+<span class="sd">            seconds. Note that the window length has to correspond at least to</span>
+<span class="sd">            the length of the longest correlation window (i.e., the length of</span>
+<span class="sd">            the correlated waveforms). This is because the correlations cannot</span>
+<span class="sd">            be sliced.</span>
+<span class="sd">        :type window_length: float</span>
+<span class="sd">        :param step: The step between the start times of two successive</span>
+<span class="sd">            windows in seconds. Has to be greater than 0</span>
+<span class="sd">        :type step: float</span>
+<span class="sd">        :param include_partially_selected: If set to ``True``, also the half</span>
+<span class="sd">            selected time window **before** the requested time will be attached</span>
+<span class="sd">            Given the following stream containing 6 correlations, &quot;|&quot; are the</span>
+<span class="sd">            correlation starts and ends, &quot;A&quot; is the requested starttime and &quot;B&quot;</span>
+<span class="sd">            the corresponding endtime::</span>
+
+<span class="sd">                |         |A        |         |       B |         |</span>
+<span class="sd">                1         2         3         4         5         6</span>
+
+<span class="sd">            ``include_partially_selected=True`` will select samples 2-4,</span>
+<span class="sd">            ``include_partially_selected=False`` will select samples 3-4 only.</span>
+<span class="sd">            Defaults to True.</span>
+<span class="sd">        :type include_partially_selected: bool, optional</span>
+<span class="sd">        :param starttime: Start the sequence at this time instead of the</span>
+<span class="sd">            earliest available starttime.</span>
+<span class="sd">        :type starttime: UTCDateTime</span>
+<span class="sd">        :param endtime: Start the sequence at this time instead of the</span>
+<span class="sd">            latest available endtime.</span>
+<span class="sd">        :type endtime: UTCDateTime</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">starttime</span><span class="p">:</span>
+            <span class="n">starttime</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">endtime</span><span class="p">:</span>
+            <span class="n">endtime</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">window_length</span> <span class="o">&lt;</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span><span class="o">-</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;The length of the requested time window has &#39;</span> <span class="o">+</span>
+                <span class="s1">&#39;to be larger or equal than the actual correlation length of&#39;</span> <span class="o">+</span>
+                <span class="s1">&#39; one window. i.e., correlations can not be sliced, only &#39;</span> <span class="o">+</span>
+                <span class="s1">&#39;selected.&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">step</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Step has to be larger than 0.&#39;</span><span class="p">)</span>
+
+        <span class="n">windows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+            <span class="n">starttime</span><span class="o">.</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">endtime</span><span class="o">.</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">windows</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="n">windows</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">window_length</span>
+            <span class="n">temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_corr_time</span><span class="p">(</span>
+                <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span>
+                <span class="n">include_partially_selected</span><span class="o">=</span><span class="n">include_partially_selected</span><span class="p">)</span>
+            <span class="c1"># It might happen that there is a time frame where there are no</span>
+            <span class="c1"># windows, e.g. two traces separated by a large gap.</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">temp</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">yield</span> <span class="n">temp</span></div>
+
+<div class="viewcode-block" id="CorrStream.select_corr_time"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrStream.select_corr_time">[docs]</a>    <span class="k">def</span> <span class="nf">select_corr_time</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
+            <span class="n">include_partially_selected</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Selects correlations that are inside of the requested time window.</span>
+
+<span class="sd">        :param starttime: Requested start</span>
+<span class="sd">        :type starttime: UTCDateTime</span>
+<span class="sd">        :param endtime: Requested end</span>
+<span class="sd">        :type endtime: UTCDateTime</span>
+<span class="sd">        :param include_partially_selected: If set to ``True``, also the half</span>
+<span class="sd">            selected time window **before** the requested time will be attached</span>
+<span class="sd">            Given the following stream containing 6 correlations, &quot;|&quot; are the</span>
+<span class="sd">            correlation starts and ends, &quot;A&quot; is the requested starttime and &quot;B&quot;</span>
+<span class="sd">            the corresponding endtime::</span>
+
+<span class="sd">                |         |A        |         |       B |         |</span>
+<span class="sd">                1         2         3         4         5         6</span>
+
+<span class="sd">            ``include_partially_selected=True`` will select samples 2-4,</span>
+<span class="sd">            ``include_partially_selected=False`` will select samples 3-4 only.</span>
+<span class="sd">            Defaults to True</span>
+<span class="sd">        :type include_partially_selected: bool, optional</span>
+<span class="sd">        :return: Correlation Stream holding all selected traces</span>
+<span class="sd">        :rtype: CorrStream</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;corr_start&#39;</span><span class="p">])</span>
+        <span class="n">outst</span> <span class="o">=</span> <span class="n">CorrStream</span><span class="p">()</span>
+        <span class="c1"># the 2 seconds difference are to avoid accidental smoothing</span>
+        <span class="k">if</span> <span class="n">include_partially_selected</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span> <span class="o">&gt;</span> <span class="n">starttime</span> <span class="ow">and</span>
+                    <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span> <span class="o">&lt;</span> <span class="n">endtime</span><span class="p">)</span> <span class="ow">or</span> \
+                        <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span> <span class="o">==</span> <span class="n">endtime</span><span class="p">:</span>
+                    <span class="n">outst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">outst</span>
+        <span class="c1"># else</span>
+        <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span> <span class="o">&gt;=</span> <span class="n">starttime</span> <span class="ow">and</span>\
+                 <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span> <span class="o">&lt;=</span> <span class="n">endtime</span><span class="p">:</span>
+                <span class="n">outst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">outst</span></div>
+
+<div class="viewcode-block" id="CorrStream.create_corr_bulk"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrStream.create_corr_bulk">[docs]</a>    <span class="k">def</span> <span class="nf">create_corr_bulk</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">location</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">times</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">UTCDateTime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrBulk</span><span class="p">:</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">channel</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">times</span><span class="p">:</span>
+            <span class="n">st</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">select_corr_time</span><span class="p">(</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">times</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">st</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="p">))</span>
+        <span class="n">statlist</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">tr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
+            <span class="n">A</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span>
+            <span class="k">if</span> <span class="n">inplace</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span>
+            <span class="n">statlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
+
+        <span class="n">stats</span> <span class="o">=</span> <span class="n">convert_statlist_to_bulk_stats</span><span class="p">(</span><span class="n">statlist</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">CorrBulk</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">stats</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_to_matrix</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">location</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">times</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">UTCDateTime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Stats</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a numpy array from the data in the</span>
+<span class="sd">        :class:`~miic3.correlate.stream.Stream` object. Also returns a list of</span>
+<span class="sd">        the Stats objects. The positional arguments are filter arguments.</span>
+
+<span class="sd">        :param st: Input Stream</span>
+<span class="sd">        :type st: CorrStream</span>
+<span class="sd">        :return: both a numpy array (i.e., matrix) and a list of the stats</span>
+<span class="sd">        :rtype: Tuple[np.ndarray, Iterator[Stats]]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">channel</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">times</span><span class="p">:</span>
+            <span class="n">st</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">select_corr_time</span><span class="p">(</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">times</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="n">st</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;corr_start&#39;</span><span class="p">])</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">st</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="p">))</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">tr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
+            <span class="n">A</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span>
+            <span class="n">stats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">A</span><span class="p">,</span> <span class="n">stats</span></div>
+
+
+<div class="viewcode-block" id="CorrTrace"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrTrace">[docs]</a><span class="k">class</span> <span class="nc">CorrTrace</span><span class="p">(</span><span class="n">Trace</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Baseclass to hold correlation data. Derived from the class</span>
+<span class="sd">    :class:`~obspy.core.trace.Trace`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">header1</span><span class="p">:</span> <span class="n">Stats</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">header2</span><span class="p">:</span> <span class="n">Stats</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">inv</span><span class="p">:</span> <span class="n">Inventory</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">start_lag</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">end_lag</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">_header</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialise the correlation trace. Is done by combining the stats of the</span>
+<span class="sd">        two :class:`~obspy.core.trace.Trace` objects&#39; headers. If said headers</span>
+<span class="sd">        do not contain Station information (i.e., coordinates), an</span>
+<span class="sd">        :class:`~obspy.core.inventory.Inventory` with information about both</span>
+<span class="sd">        stations should be provided as well.</span>
+
+<span class="sd">        :param data: The correlation data</span>
+<span class="sd">        :type data: np.ndarray</span>
+<span class="sd">        :param header1: header of the first trace, defaults to None</span>
+<span class="sd">        :type header1: Stats, optional</span>
+<span class="sd">        :param header2: header of the second trace, defaults to None</span>
+<span class="sd">        :type header2: Stats, optional</span>
+<span class="sd">        :param inv: Inventory object for the stations, defaults to None</span>
+<span class="sd">        :type inv: Inventory, optional</span>
+<span class="sd">        :param start_lag: The lag of the first sample of the correlation given</span>
+<span class="sd">            in seconds.</span>
+<span class="sd">        :type start_lag: float</span>
+<span class="sd">        :param end_lag: The lag of the last sample of the correlation</span>
+<span class="sd">            in seconds.</span>
+<span class="sd">        :type end_lag: float</span>
+<span class="sd">        :param _header: Already combined header, used when reading correlations</span>
+<span class="sd">            from a file, defaults to None</span>
+<span class="sd">        :type _header: dict, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">_header</span><span class="p">:</span>
+            <span class="n">header</span> <span class="o">=</span> <span class="n">CorrStats</span><span class="p">(</span><span class="n">_header</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">header1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">header2</span><span class="p">:</span>
+            <span class="n">header</span> <span class="o">=</span> <span class="n">CorrStats</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">start_lag</span><span class="p">:</span>
+                <span class="n">header</span><span class="p">[</span><span class="s1">&#39;start_lag&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">start_lag</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">header</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">alphabetical_correlation</span><span class="p">(</span>
+                <span class="n">header1</span><span class="p">,</span> <span class="n">header2</span><span class="p">,</span> <span class="n">start_lag</span><span class="p">,</span> <span class="n">end_lag</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">inv</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">CorrTrace</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="n">header</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;npts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">id_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return short summary string of the current trace.</span>
+
+<span class="sd">        :rtype: str</span>
+<span class="sd">        :return: Short summary string of the current trace containing the SEED</span>
+<span class="sd">            identifier, start time, end time, sampling rate and number of</span>
+<span class="sd">            points of the current trace.</span>
+
+<span class="sd">        .. rubric:: Example</span>
+
+<span class="sd">        &gt;&gt;&gt; tr = Trace(header={&#39;station&#39;:&#39;FUR&#39;, &#39;network&#39;:&#39;GR&#39;})</span>
+<span class="sd">        &gt;&gt;&gt; str(tr)  # doctest: +ELLIPSIS</span>
+<span class="sd">        &#39;GR.FUR.. | 1970-01-01T00:00:00.000000Z - ... | 1.0 Hz, 0 samples&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># set fixed id width</span>
+        <span class="k">if</span> <span class="n">id_length</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%%</span><span class="s2">-</span><span class="si">%d</span><span class="s2">s&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">id_length</span><span class="p">)</span>
+            <span class="n">trace_id</span> <span class="o">=</span> <span class="n">out</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">trace_id</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="c1"># output depending on delta or sampling rate bigger than one</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span> <span class="o">&lt;</span> <span class="mf">0.1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="s1">&#39;preview&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">preview</span><span class="p">:</span>
+                <span class="n">out</span> <span class="o">=</span> <span class="n">out</span> <span class="o">+</span> <span class="s1">&#39; | &#39;</span>\
+                    <span class="s2">&quot;</span><span class="si">%(corr_start)s</span><span class="s2"> - </span><span class="si">%(corr_end)s</span><span class="s2"> | &quot;</span> <span class="o">+</span> \
+                    <span class="s2">&quot;</span><span class="si">%(delta).1f</span><span class="s2"> s, </span><span class="si">%(npts)d</span><span class="s2"> samples [preview]&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">out</span> <span class="o">=</span> <span class="n">out</span> <span class="o">+</span> <span class="s1">&#39; | &#39;</span>\
+                    <span class="s2">&quot;</span><span class="si">%(corr_start)s</span><span class="s2"> - </span><span class="si">%(corr_end)s</span><span class="s2"> | &quot;</span> <span class="o">+</span> \
+                    <span class="s2">&quot;</span><span class="si">%(delta).1f</span><span class="s2"> s, </span><span class="si">%(npts)d</span><span class="s2"> samples&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="s1">&#39;preview&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">preview</span><span class="p">:</span>
+                <span class="n">out</span> <span class="o">=</span> <span class="n">out</span> <span class="o">+</span> <span class="s1">&#39; | &#39;</span>\
+                    <span class="s2">&quot;</span><span class="si">%(corr_start)s</span><span class="s2"> - </span><span class="si">%(corr_end)s</span><span class="s2"> | &quot;</span> <span class="o">+</span> \
+                    <span class="s2">&quot;</span><span class="si">%(sampling_rate).1f</span><span class="s2"> Hz, </span><span class="si">%(npts)d</span><span class="s2"> samples [preview]&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">out</span> <span class="o">=</span> <span class="n">out</span> <span class="o">+</span> <span class="s1">&#39; | &#39;</span>\
+                    <span class="s2">&quot;</span><span class="si">%(corr_start)s</span><span class="s2"> - </span><span class="si">%(corr_end)s</span><span class="s2"> | &quot;</span> <span class="o">+</span> \
+                    <span class="s2">&quot;</span><span class="si">%(sampling_rate).1f</span><span class="s2"> Hz, </span><span class="si">%(npts)d</span><span class="s2"> samples&quot;</span>
+        <span class="c1"># check for masked array</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">count_masked</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">out</span> <span class="o">+=</span> <span class="s1">&#39; (masked)&#39;</span>
+        <span class="k">return</span> <span class="n">trace_id</span> <span class="o">+</span> <span class="n">out</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span></div>
+
+    <span class="c1"># def plot(</span>
+    <span class="c1">#     self, tlim: list = None, ax=None, outputdir: str = None,</span>
+    <span class="c1">#         clean=False):</span>
+    <span class="c1">#     plot_correlation(self, tlim, ax, outputdir, clean)</span>
+
+
+<div class="viewcode-block" id="alphabetical_correlation"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.alphabetical_correlation">[docs]</a><span class="k">def</span> <span class="nf">alphabetical_correlation</span><span class="p">(</span>
+    <span class="n">header1</span><span class="p">:</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">header2</span><span class="p">:</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">start_lag</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end_lag</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">inv</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">CorrStats</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Make sure that Correlations are always created in alphabetical order,</span>
+<span class="sd">    so that we won&#39;t have both a correlation for AB-CD and CD-AB.</span>
+<span class="sd">    If the correlation was computed in the wrong order, the corr-data will be</span>
+<span class="sd">    flipped along the t-axis.</span>
+
+<span class="sd">    :param header1: Header of the first trace.</span>
+<span class="sd">    :type header1: Stats</span>
+<span class="sd">    :param header2: Header of the second trace</span>
+<span class="sd">    :type header2: Stats</span>
+<span class="sd">    :param start_lag: start lag in s</span>
+<span class="sd">    :type start_lag: float</span>
+<span class="sd">    :param end_lag: end lag in s</span>
+<span class="sd">    :type end_lag: float</span>
+<span class="sd">    :param data: The computed cross-correlation for header1-header2</span>
+<span class="sd">    :type data: np.ndarray</span>
+<span class="sd">    :param inv: The inventory holding the station coordinates. Only needed if</span>
+<span class="sd">        coords aren&#39;t provided in stats.</span>
+<span class="sd">    :type inv: Inventory</span>
+<span class="sd">    :return: the header for the CorrTrace and the data</span>
+<span class="sd">        (will also be modified in place)</span>
+<span class="sd">    :rtype: Tuple[Stats, np.ndarray]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># make sure the order is correct</span>
+    <span class="c1"># Will do that always alphabetically sorted</span>
+    <span class="n">sort1</span> <span class="o">=</span> <span class="n">header1</span><span class="o">.</span><span class="n">network</span> <span class="o">+</span> <span class="n">header1</span><span class="o">.</span><span class="n">station</span> <span class="o">+</span> <span class="n">header1</span><span class="o">.</span><span class="n">channel</span>
+    <span class="n">sort2</span> <span class="o">=</span> <span class="n">header2</span><span class="o">.</span><span class="n">network</span> <span class="o">+</span> <span class="n">header2</span><span class="o">.</span><span class="n">station</span> <span class="o">+</span> <span class="n">header2</span><span class="o">.</span><span class="n">channel</span>
+    <span class="n">sort</span> <span class="o">=</span> <span class="p">[</span><span class="n">sort1</span><span class="p">,</span> <span class="n">sort2</span><span class="p">]</span>
+    <span class="nb">sorted</span> <span class="o">=</span> <span class="n">sort</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="nb">sorted</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">sort</span> <span class="o">!=</span> <span class="nb">sorted</span><span class="p">:</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="n">combine_stats</span><span class="p">(</span>
+            <span class="n">header2</span><span class="p">,</span> <span class="n">header1</span><span class="p">,</span> <span class="o">-</span><span class="n">end_lag</span><span class="p">,</span>
+            <span class="n">inv</span><span class="o">=</span><span class="n">inv</span><span class="p">)</span>
+        <span class="c1"># reverse array and lag times</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="n">combine_stats</span><span class="p">(</span>
+            <span class="n">header1</span><span class="p">,</span> <span class="n">header2</span><span class="p">,</span> <span class="n">start_lag</span><span class="p">,</span>
+            <span class="n">inv</span><span class="o">=</span><span class="n">inv</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">header</span><span class="p">,</span> <span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="combine_stats"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.combine_stats">[docs]</a><span class="k">def</span> <span class="nf">combine_stats</span><span class="p">(</span>
+    <span class="n">stats1</span><span class="p">:</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">stats2</span><span class="p">:</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">start_lag</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">inv</span><span class="p">:</span> <span class="n">Inventory</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrStats</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Combine the meta-information of two ObsPy Trace.Stats objects</span>
+
+<span class="sd">    This function returns a ObsPy :class:`~obspy.core.trace.Stats` object</span>
+<span class="sd">    obtained combining the two associated with the input Traces.</span>
+<span class="sd">    Namely ``stats1`` and ``stats2``.</span>
+
+<span class="sd">    The fields [&#39;network&#39;,&#39;station&#39;,&#39;location&#39;,&#39;channel&#39;] are combined in</span>
+<span class="sd">    a ``-`` separated fashion to create a &quot;pseudo&quot; SEED like ``id``.</span>
+
+<span class="sd">    For all the others fields, only &quot;common&quot; information are retained: This</span>
+<span class="sd">    means that only keywords that exist in both dictionaries will be included</span>
+<span class="sd">    in the resulting one.</span>
+
+<span class="sd">    :type stats1: :class:`~obspy.core.trace.Stats`</span>
+<span class="sd">    :param stats1: First Trace&#39;s stats</span>
+<span class="sd">    :type stats2: :class:`~obspy.core.trace.Stats`</span>
+<span class="sd">    :param stats2: Second Trace&#39;s stats</span>
+<span class="sd">    :param start_lag: The lag of the first sample of the correlation given</span>
+<span class="sd">        in seconds (usually negative).</span>
+<span class="sd">    :type start_lag: float</span>
+<span class="sd">    :type inv: :class:`~obspy.core.inventory.Inventory`, optional</span>
+<span class="sd">    :param inv: Inventory containing the station coordinates. Only needed if</span>
+<span class="sd">        station coordinates are not in Trace.Stats. Defaults to None.</span>
+
+<span class="sd">    :rtype: :class:`~obspy.core.trace.Stats`</span>
+<span class="sd">    :return: **stats**: combined Stats object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stats1</span><span class="p">,</span> <span class="n">Stats</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;stats1 must be an obspy Stats object.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stats2</span><span class="p">,</span> <span class="n">Stats</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;stats2 must be an obspy Stats object.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># We also have to remove these as they are obspy AttributeDicts as well</span>
+    <span class="n">stats1</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;asdf&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">stats2</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;asdf&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="n">tr1_keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">stats1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">tr2_keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">stats2</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="n">stats</span> <span class="o">=</span> <span class="n">CorrStats</span><span class="p">()</span>
+    <span class="c1"># actual correlation times</span>
+    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;corr_start&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">stats1</span><span class="o">.</span><span class="n">starttime</span><span class="p">,</span> <span class="n">stats2</span><span class="o">.</span><span class="n">starttime</span><span class="p">)</span>
+    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;corr_end&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">stats1</span><span class="o">.</span><span class="n">endtime</span><span class="p">,</span> <span class="n">stats2</span><span class="o">.</span><span class="n">endtime</span><span class="p">)</span>
+    <span class="c1"># This makes stats[&#39;endtime&#39;] meaningsless, but obspy needs something that</span>
+    <span class="c1"># identifies the Trace as unique</span>
+    <span class="c1"># stats[&#39;startime&#39;] = stats[&#39;corr_start&#39;]</span>
+
+    <span class="c1"># Adjust the information to create a new SEED like id</span>
+    <span class="n">keywords</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">,</span> <span class="s1">&#39;station&#39;</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">,</span> <span class="s1">&#39;channel&#39;</span><span class="p">]</span>
+    <span class="n">sac_keywords</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;sac&#39;</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keywords</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">tr1_keys</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">tr2_keys</span><span class="p">:</span>
+            <span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats1</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;-&#39;</span> <span class="o">+</span> <span class="n">stats2</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">tr1_keys</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keywords</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sac_keywords</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">tr2_keys</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">stats1</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">==</span> <span class="n">stats2</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                    <span class="c1"># in the stats object there are read only objects</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats1</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                    <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">):</span>
+                        <span class="k">pass</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;stla&#39;</span> <span class="ow">and</span> <span class="s1">&#39;stlo&#39;</span> <span class="ow">and</span> <span class="s1">&#39;stel&#39;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">stats1</span><span class="p">:</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;stla&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats1</span><span class="o">.</span><span class="n">stla</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;stlo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats1</span><span class="o">.</span><span class="n">stlo</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;stel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats1</span><span class="o">.</span><span class="n">stel</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;evla&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats2</span><span class="o">.</span><span class="n">stla</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;evlo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats2</span><span class="o">.</span><span class="n">stlo</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;evel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats2</span><span class="o">.</span><span class="n">stel</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;stla&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats1</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stla</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;stlo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats1</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stlo</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;stel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats1</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stel</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;evla&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats2</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stla</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;evlo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats2</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stlo</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;evel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats2</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stel</span>
+            <span class="n">stats1</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">stats1</span><span class="p">[</span><span class="s1">&#39;sac&#39;</span><span class="p">])</span>
+            <span class="n">stats2</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">stats2</span><span class="p">[</span><span class="s1">&#39;sac&#39;</span><span class="p">])</span>
+
+        <span class="n">az</span><span class="p">,</span> <span class="n">baz</span><span class="p">,</span> <span class="n">dist</span> <span class="o">=</span> <span class="n">m3ut</span><span class="o">.</span><span class="n">trace_calc_az_baz_dist</span><span class="p">(</span><span class="n">stats1</span><span class="p">,</span> <span class="n">stats2</span><span class="p">)</span>
+
+        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;dist&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist</span> <span class="o">/</span> <span class="mi">1000</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;az&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">az</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;baz&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">baz</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">inv</span><span class="p">:</span>
+            <span class="n">inv1</span> <span class="o">=</span> <span class="n">inv</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+                <span class="n">network</span><span class="o">=</span><span class="n">stats1</span><span class="o">.</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">stats1</span><span class="o">.</span><span class="n">station</span><span class="p">)</span>
+            <span class="n">inv2</span> <span class="o">=</span> <span class="n">inv</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+                <span class="n">network</span><span class="o">=</span><span class="n">stats2</span><span class="o">.</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">stats2</span><span class="o">.</span><span class="n">station</span><span class="p">)</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;stla&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inv1</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">latitude</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;stlo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inv1</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">longitude</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;stel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inv1</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">elevation</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;evla&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inv2</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">latitude</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;evlo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inv2</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">longitude</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;evel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inv2</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">elevation</span>
+
+            <span class="n">az</span><span class="p">,</span> <span class="n">baz</span><span class="p">,</span> <span class="n">dist</span> <span class="o">=</span> <span class="n">m3ut</span><span class="o">.</span><span class="n">inv_calc_az_baz_dist</span><span class="p">(</span><span class="n">inv1</span><span class="p">,</span> <span class="n">inv2</span><span class="p">)</span>
+
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;dist&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist</span> <span class="o">/</span> <span class="mi">1000</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;az&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">az</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;baz&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">baz</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;No station coordinates provided.&quot;</span><span class="p">)</span>
+    <span class="n">stats</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;sac&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">stats</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;response&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;_format&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;hdf5&#39;</span>
+
+    <span class="c1"># note that those have to be adapted whenever several correlations are</span>
+    <span class="c1"># stacked</span>
+    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;start_lag&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">start_lag</span>
+    <span class="k">return</span> <span class="n">stats</span></div>
+
+
+<span class="n">Compare_Str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{network}</span><span class="s2">.</span><span class="si">{station}</span><span class="s2">.</span><span class="si">{channel}</span><span class="s2">.</span><span class="si">{location}</span><span class="s2">&quot;</span>
+<span class="n">Compare_Str_No_Loc</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{network}</span><span class="s2">.</span><span class="si">{station}</span><span class="s2">.</span><span class="si">{channel}</span><span class="s2">&quot;</span>
+
+
+<div class="viewcode-block" id="compare_tr_id"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.compare_tr_id">[docs]</a><span class="k">def</span> <span class="nf">compare_tr_id</span><span class="p">(</span><span class="n">tr0</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">tr1</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">regard_loc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check whether two traces are from the same channel, station, network, and,</span>
+<span class="sd">    optionally, location. Useful for stacking</span>
+
+<span class="sd">    :param tr0: first trace</span>
+<span class="sd">    :type tr0: :class:`~obspy.core.trace.Trace`</span>
+<span class="sd">    :param tr1: second trace</span>
+<span class="sd">    :type tr1: :class:`~obspy.core.trace.Trace`</span>
+<span class="sd">    :param regard_loc: Regard the location code or not</span>
+<span class="sd">    :type regard_loc: bool</span>
+<span class="sd">    :return: Bool whether the two are from the same (True) or not (False)</span>
+<span class="sd">    :rtype: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">regard_loc</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Compare_Str</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">tr0</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>\
+             <span class="o">==</span> <span class="n">Compare_Str</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Compare_Str_No_Loc</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">tr0</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>\
+             <span class="o">==</span> <span class="n">Compare_Str_No_Loc</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="stack_st_by_group"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.stack_st_by_group">[docs]</a><span class="k">def</span> <span class="nf">stack_st_by_group</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">regard_loc</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">weight</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrStream</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stack all traces that belong to the same network, station, channel, and</span>
+<span class="sd">    (optionally) location combination in the input stream.</span>
+
+<span class="sd">    :param st: input Stream</span>
+<span class="sd">    :type st: Stream</span>
+<span class="sd">    :param regard_loc: Seperate data with different location code</span>
+<span class="sd">    :type regard_loc: bool</span>
+<span class="sd">    :return: :class:`~miic3.correlate.stream.CorrStream`</span>
+<span class="sd">    :rtype: CorrStream</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">regard_loc</span><span class="p">:</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{network}</span><span class="s2">.</span><span class="si">{station}</span><span class="s2">.</span><span class="si">{channel}</span><span class="s2">.</span><span class="si">{location}</span><span class="s2">&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{network}</span><span class="s2">.</span><span class="si">{station}</span><span class="s2">.</span><span class="si">{channel}</span><span class="s2">&quot;</span>
+    <span class="n">stackdict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
+        <span class="n">stackdict</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">),</span> <span class="n">CorrStream</span><span class="p">())</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+    <span class="n">stackst</span> <span class="o">=</span> <span class="n">CorrStream</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">stackdict</span><span class="p">:</span>
+        <span class="n">stackst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stack_st</span><span class="p">(</span><span class="n">stackdict</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">weight</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">stackst</span></div>
+
+
+<div class="viewcode-block" id="stack_st"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.stack_st">[docs]</a><span class="k">def</span> <span class="nf">stack_st</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">CorrStream</span><span class="p">,</span> <span class="n">weight</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">norm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrTrace</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns an average of the data of all traces in the stream. Also adjusts</span>
+<span class="sd">    the corr_start and corr_end parameters in the header.</span>
+
+<span class="sd">    :param st: input Stream</span>
+<span class="sd">    :type st: CorrStream</span>
+<span class="sd">    :param weight: type of weigthing to use. Either `mean` or `by_length`</span>
+<span class="sd">    :type weigth: str</span>
+<span class="sd">    :param norm: Should the traces be normalised by their absolute maximum</span>
+<span class="sd">        prior to stacking?</span>
+<span class="sd">    :type norm: bool</span>
+<span class="sd">    :return: Single trace with stacked data</span>
+<span class="sd">    :rtype: CorrTrace</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">st</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;corr_start&#39;</span><span class="p">])</span>
+    <span class="n">stats</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;corr_end&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;corr_end&#39;</span><span class="p">]</span>
+    <span class="n">st</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;npts&#39;</span><span class="p">])</span>
+    <span class="n">npts</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span>
+    <span class="n">stack</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dur</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># duration of each trace</span>
+    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">npts</span><span class="o">=</span><span class="n">npts</span><span class="p">):</span>
+        <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">dur</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span><span class="o">-</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">)</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">stack</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">norm</span><span class="p">:</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">A</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">norm</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">if</span> <span class="n">weight</span> <span class="o">==</span> <span class="s1">&#39;mean&#39;</span> <span class="ow">or</span> <span class="n">weight</span> <span class="o">==</span> <span class="s1">&#39;average&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">CorrTrace</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">_header</span><span class="o">=</span><span class="n">stats</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">weight</span> <span class="o">==</span> <span class="s1">&#39;by_length&#39;</span><span class="p">:</span>
+        <span class="c1"># Weight by the length of each trace</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">A</span><span class="o">.</span><span class="n">T</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dur</span><span class="p">))</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dur</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">CorrTrace</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">_header</span><span class="o">=</span><span class="n">stats</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="convert_statlist_to_bulk_stats"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.convert_statlist_to_bulk_stats">[docs]</a><span class="k">def</span> <span class="nf">convert_statlist_to_bulk_stats</span><span class="p">(</span>
+        <span class="n">statlist</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">CorrStats</span><span class="p">],</span> <span class="n">varying_loc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrStats</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a list of :class:`~miic3.correlate.stream.CorrTrace` stats objects</span>
+<span class="sd">    to a single stats object that can be used for the creation of a</span>
+<span class="sd">    :class:`~miic3.correlate.stream.CorrBulk` object</span>
+
+<span class="sd">    :param statlist: list of Stats</span>
+<span class="sd">    :type statlist: List[Stats]</span>
+<span class="sd">    :param varying_loc: Set true if the location codes vary</span>
+<span class="sd">    :type varying_loc: False</span>
+<span class="sd">    :raises ValueError: raised if data does not fit together</span>
+<span class="sd">    :return: single Stats object</span>
+<span class="sd">    :rtype: Stats</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">stats</span> <span class="o">=</span> <span class="n">statlist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="c1"># can change from trace to trace</span>
+    <span class="n">mutables</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;corr_start&#39;</span><span class="p">,</span> <span class="s1">&#39;corr_end&#39;</span><span class="p">]</span>
+
+    <span class="c1"># Should / have to be identical for each trace</span>
+    <span class="c1"># Not 100% sure if start and end_lag should be on this list</span>
+    <span class="n">immutables</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;npts&#39;</span><span class="p">,</span> <span class="s1">&#39;sampling_rate&#39;</span><span class="p">,</span> <span class="s1">&#39;network&#39;</span><span class="p">,</span> <span class="s1">&#39;station&#39;</span><span class="p">,</span> <span class="s1">&#39;channel&#39;</span><span class="p">,</span> <span class="s1">&#39;start_lag&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;end_lag&#39;</span><span class="p">,</span> <span class="s1">&#39;stla&#39;</span><span class="p">,</span> <span class="s1">&#39;stlo&#39;</span><span class="p">,</span> <span class="s1">&#39;stel&#39;</span><span class="p">,</span> <span class="s1">&#39;evla&#39;</span><span class="p">,</span> <span class="s1">&#39;evlo&#39;</span><span class="p">,</span> <span class="s1">&#39;evel&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;dist&#39;</span><span class="p">,</span> <span class="s1">&#39;az&#39;</span><span class="p">,</span> <span class="s1">&#39;baz&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">varying_loc</span><span class="p">:</span>
+        <span class="n">mutables</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">immutables</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">mutables</span><span class="p">:</span>
+        <span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">trstat</span> <span class="ow">in</span> <span class="n">statlist</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">mutables</span><span class="p">:</span>
+            <span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">trstat</span><span class="p">[</span><span class="n">key</span><span class="p">]]</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">immutables</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">!=</span> <span class="n">trstat</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The stream contains data with different </span><span class="se">\</span>
+<span class="s1">properties. The differing property is </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">key</span><span class="p">)</span>
+    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;ntrcs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">statlist</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">stats</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, C.S..
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

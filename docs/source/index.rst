@@ -4,8 +4,6 @@
    contain the root `toctree` directive.
 
 
-.. _contents:
-
 MIIC3 library documentation
 ===========================
 
@@ -16,6 +14,7 @@ MIIC3 library documentation
    
    modules/utils
    modules/trace_data
+   modules/correlate
    
 
 

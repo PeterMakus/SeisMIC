@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 14th July 2021 02:01:42 pm
+Last Modified: Wednesday, 14th July 2021 04:28:10 pm
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -610,15 +610,18 @@ def zeroPadding(A: np.ndarray, args: dict, params: dict, axis=0) -> np.ndarray:
 
     Pad traces with zeros to increase the speed of the Fourier transforms and
     to avoid wrap around effects. Three possibilities for the length of the
-    padding can be set in `args['type']`
+    padding can be set in ``args['type']``:
 
-        -`nextFastLen`: traces are padded to a length that is the next fast
-            fft length
-        -`avoidWrapAround`: depending on length of the trace that is to be used
-            the padded part is just long enough to avoid wrap around
-        -`avoidWrapFastLen`: use the next fast length that avoids wrap around
+    - ``nextFastLen``:
+        Traces are padded to a length that is the next fast
+        fft length
+    - ``avoidWrapAround``:
+        depending on length of the trace that is to be used
+        the padded part is just long enough to avoid wrap around
+    - ``avoidWrapFastLen``:
+        Use the next fast length that avoids wrap around
 
-        :Example: ``args = {'type':'avoidWrapPowerTwo'}``
+    :Example: ``args = {'type':'avoidWrapPowerTwo'}``
 
     :type A: numpy.ndarray
     :param A: time series data with time oriented along the first \\
@@ -690,16 +693,20 @@ def calc_cross_combis(
     :type method: stringf
     :param method: Determines which traces of the strem are combined.
 
-        ``'betweenStations'``: Traces are combined if either their station or
+        ``'betweenStations'``:
+            Traces are combined if either their station or
             their network names are different.
-        ``'betweenComponents'``: Traces are combined if their components (last
+        ``'betweenComponents'``:
+            Traces are combined if their components (last
             letter of channel name) names are different and their station and
             network names are identical (single station cross-correlation).
-        ``'autoComponents'``: Traces are combined only with themselves.
-        ``'allSimpleCombinations'``: All Traces are combined once (onle one of
+        ``'autoComponents'``:
+            Traces are combined only with themselves.
+        ``'allSimpleCombinations'``:
+            All Traces are combined once (onle one of
             (0,1) and (1,0))
-        ``'allCombinations'``: All traces are combined in both orders ((0,1)
-            and (1,0))
+        ``'allCombinations'``:
+            All traces are combined in both orders ((0,1) and (1,0))
     """
 
     combis = []
@@ -1142,9 +1149,7 @@ def mute(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     inside these segments will all zero. Edges of the data will be tapered too
     in this case.
 
-    :Example:
-    ``args={'filter':{'type':'bandpass', 'freqmin':1., 'freqmax':6.},
-    'taper_len':1., 'threshold':1000, 'std_factor':1, 'extend_gaps':True}``
+
 
     :type A: numpy.ndarray
     :param A: time series data with time oriented along the first dimension
@@ -1152,25 +1157,35 @@ def mute(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     :type args: dictionary
     :param args: the following keywords are allowed:
 
-        * `filter`: (dictionary) description of filter to be applied before
+        * `filter`:
+            (dictionary) description of filter to be applied before
             calculation of the signal envelope. If not given the envelope is
             calculated from raw data. The value of the keyword filter is the
             same as the `args` for the function `TDfilter`.
-        * `threshold`: (float) absolute amplitude of threshold for muting
-        * `std_factor`: (float) alternativly to an absolute number the threhold
+        * `threshold`:
+            (float) absolute amplitude of threshold for muting
+        * `std_factor`:
+            (float) alternativly to an absolute number the threhold
             can be estimated as a multiple of the standard deviation if the
             scaling is given in as value of the keyword `std_factor`. If
-            neither `threshold` nor `std_factor` are given `std_factor`=1 is
+            neither `threshold` nor `std_factor` are given `std_factor=1` is
             assumed.
-        * `extend_gaps` (boolean) if True date above the threshold is
+        * `extend_gaps`:
+            (boolean) if True date above the threshold is
             guaranteed to be muted, otherwise tapering will leak into these
             parts. This step involves an additional convolution.
-        * `taper_len`: (float) length of taper for muted segments in seconds
+        * `taper_len`:
+            (float) length of taper for muted segments in seconds
+
     :type params: dictionary
     :param params: filled automatically by `pxcorr`
 
     :rtype: numpy.ndarray
     :return: clipped time series data
+
+    :Example:
+        ``args={'filter':{'type':'bandpass', 'freqmin':1., 'freqmax':6.},
+        'taper_len':1., 'threshold':1000, 'std_factor':1, 'extend_gaps':True}``
     """
 
     if args['taper_len'] == 0:
@@ -1236,7 +1251,7 @@ def TDfilter(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
         `freqmax` or `highpass`/`lowpass` with the `fargs` `freqmin`/`freqmax`
 
         :Example:
-        ``args = {'type':'bandpass','freqmin':0.5,'freqmax':2.}``
+            ``args = {'type':'bandpass','freqmin':0.5,'freqmax':2.}``
 
     :type A: numpy.ndarray
     :param A: time series data with time oriented along the first \\
@@ -1330,8 +1345,8 @@ def TDnormalization(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
         `freqmax` or `highpass`/`lowpass` with the `fargs` `freqmin`/`freqmax`
 
         :Example:
-        ``args = {'windowLength':5,'filter':{'type':'bandpass','freqmin':0.5,
-        'freqmax':2.}}``
+            ``args = {'windowLength':5,'filter':{'type':'bandpass',
+            'freqmin':0.5, 'freqmax':2.}}``
 
     :type A: numpy.ndarray
     :param A: time series data with time oriented along the first \\
@@ -1386,7 +1401,7 @@ def taper(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
         given by `obspy.signal`.
 
         :Example:
-        ``args = {'type':'cosine_taper','p':0.1}``
+            ``args = {'type':'cosine_taper','p':0.1}``
 
     :type A: numpy.ndarray
     :param A: time series data with time oriented along the first \\

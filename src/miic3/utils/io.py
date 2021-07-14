@@ -6,7 +6,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 8th July 2021 10:37:21 am
-Last Modified: Wednesday, 14th July 2021 11:31:14 am
+Last Modified: Wednesday, 14th July 2021 02:12:14 pm
 '''
 from collections import Iterable
 
@@ -24,17 +24,16 @@ def flatten(x):
     This funciton works with all :class:`~collections.Iterable` that can be
     nested in an irregular fashion.
 
-    .. rubric: Example
-
-    >>>L=[[[1, 2, 3], [4, 5]], 6]
-    >>>flatten(L)
-    [1, 2, 3, 4, 5, 6]
-
     :type x: :class:`~collections.Iterable`
     :param: Iterable to be flattened
 
     :rtype: list
     :return: x as a flattened list
+
+    .. rubric: Example
+        >>> L=[[[1, 2, 3], [4, 5]], 6]
+        >>> flatten(L)
+        [1, 2, 3, 4, 5, 6]
     """
     result = []
     for el in x:
