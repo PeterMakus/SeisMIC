@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 14th July 2021 11:23:11 am
+Last Modified: Wednesday, 14th July 2021 02:01:42 pm
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -31,6 +31,14 @@ from miic3.db.corr_hdf5 import CorrelationDataBase
 from miic3.trace_data.waveform import Store_Client
 from miic3.utils.fetch_func_from_str import func_from_str
 from miic3.utils.miic_utils import discard_short_traces, get_valid_traces
+
+
+log_lvl = {
+    'DEBUG': logging.DEBUG,
+    'INFO': logging.INFO,
+    'WARNING': logging.WARNING,
+    'CRITICAL': logging.CRITICAL,
+    'ERROR': logging.ERROR}
 
 
 class Correlator(object):
@@ -77,18 +85,14 @@ class Correlator(object):
             tstr = None
         tstr = self.comm.bcast(tstr, root=0)
 
+        loglvl = log_lvl[options['log_level'].upper()]
         self.logger = logging.Logger("miic3.Correlator0%s" % str(self.rank))
-        self.logger.setLevel(logging.WARNING)
-        if options['debug']:
-            self.logger.setLevel(logging.DEBUG)
-            # also catch the warnings
-            logging.captureWarnings(True)
+        self.logger.setLevel(loglvl)
+        logging.captureWarnings(True)
         warnlog = logging.getLogger('py.warnings')
         fh = logging.FileHandler(os.path.join(logdir, 'correlate%srank0%s' % (
             tstr, self.rank)))
-        fh.setLevel(logging.WARNING)
-        if options['debug']:
-            fh.setLevel(logging.DEBUG)
+        fh.setLevel(loglvl)
         self.logger.addHandler(fh)
         warnlog.addHandler(fh)
         fmt = logging.Formatter(
