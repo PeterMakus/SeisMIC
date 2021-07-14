@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 13th July 2021 03:28:54 pm
+Last Modified: Wednesday, 14th July 2021 09:07:14 am
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -25,10 +25,8 @@ from scipy.fftpack import next_fast_len
 from scipy import signal
 from scipy.signal.signaltools import detrend as sp_detrend
 
-# from miic3.utils.nextpowof2 import nextpowerof2
 from miic3.correlate.stream import CorrTrace, CorrStream
 from miic3.trace_data.preprocess import _preprocess
-from miic3.db.asdf_handler import get_available_stations, NoiseDB, NoDataError
 from miic3.db.corr_hdf5 import CorrelationDataBase
 from miic3.trace_data.waveform import Store_Client
 from miic3.utils.fetch_func_from_str import func_from_str
@@ -180,11 +178,11 @@ class Correlator(object):
         """
         netlist, statlist = list(zip(*self.station))
         netcombs, statcombs = compute_network_station_combinations(
-            netlist, statlist)
+            netlist, statlist, method=self.options['combination_method'])
         ex_dict = {}
-        for (n0, n1), (s0, s1) in zip(netcombs, statcombs):
-            nc = '%s-%s' % (n0, n1)
-            sc = '%s-%s' % (s0, s1)
+        for nc, sc in zip(netcombs, statcombs):
+            s0, s1 = sc.split('-')
+            n0, n1 = nc.split('-')
             outf = os.path.join(
                 self.corr_dir, '%s.%s.h5' % (nc, sc))
             if not os.path.isfile(outf):
@@ -327,7 +325,6 @@ class Correlator(object):
             with CorrelationDataBase(outf) as cdb:
                 cdb.add_correlation(cstlist[ii], tag)
 
-
     def _generate_data(self) -> Iterator[Tuple[Stream, bool]]:
         """
         Returns an Iterator that loops over each start and end time with the
@@ -382,6 +379,7 @@ class Correlator(object):
                 startt = UTCDateTime(t) - tl
                 endt = startt + self.options['read_len'] + tl
                 for net, stat in self.station:
+                    # First check whether data exists (before loading)
                     # I might want only this part to be done on rank 0
                     resp = self.store_client.select_inventory_or_load_remote(
                         net, stat)
@@ -1445,6 +1443,51 @@ def clip(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
 def sort_comb_name_alphabetically(
     network1: str, station1: str, network2: str, station2: str) -> Tuple[
         list, list]:
+    """
+    Returns the alphabetically sorted network and station codes from the two
+    station.
+
+    :param network1: network code of first station
+    :type network1: str
+    :param station1: station code of first station
+    :type station1: str
+    :param network2: Network code of second station
+    :type network2: str
+    :param station2: Station Code of second Station
+    :type station2: str
+    :return: A tuple containing the list of the network codes sorted
+        and the list of the station codes sorted.
+    :rtype: Tuple[ list, list]
+
+    Examples
+    --------
+    >>> net1 = 'IU'  # Network Code of first station
+    >>> stat1 = 'HRV'  # Station Code of first station
+    >>> net2 = 'XN'
+    >>> stat2 = 'NEP06'
+    >>> print(sort_comb_name_aphabetically(
+            net1, stat1, net2, stat2))
+    (['IU', 'XN'], ['HRV', 'NEP06'])
+    >>> print(sort_comb_name_aphabetically(
+            net2, stat2, net1, stat1))
+    (['IU', 'XN'], ['HRV', 'NEP06'])
+    >>> # Different combination
+    >>> net1 = 'YP'  # Network Code of first station
+    >>> stat1 = 'AB3'  # Station Code of first station
+    >>> net2 = 'XN'
+    >>> stat2 = 'NEP06'
+    >>> print(sort_comb_name_aphabetically(
+            net1, stat1, net2, stat2))
+    (['XN', 'YP'], ['NEP06', 'AB3'])
+    >>> # Different combination
+    >>> net1 = 'XN'  # Network Code of first station
+    >>> stat1 = 'NEP07'  # Station Code of first station
+    >>> net2 = 'XN'
+    >>> stat2 = 'NEP06'
+    >>> print(sort_comb_name_aphabetically(
+            net1, stat1, net2, stat2))
+    (['XN', 'XN'], ['NEP06', 'NEP07'])
+    """
     sort1 = network1 + station1
     sort2 = network2 + station2
     sort = [sort1, sort2]
@@ -1464,16 +1507,20 @@ def compute_network_station_combinations(
         method: str = 'betweenStations') -> Tuple[list, list]:
     """
     Return the network and station codes of the correlations for the provided
-    network station combinations.
+    lists of networks and stations and the queried combination method.
 
-    :param netlist: List in form
+    :param netlist: List of network codes
     :type netlist: list
-    :param statlist: [description]
+    :param statlist: List of Station Codes
     :type statlist: list
-    :param method: [description], defaults to 'betweenStations'
+    :param method: The combination method to use. Has to be one of the
+        following: `betweenStation`, `betweenComponents`, `autoComponents`,
+        `allSimpleCombinations`, or `allCombinations`,
+        defaults to 'betweenStations'.
     :type method: str, optional
-    :raises ValueError: [description]
-    :return: [description]
+    :raises ValueError: for unkown combination methods.
+    :return: A tuple containing the list of the correlation network code
+        and the list of the correlation station code.
     :rtype: Tuple[list, list]
     """
     netcombs = []
