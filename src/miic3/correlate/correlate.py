@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 15th July 2021 11:02:45 am
+Last Modified: Thursday, 15th July 2021 05:05:36 pm
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -203,6 +203,26 @@ class Correlator(object):
             inv = None
         inv = self.comm.bcast(inv, root=0)
         for st, write_flag in self._generate_data():
+            # collected the different time windows (each process holds a bit)
+            # Gather results
+            stl = self.comm.allgather(st)
+            st = Stream()
+            for stp in stl:
+                st.extend(stp)
+            if self.rank == 0:
+                self.options['combinations'] = calc_cross_combis(
+                    st, self.ex_dict, self.options['combination_method'])
+            else:
+                self.options['combinations'] = None
+            self.options['combinations'] = self.comm.bcast(
+                self.options['combinations'], root=0)
+            if not len(self.options['combinations']):
+            #     # no new combinations for this time period
+            #     self.logger.debug('no new data for times %s-%s' % (
+            #         str(starttrim),
+            #         str(endtrim)))
+                continue
+
             cst.extend(self._pxcorr_inner(st, inv))
             if write_flag:
                 # Here, we can recombine the correlations for the read_len
@@ -351,8 +371,8 @@ class Correlator(object):
                 ends.append(end)
 
             # find already available times
-            ex_dict = self.find_existing_times('subdivision')
-            self.logger.debug('Already existing data: %s' % str(ex_dict))
+            self.ex_dict = self.find_existing_times('subdivision')
+            self.logger.debug('Already existing data: %s' % str(self.ex_dict))
 
         # the time window that the loop will go over
         t0 = UTCDateTime(self.options['read_start']).timestamp
@@ -413,50 +433,41 @@ class Correlator(object):
             st.trim(startt, endt, pad=True)
             mu.stream_require_dtype(st, np.float32)
 
-            stl = self.comm.allgather(st)
-            st = Stream()
-            for stp in stl:
-                st.extend(stp)
+            # We can limit the memory use by doing the gathering on each time
+            # window. ALso, mpi limits the maximum amount of data that can
+            # be sent
 
-            if st.count() == 0:
-                # No time available at none of the stations
-                self.logger.warning(
-                    'No data found for day %s.' % str(UTCDateTime(t)))
-                continue
+            try:
+                # Second loop to return the time window in correlation length
+                for ii, win0 in enumerate(st.slide(
+                    opt['corr_len']-st[0].stats.delta, opt['corr_inc'],
+                        include_partial_windows=True)):
 
-            # Second loop to return the time window in correlation length
-            for ii, win0 in enumerate(st.slide(
-                opt['corr_len']-st[0].stats.delta, opt['corr_inc'],
-                    include_partial_windows=True)):
+                    # We use trim so the windows have the right time and
+                    # are filled with masked arrays for places without values
+                    starttrim = st[0].stats.starttime + ii*opt['corr_inc']
+                    endtrim = st[0].stats.starttime + ii*opt['corr_inc'] +\
+                        opt['corr_len']-st[0].stats.delta
+                    win = win0.trim(starttrim, endtrim, pad=True)
+                    mu.get_valid_traces(win)
+                    if self.options['taper']:
+                        # This could be done in the main script with several cores
+                        # to speed up things a tiny bit
+                        win.taper(max_percentage=0.05)
 
-                # We use trim so the windows have the right time and
-                # are filled with masked arrays for places without values
-                starttrim = st[0].stats.starttime + ii*opt['corr_inc']
-                endtrim = st[0].stats.starttime + ii*opt['corr_inc'] +\
-                    opt['corr_len']-st[0].stats.delta
-                win = win0.trim(starttrim, endtrim, pad=True)
-                mu.get_valid_traces(win)
-                if self.options['taper']:
-                    # This could be done in the main script with several cores
-                    # to speed up things a tiny bit
-                    win.taper(max_percentage=0.05)
-                if self.rank == 0:
-                    self.options['combinations'] = calc_cross_combis(
-                        win, ex_dict, self.options['combination_method'])
-                else:
-                    self.options['combinations'] = None
-                self.options['combinations'] = self.comm.bcast(
-                    self.options['combinations'], root=0)
-                if not len(self.options['combinations']):
-                    # no new combinations for this time period
-                    self.logger.debug('no new data for times %s-%s' % (
-                        str(starttrim),
-                        str(endtrim)))
-                    continue
-                self.logger.debug('Working on correlation times %s-%s' % (
-                    str(win[0].stats.starttime), str(win[0].stats.endtime)))
-                yield win, write_flag
-                write_flag = False
+                    self.logger.debug('Working on correlation times %s-%s' % (
+                        str(win[0].stats.starttime), str(win[0].stats.endtime)))
+                    yield win, write_flag
+                    write_flag = False
+            except IndexError:
+                # processes with no data end up here
+                win = Stream()
+                # A little dirty, but it has to go through an equally long loop
+                # else this will cause a deadlock
+                for _ in range(int(np.ceil(
+                        self.options['read_len']/opt['corr_inc']))):
+                    yield win, write_flag
+                    write_flag = False
 
     def _pxcorr_matrix(self, A: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         # time domain processing
