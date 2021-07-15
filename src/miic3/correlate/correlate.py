@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 14th July 2021 04:28:10 pm
+Last Modified: Thursday, 15th July 2021 11:02:45 am
 '''
 from copy import deepcopy
 from typing import Iterator, Tuple
@@ -30,15 +30,7 @@ from miic3.trace_data.preprocess import _preprocess
 from miic3.db.corr_hdf5 import CorrelationDataBase
 from miic3.trace_data.waveform import Store_Client
 from miic3.utils.fetch_func_from_str import func_from_str
-from miic3.utils.miic_utils import discard_short_traces, get_valid_traces
-
-
-log_lvl = {
-    'DEBUG': logging.DEBUG,
-    'INFO': logging.INFO,
-    'WARNING': logging.WARNING,
-    'CRITICAL': logging.CRITICAL,
-    'ERROR': logging.ERROR}
+from miic3.utils import miic_utils as mu
 
 
 class Correlator(object):
@@ -85,7 +77,7 @@ class Correlator(object):
             tstr = None
         tstr = self.comm.bcast(tstr, root=0)
 
-        loglvl = log_lvl[options['log_level'].upper()]
+        loglvl = mu.log_lvl[options['log_level'].upper()]
         self.logger = logging.Logger("miic3.Correlator0%s" % str(self.rank))
         self.logger.setLevel(loglvl)
         logging.captureWarnings(True)
@@ -375,36 +367,56 @@ class Correlator(object):
 
         for t in loop_window:
             write_flag = True  # Write length is same as read length
+            st = Stream()
+            startt = UTCDateTime(t) - tl
+            endt = startt + self.options['read_len'] + tl
             if self.rank == 0:
                 st = Stream()
+                resp = Inventory()
                 startt = UTCDateTime(t) - tl
                 endt = startt + self.options['read_len'] + tl
                 for net, stat in self.station:
                     # First check whether data exists (before loading)
                     # I might want only this part to be done on rank 0
-                    resp = self.store_client.select_inventory_or_load_remote(
-                        net, stat)
+                    resp.extend(
+                        self.store_client.select_inventory_or_load_remote(
+                            net, stat))
                     stext = self.store_client._load_local(
                         net, stat, '*', '*', startt, endt, True, False)
-                    get_valid_traces(stext)
+                    mu.get_valid_traces(stext)
                     if stext is None or not len(stext):
                         continue
-                    st.extend(_preprocess(
-                        stext, self.store_client, self.sampling_rate,
-                        resp, self.options['remove_response'], tl))
-                # preprocessing on stream basis
-                # Maybe a bad place to do that?
-                # Discard traces that are less then 5% of correlation length
-                discard_short_traces(st, opt['corr_len']/20)
-                if 'preProcessing' in self.options.keys():
-                    for procStep in self.options['preProcessing']:
-                        func = func_from_str(procStep['function'])
-                        st = func(st, **procStep['args'])
-                st.merge()
-                st.trim(startt, endt, pad=True)
+                    st.extend(stext)
+
+                # pack st to chunks to scatter
+                chunks = [Stream() for _ in range(self.psize)]
+                for tr, chunk in enumerate(st):
+                    chunks[tr % self.psize].append(chunk)
             else:
                 st = None
-            st = self.comm.bcast(st, root=0)
+                chunks = None
+                resp = None
+            resp = self.comm.bcast(resp, root=0)
+            st = self.comm.scatter(chunks, root=0)
+            st = _preprocess(
+                st, self.store_client, self.sampling_rate,
+                resp, self.options['remove_response'], tl)
+            # preprocessing on stream basis
+            # Maybe a bad place to do that?
+            # Discard traces that are less then 5% of correlation length
+            mu.discard_short_traces(st, opt['corr_len']/20)
+            if 'preProcessing' in self.options.keys():
+                for procStep in self.options['preProcessing']:
+                    func = func_from_str(procStep['function'])
+                    st = func(st, **procStep['args'])
+            st.merge()
+            st.trim(startt, endt, pad=True)
+            mu.stream_require_dtype(st, np.float32)
+
+            stl = self.comm.allgather(st)
+            st = Stream()
+            for stp in stl:
+                st.extend(stp)
 
             if st.count() == 0:
                 # No time available at none of the stations
@@ -423,7 +435,7 @@ class Correlator(object):
                 endtrim = st[0].stats.starttime + ii*opt['corr_inc'] +\
                     opt['corr_len']-st[0].stats.delta
                 win = win0.trim(starttrim, endtrim, pad=True)
-                get_valid_traces(win)
+                mu.get_valid_traces(win)
                 if self.options['taper']:
                     # This could be done in the main script with several cores
                     # to speed up things a tiny bit

@@ -8,10 +8,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Tuesday, 13th July 2021 04:16:47 pm
+Last Modified: Thursday, 15th July 2021 11:01:06 am
 '''
 from typing import List, Tuple
 from warnings import warn
+import logging
 
 import numpy as np
 from obspy import Inventory, Stream, Trace, UTCDateTime
@@ -19,6 +20,13 @@ from obspy.core import Stats, AttribDict
 
 # zero lag time
 lag0 = UTCDateTime(0)
+
+log_lvl = {
+    'DEBUG': logging.DEBUG,
+    'INFO': logging.INFO,
+    'WARNING': logging.WARNING,
+    'CRITICAL': logging.CRITICAL,
+    'ERROR': logging.ERROR}
 
 
 def trace_calc_az_baz_dist(stats1: Stats, stats2: Stats) -> Tuple[
@@ -480,3 +488,21 @@ def discard_short_traces(st: Stream, length: float):
         if tr.stats.npts/tr.stats.sampling_rate <= length:
             st.remove(tr)
     return
+
+def stream_require_dtype(st: Stream, dtype: type) -> Stream:
+    """
+    Often it might make sense to change the data type of seismic data before
+    saving or broadcasting (e.g., to save memory). This function allows
+    to do so
+
+    :param st: input Stream
+    :type st: Stream
+    :param dtype: desired datatype, e.g. np.float32
+    :type dtype: type
+    :return: Stream with data in new dtype
+    :rtype: Stream
+
+    .. note:: This operation is performed in place.
+    """
+    for tr in st:
+        tr.data = np.require(tr.data, dtype)

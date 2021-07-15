@@ -4,7 +4,7 @@ A module to create seismic ambient noise correlations.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 4th March 2021 03:54:06 pm
-Last Modified: Monday, 12th July 2021 05:34:21 pm
+Last Modified: Thursday, 15th July 2021 08:51:42 am
 '''
 import os
 from typing import Tuple
@@ -17,7 +17,7 @@ from pyasdf.asdf_data_set import ASDFDataSet
 
 from .waveform import Store_Client
 from miic3.db.asdf_handler import NoiseDB
-from miic3.utils.miic_utils import resample_or_decimate, cos_taper_st,\
+from miic3.utils.miic_utils import resample_or_decimate, cos_taper_st, stream_require_dtype,\
     trim_stream_delta
 
 
@@ -425,14 +425,12 @@ sample rate (%s Hz).' % (str(sampling_rate), str(
             st.remove_response(taper=False)
             store_client._write_inventory(ninv)
 
-    # st.detrend()
-    for tr in st:
-        # !Last operation before saving!
-        # The actual data in the mseeds was changed from int to float64
-        # now,
-        # Save some space by changing it back to 32 bit (most of the
-        # digitizers work at 24 bit anyways)
-        tr.data = np.require(tr.data, np.float32)
+    # !Last operation before saving!
+    # The actual data in the mseeds was changed from int to float64
+    # now,
+    # Save some space by changing it back to 32 bit (most of the
+    # digitizers work at 24 bit anyways)
+    stream_require_dtype(st, np.float32)
     return st
 
 

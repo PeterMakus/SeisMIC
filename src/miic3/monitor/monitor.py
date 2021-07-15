@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 12th July 2021 03:51:13 pm
+Last Modified: Thursday, 15th July 2021 11:06:59 am
 '''
 import logging
 import os
@@ -19,6 +19,7 @@ import numpy as np
 from obspy import UTCDateTime
 
 from miic3.db.corr_hdf5 import CorrelationDataBase
+from miic3.utils.miic_utils import log_lvl
 # 12.07 Not needed here anymore, I am 100% sure that this produces exactly
 # the same results as the old miic
 # from miic3.utils.io import corrmat_to_corrbulk, load_corrbulk_from_mat
@@ -50,6 +51,8 @@ class Monitor(object):
             os.makedirs(logdir, exist_ok=True)
 
         # Logging - rank dependent
+        loglvl = log_lvl[self.options['log_level']]
+
         if self.rank == 0:
             tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H:%M')
         else:
@@ -57,17 +60,14 @@ class Monitor(object):
         tstr = self.comm.bcast(tstr, root=0)
         self.logger = logging.getLogger(
             "miic3.monitor.Monitor0%s" % str(self.rank))
-        self.logger.setLevel(logging.WARNING)
-        if options['debug']:
-            self.logger.setLevel(logging.DEBUG)
-            # also catch the warnings
-            logging.captureWarnings(True)
+        self.logger.setLevel(loglvl)
+
+        # also catch the warnings
+        logging.captureWarnings(True)
         warnlog = logging.getLogger('py.warnings')
         fh = logging.FileHandler(os.path.join(logdir, 'monitor%srank0%s' % (
             tstr, self.rank)))
-        fh.setLevel(logging.WARNING)
-        if options['debug']:
-            fh.setLevel(logging.DEBUG)
+        fh.setLevel(loglvl)
         self.logger.addHandler(fh)
         warnlog.addHandler(fh)
         fmt = logging.Formatter(
@@ -118,7 +118,7 @@ and network combinations %s' % str(
             channel: str):
         self.logger.info('Computing velocity change for file: %s and channel:\
 %s' % (corr_file, channel))
-        with CorrelationDataBase(corr_file, 'r') as cdb:
+        with CorrelationDataBase(corr_file, mode='r') as cdb:
             # get the corrstream containing all the corrdata for this combi
             cst = cdb.get_data(network, station, channel, tag)
         cb = cst.create_corr_bulk(inplace=True)
@@ -178,7 +178,7 @@ and network combinations %s' % str(
         if self.rank == 0:
             plist = []
             for f, n, s in zip(self.infiles, self.netlist, self.statlist):
-                with CorrelationDataBase(f, 'r') as cdb:
+                with CorrelationDataBase(f, mode='r') as cdb:
                     ch = cdb.get_available_channels(
                         tag, n, s)
                     plist.extend([f, n, s, c] for c in ch)
