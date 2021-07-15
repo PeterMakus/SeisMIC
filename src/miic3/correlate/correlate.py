@@ -7,10 +7,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 15th July 2021 05:05:36 pm
+Last Modified: Thursday, 15th July 2021 06:02:03 pm
 '''
 from copy import deepcopy
-from typing import Iterator, Tuple
+from typing import Iterator, List, Tuple
 from warnings import warn
 import os
 import logging
@@ -26,7 +26,6 @@ from scipy import signal
 from scipy.signal.signaltools import detrend as sp_detrend
 
 from miic3.correlate.stream import CorrTrace, CorrStream
-from miic3.trace_data.preprocess import _preprocess
 from miic3.db.corr_hdf5 import CorrelationDataBase
 from miic3.trace_data.waveform import Store_Client
 from miic3.utils.fetch_func_from_str import func_from_str
@@ -203,25 +202,6 @@ class Correlator(object):
             inv = None
         inv = self.comm.bcast(inv, root=0)
         for st, write_flag in self._generate_data():
-            # collected the different time windows (each process holds a bit)
-            # Gather results
-            stl = self.comm.allgather(st)
-            st = Stream()
-            for stp in stl:
-                st.extend(stp)
-            if self.rank == 0:
-                self.options['combinations'] = calc_cross_combis(
-                    st, self.ex_dict, self.options['combination_method'])
-            else:
-                self.options['combinations'] = None
-            self.options['combinations'] = self.comm.bcast(
-                self.options['combinations'], root=0)
-            if not len(self.options['combinations']):
-            #     # no new combinations for this time period
-            #     self.logger.debug('no new data for times %s-%s' % (
-            #         str(starttrim),
-            #         str(endtrim)))
-                continue
 
             cst.extend(self._pxcorr_inner(st, inv))
             if write_flag:
@@ -357,22 +337,10 @@ class Correlator(object):
         that were active during this time.
         :rtype: Iterator[Stream]
         """
-        opt = self.options['subdivision']
         if self.rank == 0:
-            starts = []  # start of each time window
-            ends = []
-            for n, s in self.station:
-                start, end = self.store_client._get_times(n, s)
-                if not start:
-                    warn(
-                        'No mseed files found in database for station %s.%s.'
-                        % (n, s))
-                starts.append(start)
-                ends.append(end)
-
             # find already available times
             self.ex_dict = self.find_existing_times('subdivision')
-            self.logger.debug('Already existing data: %s' % str(self.ex_dict))
+            self.logger.info('Already existing data: %s' % str(self.ex_dict))
 
         # the time window that the loop will go over
         t0 = UTCDateTime(self.options['read_start']).timestamp
@@ -387,7 +355,6 @@ class Correlator(object):
 
         for t in loop_window:
             write_flag = True  # Write length is same as read length
-            st = Stream()
             startt = UTCDateTime(t) - tl
             endt = startt + self.options['read_len'] + tl
             if self.rank == 0:
@@ -408,7 +375,8 @@ class Correlator(object):
                         continue
                     st.extend(stext)
 
-                # pack st to chunks to scatter
+                # DISTRIBUTE results
+                # pack st to chunks to scatter them
                 chunks = [Stream() for _ in range(self.psize)]
                 for tr, chunk in enumerate(st):
                     chunks[tr % self.psize].append(chunk)
@@ -418,56 +386,38 @@ class Correlator(object):
                 resp = None
             resp = self.comm.bcast(resp, root=0)
             st = self.comm.scatter(chunks, root=0)
-            st = _preprocess(
-                st, self.store_client, self.sampling_rate,
-                resp, self.options['remove_response'], tl)
-            # preprocessing on stream basis
-            # Maybe a bad place to do that?
-            # Discard traces that are less then 5% of correlation length
-            mu.discard_short_traces(st, opt['corr_len']/20)
-            if 'preProcessing' in self.options.keys():
-                for procStep in self.options['preProcessing']:
-                    func = func_from_str(procStep['function'])
-                    st = func(st, **procStep['args'])
-            st.merge()
-            st.trim(startt, endt, pad=True)
-            mu.stream_require_dtype(st, np.float32)
 
-            # We can limit the memory use by doing the gathering on each time
-            # window. ALso, mpi limits the maximum amount of data that can
-            # be sent
+            # Stream based preprocessing
+            st = preprocess_stream(
+                st, self.store_client, resp, startt, endt, tl, **self.options)
 
-            try:
-                # Second loop to return the time window in correlation length
-                for ii, win0 in enumerate(st.slide(
-                    opt['corr_len']-st[0].stats.delta, opt['corr_inc'],
-                        include_partial_windows=True)):
-
-                    # We use trim so the windows have the right time and
-                    # are filled with masked arrays for places without values
-                    starttrim = st[0].stats.starttime + ii*opt['corr_inc']
-                    endtrim = st[0].stats.starttime + ii*opt['corr_inc'] +\
-                        opt['corr_len']-st[0].stats.delta
-                    win = win0.trim(starttrim, endtrim, pad=True)
-                    mu.get_valid_traces(win)
-                    if self.options['taper']:
-                        # This could be done in the main script with several cores
-                        # to speed up things a tiny bit
-                        win.taper(max_percentage=0.05)
-
-                    self.logger.debug('Working on correlation times %s-%s' % (
-                        str(win[0].stats.starttime), str(win[0].stats.endtime)))
-                    yield win, write_flag
-                    write_flag = False
-            except IndexError:
-                # processes with no data end up here
+            # Slice the stream in correlation length
+            for ii, win in enumerate(generate_corr_inc(st, **self.options)):
+                winstart = startt + ii*self.options['subdivision']['corr_inc']
+                winend = winstart + ii*self.options['subdivision']['corr_len']
+                # collected the different time windows
+                # Gather results
+                winl = self.comm.allgather(win)
                 win = Stream()
-                # A little dirty, but it has to go through an equally long loop
-                # else this will cause a deadlock
-                for _ in range(int(np.ceil(
-                        self.options['read_len']/opt['corr_inc']))):
-                    yield win, write_flag
-                    write_flag = False
+                for winp in winl:
+                    win.extend(winp)
+                if self.rank == 0:
+                    self.options['combinations'] = calc_cross_combis(
+                        win, self.ex_dict, self.options['combination_method'])
+                else:
+                    self.options['combinations'] = None
+                self.options['combinations'] = self.comm.bcast(
+                    self.options['combinations'], root=0)
+                if not len(self.options['combinations']):
+                    # no new combinations for this time period
+                    self.logger.info('no new data for times %s-%s' % (
+                        str(winstart),
+                        str(winend)))
+                    continue
+                self.logger.debug('Working on correlation times %s-%s' % (
+                    str(win[0].stats.starttime), str(win[0].stats.endtime)))
+                yield win, write_flag
+                write_flag = False
 
     def _pxcorr_matrix(self, A: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         # time domain processing
@@ -1595,3 +1545,96 @@ def compute_network_station_combinations(
                          "'betweenComponents', 'autoComponents', "
                          "'allSimpleCombinations' or 'allCombinations').")
     return netcombs, statcombs
+
+
+def preprocess_stream(
+    st: Stream, store_client: Store_Client, inv: Inventory or None,
+    startt: float, endt: float, taper_len: float, sampling_rate: float,
+    remove_response: bool, subdivision: dict, preProcessing: List[dict] = None,
+        **kwargs) -> Tuple[Stream, Inventory]:
+    """
+    Private method that executes the preprocessing steps on a *per Stream*
+    basis.
+    """
+    if not st:
+        return st
+
+    st.sort(keys=['starttime'])
+    # Check sampling frequency
+    if sampling_rate > st[0].stats.sampling_rate:
+        raise ValueError(
+            'The new sample rate (%sHz) is higher than the trace\'s native\
+sample rate (%s Hz).' % (str(sampling_rate), str(
+                    st[0].stats.sampling_rate)))
+
+    # Downsample
+    # AA-Filter is done in this function as well
+    st = mu.resample_or_decimate(st, sampling_rate)
+
+    if remove_response:
+        # taper before instrument response removal
+        if taper_len:
+            # st.taper(None, max_length=taper_len)
+            st = mu.cos_taper_st(st, taper_len, False)
+        try:
+            if inv:
+                ninv = inv
+                st.attach_response(ninv)
+            st.remove_response(taper=False)  # Changed for testing purposes
+        except ValueError:
+            print('Station response not found ... loading from remote.')
+            # missing station response
+            ninv = store_client.rclient.get_stations(
+                network=st[0].stats.network, station=st[0].stats.station,
+                channel='*', starttime=st[0].stats.starttime,
+                endtime=st[-1].stats.endtime, level='response')
+            st.attach_response(ninv)
+            st.remove_response(taper=False)
+            store_client._write_inventory(ninv)
+
+    mu.discard_short_traces(st, subdivision['corr_len']/20)
+    if preProcessing:
+        for procStep in preProcessing:
+            func = func_from_str(procStep['function'])
+            st = func(st, **procStep['args'])
+    st.merge()
+    st.trim(startt, endt, pad=True)
+
+    # !Last operation before saving!
+    # The actual data in the mseeds was changed from int to float64
+    # now,
+    # Save some space by changing it back to 32 bit (most of the
+    # digitizers work at 24 bit anyways)
+    mu.stream_require_dtype(st, np.float32)
+    return st
+
+
+def generate_corr_inc(
+        st: Stream, subdivision: dict, taper: bool,
+        read_len: int, **kwargs):
+    try:
+        # Second loop to return the time window in correlation length
+        for ii, win0 in enumerate(st.slide(
+            subdivision['corr_len']-st[0].stats.delta, subdivision['corr_inc'],
+                include_partial_windows=True)):
+
+            # We use trim so the windows have the right time and
+            # are filled with masked arrays for places without values
+            starttrim = st[0].stats.starttime + ii*subdivision['corr_inc']
+            endtrim = st[0].stats.starttime + ii*subdivision['corr_inc'] +\
+                subdivision['corr_len']-st[0].stats.delta
+            win = win0.trim(starttrim, endtrim, pad=True)
+            mu.get_valid_traces(win)
+            if taper:
+                win.taper(max_percentage=0.05)
+
+            yield win
+
+    except IndexError:
+        # processes with no data end up here
+        win = Stream()
+        # A little dirty, but it has to go through an equally long loop
+        # else this will cause a deadlock
+        for _ in range(int(np.ceil(
+                read_len/subdivision['corr_inc']))):
+            yield win
