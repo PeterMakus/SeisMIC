@@ -7,10 +7,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 15th July 2021 06:02:03 pm
+Last Modified: Friday, 16th July 2021 10:48:58 am
 '''
 from copy import deepcopy
-from typing import Iterator, List, Tuple
+from typing import Generator, Iterator, List, Tuple
 from warnings import warn
 import os
 import logging
@@ -340,7 +340,10 @@ class Correlator(object):
         if self.rank == 0:
             # find already available times
             self.ex_dict = self.find_existing_times('subdivision')
-            self.logger.info('Already existing data: %s' % str(self.ex_dict))
+        else:
+            self.ex_dict = None
+        self.ex_dict = self.comm.bcast(self.ex_dict, root=0)
+        self.logger.info('Already existing data: %s' % str(self.ex_dict))
 
         # the time window that the loop will go over
         t0 = UTCDateTime(self.options['read_start']).timestamp
@@ -357,35 +360,33 @@ class Correlator(object):
             write_flag = True  # Write length is same as read length
             startt = UTCDateTime(t) - tl
             endt = startt + self.options['read_len'] + tl
-            if self.rank == 0:
-                st = Stream()
-                resp = Inventory()
-                startt = UTCDateTime(t) - tl
-                endt = startt + self.options['read_len'] + tl
-                for net, stat in self.station:
-                    # First check whether data exists (before loading)
-                    # I might want only this part to be done on rank 0
-                    resp.extend(
-                        self.store_client.select_inventory_or_load_remote(
-                            net, stat))
-                    stext = self.store_client._load_local(
-                        net, stat, '*', '*', startt, endt, True, False)
-                    mu.get_valid_traces(stext)
-                    if stext is None or not len(stext):
-                        continue
-                    st.extend(stext)
+            # if self.rank == 0:
+            st = Stream()
+            resp = Inventory()
+            startt = UTCDateTime(t) - tl
+            endt = startt + self.options['read_len'] + tl
 
-                # DISTRIBUTE results
-                # pack st to chunks to scatter them
-                chunks = [Stream() for _ in range(self.psize)]
-                for tr, chunk in enumerate(st):
-                    chunks[tr % self.psize].append(chunk)
-            else:
-                st = None
-                chunks = None
-                resp = None
-            resp = self.comm.bcast(resp, root=0)
-            st = self.comm.scatter(chunks, root=0)
+            # Decide which process reads data from which station
+            # Better than just letting one core read as this avoids having to
+            # send very big chunks of data using MPI (MPI communication does
+            # not support more than 2GB/comm operation)
+            pmap = (np.arange(len(self.station))*self.psize)/len(self.station)
+            pmap = pmap.astype(np.int32)
+            ind = pmap == self.rank
+            ind = np.arange(len(self.station))[ind]
+
+            for net, stat in np.array(self.station)[ind]:
+                # First check whether data exists (before loading)
+                # I might want only this part to be done on rank 0
+                resp.extend(
+                    self.store_client.select_inventory_or_load_remote(
+                        net, stat))
+                stext = self.store_client._load_local(
+                    net, stat, '*', '*', startt, endt, True, False)
+                mu.get_valid_traces(stext)
+                if stext is None or not len(stext):
+                    continue
+                st.extend(stext)
 
             # Stream based preprocessing
             st = preprocess_stream(
@@ -1549,12 +1550,43 @@ def compute_network_station_combinations(
 
 def preprocess_stream(
     st: Stream, store_client: Store_Client, inv: Inventory or None,
-    startt: float, endt: float, taper_len: float, sampling_rate: float,
-    remove_response: bool, subdivision: dict, preProcessing: List[dict] = None,
-        **kwargs) -> Tuple[Stream, Inventory]:
+    startt: UTCDateTime, endt: UTCDateTime, taper_len: float,
+    sampling_rate: float, remove_response: bool, subdivision: dict,
+    preProcessing: List[dict] = None,
+        **kwargs) -> Stream:
     """
-    Private method that executes the preprocessing steps on a *per Stream*
-    basis.
+    Does the preprocessing on a per stream basis. Most of the parameters can be
+    fed in by using the "yaml" dict as kwargs.
+
+    :param st: Input Stream to be processed
+    :type st: :class:`obspy.core.stream.Stream`
+    :param store_client: Store Client for the database
+    :type store_client: :class:`~miic3.trace_data.waveform.Store_Client`
+    :param inv: Station response, can be None if ``remove_response=False``.
+    :type inv: Inventory or None
+    :param startt: Starttime that the stream should be clipped / padded to.
+    :type startt: :class:`obspy.UTCDateTime`
+    :param endt: Endtime that the stream should be clipped / padded to.
+    :type endt: :class:`obspy.UTCDateTime`
+    :param taper_len: If the instrument response is removed, one might want to
+        taper to mitigate the acausal effects of the deconvolution. This is
+        the length of such a taper in seconds.
+    :type taper_len: float
+    :param sampling_rate: the sampling rate that the stream should be resampled
+        to in Hz.
+    :type sampling_rate: float
+    :param remove_response: Should the instrument response be removed?
+    :type remove_response: bool
+    :param subdivision: Dictionary holding information about the correlation
+        lenghts and increments.
+    :type subdivision: dict
+    :param preProcessing: List holding information about the different external
+        preprocessing functions to be applied, defaults to None
+    :type preProcessing: List[dict], optional
+    :raises ValueError: For sampling rates higher than the stream's native
+        sampling rate (upsampling is not permitted).
+    :return: The preprocessed stream.
+    :rtype: :class:`obspy.core.stream.Stream`
     """
     if not st:
         return st
@@ -1610,8 +1642,26 @@ sample rate (%s Hz).' % (str(sampling_rate), str(
 
 
 def generate_corr_inc(
-        st: Stream, subdivision: dict, taper: bool,
-        read_len: int, **kwargs):
+    st: Stream, subdivision: dict, taper: bool, read_len: int,
+        **kwargs) -> Iterator[Stream]:
+    """
+    Subdivides the preprocessed streams into parts of equal length using
+    the parameters ``cor_inc`` and ``cor_len`` in ``subdivision``.
+    This function can be acessed by several processes in parallel
+
+    :param st: The preprocessed input stream
+    :type st: :class:`obspy.core.stream.Stream`
+    :param subdivision: Dictionary holding the information about the
+        correlation length and increment.
+    :type subdivision: dict
+    :param taper: taper each subdivision?
+    :type taper: bool
+    :param read_len: Length to be read from disk in seconds
+    :type read_len: int
+    :yield: Equal length windows, padded with nans / masked if data is missing.
+    :rtype: Generator[Stream]
+    """
+
     try:
         # Second loop to return the time window in correlation length
         for ii, win0 in enumerate(st.slide(

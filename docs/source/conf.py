@@ -35,7 +35,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.githubpages',
               'sphinx.ext.napoleon',
               'sphinx.ext.autosummary']
-#autosummary_generate = True
+# autosummary_generate = True
 
 # For docstring __init__ documentation
 autoclass_content = 'both'
@@ -51,7 +51,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # -- Autodoc options ---------------------------------------------------------
 autodoc_default_options = {
-    #'members': 'var1, var2',
+    # 'members': 'var1, var2',
     'member-order': 'bysource',
     'undoc-members': True,
     'exclude-members': '__init__',
