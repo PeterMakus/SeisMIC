@@ -8,12 +8,12 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 17th May 2021 12:25:54 pm
-Last Modified: Friday, 2nd July 2021 11:57:22 am
+Last Modified: Friday, 16th July 2021 02:55:54 pm
 '''
 
 import os
 import numpy as np
-import matplotlib
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 
@@ -25,8 +25,8 @@ def set_mpl_params():
         'figure.dpi': 150,
         'axes.labelweight': 'bold',
         'axes.linewidth': .5,
-        'axes.labelsize': 14,
-        'axes.titlesize': 18,
+        'axes.labelsize': 13,
+        'axes.titlesize': 14,
         'axes.titleweight': 'bold',
         'xtick.labelsize': 13,
         'xtick.direction': 'in',
@@ -55,7 +55,7 @@ def set_mpl_params():
         'legend.scatterpoints': 3,
         'legend.edgecolor': 'inherit'
     }
-    matplotlib.rcParams.update(params)
+    mpl.rcParams.update(params)
 
 
 def remove_all(ax=None, top=False, bottom=False, left=False, right=False,
@@ -108,6 +108,7 @@ def plot_correlation(
         ax = plt.gca(zorder=9999999)
         axtmp = None
     else:
+        fig = plt.gcf()
         bbox = ax.get_window_extent().transformed(
             fig.dpi_scale_trans.inverted())
         width, height = bbox.width, bbox.height
@@ -161,3 +162,4 @@ def plot_correlation(
             + ".pdf")
         plt.savefig(filename, format="pdf")
     return ax
+

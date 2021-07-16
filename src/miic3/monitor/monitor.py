@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Thursday, 15th July 2021 11:06:59 am
+Last Modified: Friday, 16th July 2021 04:23:17 pm
 '''
 import logging
 import os
@@ -165,6 +165,12 @@ and network combinations %s' % str(
         outf = os.path.join(
             self.outdir, 'DV-%s.%s.%s' % (network, station, channel))
         dv.save(outf)
+        if self.options['dv']['plot_vel_change']:
+            fname = '%s_%s_%s' % (
+                dv.stats.network, dv.stats.station, dv.stats.channel)
+            dv.plot(
+                save_dir=self.options['fig_subdir'], figure_file_name=fname,
+                normalize_simmat=True, sim_mat_Clim=[-1, 1])
 
     def compute_velocity_change_bulk(self):
         # Decide whether to use already stacked data

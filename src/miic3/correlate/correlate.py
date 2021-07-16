@@ -7,10 +7,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 16th July 2021 10:48:58 am
+Last Modified: Friday, 16th July 2021 01:56:17 pm
 '''
 from copy import deepcopy
-from typing import Generator, Iterator, List, Tuple
+from typing import Iterator, List, Tuple
 from warnings import warn
 import os
 import logging
@@ -340,10 +340,7 @@ class Correlator(object):
         if self.rank == 0:
             # find already available times
             self.ex_dict = self.find_existing_times('subdivision')
-        else:
-            self.ex_dict = None
-        self.ex_dict = self.comm.bcast(self.ex_dict, root=0)
-        self.logger.info('Already existing data: %s' % str(self.ex_dict))
+            self.logger.info('Already existing data: %s' % str(self.ex_dict))
 
         # the time window that the loop will go over
         t0 = UTCDateTime(self.options['read_start']).timestamp
@@ -356,11 +353,11 @@ class Correlator(object):
         else:
             tl = 0
 
+        # Loop over read increments
         for t in loop_window:
             write_flag = True  # Write length is same as read length
             startt = UTCDateTime(t) - tl
             endt = startt + self.options['read_len'] + tl
-            # if self.rank == 0:
             st = Stream()
             resp = Inventory()
             startt = UTCDateTime(t) - tl
@@ -375,9 +372,9 @@ class Correlator(object):
             ind = pmap == self.rank
             ind = np.arange(len(self.station))[ind]
 
+            # loop over queried stations
             for net, stat in np.array(self.station)[ind]:
-                # First check whether data exists (before loading)
-                # I might want only this part to be done on rank 0
+                # Load data
                 resp.extend(
                     self.store_client.select_inventory_or_load_remote(
                         net, stat))
@@ -385,6 +382,7 @@ class Correlator(object):
                     net, stat, '*', '*', startt, endt, True, False)
                 mu.get_valid_traces(stext)
                 if stext is None or not len(stext):
+                    # No data for this station to read
                     continue
                 st.extend(stext)
 
@@ -393,15 +391,18 @@ class Correlator(object):
                 st, self.store_client, resp, startt, endt, tl, **self.options)
 
             # Slice the stream in correlation length
+            # -> Loop over correlation increments
             for ii, win in enumerate(generate_corr_inc(st, **self.options)):
                 winstart = startt + ii*self.options['subdivision']['corr_inc']
                 winend = winstart + ii*self.options['subdivision']['corr_len']
-                # collected the different time windows
-                # Gather results
+
+                # Gather time windows from all stations to all cores
                 winl = self.comm.allgather(win)
                 win = Stream()
                 for winp in winl:
                     win.extend(winp)
+
+                # Get correlation combinations
                 if self.rank == 0:
                     self.options['combinations'] = calc_cross_combis(
                         win, self.ex_dict, self.options['combination_method'])
@@ -409,6 +410,7 @@ class Correlator(object):
                     self.options['combinations'] = None
                 self.options['combinations'] = self.comm.bcast(
                     self.options['combinations'], root=0)
+
                 if not len(self.options['combinations']):
                     # no new combinations for this time period
                     self.logger.info('no new data for times %s-%s' % (

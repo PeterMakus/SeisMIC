@@ -8,10 +8,13 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Monday, 5th July 2021 02:55:57 pm
+Last Modified: Friday, 16th July 2021 02:36:59 pm
 '''
 
+from datetime import datetime
+from typing import List, Tuple
 import numpy as np
+from miic3.plot.plot_dv import plot_dv
 
 from miic3.utils.miic_utils import save_header_to_np_array, \
     load_header_from_np_array
@@ -51,6 +54,15 @@ class DV(object):
             path, corr=self.corr, value=self.value, sim_mat=self.sim_mat,
             second_axis=self.second_axis, method_array=method_array,
             vt_array=vt_array, **kwargs)
+
+    def plot(
+        self, save_dir: str = '.', figure_file_name: str = None,
+        mark_time: datetime = None, normalize_simmat: bool = False,
+        sim_mat_Clim: List[float] = [],
+            figsize: Tuple[float, float] = (9, 11), dpi: int = 72):
+        plot_dv(
+            self.__dict__, save_dir, figure_file_name, mark_time,
+            normalize_simmat, sim_mat_Clim, figsize, dpi)
 
 
 def read_dv(path: str) -> DV:
