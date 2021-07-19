@@ -7,18 +7,26 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 1st June 2021 10:42:03 am
-Last Modified: Friday, 11th June 2021 02:00:45 pm
+Last Modified: Monday, 19th July 2021 11:35:11 am
 '''
+from copy import deepcopy
 import unittest
 from unittest.mock import patch, MagicMock
 import warnings
 
 from obspy import read, UTCDateTime
+from obspy.core import AttribDict
 import numpy as np
 import h5py
+import yaml
 
 from miic3.db import corr_hdf5
 from miic3.correlate.stream import CorrStream, CorrTrace
+
+
+with open('params.yaml') as file:
+    co = yaml.load(file, Loader=yaml.FullLoader)['co']
+    co['corr_args']['combinations'] = []
 
 
 class TestConvertHeaderToHDF5(unittest.TestCase):
@@ -121,7 +129,7 @@ class TestDBHandler(unittest.TestCase):
     def setUp(self, super_mock):
         self.file_mock = MagicMock()
         super_mock.return_value = self.file_mock
-        self.dbh = corr_hdf5.DBHandler('a', 'r', 'gzip9')
+        self.dbh = corr_hdf5.DBHandler('a', 'r', 'gzip9', None)
         tr = read()[0]
         tr.data = np.ones_like(tr.data, dtype=int)
         tr.stats['corr_start'] = tr.stats.starttime
@@ -140,13 +148,13 @@ class TestDBHandler(unittest.TestCase):
     def test_forbidden_compression(self, super_mock):
         super_mock.return_value = None
         with self.assertRaises(ValueError):
-            _ = corr_hdf5.DBHandler('a', 'a', 'notexisting5')
+            _ = corr_hdf5.DBHandler('a', 'a', 'notexisting5', None)
 
     @patch('miic3.db.corr_hdf5.super')
     def test_forbidden_compression_level(self, super_mock):
         super_mock.return_value = None
         with warnings.catch_warnings(record=True) as w:
-            dbh = corr_hdf5.DBHandler('a', 'a', 'gzip10')
+            dbh = corr_hdf5.DBHandler('a', 'a', 'gzip10', None)
             self.assertEqual(dbh.compression_opts, 9)
             self.assertEqual(len(w), 1)
 
@@ -154,13 +162,13 @@ class TestDBHandler(unittest.TestCase):
     def test_no_compression_level(self, super_mock):
         super_mock.return_value = None
         with self.assertRaises(IndexError):
-            _ = corr_hdf5.DBHandler('a', 'a', 'gzip')
+            _ = corr_hdf5.DBHandler('a', 'a', 'gzip', None)
 
     @patch('miic3.db.corr_hdf5.super')
     def test_no_compression_name(self, super_mock):
         super_mock.return_value = None
         with self.assertRaises(IndexError):
-            _ = corr_hdf5.DBHandler('a', 'a', '9')
+            _ = corr_hdf5.DBHandler('a', 'a', '9', None)
 
     def test_add_already_available_data(self):
         st = self.ctr.stats
@@ -181,7 +189,7 @@ class TestDBHandler(unittest.TestCase):
     @patch('miic3.db.corr_hdf5.super')
     def test_add_different_object(self, super_mock):
         super_mock.return_value = None
-        dbh = corr_hdf5.DBHandler('a', 'r', 'gzip9')
+        dbh = corr_hdf5.DBHandler('a', 'r', 'gzip9', None)
         with self.assertRaises(TypeError):
             dbh.add_correlation(read())
 
@@ -324,6 +332,39 @@ class TestDBHandler(unittest.TestCase):
         self.assertEqual(
             self.dbh.get_available_starttimes(net, stat, tag, '*'),
             exp_result)
+
+    @patch('miic3.db.corr_hdf5.DBHandler.get_corr_options')
+    @patch('miic3.db.corr_hdf5.h5py.File.__init__')
+    def test_wrong_co(self, super_mock, gco_mock):
+        self.file_mock = MagicMock()
+        super_mock.return_value = self.file_mock
+        oco = deepcopy(co)
+        oco['sampling_rate'] = 100000
+        gco_mock.return_value = oco
+        with self.assertRaises(PermissionError):
+            corr_hdf5.DBHandler('a', 'a', 'gzip9', co)
+
+    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    def test_get_corr_options(self, gi_mock):
+        d = {'co': AttribDict(attrs={'co': str(corr_hdf5.co_to_hdf5(co))})}
+        gi_mock.side_effect = d.__getitem__
+        self.assertEqual(corr_hdf5.co_to_hdf5(co), self.dbh.get_corr_options())
+
+    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    def test_get_corr_options_no_data(self, gi_mock):
+        d = {}
+        gi_mock.side_effect = d.__getitem__
+        with self.assertRaises(KeyError):
+            self.dbh.get_corr_options()
+
+    @patch('miic3.db.corr_hdf5.h5py.File.create_dataset')
+    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    def test_add_corr_options(self, gi_mock, cd_mock):
+        d = {'co': AttribDict(attrs={})}
+        gi_mock.side_effect = d.__getitem__
+        cd_mock.return_value = d['co']
+        self.dbh.add_corr_options(co)
+        self.assertEqual(corr_hdf5.co_to_hdf5(co), self.dbh.get_corr_options())
 
 
 if __name__ == "__main__":
