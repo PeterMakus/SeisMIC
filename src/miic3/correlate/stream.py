@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Monday, 19th July 2021 03:38:44 pm
+Last Modified: Monday, 19th July 2021 03:55:19 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -638,6 +638,31 @@ class CorrStream(Stream):
         location: str = None,
         times: Tuple[UTCDateTime, UTCDateTime] = None,
             inplace=True) -> CorrBulk:
+        """
+        Creates a CorrelationBulk object, which offers additional options for
+        faster postprocessing.
+
+        :param network: Select only this network, defaults to None
+        :type network: str, optional
+        :param station: Take data from this station, defaults to None
+        :type station: str, optional
+        :param channel: Take data from this channel, defaults to None
+        :type channel: str, optional
+        :param location: Take data from only this location. Else various
+            locations can be processed together, defaults to None
+        :type location: str, optional
+        :param times: Only take data from this time window, defaults to None
+        :type times: Tuple[UTCDateTime, UTCDateTime], optional
+        :param inplace: The original data will be deleted to save memory,
+            defaults to True.
+        :type inplace: bool, optional
+        :return: The CorrelationBulk object
+        :rtype: CorrBulk
+
+        .. note:: This function will check whether the metadata of the input
+            stream is identical, so that correlations from different stations,
+            components, or differently processed data cannot be mixed.
+        """
         st = self.select(network, station, location, channel)
         if times:
             st = st.select_corr_time(times[0], times[1])
@@ -938,9 +963,6 @@ def combine_stats(
     # actual correlation times
     stats['corr_start'] = max(stats1.starttime, stats2.starttime)
     stats['corr_end'] = min(stats1.endtime, stats2.endtime)
-    # This makes stats['endtime'] meaningsless, but obspy needs something that
-    # identifies the Trace as unique
-    # stats['startime'] = stats['corr_start']
 
     # Adjust the information to create a new SEED like id
     keywords = ['network', 'station', 'location', 'channel']
