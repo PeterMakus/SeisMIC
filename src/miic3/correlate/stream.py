@@ -7,11 +7,12 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Wednesday, 14th July 2021 04:23:23 pm
+Last Modified: Monday, 19th July 2021 03:38:44 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
 import warnings
+from matplotlib import pyplot as plt
 
 
 import numpy as np
@@ -19,7 +20,7 @@ from obspy import Stream, Trace, Inventory, UTCDateTime
 from obspy.core import Stats
 
 from miic3.utils import miic_utils as m3ut
-from miic3.plot.plot_utils import plot_correlation
+from miic3.plot.plot_correlation import plot_cst, plot_ctr
 import miic3.monitor.post_corr_process as pcp
 from miic3.monitor.stretch_mod import time_stretch_apply
 from miic3.monitor.dv import DV
@@ -651,6 +652,44 @@ class CorrStream(Stream):
         stats = convert_statlist_to_bulk_stats(statlist)
         return CorrBulk(A, stats)
 
+    def plot(
+        self, sort_by: str = 'corr_start',
+        timelimits: Tuple[float, float] = None,
+        ylimits: Tuple[float, float] = None, scalingfactor: float = None,
+        ax: plt.Axes = None, linewidth: float = 0.25,
+            outputfile: str = None, title: str = None):
+        """
+        Creates a section plot of all correlations in this stream.
+
+        :param sort_by: Which parameter to plot against. Can be either
+            ``corr_start`` or ``distance``, defaults to 'corr_start'.
+        :type sort_by: str, optional
+        :param timelimits: xlimits (lag time) in seconds, defaults to None
+        :type timelimits: Tuple[float, float], optional
+        :param ylimits: limits for Y-axis (either a :class:`datetime.datetime`
+            or float in km (if plotted against distance)), defaults to None.
+        :type ylimits: Tuple[float, float], optional
+        :param scalingfactor: Which factor to scale the Correlations with. Play
+            around with this if you want to make amplitudes bigger or smaller,
+            defaults to None (automatically chosen).
+        :type scalingfactor: float, optional
+        :param ax: Plot in existing axes? Defaults to None
+        :type ax: plt.Axes, optional
+        :param linewidth: Width of the lines to plot, defaults to 0.25
+        :type linewidth: float, optional
+        :param outputfile: Save the plot? defaults to None
+        :type outputfile: str, optional
+        :param title: Title of the plot, defaults to None
+        :type title: str, optional
+
+        .. note:: If you would like to plot a subset of this stream, use
+            :func:`~miic3.correlate.stream.CorrStream.select`.
+        """
+        plot_cst(
+            self, sort_by=sort_by, timelimits=timelimits, ylimits=ylimits,
+            scalingfactor=scalingfactor, ax=ax, linewidth=linewidth,
+            outputfile=outputfile, title=title)
+
     def _to_matrix(
         self, network: str = None, station: str = None, channel: str = None,
         location: str = None,
@@ -774,10 +813,35 @@ class CorrTrace(Trace):
             out += ' (masked)'
         return trace_id + out % (self.stats)
 
-    # def plot(
-    #     self, tlim: list = None, ax=None, outputdir: str = None,
-    #         clean=False):
-    #     plot_correlation(self, tlim, ax, outputdir, clean)
+    def plot(
+        self, tlim: Tuple[float, float] = None, ax: plt.Axes = None,
+            outputdir: str = None, clean: bool = False):
+        """
+        Plots thios CorrelationTrace.
+
+        :param tlim: Limits for the lapse axis in seconds, defaults to None
+        :type tlim: Tuple[float, float], optional
+        :param ax: Plot in existing axes, defaults to None
+        :type ax: plt.Axes, optional
+        :param outputdir: Save this plot? Defaults to None
+        :type outputdir: str, optional
+        :param clean: Make a clean plot without labels & axes,
+            defaults to False.
+        :type clean: bool, optional
+        """
+        plot_ctr(self, tlim, ax, outputdir, clean)
+
+    def times(self) -> np.ndarray:
+        """
+        Convenience Function that returns an array holding the lag times of the
+        correlation.
+
+        :return: Array with lag times
+        :rtype: np.ndarray
+        """
+        return np.arange(
+            self.stats.start_lag, self.stats.end_lag + self.stats.delta,
+            self.stats.delta)
 
 
 def alphabetical_correlation(

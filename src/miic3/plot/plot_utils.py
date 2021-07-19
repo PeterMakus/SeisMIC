@@ -8,11 +8,9 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 17th May 2021 12:25:54 pm
-Last Modified: Friday, 16th July 2021 02:55:54 pm
+Last Modified: Monday, 19th July 2021 11:39:39 am
 '''
 
-import os
-import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
@@ -94,72 +92,3 @@ def remove_topright(ax=None):
     # Only show ticks on the left and bottom spines
     ax.yaxis.set_ticks_position('left')
     ax.xaxis.set_ticks_position('bottom')
-
-
-def plot_correlation(
-    corr, tlim: list or tuple = None, ax: plt.Axes = None,
-        outputdir: str = None, clean: bool = False) -> plt.Axes:
-    set_mpl_params()
-
-    # Get figure/axes dimensions
-    if ax is None:
-        width, height = 10, 2.5
-        fig = plt.figure(figsize=(width, height))
-        ax = plt.gca(zorder=9999999)
-        axtmp = None
-    else:
-        fig = plt.gcf()
-        bbox = ax.get_window_extent().transformed(
-            fig.dpi_scale_trans.inverted())
-        width, height = bbox.width, bbox.height
-        axtmp = ax
-
-    # The ratio ensures that the text
-    # is perfectly distanced from top left/right corner
-    ratio = width/height
-    times = np.arange(
-        corr.stats.start_lag, corr.stats.end_lag, corr.stats.delta)
-    ydata = corr.data
-
-    # Plot stuff into axes
-    ax.fill_between(times, 0, ydata, where=ydata > 0,
-                    interpolate=True, color=(0.9, 0.2, 0.2))
-    ax.fill_between(times, 0, ydata, where=ydata < 0,
-                    interpolate=True, color=(0.2, 0.2, 0.7))
-    ax.plot(times, ydata, 'k', lw=0.75)
-
-    # Set limits
-    if tlim is None:
-        ax.set_xlim(times[0], times[-1])
-    else:
-        ax.set_xlim(tlim)
-
-    # Removes top/right axes spines. If you want the whole thing, comment
-    # or remove
-    remove_topright()
-
-    # Plot RF only
-    if clean:
-        remove_all()
-    else:
-        ax.set_xlabel("Lag Time [s]")
-        ax.set_ylabel("A    ", rotation=0)
-        # Start time in station stack does not make sense
-        text = corr.stats.corr_start.isoformat(sep=" ") + "\n" + corr.get_id()
-        ax.text(0.995, 1.0-0.005*ratio, text, transform=ax.transAxes,
-                horizontalalignment="right", verticalalignment="top")
-
-    # Only use tight layout if not part of plot.
-    if axtmp is None:
-        plt.tight_layout()
-
-    # Outout the receiver function as pdf using
-    # its station name and starttime
-    if outputdir is not None:
-        filename = os.path.join(
-            outputdir, rf.get_id() + "_"
-            + rf.stats.starttime._strftime_replacement('%Y%m%dT%H%M%S')
-            + ".pdf")
-        plt.savefig(filename, format="pdf")
-    return ax
-
