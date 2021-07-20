@@ -92,8 +92,10 @@ co:
     corr_args : {'TDpreProcessing':[
                                     {'function':'miic3.correlate.correlate.detrend',
                                     'args':{'type':'constant'}},
-                                  #  {'function':'miic.core.pxcorr_func.TDfilter',
-                                  #  'args':{'type':'bandpass','freqmin':0.01,'freqmax':4}},
+                                  #  {'function':'miic3.correlate.correlate.TDfilter',
+                                  #  'args':{'type':'bandpass','freqmin':4,'freqmax':8}},
+                                  # {'function':'miic3.correlate.correlate.taper',
+                                  #  'args': {'type':'cosine_taper','p':0.02}},
                                     # {'function':'miic.core.pxcorr_func.mute',
                                     # 'args':{'taper_len':100.,
                                     #        'threshold':1000, absolute threshold
@@ -108,6 +110,8 @@ co:
                                      'args':{'joint_norm':False}},
                                     {'function':'miic3.correlate.correlate.FDfilter',
                                      'args':{'flimit':[0.01,0.02,9,10]}}
+                                    #  {'function':miic3.correlate.correlate.FDsignBitNormalization,
+                                    # 'args':{}}
                                     ],
                  'lengthToSave':100,
                  'center_correlation':True,      # make sure zero correlation time is in the center

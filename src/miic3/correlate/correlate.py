@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 16th July 2021 01:56:17 pm
+Last Modified: Tuesday, 20th July 2021 10:04:41 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -326,8 +326,6 @@ class Correlator(object):
         Returns an Iterator that loops over each start and end time with the
         requested window length.
 
-        If self.options['taper'] true, the time windows will be tapered on both
-        ends.
         Also will lead to the time windows being prolonged by the sum of
         the length of the tapered end, so that no data is lost. Always
         a hann taper so far. Taper length is 5% of the requested time
@@ -1240,7 +1238,7 @@ def TDfilter(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     :rtype: numpy.ndarray
     :return: filtered time series data
     """
-    func = getattr(osignal.filter, args['type'])
+    func = func_from_str('obspy.signal.filter.%s' % args['type'])
     args = deepcopy(args)
     args.pop('type')
     # filtering in obspy.signal is done along the last dimension that why .T
@@ -1644,7 +1642,7 @@ sample rate (%s Hz).' % (str(sampling_rate), str(
 
 
 def generate_corr_inc(
-    st: Stream, subdivision: dict, taper: bool, read_len: int,
+    st: Stream, subdivision: dict, read_len: int,
         **kwargs) -> Iterator[Stream]:
     """
     Subdivides the preprocessed streams into parts of equal length using
@@ -1656,8 +1654,6 @@ def generate_corr_inc(
     :param subdivision: Dictionary holding the information about the
         correlation length and increment.
     :type subdivision: dict
-    :param taper: taper each subdivision?
-    :type taper: bool
     :param read_len: Length to be read from disk in seconds
     :type read_len: int
     :yield: Equal length windows, padded with nans / masked if data is missing.
@@ -1677,8 +1673,6 @@ def generate_corr_inc(
                 subdivision['corr_len']-st[0].stats.delta
             win = win0.trim(starttrim, endtrim, pad=True)
             mu.get_valid_traces(win)
-            if taper:
-                win.taper(max_percentage=0.05)
 
             yield win
 
