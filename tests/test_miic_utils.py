@@ -7,22 +7,21 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Thursday, 8th July 2021 05:17:18 pm
+Last Modified: Tuesday, 20th July 2021 04:09:49 pm
 '''
 import unittest
 import math as mathematics
 
 import numpy as np
-from obspy.core.stream import Stream
 from obspy.geodetics import gps2dist_azimuth
-from obspy import Inventory, read, Trace
+from obspy import Inventory, read
 from obspy.core import AttribDict
 from obspy.core.inventory.network import Network
 from obspy.core.inventory.station import Station
 
 from miic3.utils.fetch_func_from_str import func_from_str
 from miic3.utils.miic_utils import trace_calc_az_baz_dist,\
-    inv_calc_az_baz_dist, resample_or_decimate, cos_taper
+    inv_calc_az_baz_dist, resample_or_decimate
 import miic3.utils.miic_utils as mu
 
 
@@ -98,63 +97,6 @@ class TestResampleOrDecimate(unittest.TestCase):
         freq_new = st[0].stats.sampling_rate+5
         with self.assertRaises(ValueError):
             _ = resample_or_decimate(st, freq_new, filter=False)
-
-
-class TestCosTaper(unittest.TestCase):
-    #
-    def setUp(self):
-        self.sr = 10  # sampling rate
-        st = AttribDict({'sampling_rate': self.sr})
-        self.testtr = Trace(np.ones(1000), header=st)
-        tl = np.random.randint(1, high=20)
-        self.tls = tl * self.sr  # taper len in samples
-        self.tr_res = cos_taper(self.testtr.copy(), tl, False)
-
-    def test_ends(self):
-        # Check that ends reduce to 0
-        self.assertAlmostEqual(self.tr_res.data[0], 0)
-        self.assertAlmostEqual(self.tr_res.data[-1], 0)
-
-    def test_middle(self):
-        # Assert that the rest (in the middle) stayed the same
-        self.assertTrue(np.array_equal(
-            self.testtr[self.tls:-self.tls], self.tr_res[self.tls:-self.tls]))
-
-    def test_up_down(self):
-        # Everything else should be between 1 and 0
-        # up
-        self.assertTrue(np.all(self.tr_res[1:-1] > 0))
-        self.assertTrue(np.all(self.tr_res[1:self.tls] < 1))
-        # down
-        self.assertTrue(np.all(self.tr_res[-self.tls:-1] < 1))
-
-    def test_empty_trace(self):
-        testtr = Trace(np.array([]), header=self.testtr.stats)
-        with self.assertRaises(ValueError):
-            cos_taper(testtr, 10, False)
-
-    def test_invalid_taper_len(self):
-        with self.assertRaises(ValueError):
-            cos_taper(self.testtr.copy(), np.random.randint(-100, 0), False)
-        with self.assertRaises(ValueError):
-            cos_taper(self.testtr.copy(), 501*self.sr, False)
-
-    def test_masked_value(self):
-        tr0 = read()[0]
-        tr1 = tr0.copy()
-        tr1.stats.starttime += 240
-        st = Stream([tr0, tr1])
-        tr = st.merge()[0]
-        tl = np.random.randint(1, high=5)
-        ttr = cos_taper(tr, tl, True)
-        # Check that ends reduce to 0
-        self.assertAlmostEqual(ttr.data[0], 0)
-        self.assertAlmostEqual(ttr.data[-1], 0)
-        self.assertAlmostEqual(ttr.data[tr0.count()-1], 0)
-        self.assertAlmostEqual(ttr.data[-tr1.count()], 0)
-        # Also the mask should be retained
-        self.assertEqual(
-            len(ttr.data[ttr.data.mask]), ttr.count()-tr0.count()-tr1.count())
 
 
 class TestTrimTraceDelta(unittest.TestCase):

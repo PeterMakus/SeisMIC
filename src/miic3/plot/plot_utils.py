@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 17th May 2021 12:25:54 pm
-Last Modified: Monday, 19th July 2021 11:39:39 am
+Last Modified: Tuesday, 20th July 2021 04:31:54 pm
 '''
 
 import matplotlib as mpl
@@ -56,8 +56,9 @@ def set_mpl_params():
     mpl.rcParams.update(params)
 
 
-def remove_all(ax=None, top=False, bottom=False, left=False, right=False,
-               xticks='none', yticks='none'):
+def remove_all(
+    ax: plt.Axes = None, top=False, bottom=False, left=False, right=False,
+        xticks='none', yticks='none'):
     """Removes all frames and ticks."""
     # Get current axis if none given.
     if ax is None:
@@ -78,7 +79,7 @@ def remove_all(ax=None, top=False, bottom=False, left=False, right=False,
     ax.set_xticklabels([])
 
 
-def remove_topright(ax=None):
+def remove_topright(ax: plt.Axes = None):
     """Removes top and right border and ticks from input axes."""
 
     # Get current axis if none given.

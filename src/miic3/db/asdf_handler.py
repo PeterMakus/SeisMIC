@@ -4,7 +4,7 @@ Module to handle the different h5 files.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 16th March 2021 04:00:26 pm
-Last Modified: Friday, 2nd July 2021 11:55:56 am
+Last Modified: Tuesday, 20th July 2021 04:15:59 pm
 '''
 
 from glob import glob
@@ -19,6 +19,9 @@ import pyasdf
 from miic3.plot.plt_spectra import plot_spct_series, spct_series_welch
 from miic3.trace_data.waveform import Store_Client
 # from miic3.trace_data.preprocess import Preprocessor
+
+
+# About to be deprecated
 
 
 h5_FMTSTR = os.path.join("{dir}", "{network}.{station}.h5")

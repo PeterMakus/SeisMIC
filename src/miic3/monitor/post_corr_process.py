@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Thursday, 8th July 2021 04:55:05 pm
+Last Modified: Tuesday, 20th July 2021 04:25:42 pm
 '''
 
 from typing import List, Tuple
@@ -23,6 +23,9 @@ from obspy.signal.invsim import cosine_taper
 from miic3.monitor.stretch_mod import multi_ref_vchange_and_align, \
     time_shift_estimate
 from miic3.correlate.stats import CorrStats
+
+
+# This needs some tidying
 
 
 def _smooth(
@@ -1006,7 +1009,7 @@ def corr_mat_decimate(
 
     ..note:: This action is performed **in-place**.
     """
-    if factor  < 1:
+    if factor < 1:
         raise ValueError('Factor has to be larger than 1')
     elif factor == 1:
         return data, stats
@@ -1041,13 +1044,13 @@ def corr_mat_decimate(
 
 
 def corr_mat_resample_or_decimate(
-    data:np.ndarray, stats: CorrStats, freq: float) -> Tuple[
+    data: np.ndarray, stats: CorrStats, freq: float) -> Tuple[
         np.ndarray, CorrStats]:
     """
     Downsample a correlation matrix. Decides automatically whether to decimate
     or downsampled depneding on the target frequency. A low-pass filter
     is applied to avoid aliasing.
-    
+
     :type data: np.ndarray
     :param data: correlation matrix
     :type stats: :class:`~miic3.correlate.stats.CorrStats`
@@ -1301,88 +1304,6 @@ def corr_mat_extract_trace(
         raise ValueError("Method '%s' not defined." % method)
 
     return out
-
-# def corr_trace_maskband(corr_trace,method='all',side='both') :
-#     """ Mask a corr trace by applying nans to isolate specific
-#     bands of the correlation function trace. 
-#     Available methods:
-#     'ballistic' - Isolate just the ballistic wave arrivals
-#     'coda' - Leave just the coda (long time lag) 
-#     'zero' - Leave just the band around zero time lag. 
-#     Available side methods:
-#     'causal' -  Isolate just causal side (+ve time lag)
-#     'acausal' -  Isolate just acausal side (-ve time lag)
-#     'both' - use both sides of corr trace
-
-#     :type corr_trace: dictionary
-#     :param corr_trace: trace dictionary of type correlation trace
-#     :type method: string
-#     :param method: method to extract the trace
-#     :type side: string
-#     :param side: method for causal/acausal/both sided 
-
-#     :rtype: trace dictionary of type correlation trace
-#     :return **trace**: trace with nans 
-#     """
-#     # Sample points for definitions of arrival time bands
-#     c=(len(corr_trace['corr_trace'])-1)/2
-#     w1=(corr_trace['stats']['dist']/5.0)*corr_trace['stats']['sampling_rate']
-#     w2=(corr_trace['stats']['dist']/1.0)*corr_trace['stats']['sampling_rate']
-#     w3=(corr_trace['stats']['dist']/0.75)*corr_trace['stats']['sampling_rate']
-#     cd=np.max((w3,corr_trace['stats']['sampling_rate']*100))
-#     z=np.min((20*corr_trace['stats']['sampling_rate'],w1))
-#     masktrace=deepcopy(corr_trace['corr_trace'])
-#     if method == 'ballistic' :
-#         # Masked array for ballistic wave band
-#         masktrace[:int(c-w2)]=np.nan
-#         masktrace[int(c-w1):int(c+w1)]=np.nan
-#         masktrace[int(c+w2):]=np.nan
-#     elif method ==  'zero' :
-#         # Masked array for zero band
-#         masktrace[:int(c-z)]=np.nan
-#         masktrace[int(c+z):]=np.nan
-#     elif method == 'coda' :
-#         # Masked array for coda band
-#         masktrace[int(c-cd):int(c+cd)]=np.nan
-#     elif method == 'all' :
-#         pass
-
-#     # Restrict to one side if appropriate
-#     if side=='causal':
-#         masktrace[:c]=np.nan
-#     elif side=='acausal':
-#         masktrace[c:]=np.nan
-#     elif side=='both':
-#         pass
-
-#     mask_corr_trace=deepcopy(corr_trace)
-#     mask_corr_trace['corr_trace']=masktrace
-#     return mask_corr_trace
-
-# def corr_trace_snrs(corr_trace,method='both'):
-#     """ Measures the snr of the ballistic arrival relative to the
-#     coda noise level (coda snr) and relative to the noise level at
-#     zero time-lag (zero snr)
-
-#     :type corr_trace: dictionary
-#     :param corr_trace: trace dictionary of type correlation trace
-#     :type method: string
-#     :param method: method for causal/acausal/both sided snr
-#     :rtype: tuple
-#     :return **(coda_snr,zero_snr)**: signal-to-noise ratios
-#     """
-#     bal_trace=corr_trace_maskband(corr_trace,method='ballistic',side=method)
-#     coda_trace=corr_trace_maskband(corr_trace,method='coda',side=method)
-#     zero_trace=corr_trace_maskband(corr_trace,method='zero',side=method)
-
-#     # Find snrs and record in dictionary
-#     bal_peak=np.nanmax(np.abs(bal_trace['corr_trace']))
-#     coda_rms=np.power(np.nanmean(np.power(coda_trace['corr_trace'],2)),0.5)
-#     zero_rms=np.power(np.nanmean(np.power(zero_trace['corr_trace'],2)),0.5)
-#     coda_snr=bal_peak/coda_rms
-#     zero_snr=bal_peak/zero_rms
-
-#     return coda_snr,zero_snr
 
 
 class Error(Exception):
@@ -1853,20 +1774,9 @@ def corr_mat_shift(
             values have been obtained.
     """
 
-    # # check input
-    # if corr_mat_check(corr_mat)['is_incomplete']:
-    #     raise ValueError("Error: corr_mat is not a valid correlation_matix \
-    #         dictionary.")
-
     data = deepcopy(data)
 
-    # zerotime = lag0
-
-    # starttime = convert_time([corr_mat['stats']['starttime']])[0]
-    # endtime = convert_time([corr_mat['stats']['endtime']])[0]
-    # dta = zerotime - starttime
     dta = stats.start_lag
-    # dte = endtime - zerotime
     dte = stats.end_lag
 
     # format (trimm) the matrix for zero-time to be either at the beginning
@@ -1879,9 +1789,6 @@ def corr_mat_shift(
     if ref_trc != None:
         data = np.concatenate((data,
                             np.atleast_2d(ref_trc)), 0)
-        # not used?
-        # reft = np.tile(convert_time_to_string([datetime(1900, 1, 1)]), (1))
-        # corr_mat['time'] = np.concatenate((corr_mat['time'], reft), 0)
 
     # trim the marices
     if sides == "single":
@@ -1894,16 +1801,11 @@ def corr_mat_shift(
 
     # create or extract references
     if ref_trc == None:
-        # ref_trc = np.atleast_2d(np.mean(corr_mat['corr_data'],0))
         ref_trc = corr_mat_extract_trace(data, stats)
-        # ref_trc = np.mean(corr_mat['corr_data'], 0)
     else:
         # extract and remove references from corr matrix again
         ref_trc = data[-1, :]
         cdata = data[:-1, :]
-        # corr_mat['time'] = corr_mat['time'][:-1]
-
-    # print ref_trc.shape
     
     # set sides
     if sides == 'both':
@@ -1945,15 +1847,6 @@ def corr_mat_correct_shift(corr_mat, dt):
     :rtype: Dictionary
     :return: corrected correlation matrix dictionary
     """
-
-    # check input
-    if corr_mat_check(corr_mat)['is_incomplete']:
-        raise ValueError("Error: corr_mat is not a valid correlation_matix \
-            dictionary.")
-
-    if dv_check(dt)['is_incomplete']:
-        raise ValueError("Error: dv is not a valid Velocity change\
-            dictionary.")
 
     ccorr_mat = deepcopy(corr_mat)
     ccorr_mat['corr_data'] = time_shift_apply(ccorr_mat['corr_data'],-1.*dt['value'])

@@ -7,21 +7,21 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Monday, 19th July 2021 03:34:49 pm
+Last Modified: Tuesday, 20th July 2021 04:30:32 pm
 '''
 import os
 
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 import numpy as np
-from obspy.core.stream import Stream
 from obspy.core.utcdatetime import UTCDateTime
+from obspy import Trace, Stream
 
 from miic3.plot.plot_utils import set_mpl_params, remove_topright, remove_all
 
 
 def plot_ctr(
-    corr, tlim: list or tuple = None, ax: plt.Axes = None,
+    corr: Trace, tlim: list or tuple = None, ax: plt.Axes = None,
         outputdir: str = None, clean: bool = False) -> plt.Axes:
     set_mpl_params()
 
@@ -29,7 +29,7 @@ def plot_ctr(
     if ax is None:
         width, height = 10, 2.5
         fig = plt.figure(figsize=(width, height))
-        ax = plt.gca()  # zorder=9999999
+        ax = plt.gca()
         axtmp = None
     else:
         fig = plt.gcf()
@@ -45,6 +45,8 @@ def plot_ctr(
     ydata = corr.data
 
     # Plot stuff into axes
+    # This would fill positive red and negative blue, probably not very nice
+    # for correlations
     # ax.fill_between(times, 0, ydata, where=ydata > 0,
     #                 interpolate=True, color=(0.9, 0.2, 0.2))
     # ax.fill_between(times, 0, ydata, where=ydata < 0,
@@ -97,11 +99,11 @@ def plot_ctr(
 
 
 def plot_cst(
-    cst, sort_by: str = 'corr_start', timelimits: list or tuple or None = None,
-    ylimits: list or tuple or None = None,
-    scalingfactor: float = 2.0, ax: plt.Axes = None,
-    linewidth: float = 0.25, outputfile: str or None = None,
-        title: str or None = None):
+    cst: Stream, sort_by: str = 'corr_start',
+    timelimits: list or tuple or None = None,
+    ylimits: list or tuple or None = None, scalingfactor: float = 2.0,
+    ax: plt.Axes = None, linewidth: float = 0.25,
+        outputfile: str or None = None, title: str or None = None):
     """
     Creates a section plot of all correlations in this stream.
 
@@ -180,7 +182,9 @@ def plot_cst(
     return ax
 
 
-def sect_plot_corr_start(cst, ax, scalingfactor, linewidth):
+def sect_plot_corr_start(
+    cst: Stream, ax: plt.Axes, scalingfactor: float,
+        linewidth: float) -> np.ndarray:
     for ii, ctr in enumerate(cst):
         ydata = ctr.data
         times = ctr.times()
@@ -193,13 +197,14 @@ def sect_plot_corr_start(cst, ax, scalingfactor, linewidth):
         ax.plot(times, ctmp, 'k', lw=linewidth, zorder=-ii + 0.1)
 
     ax.yaxis.set_major_locator(mpl.dates.AutoDateLocator())
-    # plt.setp(
-    #     plt.gca().yaxis.get_majorticklabels(), 'rotation', 90)
+
     ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h'))
     return times
 
 
-def sect_plot_dist(cst, ax, scalingfactor, linewidth):
+def sect_plot_dist(
+    cst: Stream, ax: plt.Axes, scalingfactor: float,
+        linewidth: float) -> np.ndarray:
     for ii, ctr in enumerate(cst):
         ydata = ctr.data
         times = ctr.times()

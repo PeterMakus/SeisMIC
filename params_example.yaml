@@ -55,12 +55,12 @@ co:
     # these function work on an obspy.Stream object given as first argument
     # and return an obspy.Stream object.
     preProcessing : [
-                    {'function':'miic3.utils.miic_utils.detrend_st',
+                    {'function':'miic3.correlate.preprocessing_stream.detrend_st',
                     'args':{'type':'simple'}},
-                    {'function':'miic3.utils.miic_utils.cos_taper_st',
+                    {'function':'miic3.correlate.preprocessing_stream.cos_taper_st',
                       'args':{'taper_len': 10, # seconds
                               'taper_at_masked': True}},
-                    {'function':'miic3.utils.miic_utils.stream_filter',
+                    {'function':'miic3.correlate.preprocessing_stream.stream_filter',
                       'args':{'ftype':'bandpass',
                               'filter_option':{'freqmin':2, #0.01
                                                'freqmax':8}}}
@@ -89,28 +89,30 @@ co:
     taper: False
 
     # parameters for correlation preprocessing
+    # Standard functions reside in miic3.correlate.preprocessing_td
     corr_args : {'TDpreProcessing':[
-                                    {'function':'miic3.correlate.correlate.detrend',
+                                    {'function':'miic3.correlate.preprocessing_td.detrend',
                                     'args':{'type':'constant'}},
-                                  #  {'function':'miic3.correlate.correlate.TDfilter',
+                                  #  {'function':'miic3.correlate.preprocessing_td.TDfilter',
                                   #  'args':{'type':'bandpass','freqmin':4,'freqmax':8}},
-                                  # {'function':'miic3.correlate.correlate.taper',
+                                  # {'function':'miic3.correlate.preprocessing_td.taper',
                                   #  'args': {'type':'cosine_taper','p':0.02}},
-                                    # {'function':'miic.core.pxcorr_func.mute',
+                                    # {'function':'miic3.correlate.preprocessing_td.mute',
                                     # 'args':{'taper_len':100.,
                                     #        'threshold':1000, absolute threshold
                                     #         'std_factor':3,
                                     #         'filter':{'type':'bandpass','freqmin':2,'freqmax':4},
                                     #         'extend_gaps':True}},
-                                   {'function':'miic3.correlate.correlate.clip',
+                                   {'function':'miic3.correlate.preprocessing_td.clip',
                                     'args':{'std_factor':3}},
                                    ],
+                  # Standard functions reside in miic3.correlate.preprocessing_fd
                  'FDpreProcessing':[
-                                    {'function':'miic3.correlate.correlate.spectralWhitening',
+                                    {'function':'miic3.correlate.preprocessing_fd.spectralWhitening',
                                      'args':{'joint_norm':False}},
-                                    {'function':'miic3.correlate.correlate.FDfilter',
+                                    {'function':'miic3.correlate.preprocessing_fd.FDfilter',
                                      'args':{'flimit':[0.01,0.02,9,10]}}
-                                    #  {'function':miic3.correlate.correlate.FDsignBitNormalization,
+                                    #  {'function':miic3.correlate.preprocessing_fd.FDsignBitNormalization,
                                     # 'args':{}}
                                     ],
                  'lengthToSave':100,
