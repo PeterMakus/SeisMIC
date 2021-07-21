@@ -82,11 +82,6 @@ co:
         # delete
         # type: booblean
         delete_subdivision : False
-    # Taper the time windows with a 5% Hann taper on each side. If this is True,
-    # the time windows will just simply be prolonged by the length of the taper,
-    # so that no data is lost
-    # This taper is probably obsolete
-    taper: False
 
     # parameters for correlation preprocessing
     # Standard functions reside in miic3.correlate.preprocessing_td

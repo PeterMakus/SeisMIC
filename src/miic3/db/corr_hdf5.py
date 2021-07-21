@@ -9,7 +9,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Monday, 19th July 2021 11:19:21 am
+Last Modified: Wednesday, 21st July 2021 05:29:59 pm
 '''
 import ast
 import fnmatch
@@ -35,8 +35,10 @@ class DBHandler(h5py.File):
     """
     The actual file handler of the hdf5 correlation files.
 
-    :note: **Should not be accessed directly. Access
-    :class:`~miic3.db.corr_hdf5.CorrelationDataBase` instead.**
+    .. warning::
+
+        **Should not be accessed directly. Access
+        :class:`~miic3.db.corr_hdf5.CorrelationDataBase` instead.**
 
     Child object of :class:`h5py.File` and inherets all its attributes and
     functions in addition to functions that are particularly useful for noise
@@ -143,8 +145,9 @@ omitted." % path, category=UserWarning)
         Returns a :class:`~miic3.correlate.correlate.CorrStream` holding
         all the requested data.
 
-        ...note: **Wildcards are allowed for all parameters.**
+        .. note::
 
+            Wildcards are allowed for all parameters.
 
         :param network: network (combination), e.g., IU-YP
         :type network: str
@@ -153,13 +156,13 @@ omitted." % path, category=UserWarning)
         :param channel: channel (combination), e.g., BZ-BR
         :type channel: str
         :param corr_start: starttime of the time windows used to computed this
-        correlation, defaults to None
+            correlation, defaults to None
         :type corr_start: UTCDateTime, optional
         :param corr_end: endtime of the time windows used to computed this
-        correlation, defaults to None
+            correlation, defaults to None
         :type corr_end: UTCDateTime, optional
         :return: a :class:`~miic3.correlate.correlate.CorrStream` holding
-        all the requested data.
+            all the requested data.
         :rtype: CorrStream
         """
         # Make sure the request is structured correctly
@@ -277,7 +280,8 @@ class CorrelationDataBase(object):
         """
         Access an hdf5 file holding correlations. The resulting file can be
         accessed using all functionalities of
-        `pyasdf <https://seismicdata.github.io/pyasdf>` (for example as a dict)
+        `pyasdf <https://seismicdata.github.io/pyasdf>`_
+        (for example as a dict)
 
         :param path: Full path to the file
         :type path: str
@@ -286,35 +290,39 @@ class CorrelationDataBase(object):
             `= 'r'`. Defaults to None.
         :type corr_options: dict or None
         :param mode: Mode to access the file. Options are: 'a' for all, 'w' for
-        write, 'r+' for writing in an already existing file, or 'r' for
-        read-only , defaults to 'a'.
+            write, 'r+' for writing in an already existing file, or 'r' for
+            read-only , defaults to 'a'.
         :type mode: str, optional
         :param compression: The compression algorithm and compression level
-        that the arrays should be saved with. 'gzip3' tends to perform well,
-        else you could choose 'gzipx' where x is a digit between 1 and 9 (i.e.,
-        9 is the highest compression) or None for fastest perfomance,
-        defaults to 'gzip3'.
+            that the arrays should be saved with. 'gzip3' tends to perform
+            well, else you could choose 'gzipx' where x is a digit between
+            1 and 9 (i.e., 9 is the highest compression) or None for fastest
+            perfomance, defaults to 'gzip3'.
         :type compression: str, optional
 
         .. warning::
+
             **Access only through a context manager (see below):**
+
             >>> with CorrelationDataBase(myfile.h5) as cdb:
             >>>     type(cdb)  # This is a DBHandler
+            <class 'miic3.db.corr_hdf5.DBHandler'>
 
-        .. Example::
+        Example::
+
             >>> with CorrelationDataBase(
                         '/path/to/db/XN-XN.NEP06-NEP06.h5') as cdb:
             >>>     # find the available tags for existing db
             >>>     print(list(cdb.keys()))
+            ['co', 'recombined', 'stack_86398', 'subdivision']
             >>>     # find available channels with tag subdivision
             >>>     print(cdb.get_available_channels(
-                        'subdivision', 'XN-XN', 'NEP06-NEP06'))
+            >>>         'subdivision', 'XN-XN', 'NEP06-NEP06'))
+            ['HHE-HHN', 'HHE-HHZ', 'HHN-HHZ']
             >>>     # Get Data from all times, specific channel and tag
             >>>     st = cdb.get_data(
-                        'XN-XN', 'NEP06-NEP06', 'HHE-HHN', 'subdivision')
+            >>>         'XN-XN', 'NEP06-NEP06', 'HHE-HHN', 'subdivision')
             >>> print(st.count())
-            ['co', 'recombined', 'stack_86398', 'subdivision']
-            ['HHE-HHN', 'HHE-HHZ', 'HHN-HHZ']
             250
         """
 

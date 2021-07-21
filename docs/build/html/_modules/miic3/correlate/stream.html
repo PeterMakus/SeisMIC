@@ -32,6 +32,8 @@
         <script src="../../../_static/jquery.js"></script>
         <script src="../../../_static/underscore.js"></script>
         <script src="../../../_static/doctools.js"></script>
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+        <script >mermaid.initialize({startOnLoad:true});</script>
     
     <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
@@ -86,7 +88,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/trace_data.html">Trace data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/correlate.html">Correlate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/correlate.html">Compute and Access Correlations</a></li>
 </ul>
 
             
@@ -162,11 +164,12 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 20th April 2021 04:19:35 pm</span>
-<span class="sd">Last Modified: Wednesday, 14th July 2021 04:23:23 pm</span>
+<span class="sd">Last Modified: Monday, 19th July 2021 03:55:19 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -174,7 +177,7 @@
 <span class="kn">from</span> <span class="nn">obspy.core</span> <span class="kn">import</span> <span class="n">Stats</span>
 
 <span class="kn">from</span> <span class="nn">miic3.utils</span> <span class="kn">import</span> <span class="n">miic_utils</span> <span class="k">as</span> <span class="n">m3ut</span>
-<span class="kn">from</span> <span class="nn">miic3.plot.plot_utils</span> <span class="kn">import</span> <span class="n">plot_correlation</span>
+<span class="kn">from</span> <span class="nn">miic3.plot.plot_correlation</span> <span class="kn">import</span> <span class="n">plot_cst</span><span class="p">,</span> <span class="n">plot_ctr</span>
 <span class="kn">import</span> <span class="nn">miic3.monitor.post_corr_process</span> <span class="k">as</span> <span class="nn">pcp</span>
 <span class="kn">from</span> <span class="nn">miic3.monitor.stretch_mod</span> <span class="kn">import</span> <span class="n">time_stretch_apply</span>
 <span class="kn">from</span> <span class="nn">miic3.monitor.dv</span> <span class="kn">import</span> <span class="n">DV</span>
@@ -792,6 +795,31 @@
         <span class="n">location</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">times</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">UTCDateTime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrBulk</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a CorrelationBulk object, which offers additional options for</span>
+<span class="sd">        faster postprocessing.</span>
+
+<span class="sd">        :param network: Select only this network, defaults to None</span>
+<span class="sd">        :type network: str, optional</span>
+<span class="sd">        :param station: Take data from this station, defaults to None</span>
+<span class="sd">        :type station: str, optional</span>
+<span class="sd">        :param channel: Take data from this channel, defaults to None</span>
+<span class="sd">        :type channel: str, optional</span>
+<span class="sd">        :param location: Take data from only this location. Else various</span>
+<span class="sd">            locations can be processed together, defaults to None</span>
+<span class="sd">        :type location: str, optional</span>
+<span class="sd">        :param times: Only take data from this time window, defaults to None</span>
+<span class="sd">        :type times: Tuple[UTCDateTime, UTCDateTime], optional</span>
+<span class="sd">        :param inplace: The original data will be deleted to save memory,</span>
+<span class="sd">            defaults to True.</span>
+<span class="sd">        :type inplace: bool, optional</span>
+<span class="sd">        :return: The CorrelationBulk object</span>
+<span class="sd">        :rtype: CorrBulk</span>
+
+<span class="sd">        .. note:: This function will check whether the metadata of the input</span>
+<span class="sd">            stream is identical, so that correlations from different stations,</span>
+<span class="sd">            components, or differently processed data cannot be mixed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">channel</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">times</span><span class="p">:</span>
             <span class="n">st</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">select_corr_time</span><span class="p">(</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">times</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
@@ -805,6 +833,44 @@
 
         <span class="n">stats</span> <span class="o">=</span> <span class="n">convert_statlist_to_bulk_stats</span><span class="p">(</span><span class="n">statlist</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">CorrBulk</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">stats</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CorrStream.plot"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrStream.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">sort_by</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;corr_start&#39;</span><span class="p">,</span>
+        <span class="n">timelimits</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ylimits</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">scalingfactor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">linewidth</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
+            <span class="n">outputfile</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a section plot of all correlations in this stream.</span>
+
+<span class="sd">        :param sort_by: Which parameter to plot against. Can be either</span>
+<span class="sd">            ``corr_start`` or ``distance``, defaults to &#39;corr_start&#39;.</span>
+<span class="sd">        :type sort_by: str, optional</span>
+<span class="sd">        :param timelimits: xlimits (lag time) in seconds, defaults to None</span>
+<span class="sd">        :type timelimits: Tuple[float, float], optional</span>
+<span class="sd">        :param ylimits: limits for Y-axis (either a :class:`datetime.datetime`</span>
+<span class="sd">            or float in km (if plotted against distance)), defaults to None.</span>
+<span class="sd">        :type ylimits: Tuple[float, float], optional</span>
+<span class="sd">        :param scalingfactor: Which factor to scale the Correlations with. Play</span>
+<span class="sd">            around with this if you want to make amplitudes bigger or smaller,</span>
+<span class="sd">            defaults to None (automatically chosen).</span>
+<span class="sd">        :type scalingfactor: float, optional</span>
+<span class="sd">        :param ax: Plot in existing axes? Defaults to None</span>
+<span class="sd">        :type ax: plt.Axes, optional</span>
+<span class="sd">        :param linewidth: Width of the lines to plot, defaults to 0.25</span>
+<span class="sd">        :type linewidth: float, optional</span>
+<span class="sd">        :param outputfile: Save the plot? defaults to None</span>
+<span class="sd">        :type outputfile: str, optional</span>
+<span class="sd">        :param title: Title of the plot, defaults to None</span>
+<span class="sd">        :type title: str, optional</span>
+
+<span class="sd">        .. note:: If you would like to plot a subset of this stream, use</span>
+<span class="sd">            :func:`~miic3.correlate.stream.CorrStream.select`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">plot_cst</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">sort_by</span><span class="o">=</span><span class="n">sort_by</span><span class="p">,</span> <span class="n">timelimits</span><span class="o">=</span><span class="n">timelimits</span><span class="p">,</span> <span class="n">ylimits</span><span class="o">=</span><span class="n">ylimits</span><span class="p">,</span>
+            <span class="n">scalingfactor</span><span class="o">=</span><span class="n">scalingfactor</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="n">linewidth</span><span class="p">,</span>
+            <span class="n">outputfile</span><span class="o">=</span><span class="n">outputfile</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_to_matrix</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -927,12 +993,37 @@
         <span class="c1"># check for masked array</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">count_masked</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">):</span>
             <span class="n">out</span> <span class="o">+=</span> <span class="s1">&#39; (masked)&#39;</span>
-        <span class="k">return</span> <span class="n">trace_id</span> <span class="o">+</span> <span class="n">out</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">trace_id</span> <span class="o">+</span> <span class="n">out</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
 
-    <span class="c1"># def plot(</span>
-    <span class="c1">#     self, tlim: list = None, ax=None, outputdir: str = None,</span>
-    <span class="c1">#         clean=False):</span>
-    <span class="c1">#     plot_correlation(self, tlim, ax, outputdir, clean)</span>
+<div class="viewcode-block" id="CorrTrace.plot"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrTrace.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">tlim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">outputdir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">clean</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plots thios CorrelationTrace.</span>
+
+<span class="sd">        :param tlim: Limits for the lapse axis in seconds, defaults to None</span>
+<span class="sd">        :type tlim: Tuple[float, float], optional</span>
+<span class="sd">        :param ax: Plot in existing axes, defaults to None</span>
+<span class="sd">        :type ax: plt.Axes, optional</span>
+<span class="sd">        :param outputdir: Save this plot? Defaults to None</span>
+<span class="sd">        :type outputdir: str, optional</span>
+<span class="sd">        :param clean: Make a clean plot without labels &amp; axes,</span>
+<span class="sd">            defaults to False.</span>
+<span class="sd">        :type clean: bool, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">plot_ctr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tlim</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">outputdir</span><span class="p">,</span> <span class="n">clean</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CorrTrace.times"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrTrace.times">[docs]</a>    <span class="k">def</span> <span class="nf">times</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convenience Function that returns an array holding the lag times of the</span>
+<span class="sd">        correlation.</span>
+
+<span class="sd">        :return: Array with lag times</span>
+<span class="sd">        :rtype: np.ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">start_lag</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">end_lag</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">delta</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="alphabetical_correlation"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.alphabetical_correlation">[docs]</a><span class="k">def</span> <span class="nf">alphabetical_correlation</span><span class="p">(</span>
@@ -1029,9 +1120,6 @@
     <span class="c1"># actual correlation times</span>
     <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;corr_start&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">stats1</span><span class="o">.</span><span class="n">starttime</span><span class="p">,</span> <span class="n">stats2</span><span class="o">.</span><span class="n">starttime</span><span class="p">)</span>
     <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;corr_end&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">stats1</span><span class="o">.</span><span class="n">endtime</span><span class="p">,</span> <span class="n">stats2</span><span class="o">.</span><span class="n">endtime</span><span class="p">)</span>
-    <span class="c1"># This makes stats[&#39;endtime&#39;] meaningsless, but obspy needs something that</span>
-    <span class="c1"># identifies the Trace as unique</span>
-    <span class="c1"># stats[&#39;startime&#39;] = stats[&#39;corr_start&#39;]</span>
 
     <span class="c1"># Adjust the information to create a new SEED like id</span>
     <span class="n">keywords</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">,</span> <span class="s1">&#39;station&#39;</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">,</span> <span class="s1">&#39;channel&#39;</span><span class="p">]</span>

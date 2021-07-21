@@ -32,13 +32,16 @@
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
         <script src="../../_static/doctools.js"></script>
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+        <script >mermaid.initialize({startOnLoad:true});</script>
     
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="prev" title="Correlate" href="../correlate.html" /> 
+    <link rel="next" title="Save and Load Correlations" href="../corrdb.html" />
+    <link rel="prev" title="CorrTrace, CorrStream, and CorrBulk classes" href="stream.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -85,20 +88,27 @@
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../utils.html">Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../trace_data.html">Trace data</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="../correlate.html">Correlate</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="../correlate.html#compute-and-access-correlations">Compute and Access Correlations</a><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../correlate.html">Compute and Handle Correlations</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../correlate.html#introduction-noise-interferometry-with-green-s-function-retrieval">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../correlate.html#compute-correlations">Compute Correlations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../correlate.html#handle-correlations">Handle Correlations</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../correlate.html#api">API</a><ul class="current">
 <li class="toctree-l3 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">miic3.correlate</span></code> API</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#miic3-correlate-correlate">miic3.correlate.correlate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#miic3-correlate-stream">miic3.correlate.stream</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#miic3-correlate-stats">miic3.correlate.stats</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#miic3-correlate-preprocessing-stream">miic3.correlate.preprocessing_stream</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#miic3-correlate-preprocessing-td">miic3.correlate.preprocessing_td</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#miic3-correlate-preprocessing-fd">miic3.correlate.preprocessing_fd</a></li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../corrdb.html">Save and Load Correlations</a></li>
 </ul>
 
             
@@ -147,7 +157,7 @@
     
       <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
         
-          <li><a href="../correlate.html">Correlate</a> &raquo;</li>
+          <li><a href="../correlate.html">Compute and Handle Correlations</a> &raquo;</li>
         
       <li><code class="docutils literal notranslate"><span class="pre">miic3.correlate</span></code> API</li>
     
@@ -185,7 +195,7 @@
 </dd>
 </dl>
 <p>Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 14th July 2021 04:28:10 pm</p>
+Last Modified: Tuesday, 20th July 2021 04:20:30 pm</p>
 <dl class="py class">
 <dt id="miic3.correlate.correlate.Correlator">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">miic3.correlate.correlate.</span></code><code class="sig-name descname"><span class="pre">Correlator</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">store_client</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../trace_data/API.html#miic3.trace_data.waveform.Store_Client" title="miic3.trace_data.waveform.Store_Client"><span class="pre">miic3.trace_data.waveform.Store_Client</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic3/correlate/correlate.html#Correlator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.correlate.Correlator" title="Permalink to this definition">¶</a></dt>
@@ -195,7 +205,7 @@ for the database.</p>
 <p>Initiates the Correlator object. When executing
 <a class="reference internal" href="#miic3.correlate.correlate.Correlator.pxcorr" title="miic3.correlate.correlate.Correlator.pxcorr"><code class="xref py py-func docutils literal notranslate"><span class="pre">pxcorr()</span></code></a>, it will
 actually compute the correlations and save them in an hdf5 file that
-can be handled using <code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code>.
+can be handled using <a class="reference internal" href="../corrdb/API.html#miic3.db.corr_hdf5.CorrelationDataBase" title="miic3.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a>.
 Data has to be preprocessed before calling this (i.e., the data already
 has to be given in an ASDF format). Consult
 <code class="xref py py-class docutils literal notranslate"><span class="pre">Preprocessor</span></code> for information on
@@ -268,53 +278,6 @@ Also returns the same stream but without the data arrays in tr.data.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="miic3.correlate.correlate.zeroPadding">
-<code class="sig-prename descclassname"><span class="pre">miic3.correlate.correlate.</span></code><code class="sig-name descname"><span class="pre">zeroPadding</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/correlate.html#zeroPadding"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.correlate.zeroPadding" title="Permalink to this definition">¶</a></dt>
-<dd><p>Append zeros to the traces</p>
-<p>Pad traces with zeros to increase the speed of the Fourier transforms and
-to avoid wrap around effects. Three possibilities for the length of the
-padding can be set in <code class="docutils literal notranslate"><span class="pre">args['type']</span></code>:</p>
-<ul class="simple">
-<li><dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">nextFastLen</span></code>:</dt><dd><p>Traces are padded to a length that is the next fast
-fft length</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">avoidWrapAround</span></code>:</dt><dd><p>depending on length of the trace that is to be used
-the padded part is just long enough to avoid wrap around</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">avoidWrapFastLen</span></code>:</dt><dd><p>Use the next fast length that avoids wrap around</p>
-</dd>
-</dl>
-</li>
-</ul>
-<dl class="field-list simple">
-<dt class="field-odd">Example</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">args</span> <span class="pre">=</span> <span class="pre">{'type':'avoidWrapPowerTwo'}</span></code></p>
-</dd>
-<dt class="field-even">Parameters</dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – time series data with time oriented along the first dimension (columns)</p></li>
-<li><p><strong>args</strong> (<em>dictionary</em>) – arguments dictionary as described above</p></li>
-<li><p><strong>params</strong> (<em>dictionary</em>) – not used here</p></li>
-<li><p><strong>axis</strong> (<em>tuple</em><em>, </em><em>optional</em>) – axis to pad on</p></li>
-</ul>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>numpy.ndarray</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>zero padded time series data</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt id="miic3.correlate.correlate.calc_cross_combis">
 <code class="sig-prename descclassname"><span class="pre">miic3.correlate.correlate.</span></code><code class="sig-name descname"><span class="pre">calc_cross_combis</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">st</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">obspy.core.stream.Stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ex_corr</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'betweenStations'</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">list</span><a class="reference internal" href="../../_modules/miic3/correlate/correlate.html#calc_cross_combis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.correlate.calc_cross_combis" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate a list of all cross correlation combination
@@ -365,340 +328,6 @@ components are present no trace for this station combination is returned.</p>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>stream in the RTZ system</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="miic3.correlate.correlate.set_sample_options">
-<code class="sig-prename descclassname"><span class="pre">miic3.correlate.correlate.</span></code><code class="sig-name descname"><span class="pre">set_sample_options</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <span class="pre">dict</span><a class="reference internal" href="../../_modules/miic3/correlate/correlate.html#set_sample_options"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.correlate.set_sample_options" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt id="miic3.correlate.correlate.spectralWhitening">
-<code class="sig-prename descclassname"><span class="pre">miic3.correlate.correlate.</span></code><code class="sig-name descname"><span class="pre">spectralWhitening</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">B</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/correlate.html#spectralWhitening"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.correlate.spectralWhitening" title="Permalink to this definition">¶</a></dt>
-<dd><p>Spectal whitening of Fourier-transformed date</p>
-<p>Normalize the amplitude spectrum of the complex spectra in <cite>B</cite>. The
-<cite>args</cite> dictionary may contain the keyword <cite>joint_norm</cite>. If its value is
-True the normalization of sets of three traces are normalized jointly by
-the mean of their amplitude spectra. This is useful for later rotation of
-correlated traces in the ZNE system into the ZRT system.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>B</strong> (<em>numpy.ndarray</em>) – Fourier transformed time series data with frequency orientedalong the first dimension (columns)</p></li>
-<li><p><strong>args</strong> (<em>dictionary</em>) – arguments dictionary as described above</p></li>
-<li><p><strong>params</strong> (<em>dictionary</em>) – not used here</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>numpy.ndarray</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>whitened spectal data</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="miic3.correlate.correlate.FDfilter">
-<code class="sig-prename descclassname"><span class="pre">miic3.correlate.correlate.</span></code><code class="sig-name descname"><span class="pre">FDfilter</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">B</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/correlate.html#FDfilter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.correlate.FDfilter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Filter Fourier-transformed data</p>
-<p>Filter Fourier tranformed data by tapering in frequency domain. The <cite>args</cite>
-dictionary is supposed to contain the key <cite>flimit</cite> with a value that is a
-four element list or tuple defines the corner frequencies (f1, f2, f3, f4)
-in Hz of the cosine taper which is one between f2 and f3 and tapers to zero
-for f1 &lt; f &lt; f2 and f3 &lt; f &lt; f4.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>B</strong> (<em>numpy.ndarray</em>) – Fourier transformed time series data with frequency orientedalong the first dimension (columns)</p></li>
-<li><p><strong>args</strong> (<em>dictionary</em>) – arguments dictionary as described above</p></li>
-<li><p><strong>params</strong> (<em>dictionary</em>) – params[‘freqs’] contains an array with the freqency values
-of the samples in <cite>B</cite></p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>numpy.ndarray</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>filtered spectal data</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="miic3.correlate.correlate.FDsignBitNormalization">
-<code class="sig-prename descclassname"><span class="pre">miic3.correlate.correlate.</span></code><code class="sig-name descname"><span class="pre">FDsignBitNormalization</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">B</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/correlate.html#FDsignBitNormalization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.correlate.FDsignBitNormalization" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sign bit normalization of frequency transformed data</p>
-<p>Divides each sample by its amplitude resulting in trace with amplidues of
-(-1, 0, 1). As this operation is done in frequency domain it requires two
-Fourier transforms and is thus quite costly but alows to be performed
-after other steps of frequency domain procesing e.g. whitening.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>B</strong> (<em>numpy.ndarray</em>) – Fourier transformed time series data with frequency orientedalong the first dimension (columns)</p></li>
-<li><p><strong>args</strong> (<em>dictionary</em>) – not used in this function</p></li>
-<li><p><strong>params</strong> (<em>dictionary</em>) – not used in this function</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>numpy.ndarray</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>frequency transform of the 1-bit normalized data</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="miic3.correlate.correlate.mute">
-<code class="sig-prename descclassname"><span class="pre">miic3.correlate.correlate.</span></code><code class="sig-name descname"><span class="pre">mute</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/correlate.html#mute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.correlate.mute" title="Permalink to this definition">¶</a></dt>
-<dd><p>Mute parts of data that exceed a threshold</p>
-<p>To completely surpress the effect of data with high amplitudes e.g. after
-aftershocks these parts of the data are muted (set to zero). The respective
-parts of the signal are identified as those where the envelope in a given
-frequency exceeds a threshold given directly as absolute numer or as a
-multiple of the data’s standard deviation. A taper of length <cite>taper_len</cite> is
-applied to smooth the edges of muted segments. Setting <cite>extend_gaps</cite> to
-True will ensure that the taper is applied outside the segments and data
-inside these segments will all zero. Edges of the data will be tapered too
-in this case.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – time series data with time oriented along the first dimension
-(columns)</p></li>
-<li><p><strong>args</strong> (<em>dictionary</em>) – <p>the following keywords are allowed:</p>
-<ul>
-<li><dl class="simple">
-<dt><cite>filter</cite>:</dt><dd><p>(dictionary) description of filter to be applied before
-calculation of the signal envelope. If not given the envelope is
-calculated from raw data. The value of the keyword filter is the
-same as the <cite>args</cite> for the function <cite>TDfilter</cite>.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt><cite>threshold</cite>:</dt><dd><p>(float) absolute amplitude of threshold for muting</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt><cite>std_factor</cite>:</dt><dd><p>(float) alternativly to an absolute number the threhold
-can be estimated as a multiple of the standard deviation if the
-scaling is given in as value of the keyword <cite>std_factor</cite>. If
-neither <cite>threshold</cite> nor <cite>std_factor</cite> are given <cite>std_factor=1</cite> is
-assumed.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt><cite>extend_gaps</cite>:</dt><dd><p>(boolean) if True date above the threshold is
-guaranteed to be muted, otherwise tapering will leak into these
-parts. This step involves an additional convolution.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt><cite>taper_len</cite>:</dt><dd><p>(float) length of taper for muted segments in seconds</p>
-</dd>
-</dl>
-</li>
-</ul>
-</p></li>
-<li><p><strong>params</strong> (<em>dictionary</em>) – filled automatically by <cite>pxcorr</cite></p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>numpy.ndarray</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>clipped time series data</p>
-</dd>
-<dt class="field-even">Example</dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">args={'filter':{'type':'bandpass',</span> <span class="pre">'freqmin':1.,</span> <span class="pre">'freqmax':6.},</span>
-<span class="pre">'taper_len':1.,</span> <span class="pre">'threshold':1000,</span> <span class="pre">'std_factor':1,</span> <span class="pre">'extend_gaps':True}</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="miic3.correlate.correlate.TDfilter">
-<code class="sig-prename descclassname"><span class="pre">miic3.correlate.correlate.</span></code><code class="sig-name descname"><span class="pre">TDfilter</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/correlate.html#TDfilter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.correlate.TDfilter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Filter time series data</p>
-<p>Filter in time domain. Types of filters are defined by <cite>obspy.signal</cite>.</p>
-<p><cite>args</cite> has the following structure:</p>
-<blockquote>
-<div><p>args = {‘type’:<cite>filterType</cite>, fargs}</p>
-<p><cite>type</cite> may be <cite>bandpass</cite> with the corresponding fargs <cite>freqmin</cite> and
-<cite>freqmax</cite> or <cite>highpass</cite>/<cite>lowpass</cite> with the <cite>fargs</cite> <cite>freqmin</cite>/<cite>freqmax</cite></p>
-<dl class="field-list simple">
-<dt class="field-odd">Example</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">args</span> <span class="pre">=</span> <span class="pre">{'type':'bandpass','freqmin':0.5,'freqmax':2.}</span></code></p>
-</dd>
-</dl>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – time series data with time oriented along the first dimension (columns)</p></li>
-<li><p><strong>args</strong> (<em>dictionary</em>) – arguments dictionary as described above</p></li>
-<li><p><strong>params</strong> (<em>dictionary</em>) – not used here</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>numpy.ndarray</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>filtered time series data</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="miic3.correlate.correlate.normalizeStandardDeviation">
-<code class="sig-prename descclassname"><span class="pre">miic3.correlate.correlate.</span></code><code class="sig-name descname"><span class="pre">normalizeStandardDeviation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/correlate.html#normalizeStandardDeviation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.correlate.normalizeStandardDeviation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Divide the time series by their standard deviation</p>
-<p>Divide the amplitudes of each trace by its standard deviation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – time series data with time oriented along the first dimension (columns)</p></li>
-<li><p><strong>args</strong> (<em>dictionary</em>) – not used here</p></li>
-<li><p><strong>params</strong> (<em>dictionary</em>) – not used here</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>numpy.ndarray</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>normalized time series data</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="miic3.correlate.correlate.signBitNormalization">
-<code class="sig-prename descclassname"><span class="pre">miic3.correlate.correlate.</span></code><code class="sig-name descname"><span class="pre">signBitNormalization</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/correlate.html#signBitNormalization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.correlate.signBitNormalization" title="Permalink to this definition">¶</a></dt>
-<dd><p>One bit normalization of time series data</p>
-<p>Return the sign of the samples (-1, 0, 1).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – time series data with time oriented along the first dimension (columns)</p></li>
-<li><p><strong>args</strong> (<em>dictionary</em>) – not used here</p></li>
-<li><p><strong>params</strong> (<em>dictionary</em>) – not used here</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>numpy.ndarray</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>1-bit normalized time series data</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="miic3.correlate.correlate.detrend">
-<code class="sig-prename descclassname"><span class="pre">miic3.correlate.correlate.</span></code><code class="sig-name descname"><span class="pre">detrend</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/correlate.html#detrend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.correlate.detrend" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove trend from data</p>
-</dd></dl>
-
-<dl class="py function">
-<dt id="miic3.correlate.correlate.TDnormalization">
-<code class="sig-prename descclassname"><span class="pre">miic3.correlate.correlate.</span></code><code class="sig-name descname"><span class="pre">TDnormalization</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/correlate.html#TDnormalization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.correlate.TDnormalization" title="Permalink to this definition">¶</a></dt>
-<dd><p>Amplitude dependent time domain normalization</p>
-<p>Calculate the envelope of the filtered trace, smooth it in a window of
-length <cite>windowLength</cite> and normalize the waveform by this trace. The two
-used keywords in <cite>args</cite> are <cite>filter and `windowLength</cite> that describe the
-filter and the length of the envelope smoothing window, respectively.</p>
-<p><cite>args</cite> has the following structure:</p>
-<blockquote>
-<div><p>args = {‘windowLength’:<cite>length of the envelope smoothing window in [s]</cite>,’filter’:{‘type’:<cite>filterType</cite>, fargs}}``</p>
-<p><cite>type</cite> may be <cite>bandpass</cite> with the corresponding fargs <cite>freqmin</cite> and <cite>freqmax</cite> or <cite>highpass</cite>/<cite>lowpass</cite> with the <cite>fargs</cite> <cite>freqmin</cite>/<cite>freqmax</cite></p>
-<dl class="field-list simple">
-<dt class="field-odd">Example</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">args</span> <span class="pre">=</span> <span class="pre">{'windowLength':5,'filter':{'type':'bandpass',</span>
-<span class="pre">'freqmin':0.5,</span> <span class="pre">'freqmax':2.}}</span></code></p>
-</dd>
-</dl>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – time series data with time oriented along the first dimension (columns)</p></li>
-<li><p><strong>args</strong> (<em>dictionary</em>) – arguments dictionary as described above</p></li>
-<li><p><strong>params</strong> (<em>dictionary</em>) – not used here</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>numpy.ndarray</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>normalized time series data</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="miic3.correlate.correlate.taper">
-<code class="sig-prename descclassname"><span class="pre">miic3.correlate.correlate.</span></code><code class="sig-name descname"><span class="pre">taper</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/correlate.html#taper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.correlate.taper" title="Permalink to this definition">¶</a></dt>
-<dd><p>Taper to the time series data</p>
-<p>Apply a simple taper to the time series data.</p>
-<p><cite>args</cite> has the following structure:</p>
-<blockquote>
-<div><p>args = {‘type’:<cite>type of taper</cite>,taper_args}``</p>
-<p><cite>type</cite> may be <cite>cosine_taper</cite> with the corresponding taper_args <cite>p</cite> the
-percentage of the traces to taper. Possibilities of <cite>type</cite> are given by <cite>obspy.signal</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Example</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">args</span> <span class="pre">=</span> <span class="pre">{'type':'cosine_taper','p':0.1}</span></code></p>
-</dd>
-</dl>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – time series data with time oriented along the first dimension (columns)</p></li>
-<li><p><strong>args</strong> (<em>dictionary</em>) – arguments dictionary as described above</p></li>
-<li><p><strong>params</strong> (<em>dictionary</em>) – not used here</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>numpy.ndarray</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>tapered time series data</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="miic3.correlate.correlate.clip">
-<code class="sig-prename descclassname"><span class="pre">miic3.correlate.correlate.</span></code><code class="sig-name descname"><span class="pre">clip</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/correlate.html#clip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.correlate.clip" title="Permalink to this definition">¶</a></dt>
-<dd><p>Clip time series data at a multiple of the standard deviation</p>
-<p>Set amplitudes exeeding a certain threshold to this threshold.
-The threshold for clipping is estimated as the standard deviation of each
-trace times a factor specified in <cite>args</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Note</dt>
-<dd class="field-odd"><p>Traces should be demeaned before clipping.</p>
-</dd>
-<dt class="field-even">Parameters</dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – time series data with time oriented along the first dimension (columns)</p></li>
-<li><p><strong>args</strong> (<em>dictionary</em>) – the only keyword allowed is <cite>std_factor</cite> describing the scaling of the standard deviation for the clipping threshold</p></li>
-<li><p><strong>params</strong> (<em>dictionary</em>) – not used here</p></li>
-</ul>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>numpy.ndarray</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>clipped time series data</p>
 </dd>
 </dl>
 </dd></dl>
@@ -785,6 +414,68 @@ and the list of the correlation station code.</p>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt id="miic3.correlate.correlate.preprocess_stream">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.correlate.</span></code><code class="sig-name descname"><span class="pre">preprocess_stream</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">st</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">obspy.core.stream.Stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">store_client</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../trace_data/API.html#miic3.trace_data.waveform.Store_Client" title="miic3.trace_data.waveform.Store_Client"><span class="pre">miic3.trace_data.waveform.Store_Client</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">inv</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">obspy.core.inventory.inventory.Inventory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startt</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">obspy.core.utcdatetime.UTCDateTime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endt</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">obspy.core.utcdatetime.UTCDateTime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">taper_len</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_rate</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_response</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subdivision</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preProcessing</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">obspy.core.stream.Stream</span><a class="reference internal" href="../../_modules/miic3/correlate/correlate.html#preprocess_stream"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.correlate.preprocess_stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Does the preprocessing on a per stream basis. Most of the parameters can be
+fed in by using the “yaml” dict as kwargs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>st</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">obspy.core.stream.Stream</span></code>) – Input Stream to be processed</p></li>
+<li><p><strong>store_client</strong> (<a class="reference internal" href="../trace_data/API.html#miic3.trace_data.waveform.Store_Client" title="miic3.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a>) – Store Client for the database</p></li>
+<li><p><strong>inv</strong> (<em>Inventory</em><em> or </em><em>None</em>) – Station response, can be None if <code class="docutils literal notranslate"><span class="pre">remove_response=False</span></code>.</p></li>
+<li><p><strong>startt</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">obspy.UTCDateTime</span></code>) – Starttime that the stream should be clipped / padded to.</p></li>
+<li><p><strong>endt</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">obspy.UTCDateTime</span></code>) – Endtime that the stream should be clipped / padded to.</p></li>
+<li><p><strong>taper_len</strong> (<em>float</em>) – If the instrument response is removed, one might want to
+taper to mitigate the acausal effects of the deconvolution. This is
+the length of such a taper in seconds.</p></li>
+<li><p><strong>sampling_rate</strong> (<em>float</em>) – the sampling rate that the stream should be resampled
+to in Hz.</p></li>
+<li><p><strong>remove_response</strong> (<em>bool</em>) – Should the instrument response be removed?</p></li>
+<li><p><strong>subdivision</strong> (<em>dict</em>) – Dictionary holding information about the correlation
+lenghts and increments.</p></li>
+<li><p><strong>preProcessing</strong> (<em>List</em><em>[</em><em>dict</em><em>]</em><em>, </em><em>optional</em>) – List holding information about the different external
+preprocessing functions to be applied, defaults to None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – For sampling rates higher than the stream’s native
+sampling rate (upsampling is not permitted).</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The preprocessed stream.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">obspy.core.stream.Stream</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.correlate.correlate.generate_corr_inc">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.correlate.</span></code><code class="sig-name descname"><span class="pre">generate_corr_inc</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">st</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">obspy.core.stream.Stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subdivision</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_len</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><span class="pre">obspy.core.stream.Stream</span><span class="p"><span class="pre">]</span></span><a class="reference internal" href="../../_modules/miic3/correlate/correlate.html#generate_corr_inc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.correlate.generate_corr_inc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subdivides the preprocessed streams into parts of equal length using
+the parameters <code class="docutils literal notranslate"><span class="pre">cor_inc</span></code> and <code class="docutils literal notranslate"><span class="pre">cor_len</span></code> in <code class="docutils literal notranslate"><span class="pre">subdivision</span></code>.
+This function can be acessed by several processes in parallel</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>st</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">obspy.core.stream.Stream</span></code>) – The preprocessed input stream</p></li>
+<li><p><strong>subdivision</strong> (<em>dict</em>) – Dictionary holding the information about the
+correlation length and increment.</p></li>
+<li><p><strong>read_len</strong> (<em>int</em>) – Length to be read from disk in seconds</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yield</dt>
+<dd class="field-even"><p>Equal length windows, padded with nans / masked if data is missing.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Generator[Stream]</p>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
 <div class="section" id="miic3-correlate-stream">
 <h2>miic3.correlate.stream<a class="headerlink" href="#miic3-correlate-stream" title="Permalink to this headline">¶</a></h2>
@@ -801,7 +492,7 @@ and the list of the correlation station code.</p>
 </dd>
 </dl>
 <p>Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Wednesday, 14th July 2021 04:23:23 pm</p>
+Last Modified: Monday, 19th July 2021 03:55:19 pm</p>
 <dl class="py class">
 <dt id="miic3.correlate.stream.CorrBulk">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">miic3.correlate.stream.</span></code><code class="sig-name descname"><span class="pre">CorrBulk</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#miic3.correlate.stats.CorrStats" title="miic3.correlate.stats.CorrStats"><span class="pre">miic3.correlate.stats.CorrStats</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">statlist</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#miic3.correlate.stats.CorrStats" title="miic3.correlate.stats.CorrStats"><span class="pre">miic3.correlate.stats.CorrStats</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic3/correlate/stream.html#CorrBulk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.stream.CorrBulk" title="Permalink to this definition">¶</a></dt>
@@ -1294,7 +985,64 @@ Defaults to True</p>
 <dl class="py method">
 <dt id="miic3.correlate.stream.CorrStream.create_corr_bulk">
 <code class="sig-name descname"><span class="pre">create_corr_bulk</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">network</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">times</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">obspy.core.utcdatetime.UTCDateTime</span><span class="p"><span class="pre">,</span> </span><span class="pre">obspy.core.utcdatetime.UTCDateTime</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#miic3.correlate.stream.CorrBulk" title="miic3.correlate.stream.CorrBulk"><span class="pre">miic3.correlate.stream.CorrBulk</span></a><a class="reference internal" href="../../_modules/miic3/correlate/stream.html#CorrStream.create_corr_bulk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.stream.CorrStream.create_corr_bulk" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Creates a CorrelationBulk object, which offers additional options for
+faster postprocessing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>network</strong> (<em>str</em><em>, </em><em>optional</em>) – Select only this network, defaults to None</p></li>
+<li><p><strong>station</strong> (<em>str</em><em>, </em><em>optional</em>) – Take data from this station, defaults to None</p></li>
+<li><p><strong>channel</strong> (<em>str</em><em>, </em><em>optional</em>) – Take data from this channel, defaults to None</p></li>
+<li><p><strong>location</strong> (<em>str</em><em>, </em><em>optional</em>) – Take data from only this location. Else various
+locations can be processed together, defaults to None</p></li>
+<li><p><strong>times</strong> (<em>Tuple</em><em>[</em><em>UTCDateTime</em><em>, </em><em>UTCDateTime</em><em>]</em><em>, </em><em>optional</em>) – Only take data from this time window, defaults to None</p></li>
+<li><p><strong>inplace</strong> (<em>bool</em><em>, </em><em>optional</em>) – The original data will be deleted to save memory,
+defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The CorrelationBulk object</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#miic3.correlate.stream.CorrBulk" title="miic3.correlate.stream.CorrBulk">CorrBulk</a></p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function will check whether the metadata of the input
+stream is identical, so that correlations from different stations,
+components, or differently processed data cannot be mixed.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="miic3.correlate.stream.CorrStream.plot">
+<code class="sig-name descname"><span class="pre">plot</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sort_by</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'corr_start'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timelimits</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylimits</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scalingfactor</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">matplotlib.axes._axes.Axes</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linewidth</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">0.25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputfile</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic3/correlate/stream.html#CorrStream.plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.stream.CorrStream.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a section plot of all correlations in this stream.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sort_by</strong> (<em>str</em><em>, </em><em>optional</em>) – Which parameter to plot against. Can be either
+<code class="docutils literal notranslate"><span class="pre">corr_start</span></code> or <code class="docutils literal notranslate"><span class="pre">distance</span></code>, defaults to ‘corr_start’.</p></li>
+<li><p><strong>timelimits</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>, </em><em>optional</em>) – xlimits (lag time) in seconds, defaults to None</p></li>
+<li><p><strong>ylimits</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>, </em><em>optional</em>) – limits for Y-axis (either a <code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code>
+or float in km (if plotted against distance)), defaults to None.</p></li>
+<li><p><strong>scalingfactor</strong> (<em>float</em><em>, </em><em>optional</em>) – Which factor to scale the Correlations with. Play
+around with this if you want to make amplitudes bigger or smaller,
+defaults to None (automatically chosen).</p></li>
+<li><p><strong>ax</strong> (<em>plt.Axes</em><em>, </em><em>optional</em>) – Plot in existing axes? Defaults to None</p></li>
+<li><p><strong>linewidth</strong> (<em>float</em><em>, </em><em>optional</em>) – Width of the lines to plot, defaults to 0.25</p></li>
+<li><p><strong>outputfile</strong> (<em>str</em><em>, </em><em>optional</em>) – Save the plot? defaults to None</p></li>
+<li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – Title of the plot, defaults to None</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you would like to plot a subset of this stream, use
+<code class="xref py py-func docutils literal notranslate"><span class="pre">select()</span></code>.</p>
+</div>
+</dd></dl>
 
 </dd></dl>
 
@@ -1325,6 +1073,38 @@ from a file, defaults to None</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt id="miic3.correlate.stream.CorrTrace.plot">
+<code class="sig-name descname"><span class="pre">plot</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tlim</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">matplotlib.axes._axes.Axes</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputdir</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic3/correlate/stream.html#CorrTrace.plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.stream.CorrTrace.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots thios CorrelationTrace.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tlim</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>, </em><em>optional</em>) – Limits for the lapse axis in seconds, defaults to None</p></li>
+<li><p><strong>ax</strong> (<em>plt.Axes</em><em>, </em><em>optional</em>) – Plot in existing axes, defaults to None</p></li>
+<li><p><strong>outputdir</strong> (<em>str</em><em>, </em><em>optional</em>) – Save this plot? Defaults to None</p></li>
+<li><p><strong>clean</strong> (<em>bool</em><em>, </em><em>optional</em>) – Make a clean plot without labels &amp; axes,
+defaults to False.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="miic3.correlate.stream.CorrTrace.times">
+<code class="sig-name descname"><span class="pre">times</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/stream.html#CorrTrace.times"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.stream.CorrTrace.times" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenience Function that returns an array holding the lag times of the
+correlation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Array with lag times</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py function">
@@ -1643,6 +1423,564 @@ i.e. the last character of the <code class="docutils literal notranslate"><span 
 </dd></dl>
 
 </div>
+<div class="section" id="miic3-correlate-preprocessing-stream">
+<h2>miic3.correlate.preprocessing_stream<a class="headerlink" href="#miic3-correlate-preprocessing-stream" title="Permalink to this headline">¶</a></h2>
+<p>Preprocessing functions that are executed on Obspy Streams</p>
+<span class="target" id="module-miic3.correlate.preprocessing_stream"></span><p>Module that contains functions for preprocessing on obspy streams</p>
+<dl class="field-list simple">
+<dt class="field-odd">copyright</dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">license</dt>
+<dd class="field-even"><p><cite>GNU Lesser General Public License, Version 3 &lt;https://www.gnu.org/copyleft/lesser.html&gt;</cite></p>
+</dd>
+<dt class="field-odd">author</dt>
+<dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
+</dd>
+</dl>
+<p>Created: Tuesday, 20th July 2021 03:47:00 pm
+Last Modified: Tuesday, 20th July 2021 03:51:46 pm</p>
+<dl class="py function">
+<dt id="miic3.correlate.preprocessing_stream.cos_taper_st">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_stream.</span></code><code class="sig-name descname"><span class="pre">cos_taper_st</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">st</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">obspy.core.stream.Stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">taper_len</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">taper_at_masked</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">obspy.core.stream.Stream</span><a class="reference internal" href="../../_modules/miic3/correlate/preprocessing_stream.html#cos_taper_st"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_stream.cos_taper_st" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies a cosine taper to the input Stream.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tr</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Stream</span></code>) – Input Stream</p></li>
+<li><p><strong>taper_len</strong> (<em>float</em>) – Length of the taper per side</p></li>
+<li><p><strong>taper_at_masked</strong> (<em>bool</em>) – applies a split to each trace and merges again
+afterwards</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Tapered Stream</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Stream</span></code></p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This action is performed in place. If you want to keep the
+original data use <code class="xref py py-func docutils literal notranslate"><span class="pre">copy()</span></code>.</p>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.correlate.preprocessing_stream.cos_taper">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_stream.</span></code><code class="sig-name descname"><span class="pre">cos_taper</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tr</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">obspy.core.trace.Trace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">taper_len</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">taper_at_masked</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">obspy.core.trace.Trace</span><a class="reference internal" href="../../_modules/miic3/correlate/preprocessing_stream.html#cos_taper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_stream.cos_taper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies a cosine taper to the input trace.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tr</strong> (<em>Trace</em>) – Input Trace</p></li>
+<li><p><strong>taper_len</strong> (<em>float</em>) – Length of the taper per side in seconds</p></li>
+<li><p><strong>taper_at_masked</strong> (<em>bool</em>) – applies a split to each trace and merges again
+afterwards</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Tapered Trace</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Trace</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This action is performed in place. If you want to keep the
+original data use <code class="xref py py-func docutils literal notranslate"><span class="pre">copy()</span></code>.</p>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.correlate.preprocessing_stream.detrend_st">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_stream.</span></code><code class="sig-name descname"><span class="pre">detrend_st</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">st</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">obspy.core.stream.Stream</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">obspy.core.stream.Stream</span><a class="reference internal" href="../../_modules/miic3/correlate/preprocessing_stream.html#detrend_st"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_stream.detrend_st" title="Permalink to this definition">¶</a></dt>
+<dd><p>Detrends a stream while dealing with data gaps</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>st</strong> (<em>Stream</em>) – input Stream</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the obspy Stream detrended</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Stream</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This action is performed in place. If you want to keep the
+original data use <code class="xref py py-func docutils literal notranslate"><span class="pre">copy()</span></code>.</p>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.correlate.preprocessing_stream.stream_filter">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_stream.</span></code><code class="sig-name descname"><span class="pre">stream_filter</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">st</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">obspy.core.stream.Stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ftype</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_option</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">obspy.core.stream.Stream</span><a class="reference internal" href="../../_modules/miic3/correlate/preprocessing_stream.html#stream_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_stream.stream_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter each trace of a Stream according to the given parameters</p>
+<p>This faction apply the specified filter function to all the traces in the
+present in the input <code class="xref py py-class docutils literal notranslate"><span class="pre">Stream</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ftype</strong> (<em>str</em>) – String that specifies which filter is applied (e.g.
+<code class="docutils literal notranslate"><span class="pre">&quot;bandpass&quot;</span></code>). See the <a class="reference internal" href="#supported-filter">Supported Filter</a> section below for
+further details.</p></li>
+<li><p><strong>filter_option</strong> (<em>dict</em>) – Necessary arguments for the respective filter
+that will be passed on. (e.g. <code class="docutils literal notranslate"><span class="pre">freqmin=1.0</span></code>, <code class="docutils literal notranslate"><span class="pre">freqmax=20.0</span></code> for
+<code class="docutils literal notranslate"><span class="pre">&quot;bandpass&quot;</span></code>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Pram parallel</dt>
+<dd class="field-even"><p>If the filtering will be run in parallel or not</p>
+</dd>
+<dt class="field-odd">Pram processes</dt>
+<dd class="field-odd"><p>Number of processes to start (if None it will be equal
+to the number of cores available in the hosting machine)</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This operation is performed in place on the actual data arrays. The
+raw data is not accessible anymore afterwards. To keep your
+original data, use <code class="xref py py-func docutils literal notranslate"><span class="pre">stream_copy()</span></code> to create
+a copy of your stream object.
+This function can also work in parallel an all or a specified number of
+cores available in the hosting machine.</p>
+</div>
+<p class="rubric"><span class="target" id="supported-filter">Supported Filter</span></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">'bandpass'</span></code></dt><dd><p>Butterworth-Bandpass (uses <code class="xref py py-func docutils literal notranslate"><span class="pre">obspy.signal.filter.bandpass()</span></code>).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">'bandstop'</span></code></dt><dd><p>Butterworth-Bandstop (uses <code class="xref py py-func docutils literal notranslate"><span class="pre">obspy.signal.filter.bandstop()</span></code>).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">'lowpass'</span></code></dt><dd><p>Butterworth-Lowpass (uses <code class="xref py py-func docutils literal notranslate"><span class="pre">obspy.signal.filter.lowpass()</span></code>).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">'highpass'</span></code></dt><dd><p>Butterworth-Highpass (uses <code class="xref py py-func docutils literal notranslate"><span class="pre">obspy.signal.filter.highpass()</span></code>).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">'lowpassCheby2'</span></code></dt><dd><p>Cheby2-Lowpass (uses <code class="xref py py-func docutils literal notranslate"><span class="pre">obspy.signal.filter.lowpassCheby2()</span></code>).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">'lowpassFIR'</span></code> (experimental)</dt><dd><p>FIR-Lowpass (uses <code class="xref py py-func docutils literal notranslate"><span class="pre">obspy.signal.filter.lowpassFIR()</span></code>).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">'remezFIR'</span></code> (experimental)</dt><dd><p>Minimax optimal bandpass using Remez algorithm (uses
+<code class="xref py py-func docutils literal notranslate"><span class="pre">obspy.signal.filter.remezFIR()</span></code>).</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="miic3-correlate-preprocessing-td">
+<h2>miic3.correlate.preprocessing_td<a class="headerlink" href="#miic3-correlate-preprocessing-td" title="Permalink to this headline">¶</a></h2>
+<p>Preprocessing functions that are executed in Time Domain</p>
+<span class="target" id="module-miic3.correlate.preprocessing_td"></span><p>Module that contains functions for preprocessing in the time domain</p>
+<dl class="field-list simple">
+<dt class="field-odd">copyright</dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">license</dt>
+<dd class="field-even"><p><cite>GNU Lesser General Public License, Version 3 &lt;https://www.gnu.org/copyleft/lesser.html&gt;</cite></p>
+</dd>
+<dt class="field-odd">author</dt>
+<dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
+</dd>
+</dl>
+<p>Created: Tuesday, 20th July 2021 03:24:01 pm
+Last Modified: Tuesday, 20th July 2021 03:31:22 pm</p>
+<dl class="py function">
+<dt id="miic3.correlate.preprocessing_td.clip">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_td.</span></code><code class="sig-name descname"><span class="pre">clip</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/preprocessing_td.html#clip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_td.clip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clip time series data at a multiple of the standard deviation</p>
+<p>Set amplitudes exeeding a certain threshold to this threshold.
+The threshold for clipping is estimated as the standard deviation of each
+trace times a factor specified in <cite>args</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Note</dt>
+<dd class="field-odd"><p>Traces should be demeaned before clipping.</p>
+</dd>
+<dt class="field-even">Parameters</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – time series data with time oriented along the first dimension (columns)</p></li>
+<li><p><strong>args</strong> (<em>dictionary</em>) – the only keyword allowed is <cite>std_factor</cite> describing the scaling of the standard deviation for the clipping threshold</p></li>
+<li><p><strong>params</strong> (<em>dictionary</em>) – not used here</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>clipped time series data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.correlate.preprocessing_td.detrend">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_td.</span></code><code class="sig-name descname"><span class="pre">detrend</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/preprocessing_td.html#detrend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_td.detrend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove trend from data</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.correlate.preprocessing_td.mute">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_td.</span></code><code class="sig-name descname"><span class="pre">mute</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/preprocessing_td.html#mute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_td.mute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mute parts of data that exceed a threshold</p>
+<p>To completely surpress the effect of data with high amplitudes e.g. after
+aftershocks these parts of the data are muted (set to zero). The respective
+parts of the signal are identified as those where the envelope in a given
+frequency exceeds a threshold given directly as absolute numer or as a
+multiple of the data’s standard deviation. A taper of length <cite>taper_len</cite> is
+applied to smooth the edges of muted segments. Setting <cite>extend_gaps</cite> to
+True will ensure that the taper is applied outside the segments and data
+inside these segments will all zero. Edges of the data will be tapered too
+in this case.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – time series data with time oriented along the first dimension
+(columns)</p></li>
+<li><p><strong>args</strong> (<em>dictionary</em>) – <p>the following keywords are allowed:</p>
+<ul>
+<li><dl class="simple">
+<dt><cite>filter</cite>:</dt><dd><p>(dictionary) description of filter to be applied before
+calculation of the signal envelope. If not given the envelope is
+calculated from raw data. The value of the keyword filter is the
+same as the <cite>args</cite> for the function <cite>TDfilter</cite>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><cite>threshold</cite>:</dt><dd><p>(float) absolute amplitude of threshold for muting</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><cite>std_factor</cite>:</dt><dd><p>(float) alternativly to an absolute number the threhold
+can be estimated as a multiple of the standard deviation if the
+scaling is given in as value of the keyword <cite>std_factor</cite>. If
+neither <cite>threshold</cite> nor <cite>std_factor</cite> are given <cite>std_factor=1</cite> is
+assumed.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><cite>extend_gaps</cite>:</dt><dd><p>(boolean) if True date above the threshold is
+guaranteed to be muted, otherwise tapering will leak into these
+parts. This step involves an additional convolution.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><cite>taper_len</cite>:</dt><dd><p>(float) length of taper for muted segments in seconds</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p></li>
+<li><p><strong>params</strong> (<em>dictionary</em>) – filled automatically by <cite>pxcorr</cite></p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>clipped time series data</p>
+</dd>
+<dt class="field-even">Example</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">args={'filter':{'type':'bandpass',</span> <span class="pre">'freqmin':1.,</span> <span class="pre">'freqmax':6.},</span>
+<span class="pre">'taper_len':1.,</span> <span class="pre">'threshold':1000,</span> <span class="pre">'std_factor':1,</span> <span class="pre">'extend_gaps':True}</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.correlate.preprocessing_td.normalizeStandardDeviation">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_td.</span></code><code class="sig-name descname"><span class="pre">normalizeStandardDeviation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/preprocessing_td.html#normalizeStandardDeviation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_td.normalizeStandardDeviation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Divide the time series by their standard deviation</p>
+<p>Divide the amplitudes of each trace by its standard deviation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – time series data with time oriented along the first dimension (columns)</p></li>
+<li><p><strong>args</strong> (<em>dictionary</em>) – not used here</p></li>
+<li><p><strong>params</strong> (<em>dictionary</em>) – not used here</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>normalized time series data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.correlate.preprocessing_td.signBitNormalization">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_td.</span></code><code class="sig-name descname"><span class="pre">signBitNormalization</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/preprocessing_td.html#signBitNormalization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_td.signBitNormalization" title="Permalink to this definition">¶</a></dt>
+<dd><p>One bit normalization of time series data</p>
+<p>Return the sign of the samples (-1, 0, 1).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – time series data with time oriented along the first dimension (columns)</p></li>
+<li><p><strong>args</strong> (<em>dictionary</em>) – not used here</p></li>
+<li><p><strong>params</strong> (<em>dictionary</em>) – not used here</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>1-bit normalized time series data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.correlate.preprocessing_td.spectralWhitening">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_td.</span></code><code class="sig-name descname"><span class="pre">spectralWhitening</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">B</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/preprocessing_td.html#spectralWhitening"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_td.spectralWhitening" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spectal whitening of Fourier-transformed date</p>
+<p>Normalize the amplitude spectrum of the complex spectra in <cite>B</cite>. The
+<cite>args</cite> dictionary may contain the keyword <cite>joint_norm</cite>. If its value is
+True the normalization of sets of three traces are normalized jointly by
+the mean of their amplitude spectra. This is useful for later rotation of
+correlated traces in the ZNE system into the ZRT system.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>B</strong> (<em>numpy.ndarray</em>) – Fourier transformed time series data with frequency orientedalong the first dimension (columns)</p></li>
+<li><p><strong>args</strong> (<em>dictionary</em>) – arguments dictionary as described above</p></li>
+<li><p><strong>params</strong> (<em>dictionary</em>) – not used here</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>whitened spectal data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.correlate.preprocessing_td.taper">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_td.</span></code><code class="sig-name descname"><span class="pre">taper</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/preprocessing_td.html#taper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_td.taper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Taper to the time series data</p>
+<p>Apply a simple taper to the time series data.</p>
+<p><cite>args</cite> has the following structure:</p>
+<blockquote>
+<div><p>args = {‘type’:<cite>type of taper</cite>,taper_args}``</p>
+<p><cite>type</cite> may be <cite>cosine_taper</cite> with the corresponding taper_args <cite>p</cite> the
+percentage of the traces to taper. Possibilities of <cite>type</cite> are given by <cite>obspy.signal</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Example</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">args</span> <span class="pre">=</span> <span class="pre">{'type':'cosine_taper','p':0.1}</span></code></p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – time series data with time oriented along the first dimension (columns)</p></li>
+<li><p><strong>args</strong> (<em>dictionary</em>) – arguments dictionary as described above</p></li>
+<li><p><strong>params</strong> (<em>dictionary</em>) – not used here</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>tapered time series data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.correlate.preprocessing_td.TDnormalization">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_td.</span></code><code class="sig-name descname"><span class="pre">TDnormalization</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/preprocessing_td.html#TDnormalization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_td.TDnormalization" title="Permalink to this definition">¶</a></dt>
+<dd><p>Amplitude dependent time domain normalization</p>
+<p>Calculate the envelope of the filtered trace, smooth it in a window of
+length <cite>windowLength</cite> and normalize the waveform by this trace. The two
+used keywords in <cite>args</cite> are <cite>filter and `windowLength</cite> that describe the
+filter and the length of the envelope smoothing window, respectively.</p>
+<p><cite>args</cite> has the following structure:</p>
+<blockquote>
+<div><p>args = {‘windowLength’:<cite>length of the envelope smoothing window in [s]</cite>,’filter’:{‘type’:<cite>filterType</cite>, fargs}}``</p>
+<p><cite>type</cite> may be <cite>bandpass</cite> with the corresponding fargs <cite>freqmin</cite> and <cite>freqmax</cite> or <cite>highpass</cite>/<cite>lowpass</cite> with the <cite>fargs</cite> <cite>freqmin</cite>/<cite>freqmax</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Example</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">args</span> <span class="pre">=</span> <span class="pre">{'windowLength':5,'filter':{'type':'bandpass',</span>
+<span class="pre">'freqmin':0.5,</span> <span class="pre">'freqmax':2.}}</span></code></p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – time series data with time oriented along the first dimension (columns)</p></li>
+<li><p><strong>args</strong> (<em>dictionary</em>) – arguments dictionary as described above</p></li>
+<li><p><strong>params</strong> (<em>dictionary</em>) – not used here</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>normalized time series data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.correlate.preprocessing_td.TDfilter">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_td.</span></code><code class="sig-name descname"><span class="pre">TDfilter</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/preprocessing_td.html#TDfilter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_td.TDfilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter time series data</p>
+<p>Filter in time domain. Types of filters are defined by <cite>obspy.signal</cite>.</p>
+<p><cite>args</cite> has the following structure:</p>
+<blockquote>
+<div><p>args = {‘type’:<cite>filterType</cite>, fargs}</p>
+<p><cite>type</cite> may be <cite>bandpass</cite> with the corresponding fargs <cite>freqmin</cite> and
+<cite>freqmax</cite> or <cite>highpass</cite>/<cite>lowpass</cite> with the <cite>fargs</cite> <cite>freqmin</cite>/<cite>freqmax</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Example</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">args</span> <span class="pre">=</span> <span class="pre">{'type':'bandpass','freqmin':0.5,'freqmax':2.}</span></code></p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – time series data with time oriented along the first dimension (columns)</p></li>
+<li><p><strong>args</strong> (<em>dictionary</em>) – arguments dictionary as described above</p></li>
+<li><p><strong>params</strong> (<em>dictionary</em>) – not used here</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>filtered time series data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.correlate.preprocessing_td.zeroPadding">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_td.</span></code><code class="sig-name descname"><span class="pre">zeroPadding</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/preprocessing_td.html#zeroPadding"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_td.zeroPadding" title="Permalink to this definition">¶</a></dt>
+<dd><p>Append zeros to the traces</p>
+<p>Pad traces with zeros to increase the speed of the Fourier transforms and
+to avoid wrap around effects. Three possibilities for the length of the
+padding can be set in <code class="docutils literal notranslate"><span class="pre">args['type']</span></code>:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">nextFastLen</span></code>:</dt><dd><p>Traces are padded to a length that is the next fast
+fft length</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">avoidWrapAround</span></code>:</dt><dd><p>depending on length of the trace that is to be used
+the padded part is just long enough to avoid wrap around</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">avoidWrapFastLen</span></code>:</dt><dd><p>Use the next fast length that avoids wrap around</p>
+</dd>
+</dl>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Example</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">args</span> <span class="pre">=</span> <span class="pre">{'type':'avoidWrapPowerTwo'}</span></code></p>
+</dd>
+<dt class="field-even">Parameters</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – time series data with time oriented along the first dimension (columns)</p></li>
+<li><p><strong>args</strong> (<em>dictionary</em>) – arguments dictionary as described above</p></li>
+<li><p><strong>params</strong> (<em>dictionary</em>) – not used here</p></li>
+<li><p><strong>axis</strong> (<em>tuple</em><em>, </em><em>optional</em>) – axis to pad on</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>zero padded time series data</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="miic3-correlate-preprocessing-fd">
+<h2>miic3.correlate.preprocessing_fd<a class="headerlink" href="#miic3-correlate-preprocessing-fd" title="Permalink to this headline">¶</a></h2>
+<p>Preprocessing functions that are executed in Frequency Domain</p>
+<span class="target" id="module-miic3.correlate.preprocessing_fd"></span><p>Module containing functions for preprocessing in the frequency domain</p>
+<dl class="field-list simple">
+<dt class="field-odd">copyright</dt>
+<dd class="field-odd"><p>The PyGLImER development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
+</dd>
+<dt class="field-even">license</dt>
+<dd class="field-even"><p><cite>GNU Lesser General Public License, Version 3 &lt;https://www.gnu.org/copyleft/lesser.html&gt;</cite></p>
+</dd>
+<dt class="field-odd">author</dt>
+<dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
+</dd>
+</dl>
+<p>Created: Tuesday, 20th July 2021 03:40:11 pm
+Last Modified: Tuesday, 20th July 2021 03:43:11 pm</p>
+<dl class="py function">
+<dt id="miic3.correlate.preprocessing_fd.FDfilter">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_fd.</span></code><code class="sig-name descname"><span class="pre">FDfilter</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">B</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/preprocessing_fd.html#FDfilter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_fd.FDfilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter Fourier-transformed data</p>
+<p>Filter Fourier tranformed data by tapering in frequency domain. The <cite>args</cite>
+dictionary is supposed to contain the key <cite>flimit</cite> with a value that is a
+four element list or tuple defines the corner frequencies (f1, f2, f3, f4)
+in Hz of the cosine taper which is one between f2 and f3 and tapers to zero
+for f1 &lt; f &lt; f2 and f3 &lt; f &lt; f4.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>B</strong> (<em>numpy.ndarray</em>) – Fourier transformed time series data with frequency orientedalong the first dimension (columns)</p></li>
+<li><p><strong>args</strong> (<em>dictionary</em>) – arguments dictionary as described above</p></li>
+<li><p><strong>params</strong> (<em>dictionary</em>) – params[‘freqs’] contains an array with the freqency values
+of the samples in <cite>B</cite></p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>filtered spectal data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.correlate.preprocessing_fd.FDsignBitNormalization">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_fd.</span></code><code class="sig-name descname"><span class="pre">FDsignBitNormalization</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">B</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../../_modules/miic3/correlate/preprocessing_fd.html#FDsignBitNormalization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_fd.FDsignBitNormalization" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sign bit normalization of frequency transformed data</p>
+<p>Divides each sample by its amplitude resulting in trace with amplidues of
+(-1, 0, 1). As this operation is done in frequency domain it requires two
+Fourier transforms and is thus quite costly but alows to be performed
+after other steps of frequency domain procesing e.g. whitening.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>B</strong> (<em>numpy.ndarray</em>) – Fourier transformed time series data with frequency orientedalong the first dimension (columns)</p></li>
+<li><p><strong>args</strong> (<em>dictionary</em>) – not used in this function</p></li>
+<li><p><strong>params</strong> (<em>dictionary</em>) – not used in this function</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>frequency transform of the 1-bit normalized data</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
 </div>
 
 
@@ -1651,7 +1989,8 @@ i.e. the last character of the <code class="docutils literal notranslate"><span 
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="../correlate.html" class="btn btn-neutral float-left" title="Correlate" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../corrdb.html" class="btn btn-neutral float-right" title="Save and Load Correlations" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="stream.html" class="btn btn-neutral float-left" title="CorrTrace, CorrStream, and CorrBulk classes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>

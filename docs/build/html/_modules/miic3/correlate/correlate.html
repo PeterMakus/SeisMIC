@@ -32,6 +32,8 @@
         <script src="../../../_static/jquery.js"></script>
         <script src="../../../_static/underscore.js"></script>
         <script src="../../../_static/doctools.js"></script>
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+        <script >mermaid.initialize({startOnLoad:true});</script>
     
     <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
@@ -86,7 +88,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/trace_data.html">Trace data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/correlate.html">Correlate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/correlate.html">Compute and Access Correlations</a></li>
 </ul>
 
             
@@ -162,10 +164,9 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 29th March 2021 07:58:18 am</span>
-<span class="sd">Last Modified: Wednesday, 14th July 2021 04:28:10 pm</span>
+<span class="sd">Last Modified: Tuesday, 20th July 2021 04:20:30 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 <span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -175,25 +176,14 @@
 <span class="kn">from</span> <span class="nn">mpi4py</span> <span class="kn">import</span> <span class="n">MPI</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">Inventory</span>
-<span class="kn">import</span> <span class="nn">obspy.signal</span> <span class="k">as</span> <span class="nn">osignal</span>
-<span class="kn">from</span> <span class="nn">scipy.fftpack</span> <span class="kn">import</span> <span class="n">next_fast_len</span>
-<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">signal</span>
-<span class="kn">from</span> <span class="nn">scipy.signal.signaltools</span> <span class="kn">import</span> <span class="n">detrend</span> <span class="k">as</span> <span class="n">sp_detrend</span>
 
 <span class="kn">from</span> <span class="nn">miic3.correlate.stream</span> <span class="kn">import</span> <span class="n">CorrTrace</span><span class="p">,</span> <span class="n">CorrStream</span>
-<span class="kn">from</span> <span class="nn">miic3.trace_data.preprocess</span> <span class="kn">import</span> <span class="n">_preprocess</span>
+<span class="kn">from</span> <span class="nn">miic3.correlate</span> <span class="kn">import</span> <span class="n">preprocessing_td</span> <span class="k">as</span> <span class="n">pptd</span>
+<span class="kn">from</span> <span class="nn">miic3.correlate</span> <span class="kn">import</span> <span class="n">preprocessing_stream</span> <span class="k">as</span> <span class="n">ppst</span>
 <span class="kn">from</span> <span class="nn">miic3.db.corr_hdf5</span> <span class="kn">import</span> <span class="n">CorrelationDataBase</span>
 <span class="kn">from</span> <span class="nn">miic3.trace_data.waveform</span> <span class="kn">import</span> <span class="n">Store_Client</span>
 <span class="kn">from</span> <span class="nn">miic3.utils.fetch_func_from_str</span> <span class="kn">import</span> <span class="n">func_from_str</span>
-<span class="kn">from</span> <span class="nn">miic3.utils.miic_utils</span> <span class="kn">import</span> <span class="n">discard_short_traces</span><span class="p">,</span> <span class="n">get_valid_traces</span>
-
-
-<span class="n">log_lvl</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;DEBUG&#39;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
-    <span class="s1">&#39;INFO&#39;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
-    <span class="s1">&#39;WARNING&#39;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span>
-    <span class="s1">&#39;CRITICAL&#39;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">,</span>
-    <span class="s1">&#39;ERROR&#39;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">}</span>
+<span class="kn">from</span> <span class="nn">miic3.utils</span> <span class="kn">import</span> <span class="n">miic_utils</span> <span class="k">as</span> <span class="n">mu</span>
 
 
 <div class="viewcode-block" id="Correlator"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.Correlator">[docs]</a><span class="k">class</span> <span class="nc">Correlator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -240,7 +230,7 @@
             <span class="n">tstr</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">tstr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">tstr</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-        <span class="n">loglvl</span> <span class="o">=</span> <span class="n">log_lvl</span><span class="p">[</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;log_level&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()]</span>
+        <span class="n">loglvl</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">log_lvl</span><span class="p">[</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;log_level&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">(</span><span class="s2">&quot;miic3.Correlator0</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">loglvl</span><span class="p">)</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">captureWarnings</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
@@ -366,6 +356,7 @@
             <span class="n">inv</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">inv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">inv</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">st</span><span class="p">,</span> <span class="n">write_flag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_data</span><span class="p">():</span>
+
             <span class="n">cst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pxcorr_inner</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">inv</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">write_flag</span><span class="p">:</span>
                 <span class="c1"># Here, we can recombine the correlations for the read_len</span>
@@ -489,8 +480,6 @@
 <span class="sd">        Returns an Iterator that loops over each start and end time with the</span>
 <span class="sd">        requested window length.</span>
 
-<span class="sd">        If self.options[&#39;taper&#39;] true, the time windows will be tapered on both</span>
-<span class="sd">        ends.</span>
 <span class="sd">        Also will lead to the time windows being prolonged by the sum of</span>
 <span class="sd">        the length of the tapered end, so that no data is lost. Always</span>
 <span class="sd">        a hann taper so far. Taper length is 5% of the requested time</span>
@@ -500,22 +489,10 @@
 <span class="sd">        that were active during this time.</span>
 <span class="sd">        :rtype: Iterator[Stream]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">opt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;subdivision&#39;</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">starts</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># start of each time window</span>
-            <span class="n">ends</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">station</span><span class="p">:</span>
-                <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">_get_times</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">start</span><span class="p">:</span>
-                    <span class="n">warn</span><span class="p">(</span>
-                        <span class="s1">&#39;No mseed files found in database for station </span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">.&#39;</span>
-                        <span class="o">%</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span>
-                <span class="n">starts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
-                <span class="n">ends</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">end</span><span class="p">)</span>
-
             <span class="c1"># find already available times</span>
-            <span class="n">ex_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_existing_times</span><span class="p">(</span><span class="s1">&#39;subdivision&#39;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Already existing data: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">ex_dict</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ex_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_existing_times</span><span class="p">(</span><span class="s1">&#39;subdivision&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Already existing data: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ex_dict</span><span class="p">))</span>
 
         <span class="c1"># the time window that the loop will go over</span>
         <span class="n">t0</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;read_start&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">timestamp</span>
@@ -528,73 +505,69 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">tl</span> <span class="o">=</span> <span class="mi">0</span>
 
+        <span class="c1"># Loop over read increments</span>
         <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">loop_window</span><span class="p">:</span>
             <span class="n">write_flag</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Write length is same as read length</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">st</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
-                <span class="n">startt</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">-</span> <span class="n">tl</span>
-                <span class="n">endt</span> <span class="o">=</span> <span class="n">startt</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;read_len&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">tl</span>
-                <span class="k">for</span> <span class="n">net</span><span class="p">,</span> <span class="n">stat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">station</span><span class="p">:</span>
-                    <span class="c1"># First check whether data exists (before loading)</span>
-                    <span class="c1"># I might want only this part to be done on rank 0</span>
-                    <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">select_inventory_or_load_remote</span><span class="p">(</span>
-                        <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">)</span>
-                    <span class="n">stext</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">_load_local</span><span class="p">(</span>
-                        <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">startt</span><span class="p">,</span> <span class="n">endt</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-                    <span class="n">get_valid_traces</span><span class="p">(</span><span class="n">stext</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">stext</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">stext</span><span class="p">):</span>
-                        <span class="k">continue</span>
-                    <span class="n">st</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_preprocess</span><span class="p">(</span>
-                        <span class="n">stext</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">,</span>
-                        <span class="n">resp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;remove_response&#39;</span><span class="p">],</span> <span class="n">tl</span><span class="p">))</span>
-                <span class="c1"># preprocessing on stream basis</span>
-                <span class="c1"># Maybe a bad place to do that?</span>
-                <span class="c1"># Discard traces that are less then 5% of correlation length</span>
-                <span class="n">discard_short_traces</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">opt</span><span class="p">[</span><span class="s1">&#39;corr_len&#39;</span><span class="p">]</span><span class="o">/</span><span class="mi">20</span><span class="p">)</span>
-                <span class="k">if</span> <span class="s1">&#39;preProcessing&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                    <span class="k">for</span> <span class="n">procStep</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;preProcessing&#39;</span><span class="p">]:</span>
-                        <span class="n">func</span> <span class="o">=</span> <span class="n">func_from_str</span><span class="p">(</span><span class="n">procStep</span><span class="p">[</span><span class="s1">&#39;function&#39;</span><span class="p">])</span>
-                        <span class="n">st</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="o">**</span><span class="n">procStep</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">])</span>
-                <span class="n">st</span><span class="o">.</span><span class="n">merge</span><span class="p">()</span>
-                <span class="n">st</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">startt</span><span class="p">,</span> <span class="n">endt</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">st</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">startt</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">-</span> <span class="n">tl</span>
+            <span class="n">endt</span> <span class="o">=</span> <span class="n">startt</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;read_len&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">tl</span>
+            <span class="n">st</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="n">Inventory</span><span class="p">()</span>
+            <span class="n">startt</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">-</span> <span class="n">tl</span>
+            <span class="n">endt</span> <span class="o">=</span> <span class="n">startt</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;read_len&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">tl</span>
 
-            <span class="k">if</span> <span class="n">st</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="c1"># No time available at none of the stations</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                    <span class="s1">&#39;No data found for day </span><span class="si">%s</span><span class="s1">.&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">t</span><span class="p">)))</span>
-                <span class="k">continue</span>
+            <span class="c1"># Decide which process reads data from which station</span>
+            <span class="c1"># Better than just letting one core read as this avoids having to</span>
+            <span class="c1"># send very big chunks of data using MPI (MPI communication does</span>
+            <span class="c1"># not support more than 2GB/comm operation)</span>
+            <span class="n">pmap</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">station</span><span class="p">))</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">psize</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">station</span><span class="p">)</span>
+            <span class="n">pmap</span> <span class="o">=</span> <span class="n">pmap</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">pmap</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">station</span><span class="p">))[</span><span class="n">ind</span><span class="p">]</span>
 
-            <span class="c1"># Second loop to return the time window in correlation length</span>
-            <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">win0</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">slide</span><span class="p">(</span>
-                <span class="n">opt</span><span class="p">[</span><span class="s1">&#39;corr_len&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span> <span class="n">opt</span><span class="p">[</span><span class="s1">&#39;corr_inc&#39;</span><span class="p">],</span>
-                    <span class="n">include_partial_windows</span><span class="o">=</span><span class="kc">True</span><span class="p">)):</span>
+            <span class="c1"># loop over queried stations</span>
+            <span class="k">for</span> <span class="n">net</span><span class="p">,</span> <span class="n">stat</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">station</span><span class="p">)[</span><span class="n">ind</span><span class="p">]:</span>
+                <span class="c1"># Load data</span>
+                <span class="n">resp</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">select_inventory_or_load_remote</span><span class="p">(</span>
+                        <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">))</span>
+                <span class="n">stext</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">_load_local</span><span class="p">(</span>
+                    <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">startt</span><span class="p">,</span> <span class="n">endt</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+                <span class="n">mu</span><span class="o">.</span><span class="n">get_valid_traces</span><span class="p">(</span><span class="n">stext</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">stext</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">stext</span><span class="p">):</span>
+                    <span class="c1"># No data for this station to read</span>
+                    <span class="k">continue</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">stext</span><span class="p">)</span>
 
-                <span class="c1"># We use trim so the windows have the right time and</span>
-                <span class="c1"># are filled with masked arrays for places without values</span>
-                <span class="n">starttrim</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span> <span class="o">+</span> <span class="n">ii</span><span class="o">*</span><span class="n">opt</span><span class="p">[</span><span class="s1">&#39;corr_inc&#39;</span><span class="p">]</span>
-                <span class="n">endtrim</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span> <span class="o">+</span> <span class="n">ii</span><span class="o">*</span><span class="n">opt</span><span class="p">[</span><span class="s1">&#39;corr_inc&#39;</span><span class="p">]</span> <span class="o">+</span>\
-                    <span class="n">opt</span><span class="p">[</span><span class="s1">&#39;corr_len&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">delta</span>
-                <span class="n">win</span> <span class="o">=</span> <span class="n">win0</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">starttrim</span><span class="p">,</span> <span class="n">endtrim</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="n">get_valid_traces</span><span class="p">(</span><span class="n">win</span><span class="p">)</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;taper&#39;</span><span class="p">]:</span>
-                    <span class="c1"># This could be done in the main script with several cores</span>
-                    <span class="c1"># to speed up things a tiny bit</span>
-                    <span class="n">win</span><span class="o">.</span><span class="n">taper</span><span class="p">(</span><span class="n">max_percentage</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+            <span class="c1"># Stream based preprocessing</span>
+            <span class="n">st</span> <span class="o">=</span> <span class="n">preprocess_stream</span><span class="p">(</span>
+                <span class="n">st</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="p">,</span> <span class="n">resp</span><span class="p">,</span> <span class="n">startt</span><span class="p">,</span> <span class="n">endt</span><span class="p">,</span> <span class="n">tl</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
+
+            <span class="c1"># Slice the stream in correlation length</span>
+            <span class="c1"># -&gt; Loop over correlation increments</span>
+            <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">win</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">generate_corr_inc</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)):</span>
+                <span class="n">winstart</span> <span class="o">=</span> <span class="n">startt</span> <span class="o">+</span> <span class="n">ii</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;subdivision&#39;</span><span class="p">][</span><span class="s1">&#39;corr_inc&#39;</span><span class="p">]</span>
+                <span class="n">winend</span> <span class="o">=</span> <span class="n">winstart</span> <span class="o">+</span> <span class="n">ii</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;subdivision&#39;</span><span class="p">][</span><span class="s1">&#39;corr_len&#39;</span><span class="p">]</span>
+
+                <span class="c1"># Gather time windows from all stations to all cores</span>
+                <span class="n">winl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">allgather</span><span class="p">(</span><span class="n">win</span><span class="p">)</span>
+                <span class="n">win</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">winp</span> <span class="ow">in</span> <span class="n">winl</span><span class="p">:</span>
+                    <span class="n">win</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">winp</span><span class="p">)</span>
+
+                <span class="c1"># Get correlation combinations</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">calc_cross_combis</span><span class="p">(</span>
-                        <span class="n">win</span><span class="p">,</span> <span class="n">ex_dict</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combination_method&#39;</span><span class="p">])</span>
+                        <span class="n">win</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ex_dict</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combination_method&#39;</span><span class="p">])</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">],</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
                 <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">]):</span>
                     <span class="c1"># no new combinations for this time period</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;no new data for times </span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
-                        <span class="nb">str</span><span class="p">(</span><span class="n">starttrim</span><span class="p">),</span>
-                        <span class="nb">str</span><span class="p">(</span><span class="n">endtrim</span><span class="p">)))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;no new data for times </span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                        <span class="nb">str</span><span class="p">(</span><span class="n">winstart</span><span class="p">),</span>
+                        <span class="nb">str</span><span class="p">(</span><span class="n">winend</span><span class="p">)))</span>
                     <span class="k">continue</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Working on correlation times </span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
                     <span class="nb">str</span><span class="p">(</span><span class="n">win</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">win</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">endtime</span><span class="p">)))</span>
@@ -631,7 +604,7 @@
             <span class="n">A</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">A</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">],</span> <span class="n">proc</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">],</span> <span class="n">params</span><span class="p">)</span>
 
         <span class="c1"># zero-padding</span>
-        <span class="n">A</span> <span class="o">=</span> <span class="n">zeroPadding</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;avoidWrapFastLen&#39;</span><span class="p">},</span> <span class="n">params</span><span class="p">)</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">pptd</span><span class="o">.</span><span class="n">zeroPadding</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;avoidWrapFastLen&#39;</span><span class="p">},</span> <span class="n">params</span><span class="p">)</span>
 
         <span class="c1">######################################</span>
         <span class="c1"># FFT</span>
@@ -757,68 +730,6 @@
         <span class="n">A</span><span class="p">[:</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="p">,</span> <span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span>
         <span class="k">del</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span>  <span class="c1"># Not needed any more, just uses up RAM</span>
     <span class="k">return</span> <span class="n">A</span><span class="p">,</span> <span class="n">st</span></div>
-
-
-<div class="viewcode-block" id="zeroPadding"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.zeroPadding">[docs]</a><span class="k">def</span> <span class="nf">zeroPadding</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Append zeros to the traces</span>
-
-<span class="sd">    Pad traces with zeros to increase the speed of the Fourier transforms and</span>
-<span class="sd">    to avoid wrap around effects. Three possibilities for the length of the</span>
-<span class="sd">    padding can be set in ``args[&#39;type&#39;]``:</span>
-
-<span class="sd">    - ``nextFastLen``:</span>
-<span class="sd">        Traces are padded to a length that is the next fast</span>
-<span class="sd">        fft length</span>
-<span class="sd">    - ``avoidWrapAround``:</span>
-<span class="sd">        depending on length of the trace that is to be used</span>
-<span class="sd">        the padded part is just long enough to avoid wrap around</span>
-<span class="sd">    - ``avoidWrapFastLen``:</span>
-<span class="sd">        Use the next fast length that avoids wrap around</span>
-
-<span class="sd">    :Example: ``args = {&#39;type&#39;:&#39;avoidWrapPowerTwo&#39;}``</span>
-
-<span class="sd">    :type A: numpy.ndarray</span>
-<span class="sd">    :param A: time series data with time oriented along the first \\</span>
-<span class="sd">        dimension (columns)</span>
-<span class="sd">    :type args: dictionary</span>
-<span class="sd">    :param args: arguments dictionary as described above</span>
-<span class="sd">    :type params: dictionary</span>
-<span class="sd">    :param params: not used here</span>
-<span class="sd">    :param axis: axis to pad on</span>
-<span class="sd">    :type axis: tuple, optional</span>
-
-<span class="sd">    :rtype: numpy.ndarray</span>
-<span class="sd">    :return: zero padded time series data</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">A</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">axis</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Only two-dimensional arrays are supported.&#39;</span><span class="p">)</span>
-    <span class="n">npts</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">A</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="n">ntrc</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-    <span class="k">elif</span> <span class="n">A</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">ntrc</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">ntrc</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">npts</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Input Array is empty&#39;</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;nextFastLen&#39;</span><span class="p">:</span>
-        <span class="n">N</span> <span class="o">=</span> <span class="n">next_fast_len</span><span class="p">(</span><span class="n">npts</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;avoidWrapAround&#39;</span><span class="p">:</span>
-        <span class="n">N</span> <span class="o">=</span> <span class="n">npts</span> <span class="o">+</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;lengthToSave&#39;</span><span class="p">]</span>
-    <span class="k">elif</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;avoidWrapFastLen&#39;</span><span class="p">:</span>
-        <span class="n">N</span> <span class="o">=</span> <span class="n">next_fast_len</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span>
-            <span class="n">npts</span> <span class="o">+</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;lengthToSave&#39;</span><span class="p">]))</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;type &#39;</span><span class="si">%s</span><span class="s2">&#39; of zero padding not implemented&quot;</span> <span class="o">%</span>
-                         <span class="n">args</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">])</span>
-
-    <span class="k">if</span> <span class="n">axis</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
-            <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N</span><span class="o">-</span><span class="n">npts</span><span class="p">,</span> <span class="n">ntrc</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
-            <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">ntrc</span><span class="p">,</span> <span class="n">N</span><span class="o">-</span><span class="n">npts</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">A</span></div>
 
 
 <span class="k">def</span> <span class="nf">_compare_existing_data</span><span class="p">(</span><span class="n">ex_corr</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">tr0</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">tr1</span><span class="p">:</span> <span class="n">Stream</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -1144,472 +1055,6 @@
     <span class="k">return</span> <span class="n">rtz</span>
 
 
-<div class="viewcode-block" id="set_sample_options"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.set_sample_options">[docs]</a><span class="k">def</span> <span class="nf">set_sample_options</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-    <span class="n">args</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;TDpreProcessing&#39;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="p">{</span>
-            <span class="s1">&#39;function&#39;</span><span class="p">:</span> <span class="n">detrend</span><span class="p">,</span>
-            <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;linear&#39;</span><span class="p">}},</span>
-        <span class="p">{</span>
-            <span class="s1">&#39;function&#39;</span><span class="p">:</span> <span class="n">taper</span><span class="p">,</span>
-            <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;cosine_taper&#39;</span><span class="p">,</span> <span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">}},</span>
-        <span class="p">{</span>
-            <span class="s1">&#39;function&#39;</span><span class="p">:</span> <span class="n">mute</span><span class="p">,</span>
-            <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;filter&#39;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;bandpass&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;freqmin&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">,</span> <span class="s1">&#39;freqmax&#39;</span><span class="p">:</span> <span class="mf">6.</span><span class="p">},</span>
-                <span class="s1">&#39;taper_len&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">,</span> <span class="s1">&#39;std_factor&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-                <span class="s1">&#39;extend_gaps&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}},</span>
-        <span class="p">{</span>
-            <span class="s1">&#39;function&#39;</span><span class="p">:</span> <span class="n">TDfilter</span><span class="p">,</span>
-            <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;bandpass&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;freqmin&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">,</span> <span class="s1">&#39;freqmax&#39;</span><span class="p">:</span> <span class="mf">3.</span><span class="p">}},</span>
-        <span class="p">{</span>
-            <span class="s1">&#39;function&#39;</span><span class="p">:</span> <span class="n">TDnormalization</span><span class="p">,</span>
-            <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;filter&#39;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;bandpass&#39;</span><span class="p">,</span> <span class="s1">&#39;freqmin&#39;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
-                <span class="s1">&#39;freqmax&#39;</span><span class="p">:</span> <span class="mf">2.</span><span class="p">},</span> <span class="s1">&#39;windowLength&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">}},</span>
-        <span class="p">{</span>
-            <span class="s1">&#39;function&#39;</span><span class="p">:</span> <span class="n">signBitNormalization</span><span class="p">,</span>
-            <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="p">{}</span>
-        <span class="p">}</span>
-                                 <span class="p">],</span>
-            <span class="s1">&#39;FDpreProcessing&#39;</span><span class="p">:</span> <span class="p">[</span>
-                <span class="p">{</span><span class="s1">&#39;function&#39;</span><span class="p">:</span> <span class="n">spectralWhitening</span><span class="p">,</span>
-                    <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="p">{}},</span>
-                <span class="p">{</span><span class="s1">&#39;function&#39;</span><span class="p">:</span> <span class="n">FDfilter</span><span class="p">,</span>
-                    <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;flimit&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">5.</span><span class="p">,</span> <span class="mf">7.</span><span class="p">]}}],</span>
-            <span class="s1">&#39;lengthToSave&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
-            <span class="s1">&#39;center_correlation&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-            <span class="c1"># make sure zero correlation time is in the center</span>
-            <span class="s1">&#39;normalize_correlation&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-            <span class="s1">&#39;combinations&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)]}</span>
-
-    <span class="k">return</span> <span class="n">args</span></div>
-
-
-<div class="viewcode-block" id="spectralWhitening"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.spectralWhitening">[docs]</a><span class="k">def</span> <span class="nf">spectralWhitening</span><span class="p">(</span><span class="n">B</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Spectal whitening of Fourier-transformed date</span>
-
-<span class="sd">    Normalize the amplitude spectrum of the complex spectra in `B`. The</span>
-<span class="sd">    `args` dictionary may contain the keyword `joint_norm`. If its value is</span>
-<span class="sd">    True the normalization of sets of three traces are normalized jointly by</span>
-<span class="sd">    the mean of their amplitude spectra. This is useful for later rotation of</span>
-<span class="sd">    correlated traces in the ZNE system into the ZRT system.</span>
-
-<span class="sd">    :type B: numpy.ndarray</span>
-<span class="sd">    :param B: Fourier transformed time series data with frequency oriented\\</span>
-<span class="sd">        along the first dimension (columns)</span>
-<span class="sd">    :type args: dictionary</span>
-<span class="sd">    :param args: arguments dictionary as described above</span>
-<span class="sd">    :type params: dictionary</span>
-<span class="sd">    :param params: not used here</span>
-
-<span class="sd">    :rtype: numpy.ndarray</span>
-<span class="sd">    :return: whitened spectal data</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">absB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">absolute</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
-    <span class="k">if</span> <span class="s1">&#39;joint_norm&#39;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-        <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;joint_norm&#39;</span><span class="p">]:</span>
-            <span class="k">assert</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;for joint normalization the number</span><span class="se">\</span>
-<span class="s2">                      of traces needs to the multiple of 3: </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">3</span><span class="p">):</span>
-                <span class="n">absB</span><span class="p">[:,</span> <span class="n">ii</span><span class="p">:</span><span class="n">ii</span><span class="o">+</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span>
-                    <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">absB</span><span class="p">[:,</span> <span class="n">ii</span><span class="p">:</span><span class="n">ii</span><span class="o">+</span><span class="mi">3</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
-    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">invalid</span><span class="o">=</span><span class="s1">&#39;raise&#39;</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">B</span> <span class="o">/=</span> <span class="n">absB</span>
-        <span class="k">except</span> <span class="ne">FloatingPointError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">errargs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">absB</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
-            <span class="c1"># Report error where there is zero divides for a non-zero freq</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">errargs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
-                <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="n">errargs</span><span class="p">)</span>
-
-    <span class="c1"># Set zero frequency component to zero</span>
-    <span class="n">B</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mf">0.</span><span class="n">j</span>
-
-    <span class="k">return</span> <span class="n">B</span></div>
-
-
-<div class="viewcode-block" id="FDfilter"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.FDfilter">[docs]</a><span class="k">def</span> <span class="nf">FDfilter</span><span class="p">(</span><span class="n">B</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Filter Fourier-transformed data</span>
-
-<span class="sd">    Filter Fourier tranformed data by tapering in frequency domain. The `args`</span>
-<span class="sd">    dictionary is supposed to contain the key `flimit` with a value that is a</span>
-<span class="sd">    four element list or tuple defines the corner frequencies (f1, f2, f3, f4)</span>
-<span class="sd">    in Hz of the cosine taper which is one between f2 and f3 and tapers to zero</span>
-<span class="sd">    for f1 &lt; f &lt; f2 and f3 &lt; f &lt; f4.</span>
-
-<span class="sd">    :type B: numpy.ndarray</span>
-<span class="sd">    :param B: Fourier transformed time series data with frequency oriented\\</span>
-<span class="sd">        along the first dimension (columns)</span>
-<span class="sd">    :type args: dictionary</span>
-<span class="sd">    :param args: arguments dictionary as described above</span>
-<span class="sd">    :type params: dictionary</span>
-<span class="sd">    :param params: params[&#39;freqs&#39;] contains an array with the freqency values</span>
-<span class="sd">        of the samples in `B`</span>
-
-<span class="sd">    :rtype: numpy.ndarray</span>
-<span class="sd">    :return: filtered spectal data</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">args</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-    <span class="n">args</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;freqs&#39;</span><span class="p">:</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;freqs&#39;</span><span class="p">]})</span>
-    <span class="n">tap</span> <span class="o">=</span> <span class="n">osignal</span><span class="o">.</span><span class="n">invsim</span><span class="o">.</span><span class="n">cosine_taper</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span>
-    <span class="n">B</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">tap</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
-    <span class="k">return</span> <span class="n">B</span></div>
-
-
-<div class="viewcode-block" id="FDsignBitNormalization"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.FDsignBitNormalization">[docs]</a><span class="k">def</span> <span class="nf">FDsignBitNormalization</span><span class="p">(</span>
-        <span class="n">B</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Sign bit normalization of frequency transformed data</span>
-
-<span class="sd">    Divides each sample by its amplitude resulting in trace with amplidues of</span>
-<span class="sd">    (-1, 0, 1). As this operation is done in frequency domain it requires two</span>
-<span class="sd">    Fourier transforms and is thus quite costly but alows to be performed</span>
-<span class="sd">    after other steps of frequency domain procesing e.g. whitening.</span>
-
-
-<span class="sd">    :type B: numpy.ndarray</span>
-<span class="sd">    :param B: Fourier transformed time series data with frequency oriented\\</span>
-<span class="sd">        along the first dimension (columns)</span>
-<span class="sd">    :type args: dictionary</span>
-<span class="sd">    :param args: not used in this function</span>
-<span class="sd">    :type params: dictionary</span>
-<span class="sd">    :param params: not used in this function</span>
-
-<span class="sd">    :rtype: numpy.ndarray</span>
-<span class="sd">    :return: frequency transform of the 1-bit normalized data</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">irfft</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="c1"># B should always be real, so this line does not make an awful lot of sense</span>
-    <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfft</span><span class="p">(</span><span class="n">C</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="mute"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.mute">[docs]</a><span class="k">def</span> <span class="nf">mute</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Mute parts of data that exceed a threshold</span>
-
-<span class="sd">    To completely surpress the effect of data with high amplitudes e.g. after</span>
-<span class="sd">    aftershocks these parts of the data are muted (set to zero). The respective</span>
-<span class="sd">    parts of the signal are identified as those where the envelope in a given</span>
-<span class="sd">    frequency exceeds a threshold given directly as absolute numer or as a</span>
-<span class="sd">    multiple of the data&#39;s standard deviation. A taper of length `taper_len` is</span>
-<span class="sd">    applied to smooth the edges of muted segments. Setting `extend_gaps` to</span>
-<span class="sd">    True will ensure that the taper is applied outside the segments and data</span>
-<span class="sd">    inside these segments will all zero. Edges of the data will be tapered too</span>
-<span class="sd">    in this case.</span>
-
-
-
-<span class="sd">    :type A: numpy.ndarray</span>
-<span class="sd">    :param A: time series data with time oriented along the first dimension</span>
-<span class="sd">        (columns)</span>
-<span class="sd">    :type args: dictionary</span>
-<span class="sd">    :param args: the following keywords are allowed:</span>
-
-<span class="sd">        * `filter`:</span>
-<span class="sd">            (dictionary) description of filter to be applied before</span>
-<span class="sd">            calculation of the signal envelope. If not given the envelope is</span>
-<span class="sd">            calculated from raw data. The value of the keyword filter is the</span>
-<span class="sd">            same as the `args` for the function `TDfilter`.</span>
-<span class="sd">        * `threshold`:</span>
-<span class="sd">            (float) absolute amplitude of threshold for muting</span>
-<span class="sd">        * `std_factor`:</span>
-<span class="sd">            (float) alternativly to an absolute number the threhold</span>
-<span class="sd">            can be estimated as a multiple of the standard deviation if the</span>
-<span class="sd">            scaling is given in as value of the keyword `std_factor`. If</span>
-<span class="sd">            neither `threshold` nor `std_factor` are given `std_factor=1` is</span>
-<span class="sd">            assumed.</span>
-<span class="sd">        * `extend_gaps`:</span>
-<span class="sd">            (boolean) if True date above the threshold is</span>
-<span class="sd">            guaranteed to be muted, otherwise tapering will leak into these</span>
-<span class="sd">            parts. This step involves an additional convolution.</span>
-<span class="sd">        * `taper_len`:</span>
-<span class="sd">            (float) length of taper for muted segments in seconds</span>
-
-<span class="sd">    :type params: dictionary</span>
-<span class="sd">    :param params: filled automatically by `pxcorr`</span>
-
-<span class="sd">    :rtype: numpy.ndarray</span>
-<span class="sd">    :return: clipped time series data</span>
-
-<span class="sd">    :Example:</span>
-<span class="sd">        ``args={&#39;filter&#39;:{&#39;type&#39;:&#39;bandpass&#39;, &#39;freqmin&#39;:1., &#39;freqmax&#39;:6.},</span>
-<span class="sd">        &#39;taper_len&#39;:1., &#39;threshold&#39;:1000, &#39;std_factor&#39;:1, &#39;extend_gaps&#39;:True}``</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;taper_len&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Taper Length cannot be zero.&#39;</span><span class="p">)</span>
-
-    <span class="c1"># return zeros if length of traces is shorter than taper</span>
-    <span class="n">ntap</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;taper_len&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">])</span>
-    <span class="k">if</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">ntap</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
-
-    <span class="c1"># filter if asked to</span>
-    <span class="k">if</span> <span class="s1">&#39;filter&#39;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-        <span class="n">C</span> <span class="o">=</span> <span class="n">TDfilter</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;filter&#39;</span><span class="p">],</span> <span class="n">params</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">C</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
-
-    <span class="c1"># calculate envelope</span>
-    <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
-
-    <span class="c1"># calculate threshold</span>
-    <span class="k">if</span> <span class="s1">&#39;threshold&#39;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-        <span class="n">thres</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;threshold&#39;</span><span class="p">]</span>
-    <span class="k">elif</span> <span class="s1">&#39;std_factor&#39;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-        <span class="n">thres</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">C</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;std_factor&#39;</span><span class="p">]</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">thres</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">C</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-
-    <span class="c1"># calculate mask</span>
-    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
-    <span class="n">mask</span><span class="p">[</span><span class="n">D</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">thres</span><span class="p">),</span> <span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">))]</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="c1"># extend the muted segments to make sure the whole segment is zero after</span>
-    <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;extend_gaps&#39;</span><span class="p">]:</span>
-        <span class="n">tap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">ntap</span><span class="p">)</span><span class="o">/</span><span class="n">ntap</span>
-        <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
-            <span class="n">mask</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">mask</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">],</span> <span class="n">tap</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)</span>
-        <span class="n">nmask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
-        <span class="n">nmask</span><span class="p">[</span><span class="n">mask</span> <span class="o">&lt;</span> <span class="mf">1.</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">nmask</span> <span class="o">=</span> <span class="n">mask</span>
-
-    <span class="c1"># apply taper</span>
-    <span class="n">tap</span> <span class="o">=</span> <span class="mf">2.</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">ntap</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">/</span><span class="n">ntap</span><span class="o">*</span><span class="mf">2.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1.</span><span class="p">)</span>
-    <span class="n">tap</span> <span class="o">/=</span> <span class="n">ntap</span>
-    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
-        <span class="n">nmask</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">nmask</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">],</span> <span class="n">tap</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)</span>
-
-    <span class="c1"># mute data with tapered mask</span>
-    <span class="n">A</span> <span class="o">*=</span> <span class="n">nmask</span>
-    <span class="k">return</span> <span class="n">A</span></div>
-
-
-<div class="viewcode-block" id="TDfilter"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.TDfilter">[docs]</a><span class="k">def</span> <span class="nf">TDfilter</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Filter time series data</span>
-
-<span class="sd">    Filter in time domain. Types of filters are defined by `obspy.signal`.</span>
-
-<span class="sd">    `args` has the following structure:</span>
-
-<span class="sd">        args = {&#39;type&#39;:`filterType`, fargs}</span>
-
-<span class="sd">        `type` may be `bandpass` with the corresponding fargs `freqmin` and</span>
-<span class="sd">        `freqmax` or `highpass`/`lowpass` with the `fargs` `freqmin`/`freqmax`</span>
-
-<span class="sd">        :Example:</span>
-<span class="sd">            ``args = {&#39;type&#39;:&#39;bandpass&#39;,&#39;freqmin&#39;:0.5,&#39;freqmax&#39;:2.}``</span>
-
-<span class="sd">    :type A: numpy.ndarray</span>
-<span class="sd">    :param A: time series data with time oriented along the first \\</span>
-<span class="sd">        dimension (columns)</span>
-<span class="sd">    :type args: dictionary</span>
-<span class="sd">    :param args: arguments dictionary as described above</span>
-<span class="sd">    :type params: dictionary</span>
-<span class="sd">    :param params: not used here</span>
-
-<span class="sd">    :rtype: numpy.ndarray</span>
-<span class="sd">    :return: filtered time series data</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">osignal</span><span class="o">.</span><span class="n">filter</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">])</span>
-    <span class="n">args</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-    <span class="n">args</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span>
-    <span class="c1"># filtering in obspy.signal is done along the last dimension that why .T</span>
-    <span class="n">A</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">df</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">],</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
-    <span class="k">return</span> <span class="n">A</span></div>
-
-
-<div class="viewcode-block" id="normalizeStandardDeviation"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.normalizeStandardDeviation">[docs]</a><span class="k">def</span> <span class="nf">normalizeStandardDeviation</span><span class="p">(</span>
-        <span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Divide the time series by their standard deviation</span>
-
-<span class="sd">    Divide the amplitudes of each trace by its standard deviation.</span>
-
-<span class="sd">    :type A: numpy.ndarray</span>
-<span class="sd">    :param A: time series data with time oriented along the first \\</span>
-<span class="sd">        dimension (columns)</span>
-<span class="sd">    :type args: dictionary</span>
-<span class="sd">    :param args: not used here</span>
-<span class="sd">    :type params: dictionary</span>
-<span class="sd">    :param params: not used here</span>
-
-<span class="sd">    :rtype: numpy.ndarray</span>
-<span class="sd">    :return: normalized time series data</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="c1"># avoid creating nans or Zerodivisionerror</span>
-    <span class="n">std</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">std</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="n">A</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">std</span><span class="p">,</span> <span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">A</span></div>
-
-
-<div class="viewcode-block" id="signBitNormalization"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.signBitNormalization">[docs]</a><span class="k">def</span> <span class="nf">signBitNormalization</span><span class="p">(</span>
-        <span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    One bit normalization of time series data</span>
-
-<span class="sd">    Return the sign of the samples (-1, 0, 1).</span>
-
-<span class="sd">    :type A: numpy.ndarray</span>
-<span class="sd">    :param A: time series data with time oriented along the first \\</span>
-<span class="sd">        dimension (columns)</span>
-<span class="sd">    :type args: dictionary</span>
-<span class="sd">    :param args: not used here</span>
-<span class="sd">    :type params: dictionary</span>
-<span class="sd">    :param params: not used here</span>
-
-<span class="sd">    :rtype: numpy.ndarray</span>
-<span class="sd">    :return: 1-bit normalized time series data</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">A</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="detrend"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.detrend">[docs]</a><span class="k">def</span> <span class="nf">detrend</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Remove trend from data</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">A</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">A</span><span class="p">))]</span> <span class="o">=</span> <span class="n">sp_detrend</span><span class="p">(</span>
-        <span class="n">A</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">A</span><span class="p">))],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">overwrite_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">sp_detrend</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">overwrite_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="TDnormalization"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.TDnormalization">[docs]</a><span class="k">def</span> <span class="nf">TDnormalization</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Amplitude dependent time domain normalization</span>
-
-<span class="sd">    Calculate the envelope of the filtered trace, smooth it in a window of</span>
-<span class="sd">    length `windowLength` and normalize the waveform by this trace. The two</span>
-<span class="sd">    used keywords in `args` are `filter and `windowLength` that describe the</span>
-<span class="sd">    filter and the length of the envelope smoothing window, respectively.</span>
-
-<span class="sd">    `args` has the following structure:</span>
-
-<span class="sd">        args = {&#39;windowLength&#39;:`length of the envelope smoothing window in \\</span>
-<span class="sd">        [s]`,&#39;filter&#39;:{&#39;type&#39;:`filterType`, fargs}}``</span>
-
-<span class="sd">        `type` may be `bandpass` with the corresponding fargs `freqmin` and \\</span>
-<span class="sd">        `freqmax` or `highpass`/`lowpass` with the `fargs` `freqmin`/`freqmax`</span>
-
-<span class="sd">        :Example:</span>
-<span class="sd">            ``args = {&#39;windowLength&#39;:5,&#39;filter&#39;:{&#39;type&#39;:&#39;bandpass&#39;,</span>
-<span class="sd">            &#39;freqmin&#39;:0.5, &#39;freqmax&#39;:2.}}``</span>
-
-<span class="sd">    :type A: numpy.ndarray</span>
-<span class="sd">    :param A: time series data with time oriented along the first \\</span>
-<span class="sd">        dimension (columns)</span>
-<span class="sd">    :type args: dictionary</span>
-<span class="sd">    :param args: arguments dictionary as described above</span>
-<span class="sd">    :type params: dictionary</span>
-<span class="sd">    :param params: not used here</span>
-
-<span class="sd">    :rtype: numpy.ndarray</span>
-<span class="sd">    :return: normalized time series data</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;windowLength&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Window Length has to be greater than 0.&#39;</span><span class="p">)</span>
-    <span class="c1"># filter if args[&#39;filter&#39;]</span>
-    <span class="n">B</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;filter&#39;</span><span class="p">]:</span>
-        <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">osignal</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;filter&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">])</span>
-        <span class="n">fargs</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;filter&#39;</span><span class="p">])</span>
-        <span class="n">fargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span>
-        <span class="n">B</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">df</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">],</span> <span class="o">**</span><span class="n">fargs</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">B</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
-    <span class="c1"># simple calculation of envelope</span>
-    <span class="n">B</span> <span class="o">=</span> <span class="n">B</span><span class="o">**</span><span class="mi">2</span>
-    <span class="c1"># smoothing of envelope in both directions to avoid a shift</span>
-    <span class="n">window</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;windowLength&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">])))</span>
-        <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;windowLength&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">]))</span>
-    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
-        <span class="n">B</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">B</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">],</span> <span class="n">window</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)</span>
-        <span class="n">B</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">B</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">ind</span><span class="p">],</span> <span class="n">window</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="c1"># damping factor</span>
-        <span class="n">B</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">B</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">])</span><span class="o">*</span><span class="mf">1e-6</span>
-    <span class="c1"># normalization</span>
-    <span class="n">A</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">A</span></div>
-
-
-<div class="viewcode-block" id="taper"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.taper">[docs]</a><span class="k">def</span> <span class="nf">taper</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Taper to the time series data</span>
-
-<span class="sd">    Apply a simple taper to the time series data.</span>
-
-<span class="sd">    `args` has the following structure:</span>
-
-<span class="sd">        args = {&#39;type&#39;:`type of taper`,taper_args}``</span>
-
-<span class="sd">        `type` may be `cosine_taper` with the corresponding taper_args `p` the</span>
-<span class="sd">        percentage of the traces to taper. Possibilities of `type` are \\</span>
-<span class="sd">        given by `obspy.signal`.</span>
-
-<span class="sd">        :Example:</span>
-<span class="sd">            ``args = {&#39;type&#39;:&#39;cosine_taper&#39;,&#39;p&#39;:0.1}``</span>
-
-<span class="sd">    :type A: numpy.ndarray</span>
-<span class="sd">    :param A: time series data with time oriented along the first \\</span>
-<span class="sd">        dimension (columns)</span>
-<span class="sd">    :type args: dictionary</span>
-<span class="sd">    :param args: arguments dictionary as described above</span>
-<span class="sd">    :type params: dictionary</span>
-<span class="sd">    :param params: not used here</span>
-
-<span class="sd">    :rtype: numpy.ndarray</span>
-<span class="sd">    :return: tapered time series data</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;cosine_taper&#39;</span><span class="p">:</span>
-        <span class="n">func</span> <span class="o">=</span> <span class="n">osignal</span><span class="o">.</span><span class="n">invsim</span><span class="o">.</span><span class="n">cosine_taper</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">])</span>
-    <span class="n">args</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-    <span class="n">args</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span>
-    <span class="n">tap</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span>
-    <span class="n">A</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">tap</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
-    <span class="k">return</span> <span class="n">A</span></div>
-
-
-<div class="viewcode-block" id="clip"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.clip">[docs]</a><span class="k">def</span> <span class="nf">clip</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Clip time series data at a multiple of the standard deviation</span>
-
-<span class="sd">    Set amplitudes exeeding a certain threshold to this threshold.</span>
-<span class="sd">    The threshold for clipping is estimated as the standard deviation of each</span>
-<span class="sd">    trace times a factor specified in `args`.</span>
-
-<span class="sd">    :Note: Traces should be demeaned before clipping.</span>
-
-<span class="sd">    :type A: numpy.ndarray</span>
-<span class="sd">    :param A: time series data with time oriented along the first \\</span>
-<span class="sd">        dimension (columns)</span>
-<span class="sd">    :type args: dictionary</span>
-<span class="sd">    :param args: the only keyword allowed is `std_factor` describing the \\</span>
-<span class="sd">        scaling of the standard deviation for the clipping threshold</span>
-<span class="sd">    :type params: dictionary</span>
-<span class="sd">    :param params: not used here</span>
-
-<span class="sd">    :rtype: numpy.ndarray</span>
-<span class="sd">    :return: clipped time series data</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">stds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
-        <span class="n">ts</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;std_factor&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">stds</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
-        <span class="n">A</span><span class="p">[</span><span class="n">A</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">ts</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">ts</span>
-        <span class="n">A</span><span class="p">[</span><span class="n">A</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">ts</span><span class="p">,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">ts</span>
-    <span class="k">return</span> <span class="n">A</span></div>
-
-
 <div class="viewcode-block" id="sort_comb_name_alphabetically"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.sort_comb_name_alphabetically">[docs]</a><span class="k">def</span> <span class="nf">sort_comb_name_alphabetically</span><span class="p">(</span>
     <span class="n">network1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">network2</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="nb">list</span><span class="p">,</span> <span class="nb">list</span><span class="p">]:</span>
@@ -1727,6 +1172,143 @@
                          <span class="s2">&quot;&#39;betweenComponents&#39;, &#39;autoComponents&#39;, &quot;</span>
                          <span class="s2">&quot;&#39;allSimpleCombinations&#39; or &#39;allCombinations&#39;).&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">netcombs</span><span class="p">,</span> <span class="n">statcombs</span></div>
+
+
+<div class="viewcode-block" id="preprocess_stream"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.preprocess_stream">[docs]</a><span class="k">def</span> <span class="nf">preprocess_stream</span><span class="p">(</span>
+    <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">store_client</span><span class="p">:</span> <span class="n">Store_Client</span><span class="p">,</span> <span class="n">inv</span><span class="p">:</span> <span class="n">Inventory</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">startt</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endt</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">sampling_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">remove_response</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">subdivision</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="n">preProcessing</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Does the preprocessing on a per stream basis. Most of the parameters can be</span>
+<span class="sd">    fed in by using the &quot;yaml&quot; dict as kwargs.</span>
+
+<span class="sd">    :param st: Input Stream to be processed</span>
+<span class="sd">    :type st: :class:`obspy.core.stream.Stream`</span>
+<span class="sd">    :param store_client: Store Client for the database</span>
+<span class="sd">    :type store_client: :class:`~miic3.trace_data.waveform.Store_Client`</span>
+<span class="sd">    :param inv: Station response, can be None if ``remove_response=False``.</span>
+<span class="sd">    :type inv: Inventory or None</span>
+<span class="sd">    :param startt: Starttime that the stream should be clipped / padded to.</span>
+<span class="sd">    :type startt: :class:`obspy.UTCDateTime`</span>
+<span class="sd">    :param endt: Endtime that the stream should be clipped / padded to.</span>
+<span class="sd">    :type endt: :class:`obspy.UTCDateTime`</span>
+<span class="sd">    :param taper_len: If the instrument response is removed, one might want to</span>
+<span class="sd">        taper to mitigate the acausal effects of the deconvolution. This is</span>
+<span class="sd">        the length of such a taper in seconds.</span>
+<span class="sd">    :type taper_len: float</span>
+<span class="sd">    :param sampling_rate: the sampling rate that the stream should be resampled</span>
+<span class="sd">        to in Hz.</span>
+<span class="sd">    :type sampling_rate: float</span>
+<span class="sd">    :param remove_response: Should the instrument response be removed?</span>
+<span class="sd">    :type remove_response: bool</span>
+<span class="sd">    :param subdivision: Dictionary holding information about the correlation</span>
+<span class="sd">        lenghts and increments.</span>
+<span class="sd">    :type subdivision: dict</span>
+<span class="sd">    :param preProcessing: List holding information about the different external</span>
+<span class="sd">        preprocessing functions to be applied, defaults to None</span>
+<span class="sd">    :type preProcessing: List[dict], optional</span>
+<span class="sd">    :raises ValueError: For sampling rates higher than the stream&#39;s native</span>
+<span class="sd">        sampling rate (upsampling is not permitted).</span>
+<span class="sd">    :return: The preprocessed stream.</span>
+<span class="sd">    :rtype: :class:`obspy.core.stream.Stream`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">st</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">st</span>
+
+    <span class="n">st</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;starttime&#39;</span><span class="p">])</span>
+    <span class="c1"># Check sampling frequency</span>
+    <span class="k">if</span> <span class="n">sampling_rate</span> <span class="o">&gt;</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;The new sample rate (</span><span class="si">%s</span><span class="s1">Hz) is higher than the trace</span><span class="se">\&#39;</span><span class="s1">s native</span><span class="se">\</span>
+<span class="s1">sample rate (</span><span class="si">%s</span><span class="s1"> Hz).&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">sampling_rate</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span>
+                    <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)))</span>
+
+    <span class="c1"># Downsample</span>
+    <span class="c1"># AA-Filter is done in this function as well</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">resample_or_decimate</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">remove_response</span><span class="p">:</span>
+        <span class="c1"># taper before instrument response removal</span>
+        <span class="k">if</span> <span class="n">taper_len</span><span class="p">:</span>
+            <span class="n">st</span> <span class="o">=</span> <span class="n">ppst</span><span class="o">.</span><span class="n">cos_taper_st</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">inv</span><span class="p">:</span>
+                <span class="n">ninv</span> <span class="o">=</span> <span class="n">inv</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">attach_response</span><span class="p">(</span><span class="n">ninv</span><span class="p">)</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">remove_response</span><span class="p">(</span><span class="n">taper</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># Changed for testing purposes</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Station response not found ... loading from remote.&#39;</span><span class="p">)</span>
+            <span class="c1"># missing station response</span>
+            <span class="n">ninv</span> <span class="o">=</span> <span class="n">store_client</span><span class="o">.</span><span class="n">rclient</span><span class="o">.</span><span class="n">get_stations</span><span class="p">(</span>
+                <span class="n">network</span><span class="o">=</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="p">,</span>
+                <span class="n">channel</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">starttime</span><span class="o">=</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">,</span>
+                <span class="n">endtime</span><span class="o">=</span><span class="n">st</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">endtime</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;response&#39;</span><span class="p">)</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">attach_response</span><span class="p">(</span><span class="n">ninv</span><span class="p">)</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">remove_response</span><span class="p">(</span><span class="n">taper</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">store_client</span><span class="o">.</span><span class="n">_write_inventory</span><span class="p">(</span><span class="n">ninv</span><span class="p">)</span>
+
+    <span class="n">mu</span><span class="o">.</span><span class="n">discard_short_traces</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">subdivision</span><span class="p">[</span><span class="s1">&#39;corr_len&#39;</span><span class="p">]</span><span class="o">/</span><span class="mi">20</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">preProcessing</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">procStep</span> <span class="ow">in</span> <span class="n">preProcessing</span><span class="p">:</span>
+            <span class="n">func</span> <span class="o">=</span> <span class="n">func_from_str</span><span class="p">(</span><span class="n">procStep</span><span class="p">[</span><span class="s1">&#39;function&#39;</span><span class="p">])</span>
+            <span class="n">st</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="o">**</span><span class="n">procStep</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">])</span>
+    <span class="n">st</span><span class="o">.</span><span class="n">merge</span><span class="p">()</span>
+    <span class="n">st</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">startt</span><span class="p">,</span> <span class="n">endt</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># !Last operation before saving!</span>
+    <span class="c1"># The actual data in the mseeds was changed from int to float64</span>
+    <span class="c1"># now,</span>
+    <span class="c1"># Save some space by changing it back to 32 bit (most of the</span>
+    <span class="c1"># digitizers work at 24 bit anyways)</span>
+    <span class="n">mu</span><span class="o">.</span><span class="n">stream_require_dtype</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">st</span></div>
+
+
+<div class="viewcode-block" id="generate_corr_inc"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.generate_corr_inc">[docs]</a><span class="k">def</span> <span class="nf">generate_corr_inc</span><span class="p">(</span>
+    <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">subdivision</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">read_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Stream</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Subdivides the preprocessed streams into parts of equal length using</span>
+<span class="sd">    the parameters ``cor_inc`` and ``cor_len`` in ``subdivision``.</span>
+<span class="sd">    This function can be acessed by several processes in parallel</span>
+
+<span class="sd">    :param st: The preprocessed input stream</span>
+<span class="sd">    :type st: :class:`obspy.core.stream.Stream`</span>
+<span class="sd">    :param subdivision: Dictionary holding the information about the</span>
+<span class="sd">        correlation length and increment.</span>
+<span class="sd">    :type subdivision: dict</span>
+<span class="sd">    :param read_len: Length to be read from disk in seconds</span>
+<span class="sd">    :type read_len: int</span>
+<span class="sd">    :yield: Equal length windows, padded with nans / masked if data is missing.</span>
+<span class="sd">    :rtype: Generator[Stream]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Second loop to return the time window in correlation length</span>
+        <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">win0</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">slide</span><span class="p">(</span>
+            <span class="n">subdivision</span><span class="p">[</span><span class="s1">&#39;corr_len&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span> <span class="n">subdivision</span><span class="p">[</span><span class="s1">&#39;corr_inc&#39;</span><span class="p">],</span>
+                <span class="n">include_partial_windows</span><span class="o">=</span><span class="kc">True</span><span class="p">)):</span>
+
+            <span class="c1"># We use trim so the windows have the right time and</span>
+            <span class="c1"># are filled with masked arrays for places without values</span>
+            <span class="n">starttrim</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span> <span class="o">+</span> <span class="n">ii</span><span class="o">*</span><span class="n">subdivision</span><span class="p">[</span><span class="s1">&#39;corr_inc&#39;</span><span class="p">]</span>
+            <span class="n">endtrim</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span> <span class="o">+</span> <span class="n">ii</span><span class="o">*</span><span class="n">subdivision</span><span class="p">[</span><span class="s1">&#39;corr_inc&#39;</span><span class="p">]</span> <span class="o">+</span>\
+                <span class="n">subdivision</span><span class="p">[</span><span class="s1">&#39;corr_len&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">delta</span>
+            <span class="n">win</span> <span class="o">=</span> <span class="n">win0</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">starttrim</span><span class="p">,</span> <span class="n">endtrim</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">mu</span><span class="o">.</span><span class="n">get_valid_traces</span><span class="p">(</span><span class="n">win</span><span class="p">)</span>
+
+            <span class="k">yield</span> <span class="n">win</span>
+
+    <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+        <span class="c1"># processes with no data end up here</span>
+        <span class="n">win</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
+        <span class="c1"># A little dirty, but it has to go through an equally long loop</span>
+        <span class="c1"># else this will cause a deadlock</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span>
+                <span class="n">read_len</span><span class="o">/</span><span class="n">subdivision</span><span class="p">[</span><span class="s1">&#39;corr_inc&#39;</span><span class="p">]))):</span>
+            <span class="k">yield</span> <span class="n">win</span></div>
 </pre></div>
 
            </div>

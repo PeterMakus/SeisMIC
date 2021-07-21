@@ -27,4 +27,27 @@ Managing headers
     :members:
     :show-inheritance:
 
+miic3.correlate.preprocessing_stream
+++++++++++++++++++++++++++++++++++++
+Preprocessing functions that are executed on Obspy Streams
+
+.. automodule:: miic3.correlate.preprocessing_stream
+    :members:
+    :show-inheritance:
+
+miic3.correlate.preprocessing_td
+++++++++++++++++++++++++++++++++
+Preprocessing functions that are executed in Time Domain
+
+.. automodule:: miic3.correlate.preprocessing_td
+    :members:
+    :show-inheritance:
+
+miic3.correlate.preprocessing_fd
+++++++++++++++++++++++++++++++++
+Preprocessing functions that are executed in Frequency Domain
+
+.. automodule:: miic3.correlate.preprocessing_fd
+    :members:
+    :show-inheritance:
  
