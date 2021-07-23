@@ -1,5 +1,0 @@
-Monitoring
-==========
-
-.. toctree::
-    :maxdepth: 1

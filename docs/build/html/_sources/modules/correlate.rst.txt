@@ -31,11 +31,3 @@ Handle Correlations
     :maxdepth: 3
 
     correlate/stream
-
-API
----
-
-.. toctree::
-    :maxdepth: 3
-
-    correlate/API

@@ -92,6 +92,7 @@
 <li class="toctree-l1"><a class="reference internal" href="modules/correlate.html">Compute and Handle Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/corrdb.html">Save and Load Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/monitor.html">Monitor Velocity Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIIC</span></code> API</a></li>
 </ul>
 
             
@@ -168,7 +169,6 @@
 <li class="toctree-l1"><a class="reference internal" href="modules/trace_data.html">Trace data</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="modules/trace_data.html#routines-for-working-with-seismic-traces">Routines for working with seismic traces</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="modules/trace_data/waveform.html">Module to Download and Read Waveform Data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/trace_data/API.html"><code class="docutils literal notranslate"><span class="pre">miic3.trace_data</span></code> API</a></li>
 </ul>
 </li>
 </ul>
@@ -183,20 +183,12 @@
 <li class="toctree-l3"><a class="reference internal" href="modules/correlate/stream.html">CorrTrace, CorrStream, and CorrBulk classes</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="modules/correlate.html#api">API</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="modules/correlate/API.html"><code class="docutils literal notranslate"><span class="pre">miic3.correlate</span></code> API</a></li>
-</ul>
-</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="modules/corrdb.html">Save and Load Correlations</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="modules/corrdb/corrdb.html">CorrelationDataBase and DBHandler objects</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="modules/corrdb/corrdb.html#reading-correlations">Reading Correlations</a></li>
 <li class="toctree-l3"><a class="reference internal" href="modules/corrdb/corrdb.html#writing-correlations">Writing Correlations</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="modules/corrdb/API.html"><code class="docutils literal notranslate"><span class="pre">miic3.db</span></code> API</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="modules/corrdb/API.html#miic3-db-corr-hdf5">miic3.db.corr_hdf5</a></li>
 </ul>
 </li>
 </ul>
@@ -212,11 +204,31 @@
 <li class="toctree-l3"><a class="reference internal" href="modules/monitor/dv.html#plotting">Plotting</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="modules/monitor/API.html"><code class="docutils literal notranslate"><span class="pre">miic3.monitor</span></code> API</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="modules/monitor/API.html#miic3-monitor-monitor">miic3.monitor.monitor</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/monitor/API.html#miic3-monitor-dv">miic3.monitor.dv</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/monitor/API.html#miic3-monitor-post-corr-process">miic3.monitor.post_corr_process</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/monitor/API.html#miic3-monitor-stretch-mod">miic3.monitor.stretch_mod</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIIC</span></code> API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/API.html#miic3-trace-data">miic3.trace_data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/API.html#miic3-trace-data-waveform">miic3.trace_data.waveform</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/API.html#miic3-correlate">miic3.correlate</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/API.html#miic3-correlate-correlate">miic3.correlate.correlate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/API.html#miic3-correlate-stream">miic3.correlate.stream</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/API.html#miic3-correlate-stats">miic3.correlate.stats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/API.html#miic3-correlate-preprocessing-stream">miic3.correlate.preprocessing_stream</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/API.html#miic3-correlate-preprocessing-td">miic3.correlate.preprocessing_td</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/API.html#miic3-correlate-preprocessing-fd">miic3.correlate.preprocessing_fd</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/API.html#miic3-db">miic3.db</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/API.html#miic3-db-corr-hdf5">miic3.db.corr_hdf5</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/API.html#miic3-monitor">miic3.monitor</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/API.html#miic3-monitor-monitor">miic3.monitor.monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/API.html#miic3-monitor-dv">miic3.monitor.dv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/API.html#miic3-monitor-post-corr-process">miic3.monitor.post_corr_process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/API.html#miic3-monitor-stretch-mod">miic3.monitor.stretch_mod</a></li>
 </ul>
 </li>
 </ul>

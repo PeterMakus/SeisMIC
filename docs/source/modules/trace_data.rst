@@ -25,4 +25,3 @@ Routines for working with seismic traces
    
    
    trace_data/waveform
-   trace_data/API

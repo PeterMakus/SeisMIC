@@ -17,6 +17,7 @@ SeisMIIC library documentation
    modules/correlate
    modules/corrdb
    modules/monitor
+   modules/API
 
 
 Interactive Flowchart

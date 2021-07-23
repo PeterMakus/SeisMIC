@@ -19,4 +19,3 @@ Save and Load Correlations
     :maxdepth: 3
 
     corrdb/corrdb
-    corrdb/API
