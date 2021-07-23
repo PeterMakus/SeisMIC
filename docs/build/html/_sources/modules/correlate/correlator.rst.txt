@@ -26,7 +26,6 @@ A script to start your correlation could look like this:
     :caption: mycorrelation.py
     :linenos:
 
-    import yaml
     from time import time
 
     from obspy.clients.fdsn import Client

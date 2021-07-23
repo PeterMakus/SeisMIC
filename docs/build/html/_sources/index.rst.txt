@@ -16,6 +16,7 @@ SeisMIIC library documentation
    modules/trace_data
    modules/correlate
    modules/corrdb
+   modules/monitor
 
 
 Interactive Flowchart
