@@ -1,6 +1,6 @@
 .. _api-label:
 
-``miic3.correlate`` API
+``miic3.db`` API
 ------------------------
 
 miic3.db.corr_hdf5

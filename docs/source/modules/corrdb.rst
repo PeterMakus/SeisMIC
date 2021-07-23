@@ -18,4 +18,5 @@ Save and Load Correlations
 .. toctree::
     :maxdepth: 3
 
+    corrdb/corrdb
     corrdb/API

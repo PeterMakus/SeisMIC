@@ -1,0 +1,278 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>CorrelationDataBase and DBHandler objects &mdash; SeisMIIC 0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+        <script >mermaid.initialize({startOnLoad:true});</script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="miic3.db API" href="API.html" />
+    <link rel="prev" title="Save and Load Correlations" href="../corrdb.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> SeisMIIC
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace_data.html">Trace data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../correlate.html">Compute and Handle Correlations</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../corrdb.html">Save and Load Correlations</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">CorrelationDataBase and DBHandler objects</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#reading-correlations">Reading Correlations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="API.html"><code class="docutils literal notranslate"><span class="pre">miic3.db</span></code> API</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SeisMIIC</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../corrdb.html">Save and Load Correlations</a> &raquo;</li>
+        
+      <li>CorrelationDataBase and DBHandler objects</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../_sources/modules/corrdb/corrdb.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="mermaid">
+            %%{init: { 'logLevel': 'debug', 'theme': 'base' } }%%
+graph LR
+    waveform[Get Data] --&gt; correlate(Correlation)
+    correlate --&gt;|save| corrdb[(CorrDB/hdf5)]
+    corrdb:::active --&gt; monitor
+    monitor[Measure dv] --&gt;|save| dv{{DV}}
+    click waveform &quot;../trace_data.html&quot; &quot;trace_data&quot;
+    click correlate &quot;../correlate.html&quot; &quot;correlate&quot;
+    click monitor &quot;../monitor.html&quot; &quot;monitor&quot;
+    click corrdb &quot;../corrdb.html&quot; &quot;CorrDB&quot;
+    classDef active fill:#f666, stroke-width:4px, stroke:#f06;
+        </div><div class="section" id="correlationdatabase-and-dbhandler-objects">
+<h1>CorrelationDataBase and DBHandler objects<a class="headerlink" href="#correlationdatabase-and-dbhandler-objects" title="Permalink to this headline">¶</a></h1>
+<p>In <strong>SeisMIIC</strong>, correlations are stored in <a class="reference external" href="https://www.hdfgroup.org/downloads/hdf5/">HDF5</a> container files.
+This has the advantage of avoiding potential overhead caused by large amounts of correlation files.
+SeisMIIC’s implementation relies on modified <a class="reference external" href="https://www.h5py.org/">h5py</a> classes. After computing your
+correlations as shown in the earlier steps, they will be saved in one file <em>per station-combination</em>
+(e.g., the file <code class="docutils literal notranslate"><span class="pre">IU-TA.HRV-M58A</span></code> holds the correlations of all components and locations of the two stations
+with each other, whereas the file <code class="docutils literal notranslate"><span class="pre">IU-IU.HRV-HRV</span></code> holds all autocorrelations and intercomponent correlations
+of the station <code class="docutils literal notranslate"><span class="pre">IU.HRV</span></code>).</p>
+<p>As a user, you will only ever be calling the <a class="reference internal" href="API.html#miic3.db.corr_hdf5.CorrelationDataBase" title="miic3.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a> class.
+The only function of this class is to return a <a class="reference internal" href="API.html#miic3.db.corr_hdf5.DBHandler" title="miic3.db.corr_hdf5.DBHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">DBHandler</span></code></a>, which hold all the
+“useful” functions. To call <a class="reference internal" href="API.html#miic3.db.corr_hdf5.CorrelationDataBase" title="miic3.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a>, use a context manager like so:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">miic3.db.corr_hdf5</span> <span class="kn">import</span> <span class="n">CorrelationDataBase</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="n">myfile</span><span class="o">.</span><span class="n">h5</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="nb">type</span><span class="p">(</span><span class="n">cdb</span><span class="p">)</span>  <span class="c1"># This is a DBHandler</span>
+<span class="go">&lt;class &#39;miic3.db.corr_hdf5.DBHandler&#39;&gt;</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Do not call <a class="reference internal" href="API.html#miic3.db.corr_hdf5.DBHandler" title="miic3.db.corr_hdf5.DBHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">DBHandler</span></code></a> directly! This might lead to unexpected behaviour or
+even dataloss due to corrupted hdf5 files.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If you should for some reason decide to not use the context manager, you will have to close the hdf5 file
+with <code class="xref py py-meth docutils literal notranslate"><span class="pre">miic3.db.corr_hdf5.DBHandler._close()</span></code> to avoid corrupting your files!</p>
+</div>
+<div class="section" id="reading-correlations">
+<h2>Reading Correlations<a class="headerlink" href="#reading-correlations" title="Permalink to this headline">¶</a></h2>
+<p>The most common usecase is probably that you will want to access correlations that <strong>SeisMIIC</strong> computed
+for you (as shown earlier). To do so, you can use the <a class="reference internal" href="API.html#miic3.db.corr_hdf5.DBHandler.get_data" title="miic3.db.corr_hdf5.DBHandler.get_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_data()</span></code></a>
+method:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">miic3.db.corr_hdf5</span> <span class="kn">import</span> <span class="n">CorrelationDataBase</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="n">myfile</span><span class="o">.</span><span class="n">h5</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">cst</span> <span class="o">=</span> <span class="n">cdb</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="n">network</span><span class="o">=</span><span class="s1">&#39;IU-IU&#39;</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="s1">&#39;??Z-??Z&#39;</span><span class="p">,</span> <span class="n">corr_start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">corr_end</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># cst is a CorrStream object on that we can use our known methods</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">cst</span><span class="p">))</span>
+<span class="go">&lt;class &#39;miic3.correltea.stream.CorrStream&#39;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#cst.count()</span>
+<span class="go">289</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="API.html" class="btn btn-neutral float-right" title="miic3.db API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../corrdb.html" class="btn btn-neutral float-left" title="Save and Load Correlations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, C.S..
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

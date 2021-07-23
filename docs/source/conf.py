@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'MIIC3'
+project = 'SeisMIIC'
 copyright = '2020, C.S.'
 author = 'C.S.'
 

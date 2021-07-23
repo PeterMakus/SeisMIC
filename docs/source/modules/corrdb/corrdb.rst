@@ -1,0 +1,68 @@
+.. mermaid::
+
+    %%{init: { 'logLevel': 'debug', 'theme': 'base' } }%%
+    graph LR
+        waveform[Get Data] --> correlate(Correlation)
+        correlate -->|save| corrdb[(CorrDB/hdf5)]
+        corrdb:::active --> monitor
+        monitor[Measure dv] -->|save| dv{{DV}}
+        click waveform "../trace_data.html" "trace_data"
+        click correlate "../correlate.html" "correlate"
+        click monitor "../monitor.html" "monitor"
+        click corrdb "../corrdb.html" "CorrDB"
+        classDef active fill:#f666, stroke-width:4px, stroke:#f06;
+
+CorrelationDataBase and DBHandler objects
+-----------------------------------------
+
+In **SeisMIIC**, correlations are stored in `HDF5 <https://www.hdfgroup.org/downloads/hdf5/>`_ container files.
+This has the advantage of avoiding potential overhead caused by large amounts of correlation files.
+SeisMIIC's implementation relies on modified `h5py <https://www.h5py.org/>`_ classes. After computing your
+correlations as shown in the earlier steps, they will be saved in one file *per station-combination*
+(e.g., the file ``IU-TA.HRV-M58A`` holds the correlations of all components and locations of the two stations
+with each other, whereas the file ``IU-IU.HRV-HRV`` holds all autocorrelations and intercomponent correlations
+of the station ``IU.HRV``).
+
+.. note::
+    **SeisMIIC** makes use of SEISCOM-like station codes. The general logic of those codes is:
+    ``net0-net1.stat0-stat1.loc0-loc1.ch0-ch1``. Here, 0 is the first station and 1 the second station.
+    Correlations will always only be computed alphabetically. That is, **SeisMIIC** will not compute a
+    correlation for ``TA-IU.M58A-HRV`` but only for ``IU-TA.HRV-M58A``.
+
+As a user, you will only ever be calling the :class:`~miic3.db.corr_hdf5.CorrelationDataBase` class.
+The only function of this class is to return a :class:`~miic3.db.corr_hdf5.DBHandler`, which hold all the
+"useful" functions. To call :class:`~miic3.db.corr_hdf5.CorrelationDataBase`, use a context manager like so:
+
+>>> from miic3.db.corr_hdf5 import CorrelationDataBase
+>>> with CorrelationDataBase(myfile.h5) as cdb:
+>>>     type(cdb)  # This is a DBHandler
+<class 'miic3.db.corr_hdf5.DBHandler'>
+
+.. warning::
+
+    Do not call :class:`~miic3.db.corr_hdf5.DBHandler` directly! This might lead to unexpected behaviour or
+    even dataloss due to corrupted hdf5 files.
+
+.. warning::
+
+    If you should for some reason decide to not use the context manager, you will have to close the hdf5 file
+    with :meth:`miic3.db.corr_hdf5.DBHandler._close` to avoid corrupting your files!
+
+Reading Correlations
+++++++++++++++++++++
+
+The most common usecase is probably that you will want to access correlations that **SeisMIIC** computed
+for you (as shown earlier). To do so, you can use the :meth:`~miic3.db.corr_hdf5.DBHandler.get_data`
+method:
+
+>>> from miic3.db.corr_hdf5 import CorrelationDataBase
+>>> with CorrelationDataBase(myfile.h5) as cdb:
+>>>     cst = cdb.get_data(
+>>>         tag='subdivision', network='IU-IU', station='*', channel='??Z-??Z', corr_start=None, corr_end=None)
+>>> # cst is a CorrStream object on that we can use our known methods
+>>> print(type(cst))
+<class 'miic3.correltea.stream.CorrStream'>
+>>> #cst.count()
+289
+
+As you can see, 
