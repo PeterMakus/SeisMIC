@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Tuesday, 20th July 2021 04:30:32 pm
+Last Modified: Friday, 23rd July 2021 07:22:44 pm
 '''
 import os
 
@@ -129,10 +129,8 @@ def plot_cst(
     :type outputfile: str, optional
     :param title: Title of the plot, defaults to None
     :type title: str, optional
-
-     Returns
-    -------
-    ax : `matplotlib.pyplot.Axes`
+    :return: returns the axes object.
+    :rtype: `matplotlib.pyplot.Axes`
 
     """
     set_mpl_params()

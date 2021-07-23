@@ -115,3 +115,59 @@ Holds functions for the velocity estimation via stretching.
 .. automodule:: miic3.monitor.stretch_mod
     :members:
     :show-inheritance:
+
+miic3.plot
+----------
+
+miic3.plot.plot_correlation
++++++++++++++++++++++++++++
+Plot Green's function estimations.
+
+.. automodule:: miic3.plot.plot_correlation
+    :members:
+    :show-inheritance:
+
+miic3.plot.plot_dv
+++++++++++++++++++
+Plot velocity change time series.
+
+.. automodule:: miic3.plot.plot_dv
+    :members:
+    :show-inheritance:
+
+miic3.plot.plt_spectra
++++++++++++++++++++++++
+Plot noise spectra using Welch's method.
+
+.. automodule:: miic3.plot.plt_spectra
+    :members:
+    :show-inheritance:
+
+miic3.plot.plot_utils
++++++++++++++++++++++
+Useful little plotting functions
+
+.. automodule:: miic3.plot.plot_spectra
+    :members:
+    :show-inheritance:
+
+miic3.utils
+-----------
+
+Collection of tools
+
+miic3.utils.io
+++++++++++++++
+Load correlations produced by MIIC
+
+.. automodule:: miic3.utils.io
+    :members:
+    :show-inheritance:
+
+miic3.utils.fetch_func_from_str
++++++++++++++++++++++++++++++++
+Import and Return a function
+
+.. automodule:: miic3.utils.fetch_func_from_str
+    :members:
+    :show-inheritance:

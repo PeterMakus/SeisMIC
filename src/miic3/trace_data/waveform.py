@@ -411,13 +411,14 @@ def read_from_filesystem(
     directory structure. The first element is a string indicating the
     base_directory. The following elements can be strings to indicate
     one of the following
-     - %X as defined by datetime.strftime indicating an element of
-       the time. e.g. %H
+     - %X as defined by datetime.strftime indicating an element of t
+     the time. e.g. %H
      - %NET: network name or %net for lower case network name
      - %STA: station name or %sta for lower case
      - %CHA: channel name or %cha for lower case
      - %LOC: location or %loc for lower case location code
      - string with out %
+
     The format strings are replaced either with an element of the starttime
     if they correspond to a datetime specifyer or with the respective part
     of the seedID. A string withouta % sign is not changed. If more than one
@@ -436,6 +437,7 @@ def read_from_filesystem(
 
 
     :Example:
+
         Example for a station 'GJE' in network 'HEJSL' with channel 'BHZ' and
         location '00' with the start time 2010-12-24_11:36:30 and \\
         ``fs =
@@ -445,6 +447,7 @@ def read_from_filesystem(
         ``base_dir/2010/Nov/HEJSL/317_GJE_T_Z.mseed``
 
     .. note::
+
         If the data contain traces of different channels in the same file with
         different start and endtimes the routine will not work properly when a
         period spans multiple files.

@@ -117,6 +117,18 @@
 <li class="toctree-l3"><a class="reference internal" href="#miic3-monitor-stretch-mod">miic3.monitor.stretch_mod</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#miic3-plot">miic3.plot</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#miic3-plot-plot-correlation">miic3.plot.plot_correlation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#miic3-plot-plot-dv">miic3.plot.plot_dv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#miic3-plot-plt-spectra">miic3.plot.plt_spectra</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#miic3-plot-plot-utils">miic3.plot.plot_utils</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#miic3-utils">miic3.utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#miic3-utils-io">miic3.utils.io</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#miic3-utils-fetch-func-from-str">miic3.utils.fetch_func_from_str</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -335,14 +347,14 @@ base_directory. The following elements can be strings to indicate
 one of the following</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>%X as defined by datetime.strftime indicating an element of
-the time. e.g. %H</p></li>
-<li><p>%NET: network name or %net for lower case network name</p></li>
-<li><p>%STA: station name or %sta for lower case</p></li>
-<li><p>%CHA: channel name or %cha for lower case</p></li>
-<li><p>%LOC: location or %loc for lower case location code</p></li>
-<li><p>string with out %</p></li>
+<li><p>%X as defined by datetime.strftime indicating an element of t</p></li>
 </ul>
+<p>the time. e.g. %H
+- %NET: network name or %net for lower case network name
+- %STA: station name or %sta for lower case
+- %CHA: channel name or %cha for lower case
+- %LOC: location or %loc for lower case location code
+- string with out %</p>
 </div></blockquote>
 <p>The format strings are replaced either with an element of the starttime
 if they correspond to a datetime specifyer or with the respective part
@@ -3754,6 +3766,317 @@ containing the stretches relative units.</p></li>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p><strong>stretched_mat</strong>: stretched version of the input matrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="miic3-plot">
+<h2>miic3.plot<a class="headerlink" href="#miic3-plot" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="miic3-plot-plot-correlation">
+<h3>miic3.plot.plot_correlation<a class="headerlink" href="#miic3-plot-plot-correlation" title="Permalink to this headline">¶</a></h3>
+<p>Plot Green’s function estimations.</p>
+<span class="target" id="module-miic3.plot.plot_correlation"></span><dl class="field-list simple">
+<dt class="field-odd">copyright</dt>
+<dd class="field-odd"><p>The PyGLImER development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
+</dd>
+<dt class="field-even">license</dt>
+<dd class="field-even"><p><cite>GNU Lesser General Public License, Version 3 &lt;https://www.gnu.org/copyleft/lesser.html&gt;</cite></p>
+</dd>
+<dt class="field-odd">author</dt>
+<dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
+</dd>
+</dl>
+<p>Created: Monday, 19th July 2021 11:37:54 am
+Last Modified: Friday, 23rd July 2021 07:22:44 pm</p>
+<dl class="py function">
+<dt id="miic3.plot.plot_correlation.plot_ctr">
+<code class="sig-prename descclassname"><span class="pre">miic3.plot.plot_correlation.</span></code><code class="sig-name descname"><span class="pre">plot_ctr</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">corr</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">obspy.core.trace.Trace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tlim</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">matplotlib.axes._axes.Axes</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputdir</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">matplotlib.axes._axes.Axes</span><a class="reference internal" href="../_modules/miic3/plot/plot_correlation.html#plot_ctr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.plot.plot_correlation.plot_ctr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="miic3.plot.plot_correlation.plot_cst">
+<code class="sig-prename descclassname"><span class="pre">miic3.plot.plot_correlation.</span></code><code class="sig-name descname"><span class="pre">plot_cst</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cst</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">obspy.core.stream.Stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_by</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'corr_start'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timelimits</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylimits</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scalingfactor</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">matplotlib.axes._axes.Axes</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linewidth</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">0.25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputfile</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic3/plot/plot_correlation.html#plot_cst"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.plot.plot_correlation.plot_cst" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a section plot of all correlations in this stream.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cst</strong> (<a class="reference internal" href="#miic3.correlate.stream.CorrStream" title="miic3.correlate.stream.CorrStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrStream</span></code></a>) – Input CorrelationStream</p></li>
+<li><p><strong>sort_by</strong> (<em>str</em><em>, </em><em>optional</em>) – Which parameter to plot against. Can be either
+<code class="docutils literal notranslate"><span class="pre">corr_start</span></code> or <code class="docutils literal notranslate"><span class="pre">distance</span></code>, defaults to ‘corr_start’.</p></li>
+<li><p><strong>timelimits</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>, </em><em>optional</em>) – xlimits (lag time) in seconds, defaults to None</p></li>
+<li><p><strong>ylimits</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>, </em><em>optional</em>) – limits for Y-axis (either a <code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code>
+or float in km (if plotted against distance)), defaults to None.</p></li>
+<li><p><strong>scalingfactor</strong> (<em>float</em><em>, </em><em>optional</em>) – Which factor to scale the Correlations with. Play
+around with this if you want to make amplitudes bigger or smaller,
+defaults to None (automatically chosen).</p></li>
+<li><p><strong>ax</strong> (<em>plt.Axes</em><em>, </em><em>optional</em>) – Plot in existing axes? Defaults to None</p></li>
+<li><p><strong>linewidth</strong> (<em>float</em><em>, </em><em>optional</em>) – Width of the lines to plot, defaults to 0.25</p></li>
+<li><p><strong>outputfile</strong> (<em>str</em><em>, </em><em>optional</em>) – Save the plot? defaults to None</p></li>
+<li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – Title of the plot, defaults to None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>returns the axes object.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><cite>matplotlib.pyplot.Axes</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.plot.plot_correlation.sect_plot_corr_start">
+<code class="sig-prename descclassname"><span class="pre">miic3.plot.plot_correlation.</span></code><code class="sig-name descname"><span class="pre">sect_plot_corr_start</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cst</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">obspy.core.stream.Stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">matplotlib.axes._axes.Axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scalingfactor</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linewidth</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../_modules/miic3/plot/plot_correlation.html#sect_plot_corr_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.plot.plot_correlation.sect_plot_corr_start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="miic3.plot.plot_correlation.sect_plot_dist">
+<code class="sig-prename descclassname"><span class="pre">miic3.plot.plot_correlation.</span></code><code class="sig-name descname"><span class="pre">sect_plot_dist</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cst</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">obspy.core.stream.Stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">matplotlib.axes._axes.Axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scalingfactor</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linewidth</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../_modules/miic3/plot/plot_correlation.html#sect_plot_dist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.plot.plot_correlation.sect_plot_dist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="miic3-plot-plot-dv">
+<h3>miic3.plot.plot_dv<a class="headerlink" href="#miic3-plot-plot-dv" title="Permalink to this headline">¶</a></h3>
+<p>Plot velocity change time series.</p>
+<span class="target" id="module-miic3.plot.plot_dv"></span><dl class="field-list simple">
+<dt class="field-odd">copyright</dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">license</dt>
+<dd class="field-even"><p><cite>GNU Lesser General Public License, Version 3 &lt;https://www.gnu.org/copyleft/lesser.html&gt;</cite></p>
+</dd>
+<dt class="field-odd">author</dt>
+<dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
+</dd>
+</dl>
+<p>Created: Friday, 16th July 2021 02:30:02 pm
+Last Modified: Friday, 16th July 2021 04:25:03 pm</p>
+<dl class="py function">
+<dt id="miic3.plot.plot_dv.plot_dv">
+<code class="sig-prename descclassname"><span class="pre">miic3.plot.plot_dv.</span></code><code class="sig-name descname"><span class="pre">plot_dv</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_file_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_simmat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_mat_Clim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(9,</span> <span class="pre">11)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dpi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">72</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic3/plot/plot_dv.html#plot_dv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.plot.plot_dv.plot_dv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the “extended” dv dictionary</p>
+<p>This function is thought to plot the result of the velocity change estimate
+as output by <code class="xref py py-class docutils literal notranslate"><span class="pre">multi_ref_vchange_and_align</span></code>
+and successively “extended” to contain also the timing in the form
+{‘time’: time_vect} where <cite>time_vect</cite> is a <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code> of
+<code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code> objects.
+This addition can be done, for example, using the function
+<code class="xref py py-class docutils literal notranslate"><span class="pre">add_var_to_dict</span></code>.
+The produced figure is saved in <cite>save_dir</cite> that, if necessary, it is
+created.
+It is also possible to pass a “special” time value <cite>mark_time</cite> that will be
+represented in the <cite>dv/v</cite> and <cite>corr</cite> plot as a vertical line; It can be
+a string (i.e. YYYY-MM-DD) or directly a <code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code>
+object.
+if the <cite>dv</cite> dictionary also contains a ‘comb_mseedid’ keyword, its <cite>value</cite>
+(i.e. MUST be a string) will be reported in the title.
+In case of the chosen filename exist in the <cite>save_dir</cite> directory, a prefix
+_&lt;n&gt; with n:0..+Inf, is added.
+The aspect of the plot may change depending on the matplotlib version. The
+recommended one is matplotlib 1.1.1</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dv</strong> (<em>dict</em>) – velocity change estimate dictionary as output by
+<code class="xref py py-class docutils literal notranslate"><span class="pre">multi_ref_vchange_and_align</span></code> and
+successively “extended” to contain also the timing in the form
+{‘time’: time_vect} where <cite>time_vect</cite> is a <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code> of
+<code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code> objects.</p></li>
+<li><p><strong>save_dir</strong> (<em>string</em>) – Directory where to save the produced figure. It is created
+if it doesn’t exist.</p></li>
+<li><p><strong>figure_file_name</strong> (<em>string</em>) – filename to use for saving the figure. If None
+the figure is displayed in interactive mode.</p></li>
+<li><p><strong>mark_time</strong> (string or <code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code> object) – It is a “special” time location that will be represented
+in the <cite>dv/v</cite> and <cite>corr</cite> plot as a vertical line.</p></li>
+<li><p><strong>normalize_simmat</strong> (<em>Bool</em>) – if True the simmat will be normalized to a maximum
+of 1. Defaults to False</p></li>
+<li><p><strong>sim_mat_Clim</strong> (<em>2 element array_like</em>) – if non-empty it set the color scale limits of the
+similarity matrix image</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="miic3-plot-plt-spectra">
+<h3>miic3.plot.plt_spectra<a class="headerlink" href="#miic3-plot-plt-spectra" title="Permalink to this headline">¶</a></h3>
+<p>Plot noise spectra using Welch’s method.</p>
+<span class="target" id="module-miic3.plot.plt_spectra"></span><p>Simple script to compute and plot time-dependent spectral power densities.</p>
+<p>Author: Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
+<p>Created: Monday, 15th February 2021 02:09:48 pm
+Last Modified: Friday, 4th June 2021 03:03:46 pm</p>
+<dl class="py function">
+<dt id="miic3.plot.plt_spectra.plot_spct_series">
+<code class="sig-prename descclassname"><span class="pre">miic3.plot.plt_spectra.</span></code><code class="sig-name descname"><span class="pre">plot_spct_series</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">S</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_method</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outfile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pdf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dpi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic3/plot/plt_spectra.html#plot_spct_series"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.plot.plt_spectra.plot_spct_series" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots a spectral series.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>S</strong> (<em>np.ndarray</em>) – A spectral series with dim=2.</p></li>
+<li><p><strong>f</strong> (<em>np.ndarray</em>) – Vector containing frequencies (Hz)</p></li>
+<li><p><strong>t</strong> (<em>np.ndarray</em>) – Vector containing times (in s)</p></li>
+<li><p><strong>norm</strong> (<em>str</em><em>, </em><em>optional</em>) – Normalise the spectrum either on the time axis with
+<cite>norm=’t’</cite> or on the frequency axis with <cite>norm=’f’</cite>, defaults to None.</p></li>
+<li><p><strong>norm_method</strong> – Normation method to use. Either <cite>‘linalg’</cite>
+(i.e., length of vector), <cite>‘mean’</cite>, or <cite>‘median’</cite>.</p></li>
+<li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – Plot title, defaults to None</p></li>
+<li><p><strong>outfile</strong> (<em>str</em><em>, </em><em>optional</em>) – location to save the plot to, defaults to None</p></li>
+<li><p><strong>fmt</strong> (<em>str</em><em>, </em><em>optional</em>) – Format to save figure, defaults to ‘pdf’</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.plot.plt_spectra.spct_series_welch">
+<code class="sig-prename descclassname"><span class="pre">miic3.plot.plt_spectra.</span></code><code class="sig-name descname"><span class="pre">spct_series_welch</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">st</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">obspy.core.stream.Stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_length</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">,</span> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">,</span> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">]</span></span><a class="reference internal" href="../_modules/miic3/plot/plt_spectra.html#spct_series_welch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.plot.plt_spectra.spct_series_welch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a spectral time series. Each point in time is computed using the
+welch method. Windows overlap by half the windolength. The input stream can
+contain one or several traces from the same station. Frequency axis is
+logarithmic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>st</strong> (<em>Stream</em>) – Input Stream with data from one station.</p></li>
+<li><p><strong>window_length</strong> (<em>int</em><em> or </em><em>float</em>) – window length in seconds for each datapoint in time</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Arrays containing a frequency and time series and the spectral
+series.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.plot.plt_spectra.set_mpl_params">
+<code class="sig-prename descclassname"><span class="pre">miic3.plot.plt_spectra.</span></code><code class="sig-name descname"><span class="pre">set_mpl_params</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic3/plot/plt_spectra.html#set_mpl_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.plot.plt_spectra.set_mpl_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="miic3-plot-plot-utils">
+<h3>miic3.plot.plot_utils<a class="headerlink" href="#miic3-plot-plot-utils" title="Permalink to this headline">¶</a></h3>
+<p>Useful little plotting functions</p>
+</div>
+</div>
+<div class="section" id="miic3-utils">
+<h2>miic3.utils<a class="headerlink" href="#miic3-utils" title="Permalink to this headline">¶</a></h2>
+<p>Collection of tools</p>
+<div class="section" id="miic3-utils-io">
+<h3>miic3.utils.io<a class="headerlink" href="#miic3-utils-io" title="Permalink to this headline">¶</a></h3>
+<p>Load correlations produced by MIIC</p>
+<span class="target" id="module-miic3.utils.io"></span><dl class="field-list simple">
+<dt class="field-odd">copyright</dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">license</dt>
+<dd class="field-even"><p><cite>GNU Lesser General Public License, Version 3 &lt;https://www.gnu.org/copyleft/lesser.html&gt;</cite></p>
+</dd>
+<dt class="field-odd">author</dt>
+<dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
+</dd>
+</dl>
+<p>Created: Thursday, 8th July 2021 10:37:21 am
+Last Modified: Wednesday, 14th July 2021 02:12:14 pm</p>
+<dl class="py function">
+<dt id="miic3.utils.io.flatten">
+<code class="sig-prename descclassname"><span class="pre">miic3.utils.io.</span></code><code class="sig-name descname"><span class="pre">flatten</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic3/utils/io.html#flatten"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.utils.io.flatten" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the flattened version of the input array x</p>
+<p>This funciton works with all <code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code> that can be
+nested in an irregular fashion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Param</dt>
+<dd class="field-odd"><p>Iterable to be flattened</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>x as a flattened list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.utils.io.flatten_recarray">
+<code class="sig-prename descclassname"><span class="pre">miic3.utils.io.</span></code><code class="sig-name descname"><span class="pre">flatten_recarray</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic3/utils/io.html#flatten_recarray"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.utils.io.flatten_recarray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flatten a recarray</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.utils.io.mat_to_corrtrace">
+<code class="sig-prename descclassname"><span class="pre">miic3.utils.io.</span></code><code class="sig-name descname"><span class="pre">mat_to_corrtrace</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mat</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#miic3.correlate.stream.CorrTrace" title="miic3.correlate.stream.CorrTrace"><span class="pre">miic3.correlate.stream.CorrTrace</span></a><a class="reference internal" href="../_modules/miic3/utils/io.html#mat_to_corrtrace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.utils.io.mat_to_corrtrace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads in a correlation dictionary created with the old (i.e., python2)
+miic and translates it into a <a class="reference internal" href="#miic3.correlate.stream.CorrTrace" title="miic3.correlate.stream.CorrTrace"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrTrace</span></code></a>
+object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>mat</strong> (<em>dict</em>) – dictionary as produced by <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.io.loadmat()</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A Correlation Trace</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#miic3.correlate.stream.CorrTrace" title="miic3.correlate.stream.CorrTrace">CorrTrace</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.utils.io.corrmat_to_corrbulk">
+<code class="sig-prename descclassname"><span class="pre">miic3.utils.io.</span></code><code class="sig-name descname"><span class="pre">corrmat_to_corrbulk</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#miic3.correlate.stream.CorrBulk" title="miic3.correlate.stream.CorrBulk"><span class="pre">miic3.correlate.stream.CorrBulk</span></a><a class="reference internal" href="../_modules/miic3/utils/io.html#corrmat_to_corrbulk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.utils.io.corrmat_to_corrbulk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads in a correlation .mat file created with the old (i.e., python2)
+miic and translates it into a <a class="reference internal" href="#miic3.correlate.stream.CorrTrace" title="miic3.correlate.stream.CorrTrace"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrTrace</span></code></a>
+object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – Path to file</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A Correlation Bulk object</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#miic3.correlate.stream.CorrBulk" title="miic3.correlate.stream.CorrBulk">CorrBulk</a></p>
+</dd>
+<dt class="field-even">Warning</dt>
+<dd class="field-even"><p>This reads both stacks and subdivisions into the same object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="miic3-utils-fetch-func-from-str">
+<h3>miic3.utils.fetch_func_from_str<a class="headerlink" href="#miic3-utils-fetch-func-from-str" title="Permalink to this headline">¶</a></h3>
+<p>Import and Return a function</p>
+<span class="target" id="module-miic3.utils.fetch_func_from_str"></span><dl class="field-list simple">
+<dt class="field-odd">license</dt>
+<dd class="field-odd"><p>GNU Lesser General Public License, Version 3
+(<a class="reference external" href="https://www.gnu.org/copyleft/lesser.html">https://www.gnu.org/copyleft/lesser.html</a>)</p>
+</dd>
+<dt class="field-even">author</dt>
+<dd class="field-even"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
+</dd>
+</dl>
+<p>Created: Friday, 9th April 2021 04:07:06 pm
+Last Modified: Friday, 4th June 2021 03:23:33 pm</p>
+<dl class="py function">
+<dt id="miic3.utils.fetch_func_from_str.func_from_str">
+<code class="sig-prename descclassname"><span class="pre">miic3.utils.fetch_func_from_str.</span></code><code class="sig-name descname"><span class="pre">func_from_str</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Callable</span><a class="reference internal" href="../_modules/miic3/utils/fetch_func_from_str.html#func_from_str"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.utils.fetch_func_from_str.func_from_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a full string in the form ‘module.submodule.function’. This function
+imports said function and returns it, so that it can be called. The actual
+function can be located in any module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>string</strong> (<em>str</em>) – string in the form module.submodule.function</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The imported function ready to be executed</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>function</p>
 </dd>
 </dl>
 </dd></dl>
