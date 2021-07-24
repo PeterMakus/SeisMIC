@@ -1,16 +1,14 @@
-name: miic3
+name: seismiic
 channels:
   - conda-forge
 dependencies:
   - geographiclib
-  - joblib
   - matplotlib
   - mpi4py
   - numpy
   - obspy
   - pip
   - prov
-  - pyasdf
   - pytest
   - pyyaml
   - python=3.8

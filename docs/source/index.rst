@@ -13,6 +13,7 @@ SeisMIIC library documentation
    
    
    modules/intro
+   modules/get_started
    modules/trace_data
    modules/correlate
    modules/corrdb
