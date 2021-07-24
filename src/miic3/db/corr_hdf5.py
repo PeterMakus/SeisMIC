@@ -9,7 +9,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Wednesday, 21st July 2021 05:29:59 pm
+Last Modified: Saturday, 24th July 2021 09:21:06 pm
 '''
 import ast
 import fnmatch
@@ -373,7 +373,13 @@ def all_traces_recursive(
         if isinstance(v, h5py._hl.group.Group):
             all_traces_recursive(v, stream, pattern)
         else:
-            stream.append(CorrTrace(np.array(v), _header=read_hdf5_header(v)))
+            try:
+                stream.append(
+                    CorrTrace(np.array(v), _header=read_hdf5_header(v)))
+            except ValueError:
+                warnings.warn(
+                    'Header could not be converted. Attributes are: %s' % (
+                        str(v.attrs)))
     return stream
 
 
