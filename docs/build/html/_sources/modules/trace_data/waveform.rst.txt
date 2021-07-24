@@ -13,6 +13,7 @@
         click correlate "../correlate.html" "correlate"
         click monitor "../monitor.html" "monitor"
         click corrdb "../corrdb.html" "CorrDB"
+        click dv "../monitor/dv.html" "DV"
         classDef active fill:#f666, stroke-width:4px, stroke:#f06;
     
     

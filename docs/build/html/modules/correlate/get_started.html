@@ -100,11 +100,11 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../correlate.html#handle-correlations">Handle Correlations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../correlate.html#api">API</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../corrdb.html">Save and Load Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../monitor.html">Monitor Velocity Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIIC</span></code> API</a></li>
 </ul>
 
             
@@ -185,6 +185,7 @@ graph LR
     click correlate &quot;../correlate.html&quot; &quot;correlate&quot;
     click monitor &quot;../monitor.html&quot; &quot;monitor&quot;
     click corrdb &quot;../corrdb.html&quot; &quot;CorrDB&quot;
+    click dv &quot;../monitor/dv.html&quot; &quot;DV&quot;
     classDef active fill:#f666, stroke-width:4px, stroke:#f06;
         </div><div class="section" id="get-started-compute-your-first-noise-correlations">
 <h1>Get Started (Compute your first Noise Correlations)<a class="headerlink" href="#get-started-compute-your-first-noise-correlations" title="Permalink to this headline">¶</a></h1>
@@ -517,7 +518,7 @@ To achieve a better understanding of what each of the parameters do, let’s hav
 <span class="nt">fig_subdir </span><span class="p">:</span> <span class="s">&#39;figures&#39;</span>
 </pre></div>
 </td></tr></table></div>
-<p>Those are parameters that govern the logging and the file-structure. <code class="docutils literal notranslate"><span class="pre">proj_dir</span></code> is the root directory, we have chosen when initialising our <a class="reference internal" href="../trace_data/API.html#miic3.trace_data.waveform.Store_Client" title="miic3.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> as shown <a class="reference external" href="../trace_data/waveform.html#download-data">here</a> .
+<p>Those are parameters that govern the logging and the file-structure. <code class="docutils literal notranslate"><span class="pre">proj_dir</span></code> is the root directory, we have chosen when initialising our <a class="reference internal" href="../API.html#miic3.trace_data.waveform.Store_Client" title="miic3.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> as shown <a class="reference external" href="../trace_data/waveform.html#download-data">here</a> .
 <code class="docutils literal notranslate"><span class="pre">fig_dir</span></code> and <code class="docutils literal notranslate"><span class="pre">log_dir</span></code> are just subdirectories for figures and logs, respectively, and the log level decides how much will actually be logged.</p>
 </div>
 <div class="section" id="network-specific-parameters">
@@ -622,7 +623,7 @@ Let’s start by getting the most obvious parameters out of the way:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">Sampling_rate</span></code> is the new sampling rate you will want your data to have. <strong>SeisMIIC</strong> will take care of anti-alias filtering and determine whether data can be decimated.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">remove_response</span></code> if you want the data to be corrected for the instrument response, set this to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">combination_method</span></code> decides which components you will want to correlate. See <a class="reference internal" href="API.html#miic3.correlate.correlate.calc_cross_combis" title="miic3.correlate.correlate.calc_cross_combis"><code class="xref py py-func docutils literal notranslate"><span class="pre">calc_cross_combis()</span></code></a> for allowed options.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">combination_method</span></code> decides which components you will want to correlate. See <a class="reference internal" href="../API.html#miic3.correlate.correlate.calc_cross_combis" title="miic3.correlate.correlate.calc_cross_combis"><code class="xref py py-func docutils literal notranslate"><span class="pre">calc_cross_combis()</span></code></a> for allowed options.</p></li>
 </ul>
 <div class="section" id="preprocessing-arguments">
 <h4>Preprocessing Arguments<a class="headerlink" href="#preprocessing-arguments" title="Permalink to this headline">¶</a></h4>
@@ -633,7 +634,7 @@ All these parameters expect a <code class="docutils literal notranslate"><span c
 Preprocecssing is generally done in three steps:</p>
 <p><strong>Preprocessing “on per stream basis”</strong>
 All functions here take an <a class="reference external" href="https://docs.obspy.org/master/packages/autogen/obspy.core.stream.Stream.html">obspy stream</a> as input and return the processed stream.
-An over view of available stream preprocessing functions can  be found in <a class="reference internal" href="API.html#module-miic3.correlate.preprocessing_stream" title="miic3.correlate.preprocessing_stream"><code class="xref py py-mod docutils literal notranslate"><span class="pre">preprocessing_stream</span></code></a>.</p>
+An over view of available stream preprocessing functions can  be found in <a class="reference internal" href="../API.html#module-miic3.correlate.preprocessing_stream" title="miic3.correlate.preprocessing_stream"><code class="xref py py-mod docutils literal notranslate"><span class="pre">preprocessing_stream</span></code></a>.</p>
 <div class="highlight-yaml notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>

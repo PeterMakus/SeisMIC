@@ -40,7 +40,7 @@
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="miic3.db API" href="API.html" />
+    <link rel="next" title="Monitor Velocity Changes" href="../monitor.html" />
     <link rel="prev" title="Save and Load Correlations" href="../corrdb.html" /> 
 </head>
 
@@ -102,10 +102,10 @@
 <li class="toctree-l3"><a class="reference internal" href="#writing-correlations">Writing Correlations</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="API.html"><code class="docutils literal notranslate"><span class="pre">miic3.db</span></code> API</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../monitor.html">Monitor Velocity Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIIC</span></code> API</a></li>
 </ul>
 
             
@@ -186,6 +186,7 @@ graph LR
     click correlate &quot;../correlate.html&quot; &quot;correlate&quot;
     click monitor &quot;../monitor.html&quot; &quot;monitor&quot;
     click corrdb &quot;../corrdb.html&quot; &quot;CorrDB&quot;
+    click dv &quot;../monitor/dv.html&quot; &quot;DV&quot;
     classDef active fill:#f666, stroke-width:4px, stroke:#f06;
         </div><div class="section" id="correlationdatabase-and-dbhandler-objects">
 <h1>CorrelationDataBase and DBHandler objects<a class="headerlink" href="#correlationdatabase-and-dbhandler-objects" title="Permalink to this headline">¶</a></h1>
@@ -203,9 +204,9 @@ of the station <code class="docutils literal notranslate"><span class="pre">IU.H
 Correlations will always only be computed alphabetically. That is, <strong>SeisMIIC</strong> will not compute a
 correlation for <code class="docutils literal notranslate"><span class="pre">TA-IU.M58A-HRV</span></code> but only for <code class="docutils literal notranslate"><span class="pre">IU-TA.HRV-M58A</span></code>.</p>
 </div>
-<p>As a user, you will only ever be calling the <a class="reference internal" href="API.html#miic3.db.corr_hdf5.CorrelationDataBase" title="miic3.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a> class.
-The only function of this class is to return a <a class="reference internal" href="API.html#miic3.db.corr_hdf5.DBHandler" title="miic3.db.corr_hdf5.DBHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">DBHandler</span></code></a>, which hold all the
-“useful” functions. To call <a class="reference internal" href="API.html#miic3.db.corr_hdf5.CorrelationDataBase" title="miic3.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a>, use a context manager like so:</p>
+<p>As a user, you will only ever be calling the <a class="reference internal" href="../API.html#miic3.db.corr_hdf5.CorrelationDataBase" title="miic3.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a> class.
+The only function of this class is to return a <a class="reference internal" href="../API.html#miic3.db.corr_hdf5.DBHandler" title="miic3.db.corr_hdf5.DBHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">DBHandler</span></code></a>, which hold all the
+“useful” functions. To call <a class="reference internal" href="../API.html#miic3.db.corr_hdf5.CorrelationDataBase" title="miic3.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a>, use a context manager like so:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">miic3.db.corr_hdf5</span> <span class="kn">import</span> <span class="n">CorrelationDataBase</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="n">myfile</span><span class="o">.</span><span class="n">h5</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="nb">type</span><span class="p">(</span><span class="n">cdb</span><span class="p">)</span>  <span class="c1"># This is a DBHandler</span>
@@ -214,7 +215,7 @@ The only function of this class is to return a <a class="reference internal" hre
 </div>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>Do not call <a class="reference internal" href="API.html#miic3.db.corr_hdf5.DBHandler" title="miic3.db.corr_hdf5.DBHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">DBHandler</span></code></a> directly! This might lead to unexpected behaviour or
+<p>Do not call <a class="reference internal" href="../API.html#miic3.db.corr_hdf5.DBHandler" title="miic3.db.corr_hdf5.DBHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">DBHandler</span></code></a> directly! This might lead to unexpected behaviour or
 even dataloss due to corrupted hdf5 files.</p>
 </div>
 <div class="admonition warning">
@@ -225,7 +226,7 @@ with <code class="xref py py-meth docutils literal notranslate"><span class="pre
 <div class="section" id="reading-correlations">
 <h2>Reading Correlations<a class="headerlink" href="#reading-correlations" title="Permalink to this headline">¶</a></h2>
 <p>The most common usecase is probably that you will want to access correlations that <strong>SeisMIIC</strong> computed
-for you (as shown earlier). To do so, you can use the <a class="reference internal" href="API.html#miic3.db.corr_hdf5.DBHandler.get_data" title="miic3.db.corr_hdf5.DBHandler.get_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_data()</span></code></a>
+for you (as shown earlier). To do so, you can use the <a class="reference internal" href="../API.html#miic3.db.corr_hdf5.DBHandler.get_data" title="miic3.db.corr_hdf5.DBHandler.get_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_data()</span></code></a>
 method:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">miic3.db.corr_hdf5</span> <span class="kn">import</span> <span class="n">CorrelationDataBase</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="n">myfile</span><span class="o">.</span><span class="n">h5</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
@@ -311,8 +312,8 @@ you will have to pay attention to a couple of particularities:</p>
     <span class="n">cdb</span><span class="o">.</span><span class="n">add_correlation</span><span class="p">(</span><span class="n">cst</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;my_sensible_tag&#39;</span><span class="p">)</span>
 </pre></div>
 </td></tr></table></div>
-<p>If there had been any data in our <a class="reference internal" href="../correlate/API.html#miic3.correlate.stream.CorrStream" title="miic3.correlate.stream.CorrStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrStream</span></code></a>, we could retrieve it as shown above.
-Network, station, and channel information are determined automatically from the <a class="reference internal" href="../correlate/API.html#miic3.correlate.stream.CorrTrace" title="miic3.correlate.stream.CorrTrace"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrTrace</span></code></a> header.</p>
+<p>If there had been any data in our <a class="reference internal" href="../API.html#miic3.correlate.stream.CorrStream" title="miic3.correlate.stream.CorrStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrStream</span></code></a>, we could retrieve it as shown above.
+Network, station, and channel information are determined automatically from the <a class="reference internal" href="../API.html#miic3.correlate.stream.CorrTrace" title="miic3.correlate.stream.CorrTrace"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrTrace</span></code></a> header.</p>
 </div>
 </div>
 
@@ -322,7 +323,7 @@ Network, station, and channel information are determined automatically from the 
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="API.html" class="btn btn-neutral float-right" title="miic3.db API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../monitor.html" class="btn btn-neutral float-right" title="Monitor Velocity Changes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
         <a href="../corrdb.html" class="btn btn-neutral float-left" title="Save and Load Correlations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 

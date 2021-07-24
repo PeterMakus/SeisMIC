@@ -260,7 +260,7 @@ graph TD
     waveform
     end
     subgraph miic3.correlate
-    preprocess_st:::active --&gt; preprocessing_td[TDPreProcessing]
+    preprocess_st --&gt; preprocessing_td[TDPreProcessing]
     preprocessing_td --&gt; preprocessing_fd[FDPreprocessing]
     preprocessing_fd --&gt; correlate[Correlate]
     correlate --&gt; stream{{CorrTrace, CorrStream, and CorrBulk}}
@@ -270,7 +270,16 @@ graph TD
     subgraph miic3.monitor
     monitor[Measure dv] --&gt;|save| dv{{DV}}
     end
-    click waveform &quot;http://www.github.com&quot; &quot;trace_data&quot;
+    click waveform &quot;./modules/trace_data.html&quot; &quot;trace_data&quot;
+    click miic3.correlate &quot;./modules/correlate.html&quot; &quot;correlate&quot;
+    click preprocess_st &quot;./modules/correlate/get_started.html#preprocessing-arguments&quot; &quot;preprocessing&quot;
+    click preprocessing_fd &quot;./modules/correlate/get_started.html#preprocessing-arguments&quot; &quot;preprocessing&quot;
+    click preprocessing_td &quot;./modules/correlate/get_started.html#preprocessing-arguments&quot; &quot;preprocessing&quot;
+    click correlate &quot;./modules/correlate.html&quot; &quot;correlate&quot;
+    click stream &quot;./modules/correlate/stream.html&quot; &quot;CorrStream&quot;
+    click corrdb &quot;./modules/corrdb.html&quot; &quot;CorrDB&quot;
+    click monitor &quot;./modules/monitor.html&quot; &quot;Monitor&quot;
+    click dv &quot;./modules/monitor/dv.html&quot; &quot;DV&quot;
     classDef active fill:#f666, stroke-width:4px, stroke:#f06;
         </div></div>
 <div class="section" id="indices-and-tables">

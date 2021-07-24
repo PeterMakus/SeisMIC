@@ -97,11 +97,11 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../correlate.html#handle-correlations">Handle Correlations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../correlate.html#api">API</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../corrdb.html">Save and Load Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../monitor.html">Monitor Velocity Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIIC</span></code> API</a></li>
 </ul>
 
             
@@ -182,11 +182,12 @@ graph LR
     click correlate &quot;../correlate.html&quot; &quot;correlate&quot;
     click monitor &quot;../monitor.html&quot; &quot;monitor&quot;
     click corrdb &quot;../corrdb.html&quot; &quot;CorrDB&quot;
+    click dv &quot;../monitor/dv.html&quot; &quot;DV&quot;
     classDef active fill:#f666, stroke-width:4px, stroke:#f06;
         </div><div class="section" id="the-correlator-object">
 <h1>The Correlator Object<a class="headerlink" href="#the-correlator-object" title="Permalink to this headline">¶</a></h1>
-<p>The Object governing the actual computation is <a class="reference internal" href="API.html#miic3.correlate.correlate.Correlator" title="miic3.correlate.correlate.Correlator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Correlator</span></code></a>. It takes only two input arguments and the most important is the dictionary / yml file that we created in <a class="reference external" href="./get_started.html#download-data">the preceding step</a>.
-The second input argument is the <a class="reference internal" href="../trace_data/API.html#miic3.trace_data.waveform.Store_Client" title="miic3.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> we used to <a class="reference external" href="../trace_data/waveform.html#download-data">download</a> our data.</p>
+<p>The Object governing the actual computation is <a class="reference internal" href="../API.html#miic3.correlate.correlate.Correlator" title="miic3.correlate.correlate.Correlator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Correlator</span></code></a>. It takes only two input arguments and the most important is the dictionary / yml file that we created in <a class="reference external" href="./get_started.html#download-data">the preceding step</a>.
+The second input argument is the <a class="reference internal" href="../API.html#miic3.trace_data.waveform.Store_Client" title="miic3.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> we used to <a class="reference external" href="../trace_data/waveform.html#download-data">download</a> our data.</p>
 <p>As Computing Ambient Noise Correlations is computationally very expensive, <strong>SeisMIIC</strong> can be used in conjuction with MPI (e.g., openMPI) to enable processing with several cores or on HPCs.</p>
 <p>A script to start your correlation could look like this:</p>
 <div class="literal-block-wrapper docutils container" id="id1">
@@ -239,7 +240,7 @@ The second input argument is the <a class="reference internal" href="../trace_da
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun -n <span class="nv">$number_cores</span>$ python mycorrelation.py
 </pre></div>
 </div>
-<p>where <code class="docutils literal notranslate"><span class="pre">$number_cores$</span></code> is the number of cores you want to initialise. The only method of <a class="reference internal" href="API.html#miic3.correlate.correlate.Correlator" title="miic3.correlate.correlate.Correlator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Correlator</span></code></a> that you will want to use is <a class="reference internal" href="API.html#miic3.correlate.correlate.Correlator.pxcorr" title="miic3.correlate.correlate.Correlator.pxcorr"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pxcorr()</span></code></a>, which does not require any (additional) input.</p>
+<p>where <code class="docutils literal notranslate"><span class="pre">$number_cores$</span></code> is the number of cores you want to initialise. The only method of <a class="reference internal" href="../API.html#miic3.correlate.correlate.Correlator" title="miic3.correlate.correlate.Correlator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Correlator</span></code></a> that you will want to use is <a class="reference internal" href="../API.html#miic3.correlate.correlate.Correlator.pxcorr" title="miic3.correlate.correlate.Correlator.pxcorr"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pxcorr()</span></code></a>, which does not require any (additional) input.</p>
 </div>
 
 

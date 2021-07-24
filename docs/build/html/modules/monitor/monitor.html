@@ -99,9 +99,9 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="dv.html">Reading and Handling of DV objects</a></li>
-<li class="toctree-l2"><a class="reference internal" href="API.html"><code class="docutils literal notranslate"><span class="pre">miic3.monitor</span></code> API</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIIC</span></code> API</a></li>
 </ul>
 
             
@@ -182,6 +182,7 @@ graph LR
     click correlate &quot;../correlate.html&quot; &quot;correlate&quot;
     click monitor &quot;../monitor.html&quot; &quot;monitor&quot;
     click corrdb &quot;../corrdb.html&quot; &quot;CorrDB&quot;
+    click dv &quot;../monitor/dv.html&quot; &quot;DV&quot;
     classDef active fill:#f666, stroke-width:4px, stroke:#f06;
         </div><div class="section" id="compute-velocity-changes">
 <h1>Compute Velocity Changes<a class="headerlink" href="#compute-velocity-changes" title="Permalink to this headline">¶</a></h1>
@@ -259,7 +260,7 @@ of increments that will be tested between the minimum and maximum stretching.</p
 <div class="section" id="start-the-computation">
 <h2>Start the Computation<a class="headerlink" href="#start-the-computation" title="Permalink to this headline">¶</a></h2>
 <p>Again, the procedure is fairly similar to startin the correlation. Velocity stretch estimates are computed by the
-<a class="reference internal" href="API.html#miic3.monitor.monitor.Monitor" title="miic3.monitor.monitor.Monitor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Monitor</span></code></a> object. Once again, usage with mpi is possible. Your velocity stretch estimate
+<a class="reference internal" href="../API.html#miic3.monitor.monitor.Monitor" title="miic3.monitor.monitor.Monitor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Monitor</span></code></a> object. Once again, usage with mpi is possible. Your velocity stretch estimate
 script could look something like this:</p>
 <div class="literal-block-wrapper docutils container" id="id1">
 <div class="code-block-caption"><span class="caption-text">compute_dv.py</span><a class="headerlink" href="#id1" title="Permalink to this code">¶</a></div>
@@ -275,7 +276,7 @@ script could look something like this:</p>
 </pre></div>
 </td></tr></table></div>
 </div>
-<p>Again, you will only want to use the method <a class="reference internal" href="API.html#miic3.monitor.monitor.Monitor.compute_velocity_change_bulk" title="miic3.monitor.monitor.Monitor.compute_velocity_change_bulk"><code class="xref py py-meth docutils literal notranslate"><span class="pre">miic3.monitor.monitor.Monitor.compute_velocity_change_bulk()</span></code></a>.
+<p>Again, you will only want to use the method <a class="reference internal" href="../API.html#miic3.monitor.monitor.Monitor.compute_velocity_change_bulk" title="miic3.monitor.monitor.Monitor.compute_velocity_change_bulk"><code class="xref py py-meth docutils literal notranslate"><span class="pre">miic3.monitor.monitor.Monitor.compute_velocity_change_bulk()</span></code></a>.
 You can start the script using mpi:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun -n <span class="nv">$number_of_cores</span>$ python <span class="nv">$path_to_file</span>$/compute_dv.py
 </pre></div>
