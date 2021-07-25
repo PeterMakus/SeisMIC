@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Sunday, 25th July 2021 10:03:36 am
+Last Modified: Sunday, 25th July 2021 10:18:52 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -129,6 +129,28 @@ class CorrBulk(object):
         self.data = time_stretch_apply(self.data, -1.*dv.value)
         self.stats.processing_bulk += ['Applied time stretch']
         return self
+
+    def create_corr_stream(self):
+        """
+        Creates a :class:`~miic3.correlate.stream.CorrStream` object from
+        the current :class:`~miic3.correlate.stream.CorrBulk` object. This
+        can be useful if you want to save your postprocessed data in a hdf5
+        file again.
+
+        :return: Correlation Stream holding the same data
+        :rtype: :class:`~miic3.correlate.stream.CorrStream`
+        """
+        cst = CorrStream()
+        mutables = ['corr_start', 'corr_end', 'location']
+        for ii, li in enumerate(self.data):
+            stats = deepcopy(self.stats)
+            for k in mutables:
+                if not isinstance(stats[k], list):
+                    continue
+                stats[k] = self.stats[k][ii]
+            ctr = CorrTrace(li, _header=stats)
+            cst.append(ctr)
+        return cst
 
     def envelope(self):
         """
