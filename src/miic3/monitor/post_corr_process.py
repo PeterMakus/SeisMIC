@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Tuesday, 20th July 2021 04:25:42 pm
+Last Modified: Sunday, 25th July 2021 05:07:28 pm
 '''
 
 from typing import List, Tuple
@@ -222,10 +222,10 @@ def corr_mat_trim(
     # check range
     if start < 0:
         print('Error: starttime before beginning of trace. Data not changed')
-        return data
+        return data, stats
     if end >= stats['npts']:
         print('Error: endtime after end of trace. Data not changed')
-        return data
+        return data, stats
 
     # select requested part from matrix
     # +1 is to include the last sample
