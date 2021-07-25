@@ -49,7 +49,7 @@ class Store_Client(object):
         if not read_only:
             os.makedirs(self.sds_root, exist_ok=True)
         self.inv_dir = os.path.join(path, "inventory")
-        if os.listdir(self.inv_dir):
+        if os.path.isdir(self.inv_dir) and os.listdir(self.inv_dir):
             self.inventory = self.read_inventory()
         else:
             self.inventory = Inventory()

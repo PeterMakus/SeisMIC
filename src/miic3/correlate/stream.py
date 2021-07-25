@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Sunday, 25th July 2021 10:18:52 am
+Last Modified: Sunday, 25th July 2021 12:03:02 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -690,7 +690,12 @@ class CorrStream(Stream):
             st = st.select_corr_time(times[0], times[1])
         A = np.empty((st.count(), st[0].stats.npts))
         statlist = []
+        # Double check sampling rate
+        sr = st[0].stats.sampling_rate
         for ii, tr in enumerate(st):
+            if tr.stats.sampling_rate != sr:
+                warnings.warn('Sampling rate differs. Trace is skipped.')
+                continue
             A[ii] = tr.data
             if inplace:
                 del tr.data
