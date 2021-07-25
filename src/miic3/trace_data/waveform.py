@@ -247,7 +247,7 @@ class Store_Client(object):
         """
         Read data from local SDS structure.
         """
-        print("Loading locally ... ", end='')
+        # print("Loading locally ... ", end='')
         st = self.lclient.get_waveforms(
             network, station, location, channel, starttime, endtime)
         # Making sure that the order is correct for the next bit to work
@@ -256,14 +256,14 @@ class Store_Client(object):
             len(st) == 0 or (
                 starttime < (st[0].stats.starttime-st[0].stats.delta) or (
                     endtime > st[-1].stats.endtime+st[-1].stats.delta))):
-            print("Failed")
+            # print("Failed")
             return None
         if attach_response:
             try:
                 st.attach_response(self.inventory)
             except Exception:
                 pass
-        print("Success")
+        # print("Success")
         return st
 
     def read_inventory(self) -> Inventory:

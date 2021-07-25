@@ -9,7 +9,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Saturday, 24th July 2021 09:21:06 pm
+Last Modified: Sunday, 25th July 2021 05:36:05 pm
 '''
 import ast
 import fnmatch
@@ -280,8 +280,7 @@ class CorrelationDataBase(object):
         """
         Access an hdf5 file holding correlations. The resulting file can be
         accessed using all functionalities of
-        `pyasdf <https://seismicdata.github.io/pyasdf>`_
-        (for example as a dict)
+        `h5py <https://www.h5py.org/>`_ (for example as a dict).
 
         :param path: Full path to the file
         :type path: str

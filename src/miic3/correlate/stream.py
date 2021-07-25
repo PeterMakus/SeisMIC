@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Sunday, 25th July 2021 12:03:02 pm
+Last Modified: Sunday, 25th July 2021 05:54:50 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -1139,14 +1139,18 @@ def stack_st(st: CorrStream, weight: str, norm: bool = True) -> CorrTrace:
         stack.append(tr.data)
         dur.append(tr.stats.corr_end-tr.stats.corr_start)
     A = np.array(stack)
-    if norm:
-        norm = np.max(np.abs(A), axis=1)
-        A /= np.tile(np.atleast_2d(norm).T, (1, A.shape[1]))
     if weight == 'mean' or weight == 'average':
-        return CorrTrace(data=np.average(A, axis=0), _header=stats)
+        data = np.average(A, axis=0)
+        if norm:
+            norm = np.max(np.abs(data))
+            data /= norm  # np.tile(np.atleast_2d(norm).T, (1, A.shape[1]))
+        return CorrTrace(data, _header=stats)
     elif weight == 'by_length':
         # Weight by the length of each trace
         data = np.sum((A.T*np.array(dur)).T, axis=0)/np.sum(dur)
+        if norm:
+            norm = np.max(np.abs(data))
+            data /= norm  # np.tile(np.atleast_2d(norm).T, (1, A.shape[1]))
         return CorrTrace(data=data, _header=stats)
 
 

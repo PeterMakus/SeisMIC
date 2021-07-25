@@ -10,7 +10,7 @@ Module containing functions for preprocessing in the frequency domain
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:40:11 pm
-Last Modified: Tuesday, 20th July 2021 03:43:11 pm
+Last Modified: Sunday, 25th July 2021 05:27:31 pm
 '''
 from copy import deepcopy
 
@@ -74,3 +74,48 @@ def FDsignBitNormalization(
     # B should always be real, so this line does not make an awful lot of sense
     C = np.sign(B.real)
     return np.fft.rfft(C, axis=0)
+
+
+def spectralWhitening(B: np.ndarray, args: dict, params) -> np.ndarray:
+    """
+    Spectal whitening of Fourier-transformed date
+
+    Normalize the amplitude spectrum of the complex spectra in `B`. The
+    `args` dictionary may contain the keyword `joint_norm`. If its value is
+    True the normalization of sets of three traces are normalized jointly by
+    the mean of their amplitude spectra. This is useful for later rotation of
+    correlated traces in the ZNE system into the ZRT system.
+
+    :type B: numpy.ndarray
+    :param B: Fourier transformed time series data with frequency oriented\\
+        along the first dimension (columns)
+    :type args: dictionary
+    :param args: arguments dictionary as described above
+    :type params: dictionary
+    :param params: not used here
+
+    :rtype: numpy.ndarray
+    :return: whitened spectal data
+    """
+    absB = np.absolute(B)
+    if 'joint_norm' in list(args.keys()):
+        if args['joint_norm']:
+            assert B.shape[1] % 3 == 0, "for joint normalization the number\
+                      of traces needs to the multiple of 3: %d" % B.shape[1]
+            for ii in np.arange(0, B.shape[1], 3):
+                absB[:, ii:ii+3] = np.tile(
+                    np.atleast_2d(np.mean(absB[:, ii:ii+3], axis=1)).T, [1, 3])
+    with np.errstate(invalid='raise'):
+        try:
+            B /= absB
+        except FloatingPointError as e:
+            errargs = np.argwhere(absB == 0)
+            # Report error where there is zero divides for a non-zero freq
+            if not np.all(errargs[:, 0] == 0):
+                print(e)
+                print(errargs)
+
+    # Set zero frequency component to zero
+    B[0, :] = 0.j
+
+    return B

@@ -16,7 +16,7 @@ net:
     # list of stations used in the project
     # type: list of strings or string, wildcards allowed
     network : 'XD'
-    station : 'LBAB'
+    station : 'DELB'
     # stations : ['D0.BZG', 'D0.ESO', 'D0.KBG', 'D0.KIR']
     # list of channels
     # type: list of strings
@@ -57,12 +57,12 @@ co:
     # these function work on an obspy.Stream object given as first argument
     # and return an obspy.Stream object.
     preProcessing : [
-                    {'function':'miic3.utils.miic_utils.detrend_st',
+                    {'function':'miic3.correlate.preprocessing_stream.detrend_st',
                     'args':{'type':'simple'}},
-                    {'function':'miic3.utils.miic_utils.cos_taper_st',
+                    {'function':'miic3.correlate.preprocessing_stream.cos_taper_st',
                       'args':{'taper_len': 10, # seconds
                               'taper_at_masked': True}},
-                    {'function':'miic3.utils.miic_utils.stream_filter',
+                    {'function':'miic3.correlate.preprocessing_stream.stream_filter',
                       'args':{'ftype':'bandpass',
                               'filter_option':{'freqmin':0.15, #0.01
                                                'freqmax':0.5}}}
@@ -97,13 +97,13 @@ co:
                                     #         'std_factor':3,
                                     #         'filter':{'type':'bandpass','freqmin':2,'freqmax':4},
                                     #         'extend_gaps':True}},
-                                   {'function':'miic3.correlate.correlate.clip',
+                                   {'function':'miic3.correlate.preprocessing_td.clip',
                                     'args':{'std_factor':3}},
                                    ],
                  'FDpreProcessing':[
-                                    {'function':'miic3.correlate.correlate.spectralWhitening',
+                                    {'function':'miic3.correlate.preprocessing_fd.spectralWhitening',
                                      'args':{'joint_norm':False}},
-                                    {'function':'miic3.correlate.correlate.FDfilter',
+                                    {'function':'miic3.correlate.preprocessing_fd.FDfilter',
                                      'args':{'flimit':[0.01,0.02,9,10]}}
                                     ],
                  'lengthToSave':100,
