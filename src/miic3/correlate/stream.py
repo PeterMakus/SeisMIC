@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Monday, 19th July 2021 03:55:19 pm
+Last Modified: Sunday, 25th July 2021 10:03:36 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -1158,8 +1158,13 @@ def convert_statlist_to_bulk_stats(
         for key in mutables:
             stats[key] += [trstat[key]]
         for key in immutables:
+            ph = (
+                key, str(stats[key]), str(trstat[key]), stats['network'],
+                stats['station'])
             if stats[key] != trstat[key]:
-                raise ValueError('The stream contains data with different \
-properties. The differing property is %s' % key)
+                raise ValueError(
+                    'The stream contains data with different properties. \
+The differing property is %s. With the values: %s and %s. For station \
+%s.%s' % ph)
     stats['ntrcs'] = len(statlist)
     return stats
