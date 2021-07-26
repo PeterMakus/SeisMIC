@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 26th July 2021 09:19:22 am
+Last Modified: Monday, 26th July 2021 12:42:44 pm
 '''
 import logging
 import os
@@ -182,7 +182,7 @@ and network combinations %s' % str(
         if self.options['co']['subdivision']['recombine_subdivision'] and\
             self.options['co']['read_inc'] \
                 <= self.options['dv']['date_inc']:
-            tag = 'recombined'
+            tag = 'stack_%s' % str(self.options['co']['read_inc'])
         else:
             tag = 'subdivision'
         # get number of available channel combis

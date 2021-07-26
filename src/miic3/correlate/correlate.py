@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Sunday, 25th July 2021 05:58:01 pm
+Last Modified: Monday, 26th July 2021 12:29:22 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -19,6 +19,7 @@ import yaml
 from mpi4py import MPI
 import numpy as np
 from obspy import Stream, UTCDateTime, Inventory
+from tqdm import tqdm
 
 from miic3.correlate.stream import CorrTrace, CorrStream
 from miic3.correlate import preprocessing_td as pptd
@@ -349,7 +350,7 @@ class Correlator(object):
             tl = 0
 
         # Loop over read increments
-        for t in loop_window:
+        for t in tqdm(loop_window):
             write_flag = True  # Write length is same as read length
             startt = UTCDateTime(t) - tl
             endt = startt + self.options['read_len'] + tl

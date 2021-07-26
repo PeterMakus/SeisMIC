@@ -46,7 +46,7 @@ co:
     # New sampling rate in Hz. Note that it will try to decimate
     # if possible (i.e., there is an integer factor from the
     # native sampling_rate)
-    sampling_rate: 25
+    sampling_rate: 20
     # Remove the instrument response, will take substantially more time
     remove_response: False
 
@@ -129,15 +129,15 @@ dv:
     ### Definition of calender time windows for the time difference measurements
     start_date : '2004-08-15 00:00:01.0'  # %Y-%m-%dT%H:%M:%S.%fZ'
     end_date : '2004-11-01 00:00:00.0'
-    win_len : 86400                         # length of window in which EGFs are stacked
-    date_inc : 86400                        # increment of measurements
+    win_len : 432000                      # length of window in which EGFs are stacked
+    date_inc : 28800                        # increment of measurements
 
     ### Frequencies
-    freq_min : .1
-    freq_max : .9
+    freq_min : 0.1
+    freq_max : 0.9
 
     ### Definition of lapse time window
-    tw_start : 10     # lapse time of first sample [s]
+    tw_start : 5     # lapse time of first sample [s]
     tw_len : 80       # length of window [s]
     
     ### Range to try stretching
