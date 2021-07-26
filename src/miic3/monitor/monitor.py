@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Sunday, 25th July 2021 06:09:34 pm
+Last Modified: Monday, 26th July 2021 09:16:48 am
 '''
 import logging
 import os
@@ -134,6 +134,9 @@ and network combinations %s' % str(
         cbt = cb.copy().trim(
             -(self.options['dv']['tw_start']+self.options['dv']['tw_len']),
             (self.options['dv']['tw_start']+self.options['dv']['tw_len']))
+
+        if cbt.data.shape[1] <= 20:
+            raise ValueError('CorrBulk extremely short.')
 
         tr = cbt.extract_trace(method='mean')
 

@@ -6,7 +6,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:54:28 pm
-Last Modified: Tuesday, 20th July 2021 04:04:29 pm
+Last Modified: Monday, 26th July 2021 08:01:43 am
 '''
 import unittest
 
@@ -117,31 +117,6 @@ class TestFDSignBitNormalisation(unittest.TestCase):
         expected_result = np.sign(A)
         self.assertTrue(np.allclose(
             expected_result, pptd.signBitNormalization(A, {}, {})))
-
-
-class TestSpectralWhitening(unittest.TestCase):
-    def setUp(self):
-        dim = (np.random.randint(200, 766), np.random.randint(2, 44))
-        self.A = np.random.random(dim) + np.random.random(dim) * 1j
-
-    def test_result(self):
-        # Again so straightforward that I wonder whether it makes sense
-        # to test this
-        expected = self.A/abs(self.A)
-        expected[0, :] = 0.j
-        self.assertTrue(np.allclose(
-            expected, pptd.spectralWhitening(self.A, {}, {})))
-
-    def test_joint_norm_not_possible(self):
-        with self.assertRaises(AssertionError):
-            pptd.spectralWhitening(
-                np.ones((5, 5)), {'joint_norm': True}, {})
-
-    def test_empty_array(self):
-        A = np.array([])
-        with self.assertRaises(IndexError):
-            pptd.spectralWhitening(
-                A, {}, {})
 
 
 class TestTDNormalisation(unittest.TestCase):
