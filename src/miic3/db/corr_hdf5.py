@@ -9,7 +9,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Sunday, 25th July 2021 05:36:05 pm
+Last Modified: Monday, 26th July 2021 07:54:40 am
 '''
 import ast
 import fnmatch
@@ -267,7 +267,11 @@ omitted." % path, category=UserWarning)
             tag=tag, network=network, station=station, channel='*',
             corr_st='*', corr_et='*')
         path = path.split('*')[0]
-        return list(self[path].keys())
+        try:
+            return list(self[path].keys())
+        except KeyError:
+            # No channels available
+            return []
 
 
 class CorrelationDataBase(object):
