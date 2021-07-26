@@ -35,6 +35,7 @@ If you follow the instructions below, it should not be necessary to install depe
 - sphinx
 - sphinx-rtd-theme
 - sphinxcontrib-mermaid
+- tqdm
 
 Via PyPi
 ++++++++
@@ -63,3 +64,9 @@ After downloading just run the following commands **in the repository's folder**
 
     While it is certainly recommendable to use a conda environment, you can also just install the package on your repository's python
     or in the currently active environment by executing the last command.
+
+Tutorial
+--------
+
+Along with the source code **SeisMIIC** is distributed with a Jupyter notebook that provides you with an easy example on how
+to use the code in `examples/tutorial.ipynb`. Else, we recommend going throught this documentation.
