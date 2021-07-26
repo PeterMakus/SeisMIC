@@ -87,6 +87,7 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/get_started.html">Getting Started with SeisMIIC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/trace_data.html">Trace data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/correlate.html">Compute and Handle Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/corrdb.html">Save and Load Correlations</a></li>
@@ -209,7 +210,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">read_only</span><span class="p">:</span>
             <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sds_root</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">inv_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;inventory&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inv_dir</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inv_dir</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inv_dir</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_inventory</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span> <span class="o">=</span> <span class="n">Inventory</span><span class="p">()</span>
@@ -407,7 +408,7 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Read data from local SDS structure.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading locally ... &quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="c1"># print(&quot;Loading locally ... &quot;, end=&#39;&#39;)</span>
         <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lclient</span><span class="o">.</span><span class="n">get_waveforms</span><span class="p">(</span>
             <span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">)</span>
         <span class="c1"># Making sure that the order is correct for the next bit to work</span>
@@ -416,14 +417,14 @@
             <span class="nb">len</span><span class="p">(</span><span class="n">st</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="p">(</span>
                 <span class="n">starttime</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="o">-</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">delta</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
                     <span class="n">endtime</span> <span class="o">&gt;</span> <span class="n">st</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">endtime</span><span class="o">+</span><span class="n">st</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">delta</span><span class="p">))):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Failed&quot;</span><span class="p">)</span>
+            <span class="c1"># print(&quot;Failed&quot;)</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">attach_response</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">st</span><span class="o">.</span><span class="n">attach_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inventory</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="k">pass</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Success&quot;</span><span class="p">)</span>
+        <span class="c1"># print(&quot;Success&quot;)</span>
         <span class="k">return</span> <span class="n">st</span>
 
 <div class="viewcode-block" id="Store_Client.read_inventory"><a class="viewcode-back" href="../../../modules/API.html#miic3.trace_data.waveform.Store_Client.read_inventory">[docs]</a>    <span class="k">def</span> <span class="nf">read_inventory</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span><span class="p">:</span>

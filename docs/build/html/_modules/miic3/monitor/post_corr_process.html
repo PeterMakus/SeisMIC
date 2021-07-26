@@ -87,10 +87,12 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/get_started.html">Getting Started with SeisMIIC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/trace_data.html">Trace data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/correlate.html">Compute and Handle Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/corrdb.html">Save and Load Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/monitor.html">Monitor Velocity Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIIC</span></code> API</a></li>
 </ul>
 
             
@@ -167,7 +169,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 14th June 2021 08:50:57 am</span>
-<span class="sd">Last Modified: Tuesday, 20th July 2021 04:25:42 pm</span>
+<span class="sd">Last Modified: Sunday, 25th July 2021 05:07:28 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
@@ -248,7 +250,7 @@
     <span class="k">return</span> <span class="n">y</span><span class="p">[</span><span class="n">window_len</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="n">window_len</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="corr_mat_smooth"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_smooth">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_smooth</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_smooth"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_smooth">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_smooth</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">wsize</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">wtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;flat&#39;</span><span class="p">,</span>
         <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot; Smoothing of a correlation matrix.</span>
@@ -299,7 +301,7 @@
     <span class="k">return</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="unicode_to_string"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.unicode_to_string">[docs]</a><span class="k">def</span> <span class="nf">unicode_to_string</span><span class="p">(</span><span class="nb">input</span><span class="p">):</span>
+<div class="viewcode-block" id="unicode_to_string"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.unicode_to_string">[docs]</a><span class="k">def</span> <span class="nf">unicode_to_string</span><span class="p">(</span><span class="nb">input</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Convert all unicode strings to utf-8 strings</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -314,7 +316,7 @@
         <span class="k">return</span> <span class="nb">input</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_filter"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_filter">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_filter</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_filter"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_filter">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_filter</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">freqs</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
         <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot; Filter a correlation matrix.</span>
@@ -352,7 +354,7 @@
     <span class="k">return</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_trim"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_trim">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_trim</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_trim"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_trim">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_trim</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">endtime</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot; Trim the correlation matrix to a given period.</span>
@@ -381,10 +383,10 @@
     <span class="c1"># check range</span>
     <span class="k">if</span> <span class="n">start</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Error: starttime before beginning of trace. Data not changed&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">data</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">stats</span>
     <span class="k">if</span> <span class="n">end</span> <span class="o">&gt;=</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;npts&#39;</span><span class="p">]:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Error: endtime after end of trace. Data not changed&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">data</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">stats</span>
 
     <span class="c1"># select requested part from matrix</span>
     <span class="c1"># +1 is to include the last sample</span>
@@ -400,7 +402,7 @@
     <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">stats</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_resample"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_resample">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_resample</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_resample"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_resample">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_resample</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">start_times</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">],</span>
         <span class="n">end_times</span><span class="o">=</span><span class="p">[])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot; Function to create correlation matrices with constant sampling</span>
@@ -617,7 +619,7 @@
 
 
 <span class="c1"># Probably not necessary</span>
-<div class="viewcode-block" id="corr_mat_correct_decay"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_correct_decay">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_correct_decay</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="corr_mat_correct_decay"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_correct_decay">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_correct_decay</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Correct for the amplitude decay in a correlation matrix.</span>
 
@@ -667,7 +669,7 @@
     <span class="k">return</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_envelope"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_envelope">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_envelope</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="corr_mat_envelope"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_envelope">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_envelope</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot; Calculate the envelope of a correlation matrix.</span>
 
 <span class="sd">    The corrlation data of the correlation matrix are replaced by their</span>
@@ -690,7 +692,7 @@
     <span class="k">return</span> <span class="n">hilb</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_normalize"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_normalize">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_normalize</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_normalize"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_normalize">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_normalize</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">endtime</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;energy&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot; Correct amplitude variations with time in a correlation matrix.</span>
@@ -761,7 +763,7 @@
     <span class="k">return</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_mirror"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_mirror">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_mirror</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+<div class="viewcode-block" id="corr_mat_mirror"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_mirror">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_mirror</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Average the causal and acausal parts of a correlation matrix.</span>
@@ -989,7 +991,7 @@
 <span class="c1">#     return mir_tr</span>
 
 
-<div class="viewcode-block" id="corr_mat_taper"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_taper">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_taper</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_taper"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_taper">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_taper</span><span class="p">(</span>
         <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot; Taper a correlation matrix.</span>
 
@@ -1020,7 +1022,7 @@
     <span class="k">return</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_taper_center"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_taper_center">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_taper_center</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_taper_center"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_taper_center">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_taper_center</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">slope_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -1084,7 +1086,7 @@
     <span class="k">return</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_resample_time"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_resample_time">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_resample_time</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_resample_time"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_resample_time">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_resample_time</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -1148,7 +1150,7 @@
     <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">stats</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_decimate"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_decimate">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_decimate</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_decimate"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_decimate">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_decimate</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">factor</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -1202,7 +1204,7 @@
     <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">stats</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_resample_or_decimate"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_resample_or_decimate">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_resample_or_decimate</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_resample_or_decimate"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_resample_or_decimate">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_resample_or_decimate</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -1399,7 +1401,7 @@
 <span class="c1">#     return corr_mat</span>
 
 
-<div class="viewcode-block" id="corr_mat_extract_trace"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_extract_trace">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_extract_trace</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_extract_trace"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_extract_trace">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_extract_trace</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span>
         <span class="n">percentile</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">50.</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot; Extract a representative trace from a correlation matrix.</span>
@@ -1465,15 +1467,15 @@
     <span class="k">return</span> <span class="n">out</span></div>
 
 
-<div class="viewcode-block" id="Error"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.Error">[docs]</a><span class="k">class</span> <span class="nc">Error</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="viewcode-block" id="Error"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.Error">[docs]</a><span class="k">class</span> <span class="nc">Error</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="k">pass</span></div>
 
-<div class="viewcode-block" id="InputError"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.InputError">[docs]</a><span class="k">class</span> <span class="nc">InputError</span><span class="p">(</span><span class="n">Error</span><span class="p">):</span>
+<div class="viewcode-block" id="InputError"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.InputError">[docs]</a><span class="k">class</span> <span class="nc">InputError</span><span class="p">(</span><span class="n">Error</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>  <span class="n">msg</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span></div>
         
 
-<div class="viewcode-block" id="corr_mat_rotate"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_rotate">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_rotate</span><span class="p">(</span><span class="n">corr_mat_list</span><span class="p">):</span>
+<div class="viewcode-block" id="corr_mat_rotate"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_rotate">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_rotate</span><span class="p">(</span><span class="n">corr_mat_list</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Rotate correlation matrices from the NEZ in the RTZ frame. Corr_mat_list</span>
 <span class="sd">    contains the NN,NE,NZ,EN,EE,EZ,ZN,ZE,ZZ components of the Greens tensor. Time</span>
 <span class="sd">    vectors of all the correlation matricies must be identical.</span>
@@ -1549,7 +1551,7 @@
     
 
 
-<div class="viewcode-block" id="corr_mat_rotate_horiz"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_rotate_horiz">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_rotate_horiz</span><span class="p">(</span><span class="n">corr_mat_list</span><span class="p">):</span>
+<div class="viewcode-block" id="corr_mat_rotate_horiz"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_rotate_horiz">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_rotate_horiz</span><span class="p">(</span><span class="n">corr_mat_list</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Rotate correlation matrices from the NE into the RT frame. Corr_mat_list</span>
 <span class="sd">    contains the NN,NE,EN,EE components of the Greens tensor. Time</span>
 <span class="sd">    vectors of all the correlation matricies must be identical.</span>
@@ -1707,7 +1709,7 @@
         <span class="k">return</span> <span class="n">RR</span><span class="p">,</span><span class="n">RT</span><span class="p">,</span><span class="n">RZ</span><span class="p">,</span><span class="n">TR</span><span class="p">,</span><span class="n">TT</span><span class="p">,</span><span class="n">TZ</span><span class="p">,</span><span class="n">ZR</span><span class="p">,</span><span class="n">ZT</span><span class="p">,</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;ZZ&#39;</span><span class="p">])</span>
 
 
-<div class="viewcode-block" id="corr_mat_stretch"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_stretch">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_stretch</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_stretch"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_stretch">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_stretch</span><span class="p">(</span>
     <span class="n">cdata</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">tw</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">stretch_range</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
     <span class="n">stretch_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span>
@@ -1832,7 +1834,7 @@
     <span class="k">return</span> <span class="n">dv</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_correct_stretch"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_correct_stretch">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_correct_stretch</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,</span> <span class="n">dv</span><span class="p">):</span>
+<div class="viewcode-block" id="corr_mat_correct_stretch"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_correct_stretch">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_correct_stretch</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,</span> <span class="n">dv</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Correct stretching of correlation matrix</span>
 
 <span class="sd">    In the case of a homogeneous subsurface velocity change the correlation</span>
@@ -1865,7 +1867,7 @@
     <span class="k">return</span> <span class="n">ccorr_mat</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_shift"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_shift">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_shift</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_shift"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_shift">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_shift</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">tw</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shift_range</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">shift_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span>
@@ -1989,7 +1991,7 @@
     <span class="k">return</span> <span class="n">dt</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_correct_shift"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.post_corr_process.corr_mat_correct_shift">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_correct_shift</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+<div class="viewcode-block" id="corr_mat_correct_shift"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.post_corr_process.corr_mat_correct_shift">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_correct_shift</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Correct shift of a correlation matrix</span>
 
 <span class="sd">    In the case of a clock error the correlation traces are shifted in lag time</span>

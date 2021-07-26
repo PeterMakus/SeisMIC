@@ -87,10 +87,12 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/get_started.html">Getting Started with SeisMIIC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/trace_data.html">Trace data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/correlate.html">Compute and Handle Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/corrdb.html">Save and Load Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/monitor.html">Monitor Velocity Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIIC</span></code> API</a></li>
 </ul>
 
             
@@ -167,7 +169,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 20th July 2021 03:24:01 pm</span>
-<span class="sd">Last Modified: Tuesday, 20th July 2021 03:31:22 pm</span>
+<span class="sd">Last Modified: Sunday, 25th July 2021 05:27:20 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 
@@ -180,7 +182,7 @@
 <span class="kn">from</span> <span class="nn">miic3.utils.fetch_func_from_str</span> <span class="kn">import</span> <span class="n">func_from_str</span>
 
 
-<div class="viewcode-block" id="clip"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.preprocessing_td.clip">[docs]</a><span class="k">def</span> <span class="nf">clip</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="clip"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.preprocessing_td.clip">[docs]</a><span class="k">def</span> <span class="nf">clip</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Clip time series data at a multiple of the standard deviation</span>
 
@@ -210,7 +212,7 @@
     <span class="k">return</span> <span class="n">A</span></div>
 
 
-<div class="viewcode-block" id="detrend"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.preprocessing_td.detrend">[docs]</a><span class="k">def</span> <span class="nf">detrend</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="detrend"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.preprocessing_td.detrend">[docs]</a><span class="k">def</span> <span class="nf">detrend</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Remove trend from data</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -219,7 +221,7 @@
     <span class="k">return</span> <span class="n">sp_detrend</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">overwrite_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="mute"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.preprocessing_td.mute">[docs]</a><span class="k">def</span> <span class="nf">mute</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="mute"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.preprocessing_td.mute">[docs]</a><span class="k">def</span> <span class="nf">mute</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Mute parts of data that exceed a threshold</span>
 
@@ -321,7 +323,7 @@
     <span class="k">return</span> <span class="n">A</span></div>
 
 
-<div class="viewcode-block" id="normalizeStandardDeviation"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.preprocessing_td.normalizeStandardDeviation">[docs]</a><span class="k">def</span> <span class="nf">normalizeStandardDeviation</span><span class="p">(</span>
+<div class="viewcode-block" id="normalizeStandardDeviation"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.preprocessing_td.normalizeStandardDeviation">[docs]</a><span class="k">def</span> <span class="nf">normalizeStandardDeviation</span><span class="p">(</span>
         <span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Divide the time series by their standard deviation</span>
@@ -346,7 +348,7 @@
     <span class="k">return</span> <span class="n">A</span></div>
 
 
-<div class="viewcode-block" id="signBitNormalization"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.preprocessing_td.signBitNormalization">[docs]</a><span class="k">def</span> <span class="nf">signBitNormalization</span><span class="p">(</span>
+<div class="viewcode-block" id="signBitNormalization"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.preprocessing_td.signBitNormalization">[docs]</a><span class="k">def</span> <span class="nf">signBitNormalization</span><span class="p">(</span>
         <span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    One bit normalization of time series data</span>
@@ -367,52 +369,7 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">A</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="spectralWhitening"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.preprocessing_td.spectralWhitening">[docs]</a><span class="k">def</span> <span class="nf">spectralWhitening</span><span class="p">(</span><span class="n">B</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Spectal whitening of Fourier-transformed date</span>
-
-<span class="sd">    Normalize the amplitude spectrum of the complex spectra in `B`. The</span>
-<span class="sd">    `args` dictionary may contain the keyword `joint_norm`. If its value is</span>
-<span class="sd">    True the normalization of sets of three traces are normalized jointly by</span>
-<span class="sd">    the mean of their amplitude spectra. This is useful for later rotation of</span>
-<span class="sd">    correlated traces in the ZNE system into the ZRT system.</span>
-
-<span class="sd">    :type B: numpy.ndarray</span>
-<span class="sd">    :param B: Fourier transformed time series data with frequency oriented\\</span>
-<span class="sd">        along the first dimension (columns)</span>
-<span class="sd">    :type args: dictionary</span>
-<span class="sd">    :param args: arguments dictionary as described above</span>
-<span class="sd">    :type params: dictionary</span>
-<span class="sd">    :param params: not used here</span>
-
-<span class="sd">    :rtype: numpy.ndarray</span>
-<span class="sd">    :return: whitened spectal data</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">absB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">absolute</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
-    <span class="k">if</span> <span class="s1">&#39;joint_norm&#39;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-        <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;joint_norm&#39;</span><span class="p">]:</span>
-            <span class="k">assert</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;for joint normalization the number</span><span class="se">\</span>
-<span class="s2">                      of traces needs to the multiple of 3: </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">3</span><span class="p">):</span>
-                <span class="n">absB</span><span class="p">[:,</span> <span class="n">ii</span><span class="p">:</span><span class="n">ii</span><span class="o">+</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span>
-                    <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">absB</span><span class="p">[:,</span> <span class="n">ii</span><span class="p">:</span><span class="n">ii</span><span class="o">+</span><span class="mi">3</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
-    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">invalid</span><span class="o">=</span><span class="s1">&#39;raise&#39;</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">B</span> <span class="o">/=</span> <span class="n">absB</span>
-        <span class="k">except</span> <span class="ne">FloatingPointError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">errargs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">absB</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
-            <span class="c1"># Report error where there is zero divides for a non-zero freq</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">errargs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
-                <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="n">errargs</span><span class="p">)</span>
-
-    <span class="c1"># Set zero frequency component to zero</span>
-    <span class="n">B</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mf">0.</span><span class="n">j</span>
-
-    <span class="k">return</span> <span class="n">B</span></div>
-
-
-<div class="viewcode-block" id="taper"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.preprocessing_td.taper">[docs]</a><span class="k">def</span> <span class="nf">taper</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="taper"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.preprocessing_td.taper">[docs]</a><span class="k">def</span> <span class="nf">taper</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Taper to the time series data</span>
 
@@ -451,7 +408,7 @@
     <span class="k">return</span> <span class="n">A</span></div>
 
 
-<div class="viewcode-block" id="TDnormalization"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.preprocessing_td.TDnormalization">[docs]</a><span class="k">def</span> <span class="nf">TDnormalization</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="TDnormalization"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.preprocessing_td.TDnormalization">[docs]</a><span class="k">def</span> <span class="nf">TDnormalization</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Amplitude dependent time domain normalization</span>
 
@@ -510,7 +467,7 @@
     <span class="k">return</span> <span class="n">A</span></div>
 
 
-<div class="viewcode-block" id="TDfilter"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.preprocessing_td.TDfilter">[docs]</a><span class="k">def</span> <span class="nf">TDfilter</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="TDfilter"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.preprocessing_td.TDfilter">[docs]</a><span class="k">def</span> <span class="nf">TDfilter</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Filter time series data</span>
 
@@ -545,7 +502,7 @@
     <span class="k">return</span> <span class="n">A</span></div>
 
 
-<div class="viewcode-block" id="zeroPadding"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.preprocessing_td.zeroPadding">[docs]</a><span class="k">def</span> <span class="nf">zeroPadding</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="zeroPadding"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.preprocessing_td.zeroPadding">[docs]</a><span class="k">def</span> <span class="nf">zeroPadding</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Append zeros to the traces</span>
 

@@ -87,10 +87,12 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/get_started.html">Getting Started with SeisMIIC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/trace_data.html">Trace data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/correlate.html">Compute and Handle Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/corrdb.html">Save and Load Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/monitor.html">Monitor Velocity Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIIC</span></code> API</a></li>
 </ul>
 
             
@@ -166,7 +168,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 20th April 2021 04:19:35 pm</span>
-<span class="sd">Last Modified: Monday, 19th July 2021 03:55:19 pm</span>
+<span class="sd">Last Modified: Sunday, 25th July 2021 05:54:50 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
@@ -186,7 +188,7 @@
 <span class="kn">from</span> <span class="nn">miic3.correlate.stats</span> <span class="kn">import</span> <span class="n">CorrStats</span>
 
 
-<div class="viewcode-block" id="CorrBulk"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk">[docs]</a><span class="k">class</span> <span class="nc">CorrBulk</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrBulk">[docs]</a><span class="k">class</span> <span class="nc">CorrBulk</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An object for faster computations on several correlations. The input</span>
 <span class="sd">    correlation contain data from only one Station-Channel pair.</span>
@@ -205,7 +207,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;processing_bulk&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ref_trc</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="CorrBulk.normalize"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.normalize">[docs]</a>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrBulk.normalize"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrBulk.normalize">[docs]</a>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">normtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;energy&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -242,7 +244,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="n">proc_str</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.copy"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.copy"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrBulk.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a copy of self</span>
 
@@ -250,7 +252,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CorrBulk.correct_decay"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.correct_decay">[docs]</a>    <span class="k">def</span> <span class="nf">correct_decay</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.correct_decay"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrBulk.correct_decay">[docs]</a>    <span class="k">def</span> <span class="nf">correct_decay</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Correct for the amplitude decay in a correlation matrix.</span>
 
@@ -269,7 +271,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;Corrected for Amplitude Decay&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.correct_stretch"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.correct_stretch">[docs]</a>    <span class="k">def</span> <span class="nf">correct_stretch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dv</span><span class="p">:</span> <span class="n">DV</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.correct_stretch"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrBulk.correct_stretch">[docs]</a>    <span class="k">def</span> <span class="nf">correct_stretch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dv</span><span class="p">:</span> <span class="n">DV</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Correct stretching of correlation matrix</span>
 
@@ -289,7 +291,29 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;Applied time stretch&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.envelope"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.envelope">[docs]</a>    <span class="k">def</span> <span class="nf">envelope</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.create_corr_stream"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrBulk.create_corr_stream">[docs]</a>    <span class="k">def</span> <span class="nf">create_corr_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a :class:`~miic3.correlate.stream.CorrStream` object from</span>
+<span class="sd">        the current :class:`~miic3.correlate.stream.CorrBulk` object. This</span>
+<span class="sd">        can be useful if you want to save your postprocessed data in a hdf5</span>
+<span class="sd">        file again.</span>
+
+<span class="sd">        :return: Correlation Stream holding the same data</span>
+<span class="sd">        :rtype: :class:`~miic3.correlate.stream.CorrStream`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cst</span> <span class="o">=</span> <span class="n">CorrStream</span><span class="p">()</span>
+        <span class="n">mutables</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;corr_start&#39;</span><span class="p">,</span> <span class="s1">&#39;corr_end&#39;</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">li</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">):</span>
+            <span class="n">stats</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">mutables</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="n">stats</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">ii</span><span class="p">]</span>
+            <span class="n">ctr</span> <span class="o">=</span> <span class="n">CorrTrace</span><span class="p">(</span><span class="n">li</span><span class="p">,</span> <span class="n">_header</span><span class="o">=</span><span class="n">stats</span><span class="p">)</span>
+            <span class="n">cst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ctr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cst</span></div>
+
+<div class="viewcode-block" id="CorrBulk.envelope"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrBulk.envelope">[docs]</a>    <span class="k">def</span> <span class="nf">envelope</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate the envelope of a correlation matrix.</span>
 
@@ -307,7 +331,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;Computed Envelope&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.filter"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.filter">[docs]</a>    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freqs</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.filter"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrBulk.filter">[docs]</a>    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freqs</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Filters the correlation matrix in the frequency band specified in</span>
 <span class="sd">        freqs using a zero phase filter of twice the order given in order.</span>
@@ -328,7 +352,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="n">proc</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.extract_trace"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.extract_trace">[docs]</a>    <span class="k">def</span> <span class="nf">extract_trace</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrBulk.extract_trace"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrBulk.extract_trace">[docs]</a>    <span class="k">def</span> <span class="nf">extract_trace</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span>
             <span class="n">percentile</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">50.</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -361,7 +385,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">ref_trc</span> <span class="o">=</span> <span class="n">outdata</span>
         <span class="k">return</span> <span class="n">outdata</span></div>
 
-<div class="viewcode-block" id="CorrBulk.mirror"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.mirror">[docs]</a>    <span class="k">def</span> <span class="nf">mirror</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.mirror"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrBulk.mirror">[docs]</a>    <span class="k">def</span> <span class="nf">mirror</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Average the causal and acausal (i.e., right and left) parts of the</span>
 <span class="sd">        correlation.</span>
@@ -374,7 +398,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;Mirrored.&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.resample"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.resample">[docs]</a>    <span class="k">def</span> <span class="nf">resample</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrBulk.resample"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrBulk.resample">[docs]</a>    <span class="k">def</span> <span class="nf">resample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">starttimes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">],</span>
             <span class="n">endtimes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]):</span>
         <span class="sd">&quot;&quot;&quot; Function to create correlation matrices with constant sampling</span>
@@ -408,7 +432,7 @@
                 <span class="nb">str</span><span class="p">(</span><span class="n">starttimes</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">endtimes</span><span class="p">))]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.resample_time_axis"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.resample_time_axis">[docs]</a>    <span class="k">def</span> <span class="nf">resample_time_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.resample_time_axis"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrBulk.resample_time_axis">[docs]</a>    <span class="k">def</span> <span class="nf">resample_time_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Resample the lapse time axis of a correlation matrix. The correlations</span>
 <span class="sd">        are automatically filtered with a highpass filter of 0.4*sampling</span>
@@ -428,7 +452,7 @@
             <span class="s1">&#39;Resampled time axis. New sampling rate: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">freq</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.smooth"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.smooth">[docs]</a>    <span class="k">def</span> <span class="nf">smooth</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrBulk.smooth"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrBulk.smooth">[docs]</a>    <span class="k">def</span> <span class="nf">smooth</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">wsize</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">wtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;flat&#39;</span><span class="p">,</span>
             <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -463,7 +487,7 @@
             <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">wsize</span><span class="p">),</span> <span class="n">wtype</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">axis</span><span class="p">))]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.stretch"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.stretch">[docs]</a>    <span class="k">def</span> <span class="nf">stretch</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrBulk.stretch"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrBulk.stretch">[docs]</a>    <span class="k">def</span> <span class="nf">stretch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">tw</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">stretch_range</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">stretch_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
             <span class="n">sides</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
@@ -474,7 +498,7 @@
             <span class="n">sides</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">DV</span><span class="p">(</span><span class="o">**</span><span class="n">dv_dict</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CorrBulk.save"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.save"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrBulk.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save the object to a numpy binary format (**.npz**)</span>
 
@@ -485,7 +509,7 @@
         <span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span>
             <span class="n">path</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CorrBulk.taper"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.taper">[docs]</a>    <span class="k">def</span> <span class="nf">taper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.taper"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrBulk.taper">[docs]</a>    <span class="k">def</span> <span class="nf">taper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Taper the data.</span>
 
@@ -500,7 +524,7 @@
         <span class="n">proc</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;tapered: width=</span><span class="si">%s</span><span class="s1">s&#39;</span> <span class="o">%</span> <span class="n">width</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="n">proc</span></div>
 
-<div class="viewcode-block" id="CorrBulk.taper_center"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.taper_center">[docs]</a>    <span class="k">def</span> <span class="nf">taper_center</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">slope_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.taper_center"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrBulk.taper_center">[docs]</a>    <span class="k">def</span> <span class="nf">taper_center</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">slope_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Taper the central part of a correlation matrix.</span>
 
@@ -529,7 +553,7 @@
             <span class="s1">&#39;tapered-centre: width=</span><span class="si">%s</span><span class="s1">s, slope_frac=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">slope_frac</span><span class="p">)]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="n">proc</span></div>
 
-<div class="viewcode-block" id="CorrBulk.trim"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrBulk.trim">[docs]</a>    <span class="k">def</span> <span class="nf">trim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.trim"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrBulk.trim">[docs]</a>    <span class="k">def</span> <span class="nf">trim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">        Trim the correlation matrix to the period from `starttime` to</span>
@@ -555,7 +579,7 @@
         <span class="k">return</span> <span class="bp">self</span></div></div>
 
 
-<div class="viewcode-block" id="read_corr_bulk"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.read_corr_bulk">[docs]</a><span class="k">def</span> <span class="nf">read_corr_bulk</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrBulk</span><span class="p">:</span>
+<div class="viewcode-block" id="read_corr_bulk"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.read_corr_bulk">[docs]</a><span class="k">def</span> <span class="nf">read_corr_bulk</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrBulk</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Reads a CorrBulk object from an **.npz** file.</span>
 
@@ -569,7 +593,7 @@
     <span class="k">return</span> <span class="n">CorrBulk</span><span class="p">(</span><span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">],</span> <span class="n">stats</span><span class="o">=</span><span class="n">stats</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="CorrStream"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrStream">[docs]</a><span class="k">class</span> <span class="nc">CorrStream</span><span class="p">(</span><span class="n">Stream</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrStream"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrStream">[docs]</a><span class="k">class</span> <span class="nc">CorrStream</span><span class="p">(</span><span class="n">Stream</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Baseclass to hold correlation traces. Basically just a list of the</span>
 <span class="sd">    correlation traces.</span>
@@ -618,7 +642,7 @@
                 <span class="s1">&#39;Stream.__str__(extended=True))&quot; to print all correlaitons]&#39;</span>
         <span class="k">return</span> <span class="n">out</span>
 
-<div class="viewcode-block" id="CorrStream.stack"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrStream.stack">[docs]</a>    <span class="k">def</span> <span class="nf">stack</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrStream.stack"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrStream.stack">[docs]</a>    <span class="k">def</span> <span class="nf">stack</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">weight</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;by_length&#39;</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">stack_len</span><span class="p">:</span> <span class="nb">int</span> <span class="ow">or</span> <span class="nb">str</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
             <span class="n">regard_location</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
@@ -667,7 +691,7 @@
             <span class="n">outst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">stack_st_by_group</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">regard_location</span><span class="p">,</span> <span class="n">weight</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">outst</span></div>
 
-<div class="viewcode-block" id="CorrStream.slide"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrStream.slide">[docs]</a>    <span class="k">def</span> <span class="nf">slide</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrStream.slide"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrStream.slide">[docs]</a>    <span class="k">def</span> <span class="nf">slide</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">window_length</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">include_partially_selected</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
             <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
@@ -749,7 +773,7 @@
                 <span class="k">continue</span>
             <span class="k">yield</span> <span class="n">temp</span></div>
 
-<div class="viewcode-block" id="CorrStream.select_corr_time"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrStream.select_corr_time">[docs]</a>    <span class="k">def</span> <span class="nf">select_corr_time</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrStream.select_corr_time"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrStream.select_corr_time">[docs]</a>    <span class="k">def</span> <span class="nf">select_corr_time</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
             <span class="n">include_partially_selected</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -792,7 +816,7 @@
                 <span class="n">outst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">outst</span></div>
 
-<div class="viewcode-block" id="CorrStream.create_corr_bulk"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrStream.create_corr_bulk">[docs]</a>    <span class="k">def</span> <span class="nf">create_corr_bulk</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrStream.create_corr_bulk"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrStream.create_corr_bulk">[docs]</a>    <span class="k">def</span> <span class="nf">create_corr_bulk</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">location</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">times</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">UTCDateTime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -827,7 +851,12 @@
             <span class="n">st</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">select_corr_time</span><span class="p">(</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">times</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
         <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">st</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="p">))</span>
         <span class="n">statlist</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># Double check sampling rate</span>
+        <span class="n">sr</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span>
         <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">tr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span> <span class="o">!=</span> <span class="n">sr</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Sampling rate differs. Trace is skipped.&#39;</span><span class="p">)</span>
+                <span class="k">continue</span>
             <span class="n">A</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span>
             <span class="k">if</span> <span class="n">inplace</span><span class="p">:</span>
                 <span class="k">del</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span>
@@ -836,7 +865,7 @@
         <span class="n">stats</span> <span class="o">=</span> <span class="n">convert_statlist_to_bulk_stats</span><span class="p">(</span><span class="n">statlist</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">CorrBulk</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">stats</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CorrStream.plot"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrStream.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrStream.plot"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrStream.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">sort_by</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;corr_start&#39;</span><span class="p">,</span>
         <span class="n">timelimits</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">ylimits</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">scalingfactor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -902,7 +931,7 @@
         <span class="k">return</span> <span class="n">A</span><span class="p">,</span> <span class="n">stats</span></div>
 
 
-<div class="viewcode-block" id="CorrTrace"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrTrace">[docs]</a><span class="k">class</span> <span class="nc">CorrTrace</span><span class="p">(</span><span class="n">Trace</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrTrace"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrTrace">[docs]</a><span class="k">class</span> <span class="nc">CorrTrace</span><span class="p">(</span><span class="n">Trace</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Baseclass to hold correlation data. Derived from the class</span>
 <span class="sd">    :class:`~obspy.core.trace.Trace`.</span>
@@ -997,7 +1026,7 @@
             <span class="n">out</span> <span class="o">+=</span> <span class="s1">&#39; (masked)&#39;</span>
         <span class="k">return</span> <span class="n">trace_id</span> <span class="o">+</span> <span class="n">out</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
 
-<div class="viewcode-block" id="CorrTrace.plot"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrTrace.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrTrace.plot"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrTrace.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">tlim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">outputdir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">clean</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1015,7 +1044,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">plot_ctr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tlim</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">outputdir</span><span class="p">,</span> <span class="n">clean</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CorrTrace.times"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.CorrTrace.times">[docs]</a>    <span class="k">def</span> <span class="nf">times</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="CorrTrace.times"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.CorrTrace.times">[docs]</a>    <span class="k">def</span> <span class="nf">times</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convenience Function that returns an array holding the lag times of the</span>
 <span class="sd">        correlation.</span>
@@ -1028,7 +1057,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">delta</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="alphabetical_correlation"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.alphabetical_correlation">[docs]</a><span class="k">def</span> <span class="nf">alphabetical_correlation</span><span class="p">(</span>
+<div class="viewcode-block" id="alphabetical_correlation"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.alphabetical_correlation">[docs]</a><span class="k">def</span> <span class="nf">alphabetical_correlation</span><span class="p">(</span>
     <span class="n">header1</span><span class="p">:</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">header2</span><span class="p">:</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">start_lag</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end_lag</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">inv</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">CorrStats</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -1074,7 +1103,7 @@
     <span class="k">return</span> <span class="n">header</span><span class="p">,</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="combine_stats"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.combine_stats">[docs]</a><span class="k">def</span> <span class="nf">combine_stats</span><span class="p">(</span>
+<div class="viewcode-block" id="combine_stats"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.combine_stats">[docs]</a><span class="k">def</span> <span class="nf">combine_stats</span><span class="p">(</span>
     <span class="n">stats1</span><span class="p">:</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">stats2</span><span class="p">:</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">start_lag</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">inv</span><span class="p">:</span> <span class="n">Inventory</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrStats</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot; Combine the meta-information of two ObsPy Trace.Stats objects</span>
@@ -1198,7 +1227,7 @@
 <span class="n">Compare_Str_No_Loc</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{network}</span><span class="s2">.</span><span class="si">{station}</span><span class="s2">.</span><span class="si">{channel}</span><span class="s2">&quot;</span>
 
 
-<div class="viewcode-block" id="compare_tr_id"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.compare_tr_id">[docs]</a><span class="k">def</span> <span class="nf">compare_tr_id</span><span class="p">(</span><span class="n">tr0</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">tr1</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">regard_loc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<div class="viewcode-block" id="compare_tr_id"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.compare_tr_id">[docs]</a><span class="k">def</span> <span class="nf">compare_tr_id</span><span class="p">(</span><span class="n">tr0</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">tr1</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">regard_loc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check whether two traces are from the same channel, station, network, and,</span>
 <span class="sd">    optionally, location. Useful for stacking</span>
@@ -1220,7 +1249,7 @@
              <span class="o">==</span> <span class="n">Compare_Str_No_Loc</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="stack_st_by_group"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.stack_st_by_group">[docs]</a><span class="k">def</span> <span class="nf">stack_st_by_group</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">regard_loc</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">weight</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrStream</span><span class="p">:</span>
+<div class="viewcode-block" id="stack_st_by_group"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.stack_st_by_group">[docs]</a><span class="k">def</span> <span class="nf">stack_st_by_group</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">regard_loc</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">weight</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrStream</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Stack all traces that belong to the same network, station, channel, and</span>
 <span class="sd">    (optionally) location combination in the input stream.</span>
@@ -1245,7 +1274,7 @@
     <span class="k">return</span> <span class="n">stackst</span></div>
 
 
-<div class="viewcode-block" id="stack_st"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.stack_st">[docs]</a><span class="k">def</span> <span class="nf">stack_st</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">CorrStream</span><span class="p">,</span> <span class="n">weight</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">norm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrTrace</span><span class="p">:</span>
+<div class="viewcode-block" id="stack_st"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.stack_st">[docs]</a><span class="k">def</span> <span class="nf">stack_st</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">CorrStream</span><span class="p">,</span> <span class="n">weight</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">norm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrTrace</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Returns an average of the data of all traces in the stream. Also adjusts</span>
 <span class="sd">    the corr_start and corr_end parameters in the header.</span>
@@ -1271,18 +1300,22 @@
         <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
         <span class="n">dur</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span><span class="o">-</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">)</span>
     <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">stack</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">norm</span><span class="p">:</span>
-        <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">A</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">norm</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
     <span class="k">if</span> <span class="n">weight</span> <span class="o">==</span> <span class="s1">&#39;mean&#39;</span> <span class="ow">or</span> <span class="n">weight</span> <span class="o">==</span> <span class="s1">&#39;average&#39;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">CorrTrace</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">_header</span><span class="o">=</span><span class="n">stats</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">norm</span><span class="p">:</span>
+            <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+            <span class="n">data</span> <span class="o">/=</span> <span class="n">norm</span>  <span class="c1"># np.tile(np.atleast_2d(norm).T, (1, A.shape[1]))</span>
+        <span class="k">return</span> <span class="n">CorrTrace</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">_header</span><span class="o">=</span><span class="n">stats</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">weight</span> <span class="o">==</span> <span class="s1">&#39;by_length&#39;</span><span class="p">:</span>
         <span class="c1"># Weight by the length of each trace</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">A</span><span class="o">.</span><span class="n">T</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dur</span><span class="p">))</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dur</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">norm</span><span class="p">:</span>
+            <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+            <span class="n">data</span> <span class="o">/=</span> <span class="n">norm</span>  <span class="c1"># np.tile(np.atleast_2d(norm).T, (1, A.shape[1]))</span>
         <span class="k">return</span> <span class="n">CorrTrace</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">_header</span><span class="o">=</span><span class="n">stats</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="convert_statlist_to_bulk_stats"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stream.convert_statlist_to_bulk_stats">[docs]</a><span class="k">def</span> <span class="nf">convert_statlist_to_bulk_stats</span><span class="p">(</span>
+<div class="viewcode-block" id="convert_statlist_to_bulk_stats"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.stream.convert_statlist_to_bulk_stats">[docs]</a><span class="k">def</span> <span class="nf">convert_statlist_to_bulk_stats</span><span class="p">(</span>
         <span class="n">statlist</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">CorrStats</span><span class="p">],</span> <span class="n">varying_loc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrStats</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Converts a list of :class:`~miic3.correlate.stream.CorrTrace` stats objects</span>
@@ -1317,9 +1350,14 @@
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">mutables</span><span class="p">:</span>
             <span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">trstat</span><span class="p">[</span><span class="n">key</span><span class="p">]]</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">immutables</span><span class="p">:</span>
+            <span class="n">ph</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]),</span> <span class="nb">str</span><span class="p">(</span><span class="n">trstat</span><span class="p">[</span><span class="n">key</span><span class="p">]),</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">],</span>
+                <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;station&#39;</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">!=</span> <span class="n">trstat</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The stream contains data with different </span><span class="se">\</span>
-<span class="s1">properties. The differing property is </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">key</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s1">&#39;The stream contains data with different properties. </span><span class="se">\</span>
+<span class="s1">The differing property is </span><span class="si">%s</span><span class="s1">. With the values: </span><span class="si">%s</span><span class="s1"> and </span><span class="si">%s</span><span class="s1">. For station </span><span class="se">\</span>
+<span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">ph</span><span class="p">)</span>
     <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;ntrcs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">statlist</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">stats</span></div>
 </pre></div>

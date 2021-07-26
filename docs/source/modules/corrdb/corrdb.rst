@@ -25,7 +25,7 @@ with each other, whereas the file ``IU-IU.HRV-HRV`` holds all autocorrelations a
 of the station ``IU.HRV``).
 
 .. note::
-    **SeisMIIC** makes use of SEISCOM-like station codes. The general logic of those codes is:
+    **SeisMIIC** makes use of SEED-like station codes. The general logic of those codes is:
     ``net0-net1.stat0-stat1.loc0-loc1.ch0-ch1``. Here, 0 is the first station and 1 the second station.
     Correlations will always only be computed alphabetically. That is, **SeisMIIC** will not compute a
     correlation for ``TA-IU.M58A-HRV`` but only for ``IU-TA.HRV-M58A``.

@@ -87,10 +87,12 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/get_started.html">Getting Started with SeisMIIC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/trace_data.html">Trace data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/correlate.html">Compute and Handle Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/corrdb.html">Save and Load Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/monitor.html">Monitor Velocity Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIIC</span></code> API</a></li>
 </ul>
 
             
@@ -166,7 +168,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Thursday, 3rd June 2021 04:15:57 pm</span>
-<span class="sd">Last Modified: Friday, 16th July 2021 04:23:17 pm</span>
+<span class="sd">Last Modified: Monday, 26th July 2021 12:42:44 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
@@ -184,7 +186,7 @@
 <span class="c1"># from miic3.utils.io import corrmat_to_corrbulk, load_corrbulk_from_mat</span>
 
 
-<div class="viewcode-block" id="Monitor"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.monitor.Monitor">[docs]</a><span class="k">class</span> <span class="nc">Monitor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="Monitor"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.monitor.Monitor">[docs]</a><span class="k">class</span> <span class="nc">Monitor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="nb">dict</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">options</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
@@ -272,7 +274,7 @@
                     <span class="n">netlist</span><span class="p">,</span> <span class="n">statlist</span><span class="p">)]))</span>
         <span class="k">return</span> <span class="n">netlist</span><span class="p">,</span> <span class="n">statlist</span><span class="p">,</span> <span class="n">infiles</span>
 
-<div class="viewcode-block" id="Monitor.compute_velocity_change"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.monitor.Monitor.compute_velocity_change">[docs]</a>    <span class="k">def</span> <span class="nf">compute_velocity_change</span><span class="p">(</span>
+<div class="viewcode-block" id="Monitor.compute_velocity_change"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.monitor.Monitor.compute_velocity_change">[docs]</a>    <span class="k">def</span> <span class="nf">compute_velocity_change</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">corr_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
             <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Computing velocity change for file: </span><span class="si">%s</span><span class="s1"> and channel:</span><span class="se">\</span>
@@ -293,6 +295,9 @@
         <span class="n">cbt</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span>
             <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]),</span>
             <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]))</span>
+
+        <span class="k">if</span> <span class="n">cbt</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">20</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;CorrBulk extremely short.&#39;</span><span class="p">)</span>
 
         <span class="n">tr</span> <span class="o">=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">extract_trace</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">)</span>
 
@@ -327,16 +332,18 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;plot_vel_change&#39;</span><span class="p">]:</span>
             <span class="n">fname</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_</span><span class="si">%s</span><span class="s1">_</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
                 <span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="p">,</span> <span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="p">,</span> <span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span><span class="p">)</span>
+            <span class="n">savedir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;proj_dir&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;fig_subdir&#39;</span><span class="p">])</span>
             <span class="n">dv</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
-                <span class="n">save_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;fig_subdir&#39;</span><span class="p">],</span> <span class="n">figure_file_name</span><span class="o">=</span><span class="n">fname</span><span class="p">,</span>
+                <span class="n">save_dir</span><span class="o">=</span><span class="n">savedir</span><span class="p">,</span> <span class="n">figure_file_name</span><span class="o">=</span><span class="n">fname</span><span class="p">,</span>
                 <span class="n">normalize_simmat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sim_mat_Clim</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="Monitor.compute_velocity_change_bulk"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.monitor.Monitor.compute_velocity_change_bulk">[docs]</a>    <span class="k">def</span> <span class="nf">compute_velocity_change_bulk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Monitor.compute_velocity_change_bulk"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.monitor.Monitor.compute_velocity_change_bulk">[docs]</a>    <span class="k">def</span> <span class="nf">compute_velocity_change_bulk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Decide whether to use already stacked data</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;co&#39;</span><span class="p">][</span><span class="s1">&#39;subdivision&#39;</span><span class="p">][</span><span class="s1">&#39;recombine_subdivision&#39;</span><span class="p">]</span> <span class="ow">and</span>\
             <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;co&#39;</span><span class="p">][</span><span class="s1">&#39;read_inc&#39;</span><span class="p">]</span> \
                 <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;date_inc&#39;</span><span class="p">]:</span>
-            <span class="n">tag</span> <span class="o">=</span> <span class="s1">&#39;recombined&#39;</span>
+            <span class="n">tag</span> <span class="o">=</span> <span class="s1">&#39;stack_</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;co&#39;</span><span class="p">][</span><span class="s1">&#39;read_inc&#39;</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">tag</span> <span class="o">=</span> <span class="s1">&#39;subdivision&#39;</span>
         <span class="c1"># get number of available channel combis</span>
@@ -358,12 +365,14 @@
         <span class="c1"># Assign a task to each rank</span>
         <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">ind</span><span class="p">:</span>
             <span class="n">corr_file</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="n">cha</span> <span class="o">=</span> <span class="n">plist</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
-            <span class="c1"># There should be other options than using recombined in the future</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">compute_velocity_change</span><span class="p">(</span>
-                <span class="n">corr_file</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="n">cha</span><span class="p">)</span></div></div>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compute_velocity_change</span><span class="p">(</span>
+                    <span class="n">corr_file</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="n">cha</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="make_time_list"><a class="viewcode-back" href="../../../modules/monitor/API.html#miic3.monitor.monitor.make_time_list">[docs]</a><span class="k">def</span> <span class="nf">make_time_list</span><span class="p">(</span>
+<div class="viewcode-block" id="make_time_list"><a class="viewcode-back" href="../../../modules/API.html#miic3.monitor.monitor.make_time_list">[docs]</a><span class="k">def</span> <span class="nf">make_time_list</span><span class="p">(</span>
     <span class="n">start_date</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">end_date</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">date_inc</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">win_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;</span>

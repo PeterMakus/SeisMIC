@@ -87,10 +87,12 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/get_started.html">Getting Started with SeisMIIC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/trace_data.html">Trace data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/correlate.html">Compute and Handle Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/corrdb.html">Save and Load Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/monitor.html">Monitor Velocity Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIIC</span></code> API</a></li>
 </ul>
 
             
@@ -168,7 +170,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Friday, 16th April 2021 03:21:30 pm</span>
-<span class="sd">Last Modified: Wednesday, 21st July 2021 05:29:59 pm</span>
+<span class="sd">Last Modified: Monday, 26th July 2021 07:54:40 am</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">ast</span>
 <span class="kn">import</span> <span class="nn">fnmatch</span>
@@ -190,7 +192,7 @@
 <span class="n">h5_FMTSTR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{dir}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{network}</span><span class="s2">.</span><span class="si">{station}</span><span class="s2">.h5&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="DBHandler"><a class="viewcode-back" href="../../../modules/corrdb/API.html#miic3.db.corr_hdf5.DBHandler">[docs]</a><span class="k">class</span> <span class="nc">DBHandler</span><span class="p">(</span><span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">):</span>
+<div class="viewcode-block" id="DBHandler"><a class="viewcode-back" href="../../../modules/API.html#miic3.db.corr_hdf5.DBHandler">[docs]</a><span class="k">class</span> <span class="nc">DBHandler</span><span class="p">(</span><span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The actual file handler of the hdf5 correlation files.</span>
 
@@ -240,12 +242,12 @@
     <span class="k">def</span> <span class="nf">_close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
-<div class="viewcode-block" id="DBHandler.add_corr_options"><a class="viewcode-back" href="../../../modules/corrdb/API.html#miic3.db.corr_hdf5.DBHandler.add_corr_options">[docs]</a>    <span class="k">def</span> <span class="nf">add_corr_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">co</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+<div class="viewcode-block" id="DBHandler.add_corr_options"><a class="viewcode-back" href="../../../modules/API.html#miic3.db.corr_hdf5.DBHandler.add_corr_options">[docs]</a>    <span class="k">def</span> <span class="nf">add_corr_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">co</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="n">sco</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">co_to_hdf5</span><span class="p">(</span><span class="n">co</span><span class="p">))</span>
         <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;co&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
         <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;co&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sco</span></div>
 
-<div class="viewcode-block" id="DBHandler.add_correlation"><a class="viewcode-back" href="../../../modules/corrdb/API.html#miic3.db.corr_hdf5.DBHandler.add_correlation">[docs]</a>    <span class="k">def</span> <span class="nf">add_correlation</span><span class="p">(</span>
+<div class="viewcode-block" id="DBHandler.add_correlation"><a class="viewcode-back" href="../../../modules/API.html#miic3.db.corr_hdf5.DBHandler.add_correlation">[docs]</a>    <span class="k">def</span> <span class="nf">add_correlation</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">CorrTrace</span> <span class="ow">or</span> <span class="n">CorrStream</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;subdivision&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add correlation data to the hdf5 file. Can be accessed using the</span>
@@ -288,7 +290,7 @@
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;The dataset </span><span class="si">%s</span><span class="s2"> is already in file and will be </span><span class="se">\</span>
 <span class="s2">omitted.&quot;</span> <span class="o">%</span> <span class="n">path</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">UserWarning</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="DBHandler.get_corr_options"><a class="viewcode-back" href="../../../modules/corrdb/API.html#miic3.db.corr_hdf5.DBHandler.get_corr_options">[docs]</a>    <span class="k">def</span> <span class="nf">get_corr_options</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<div class="viewcode-block" id="DBHandler.get_corr_options"><a class="viewcode-back" href="../../../modules/API.html#miic3.db.corr_hdf5.DBHandler.get_corr_options">[docs]</a>    <span class="k">def</span> <span class="nf">get_corr_options</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">sco</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;co&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;co&#39;</span><span class="p">])</span>
             <span class="n">co</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">literal_eval</span><span class="p">(</span><span class="n">sco</span><span class="p">)</span>
@@ -296,7 +298,7 @@
             <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;No correlation options in file&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">co</span></div>
 
-<div class="viewcode-block" id="DBHandler.get_data"><a class="viewcode-back" href="../../../modules/corrdb/API.html#miic3.db.corr_hdf5.DBHandler.get_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span>
+<div class="viewcode-block" id="DBHandler.get_data"><a class="viewcode-back" href="../../../modules/API.html#miic3.db.corr_hdf5.DBHandler.get_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">corr_start</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">corr_end</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrStream</span><span class="p">:</span>
@@ -368,7 +370,7 @@
                 <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">all_traces_recursive</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">path</span><span class="p">],</span> <span class="n">CorrStream</span><span class="p">(),</span> <span class="n">pattern</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="DBHandler.get_available_starttimes"><a class="viewcode-back" href="../../../modules/corrdb/API.html#miic3.db.corr_hdf5.DBHandler.get_available_starttimes">[docs]</a>    <span class="k">def</span> <span class="nf">get_available_starttimes</span><span class="p">(</span>
+<div class="viewcode-block" id="DBHandler.get_available_starttimes"><a class="viewcode-back" href="../../../modules/API.html#miic3.db.corr_hdf5.DBHandler.get_available_starttimes">[docs]</a>    <span class="k">def</span> <span class="nf">get_available_starttimes</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
             <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span> <span class="ow">or</span> <span class="nb">list</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -407,7 +409,7 @@
                 <span class="n">out</span><span class="p">[</span><span class="n">match</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">path</span><span class="p">,</span> <span class="n">match</span><span class="p">])]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="k">return</span> <span class="n">out</span></div>
 
-<div class="viewcode-block" id="DBHandler.get_available_channels"><a class="viewcode-back" href="../../../modules/corrdb/API.html#miic3.db.corr_hdf5.DBHandler.get_available_channels">[docs]</a>    <span class="k">def</span> <span class="nf">get_available_channels</span><span class="p">(</span>
+<div class="viewcode-block" id="DBHandler.get_available_channels"><a class="viewcode-back" href="../../../modules/API.html#miic3.db.corr_hdf5.DBHandler.get_available_channels">[docs]</a>    <span class="k">def</span> <span class="nf">get_available_channels</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a list of all available channels (i.e., their combination</span>
@@ -426,10 +428,14 @@
             <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span> <span class="n">network</span><span class="o">=</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">station</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span>
             <span class="n">corr_st</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">corr_et</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">)</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">path</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div></div>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">path</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="c1"># No channels available</span>
+            <span class="k">return</span> <span class="p">[]</span></div></div>
 
 
-<div class="viewcode-block" id="CorrelationDataBase"><a class="viewcode-back" href="../../../modules/corrdb/API.html#miic3.db.corr_hdf5.CorrelationDataBase">[docs]</a><span class="k">class</span> <span class="nc">CorrelationDataBase</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrelationDataBase"><a class="viewcode-back" href="../../../modules/API.html#miic3.db.corr_hdf5.CorrelationDataBase">[docs]</a><span class="k">class</span> <span class="nc">CorrelationDataBase</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Base class to handle the hdf5 files that contain noise correlations.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -439,8 +445,7 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Access an hdf5 file holding correlations. The resulting file can be</span>
 <span class="sd">        accessed using all functionalities of</span>
-<span class="sd">        `pyasdf &lt;https://seismicdata.github.io/pyasdf&gt;`_</span>
-<span class="sd">        (for example as a dict)</span>
+<span class="sd">        `h5py &lt;https://www.h5py.org/&gt;`_ (for example as a dict).</span>
 
 <span class="sd">        :param path: Full path to the file</span>
 <span class="sd">        :type path: str</span>
@@ -509,7 +514,7 @@
             <span class="k">return</span> <span class="kc">False</span></div>
 
 
-<div class="viewcode-block" id="all_traces_recursive"><a class="viewcode-back" href="../../../modules/corrdb/API.html#miic3.db.corr_hdf5.all_traces_recursive">[docs]</a><span class="k">def</span> <span class="nf">all_traces_recursive</span><span class="p">(</span>
+<div class="viewcode-block" id="all_traces_recursive"><a class="viewcode-back" href="../../../modules/API.html#miic3.db.corr_hdf5.all_traces_recursive">[docs]</a><span class="k">def</span> <span class="nf">all_traces_recursive</span><span class="p">(</span>
     <span class="n">group</span><span class="p">:</span> <span class="n">h5py</span><span class="o">.</span><span class="n">_hl</span><span class="o">.</span><span class="n">group</span><span class="o">.</span><span class="n">Group</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="n">CorrStream</span><span class="p">,</span>
         <span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrStream</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -532,11 +537,17 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">_hl</span><span class="o">.</span><span class="n">group</span><span class="o">.</span><span class="n">Group</span><span class="p">):</span>
             <span class="n">all_traces_recursive</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">pattern</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">stream</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CorrTrace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">_header</span><span class="o">=</span><span class="n">read_hdf5_header</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">stream</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">CorrTrace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">_header</span><span class="o">=</span><span class="n">read_hdf5_header</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s1">&#39;Header could not be converted. Attributes are: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                        <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">attrs</span><span class="p">)))</span>
     <span class="k">return</span> <span class="n">stream</span></div>
 
 
-<div class="viewcode-block" id="convert_header_to_hdf5"><a class="viewcode-back" href="../../../modules/corrdb/API.html#miic3.db.corr_hdf5.convert_header_to_hdf5">[docs]</a><span class="k">def</span> <span class="nf">convert_header_to_hdf5</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">header</span><span class="p">:</span> <span class="n">Stats</span><span class="p">):</span>
+<div class="viewcode-block" id="convert_header_to_hdf5"><a class="viewcode-back" href="../../../modules/API.html#miic3.db.corr_hdf5.convert_header_to_hdf5">[docs]</a><span class="k">def</span> <span class="nf">convert_header_to_hdf5</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">header</span><span class="p">:</span> <span class="n">Stats</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convert an :class:`~obspy.core.Stats` object and adds it to the provided</span>
 <span class="sd">    hdf5 dataset.</span>
@@ -561,7 +572,7 @@
             <span class="k">continue</span></div>
 
 
-<div class="viewcode-block" id="read_hdf5_header"><a class="viewcode-back" href="../../../modules/corrdb/API.html#miic3.db.corr_hdf5.read_hdf5_header">[docs]</a><span class="k">def</span> <span class="nf">read_hdf5_header</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stats</span><span class="p">:</span>
+<div class="viewcode-block" id="read_hdf5_header"><a class="viewcode-back" href="../../../modules/API.html#miic3.db.corr_hdf5.read_hdf5_header">[docs]</a><span class="k">def</span> <span class="nf">read_hdf5_header</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stats</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Takes an hdft5 dataset as input and returns the header of the CorrTrace.</span>
 
@@ -583,7 +594,7 @@
     <span class="k">return</span> <span class="n">Stats</span><span class="p">(</span><span class="n">header</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="co_to_hdf5"><a class="viewcode-back" href="../../../modules/corrdb/API.html#miic3.db.corr_hdf5.co_to_hdf5">[docs]</a><span class="k">def</span> <span class="nf">co_to_hdf5</span><span class="p">(</span><span class="n">co</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<div class="viewcode-block" id="co_to_hdf5"><a class="viewcode-back" href="../../../modules/API.html#miic3.db.corr_hdf5.co_to_hdf5">[docs]</a><span class="k">def</span> <span class="nf">co_to_hdf5</span><span class="p">(</span><span class="n">co</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
     <span class="n">coc</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">co</span><span class="p">)</span>
     <span class="n">remk</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s1">&#39;subdir&#39;</span><span class="p">,</span> <span class="s1">&#39;read_start&#39;</span><span class="p">,</span> <span class="s1">&#39;read_end&#39;</span><span class="p">,</span> <span class="s1">&#39;read_len&#39;</span><span class="p">,</span> <span class="s1">&#39;read_inc&#39;</span><span class="p">,</span>

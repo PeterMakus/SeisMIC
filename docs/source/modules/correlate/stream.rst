@@ -28,7 +28,7 @@ and information about the coordinates of the stations.
 
 :class:`~miic3.correlate.stream.CorrTrace` does also come with its own plotting method :meth:`~miic3.correlate.stream.CorrTrace.plot` (check it for details). It can produce plots akin to this one:
 
-.. image:: ../../figures/NEP06_ctr.svg
+.. image:: ../../figures/corrtr.png
 
 CorrStream
 ++++++++++
@@ -37,7 +37,7 @@ Essentially, this class is just a fancy list of :class:`~miic3.correlate.stream.
 select (:meth:`~miic3.correlate.stream.CorrStream.select_corr_time`), or slide (:meth:`~miic3.correlate.stream.CorrStream.slide`) time windows. It also enables us to create section stacks, sorted
 by interstation distance or time:
 
-.. image:: ../../figures/NEP06_cst.svg
+.. image:: ../../figures/cst.svg
 
 
 CorrBulk

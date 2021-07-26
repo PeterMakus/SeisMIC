@@ -87,10 +87,12 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/get_started.html">Getting Started with SeisMIIC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/trace_data.html">Trace data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/correlate.html">Compute and Handle Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/corrdb.html">Save and Load Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/monitor.html">Monitor Velocity Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIIC</span></code> API</a></li>
 </ul>
 
             
@@ -166,7 +168,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 29th March 2021 07:58:18 am</span>
-<span class="sd">Last Modified: Tuesday, 20th July 2021 04:20:30 pm</span>
+<span class="sd">Last Modified: Monday, 26th July 2021 12:29:22 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 <span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
@@ -178,6 +180,7 @@
 <span class="kn">from</span> <span class="nn">mpi4py</span> <span class="kn">import</span> <span class="n">MPI</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">Inventory</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
 
 <span class="kn">from</span> <span class="nn">miic3.correlate.stream</span> <span class="kn">import</span> <span class="n">CorrTrace</span><span class="p">,</span> <span class="n">CorrStream</span>
 <span class="kn">from</span> <span class="nn">miic3.correlate</span> <span class="kn">import</span> <span class="n">preprocessing_td</span> <span class="k">as</span> <span class="n">pptd</span>
@@ -188,7 +191,7 @@
 <span class="kn">from</span> <span class="nn">miic3.utils</span> <span class="kn">import</span> <span class="n">miic_utils</span> <span class="k">as</span> <span class="n">mu</span>
 
 
-<div class="viewcode-block" id="Correlator"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.Correlator">[docs]</a><span class="k">class</span> <span class="nc">Correlator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="Correlator"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.correlate.Correlator">[docs]</a><span class="k">class</span> <span class="nc">Correlator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Object to manage the actual Correlation (i.e., Green&#39;s function retrieval)</span>
 <span class="sd">    for the database.</span>
@@ -306,7 +309,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">]</span>
 
-<div class="viewcode-block" id="Correlator.find_existing_times"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.Correlator.find_existing_times">[docs]</a>    <span class="k">def</span> <span class="nf">find_existing_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<div class="viewcode-block" id="Correlator.find_existing_times"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.correlate.Correlator.find_existing_times">[docs]</a>    <span class="k">def</span> <span class="nf">find_existing_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns the already existing starttimes in form of a dictionary (see</span>
 <span class="sd">        below)</span>
@@ -345,7 +348,7 @@
             <span class="n">ex_dict</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n0</span><span class="p">,</span> <span class="n">s0</span><span class="p">)][</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">s1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">d</span>
         <span class="k">return</span> <span class="n">ex_dict</span></div>
 
-<div class="viewcode-block" id="Correlator.pxcorr"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.Correlator.pxcorr">[docs]</a>    <span class="k">def</span> <span class="nf">pxcorr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Correlator.pxcorr"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.correlate.Correlator.pxcorr">[docs]</a>    <span class="k">def</span> <span class="nf">pxcorr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Start the correlation with the parameters that were defined when</span>
 <span class="sd">        initiating the object.</span>
@@ -377,7 +380,7 @@
         <span class="c1"># write the remaining data</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;subdivision&#39;</span><span class="p">][</span><span class="s1">&#39;recombine_subdivision&#39;</span><span class="p">]</span> <span class="ow">and</span> \
                 <span class="n">cst</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">cst</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">regard_location</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="s1">&#39;recombined&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">cst</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">regard_location</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">tag</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;subdivision&#39;</span><span class="p">][</span><span class="s1">&#39;delete_subdivision&#39;</span><span class="p">]</span> <span class="ow">and</span> \
                 <span class="n">cst</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">cst</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;subdivision&#39;</span><span class="p">)</span></div>
@@ -508,7 +511,7 @@
             <span class="n">tl</span> <span class="o">=</span> <span class="mi">0</span>
 
         <span class="c1"># Loop over read increments</span>
-        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">loop_window</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">loop_window</span><span class="p">):</span>
             <span class="n">write_flag</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Write length is same as read length</span>
             <span class="n">startt</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">-</span> <span class="n">tl</span>
             <span class="n">endt</span> <span class="o">=</span> <span class="n">startt</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;read_len&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">tl</span>
@@ -715,7 +718,7 @@
         <span class="k">return</span> <span class="p">(</span><span class="n">C</span><span class="p">,</span> <span class="n">startlags</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="st_to_np_array"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.st_to_np_array">[docs]</a><span class="k">def</span> <span class="nf">st_to_np_array</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">npts</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Stream</span><span class="p">]:</span>
+<div class="viewcode-block" id="st_to_np_array"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.correlate.st_to_np_array">[docs]</a><span class="k">def</span> <span class="nf">st_to_np_array</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">npts</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Stream</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Converts an obspy stream to a matrix with the shape (npts, st.count()).</span>
 <span class="sd">    Also returns the same stream but without the data arrays in tr.data.</span>
@@ -747,7 +750,7 @@
     <span class="k">return</span> <span class="kc">False</span>
 
 
-<div class="viewcode-block" id="calc_cross_combis"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.calc_cross_combis">[docs]</a><span class="k">def</span> <span class="nf">calc_cross_combis</span><span class="p">(</span>
+<div class="viewcode-block" id="calc_cross_combis"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.correlate.calc_cross_combis">[docs]</a><span class="k">def</span> <span class="nf">calc_cross_combis</span><span class="p">(</span>
         <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">ex_corr</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;betweenStations&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calculate a list of all cross correlation combination</span>
@@ -828,7 +831,7 @@
     <span class="k">return</span> <span class="n">combis</span></div>
 
 
-<div class="viewcode-block" id="rotate_multi_corr_stream"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.rotate_multi_corr_stream">[docs]</a><span class="k">def</span> <span class="nf">rotate_multi_corr_stream</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
+<div class="viewcode-block" id="rotate_multi_corr_stream"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.correlate.rotate_multi_corr_stream">[docs]</a><span class="k">def</span> <span class="nf">rotate_multi_corr_stream</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Rotate a stream with full Greens tensor from ENZ to RTZ</span>
 
 <span class="sd">    Take a stream with numerous correlation traces and rotate the</span>
@@ -1057,7 +1060,7 @@
     <span class="k">return</span> <span class="n">rtz</span>
 
 
-<div class="viewcode-block" id="sort_comb_name_alphabetically"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.sort_comb_name_alphabetically">[docs]</a><span class="k">def</span> <span class="nf">sort_comb_name_alphabetically</span><span class="p">(</span>
+<div class="viewcode-block" id="sort_comb_name_alphabetically"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.correlate.sort_comb_name_alphabetically">[docs]</a><span class="k">def</span> <span class="nf">sort_comb_name_alphabetically</span><span class="p">(</span>
     <span class="n">network1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">network2</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="nb">list</span><span class="p">,</span> <span class="nb">list</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -1119,7 +1122,7 @@
     <span class="k">return</span> <span class="n">netcomb</span><span class="p">,</span> <span class="n">statcomb</span></div>
 
 
-<div class="viewcode-block" id="compute_network_station_combinations"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.compute_network_station_combinations">[docs]</a><span class="k">def</span> <span class="nf">compute_network_station_combinations</span><span class="p">(</span>
+<div class="viewcode-block" id="compute_network_station_combinations"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.correlate.compute_network_station_combinations">[docs]</a><span class="k">def</span> <span class="nf">compute_network_station_combinations</span><span class="p">(</span>
     <span class="n">netlist</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">statlist</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
         <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;betweenStations&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="nb">list</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -1176,7 +1179,7 @@
     <span class="k">return</span> <span class="n">netcombs</span><span class="p">,</span> <span class="n">statcombs</span></div>
 
 
-<div class="viewcode-block" id="preprocess_stream"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.preprocess_stream">[docs]</a><span class="k">def</span> <span class="nf">preprocess_stream</span><span class="p">(</span>
+<div class="viewcode-block" id="preprocess_stream"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.correlate.preprocess_stream">[docs]</a><span class="k">def</span> <span class="nf">preprocess_stream</span><span class="p">(</span>
     <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">store_client</span><span class="p">:</span> <span class="n">Store_Client</span><span class="p">,</span> <span class="n">inv</span><span class="p">:</span> <span class="n">Inventory</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">startt</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endt</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">sampling_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">remove_response</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">subdivision</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
@@ -1268,7 +1271,7 @@
     <span class="k">return</span> <span class="n">st</span></div>
 
 
-<div class="viewcode-block" id="generate_corr_inc"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.correlate.generate_corr_inc">[docs]</a><span class="k">def</span> <span class="nf">generate_corr_inc</span><span class="p">(</span>
+<div class="viewcode-block" id="generate_corr_inc"><a class="viewcode-back" href="../../../modules/API.html#miic3.correlate.correlate.generate_corr_inc">[docs]</a><span class="k">def</span> <span class="nf">generate_corr_inc</span><span class="p">(</span>
     <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">subdivision</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">read_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Stream</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;</span>

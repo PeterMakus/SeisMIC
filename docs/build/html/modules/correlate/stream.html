@@ -89,6 +89,7 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Getting Started with SeisMIIC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../trace_data.html">Trace data</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../correlate.html">Compute and Handle Correlations</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../correlate.html#compute-correlations">Compute Correlations</a></li>
@@ -198,13 +199,14 @@ Both inherit most of their methods and attributes from their <a class="reference
 saving vital information like lag times (<code class="docutils literal notranslate"><span class="pre">start_lag</span></code> and <code class="docutils literal notranslate"><span class="pre">end_lag</span></code>), the start- and the endtime of the waveforms that were used to compute the correlation (<code class="docutils literal notranslate"><span class="pre">corr_start</span></code> and <code class="docutils literal notranslate"><span class="pre">corr_end</span></code>, respectively),
 and information about the coordinates of the stations.</p>
 <p><a class="reference internal" href="../API.html#miic3.correlate.stream.CorrTrace" title="miic3.correlate.stream.CorrTrace"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrTrace</span></code></a> does also come with its own plotting method <a class="reference internal" href="../API.html#miic3.correlate.stream.CorrTrace.plot" title="miic3.correlate.stream.CorrTrace.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot()</span></code></a> (check it for details). It can produce plots akin to this one:</p>
-<img alt="../../_images/NEP06_ctr.svg" src="../../_images/NEP06_ctr.svg" /></div>
+<img alt="../../_images/corrtr.png" src="../../_images/corrtr.png" />
+</div>
 <div class="section" id="corrstream">
 <h2>CorrStream<a class="headerlink" href="#corrstream" title="Permalink to this headline">¶</a></h2>
 <p>Essentially, this class is just a fancy list of <a class="reference internal" href="../API.html#miic3.correlate.stream.CorrTrace" title="miic3.correlate.stream.CorrTrace"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrTrace</span></code></a> objects. However, it has methods to stack (<a class="reference internal" href="../API.html#miic3.correlate.stream.CorrStream.stack" title="miic3.correlate.stream.CorrStream.stack"><code class="xref py py-meth docutils literal notranslate"><span class="pre">stack()</span></code></a>),
 select (<a class="reference internal" href="../API.html#miic3.correlate.stream.CorrStream.select_corr_time" title="miic3.correlate.stream.CorrStream.select_corr_time"><code class="xref py py-meth docutils literal notranslate"><span class="pre">select_corr_time()</span></code></a>), or slide (<a class="reference internal" href="../API.html#miic3.correlate.stream.CorrStream.slide" title="miic3.correlate.stream.CorrStream.slide"><code class="xref py py-meth docutils literal notranslate"><span class="pre">slide()</span></code></a>) time windows. It also enables us to create section stacks, sorted
 by interstation distance or time:</p>
-<img alt="../../_images/NEP06_cst.svg" src="../../_images/NEP06_cst.svg" /></div>
+<img alt="../../_images/cst.svg" src="../../_images/cst.svg" /></div>
 <div class="section" id="corrbulk">
 <h2>CorrBulk<a class="headerlink" href="#corrbulk" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference internal" href="../API.html#miic3.correlate.stream.CorrStream" title="miic3.correlate.stream.CorrStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrStream</span></code></a> does also have a method to create a <a class="reference internal" href="../API.html#miic3.correlate.stream.CorrBulk" title="miic3.correlate.stream.CorrBulk"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrBulk</span></code></a> object (<a class="reference internal" href="../API.html#miic3.correlate.stream.CorrStream.create_corr_bulk" title="miic3.correlate.stream.CorrStream.create_corr_bulk"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create_corr_bulk()</span></code></a>).

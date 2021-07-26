@@ -36,4 +36,4 @@ Plotting
 
 You can create a plot of the dv object with :meth:`miic3.monitor.dv.DV.plot`. The result will look like this:
 
-.. image:: ../../figures/XN-XN_NEP06-NEP06_HHE-HHN_change.png
+.. image:: ../../figures/vchange.png

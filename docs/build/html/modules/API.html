@@ -441,7 +441,7 @@ upon the argument passed as <code class="docutils literal notranslate"><span cla
 </dd>
 </dl>
 <p>Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 20th July 2021 04:20:30 pm</p>
+Last Modified: Monday, 26th July 2021 12:29:22 pm</p>
 <dl class="py class">
 <dt id="miic3.correlate.correlate.Correlator">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">miic3.correlate.correlate.</span></code><code class="sig-name descname"><span class="pre">Correlator</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">store_client</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#miic3.trace_data.waveform.Store_Client" title="miic3.trace_data.waveform.Store_Client"><span class="pre">miic3.trace_data.waveform.Store_Client</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic3/correlate/correlate.html#Correlator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.correlate.Correlator" title="Permalink to this definition">¶</a></dt>
@@ -738,7 +738,7 @@ correlation length and increment.</p></li>
 </dd>
 </dl>
 <p>Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Monday, 19th July 2021 03:55:19 pm</p>
+Last Modified: Sunday, 25th July 2021 05:54:50 pm</p>
 <dl class="py class">
 <dt id="miic3.correlate.stream.CorrBulk">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">miic3.correlate.stream.</span></code><code class="sig-name descname"><span class="pre">CorrBulk</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#miic3.correlate.stats.CorrStats" title="miic3.correlate.stats.CorrStats"><span class="pre">miic3.correlate.stats.CorrStats</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">statlist</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#miic3.correlate.stats.CorrStats" title="miic3.correlate.stats.CorrStats"><span class="pre">miic3.correlate.stats.CorrStats</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic3/correlate/stream.html#CorrBulk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.stream.CorrBulk" title="Permalink to this definition">¶</a></dt>
@@ -825,6 +825,23 @@ this function to remove the stretching from the correlation matrix.</p>
 <dl class="simple">
 <dt>..note:: This action is performed <strong>in-place</strong>. If you would like to</dt><dd><p>keep the original data use
 <code class="xref py py-func docutils literal notranslate"><span class="pre">copy()</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="miic3.correlate.stream.CorrBulk.create_corr_stream">
+<code class="sig-name descname"><span class="pre">create_corr_stream</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic3/correlate/stream.html#CorrBulk.create_corr_stream"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.stream.CorrBulk.create_corr_stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a <a class="reference internal" href="#miic3.correlate.stream.CorrStream" title="miic3.correlate.stream.CorrStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrStream</span></code></a> object from
+the current <a class="reference internal" href="#miic3.correlate.stream.CorrBulk" title="miic3.correlate.stream.CorrBulk"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrBulk</span></code></a> object. This
+can be useful if you want to save your postprocessed data in a hdf5
+file again.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Correlation Stream holding the same data</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#miic3.correlate.stream.CorrStream" title="miic3.correlate.stream.CorrStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrStream</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1831,7 +1848,7 @@ cores available in the hosting machine.</p>
 </dd>
 </dl>
 <p>Created: Tuesday, 20th July 2021 03:24:01 pm
-Last Modified: Tuesday, 20th July 2021 03:31:22 pm</p>
+Last Modified: Sunday, 25th July 2021 05:27:20 pm</p>
 <dl class="py function">
 <dt id="miic3.correlate.preprocessing_td.clip">
 <code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_td.</span></code><code class="sig-name descname"><span class="pre">clip</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../_modules/miic3/correlate/preprocessing_td.html#clip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_td.clip" title="Permalink to this definition">¶</a></dt>
@@ -1977,32 +1994,6 @@ parts. This step involves an additional convolution.</p>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>1-bit normalized time series data</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="miic3.correlate.preprocessing_td.spectralWhitening">
-<code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_td.</span></code><code class="sig-name descname"><span class="pre">spectralWhitening</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">B</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../_modules/miic3/correlate/preprocessing_td.html#spectralWhitening"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_td.spectralWhitening" title="Permalink to this definition">¶</a></dt>
-<dd><p>Spectal whitening of Fourier-transformed date</p>
-<p>Normalize the amplitude spectrum of the complex spectra in <cite>B</cite>. The
-<cite>args</cite> dictionary may contain the keyword <cite>joint_norm</cite>. If its value is
-True the normalization of sets of three traces are normalized jointly by
-the mean of their amplitude spectra. This is useful for later rotation of
-correlated traces in the ZNE system into the ZRT system.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>B</strong> (<em>numpy.ndarray</em>) – Fourier transformed time series data with frequency orientedalong the first dimension (columns)</p></li>
-<li><p><strong>args</strong> (<em>dictionary</em>) – arguments dictionary as described above</p></li>
-<li><p><strong>params</strong> (<em>dictionary</em>) – not used here</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>numpy.ndarray</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>whitened spectal data</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2173,7 +2164,7 @@ the padded part is just long enough to avoid wrap around</p>
 </dd>
 </dl>
 <p>Created: Tuesday, 20th July 2021 03:40:11 pm
-Last Modified: Tuesday, 20th July 2021 03:43:11 pm</p>
+Last Modified: Sunday, 25th July 2021 05:27:31 pm</p>
 <dl class="py function">
 <dt id="miic3.correlate.preprocessing_fd.FDfilter">
 <code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_fd.</span></code><code class="sig-name descname"><span class="pre">FDfilter</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">B</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../_modules/miic3/correlate/preprocessing_fd.html#FDfilter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_fd.FDfilter" title="Permalink to this definition">¶</a></dt>
@@ -2226,6 +2217,32 @@ after other steps of frequency domain procesing e.g. whitening.</p>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt id="miic3.correlate.preprocessing_fd.spectralWhitening">
+<code class="sig-prename descclassname"><span class="pre">miic3.correlate.preprocessing_fd.</span></code><code class="sig-name descname"><span class="pre">spectralWhitening</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">B</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../_modules/miic3/correlate/preprocessing_fd.html#spectralWhitening"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.correlate.preprocessing_fd.spectralWhitening" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spectal whitening of Fourier-transformed date</p>
+<p>Normalize the amplitude spectrum of the complex spectra in <cite>B</cite>. The
+<cite>args</cite> dictionary may contain the keyword <cite>joint_norm</cite>. If its value is
+True the normalization of sets of three traces are normalized jointly by
+the mean of their amplitude spectra. This is useful for later rotation of
+correlated traces in the ZNE system into the ZRT system.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>B</strong> (<em>numpy.ndarray</em>) – Fourier transformed time series data with frequency orientedalong the first dimension (columns)</p></li>
+<li><p><strong>args</strong> (<em>dictionary</em>) – arguments dictionary as described above</p></li>
+<li><p><strong>params</strong> (<em>dictionary</em>) – not used here</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>whitened spectal data</p>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
 </div>
 <div class="section" id="miic3-db">
@@ -2246,7 +2263,7 @@ after other steps of frequency domain procesing e.g. whitening.</p>
 </dd>
 </dl>
 <p>Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Wednesday, 21st July 2021 05:29:59 pm</p>
+Last Modified: Monday, 26th July 2021 07:54:40 am</p>
 <dl class="py class">
 <dt id="miic3.db.corr_hdf5.DBHandler">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">miic3.db.corr_hdf5.</span></code><code class="sig-name descname"><span class="pre">DBHandler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compression</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">co</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic3/db/corr_hdf5.html#DBHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.db.corr_hdf5.DBHandler" title="Permalink to this definition">¶</a></dt>
@@ -2452,8 +2469,7 @@ codes) in this file.</p>
 <p>Base class to handle the hdf5 files that contain noise correlations.</p>
 <p>Access an hdf5 file holding correlations. The resulting file can be
 accessed using all functionalities of
-<a class="reference external" href="https://seismicdata.github.io/pyasdf">pyasdf</a>
-(for example as a dict)</p>
+<a class="reference external" href="https://www.h5py.org/">h5py</a> (for example as a dict).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -2579,7 +2595,7 @@ hdf5 dataset.</p>
 </dd>
 </dl>
 <p>Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 16th July 2021 04:23:17 pm</p>
+Last Modified: Monday, 26th July 2021 12:42:44 pm</p>
 <dl class="py class">
 <dt id="miic3.monitor.monitor.Monitor">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">miic3.monitor.monitor.</span></code><code class="sig-name descname"><span class="pre">Monitor</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic3/monitor/monitor.html#Monitor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.monitor.monitor.Monitor" title="Permalink to this definition">¶</a></dt>
@@ -2700,7 +2716,7 @@ later be read using <a class="reference internal" href="#miic3.monitor.dv.read_d
 </dd>
 </dl>
 <p>Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Tuesday, 20th July 2021 04:25:42 pm</p>
+Last Modified: Sunday, 25th July 2021 05:07:28 pm</p>
 <dl class="py function">
 <dt id="miic3.monitor.post_corr_process.corr_mat_smooth">
 <code class="sig-prename descclassname"><span class="pre">miic3.monitor.post_corr_process.</span></code><code class="sig-name descname"><span class="pre">corr_mat_smooth</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wsize</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wtype</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'flat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">numpy.ndarray</span><a class="reference internal" href="../_modules/miic3/monitor/post_corr_process.html#corr_mat_smooth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.monitor.post_corr_process.corr_mat_smooth" title="Permalink to this definition">¶</a></dt>
