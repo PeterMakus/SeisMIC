@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 26th July 2021 09:16:48 am
+Last Modified: Monday, 26th July 2021 09:19:22 am
 '''
 import logging
 import os
@@ -204,9 +204,11 @@ and network combinations %s' % str(
         # Assign a task to each rank
         for ii in ind:
             corr_file, net, stat, cha = plist[ii]
-            # There should be other options than using recombined in the future
-            self.compute_velocity_change(
-                corr_file, tag, net, stat, cha)
+            try:
+                self.compute_velocity_change(
+                    corr_file, tag, net, stat, cha)
+            except Exception as e:
+                self.logger.error(e)
 
 
 def make_time_list(
