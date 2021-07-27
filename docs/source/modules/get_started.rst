@@ -1,4 +1,4 @@
-Getting Started with SeisMIIC
+Getting Started with SeisMIC
 =============================
 
 Download and Installation
@@ -17,9 +17,9 @@ Most likely, your system will come with a preinstalled MPI. Else, we recommend `
 Python Dependencies
 ###################
 
-**SeisMIIC** has been tested on Python3.8, but should in principle also be compatible with Python3.7 and later.
+**SeisMIC** has been tested on Python3.8, but should in principle also be compatible with Python3.7 and later.
 If you follow the instructions below, it should not be necessary to install dependencies manually.
-**SeisMIIC** depends on the following modules:
+**SeisMIC** depends on the following modules:
 
 - geographiclib
 - matplotlib
@@ -45,7 +45,7 @@ Via PyPi
 Via GitHub
 ++++++++++
 
-You can download the latest version of SeisMIIC from GitHub (put link as soon as deployed).
+You can download the latest version of SeisMIC from GitHub (put link as soon as deployed).
 
 After downloading just run the following commands **in the repository's folder**:
 
@@ -55,7 +55,7 @@ After downloading just run the following commands **in the repository's folder**
     conda env create -f environment.yml
 
     # Activate the conda environment
-    conda activate seismiic
+    conda activate SeisMIC
 
     # Install your package
     pip install $InstallationDirectory$
@@ -68,5 +68,5 @@ After downloading just run the following commands **in the repository's folder**
 Tutorial
 --------
 
-Along with the source code **SeisMIIC** is distributed with a Jupyter notebook that provides you with an easy example on how
+Along with the source code **SeisMIC** is distributed with a Jupyter notebook that provides you with an easy example on how
 to use the code in `examples/tutorial.ipynb`. Else, we recommend going throught this documentation.

@@ -1,11 +1,15 @@
-.. MIIC3 documentation master file, created by
+.. seismic documentation master file, created by
    sphinx-quickstart on Sun Mar 22 12:50:55 2020.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
 
-SeisMIIC library documentation
-==============================
+SeisMIC library documentation
+=============================
+
+SeisMIC (**Seismological Monitoring with Interferometric Concepts**) is a software that emerged from the miic library.
+**SeisMIC** provides functionality to apply some concepts of seismic interferometry to different data of elastic waves.
+Its main use case is the monitoring of temporal changes in a mediums Green's Function (i.e., monitoring of temporal velocity changes).
 
 .. toctree::
    :maxdepth: 3
@@ -30,10 +34,10 @@ Interactive Flowchart
         fdsn[(FDSN Server)] -->|download| waveform
         raw[(Raw Data)] -->|read| waveform
         waveform[.waveform] --> preprocess_st(Stream Preprocessing)
-        subgraph miic3.trace_data
+        subgraph seismic.trace_data
         waveform
         end
-        subgraph miic3.correlate
+        subgraph seismic.correlate
         preprocess_st --> preprocessing_td[TDPreProcessing]
         preprocessing_td --> preprocessing_fd[FDPreprocessing]
         preprocessing_fd --> correlate[Correlate]
@@ -41,11 +45,11 @@ Interactive Flowchart
         end
         stream -->|save| corrdb[(CorrDB/hdf5)]
         corrdb --> monitor
-        subgraph miic3.monitor
+        subgraph seismic.monitor
         monitor[Measure dv] -->|save| dv{{DV}}
         end
         click waveform "./modules/trace_data.html" "trace_data"
-        click miic3.correlate "./modules/correlate.html" "correlate"
+        click seismic.correlate "./modules/correlate.html" "correlate"
         click preprocess_st "./modules/correlate/get_started.html#preprocessing-arguments" "preprocessing"
         click preprocessing_fd "./modules/correlate/get_started.html#preprocessing-arguments" "preprocessing"
         click preprocessing_td "./modules/correlate/get_started.html#preprocessing-arguments" "preprocessing"

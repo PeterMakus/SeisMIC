@@ -4,7 +4,7 @@ UnitTests for the waveform module.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 15th March 2021 03:33:25 pm
-Last Modified: Tuesday, 22nd June 2021 01:11:34 pm
+Last Modified: Tuesday, 27th July 2021 10:56:32 am
 '''
 
 import unittest
@@ -15,12 +15,12 @@ import warnings
 import numpy as np
 from obspy import UTCDateTime
 
-from miic3.trace_data import waveform
+from seismic.trace_data import waveform
 
 
 class TestStoreClient(unittest.TestCase):
-    @mock.patch('miic3.trace_data.waveform.os.listdir')
-    @mock.patch('miic3.trace_data.waveform.os.path.isdir')
+    @mock.patch('seismic.trace_data.waveform.os.listdir')
+    @mock.patch('seismic.trace_data.waveform.os.path.isdir')
     def setUp(self, isdir_mock, listdir_mock):
         isdir_mock.return_value = True
         listdir_mock.return_value = False
@@ -36,7 +36,7 @@ class TestStoreClient(unittest.TestCase):
                 self.sc._get_times(self.net, self.stat), (None, None))
             self.assertEqual(len(w), 1)
 
-    @mock.patch('miic3.trace_data.waveform.glob.glob')
+    @mock.patch('seismic.trace_data.waveform.glob.glob')
     def test_get_times(self, glob_mock):
         start = UTCDateTime(np.random.randint(0, 3e8))
         end = UTCDateTime(np.random.randint(4e8, 8e8))
@@ -68,7 +68,7 @@ class TestStoreClient(unittest.TestCase):
             UTCDateTime(year=end.year, julday=end.julday)+24*3600)
         self.assertEqual(timetup, t_control)
 
-    @mock.patch('miic3.trace_data.waveform.glob.glob')
+    @mock.patch('seismic.trace_data.waveform.glob.glob')
     def test_get_times_year_change(self, glob_mock):
         # Just checking as there is no julday 366 in most years
         start = UTCDateTime(year=2015, month=12, day=31, hour=1)
@@ -101,7 +101,7 @@ class TestStoreClient(unittest.TestCase):
             UTCDateTime(year=end.year, julday=end.julday)+24*3600)
         self.assertEqual(timetup, t_control)
 
-    @mock.patch('miic3.trace_data.waveform.glob.glob')
+    @mock.patch('seismic.trace_data.waveform.glob.glob')
     def test_get_available_stations(self, glob_mock):
         net = ['TOTAL']*3 + ['RANDOM']*3
         stat = ['RANDOM', 'BUT', 'SA', 'ME', 'LEN', 'GTH']

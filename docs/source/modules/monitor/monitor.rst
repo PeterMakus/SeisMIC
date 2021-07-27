@@ -17,7 +17,7 @@
 Compute Velocity Changes
 ------------------------
 
-**SeisMIIC** uses the stretching technique (Sens-Schönfelder & Wegler, 2006) to estimate a spatially homogeneous velocity change between the
+**SeisMIC** uses the stretching technique (Sens-Schönfelder & Wegler, 2006) to estimate a spatially homogeneous velocity change between the
 stations (for Cross-Correlations) or in station vicinity (for inter-component or autocorrelations).
 This technique is grounded upon the assumption that a homogeneous change in velocity will result in a homogeneous stretching of the
 Green's function.
@@ -73,20 +73,20 @@ Start the Computation
 +++++++++++++++++++++
 
 Again, the procedure is fairly similar to startin the correlation. Velocity stretch estimates are computed by the
-:class:`~miic3.monitor.monitor.Monitor` object. Once again, usage with mpi is possible. Your velocity stretch estimate
+:class:`~seismic.monitor.monitor.Monitor` object. Once again, usage with mpi is possible. Your velocity stretch estimate
 script could look something like this:
 
 .. code-block:: python
     :caption: compute_dv.py
     :linenos:
 
-    from miic3.monitor.monitor import Monitor
+    from seismic.monitor.monitor import Monitor
 
     yaml_f = '/home/pm/Documents/PhD/Chaku/params.yaml'
     m = Monitor(yaml_f)
     m.compute_velocity_change_bulk()
 
-Again, you will only want to use the method :meth:`miic3.monitor.monitor.Monitor.compute_velocity_change_bulk`.
+Again, you will only want to use the method :meth:`seismic.monitor.monitor.Monitor.compute_velocity_change_bulk`.
 You can start the script using mpi:
 
 .. code-block:: bash

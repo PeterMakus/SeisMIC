@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Thursday, 8th July 2021 05:22:54 pm
+Last Modified: Tuesday, 27th July 2021 10:56:25 am
 '''
 
 import unittest
@@ -17,7 +17,7 @@ import numpy as np
 from obspy import read, read_inventory, Stream
 from obspy.core.utcdatetime import UTCDateTime
 
-from miic3.correlate import stream
+from seismic.correlate import stream
 
 
 class TestCorrStats(unittest.TestCase):

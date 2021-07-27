@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 6th July 2021 09:18:14 am
-Last Modified: Tuesday, 6th July 2021 09:41:19 am
+Last Modified: Tuesday, 27th July 2021 10:56:00 am
 '''
 
 import unittest
@@ -15,7 +15,7 @@ import unittest
 import numpy as np
 from obspy import UTCDateTime
 
-from miic3.monitor import monitor
+from seismic.monitor import monitor
 
 
 class TestMakeTimeList(unittest.TestCase):

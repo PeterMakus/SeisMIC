@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Compute Velocity Changes &mdash; SeisMIIC 0.1 documentation</title>
+  <title>Compute Velocity Changes &mdash; SeisMIC 0.1 documentation</title>
   
 
   
@@ -55,7 +55,7 @@
           
 
           
-            <a href="../../index.html" class="icon icon-home"> SeisMIIC
+            <a href="../../index.html" class="icon icon-home"> SeisMIC
           
 
           
@@ -89,6 +89,7 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Getting Started with SeisMIC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../trace_data.html">Trace data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../correlate.html">Compute and Handle Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../corrdb.html">Save and Load Correlations</a></li>
@@ -101,7 +102,7 @@
 <li class="toctree-l2"><a class="reference internal" href="dv.html">Reading and Handling of DV objects</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIIC</span></code> API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIC</span></code> API</a></li>
 </ul>
 
             
@@ -117,7 +118,7 @@
       <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">SeisMIIC</a>
+          <a href="../../index.html">SeisMIC</a>
         
       </nav>
 
@@ -186,7 +187,7 @@ graph LR
     classDef active fill:#f666, stroke-width:4px, stroke:#f06;
         </div><div class="section" id="compute-velocity-changes">
 <h1>Compute Velocity Changes<a class="headerlink" href="#compute-velocity-changes" title="Permalink to this headline">¶</a></h1>
-<p><strong>SeisMIIC</strong> uses the stretching technique (Sens-Schönfelder &amp; Wegler, 2006) to estimate a spatially homogeneous velocity change between the
+<p><strong>SeisMIC</strong> uses the stretching technique (Sens-Schönfelder &amp; Wegler, 2006) to estimate a spatially homogeneous velocity change between the
 stations (for Cross-Correlations) or in station vicinity (for inter-component or autocorrelations).
 This technique is grounded upon the assumption that a homogeneous change in velocity will result in a homogeneous stretching of the
 Green’s function.</p>
@@ -260,7 +261,7 @@ of increments that will be tested between the minimum and maximum stretching.</p
 <div class="section" id="start-the-computation">
 <h2>Start the Computation<a class="headerlink" href="#start-the-computation" title="Permalink to this headline">¶</a></h2>
 <p>Again, the procedure is fairly similar to startin the correlation. Velocity stretch estimates are computed by the
-<a class="reference internal" href="../API.html#miic3.monitor.monitor.Monitor" title="miic3.monitor.monitor.Monitor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Monitor</span></code></a> object. Once again, usage with mpi is possible. Your velocity stretch estimate
+<a class="reference internal" href="../API.html#seismic.monitor.monitor.Monitor" title="seismic.monitor.monitor.Monitor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Monitor</span></code></a> object. Once again, usage with mpi is possible. Your velocity stretch estimate
 script could look something like this:</p>
 <div class="literal-block-wrapper docutils container" id="id1">
 <div class="code-block-caption"><span class="caption-text">compute_dv.py</span><a class="headerlink" href="#id1" title="Permalink to this code">¶</a></div>
@@ -268,7 +269,7 @@ script could look something like this:</p>
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">miic3.monitor.monitor</span> <span class="kn">import</span> <span class="n">Monitor</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">seismic.monitor.monitor</span> <span class="kn">import</span> <span class="n">Monitor</span>
 
 <span class="n">yaml_f</span> <span class="o">=</span> <span class="s1">&#39;/home/pm/Documents/PhD/Chaku/params.yaml&#39;</span>
 <span class="n">m</span> <span class="o">=</span> <span class="n">Monitor</span><span class="p">(</span><span class="n">yaml_f</span><span class="p">)</span>
@@ -276,7 +277,7 @@ script could look something like this:</p>
 </pre></div>
 </td></tr></table></div>
 </div>
-<p>Again, you will only want to use the method <a class="reference internal" href="../API.html#miic3.monitor.monitor.Monitor.compute_velocity_change_bulk" title="miic3.monitor.monitor.Monitor.compute_velocity_change_bulk"><code class="xref py py-meth docutils literal notranslate"><span class="pre">miic3.monitor.monitor.Monitor.compute_velocity_change_bulk()</span></code></a>.
+<p>Again, you will only want to use the method <a class="reference internal" href="../API.html#seismic.monitor.monitor.Monitor.compute_velocity_change_bulk" title="seismic.monitor.monitor.Monitor.compute_velocity_change_bulk"><code class="xref py py-meth docutils literal notranslate"><span class="pre">seismic.monitor.monitor.Monitor.compute_velocity_change_bulk()</span></code></a>.
 You can start the script using mpi:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun -n <span class="nv">$number_of_cores</span>$ python <span class="nv">$path_to_file</span>$/compute_dv.py
 </pre></div>
@@ -298,7 +299,7 @@ You can start the script using mpi:</p>
 
   <div role="contentinfo">
     <p>
-        &#169; Copyright 2020, C.S..
+        &#169; Copyright 2021, The SeisMIC development team..
 
     </p>
   </div>

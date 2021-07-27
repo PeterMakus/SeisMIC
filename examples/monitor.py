@@ -1,4 +1,4 @@
-from miic3.monitor.monitor import Monitor
+from seismic.monitor.monitor import Monitor
 
 yaml_f = 'params.yaml'
 m = Monitor(yaml_f)

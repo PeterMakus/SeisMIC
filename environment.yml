@@ -1,4 +1,4 @@
-name: seismiic
+name: seismic
 channels:
   - conda-forge
 dependencies:

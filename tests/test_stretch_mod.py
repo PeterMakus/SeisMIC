@@ -8,14 +8,14 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 24th June 2021 02:23:40 pm
-Last Modified: Friday, 2nd July 2021 11:52:18 am
+Last Modified: Tuesday, 27th July 2021 10:56:28 am
 '''
 
 import unittest
 
 import numpy as np
 
-from miic3.monitor import stretch_mod as sm
+from seismic.monitor import stretch_mod as sm
 
 
 class TestTimeWindowsCreation(unittest.TestCase):

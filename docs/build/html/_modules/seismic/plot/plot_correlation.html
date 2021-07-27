@@ -1,0 +1,424 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>seismic.plot.plot_correlation &mdash; SeisMIC 0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+        <script >mermaid.initialize({startOnLoad:true});</script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> SeisMIC
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/get_started.html">Getting Started with SeisMIC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trace_data.html">Trace data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/correlate.html">Compute and Handle Correlations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/corrdb.html">Save and Load Correlations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/monitor.html">Monitor Velocity Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIC</span></code> API</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SeisMIC</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>seismic.plot.plot_correlation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for seismic.plot.plot_correlation</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">:copyright:</span>
+<span class="sd">   The PyGLImER development team (makus@gfz-potsdam.de).</span>
+<span class="sd">:license:</span>
+<span class="sd">   `GNU Lesser General Public License, Version 3 &lt;https://www.gnu.org/copyleft/lesser.html&gt;`</span>
+<span class="sd">:author:</span>
+<span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
+
+<span class="sd">Created: Monday, 19th July 2021 11:37:54 am</span>
+<span class="sd">Last Modified: Tuesday, 27th July 2021 10:53:46 am</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="nn">mpl</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">obspy.core.utcdatetime</span> <span class="kn">import</span> <span class="n">UTCDateTime</span>
+<span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">Stream</span>
+
+<span class="kn">from</span> <span class="nn">seismic.plot.plot_utils</span> <span class="kn">import</span> <span class="n">set_mpl_params</span><span class="p">,</span> <span class="n">remove_topright</span><span class="p">,</span> <span class="n">remove_all</span>
+
+
+<div class="viewcode-block" id="plot_ctr"><a class="viewcode-back" href="../../../modules/API.html#seismic.plot.plot_correlation.plot_ctr">[docs]</a><span class="k">def</span> <span class="nf">plot_ctr</span><span class="p">(</span>
+    <span class="n">corr</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">tlim</span><span class="p">:</span> <span class="nb">list</span> <span class="ow">or</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">outputdir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">clean</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">:</span>
+    <span class="n">set_mpl_params</span><span class="p">()</span>
+
+    <span class="c1"># Get figure/axes dimensions</span>
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="mf">2.5</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">))</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+        <span class="n">axtmp</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gcf</span><span class="p">()</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_window_extent</span><span class="p">()</span><span class="o">.</span><span class="n">transformed</span><span class="p">(</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">dpi_scale_trans</span><span class="o">.</span><span class="n">inverted</span><span class="p">())</span>
+        <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">bbox</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">bbox</span><span class="o">.</span><span class="n">height</span>
+        <span class="n">axtmp</span> <span class="o">=</span> <span class="n">ax</span>
+
+    <span class="c1"># The ratio ensures that the text</span>
+    <span class="c1"># is perfectly distanced from top left/right corner</span>
+    <span class="n">ratio</span> <span class="o">=</span> <span class="n">width</span><span class="o">/</span><span class="n">height</span>
+    <span class="n">times</span> <span class="o">=</span> <span class="n">corr</span><span class="o">.</span><span class="n">times</span><span class="p">()</span>
+    <span class="n">ydata</span> <span class="o">=</span> <span class="n">corr</span><span class="o">.</span><span class="n">data</span>
+
+    <span class="c1"># Plot stuff into axes</span>
+    <span class="c1"># This would fill positive red and negative blue, probably not very nice</span>
+    <span class="c1"># for correlations</span>
+    <span class="c1"># ax.fill_between(times, 0, ydata, where=ydata &gt; 0,</span>
+    <span class="c1">#                 interpolate=True, color=(0.9, 0.2, 0.2))</span>
+    <span class="c1"># ax.fill_between(times, 0, ydata, where=ydata &lt; 0,</span>
+    <span class="c1">#                 interpolate=True, color=(0.2, 0.2, 0.7))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">ydata</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Set limits</span>
+    <span class="k">if</span> <span class="n">tlim</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">tlim</span><span class="p">)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># Removes top/right axes spines. If you want the whole thing, comment</span>
+    <span class="c1"># or remove</span>
+    <span class="n">remove_topright</span><span class="p">()</span>
+
+    <span class="c1"># Plot RF only</span>
+    <span class="k">if</span> <span class="n">clean</span><span class="p">:</span>
+        <span class="n">remove_all</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Lag Time [s]&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Correlation&quot;</span><span class="p">)</span>
+        <span class="c1"># Start time in station stack does not make sense</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> - </span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="n">corr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="o">.</span><span class="n">_strftime_replacement</span><span class="p">(</span><span class="s1">&#39;%Y/%m/</span><span class="si">%d</span><span class="s1"> %H:%M&#39;</span><span class="p">),</span>
+            <span class="n">corr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span><span class="o">.</span><span class="n">_strftime_replacement</span><span class="p">(</span><span class="s1">&#39;%Y/%m/</span><span class="si">%d</span><span class="s1"> %H:%M&#39;</span><span class="p">),</span>
+            <span class="n">corr</span><span class="o">.</span><span class="n">get_id</span><span class="p">())</span>
+        <span class="c1"># corr.stats.corr_start.isoformat(sep=&quot; &quot;) + &quot;\n&quot; + corr.get_id()</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.995</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">-</span><span class="mf">0.005</span><span class="o">*</span><span class="n">ratio</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">ax</span><span class="o">.</span><span class="n">transAxes</span><span class="p">,</span>
+                <span class="n">horizontalalignment</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">,</span> <span class="n">verticalalignment</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Only use tight layout if not part of plot.</span>
+    <span class="k">if</span> <span class="n">axtmp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+    <span class="c1"># Hide minor ticks on y-axis</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s1">&#39;minor&#39;</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Outout the receiver function as pdf using</span>
+    <span class="c1"># its station name and starttime</span>
+    <span class="k">if</span> <span class="n">outputdir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">outputdir</span><span class="p">,</span> <span class="n">corr</span><span class="o">.</span><span class="n">get_id</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span>
+            <span class="o">+</span> <span class="n">corr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="o">.</span><span class="n">_strftime_replacement</span><span class="p">(</span><span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">T%H%M%S&#39;</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot;.pdf&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ax</span></div>
+
+
+<div class="viewcode-block" id="plot_cst"><a class="viewcode-back" href="../../../modules/API.html#seismic.plot.plot_correlation.plot_cst">[docs]</a><span class="k">def</span> <span class="nf">plot_cst</span><span class="p">(</span>
+    <span class="n">cst</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">sort_by</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;corr_start&#39;</span><span class="p">,</span>
+    <span class="n">timelimits</span><span class="p">:</span> <span class="nb">list</span> <span class="ow">or</span> <span class="nb">tuple</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">ylimits</span><span class="p">:</span> <span class="nb">list</span> <span class="ow">or</span> <span class="nb">tuple</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">scalingfactor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+    <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">linewidth</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
+        <span class="n">outputfile</span><span class="p">:</span> <span class="nb">str</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a section plot of all correlations in this stream.</span>
+
+<span class="sd">    :param cst: Input CorrelationStream</span>
+<span class="sd">    :type cst: :class:`~seismic.correlate.stream.CorrStream`</span>
+<span class="sd">    :param sort_by: Which parameter to plot against. Can be either</span>
+<span class="sd">        ``corr_start`` or ``distance``, defaults to &#39;corr_start&#39;.</span>
+<span class="sd">    :type sort_by: str, optional</span>
+<span class="sd">    :param timelimits: xlimits (lag time) in seconds, defaults to None</span>
+<span class="sd">    :type timelimits: Tuple[float, float], optional</span>
+<span class="sd">    :param ylimits: limits for Y-axis (either a :class:`datetime.datetime`</span>
+<span class="sd">        or float in km (if plotted against distance)), defaults to None.</span>
+<span class="sd">    :type ylimits: Tuple[float, float], optional</span>
+<span class="sd">    :param scalingfactor: Which factor to scale the Correlations with. Play</span>
+<span class="sd">        around with this if you want to make amplitudes bigger or smaller,</span>
+<span class="sd">        defaults to None (automatically chosen).</span>
+<span class="sd">    :type scalingfactor: float, optional</span>
+<span class="sd">    :param ax: Plot in existing axes? Defaults to None</span>
+<span class="sd">    :type ax: plt.Axes, optional</span>
+<span class="sd">    :param linewidth: Width of the lines to plot, defaults to 0.25</span>
+<span class="sd">    :type linewidth: float, optional</span>
+<span class="sd">    :param outputfile: Save the plot? defaults to None</span>
+<span class="sd">    :type outputfile: str, optional</span>
+<span class="sd">    :param title: Title of the plot, defaults to None</span>
+<span class="sd">    :type title: str, optional</span>
+<span class="sd">    :return: returns the axes object.</span>
+<span class="sd">    :rtype: `matplotlib.pyplot.Axes`</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">set_mpl_params</span><span class="p">()</span>
+
+    <span class="c1"># Create figure if no axes is specified</span>
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">axes</span><span class="p">()</span>  <span class="c1"># zorder=9999999</span>
+    <span class="k">if</span> <span class="n">sort_by</span> <span class="o">==</span> <span class="s1">&#39;distance&#39;</span><span class="p">:</span>
+        <span class="n">sort_by</span> <span class="o">=</span> <span class="s1">&#39;dist&#39;</span>
+    <span class="n">cst</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="n">sort_by</span><span class="p">,</span> <span class="s1">&#39;network&#39;</span><span class="p">,</span> <span class="s1">&#39;station&#39;</span><span class="p">,</span> <span class="s1">&#39;channel&#39;</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cst</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;No Correlations with the desired properties found.&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Plot traces</span>
+    <span class="k">if</span> <span class="n">sort_by</span> <span class="o">==</span> <span class="s1">&#39;corr_start&#39;</span><span class="p">:</span>
+        <span class="n">scalingfactor</span> <span class="o">=</span> <span class="n">scalingfactor</span> <span class="ow">or</span> <span class="mf">1e5</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="n">sect_plot_corr_start</span><span class="p">(</span><span class="n">cst</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">scalingfactor</span><span class="p">,</span> <span class="n">linewidth</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">sort_by</span> <span class="o">==</span> <span class="s1">&#39;dist&#39;</span><span class="p">:</span>
+        <span class="n">scalingfactor</span> <span class="o">=</span> <span class="n">scalingfactor</span> <span class="ow">or</span> <span class="mi">4</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="n">sect_plot_dist</span><span class="p">(</span><span class="n">cst</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">scalingfactor</span><span class="p">,</span> <span class="n">linewidth</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Unknown sorting method </span><span class="si">%s</span><span class="s1">.&#39;</span> <span class="o">%</span> <span class="n">sort_by</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s1">&#39;minor&#39;</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Set limits</span>
+    <span class="k">if</span> <span class="n">ylimits</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="n">ylimits</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">timelimits</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="n">timelimits</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">invert_yaxis</span><span class="p">()</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Lag Time [s]&quot;</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+
+    <span class="c1"># Set output directory</span>
+    <span class="k">if</span> <span class="n">outputfile</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">outputfile</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">transparent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ax</span></div>
+
+
+<div class="viewcode-block" id="sect_plot_corr_start"><a class="viewcode-back" href="../../../modules/API.html#seismic.plot.plot_correlation.sect_plot_corr_start">[docs]</a><span class="k">def</span> <span class="nf">sect_plot_corr_start</span><span class="p">(</span>
+    <span class="n">cst</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span> <span class="n">scalingfactor</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">linewidth</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">ctr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cst</span><span class="p">):</span>
+        <span class="n">ydata</span> <span class="o">=</span> <span class="n">ctr</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="n">ctr</span><span class="o">.</span><span class="n">times</span><span class="p">()</span>
+
+        <span class="n">ytmp</span> <span class="o">=</span> <span class="n">ctr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;corr_start&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">timestamp</span>
+
+        <span class="n">ctmp</span> <span class="o">=</span> <span class="n">ydata</span> <span class="o">*</span> <span class="n">scalingfactor</span> <span class="o">+</span> <span class="n">ytmp</span>
+        <span class="n">ctmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">t</span><span class="p">)</span><span class="o">.</span><span class="n">datetime</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">ctmp</span><span class="p">])</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">ctmp</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="n">linewidth</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=-</span><span class="n">ii</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">mpl</span><span class="o">.</span><span class="n">dates</span><span class="o">.</span><span class="n">AutoDateLocator</span><span class="p">())</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">mpl</span><span class="o">.</span><span class="n">dates</span><span class="o">.</span><span class="n">DateFormatter</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%d</span><span class="s1"> %h&#39;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">times</span></div>
+
+
+<div class="viewcode-block" id="sect_plot_dist"><a class="viewcode-back" href="../../../modules/API.html#seismic.plot.plot_correlation.sect_plot_dist">[docs]</a><span class="k">def</span> <span class="nf">sect_plot_dist</span><span class="p">(</span>
+    <span class="n">cst</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span> <span class="n">scalingfactor</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">linewidth</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">ctr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cst</span><span class="p">):</span>
+        <span class="n">ydata</span> <span class="o">=</span> <span class="n">ctr</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="n">ctr</span><span class="o">.</span><span class="n">times</span><span class="p">()</span>
+
+        <span class="n">ytmp</span> <span class="o">=</span> <span class="n">ydata</span> <span class="o">*</span> <span class="n">scalingfactor</span> <span class="o">+</span> <span class="n">ctr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">dist</span><span class="o">/</span><span class="mi">1000</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">ytmp</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="n">linewidth</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=-</span><span class="n">ii</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Distance [km]&quot;</span><span class="p">)</span>
+    <span class="c1"># Set label locations.</span>
+    <span class="n">step</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="n">cst</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">dist</span> <span class="o">-</span> <span class="n">cst</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">dist</span><span class="p">)</span><span class="o">/</span><span class="mi">10000</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ctr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">dist</span><span class="o">/</span><span class="mi">1000</span><span class="o">+</span><span class="n">step</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">times</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, The SeisMIC development team..
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

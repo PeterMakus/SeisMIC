@@ -6,7 +6,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 04:07:16 pm
-Last Modified: Tuesday, 20th July 2021 04:10:24 pm
+Last Modified: Tuesday, 27th July 2021 10:56:17 am
 '''
 
 import unittest
@@ -15,7 +15,7 @@ import numpy as np
 from obspy.core import AttribDict
 from obspy import read, Stream, Trace
 
-from miic3.correlate import preprocessing_stream as ppst
+from seismic.correlate import preprocessing_stream as ppst
 
 
 class TestCosTaper(unittest.TestCase):

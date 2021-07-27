@@ -14,7 +14,7 @@ install:
   - conda update -q conda
   - conda info -a
   - conda env create -f environment.yml
-  - source activate miic3
+  - source activate seismic
   - pip install -e .
 
 # command to run tests

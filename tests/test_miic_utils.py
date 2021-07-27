@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Tuesday, 20th July 2021 04:09:49 pm
+Last Modified: Tuesday, 27th July 2021 10:55:56 am
 '''
 import unittest
 import math as mathematics
@@ -19,10 +19,10 @@ from obspy.core import AttribDict
 from obspy.core.inventory.network import Network
 from obspy.core.inventory.station import Station
 
-from miic3.utils.fetch_func_from_str import func_from_str
-from miic3.utils.miic_utils import trace_calc_az_baz_dist,\
+from seismic.utils.fetch_func_from_str import func_from_str
+from seismic.utils.miic_utils import trace_calc_az_baz_dist,\
     inv_calc_az_baz_dist, resample_or_decimate
-import miic3.utils.miic_utils as mu
+import seismic.utils.miic_utils as mu
 
 
 class TestBazCalc(unittest.TestCase):

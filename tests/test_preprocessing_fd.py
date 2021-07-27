@@ -6,13 +6,13 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 04:00:46 pm
-Last Modified: Monday, 26th July 2021 07:59:38 am
+Last Modified: Tuesday, 27th July 2021 10:56:08 am
 '''
 import unittest
 
 import numpy as np
 
-from miic3.correlate import preprocessing_fd as ppfd
+from seismic.correlate import preprocessing_fd as ppfd
 
 
 class TestFDSignBitNormalisation(unittest.TestCase):

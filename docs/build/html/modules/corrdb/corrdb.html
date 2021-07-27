@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>CorrelationDataBase and DBHandler objects &mdash; SeisMIIC 0.1 documentation</title>
+  <title>CorrelationDataBase and DBHandler objects &mdash; SeisMIC 0.1 documentation</title>
   
 
   
@@ -55,7 +55,7 @@
           
 
           
-            <a href="../../index.html" class="icon icon-home"> SeisMIIC
+            <a href="../../index.html" class="icon icon-home"> SeisMIC
           
 
           
@@ -89,7 +89,7 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Getting Started with SeisMIIC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Getting Started with SeisMIC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../trace_data.html">Trace data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../correlate.html">Compute and Handle Correlations</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../corrdb.html">Save and Load Correlations</a><ul class="current">
@@ -106,7 +106,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../monitor.html">Monitor Velocity Changes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIIC</span></code> API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIC</span></code> API</a></li>
 </ul>
 
             
@@ -122,7 +122,7 @@
       <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">SeisMIIC</a>
+          <a href="../../index.html">SeisMIC</a>
         
       </nav>
 
@@ -191,51 +191,51 @@ graph LR
     classDef active fill:#f666, stroke-width:4px, stroke:#f06;
         </div><div class="section" id="correlationdatabase-and-dbhandler-objects">
 <h1>CorrelationDataBase and DBHandler objects<a class="headerlink" href="#correlationdatabase-and-dbhandler-objects" title="Permalink to this headline">¶</a></h1>
-<p>In <strong>SeisMIIC</strong>, correlations are stored in <a class="reference external" href="https://www.hdfgroup.org/downloads/hdf5/">HDF5</a> container files.
+<p>In <strong>SeisMIC</strong>, correlations are stored in <a class="reference external" href="https://www.hdfgroup.org/downloads/hdf5/">HDF5</a> container files.
 This has the advantage of avoiding potential overhead caused by large amounts of correlation files.
-SeisMIIC’s implementation relies on modified <a class="reference external" href="https://www.h5py.org/">h5py</a> classes. After computing your
+SeisMIC’s implementation relies on modified <a class="reference external" href="https://www.h5py.org/">h5py</a> classes. After computing your
 correlations as shown in the earlier steps, they will be saved in one file <em>per station-combination</em>
 (e.g., the file <code class="docutils literal notranslate"><span class="pre">IU-TA.HRV-M58A</span></code> holds the correlations of all components and locations of the two stations
 with each other, whereas the file <code class="docutils literal notranslate"><span class="pre">IU-IU.HRV-HRV</span></code> holds all autocorrelations and intercomponent correlations
 of the station <code class="docutils literal notranslate"><span class="pre">IU.HRV</span></code>).</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p><strong>SeisMIIC</strong> makes use of SEED-like station codes. The general logic of those codes is:
+<p><strong>SeisMIC</strong> makes use of SEED-like station codes. The general logic of those codes is:
 <code class="docutils literal notranslate"><span class="pre">net0-net1.stat0-stat1.loc0-loc1.ch0-ch1</span></code>. Here, 0 is the first station and 1 the second station.
-Correlations will always only be computed alphabetically. That is, <strong>SeisMIIC</strong> will not compute a
+Correlations will always only be computed alphabetically. That is, <strong>SeisMIC</strong> will not compute a
 correlation for <code class="docutils literal notranslate"><span class="pre">TA-IU.M58A-HRV</span></code> but only for <code class="docutils literal notranslate"><span class="pre">IU-TA.HRV-M58A</span></code>.</p>
 </div>
-<p>As a user, you will only ever be calling the <a class="reference internal" href="../API.html#miic3.db.corr_hdf5.CorrelationDataBase" title="miic3.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a> class.
-The only function of this class is to return a <a class="reference internal" href="../API.html#miic3.db.corr_hdf5.DBHandler" title="miic3.db.corr_hdf5.DBHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">DBHandler</span></code></a>, which hold all the
-“useful” functions. To call <a class="reference internal" href="../API.html#miic3.db.corr_hdf5.CorrelationDataBase" title="miic3.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a>, use a context manager like so:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">miic3.db.corr_hdf5</span> <span class="kn">import</span> <span class="n">CorrelationDataBase</span>
+<p>As a user, you will only ever be calling the <a class="reference internal" href="../API.html#seismic.db.corr_hdf5.CorrelationDataBase" title="seismic.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a> class.
+The only function of this class is to return a <a class="reference internal" href="../API.html#seismic.db.corr_hdf5.DBHandler" title="seismic.db.corr_hdf5.DBHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">DBHandler</span></code></a>, which hold all the
+“useful” functions. To call <a class="reference internal" href="../API.html#seismic.db.corr_hdf5.CorrelationDataBase" title="seismic.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a>, use a context manager like so:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">seismic.db.corr_hdf5</span> <span class="kn">import</span> <span class="n">CorrelationDataBase</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="n">myfile</span><span class="o">.</span><span class="n">h5</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="nb">type</span><span class="p">(</span><span class="n">cdb</span><span class="p">)</span>  <span class="c1"># This is a DBHandler</span>
-<span class="go">&lt;class &#39;miic3.db.corr_hdf5.DBHandler&#39;&gt;</span>
+<span class="go">&lt;class &#39;seismic.db.corr_hdf5.DBHandler&#39;&gt;</span>
 </pre></div>
 </div>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>Do not call <a class="reference internal" href="../API.html#miic3.db.corr_hdf5.DBHandler" title="miic3.db.corr_hdf5.DBHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">DBHandler</span></code></a> directly! This might lead to unexpected behaviour or
+<p>Do not call <a class="reference internal" href="../API.html#seismic.db.corr_hdf5.DBHandler" title="seismic.db.corr_hdf5.DBHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">DBHandler</span></code></a> directly! This might lead to unexpected behaviour or
 even dataloss due to corrupted hdf5 files.</p>
 </div>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>If you should for some reason decide to not use the context manager, you will have to close the hdf5 file
-with <code class="xref py py-meth docutils literal notranslate"><span class="pre">miic3.db.corr_hdf5.DBHandler._close()</span></code> to avoid corrupting your files!</p>
+with <code class="xref py py-meth docutils literal notranslate"><span class="pre">seismic.db.corr_hdf5.DBHandler._close()</span></code> to avoid corrupting your files!</p>
 </div>
 <div class="section" id="reading-correlations">
 <h2>Reading Correlations<a class="headerlink" href="#reading-correlations" title="Permalink to this headline">¶</a></h2>
-<p>The most common usecase is probably that you will want to access correlations that <strong>SeisMIIC</strong> computed
-for you (as shown earlier). To do so, you can use the <a class="reference internal" href="../API.html#miic3.db.corr_hdf5.DBHandler.get_data" title="miic3.db.corr_hdf5.DBHandler.get_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_data()</span></code></a>
+<p>The most common usecase is probably that you will want to access correlations that <strong>SeisMIC</strong> computed
+for you (as shown earlier). To do so, you can use the <a class="reference internal" href="../API.html#seismic.db.corr_hdf5.DBHandler.get_data" title="seismic.db.corr_hdf5.DBHandler.get_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_data()</span></code></a>
 method:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">miic3.db.corr_hdf5</span> <span class="kn">import</span> <span class="n">CorrelationDataBase</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">seismic.db.corr_hdf5</span> <span class="kn">import</span> <span class="n">CorrelationDataBase</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="n">myfile</span><span class="o">.</span><span class="n">h5</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="n">cst</span> <span class="o">=</span> <span class="n">cdb</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span>
 <span class="gp">&gt;&gt;&gt; </span>        <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;subdivision&#39;</span><span class="p">,</span> <span class="n">network</span><span class="o">=</span><span class="s1">&#39;IU-IU&#39;</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="s1">&#39;??Z-??Z&#39;</span><span class="p">,</span> <span class="n">corr_start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">corr_end</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># cst is a CorrStream object on that we can use our known methods</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">cst</span><span class="p">))</span>
-<span class="go">&lt;class &#39;miic3.correltea.stream.CorrStream&#39;&gt;</span>
+<span class="go">&lt;class &#39;seismic.correltea.stream.CorrStream&#39;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1">#cst.count()</span>
 <span class="go">289</span>
 </pre></div>
@@ -245,7 +245,7 @@ The data we are loading are correlations from waveforms recorded between <code c
 is similar to using a wildcard (i.e., load from earliest to latest available data).</p>
 <div class="section" id="tags">
 <h3>Tags<a class="headerlink" href="#tags" title="Permalink to this headline">¶</a></h3>
-<p><strong>SeisMIIC</strong> uses the following standard tags:</p>
+<p><strong>SeisMIC</strong> uses the following standard tags:</p>
 <ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">subdivision</span></code>: Are the unstacked correlations with the the correlation length of <code class="docutils literal notranslate"><span class="pre">corr_len</span></code> as defined in our <a class="reference external" href="../correlate/get_started.html#setting-the-parameters">yaml file</a>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">stack_$stacklen$</span></code> : Is the standard tag for correlation stacks, where $stacklen$ should be replaced by the stack length in seconds.</p></li>
@@ -254,15 +254,15 @@ is similar to using a wildcard (i.e., load from earliest to latest available dat
 <div class="section" id="obtain-correlation-parameters">
 <h3>Obtain correlation parameters<a class="headerlink" href="#obtain-correlation-parameters" title="Permalink to this headline">¶</a></h3>
 <p>You might want to get the dictionary that you used to produce the correlations in the file. You can do that by using
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">miic3.corr_hdf5.corrdb.DBHandler.get_corr_options()</span></code>.</p>
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">seismic.corr_hdf5.corrdb.DBHandler.get_corr_options()</span></code>.</p>
 </div>
 <div class="section" id="getting-an-overview-over-available-data">
 <h3>Getting an overview over available data<a class="headerlink" href="#getting-an-overview-over-available-data" title="Permalink to this headline">¶</a></h3>
 <p>Once you have a suffieciently large dataset, you might be confused about which data you have already produced.
-In this case, <strong>SeisMIIC</strong> offers several methods to make your life a little easier:</p>
+In this case, <strong>SeisMIC</strong> offers several methods to make your life a little easier:</p>
 <ol class="arabic simple">
-<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">miic3.corr_hdf5.corrdb.DBHandler.get_available_starttimes()</span></code>: Returns a dictionaryof available starttimes for your chosen network, station, and channel combinations (wildcards are allowed).</p></li>
-<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">miic3.corr_hdf5.corrdb.DBHandler.get_available_channels()</span></code> : Returns the available channel combinations for a given station combination.</p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">seismic.corr_hdf5.corrdb.DBHandler.get_available_starttimes()</span></code>: Returns a dictionaryof available starttimes for your chosen network, station, and channel combinations (wildcards are allowed).</p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">seismic.corr_hdf5.corrdb.DBHandler.get_available_channels()</span></code> : Returns the available channel combinations for a given station combination.</p></li>
 <li><dl class="simple">
 <dt><strong>Access the DBHandler like a dictionary</strong>: Just like in h5py, it is possible to access the <code class="xref py py-class docutils literal notranslate"><span class="pre">DBHandler</span></code> like a dictionary. The logic works as follows:</dt><dd><p>dbh[tag][netcomb][statcomb][chacomb][corr_start][corr_end]</p>
 </dd>
@@ -299,8 +299,8 @@ you will have to pay attention to a couple of particularities:</p>
 <span class="normal">13</span>
 <span class="normal">14</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">yaml</span>
 
-<span class="kn">from</span> <span class="nn">miic3.db.corr_hdf5</span> <span class="kn">import</span> <span class="n">CorrelationDataBase</span>
-<span class="kn">from</span> <span class="nn">miic3.correlate.stream</span> <span class="kn">import</span> <span class="n">CorrStream</span>
+<span class="kn">from</span> <span class="nn">seismic.db.corr_hdf5</span> <span class="kn">import</span> <span class="n">CorrelationDataBase</span>
+<span class="kn">from</span> <span class="nn">seismic.correlate.stream</span> <span class="kn">import</span> <span class="n">CorrStream</span>
 
 <span class="c1"># For this example, we are just gonna create an empty CorrStream</span>
 <span class="c1"># Of course, this will not really add any data to the file</span>
@@ -313,8 +313,8 @@ you will have to pay attention to a couple of particularities:</p>
     <span class="n">cdb</span><span class="o">.</span><span class="n">add_correlation</span><span class="p">(</span><span class="n">cst</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;my_sensible_tag&#39;</span><span class="p">)</span>
 </pre></div>
 </td></tr></table></div>
-<p>If there had been any data in our <a class="reference internal" href="../API.html#miic3.correlate.stream.CorrStream" title="miic3.correlate.stream.CorrStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrStream</span></code></a>, we could retrieve it as shown above.
-Network, station, and channel information are determined automatically from the <a class="reference internal" href="../API.html#miic3.correlate.stream.CorrTrace" title="miic3.correlate.stream.CorrTrace"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrTrace</span></code></a> header.</p>
+<p>If there had been any data in our <a class="reference internal" href="../API.html#seismic.correlate.stream.CorrStream" title="seismic.correlate.stream.CorrStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrStream</span></code></a>, we could retrieve it as shown above.
+Network, station, and channel information are determined automatically from the <a class="reference internal" href="../API.html#seismic.correlate.stream.CorrTrace" title="seismic.correlate.stream.CorrTrace"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrTrace</span></code></a> header.</p>
 </div>
 </div>
 
@@ -332,7 +332,7 @@ Network, station, and channel information are determined automatically from the 
 
   <div role="contentinfo">
     <p>
-        &#169; Copyright 2020, C.S..
+        &#169; Copyright 2021, The SeisMIC development team..
 
     </p>
   </div>

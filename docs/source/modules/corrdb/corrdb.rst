@@ -16,53 +16,53 @@
 CorrelationDataBase and DBHandler objects
 -----------------------------------------
 
-In **SeisMIIC**, correlations are stored in `HDF5 <https://www.hdfgroup.org/downloads/hdf5/>`_ container files.
+In **SeisMIC**, correlations are stored in `HDF5 <https://www.hdfgroup.org/downloads/hdf5/>`_ container files.
 This has the advantage of avoiding potential overhead caused by large amounts of correlation files.
-SeisMIIC's implementation relies on modified `h5py <https://www.h5py.org/>`_ classes. After computing your
+SeisMIC's implementation relies on modified `h5py <https://www.h5py.org/>`_ classes. After computing your
 correlations as shown in the earlier steps, they will be saved in one file *per station-combination*
 (e.g., the file ``IU-TA.HRV-M58A`` holds the correlations of all components and locations of the two stations
 with each other, whereas the file ``IU-IU.HRV-HRV`` holds all autocorrelations and intercomponent correlations
 of the station ``IU.HRV``).
 
 .. note::
-    **SeisMIIC** makes use of SEED-like station codes. The general logic of those codes is:
+    **SeisMIC** makes use of SEED-like station codes. The general logic of those codes is:
     ``net0-net1.stat0-stat1.loc0-loc1.ch0-ch1``. Here, 0 is the first station and 1 the second station.
-    Correlations will always only be computed alphabetically. That is, **SeisMIIC** will not compute a
+    Correlations will always only be computed alphabetically. That is, **SeisMIC** will not compute a
     correlation for ``TA-IU.M58A-HRV`` but only for ``IU-TA.HRV-M58A``.
 
-As a user, you will only ever be calling the :class:`~miic3.db.corr_hdf5.CorrelationDataBase` class.
-The only function of this class is to return a :class:`~miic3.db.corr_hdf5.DBHandler`, which hold all the
-"useful" functions. To call :class:`~miic3.db.corr_hdf5.CorrelationDataBase`, use a context manager like so:
+As a user, you will only ever be calling the :class:`~seismic.db.corr_hdf5.CorrelationDataBase` class.
+The only function of this class is to return a :class:`~seismic.db.corr_hdf5.DBHandler`, which hold all the
+"useful" functions. To call :class:`~seismic.db.corr_hdf5.CorrelationDataBase`, use a context manager like so:
 
->>> from miic3.db.corr_hdf5 import CorrelationDataBase
+>>> from seismic.db.corr_hdf5 import CorrelationDataBase
 >>> with CorrelationDataBase(myfile.h5) as cdb:
 >>>     type(cdb)  # This is a DBHandler
-<class 'miic3.db.corr_hdf5.DBHandler'>
+<class 'seismic.db.corr_hdf5.DBHandler'>
 
 .. warning::
 
-    Do not call :class:`~miic3.db.corr_hdf5.DBHandler` directly! This might lead to unexpected behaviour or
+    Do not call :class:`~seismic.db.corr_hdf5.DBHandler` directly! This might lead to unexpected behaviour or
     even dataloss due to corrupted hdf5 files.
 
 .. warning::
 
     If you should for some reason decide to not use the context manager, you will have to close the hdf5 file
-    with :meth:`miic3.db.corr_hdf5.DBHandler._close` to avoid corrupting your files!
+    with :meth:`seismic.db.corr_hdf5.DBHandler._close` to avoid corrupting your files!
 
 Reading Correlations
 ++++++++++++++++++++
 
-The most common usecase is probably that you will want to access correlations that **SeisMIIC** computed
-for you (as shown earlier). To do so, you can use the :meth:`~miic3.db.corr_hdf5.DBHandler.get_data`
+The most common usecase is probably that you will want to access correlations that **SeisMIC** computed
+for you (as shown earlier). To do so, you can use the :meth:`~seismic.db.corr_hdf5.DBHandler.get_data`
 method:
 
->>> from miic3.db.corr_hdf5 import CorrelationDataBase
+>>> from seismic.db.corr_hdf5 import CorrelationDataBase
 >>> with CorrelationDataBase(myfile.h5, mode='r') as cdb:
 >>>     cst = cdb.get_data(
 >>>         tag='subdivision', network='IU-IU', station='*', channel='??Z-??Z', corr_start=None, corr_end=None)
 >>> # cst is a CorrStream object on that we can use our known methods
 >>> print(type(cst))
-<class 'miic3.correltea.stream.CorrStream'>
+<class 'seismic.correltea.stream.CorrStream'>
 >>> #cst.count()
 289
 
@@ -73,7 +73,7 @@ is similar to using a wildcard (i.e., load from earliest to latest available dat
 Tags
 ####
 
-**SeisMIIC** uses the following standard tags:
+**SeisMIC** uses the following standard tags:
 
 1. ``subdivision``: Are the unstacked correlations with the the correlation length of ``corr_len`` as defined in our `yaml file <../correlate/get_started.html#setting-the-parameters>`_.
 2. ``stack_$stacklen$`` : Is the standard tag for correlation stacks, where $stacklen$ should be replaced by the stack length in seconds.
@@ -83,17 +83,17 @@ Obtain correlation parameters
 #############################
 
 You might want to get the dictionary that you used to produce the correlations in the file. You can do that by using
-:meth:`miic3.corr_hdf5.corrdb.DBHandler.get_corr_options`.
+:meth:`seismic.corr_hdf5.corrdb.DBHandler.get_corr_options`.
 
 Getting an overview over available data
 #######################################
 
 Once you have a suffieciently large dataset, you might be confused about which data you have already produced.
-In this case, **SeisMIIC** offers several methods to make your life a little easier:
+In this case, **SeisMIC** offers several methods to make your life a little easier:
 
-1. :meth:`miic3.corr_hdf5.corrdb.DBHandler.get_available_starttimes`: Returns a dictionaryof available starttimes for your chosen network, station, and channel combinations (wildcards are allowed).
-2. :meth:`miic3.corr_hdf5.corrdb.DBHandler.get_available_channels` : Returns the available channel combinations for a given station combination.
-3. **Access the DBHandler like a dictionary**: Just like in h5py, it is possible to access the :class:`~miic3.db.corr_hdf5.corrdb.DBHandler` like a dictionary. The logic works as follows:
+1. :meth:`seismic.corr_hdf5.corrdb.DBHandler.get_available_starttimes`: Returns a dictionaryof available starttimes for your chosen network, station, and channel combinations (wildcards are allowed).
+2. :meth:`seismic.corr_hdf5.corrdb.DBHandler.get_available_channels` : Returns the available channel combinations for a given station combination.
+3. **Access the DBHandler like a dictionary**: Just like in h5py, it is possible to access the :class:`~seismic.db.corr_hdf5.corrdb.DBHandler` like a dictionary. The logic works as follows:
     dbh[tag][netcomb][statcomb][chacomb][corr_start][corr_end]
 
 Following the logic of the structure above, we can get a list of all available tags as follows:
@@ -115,8 +115,8 @@ you will have to pay attention to a couple of particularities:
 
     import yaml
 
-    from miic3.db.corr_hdf5 import CorrelationDataBase
-    from miic3.correlate.stream import CorrStream
+    from seismic.db.corr_hdf5 import CorrelationDataBase
+    from seismic.correlate.stream import CorrStream
 
     # For this example, we are just gonna create an empty CorrStream
     # Of course, this will not really add any data to the file
@@ -128,7 +128,7 @@ you will have to pay attention to a couple of particularities:
     with CorrelationDataBase(myfile.h5, mode='w', corr_options=co) as cdb:
         cdb.add_correlation(cst, tag='my_sensible_tag')
 
-If there had been any data in our :class:`~miic3.correlate.stream.CorrStream`, we could retrieve it as shown above.
-Network, station, and channel information are determined automatically from the :class:`~miic3.correlate.stream.CorrTrace` header.
+If there had been any data in our :class:`~seismic.correlate.stream.CorrStream`, we could retrieve it as shown above.
+Network, station, and channel information are determined automatically from the :class:`~seismic.correlate.stream.CorrTrace` header.
     
     

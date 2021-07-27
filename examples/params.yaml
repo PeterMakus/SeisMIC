@@ -57,15 +57,16 @@ co:
     # these function work on an obspy.Stream object given as first argument
     # and return an obspy.Stream object.
     preProcessing : [
-                    {'function':'miic3.correlate.preprocessing_stream.detrend_st',
+                    # "Technical Filter" Only filter unphysical freqs
+                    {'function':'seismic.correlate.preprocessing_stream.detrend_st',
                     'args':{'type':'simple'}},
-                    {'function':'miic3.correlate.preprocessing_stream.cos_taper_st',
+                    {'function':'seismic.correlate.preprocessing_stream.cos_taper_st',
                       'args':{'taper_len': 10, # seconds
                               'taper_at_masked': True}},
-                    {'function':'miic3.correlate.preprocessing_stream.stream_filter',
+                    {'function':'seismic.correlate.preprocessing_stream.stream_filter',
                       'args':{'ftype':'bandpass',
-                              'filter_option':{'freqmin':0.15, #0.01
-                                               'freqmax':0.5}}}
+                              'filter_option':{'freqmin':0.01,
+                                               'freqmax':9.5}}}
                     ]
     # subdivision of the read sequences for correlation
     # type: presence of this key
@@ -87,24 +88,25 @@ co:
 
     # parameters for correlation preprocessing
     corr_args : {'TDpreProcessing':[
-                                    # {'function':'miic3.correlate.correlate.detrend',
+                                    # {'function':'seismic.correlate.preprocessing_td.detrend',
                                     # 'args':{'type':'constant'}},
-                                   #{'function':'miic.core.pxcorr_func.TDfilter',
-                                   # 'args':{'type':'bandpass','freqmin':0.01,'freqmax':4}},
-                                    #{'function':'miic.core.pxcorr_func.mute',
+                                    # Filter Here!
+                                   {'function':'seismic.correlate.preprocessing_td.TDfilter',
+                                   'args':{'type':'bandpass','freqmin':0.05,'freqmax':0.5}},
+                                    #{'function':'seismic.correlate.preprocessing_td.mute',
                                     # 'args':{'taper_len':100.,
                                            # 'threshold':1000, absolute threshold
                                     #         'std_factor':3,
                                     #         'filter':{'type':'bandpass','freqmin':2,'freqmax':4},
                                     #         'extend_gaps':True}},
-                                   {'function':'miic3.correlate.preprocessing_td.clip',
+                                   {'function':'seismic.correlate.preprocessing_td.clip',
                                     'args':{'std_factor':3}},
                                    ],
                  'FDpreProcessing':[
-                                    {'function':'miic3.correlate.preprocessing_fd.spectralWhitening',
+                                    {'function':'seismic.correlate.preprocessing_fd.spectralWhitening',
                                      'args':{'joint_norm':False}},
-                                    {'function':'miic3.correlate.preprocessing_fd.FDfilter',
-                                     'args':{'flimit':[0.01,0.02,9,10]}}
+                                    {'function':'seismic.correlate.preprocessing_fd.FDfilter',
+                                     'args':{'flimit':[0.02,0.05,0.5,0.6]}}
                                     ],
                  'lengthToSave':100,
                  'center_correlation':True,      # make sure zero correlation time is in the center
@@ -137,7 +139,7 @@ dv:
     freq_max : 0.9
 
     ### Definition of lapse time window
-    tw_start : 5     # lapse time of first sample [s]
+    tw_start : 20     # lapse time of first sample [s]
     tw_len : 80       # length of window [s]
     
     ### Range to try stretching

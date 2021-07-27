@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Tuesday, 20th July 2021 03:57:49 pm
+Last Modified: Tuesday, 27th July 2021 10:55:39 am
 '''
 import unittest
 import warnings
@@ -19,7 +19,7 @@ from obspy.core import AttribDict
 from scipy.fftpack import next_fast_len
 from scipy.signal.windows import gaussian
 
-from miic3.correlate import correlate
+from seismic.correlate import correlate
 
 
 # class TestCorrrelator(unittest.TestCase):
@@ -123,7 +123,7 @@ class TestCalcCrossCombis(unittest.TestCase):
                 Stream(), {}, method='allCombinations'))
             self.assertEqual(len(w), 1)
 
-    @mock.patch('miic3.correlate.correlate._compare_existing_data')
+    @mock.patch('seismic.correlate.correlate._compare_existing_data')
     def test_existing_db(self, compare_mock):
         compare_mock.return_value = True
         with warnings.catch_warnings(record=True) as w:

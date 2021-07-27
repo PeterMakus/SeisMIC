@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 1st June 2021 10:42:03 am
-Last Modified: Monday, 19th July 2021 11:35:11 am
+Last Modified: Tuesday, 27th July 2021 10:55:36 am
 '''
 from copy import deepcopy
 import unittest
@@ -20,8 +20,8 @@ import numpy as np
 import h5py
 import yaml
 
-from miic3.db import corr_hdf5
-from miic3.correlate.stream import CorrStream, CorrTrace
+from seismic.db import corr_hdf5
+from seismic.correlate.stream import CorrStream, CorrTrace
 
 
 with open('params.yaml') as file:
@@ -86,7 +86,7 @@ def create_group_mock(d: dict, name: str, group: bool):
 
 class TestAllTracesRecursive(unittest.TestCase):
     # The only thing I can do here is testing whether the conditions work
-    @patch('miic3.db.corr_hdf5.read_hdf5_header')
+    @patch('seismic.db.corr_hdf5.read_hdf5_header')
     def test_is_np_array(self, read_header_mock):
         read_header_mock.return_value = None
         d = {
@@ -104,7 +104,7 @@ class TestAllTracesRecursive(unittest.TestCase):
         st = corr_hdf5.all_traces_recursive(g, st.clear(), 'no_match')
         self.assertEqual(st.count(), 0)
 
-    @patch('miic3.db.corr_hdf5.read_hdf5_header')
+    @patch('seismic.db.corr_hdf5.read_hdf5_header')
     def test_recursive(self, read_header_mock):
         # For this we need to patch fnmatch as well, as the names here aren't
         # full path
@@ -125,7 +125,7 @@ class TestAllTracesRecursive(unittest.TestCase):
 
 
 class TestDBHandler(unittest.TestCase):
-    @patch('miic3.db.corr_hdf5.h5py.File.__init__')
+    @patch('seismic.db.corr_hdf5.h5py.File.__init__')
     def setUp(self, super_mock):
         self.file_mock = MagicMock()
         super_mock.return_value = self.file_mock
@@ -136,7 +136,7 @@ class TestDBHandler(unittest.TestCase):
         tr.stats['corr_end'] = tr.stats.endtime
         self.ctr = CorrTrace(tr.data, _header=tr.stats)
 
-    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_compression_indentifier(self, getitem_mock):
         d = {'test': 0}
         getitem_mock.side_effect = d.__getitem__
@@ -144,13 +144,13 @@ class TestDBHandler(unittest.TestCase):
         self.assertEqual(self.dbh.compression_opts, 9)
         self.assertEqual(self.dbh['test'], 0)
 
-    @patch('miic3.db.corr_hdf5.super')
+    @patch('seismic.db.corr_hdf5.super')
     def test_forbidden_compression(self, super_mock):
         super_mock.return_value = None
         with self.assertRaises(ValueError):
             _ = corr_hdf5.DBHandler('a', 'a', 'notexisting5', None)
 
-    @patch('miic3.db.corr_hdf5.super')
+    @patch('seismic.db.corr_hdf5.super')
     def test_forbidden_compression_level(self, super_mock):
         super_mock.return_value = None
         with warnings.catch_warnings(record=True) as w:
@@ -158,13 +158,13 @@ class TestDBHandler(unittest.TestCase):
             self.assertEqual(dbh.compression_opts, 9)
             self.assertEqual(len(w), 1)
 
-    @patch('miic3.db.corr_hdf5.super')
+    @patch('seismic.db.corr_hdf5.super')
     def test_no_compression_level(self, super_mock):
         super_mock.return_value = None
         with self.assertRaises(IndexError):
             _ = corr_hdf5.DBHandler('a', 'a', 'gzip', None)
 
-    @patch('miic3.db.corr_hdf5.super')
+    @patch('seismic.db.corr_hdf5.super')
     def test_no_compression_name(self, super_mock):
         super_mock.return_value = None
         with self.assertRaises(IndexError):
@@ -186,15 +186,15 @@ class TestDBHandler(unittest.TestCase):
                     compression_opts=9)
             self.assertEqual(len(w), 1)
 
-    @patch('miic3.db.corr_hdf5.super')
+    @patch('seismic.db.corr_hdf5.super')
     def test_add_different_object(self, super_mock):
         super_mock.return_value = None
         dbh = corr_hdf5.DBHandler('a', 'r', 'gzip9', None)
         with self.assertRaises(TypeError):
             dbh.add_correlation(read())
 
-    @patch('miic3.db.corr_hdf5.read_hdf5_header')
-    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    @patch('seismic.db.corr_hdf5.read_hdf5_header')
+    @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_data_no_wildcard(self, file_mock, read_hdf5_header_mock):
         read_hdf5_header_mock.return_value = self.ctr.stats
         net = 'AB-CD'
@@ -215,8 +215,8 @@ class TestDBHandler(unittest.TestCase):
         self.assertEqual(outdata[0], self.ctr)
         file_mock.assert_called_with(exp_path)
 
-    @patch('miic3.db.corr_hdf5.read_hdf5_header')
-    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    @patch('seismic.db.corr_hdf5.read_hdf5_header')
+    @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_data_no_wildcard_not_alphabetical(
             self, file_mock, read_hdf5_header_mock):
         read_hdf5_header_mock.return_value = self.ctr.stats
@@ -237,8 +237,8 @@ class TestDBHandler(unittest.TestCase):
         file_mock.assert_called_with(exp_path)
         self.assertEqual(out[0], self.ctr)
 
-    @patch('miic3.db.corr_hdf5.all_traces_recursive')
-    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    @patch('seismic.db.corr_hdf5.all_traces_recursive')
+    @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_data_wildcard(self, file_mock, all_tr_recursive_mock):
         all_tr_recursive_mock.return_value = None
         net = 'AB-CD'
@@ -258,8 +258,8 @@ class TestDBHandler(unittest.TestCase):
         _ = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
         file_mock.assert_called_with(exp_path)
 
-    @patch('miic3.db.corr_hdf5.all_traces_recursive')
-    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    @patch('seismic.db.corr_hdf5.all_traces_recursive')
+    @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_data_wildcard2(self, file_mock, all_tr_recursive_mock):
         all_tr_recursive_mock.return_value = None
         net = 'AB-CD'
@@ -280,7 +280,7 @@ class TestDBHandler(unittest.TestCase):
         _ = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
         file_mock.assert_called_with(exp_path)
 
-    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_available_starttimes(self, file_mock):
         net = 'AB-CD'
         stat = 'XY-YZ'
@@ -298,7 +298,7 @@ class TestDBHandler(unittest.TestCase):
             exp_result)
         file_mock.assert_called_with('/'+'/'.join([tag, net, stat, ch]))
 
-    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_available_starttimes_key_error(self, file_mock):
         net = 'AB-CD'
         stat = 'XY-YZ'
@@ -314,7 +314,7 @@ class TestDBHandler(unittest.TestCase):
             self.dbh.get_available_starttimes(net, stat, tag, 'blub'),
             {})
 
-    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_available_starttimes_wildcard(self, file_mock):
         net = 'AB-CD'
         stat = 'XY-YZ'
@@ -333,8 +333,8 @@ class TestDBHandler(unittest.TestCase):
             self.dbh.get_available_starttimes(net, stat, tag, '*'),
             exp_result)
 
-    @patch('miic3.db.corr_hdf5.DBHandler.get_corr_options')
-    @patch('miic3.db.corr_hdf5.h5py.File.__init__')
+    @patch('seismic.db.corr_hdf5.DBHandler.get_corr_options')
+    @patch('seismic.db.corr_hdf5.h5py.File.__init__')
     def test_wrong_co(self, super_mock, gco_mock):
         self.file_mock = MagicMock()
         super_mock.return_value = self.file_mock
@@ -344,21 +344,21 @@ class TestDBHandler(unittest.TestCase):
         with self.assertRaises(PermissionError):
             corr_hdf5.DBHandler('a', 'a', 'gzip9', co)
 
-    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_corr_options(self, gi_mock):
         d = {'co': AttribDict(attrs={'co': str(corr_hdf5.co_to_hdf5(co))})}
         gi_mock.side_effect = d.__getitem__
         self.assertEqual(corr_hdf5.co_to_hdf5(co), self.dbh.get_corr_options())
 
-    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_corr_options_no_data(self, gi_mock):
         d = {}
         gi_mock.side_effect = d.__getitem__
         with self.assertRaises(KeyError):
             self.dbh.get_corr_options()
 
-    @patch('miic3.db.corr_hdf5.h5py.File.create_dataset')
-    @patch('miic3.db.corr_hdf5.h5py.File.__getitem__')
+    @patch('seismic.db.corr_hdf5.h5py.File.create_dataset')
+    @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_add_corr_options(self, gi_mock, cd_mock):
         d = {'co': AttribDict(attrs={})}
         gi_mock.side_effect = d.__getitem__

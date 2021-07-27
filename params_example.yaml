@@ -55,16 +55,16 @@ co:
     # these function work on an obspy.Stream object given as first argument
     # and return an obspy.Stream object.
     preProcessing : [
-                    {'function':'miic3.correlate.preprocessing_stream.detrend_st',
+                    {'function':'seismic.correlate.preprocessing_stream.detrend_st',
                     'args':{'type':'simple'}},
-                    {'function':'miic3.correlate.preprocessing_stream.cos_taper_st',
+                    {'function':'seismic.correlate.preprocessing_stream.cos_taper_st',
                       'args':{'taper_len': 10, # seconds
                               'taper_at_masked': True}},
-                    {'function':'miic3.correlate.preprocessing_stream.stream_filter',
+                    {'function':'seismic.correlate.preprocessing_stream.stream_filter',
                       'args':{'ftype':'bandpass',
-                              'filter_option':{'freqmin':2, #0.01
-                                               'freqmax':8}}}
-                     #{'function':'miic.core.stream.stream_mute',
+                              'filter_option':{'freqmin':0.01, #0.01
+                                               'freqmax':12}}}
+                     #{'function':'seismic.correlate.preprocessing_stream.stream_mute',
                      # 'args':{'taper_len':100,
                      #         'mute_method':'std_factor',
                      #         'mute_value':3}}
@@ -84,30 +84,30 @@ co:
         delete_subdivision : False
 
     # parameters for correlation preprocessing
-    # Standard functions reside in miic3.correlate.preprocessing_td
+    # Standard functions reside in seismic.correlate.preprocessing_td
     corr_args : {'TDpreProcessing':[
-                                    {'function':'miic3.correlate.preprocessing_td.detrend',
+                                    {'function':'seismic.correlate.preprocessing_td.detrend',
                                     'args':{'type':'constant'}},
-                                  #  {'function':'miic3.correlate.preprocessing_td.TDfilter',
-                                  #  'args':{'type':'bandpass','freqmin':4,'freqmax':8}},
-                                  # {'function':'miic3.correlate.preprocessing_td.taper',
+                                   {'function':'seismic.correlate.preprocessing_td.TDfilter',
+                                   'args':{'type':'bandpass','freqmin':4,'freqmax':8}},
+                                  # {'function':'seismic.correlate.preprocessing_td.taper',
                                   #  'args': {'type':'cosine_taper','p':0.02}},
-                                    # {'function':'miic3.correlate.preprocessing_td.mute',
+                                    # {'function':'seismic.correlate.preprocessing_td.mute',
                                     # 'args':{'taper_len':100.,
                                     #        'threshold':1000, absolute threshold
                                     #         'std_factor':3,
                                     #         'filter':{'type':'bandpass','freqmin':2,'freqmax':4},
                                     #         'extend_gaps':True}},
-                                   {'function':'miic3.correlate.preprocessing_td.clip',
+                                   {'function':'seismic.correlate.preprocessing_td.clip',
                                     'args':{'std_factor':3}},
                                    ],
-                  # Standard functions reside in miic3.correlate.preprocessing_fd
+                  # Standard functions reside in seismic.correlate.preprocessing_fd
                  'FDpreProcessing':[
-                                    {'function':'miic3.correlate.preprocessing_fd.spectralWhitening',
+                                    {'function':'seismic.correlate.preprocessing_fd.spectralWhitening',
                                      'args':{'joint_norm':False}},
-                                    {'function':'miic3.correlate.preprocessing_fd.FDfilter',
+                                    {'function':'seismic.correlate.preprocessing_fd.FDfilter',
                                      'args':{'flimit':[0.01,0.02,9,10]}}
-                                    #  {'function':miic3.correlate.preprocessing_fd.FDsignBitNormalization,
+                                    #  {'function':seismic.correlate.preprocessing_fd.FDsignBitNormalization,
                                     # 'args':{}}
                                     ],
                  'lengthToSave':100,
@@ -137,8 +137,8 @@ dv:
     date_inc : 86400                        # increment of measurements
 
     ### Frequencies
-    freq_min : 0.1
-    freq_max : 0.5
+    freq_min : 4
+    freq_max : 8
 
     ### Definition of lapse time window
     tw_start : 20     # lapse time of first sample [s]
@@ -146,5 +146,5 @@ dv:
     
     ### Range to try stretching
     stretch_range : 0.03
-    stretch_steps : 1000
+    stretch_steps : 1001
 

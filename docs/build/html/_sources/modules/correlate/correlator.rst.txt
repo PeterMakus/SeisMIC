@@ -16,10 +16,10 @@
 The Correlator Object
 ---------------------
 
-The Object governing the actual computation is :class:`~miic3.correlate.correlate.Correlator`. It takes only two input arguments and the most important is the dictionary / yml file that we created in `the preceding step <./get_started.html#download-data>`_.
-The second input argument is the :class:`~miic3.trace_data.waveform.Store_Client` we used to `download <../trace_data/waveform.html#download-data>`_ our data.
+The Object governing the actual computation is :class:`~seismic.correlate.correlate.Correlator`. It takes only two input arguments and the most important is the dictionary / yml file that we created in `the preceding step <./get_started.html#download-data>`_.
+The second input argument is the :class:`~seismic.trace_data.waveform.Store_Client` we used to `download <../trace_data/waveform.html#download-data>`_ our data.
 
-As Computing Ambient Noise Correlations is computationally very expensive, **SeisMIIC** can be used in conjuction with MPI (e.g., openMPI) to enable processing with several cores or on HPCs.
+As Computing Ambient Noise Correlations is computationally very expensive, **SeisMIC** can be used in conjuction with MPI (e.g., openMPI) to enable processing with several cores or on HPCs.
 
 A script to start your correlation could look like this:
 
@@ -31,8 +31,8 @@ A script to start your correlation could look like this:
 
     from obspy.clients.fdsn import Client
 
-    from miic3.correlate.correlate import Correlator
-    from miic3.trace_data.waveform import Store_Client
+    from seismic.correlate.correlate import Correlator
+    from seismic.trace_data.waveform import Store_Client
 
     # Path to the paramter file we created in the step before
     params = '/path/to/my/params.yaml'
@@ -55,4 +55,4 @@ This script can be iniated in bash using:
 
     mpirun -n $number_cores$ python mycorrelation.py
 
-where ``$number_cores$`` is the number of cores you want to initialise. The only method of :class:`~miic3.correlate.correlate.Correlator` that you will want to use is :meth:`~miic3.correlate.correlate.Correlator.pxcorr()`, which does not require any (additional) input.
+where ``$number_cores$`` is the number of cores you want to initialise. The only method of :class:`~seismic.correlate.correlate.Correlator` that you will want to use is :meth:`~seismic.correlate.correlate.Correlator.pxcorr()`, which does not require any (additional) input.

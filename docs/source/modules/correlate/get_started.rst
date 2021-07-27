@@ -17,7 +17,7 @@ Get Started (Compute your first Noise Correlations)
 ---------------------------------------------------
 
 After having downloaded your data as shown `here <../trace_data/waveform.html#download-data>`_ (or retrieved seismic data any other way), we are ready to compute our first noise correlation!
-In **SeisMIIC**, parameters for the *preprocessing*, the *correlation*, and, subsequently, measuring the *change in seismic velocity* are provided as a *.yaml* file or as a python *dictionary*.
+In **SeisMIC**, parameters for the *preprocessing*, the *correlation*, and, subsequently, measuring the *change in seismic velocity* are provided as a *.yaml* file or as a python *dictionary*.
 An example for such a *.yaml* file is shown below (and provided in the repository as ``params_example.yaml``).
 
 Setting the parameters
@@ -82,12 +82,12 @@ Setting the parameters
         # these function work on an obspy.Stream object given as first argument
         # and return an obspy.Stream object.
         preProcessing : [
-                        {'function':'miic3.correlate.preprocessing_stream.detrend_st',
+                        {'function':'seismic.correlate.preprocessing_stream.detrend_st',
                         'args':{'type':'simple'}},
-                        {'function':'miic3.correlate.preprocessing_stream.cos_taper_st',
+                        {'function':'seismic.correlate.preprocessing_stream.cos_taper_st',
                         'args':{'taper_len': 10, # seconds
                                 'taper_at_masked': True}},
-                        {'function':'miic3.correlate.preprocessing_stream.stream_filter',
+                        {'function':'seismic.correlate.preprocessing_stream.stream_filter',
                         'args':{'ftype':'bandpass',
                                 'filter_option':{'freqmin':2, #0.01
                                                 'freqmax':8}}}
@@ -112,30 +112,30 @@ Setting the parameters
         taper: False
 
         # parameters for correlation preprocessing
-        # Standard functions reside in miic3.correlate.preprocessing_td
+        # Standard functions reside in seismic.correlate.preprocessing_td
         corr_args : {'TDpreProcessing':[
-                                        {'function':'miic3.correlate.preprocessing_td.detrend',
+                                        {'function':'seismic.correlate.preprocessing_td.detrend',
                                         'args':{'type':'constant'}},
-                                    #  {'function':'miic3.correlate.preprocessing_td.TDfilter',
+                                    #  {'function':'seismic.correlate.preprocessing_td.TDfilter',
                                     #  'args':{'type':'bandpass','freqmin':4,'freqmax':8}},
-                                    # {'function':'miic3.correlate.preprocessing_td.taper',
+                                    # {'function':'seismic.correlate.preprocessing_td.taper',
                                     #  'args': {'type':'cosine_taper','p':0.02}},
-                                        # {'function':'miic3.correlate.preprocessing_td.mute',
+                                        # {'function':'seismic.correlate.preprocessing_td.mute',
                                         # 'args':{'taper_len':100.,
                                         #        'threshold':1000, absolute threshold
                                         #         'std_factor':3,
                                         #         'filter':{'type':'bandpass','freqmin':2,'freqmax':4},
                                         #         'extend_gaps':True}},
-                                    {'function':'miic3.correlate.preprocessing_td.clip',
+                                    {'function':'seismic.correlate.preprocessing_td.clip',
                                         'args':{'std_factor':3}},
                                     ],
-                    # Standard functions reside in miic3.correlate.preprocessing_fd
+                    # Standard functions reside in seismic.correlate.preprocessing_fd
                     'FDpreProcessing':[
-                                        {'function':'miic3.correlate.preprocessing_fd.spectralWhitening',
+                                        {'function':'seismic.correlate.preprocessing_fd.spectralWhitening',
                                         'args':{'joint_norm':False}},
-                                        {'function':'miic3.correlate.preprocessing_fd.FDfilter',
+                                        {'function':'seismic.correlate.preprocessing_fd.FDfilter',
                                         'args':{'flimit':[0.01,0.02,9,10]}}
-                                        #  {'function':miic3.correlate.preprocessing_fd.FDsignBitNormalization,
+                                        #  {'function':seismic.correlate.preprocessing_fd.FDsignBitNormalization,
                                         # 'args':{}}
                                         ],
                     'lengthToSave':100,
@@ -196,7 +196,7 @@ Project Wide Parameters
     # folder for figures
     fig_subdir : 'figures'
 
-Those are parameters that govern the logging and the file-structure. ``proj_dir`` is the root directory, we have chosen when initialising our :class:`~miic3.trace_data.waveform.Store_Client` as shown `here <../trace_data/waveform.html#download-data>`_ .
+Those are parameters that govern the logging and the file-structure. ``proj_dir`` is the root directory, we have chosen when initialising our :class:`~seismic.trace_data.waveform.Store_Client` as shown `here <../trace_data/waveform.html#download-data>`_ .
 ``fig_dir`` and ``log_dir`` are just subdirectories for figures and logs, respectively, and the log level decides how much will actually be logged.
 
 Network Specific Parameters
@@ -271,24 +271,24 @@ Let's start by getting the most obvious parameters out of the way:
         # Method to combine different traces
         combination_method : 'betweenStations'
 
-+ ``Sampling_rate`` is the new sampling rate you will want your data to have. **SeisMIIC** will take care of anti-alias filtering and determine whether data can be decimated.
++ ``Sampling_rate`` is the new sampling rate you will want your data to have. **SeisMIC** will take care of anti-alias filtering and determine whether data can be decimated.
 + ``remove_response`` if you want the data to be corrected for the instrument response, set this to ``True``.
-+ ``combination_method`` decides which components you will want to correlate. See :func:`~miic3.correlate.correlate.calc_cross_combis` for allowed options.
++ ``combination_method`` decides which components you will want to correlate. See :func:`~seismic.correlate.correlate.calc_cross_combis` for allowed options.
 
 
 Preprocessing Arguments
 #######################
 
-**SeisMIIC** is coded in a manner that makes it easy for the user to pass custom preprocessing functions. Custom functions can be defined in the three parameters ``preProcessing``, ``TDpreProcessing``, and ``FDpreprocessing``.
+**SeisMIC** is coded in a manner that makes it easy for the user to pass custom preprocessing functions. Custom functions can be defined in the three parameters ``preProcessing``, ``TDpreProcessing``, and ``FDpreprocessing``.
 All these parameters expect a ``list`` of ``dictionaries`` as input. Each dictionary must have the keys ``function`` and ``args``. The value for function is a string describing the complete import path of the preprocessing function in the form **'package.module.sobmodule.function'**.
 ``args`` is simply a keyword argument dictionary that will be passed to the function.
 
-**SeisMIIC** comes with a number of preprocessing functions. If you are creating a custom preprocessing function, it is probably a good idea to have a look at these first in order to understand the required syntax.
+**SeisMIC** comes with a number of preprocessing functions. If you are creating a custom preprocessing function, it is probably a good idea to have a look at these first in order to understand the required syntax.
 Preprocecssing is generally done in three steps:
 
 **Preprocessing "on per stream basis"**
 All functions here take an `obspy stream <https://docs.obspy.org/master/packages/autogen/obspy.core.stream.Stream.html>`_ as input and return the processed stream.
-An over view of available stream preprocessing functions can  be found in :mod:`~miic3.correlate.preprocessing_stream`.
+An over view of available stream preprocessing functions can  be found in :mod:`~seismic.correlate.preprocessing_stream`.
 
 
 .. code-block:: yaml
@@ -298,12 +298,12 @@ An over view of available stream preprocessing functions can  be found in :mod:`
         # these function work on an obspy.Stream object given as first argument
         # and return an obspy.Stream object.
         preProcessing : [
-                        {'function':'miic3.correlate.preprocessing_stream.detrend_st',
+                        {'function':'seismic.correlate.preprocessing_stream.detrend_st',
                         'args':{'type':'simple'}},
-                        {'function':'miic3.correlate.preprocessing_stream.cos_taper_st',
+                        {'function':'seismic.correlate.preprocessing_stream.cos_taper_st',
                         'args':{'taper_len': 10, # seconds
                                 'taper_at_masked': True}},
-                        {'function':'miic3.correlate.preprocessing_stream.stream_filter',
+                        {'function':'seismic.correlate.preprocessing_stream.stream_filter',
                         'args':{'ftype':'bandpass',
                                 'filter_option':{'freqmin':2,
                                                 'freqmax':8}}}
@@ -318,30 +318,30 @@ A custom function would need to take a matrix as input, where each column is one
     :linenos:
 
     # parameters for correlation preprocessing
-    # Standard functions reside in miic3.correlate.preprocessing_td
+    # Standard functions reside in seismic.correlate.preprocessing_td
     corr_args : {'TDpreProcessing':[
-                                    {'function':'miic3.correlate.preprocessing_td.detrend',
+                                    {'function':'seismic.correlate.preprocessing_td.detrend',
                                     'args':{'type':'constant'}},
-                                #  {'function':'miic3.correlate.preprocessing_td.TDfilter',
+                                #  {'function':'seismic.correlate.preprocessing_td.TDfilter',
                                 #  'args':{'type':'bandpass','freqmin':4,'freqmax':8}},
-                                # {'function':'miic3.correlate.preprocessing_td.taper',
+                                # {'function':'seismic.correlate.preprocessing_td.taper',
                                 #  'args': {'type':'cosine_taper','p':0.02}},
-                                    # {'function':'miic3.correlate.preprocessing_td.mute',
+                                    # {'function':'seismic.correlate.preprocessing_td.mute',
                                     # 'args':{'taper_len':100.,
                                     #        'threshold':1000, absolute threshold
                                     #         'std_factor':3,
                                     #         'filter':{'type':'bandpass','freqmin':2,'freqmax':4},
                                     #         'extend_gaps':True}},
-                                {'function':'miic3.correlate.preprocessing_td.clip',
+                                {'function':'seismic.correlate.preprocessing_td.clip',
                                     'args':{'std_factor':3}},
                                 ],
-                # Standard functions reside in miic3.correlate.preprocessing_fd
+                # Standard functions reside in seismic.correlate.preprocessing_fd
                 'FDpreProcessing':[
-                                    {'function':'miic3.correlate.preprocessing_fd.spectralWhitening',
+                                    {'function':'seismic.correlate.preprocessing_fd.spectralWhitening',
                                     'args':{'joint_norm':False}},
-                                    {'function':'miic3.correlate.preprocessing_fd.FDfilter',
+                                    {'function':'seismic.correlate.preprocessing_fd.FDfilter',
                                     'args':{'flimit':[0.01,0.02,9,10]}}
-                                    #  {'function':miic3.correlate.preprocessing_fd.FDsignBitNormalization,
+                                    #  {'function':seismic.correlate.preprocessing_fd.FDsignBitNormalization,
                                     # 'args':{}}
                                     ]
                 }
@@ -375,7 +375,7 @@ If ``recombine_subdivision=True``, the correlations will be stacked to ``read_le
             delete_subdivision : False
 
         # parameters for correlation preprocessing
-        # Standard functions reside in miic3.correlate.preprocessing_td
+        # Standard functions reside in seismic.correlate.preprocessing_td
         corr_args : {'lengthToSave':100,
                     'center_correlation':True,      # make sure zero correlation time is in the center
                     'normalize_correlation':True,

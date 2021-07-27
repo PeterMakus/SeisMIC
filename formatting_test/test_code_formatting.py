@@ -16,7 +16,7 @@ import os
 
 def test_flake8():
     test_dir = os.path.dirname(__file__)
-    package_dir = os.path.join(os.path.dirname(test_dir), "miic3")
+    package_dir = os.path.join(os.path.dirname(test_dir), "seismic")
 
     # Possibility to ignore some files and paths.
     ignore_paths = [

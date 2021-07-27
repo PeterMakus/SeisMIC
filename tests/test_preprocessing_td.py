@@ -6,7 +6,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:54:28 pm
-Last Modified: Monday, 26th July 2021 08:01:43 am
+Last Modified: Tuesday, 27th July 2021 10:56:22 am
 '''
 import unittest
 
@@ -14,7 +14,7 @@ import numpy as np
 from scipy.fftpack import next_fast_len
 from scipy.signal.windows import gaussian
 
-from miic3.correlate import preprocessing_td as pptd
+from seismic.correlate import preprocessing_td as pptd
 
 
 class TestClip(unittest.TestCase):

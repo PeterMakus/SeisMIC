@@ -17,9 +17,9 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'SeisMIIC'
-copyright = '2020, C.S.'
-author = 'C.S.'
+project = 'SeisMIC'
+copyright = '2021, The SeisMIC development team.'
+author = 'The SeisMIC development Team'
 
 # The full version, including alpha/beta/rc tags
 release = '0.1'

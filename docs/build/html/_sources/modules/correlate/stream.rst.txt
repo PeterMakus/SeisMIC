@@ -16,25 +16,25 @@
 CorrTrace, CorrStream, and CorrBulk classes
 -------------------------------------------
 
-Once the correlations are actually computed, they are assigned as :class:`~miic3.correlate.stream.CorrTrace` and :class:`~miic3.correlate.stream.CorrStream` objects.
+Once the correlations are actually computed, they are assigned as :class:`~seismic.correlate.stream.CorrTrace` and :class:`~seismic.correlate.stream.CorrStream` objects.
 Both inherit most of their methods and attributes from their `obspy <https://docs.obspy.org/>`_ parents. However, there are some extra attributes and functionalities.
 
 CorrTrace
 +++++++++
 
-Most notably a new Header object (:class:`~miic3.correlate.stats.CorrStats`) with different attributes is associated to this type of trace. The header takes care of
+Most notably a new Header object (:class:`~seismic.correlate.stats.CorrStats`) with different attributes is associated to this type of trace. The header takes care of
 saving vital information like lag times (``start_lag`` and ``end_lag``), the start- and the endtime of the waveforms that were used to compute the correlation (``corr_start`` and ``corr_end``, respectively),
 and information about the coordinates of the stations.
 
-:class:`~miic3.correlate.stream.CorrTrace` does also come with its own plotting method :meth:`~miic3.correlate.stream.CorrTrace.plot` (check it for details). It can produce plots akin to this one:
+:class:`~seismic.correlate.stream.CorrTrace` does also come with its own plotting method :meth:`~seismic.correlate.stream.CorrTrace.plot` (check it for details). It can produce plots akin to this one:
 
 .. image:: ../../figures/corrtr.png
 
 CorrStream
 ++++++++++
 
-Essentially, this class is just a fancy list of :class:`~miic3.correlate.stream.CorrTrace` objects. However, it has methods to stack (:meth:`~miic3.correlate.stream.CorrStream.stack`),
-select (:meth:`~miic3.correlate.stream.CorrStream.select_corr_time`), or slide (:meth:`~miic3.correlate.stream.CorrStream.slide`) time windows. It also enables us to create section stacks, sorted
+Essentially, this class is just a fancy list of :class:`~seismic.correlate.stream.CorrTrace` objects. However, it has methods to stack (:meth:`~seismic.correlate.stream.CorrStream.stack`),
+select (:meth:`~seismic.correlate.stream.CorrStream.select_corr_time`), or slide (:meth:`~seismic.correlate.stream.CorrStream.slide`) time windows. It also enables us to create section stacks, sorted
 by interstation distance or time:
 
 .. image:: ../../figures/cst.svg
@@ -43,6 +43,6 @@ by interstation distance or time:
 CorrBulk
 ++++++++
 
-:class:`~miic3.correlate.stream.CorrStream` does also have a method to create a :class:`~miic3.correlate.stream.CorrBulk` object (:meth:`~miic3.correlate.stream.CorrStream.create_corr_bulk`).
-Instead of relying on a list of traces, this object is based on numpy arrays, which makes postprocessing computationally cheaper. Check out :class:`~miic3.correlate.stream.CorrBulk` for available
+:class:`~seismic.correlate.stream.CorrStream` does also have a method to create a :class:`~seismic.correlate.stream.CorrBulk` object (:meth:`~seismic.correlate.stream.CorrStream.create_corr_bulk`).
+Instead of relying on a list of traces, this object is based on numpy arrays, which makes postprocessing computationally cheaper. Check out :class:`~seismic.correlate.stream.CorrBulk` for available
 post processing functions.

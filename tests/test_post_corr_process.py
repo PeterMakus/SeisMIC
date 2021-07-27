@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 25th June 2021 09:33:09 am
-Last Modified: Monday, 5th July 2021 05:12:56 pm
+Last Modified: Tuesday, 27th July 2021 10:56:04 am
 '''
 
 import unittest
@@ -16,8 +16,8 @@ import unittest
 import numpy as np
 from obspy import UTCDateTime
 
-from miic3.monitor import post_corr_process as pcp
-from miic3.correlate.stats import CorrStats
+from seismic.monitor import post_corr_process as pcp
+from seismic.correlate.stats import CorrStats
 
 
 class TestSmooth(unittest.TestCase):
