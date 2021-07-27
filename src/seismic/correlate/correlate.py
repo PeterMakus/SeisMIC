@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 27th July 2021 10:51:47 am
+Last Modified: Tuesday, 27th July 2021 02:22:24 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -1075,6 +1075,7 @@ sample rate (%s Hz).' % (str(sampling_rate), str(
 
     if remove_response:
         # taper before instrument response removal
+        # print(store_client.rclient.get_stations())
         if taper_len:
             st = ppst.cos_taper_st(st, taper_len, False)
         try:
@@ -1094,12 +1095,15 @@ sample rate (%s Hz).' % (str(sampling_rate), str(
             store_client._write_inventory(ninv)
 
     mu.discard_short_traces(st, subdivision['corr_len']/20)
+
     if preProcessing:
         for procStep in preProcessing:
             func = func_from_str(procStep['function'])
             st = func(st, **procStep['args'])
     st.merge()
     st.trim(startt, endt, pad=True)
+
+    mu.discard_short_traces(st, subdivision['corr_len']/20)
 
     # !Last operation before saving!
     # The actual data in the mseeds was changed from int to float64

@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 1st June 2021 10:42:03 am
-Last Modified: Tuesday, 27th July 2021 10:55:36 am
+Last Modified: Tuesday, 27th July 2021 12:13:46 pm
 '''
 from copy import deepcopy
 import unittest
@@ -365,6 +365,51 @@ class TestDBHandler(unittest.TestCase):
         cd_mock.return_value = d['co']
         self.dbh.add_corr_options(co)
         self.assertEqual(corr_hdf5.co_to_hdf5(co), self.dbh.get_corr_options())
+
+    @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
+    def test_get_available_channels(self, gi_mock):
+        net = 'mynet'
+        stat = 'mystat'
+        tag = 'bla'
+        path = '/%s/' % '/'.join([tag, net, stat])
+        d = {path: {'a': 0, 'b': 1, 'c': 2}}
+        gi_mock.side_effect = d.__getitem__
+        exp = ['a', 'b', 'c']
+        self.assertEqual(exp, self.dbh.get_available_channels(tag, net, stat))
+
+    @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
+    def test_get_available_channels_none_available(self, gi_mock):
+        net = 'mynet'
+        stat = 'mystat'
+        tag = 'bla'
+        d = {}
+        gi_mock.side_effect = d.__getitem__
+        self.assertEqual([], self.dbh.get_available_channels(tag, net, stat))
+
+
+class TestCorrelationDataBase(unittest.TestCase):
+    @patch('seismic.db.corr_hdf5.DBHandler')
+    def test_no_corr_options(self, dbh_mock):
+        with warnings.catch_warnings(record=True) as w:
+            cdb = corr_hdf5.CorrelationDataBase('a', None, 'a')
+        self.assertEqual(cdb.mode, 'r')
+        self.assertEqual(len(w), 1)
+
+    @patch('seismic.db.corr_hdf5.DBHandler')
+    def test_path_name(self, dbh_mock):
+        cdb = corr_hdf5.CorrelationDataBase('a', None, 'r')
+        self.assertEqual(cdb.path, 'a.h5')
+
+
+class TestCoToHDF5(unittest.TestCase):
+    def test_pop_keys(self):
+        d = {
+            'subdir': 0, 'starttime': 15, 'corr_args': {}, 'subdivision': {}}
+        coc = corr_hdf5.co_to_hdf5(d)
+        self.assertEqual(coc, {'corr_args': {}, 'subdivision': {}})
+        # Make sure that input is not altered
+        self.assertEqual(d, {
+            'subdir': 0, 'starttime': 15, 'corr_args': {}, 'subdivision': {}})
 
 
 if __name__ == "__main__":

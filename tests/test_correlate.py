@@ -7,8 +7,9 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Tuesday, 27th July 2021 10:55:39 am
+Last Modified: Tuesday, 27th July 2021 03:05:14 pm
 '''
+from copy import deepcopy
 import unittest
 import warnings
 from unittest import mock
@@ -16,8 +17,8 @@ from unittest import mock
 import numpy as np
 from obspy import read, Stream, Trace
 from obspy.core import AttribDict
-from scipy.fftpack import next_fast_len
-from scipy.signal.windows import gaussian
+from obspy.core.inventory.inventory import read_inventory
+from obspy.core.utcdatetime import UTCDateTime
 
 from seismic.correlate import correlate
 
@@ -44,6 +45,45 @@ class TestStToNpArray(unittest.TestCase):
         A, _ = correlate.st_to_np_array(self.st.copy(), self.st[0].stats.npts)
         for ii, tr in enumerate(self.st):
             self.assertTrue(np.allclose(tr.data, A[:, ii]))
+
+
+class TestCompareExistingData(unittest.TestCase):
+    def setUp(self):
+        st = read()
+        st.sort(keys=['channel'])
+        tr0 = st[0]
+        tr1 = st[1]
+        ex_d = {}
+        ex_d['%s.%s' % (tr0.stats.network, tr0.stats.station)] = {}
+        ex_d[
+            '%s.%s' % (tr0.stats.network, tr0.stats.station)][
+                '%s.%s' % (tr1.stats.network, tr1.stats.station)] = {}
+        ex_d[
+            '%s.%s' % (tr0.stats.network, tr0.stats.station)][
+                '%s.%s' % (tr1.stats.network, tr1.stats.station)] = {}
+        ex_d[
+            '%s.%s' % (tr0.stats.network, tr0.stats.station)][
+                '%s.%s' % (tr1.stats.network, tr1.stats.station)][
+            '%s-%s' % (
+                tr0.stats.channel, tr1.stats.channel)] = [
+                    tr0.stats.starttime]
+        self.ex_d = ex_d
+        self.tr0 = tr0
+        self.tr1 = tr1
+
+    def test_existing(self):
+        self.assertTrue(correlate._compare_existing_data(
+            self.ex_d, self.tr0, self.tr1))
+
+    def test_not_in_db(self):
+        ttr = self.tr0.copy()
+        ttr.stats.starttime += 1
+        self.assertFalse(correlate._compare_existing_data(
+            {}, ttr, self.tr1))
+
+    def test_key_error_handler(self):
+        self.assertFalse(correlate._compare_existing_data(
+            {}, self.tr0, self.tr1))
 
 
 class TestCalcCrossCombis(unittest.TestCase):
@@ -132,45 +172,6 @@ class TestCalcCrossCombis(unittest.TestCase):
             self.assertEqual(len(w), 1)
 
 
-class TestCompareExistingData(unittest.TestCase):
-    def setUp(self):
-        st = read()
-        st.sort(keys=['channel'])
-        tr0 = st[0]
-        tr1 = st[1]
-        ex_d = {}
-        ex_d['%s.%s' % (tr0.stats.network, tr0.stats.station)] = {}
-        ex_d[
-            '%s.%s' % (tr0.stats.network, tr0.stats.station)][
-                '%s.%s' % (tr1.stats.network, tr1.stats.station)] = {}
-        ex_d[
-            '%s.%s' % (tr0.stats.network, tr0.stats.station)][
-                '%s.%s' % (tr1.stats.network, tr1.stats.station)] = {}
-        ex_d[
-            '%s.%s' % (tr0.stats.network, tr0.stats.station)][
-                '%s.%s' % (tr1.stats.network, tr1.stats.station)][
-            '%s-%s' % (
-                tr0.stats.channel, tr1.stats.channel)] = [
-                    tr0.stats.starttime]
-        self.ex_d = ex_d
-        self.tr0 = tr0
-        self.tr1 = tr1
-
-    def test_existing(self):
-        self.assertTrue(correlate._compare_existing_data(
-            self.ex_d, self.tr0, self.tr1))
-
-    def test_not_in_db(self):
-        ttr = self.tr0.copy()
-        ttr.stats.starttime += 1
-        self.assertFalse(correlate._compare_existing_data(
-            {}, ttr, self.tr1))
-
-    def test_key_error_handler(self):
-        self.assertFalse(correlate._compare_existing_data(
-            {}, self.tr0, self.tr1))
-
-
 class TestSortCombnameAlphabetically(unittest.TestCase):
     def test_retain_input(self):
         net0 = 'A'
@@ -218,6 +219,133 @@ class TestComputeNetworkStationCombinations(unittest.TestCase):
             correlate.compute_network_station_combinations(
                 self.slist, self.nlist),
             exp_result)
+
+
+class TestPreProcessStream(unittest.TestCase):
+    def setUp(self):
+        self.st = read()
+        for tr in self.st:
+            del tr.stats.response
+        self.kwargs = {
+            'store_client': None,
+            'inv': read_inventory(),
+            'startt': self.st[0].stats.starttime,
+            'endt': self.st[0].stats.endtime,
+            'taper_len': 0,
+            'sampling_rate': 25,
+            'remove_response': False,
+            'subdivision': {'corr_len': 20}
+            }
+
+    def test_wrong_sr(self):
+        x = np.random.randint(1, 100)
+        sr = self.st[0].stats.sampling_rate + x
+        kwargs = deepcopy(self.kwargs)
+        kwargs['sampling_rate'] = sr
+        with self.assertRaises(ValueError):
+            correlate.preprocess_stream(self.st, **kwargs)
+
+    def test_decimate(self):
+        st = correlate.preprocess_stream(self.st.copy(), **self.kwargs)
+        self.assertEqual(25, st[0].stats.sampling_rate)
+
+    def test_resample(self):
+        kwargs = deepcopy(self.kwargs)
+        kwargs['sampling_rate'] = 23
+        st = correlate.preprocess_stream(self.st.copy(), **kwargs)
+        self.assertEqual(23, st[0].stats.sampling_rate)
+
+    def test_pad(self):
+        kwargs = deepcopy(self.kwargs)
+        kwargs['startt'] -= 10
+        kwargs['endt'] += 10
+        st = correlate.preprocess_stream(self.st.copy(), **kwargs)
+        self.assertAlmostEqual(
+            kwargs['startt'], st[0].stats.starttime, delta=st[0].stats.delta/2)
+        self.assertAlmostEqual(
+            kwargs['endt'], st[0].stats.endtime, delta=st[0].stats.delta/2)
+
+    def test_trim(self):
+        kwargs = deepcopy(self.kwargs)
+        kwargs['startt'] += 5
+        kwargs['endt'] -= 5
+        st = correlate.preprocess_stream(self.st.copy(), **kwargs)
+        self.assertAlmostEqual(
+            kwargs['startt'], st[0].stats.starttime, delta=st[0].stats.delta/2)
+        self.assertAlmostEqual(
+            kwargs['endt'], st[0].stats.endtime, delta=st[0].stats.delta/2)
+
+    def test_discard_short(self):
+        kwargs = deepcopy(self.kwargs)
+        kwargs['startt'] += 15
+        kwargs['endt'] -= 15
+        kwargs['subdivision']['corr_len'] = 200
+        st = correlate.preprocess_stream(self.st.copy(), **kwargs)
+        self.assertFalse(st.count())
+
+    def test_remove_resp(self):
+        kwargs = deepcopy(self.kwargs)
+        kwargs['remove_response'] = True
+        st = correlate.preprocess_stream(self.st.copy(), **kwargs)
+        self.assertIn('remove_response', st[0].stats.processing[-2])
+        # Check whether response was attached
+        self.assertTrue(st[0].stats.response)
+
+    def test_taper(self):
+        kwargs = deepcopy(self.kwargs)
+        kwargs['remove_response'] = True
+        st = correlate.preprocess_stream(self.st.copy(), **kwargs)
+
+        kwargs = deepcopy(kwargs)
+        kwargs['remove_response'] = True
+        kwargs['taper_len'] = 5
+        stt = correlate.preprocess_stream(self.st.copy(), **kwargs)
+        self.assertFalse(np.allclose(stt[0].data, st[0].data))
+
+    def test_no_inv(self):
+        kwargs = deepcopy(self.kwargs)
+        kwargs['remove_response'] = True
+        kwargs['inv'] = None
+        sc_mock = mock.MagicMock()
+        sc_mock.rclient.get_stations.return_value = self.kwargs['inv']
+        kwargs['store_client'] = sc_mock
+        st = correlate.preprocess_stream(self.st.copy(), **kwargs)
+        self.assertIn('remove_response', st[0].stats.processing[-2])
+        # Check whether response was attached
+        self.assertTrue(st[0].stats.response)
+        sc_mock.rclient.get_stations.assert_called_once()
+
+
+class TestGenCorrInc(unittest.TestCase):
+    def setUp(self):
+        st = read()
+        self.st = st
+        self.rl = st[0].stats.npts/st[0].stats.sampling_rate
+
+    def test_empty(self):
+        subdivision = {'corr_inc': self.rl/10, 'corr_len': 10}
+        x = list(correlate.generate_corr_inc(Stream(), subdivision, self.rl))
+        self.assertEqual(len(x), 10)
+        for st in x:
+            self.assertEqual(Stream(), st)
+
+    def test_result(self):
+        subdivision = {'corr_inc': self.rl/10, 'corr_len': 10}
+        x = list(correlate.generate_corr_inc(self.st, subdivision, self.rl))
+        self.assertEqual(len(x), 10)
+        for st in x:
+            for tr in st:
+                self.assertAlmostEqual(
+                    10, tr.stats.npts/tr.stats.sampling_rate)
+
+    def test_pad(self):
+        subdivision = {'corr_inc': self.rl/10, 'corr_len': 45}
+        x = list(correlate.generate_corr_inc(self.st, subdivision, self.rl))
+        self.assertEqual(len(x), 10)
+        for st in x:
+            for tr in st:
+                self.assertAlmostEqual(
+                    45, tr.stats.npts/tr.stats.sampling_rate)
 
 
 if __name__ == "__main__":
