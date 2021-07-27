@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Tuesday, 27th July 2021 02:04:00 pm
+Last Modified: Tuesday, 27th July 2021 04:39:28 pm
 '''
 from typing import List, Tuple
 import logging
@@ -230,15 +230,15 @@ def save_header_to_np_array(stats: Stats) -> dict:
     return array_dict
 
 
-def load_header_from_np_array(array_dict: dict) -> Stats:
+def load_header_from_np_array(array_dict: dict) -> dict:
     """
     Takes the *dictionary-like* return-value of `np.load` and converts the
     corresponding keywords into an obspy header.
 
     :param array_dict: Return value of `np.load`
     :type array_dict: dict
-    :return: The obspy header object
-    :rtype: Stats
+    :return: The obspy header as dictionary
+    :rtype: dict
     """
     d = {}
     for k in array_dict:
