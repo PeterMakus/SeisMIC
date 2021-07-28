@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Tuesday, 20th July 2021 04:27:22 pm
+Last Modified: Wednesday, 28th July 2021 01:41:19 pm
 '''
 from typing import List, Tuple
 
@@ -424,13 +424,10 @@ def multi_ref_vchange(
         for i in range(reftr_count):
             ref_trc = ref_trs[i]
             key = "reftr_%d" % int(i)
-            value = time_stretch_estimate(corr_data,
-                                          ref_trc=ref_trc,
-                                          tw=tw,
-                                          stretch_range=stretch_range,
-                                          stretch_steps=stretch_steps,
-                                          sides=sides,
-                                          remove_nans=remove_nans)
+            value = time_stretch_estimate(
+                corr_data, ref_trc=ref_trc, tw=tw, stretch_range=stretch_range,
+                stretch_steps=stretch_steps, sides=sides,
+                remove_nans=remove_nans)
             multi_ref_panel.update({key: value})
 
     return multi_ref_panel
@@ -491,7 +488,7 @@ def est_shift_from_dt_corr(
     # This saves from returning a masked value
     try:
         wgt_s = np.sum(wgt).filled(np.nan)
-    except:
+    except Exception:
         wgt_s = np.sum(wgt)
 
     # Calculate the shift and the total weight as a cumulative sum of the
@@ -502,12 +499,12 @@ def est_shift_from_dt_corr(
     # This saves from returning masked values
     try:
         shift = shift.filled(np.nan)
-    except:
+    except Exception:
         pass
 
     try:
         comb_corr = comb_corr.filled(np.nan)
-    except:
+    except Exception:
         pass
 
     return comb_corr, shift
@@ -649,10 +646,8 @@ def estimate_reftr_shifts_from_dt_corr(
                         axis=1)
 
         # Create a msked array to evaluate the mean
-        stmp_masked = np.ma.masked_array(stmp,
-                                         mask=(np.isnan(stmp) | \
-                                               np.isinf(stmp)),
-                                         fill_value=0)
+        stmp_masked = np.ma.masked_array(
+            stmp, mask=(np.isnan(stmp) | np.isinf(stmp)), fill_value=0)
 
         # Evaluate the sim_mat for the multi-ref approach as the mean
         # of the rolled sim_mat corresponfing to the individual reference
@@ -671,12 +666,12 @@ def estimate_reftr_shifts_from_dt_corr(
 
         try:
             corr = corr.filled(np.nan)
-        except:
+        except Exception:
             pass
 
         try:
             dt = dt.filled(np.nan).astype('int')
-        except:
+        except Exception:
             pass
 
         ret_dict = {'corr': corr,
@@ -766,7 +761,7 @@ def multi_ref_vchange_and_align(
         corr_data = np.nan_to_num(corr_data)
         ref_trs = np.nan_to_num(ref_trs)
 
-    if tw and len(tw) > 1:
+    if tw is not None and len(tw) > 1:
         print(" The multi-reference vchange evaluation doesn't handle multiple\
                 time windows. Only the first time-window will be used")
         tw = tw[0]
@@ -940,7 +935,7 @@ def time_shift_estimate(
         shift = np.zeros_like(lshift)
         corr = np.zeros_like(lshift)
         sim_mat = np.zeros_like(lsim_mat)
-    
+
         corr = (lcorr + rcorr) / 2.
         shift = (lshift + rshift) / 2.
         sim_mat = (lsim_mat + rsim_mat) / 2.
@@ -952,14 +947,13 @@ def time_shift_estimate(
         shift = dtdict['value']
         sim_mat = dtdict['sim_mat']
 
-
     # create the result dictionary
     dt = {'corr': np.squeeze(corr),
           'value': np.squeeze(shift),
           'second_axis': shifts,
           'value_type': np.array(['shift']),
           'method': np.array(['time_shift'])}
-    
+
     if return_sim_mat:
         dt.update({'sim_mat': np.squeeze(sim_mat)})
 

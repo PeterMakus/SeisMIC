@@ -7,12 +7,14 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 27th July 2021 10:53:19 am
+Last Modified: Wednesday, 28th July 2021 10:14:36 am
 '''
 import logging
 import os
-from typing import Tuple
+from typing import List, Tuple
 import yaml
+import fnmatch
+from glob import glob
 
 from mpi4py import MPI
 import numpy as np
@@ -25,6 +27,18 @@ from seismic.utils.miic_utils import log_lvl
 
 class Monitor(object):
     def __init__(self, options: dict or str):
+        """
+        Object that handles the computation of seismic velocity changes.
+        This will access correlations that have been computed previously with
+        the :class:`~seismic.correlate.correlate.Correlator` class.
+
+        Takes the parameter file as input (either as yaml or as dict).
+
+        :param options: Parameters for the monitor. Usually, they come in form
+            of a *yaml* file. If this parameter is a str, it will be
+            interpreted to be the path to said *yaml* file.
+        :type options: dict or str
+        """
         if isinstance(options, str):
             with open(options) as file:
                 options = yaml.load(file, Loader=yaml.FullLoader)
@@ -96,15 +110,18 @@ class Monitor(object):
             self.options['dv']['date_inc'], self.options['dv']['win_len'])
         return starttimes, endtimes
 
-    def _find_available_corrs(self):
-        netlist = []
-        statlist = []
-        infiles = []
-        for f in os.listdir(self.indir):
-            split = f.split('.')
-            netlist.append(split[0])
-            statlist.append(split[1])
-            infiles.append(os.path.join(self.indir, f))
+    def _find_available_corrs(self) -> Tuple[List[str], List[str], List[str]]:
+        """
+        1. Finds the files of available correlations.
+        2. Out of those files, it will extract the ones that are requested.
+
+        :return: list of network combination codes, list of station combination
+            codes, and list of the file paths to their corresponding
+            correlation files.
+        :rtype: Tuple[List[str], List[str], List[str]]
+        """
+        netlist, statlist, infiles = corr_find_filter(
+            self.indir, **self.options)
         self.logger.info('Found correlation data for the following station \
 and network combinations %s' % str(
                 ['{n}.{s}'.format(n=n, s=s) for n, s in zip(
@@ -114,6 +131,27 @@ and network combinations %s' % str(
     def compute_velocity_change(
         self, corr_file: str, tag: str, network: str, station: str,
             channel: str):
+        """
+        Computes the velocity change for a cross (or auto) correlation
+        time-series. This process is executed "per station combination".
+        Meaning, several processes of this method can be started via MPI
+        and the method
+        :meth:`~seismic.monitor.monitor.Monitor.compute_velocity_change_bulk`,
+        which is the function that should rather be acessed than this one.
+        Data will be written into the defined dv folder and plotted if this
+        option was previously set to True.
+
+        :param corr_file: File to read the correlation data from.
+        :type corr_file: str
+        :param tag: Tag of the data in the file (almost always `'subdivision'`)
+        :type tag: str
+        :param network: Network combination code
+        :type network: str
+        :param station: Station Combination Code
+        :type station: str
+        :param channel: Channel combination code
+        :type channel: str
+        """
         self.logger.info('Computing velocity change for file: %s and channel:\
 %s' % (corr_file, channel))
         with CorrelationDataBase(corr_file, mode='r') as cdb:
@@ -176,13 +214,15 @@ and network combinations %s' % str(
                 normalize_simmat=True, sim_mat_Clim=[-1, 1])
 
     def compute_velocity_change_bulk(self):
-        # Decide whether to use already stacked data
-        # Stacking does not take a whole lot of time, so why bother
-        # if self.options['co']['subdivision']['recombine_subdivision'] and\
-        #     self.options['co']['read_inc'] \
-        #         <= self.options['dv']['date_inc']:
-        #     tag = 'stack_%s' % str(self.options['co']['read_inc'])
-        # else:
+        """
+        Compute the velocity change for all correlations using MPI.
+        The parameters for the correlation defined in the *yaml* file will be
+        used.
+
+        This function will just call
+        :meth:`~seismic.monitor.monitor.Monitor.compute_velocity_change`
+        several times.
+        """
         tag = 'subdivision'
         # get number of available channel combis
         if self.rank == 0:
@@ -229,8 +269,11 @@ def make_time_list(
         time windows in seconds (as UTC timestamps)
     :rtype: Tuple[ np.ndarray, np.ndarray]
 
-    ..note:: see `obspy's documentation <https://docs.obspy.org/packages/autogen/obspy.core.utcdatetime.UTCDateTime.html>`
-    for compatible input strings.
+    ..note::
+
+        see `obspy's documentation
+        <https://docs.obspy.org/packages/autogen/obspy.core.utcdatetime.UTCDateTime.html>`
+        for compatible input strings.
     """
     if date_inc <= 0 or win_len <= 0:
         raise ValueError(
@@ -243,3 +286,47 @@ def make_time_list(
     starttimes = np.arange(start, end, inc)
     endtimes = starttimes + win_len
     return starttimes, endtimes
+
+
+def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
+        List[str], List[str], List[str]]:
+    """
+    1. Finds the files of available correlations.
+    2. Out of those files, it will extract the ones that are requested.
+
+    :param indir: Directory that the correlations are saved in.
+    :type indir: str
+    :param net: Network dictionary from *yaml* file.
+    :type net: dict
+    :return: list of network combination codes, list of station combination
+        codes, and list of the file paths to their corresponding
+        correlation files.
+    :rtype: Tuple[List[str], List[str], List[str]]
+    """
+    netlist = []
+    statlist = []
+    infiles = []
+    for f in glob(os.path.join(indir, '*-*.*-*.h5')):
+        f = os.path.basename(f)
+        split = f.split('.')
+
+        # Find the files that should actually be processed
+        nsplit = split[0].split('-')
+        ssplit = split[1].split('-')
+        if isinstance(net['network'], str) and not fnmatch.filter(
+                nsplit, net['network']) == nsplit:
+            continue
+        elif isinstance(net['network'], list) and (
+                nsplit[0] and nsplit[1]) not in net['network']:
+            continue
+        if isinstance(net['station'], str) and not fnmatch.filter(
+                ssplit, net['station']) == ssplit:
+            continue
+        elif isinstance(net['station'], list) and (
+                ssplit[0] and ssplit[1]) not in net['station']:
+            continue
+
+        netlist.append(split[0])
+        statlist.append(split[1])
+        infiles.append(os.path.join(indir, f))
+    return netlist, statlist, infiles

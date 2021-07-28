@@ -5,7 +5,7 @@ proj_dir : 'data/'
 log_subdir : 'log'
 # levels:
 # 'DEBUG', 'INFO', 'WARNING', 'ERROR', or 'CRITICAL'
-log_level: 'WARNING'
+log_level: 'INFO'
 # folder for figures
 fig_subdir : 'figures'
 # folder containing preprocessed data

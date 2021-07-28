@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 25th June 2021 09:33:09 am
-Last Modified: Tuesday, 27th July 2021 10:56:04 am
+Last Modified: Wednesday, 28th July 2021 12:04:25 pm
 '''
 
 import unittest
@@ -464,6 +464,47 @@ class TestCorrMatExtractTrace(unittest.TestCase):
     #     print(randi)
     #     exp = np.ones(21)
     #     self.assertTrue(np.allclose(out, exp))
+
+
+class TestCorrMatStretch(unittest.TestCase):
+    def setUp(self):
+        reftr = np.zeros(101)
+        reftr[np.array([25, -25])] = 1
+        self.reftr = reftr
+        self.stats = CorrStats({
+            'start_lag': -50,
+            'sampling_rate': 1,
+            'corr_start': [UTCDateTime(ii) for ii in range(2)],
+            'corr_end': [UTCDateTime(10+ii) for ii in range(2)]
+        })
+
+    def test_stretch_0(self):
+        data = np.tile(self.reftr, (2, 1))
+        dv = pcp.corr_mat_stretch(
+            data, self.stats, self.reftr, stretch_steps=101)
+        self.assertListEqual([0, 0], list(dv['value']))
+
+    def test_stretch(self):
+        s = np.zeros_like(self.reftr)
+        s[np.array([26, -26])] = 1
+        data = np.vstack((self.reftr, s))
+
+        dv = pcp.corr_mat_stretch(
+            data, self.stats, self.reftr, stretch_steps=101)
+        self.assertTrue(np.allclose(
+            [0, -0.04], list(dv['value'])))
+
+    def test_stretch_single(self):
+        s = np.zeros_like(self.reftr)
+        s[np.array([26])] = 1
+        data = np.vstack((self.reftr, s))
+
+        dv = pcp.corr_mat_stretch(
+            data, self.stats, self.reftr, stretch_steps=101, sides='single',
+            tw=[np.arange(51)])
+        # Flips the result as it assumes 0 lag to be on index 0
+        self.assertTrue(np.allclose(
+            [0, 0.04], list(dv['value'])))
 
 
 if __name__ == "__main__":
