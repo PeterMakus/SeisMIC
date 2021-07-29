@@ -91,8 +91,8 @@ Setting the parameters
                                 'taper_at_masked': True}},
                         {'function':'seismic.correlate.preprocessing_stream.stream_filter',
                         'args':{'ftype':'bandpass',
-                                'filter_option':{'freqmin':2, #0.01
-                                                'freqmax':8}}}
+                                'filter_option':{'freqmin':0.01, #0.01
+                                                'freqmax':12.5}}}
                         ]
         # subdivision of the read sequences for correlation
         # type: presence of this key
@@ -118,8 +118,8 @@ Setting the parameters
         corr_args : {'TDpreProcessing':[
                                         {'function':'seismic.correlate.preprocessing_td.detrend',
                                         'args':{'type':'constant'}},
-                                    #  {'function':'seismic.correlate.preprocessing_td.TDfilter',
-                                    #  'args':{'type':'bandpass','freqmin':4,'freqmax':8}},
+                                      {'function':'seismic.correlate.preprocessing_td.TDfilter',
+                                      'args':{'type':'bandpass','freqmin':2,'freqmax':8}},
                                     # {'function':'seismic.correlate.preprocessing_td.taper',
                                     #  'args': {'type':'cosine_taper','p':0.02}},
                                         # {'function':'seismic.correlate.preprocessing_td.mute',
@@ -307,8 +307,8 @@ An over view of available stream preprocessing functions can  be found in :mod:`
                                 'taper_at_masked': True}},
                         {'function':'seismic.correlate.preprocessing_stream.stream_filter',
                         'args':{'ftype':'bandpass',
-                                'filter_option':{'freqmin':2,
-                                                'freqmax':8}}}
+                                'filter_option':{'freqmin':0.01,
+                                                'freqmax':12.5}}}
                         ]
 
 
@@ -324,8 +324,8 @@ A custom function would need to take a matrix as input, where each column is one
     corr_args : {'TDpreProcessing':[
                                     {'function':'seismic.correlate.preprocessing_td.detrend',
                                     'args':{'type':'constant'}},
-                                #  {'function':'seismic.correlate.preprocessing_td.TDfilter',
-                                #  'args':{'type':'bandpass','freqmin':4,'freqmax':8}},
+                                  {'function':'seismic.correlate.preprocessing_td.TDfilter',
+                                  'args':{'type':'bandpass','freqmin':2,'freqmax':8}},
                                 # {'function':'seismic.correlate.preprocessing_td.taper',
                                 #  'args': {'type':'cosine_taper','p':0.02}},
                                     # {'function':'seismic.correlate.preprocessing_td.mute',
