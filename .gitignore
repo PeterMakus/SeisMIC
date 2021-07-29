@@ -7,3 +7,4 @@ autogen/*.rst
 ./params.yaml
 examples/data
 testnb.ipynb
+*.ipynb_checkpoints
