@@ -30,7 +30,7 @@ gh-pages:
 	cp -frv docs/build/html/* ./ && rm -R docs/build/html/*
 	rm -rf $(GH_PAGES_SOURCES) build
 	git add -A
-	git commit -m "Generated gh-pages for `git log master -1 --pretty=short --abbrev-commit`" && git push origin gh-pages ; git checkout master
+	git commit -m "Generated gh-pages for `git log main -1 --pretty=short --abbrev-commit`" && git push origin gh-pages ; git checkout main
 
 dist:
 	python3 -m pip install --user --upgrade setuptools wheel
