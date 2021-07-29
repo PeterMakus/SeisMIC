@@ -6,3 +6,4 @@ autogen/*.rst
 *.egg-info*
 ./params.yaml
 examples/data
+testnb.ipynb
