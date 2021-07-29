@@ -16,8 +16,10 @@
 Get Started (Compute your first Noise Correlations)
 ---------------------------------------------------
 
-After having downloaded your data as shown `here <../trace_data/waveform.html#download-data>`_ (or retrieved seismic data any other way), we are ready to compute our first noise correlation!
-In **SeisMIC**, parameters for the *preprocessing*, the *correlation*, and, subsequently, measuring the *change in seismic velocity* are provided as a *.yaml* file or as a python *dictionary*.
+After having downloaded your data as shown `here <../trace_data/waveform.html#download-data>`_ (or retrieved seismic data any other way),
+we are ready to compute our first noise correlation!
+In **SeisMIC**, parameters for the *preprocessing*, the *correlation*, and, subsequently,
+measuring the *change in seismic velocity* are provided as a *.yaml* file or as a python *dictionary*.
 An example for such a *.yaml* file is shown below (and provided in the repository as ``params_example.yaml``).
 
 Setting the parameters

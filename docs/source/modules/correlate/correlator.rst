@@ -55,4 +55,5 @@ This script can be iniated in bash using:
 
     mpirun -n $number_cores$ python mycorrelation.py
 
-where ``$number_cores$`` is the number of cores you want to initialise. The only method of :class:`~seismic.correlate.correlate.Correlator` that you will want to use is :meth:`~seismic.correlate.correlate.Correlator.pxcorr()`, which does not require any (additional) input.
+where ``$number_cores$`` is the number of cores you want to initialise. The only method of :class:`~seismic.correlate.correlate.Correlator`
+that you will want to use is :meth:`~seismic.correlate.correlate.Correlator.pxcorr()`, which does not require any (additional) input.

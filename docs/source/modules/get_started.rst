@@ -45,7 +45,7 @@ Via PyPi
 Via GitHub
 ++++++++++
 
-You can download the latest version of SeisMIC from GitHub (put link as soon as deployed).
+You can download the latest version of SeisMIC from `GitHub <https://github.com/PeterMakus/SeisMIC>`_.
 
 After downloading just run the following commands **in the repository's folder**:
 
@@ -55,7 +55,7 @@ After downloading just run the following commands **in the repository's folder**
     conda env create -f environment.yml
 
     # Activate the conda environment
-    conda activate SeisMIC
+    conda activate seismic
 
     # Install your package
     pip install $InstallationDirectory$
