@@ -47,5 +47,5 @@ def test_flake8():
     assert report.total_errors == 0
 
 
-if __name__ == "__main__":
-    test_flake8()
+# if __name__ == "__main__":
+#     test_flake8()
