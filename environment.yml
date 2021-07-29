@@ -3,6 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - geographiclib
+  - h5py
   - matplotlib
   - mpi4py
   - numpy

@@ -22,6 +22,7 @@ If you follow the instructions below, it should not be necessary to install depe
 **SeisMIC** depends on the following modules:
 
 - geographiclib
+- h5py
 - matplotlib
 - mpi4py
 - numpy
