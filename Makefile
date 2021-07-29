@@ -7,7 +7,7 @@ SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = docs/source
 BUILDDIR      = docs/build
-GH_PAGES_SOURCES = docs src/seismic setup.py setup.cfg environment.yml Makefile tests formatting_test
+GH_PAGES_SOURCES = docs src/seismic Makefile
 
 # Put it first so that "make" without argument is like "make help".
 help:
