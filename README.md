@@ -34,7 +34,7 @@ pip install  $InstallationDirectory$
 ```
 
 ## Getting started
-Access SeisMIIC's documentation [here](https://petermakus.github.io/SeisMIC/index.html).
+Access SeisMIC's documentation [here](https://petermakus.github.io/SeisMIC/index.html).
 
 SeisMIC comes with a few tutorials (Jupyter notebooks). You can find those in the `examples/` directory.
 
