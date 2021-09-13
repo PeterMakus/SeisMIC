@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 27th July 2021 02:22:24 pm
+Last Modified: Monday, 13th September 2021 12:03:02 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -74,13 +74,15 @@ class Correlator(object):
             tstr = None
         tstr = self.comm.bcast(tstr, root=0)
 
+        rankstr = str(self.rank).zfill(3)
+
         loglvl = mu.log_lvl[options['log_level'].upper()]
-        self.logger = logging.Logger("seismic.Correlator0%s" % str(self.rank))
+        self.logger = logging.Logger("seismic.Correlator%s" % rankstr)
         self.logger.setLevel(loglvl)
         logging.captureWarnings(True)
         warnlog = logging.getLogger('py.warnings')
-        fh = logging.FileHandler(os.path.join(logdir, 'correlate%srank0%s' % (
-            tstr, self.rank)))
+        fh = logging.FileHandler(os.path.join(logdir, 'correlate%srank%s' % (
+            tstr, rankstr)))
         fh.setLevel(loglvl)
         self.logger.addHandler(fh)
         warnlog.addHandler(fh)
