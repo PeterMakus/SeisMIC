@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 28th July 2021 10:14:36 am
+Last Modified: Monday, 13th September 2021 12:04:02 pm
 '''
 import logging
 import os
@@ -77,8 +77,8 @@ class Monitor(object):
         # also catch the warnings
         logging.captureWarnings(True)
         warnlog = logging.getLogger('py.warnings')
-        fh = logging.FileHandler(os.path.join(logdir, 'monitor%srank0%s' % (
-            tstr, self.rank)))
+        fh = logging.FileHandler(os.path.join(logdir, 'monitor%srank%s' % (
+            tstr, str(self.rank).zfill(3))))
         fh.setLevel(loglvl)
         self.logger.addHandler(fh)
         warnlog.addHandler(fh)
