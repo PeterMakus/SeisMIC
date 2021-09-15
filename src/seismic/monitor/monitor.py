@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 15th September 2021 02:30:10 pm
+Last Modified: Wednesday, 15th September 2021 03:06:20 pm
 '''
 import logging
 import os
@@ -163,12 +163,13 @@ and network combinations %s' % str(
         del cst
         # Do the actual processing:
         cb.normalize(normtype='absmax')
+        # That is were the stacking is happening
         cb.resample(self.starttimes, self.endtimes)
         cb.filter(
             (self.options['dv']['freq_min'], self.options['dv']['freq_max']))
 
         # Preprocessing on the correlation bulk
-        for func in self.options['preprocessing']:
+        for func in self.options['dv']['preprocessing']:
             f = cb.__getattribute__(func['function'])
             cb = f(func['args'])
 
