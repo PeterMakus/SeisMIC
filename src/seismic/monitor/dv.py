@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Tuesday, 27th July 2021 10:53:05 am
+Last Modified: Wednesday, 15th September 2021 09:14:15 am
 '''
 
 from datetime import datetime
@@ -36,7 +36,6 @@ class DV(object):
         self.sim_mat = sim_mat
         self.second_axis = second_axis
         self.method = method
-        # self.corr_start = stats.corr_start
         self.stats = stats
 
     def save(self, path: str):

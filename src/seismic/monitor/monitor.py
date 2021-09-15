@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 13th September 2021 12:06:54 pm
+Last Modified: Wednesday, 15th September 2021 02:30:10 pm
 '''
 import logging
 import os
@@ -166,6 +166,12 @@ and network combinations %s' % str(
         cb.resample(self.starttimes, self.endtimes)
         cb.filter(
             (self.options['dv']['freq_min'], self.options['dv']['freq_max']))
+
+        # Preprocessing on the correlation bulk
+        for func in self.options['preprocessing']:
+            f = cb.__getattribute__(func['function'])
+            cb = f(func['args'])
+
         # Now, we make a copy of the cm to be trimmed
         cbt = cb.copy().trim(
             -(self.options['dv']['tw_start']+self.options['dv']['tw_len']),

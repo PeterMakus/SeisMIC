@@ -148,3 +148,8 @@ dv:
     stretch_range : 0.03
     stretch_steps : 1001
 
+    # preprocessing on the correlation bulk before stretch estimation
+    preprocessing: [
+                    {'function': 'smooth', 'args': {'wsize': 48, 'wtype': 'hanning', 'axis': 1}}
+    ]
+
