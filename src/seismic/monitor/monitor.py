@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 15th September 2021 03:06:20 pm
+Last Modified: Wednesday, 15th September 2021 03:38:56 pm
 '''
 import logging
 import os
@@ -171,7 +171,7 @@ and network combinations %s' % str(
         # Preprocessing on the correlation bulk
         for func in self.options['dv']['preprocessing']:
             f = cb.__getattribute__(func['function'])
-            cb = f(func['args'])
+            cb = f(**func['args'])
 
         # Now, we make a copy of the cm to be trimmed
         cbt = cb.copy().trim(
