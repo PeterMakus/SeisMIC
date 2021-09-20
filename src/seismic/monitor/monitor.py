@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 20th September 2021 11:13:45 am
+Last Modified: Monday, 20th September 2021 11:45:37 am
 '''
 from copy import deepcopy
 import logging
@@ -343,27 +343,44 @@ def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
 
 def average_components(dvs: List[DV]) -> DV:
     """
-    [summary]
+    Averages the Similariy matrix of the three DV objects. Based on those,
+    it computes a new dv value and a new correlation value.
 
-    :param dvs: [description]
-    :type dvs: List[DV]
-    :raises TypeError: [description]
-    :return: [description]
+    :param dvs: List of dvs from the different components to compute an
+            average from. Note that it is possible to use almost anything as
+            input (also from different stations). However, at the time,
+            the function requires the input to be of the same shape
+
+    :type dvs: List[class:`~seismic.monitor.dv.DV`]
+    :raises TypeError: for DVs that were computed with different methods
+    :return: A single dv with an averaged similarity matrix
     :rtype: DV
     """
+    shapes = []
     for dv in dvs:
         if dv.method != dvs[0].method:
             raise TypeError('DV has to be computed with the same method.')
+        # adapt shape to maiximum
+        shapes.append(dv.sim_mat.shape)
+    #     if dv.sim_mat.shape[:-1] != shapes[0][:-1]:
+    #         raise ValueError(
+    #             'Only the time axis is allowed to have a different shape.' +
+    #             'Make sure you use the same number of stretching steps')
+    # shape = max(shapes)
     sim_mats = [dv.sim_mat for dv in dvs]
-    av_sim_mat = np.average(sim_mats, axis=0)
+    av_sim_mat = np.nanmean(sim_mats, axis=0)
     # Now we would have to recompute the dv value and corr value
-    corr = np.max(av_sim_mat, axis=1)
+    corr = np.nanmax(av_sim_mat, axis=1)
     strvec = dvs[0].second_axis
-    dt = strvec[np.argmax(av_sim_mat, axis=1)]
+    dt = strvec[np.nanargmax(av_sim_mat, axis=1)]
     stats = deepcopy(dvs[0].stats)
     stats['channel'] = 'av'
-    stats['processing'] = np.array(
-        list(stats['processing']).append('Averaged Similarity Matrix.'))
+    try:
+        stats['processing'] = np.array(
+            list(stats['processing']).append('Averaged Similarity Matrix.'))
+    except KeyError:
+        stats['processing'] = np.array(
+            [('Averaged Similarity Matrix.')])
     dvout = DV(
         corr, dt, dvs[0].value_type, av_sim_mat, strvec, dvs[0].method, stats)
     return dvout
