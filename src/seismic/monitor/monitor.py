@@ -7,10 +7,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 20th September 2021 11:45:37 am
+Last Modified: Monday, 20th September 2021 12:32:50 pm
 '''
 from copy import deepcopy
 import logging
+from math import inf
 import os
 from typing import List, Tuple
 import yaml
@@ -23,7 +24,7 @@ from obspy import UTCDateTime
 from tqdm import tqdm
 
 from seismic.db.corr_hdf5 import CorrelationDataBase
-from seismic.monitor.dv import DV
+from seismic.monitor.dv import DV, read_dv
 from seismic.utils.miic_utils import log_lvl
 
 
@@ -257,6 +258,56 @@ and network combinations %s' % str(
                     corr_file, tag, net, stat, cha)
             except Exception as e:
                 self.logger.error(e)
+
+    def compute_components_average(self, method: str = 'AutoComponents'):
+        """
+        Averages the Similarity matrix of different velocity changes in
+        the whole dv folder. Based upon those values, new dvs and correlations
+        are computed.
+
+        :param method: Which components should be averaged? Can be
+            'StationWide' if all component-combinations should be averaged or
+            'AutoComponents' if only the dv results of autocorrelation are to
+            be averaged. Defaults to 'AutoComponents'
+        :type method: str, optional
+        :raises ValueError: For Unknown combination methods.
+        """
+        if method.lower() not in ('autocomponents', 'stationwide'):
+            raise ValueError(
+                'Unknown averaging method. ' +
+                'Use "autocomponent" or "stationwide".'
+            )
+        infiles = glob(os.path.join(self.outdir, '*.npz'))
+
+        while len(infiles):
+            # Find files belonging to same station
+            pat = '.'.join(infiles[0].split('.')[:-2]) + '*'
+            filtfil = fnmatch.filter(infiles, pat)
+            if method.lower() == 'autocomponents':
+                # Remove those from combined channels
+                for f in filtfil:
+                    components = f.split('.')[-2].split['-']
+                    if components[0] != components[1]:
+                        filtfil.remove(f)
+            dvs = []
+            for f in filtfil:
+                dvs.append(read_dv(f))
+                # Remove so they are not processed again
+                infiles.remove(f)
+            dv_av = average_components(dvs)
+            outf = os.path.join(
+                self.outdir, 'DV-%s.%s.av' % (
+                    dv_av.stats.network, dv_av.stats.station))
+            dv_av.save(outf)
+            if self.options['dv']['plot_vel_change']:
+                # plot if desired
+                fname = '%s_%s_av' % (
+                    dv_av.stats.network, dv_av.stats.station)
+                savedir = os.path.join(
+                    self.options['proj_dir'], self.options['fig_subdir'])
+                dv_av.plot(
+                    save_dir=savedir, figure_file_name=fname,
+                    normalize_simmat=True, sim_mat_Clim=[-1, 1])
 
 
 def make_time_list(
