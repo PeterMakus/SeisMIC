@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 20th September 2021 04:58:50 pm
+Last Modified: Monday, 20th September 2021 05:03:25 pm
 '''
 from copy import deepcopy
 import logging
@@ -447,11 +447,6 @@ def average_components(dvs: List[DV]) -> DV:
     dt = strvec[np.nanargmax(np.nan_to_num(av_sim_mat), axis=1)]
     stats = deepcopy(dvs[0].stats)
     stats['channel'] = 'av'
-    try:
-        stats['processing'] = list(
-            stats['processing']).append('Averaged Similarity Matrix.')
-    except KeyError:
-        stats['processing'] = [('Averaged Similarity Matrix.')]
     dvout = DV(
         corr, dt, dvs[0].value_type, av_sim_mat, strvec, dvs[0].method, stats)
     return dvout
