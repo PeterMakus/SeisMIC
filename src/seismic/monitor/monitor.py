@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 20th September 2021 02:04:02 pm
+Last Modified: Monday, 20th September 2021 04:58:50 pm
 '''
 from copy import deepcopy
 import logging
@@ -283,18 +283,34 @@ and network combinations %s' % str(
             # Find files belonging to same station
             pat = '.'.join(infiles[0].split('.')[:-2]) + '*'
             filtfil = fnmatch.filter(infiles, pat)
-            if method.lower() == 'autocomponents':
-                # Remove those from combined channels
-                for f in filtfil:
+            fffil = []  # Second filter
+            for f in filtfil:
+                if 'av' in f.split('.'):
+                    # Is already computed for this station
+                    # So let's remove all of them from the initial list
+                    for ff in filtfil:
+                        infiles.remove(ff)
+                    filtfil.clear()
+                    fffil.clear()
+                    self.logger.debug('Skipping already averaged dv...%s' % f)
+                    break
+                if method.lower() == 'autocomponents':
+                    # Remove those from combined channels
                     components = f.split('.')[-2].split('-')
                     if components[0] != components[1]:
-                        filtfil.remove(f)
+                        continue
+                fffil.append(f)
             dvs = []
-            for f in filtfil:
-                dvs.append(read_dv(f))
+            for f in fffil:
+                try:
+                    dvs.append(read_dv(f))
+                except ValueError:
+                    raise ValueError(f)
                 # Remove so they are not processed again
                 infiles.remove(f)
-            if len(dvs) < 1:
+            if not len(dvs):
+                continue
+            elif len(dvs) == 1:
                 self.logger.warn(
                     'Only one component found for station %s.%s... Skipping.'
                     % (dvs[0].stats.network, dvs[0].stats.station))
@@ -432,11 +448,10 @@ def average_components(dvs: List[DV]) -> DV:
     stats = deepcopy(dvs[0].stats)
     stats['channel'] = 'av'
     try:
-        stats['processing'] = np.array(
-            list(stats['processing']).append('Averaged Similarity Matrix.'))
+        stats['processing'] = list(
+            stats['processing']).append('Averaged Similarity Matrix.')
     except KeyError:
-        stats['processing'] = np.array(
-            [('Averaged Similarity Matrix.')])
+        stats['processing'] = [('Averaged Similarity Matrix.')]
     dvout = DV(
         corr, dt, dvs[0].value_type, av_sim_mat, strvec, dvs[0].method, stats)
     return dvout
