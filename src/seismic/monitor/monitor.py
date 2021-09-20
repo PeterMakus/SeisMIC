@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 20th September 2021 01:23:49 pm
+Last Modified: Monday, 20th September 2021 01:51:58 pm
 '''
 from copy import deepcopy
 import logging
@@ -423,7 +423,7 @@ def average_components(dvs: List[DV]) -> DV:
     # Now we would have to recompute the dv value and corr value
     corr = np.nanmax(av_sim_mat, axis=1)
     strvec = dvs[0].second_axis
-    dt = strvec[np.nanargmax(av_sim_mat, axis=1)]
+    dt = strvec[np.nanargmax(np.nan_to_num(av_sim_mat), axis=1)]
     stats = deepcopy(dvs[0].stats)
     stats['channel'] = 'av'
     try:
