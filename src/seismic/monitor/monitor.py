@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 20th September 2021 12:32:50 pm
+Last Modified: Monday, 20th September 2021 01:23:49 pm
 '''
 from copy import deepcopy
 import logging
@@ -286,7 +286,7 @@ and network combinations %s' % str(
             if method.lower() == 'autocomponents':
                 # Remove those from combined channels
                 for f in filtfil:
-                    components = f.split('.')[-2].split['-']
+                    components = f.split('.')[-2].split('-')
                     if components[0] != components[1]:
                         filtfil.remove(f)
             dvs = []
