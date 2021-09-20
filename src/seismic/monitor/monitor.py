@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 20th September 2021 01:51:58 pm
+Last Modified: Monday, 20th September 2021 02:04:02 pm
 '''
 from copy import deepcopy
 import logging
@@ -294,6 +294,11 @@ and network combinations %s' % str(
                 dvs.append(read_dv(f))
                 # Remove so they are not processed again
                 infiles.remove(f)
+            if len(dvs) < 1:
+                self.logger.warn(
+                    'Only one component found for station %s.%s... Skipping.'
+                    % (dvs[0].stats.network, dvs[0].stats.station))
+                continue
             dv_av = average_components(dvs)
             outf = os.path.join(
                 self.outdir, 'DV-%s.%s.av' % (
