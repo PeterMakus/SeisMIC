@@ -7,8 +7,9 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 15th September 2021 03:38:56 pm
+Last Modified: Monday, 20th September 2021 11:13:45 am
 '''
+from copy import deepcopy
 import logging
 import os
 from typing import List, Tuple
@@ -22,6 +23,7 @@ from obspy import UTCDateTime
 from tqdm import tqdm
 
 from seismic.db.corr_hdf5 import CorrelationDataBase
+from seismic.monitor.dv import DV
 from seismic.utils.miic_utils import log_lvl
 
 
@@ -337,3 +339,31 @@ def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
         statlist.append(split[1])
         infiles.append(os.path.join(indir, f))
     return netlist, statlist, infiles
+
+
+def average_components(dvs: List[DV]) -> DV:
+    """
+    [summary]
+
+    :param dvs: [description]
+    :type dvs: List[DV]
+    :raises TypeError: [description]
+    :return: [description]
+    :rtype: DV
+    """
+    for dv in dvs:
+        if dv.method != dvs[0].method:
+            raise TypeError('DV has to be computed with the same method.')
+    sim_mats = [dv.sim_mat for dv in dvs]
+    av_sim_mat = np.average(sim_mats, axis=0)
+    # Now we would have to recompute the dv value and corr value
+    corr = np.max(av_sim_mat, axis=1)
+    strvec = dvs[0].second_axis
+    dt = strvec[np.argmax(av_sim_mat, axis=1)]
+    stats = deepcopy(dvs[0].stats)
+    stats['channel'] = 'av'
+    stats['processing'] = np.array(
+        list(stats['processing']).append('Averaged Similarity Matrix.'))
+    dvout = DV(
+        corr, dt, dvs[0].value_type, av_sim_mat, strvec, dvs[0].method, stats)
+    return dvout
