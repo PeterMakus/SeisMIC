@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Tuesday, 27th July 2021 10:53:46 am
+Last Modified: Tuesday, 21st September 2021 10:55:11 am
 '''
 import os
 
@@ -135,6 +135,8 @@ def plot_cst(
     """
     set_mpl_params()
 
+    scalingfactor = scalingfactor or 1
+
     # Create figure if no axes is specified
     if ax is None:
         plt.figure(figsize=(8, 6))
@@ -148,10 +150,10 @@ def plot_cst(
 
     # Plot traces
     if sort_by == 'corr_start':
-        scalingfactor = scalingfactor or 1e5
+        scalingfactor *= 1e5
         times = sect_plot_corr_start(cst, ax, scalingfactor, linewidth)
     elif sort_by == 'dist':
-        scalingfactor = scalingfactor or 4
+        scalingfactor *= 4
         times = sect_plot_dist(cst, ax, scalingfactor, linewidth)
     else:
         raise NotImplementedError('Unknown sorting method %s.' % sort_by)

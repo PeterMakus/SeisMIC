@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 20th September 2021 05:03:25 pm
+Last Modified: Tuesday, 21st September 2021 02:42:23 pm
 '''
 from copy import deepcopy
 import logging
@@ -280,6 +280,8 @@ and network combinations %s' % str(
         infiles = glob(os.path.join(self.outdir, '*.npz'))
 
         while len(infiles):
+            print('\nlength: ', len(infiles))
+            # print('\nactual list: ', infiles)
             # Find files belonging to same station
             pat = '.'.join(infiles[0].split('.')[:-2]) + '*'
             filtfil = fnmatch.filter(infiles, pat)
@@ -289,7 +291,12 @@ and network combinations %s' % str(
                     # Is already computed for this station
                     # So let's remove all of them from the initial list
                     for ff in filtfil:
-                        infiles.remove(ff)
+                        try:
+                            infiles.remove(ff)
+                        except ValueError:
+                            # Has already been removed by one of the other
+                            # check
+                            pass
                     filtfil.clear()
                     fffil.clear()
                     self.logger.debug('Skipping already averaged dv...%s' % f)
@@ -298,14 +305,12 @@ and network combinations %s' % str(
                     # Remove those from combined channels
                     components = f.split('.')[-2].split('-')
                     if components[0] != components[1]:
+                        infiles.remove(f)
                         continue
                 fffil.append(f)
             dvs = []
             for f in fffil:
-                try:
-                    dvs.append(read_dv(f))
-                except ValueError:
-                    raise ValueError(f)
+                dvs.append(read_dv(f))
                 # Remove so they are not processed again
                 infiles.remove(f)
             if not len(dvs):
