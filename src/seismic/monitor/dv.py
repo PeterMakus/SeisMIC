@@ -8,14 +8,17 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Wednesday, 15th September 2021 09:14:15 am
+Last Modified: Wednesday, 22nd September 2021 01:18:44 pm
 '''
 
 from datetime import datetime
 from typing import List, Tuple
-import numpy as np
-from seismic.plot.plot_dv import plot_dv
 
+import numpy as np
+from scipy.signal.windows import get_window
+from scipy.ndimage import convolve1d
+
+from seismic.plot.plot_dv import plot_dv
 from seismic.utils.miic_utils import save_header_to_np_array, \
     load_header_from_np_array
 from seismic.correlate.stats import CorrStats
@@ -62,6 +65,30 @@ class DV(object):
         plot_dv(
             self.__dict__, save_dir, figure_file_name, mark_time,
             normalize_simmat, sim_mat_Clim, figsize, dpi)
+
+    def smooth_sim_mat(self, win: str, win_len: int):
+        """
+        Smoothes the similarity matrix along the desired axis with a chosen
+        window.
+
+        :param win: A string describing a window. All windows in
+            scipy.signal.windows are allowed. (e.g., gaussian, hann, boxcar)
+        :type win: str
+        :param win_len: Length of the window in number of samples.
+        :type win_len: int
+
+        :note::
+
+            This action is perfomed in-place.
+        """
+        # retrieve desired window
+        win = get_window(win, win_len, False)
+        self.sim_mat = convolve1d(self.sim_mat, win, axis=1)
+
+        # Compute the dependencies again
+        self.corr = np.nanmax(self.sim_mat)
+        self.value = self.second_axis[
+            np.argmax(np.nan_to_num(self.sim_mat), axis=1)]
 
 
 def read_dv(path: str) -> DV:
