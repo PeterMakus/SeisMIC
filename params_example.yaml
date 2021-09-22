@@ -153,3 +153,8 @@ dv:
                     {'function': 'smooth', 'args': {'wsize': 48, 'wtype': 'hanning', 'axis': 1}}
     ]
 
+    # postprocessing of dv objects before saving and plotting
+    postprocessing: [
+                      {'function': 'smooth_sim_mat', 'args': {'win_len': 7}}
+    ]
+

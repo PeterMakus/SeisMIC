@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 21st September 2021 02:42:23 pm
+Last Modified: Wednesday, 22nd September 2021 02:25:41 pm
 '''
 from copy import deepcopy
 import logging
@@ -172,9 +172,10 @@ and network combinations %s' % str(
             (self.options['dv']['freq_min'], self.options['dv']['freq_max']))
 
         # Preprocessing on the correlation bulk
-        for func in self.options['dv']['preprocessing']:
-            f = cb.__getattribute__(func['function'])
-            cb = f(**func['args'])
+        if 'preprocessing' in self.options['dv']:
+            for func in self.options['dv']['preprocessing']:
+                f = cb.__getattribute__(func['function'])
+                cb = f(**func['args'])
 
         # Now, we make a copy of the cm to be trimmed
         cbt = cb.copy().trim(
@@ -211,6 +212,13 @@ and network combinations %s' % str(
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],
             tw=tw)
+
+        # Postprocessing on the dv object
+        if 'postprocessing' in self.options['dv']:
+            for func in self.options['dv']['postprocessing']:
+                f = dv.__getattribute__(func['function'])
+                dv = f(**func['args'])
+
         outf = os.path.join(
             self.outdir, 'DV-%s.%s.%s' % (network, station, channel))
         dv.save(outf)
