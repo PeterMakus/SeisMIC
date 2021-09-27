@@ -7,11 +7,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 22nd September 2021 02:25:41 pm
+Last Modified: Monday, 27th September 2021 09:19:50 am
 '''
 from copy import deepcopy
 import logging
-from math import inf
 import os
 from typing import List, Tuple
 import yaml

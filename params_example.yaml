@@ -87,7 +87,7 @@ co:
     # Standard functions reside in seismic.correlate.preprocessing_td
     corr_args : {'TDpreProcessing':[
                                     {'function':'seismic.correlate.preprocessing_td.detrend',
-                                    'args':{'type':'constant'}},
+                                    'args':{'type':'linear'}},
                                    {'function':'seismic.correlate.preprocessing_td.TDfilter',
                                    'args':{'type':'bandpass','freqmin':4,'freqmax':8}},
                                   # {'function':'seismic.correlate.preprocessing_td.taper',
