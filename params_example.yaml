@@ -56,7 +56,7 @@ co:
     # and return an obspy.Stream object.
     preProcessing : [
                     {'function':'seismic.correlate.preprocessing_stream.detrend_st',
-                    'args':{'type':'simple'}},
+                    'args':{'type':'linear'}},
                     {'function':'seismic.correlate.preprocessing_stream.cos_taper_st',
                       'args':{'taper_len': 10, # seconds
                               'taper_at_masked': True}},
