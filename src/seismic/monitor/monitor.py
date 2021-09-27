@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 27th September 2021 09:19:50 am
+Last Modified: Monday, 27th September 2021 02:22:17 pm
 '''
 from copy import deepcopy
 import logging
@@ -273,13 +273,16 @@ and network combinations %s' % str(
         are computed.
 
         :param method: Which components should be averaged? Can be
-            'StationWide' if all component-combinations should be averaged or
+            'StationWide' if all component-combinations should be averaged,
             'AutoComponents' if only the dv results of autocorrelation are to
-            be averaged. Defaults to 'AutoComponents'
+            be averaged, or 'CrossComponents' if you wish to average dvs from
+            the same station but only intercomponent corrrelations.
+            Defaults to 'AutoComponents'
         :type method: str, optional
         :raises ValueError: For Unknown combination methods.
         """
-        if method.lower() not in ('autocomponents', 'stationwide'):
+        if method.lower() not in (
+                'autocomponents', 'crosscomponents', 'stationwide'):
             raise ValueError(
                 'Unknown averaging method. ' +
                 'Use "autocomponent" or "stationwide".'
@@ -312,6 +315,12 @@ and network combinations %s' % str(
                     # Remove those from combined channels
                     components = f.split('.')[-2].split('-')
                     if components[0] != components[1]:
+                        infiles.remove(f)
+                        continue
+                elif method.lower() == 'crosscomponents':
+                    # Remove those from equal channels
+                    components = f.split('.')[-2].split('-')
+                    if components[0] == components[1]:
                         infiles.remove(f)
                         continue
                 fffil.append(f)
