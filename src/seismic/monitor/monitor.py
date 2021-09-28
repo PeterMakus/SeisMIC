@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 27th September 2021 02:22:17 pm
+Last Modified: Tuesday, 28th September 2021 08:18:15 am
 '''
 from copy import deepcopy
 import logging
@@ -288,7 +288,12 @@ and network combinations %s' % str(
                 'Use "autocomponent" or "stationwide".'
             )
         infiles = glob(os.path.join(self.outdir, '*.npz'))
-
+        if method.lower() == 'autocomponents':
+            ch = 'av-auto'
+        elif method.lower() == 'crosscomponents':
+            ch = 'av-cc'
+        else:
+            ch = 'av'
         while len(infiles):
             print('\nlength: ', len(infiles))
             # print('\nactual list: ', infiles)
@@ -297,7 +302,7 @@ and network combinations %s' % str(
             filtfil = fnmatch.filter(infiles, pat)
             fffil = []  # Second filter
             for f in filtfil:
-                if 'av' in f.split('.'):
+                if ch in f.split('.'):
                     # Is already computed for this station
                     # So let's remove all of them from the initial list
                     for ff in filtfil:
@@ -338,13 +343,13 @@ and network combinations %s' % str(
                 continue
             dv_av = average_components(dvs)
             outf = os.path.join(
-                self.outdir, 'DV-%s.%s.av' % (
-                    dv_av.stats.network, dv_av.stats.station))
+                self.outdir, 'DV-%s.%s.%s' % (
+                    dv_av.stats.network, dv_av.stats.station, ch))
             dv_av.save(outf)
             if self.options['dv']['plot_vel_change']:
                 # plot if desired
-                fname = '%s_%s_av' % (
-                    dv_av.stats.network, dv_av.stats.station)
+                fname = '%s_%s_%s' % (
+                    dv_av.stats.network, dv_av.stats.station, ch)
                 savedir = os.path.join(
                     self.options['proj_dir'], self.options['fig_subdir'])
                 dv_av.plot(
