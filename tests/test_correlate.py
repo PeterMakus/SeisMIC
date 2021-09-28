@@ -7,8 +7,9 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Tuesday, 27th July 2021 03:05:14 pm
+Last Modified: Tuesday, 28th September 2021 03:28:11 pm
 '''
+from calendar import c
 from copy import deepcopy
 import unittest
 import warnings
@@ -171,6 +172,28 @@ class TestCalcCrossCombis(unittest.TestCase):
                 self.st, {}, method='betweenStations')))
             self.assertEqual(len(w), 1)
 
+    def test_rcombis(self):
+        xlen = np.random.randint(0, 6)
+        rcombis = []
+        for ii, tr in enumerate(self.st):
+            if len(rcombis) == xlen:
+                break
+            for jj in range(ii+1, len(self.st)):
+                tr1 = self.st[jj]
+                n = tr.stats.network
+                n2 = tr1.stats.network
+                s = tr.stats.station
+                s2 = tr1.stats.station
+                if n != n2 or s != s2:
+                    rcombis.append('%s-%s.%s-%s' % (n, n2, s, s2))
+                    # remove duplicates
+                    rcombis = list(set(rcombis))
+                if len(rcombis) == xlen:
+                    break
+        expected_len = xlen*self.N_chan**2
+        self.assertEqual(expected_len, len(correlate.calc_cross_combis(
+            self.st, {}, method='betweenStations', rcombis=rcombis)))
+
 
 class TestSortCombnameAlphabetically(unittest.TestCase):
     def test_retain_input(self):
@@ -219,6 +242,15 @@ class TestComputeNetworkStationCombinations(unittest.TestCase):
             correlate.compute_network_station_combinations(
                 self.slist, self.nlist),
             exp_result)
+
+    def test_rcombis(self):
+        exp_result = ([['A', 'A']], [['B', 'C']])
+        nlist = ['A', 'A', 'B']
+        slist = ['B', 'C', 'D']
+        rcombis = ['A-A.B-C']
+        self.assertEqual(
+            correlate.compute_network_station_combinations(
+                nlist, slist, combis=rcombis), exp_result)
 
 
 class TestPreProcessStream(unittest.TestCase):

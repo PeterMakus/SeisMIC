@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 13th September 2021 12:03:02 pm
+Last Modified: Tuesday, 28th September 2021 03:34:07 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -101,6 +101,12 @@ class Correlator(object):
 
         self.options = options['co']
 
+        # requested combis?
+        if 'xcombinations' in self.options:
+            self.rcombis = self.options['xcombinations']
+        else:
+            self.rcombis = None
+
         # find the available data
         network = options['net']['network']
         station = options['net']['station']
@@ -173,7 +179,8 @@ class Correlator(object):
         """
         netlist, statlist = list(zip(*self.station))
         netcombs, statcombs = compute_network_station_combinations(
-            netlist, statlist, method=self.options['combination_method'])
+            netlist, statlist, method=self.options['combination_method'],
+            combis=self.rcombis)
         ex_dict = {}
         for nc, sc in zip(netcombs, statcombs):
             s0, s1 = sc.split('-')
@@ -403,7 +410,8 @@ class Correlator(object):
                 # Get correlation combinations
                 if self.rank == 0:
                     self.options['combinations'] = calc_cross_combis(
-                        win, self.ex_dict, self.options['combination_method'])
+                        win, self.ex_dict, self.options['combination_method'],
+                        rcombis=self.rcombis)
                 else:
                     self.options['combinations'] = None
                 self.options['combinations'] = self.comm.bcast(
@@ -592,7 +600,8 @@ def _compare_existing_data(ex_corr: dict, tr0: Stream, tr1: Stream) -> bool:
 
 
 def calc_cross_combis(
-        st: Stream, ex_corr: dict, method: str = 'betweenStations') -> list:
+    st: Stream, ex_corr: dict, method: str = 'betweenStations',
+        rcombis: List[str] = None) -> list:
     """
     Calculate a list of all cross correlation combination
     of traces in the stream: i.e. all combination with two different
@@ -604,6 +613,9 @@ def calc_cross_combis(
     :type ex_corr: dict
     :type method: stringf
     :param method: Determines which traces of the strem are combined.
+    :param rcombis: requested combinations, only works if
+        `method==betweenStations`.
+    :type rcombis: List[str] strings are in form net0-net1.stat0-stat1
 
         ``'betweenStations'``:
             Traces are combined if either their station or
@@ -628,10 +640,19 @@ def calc_cross_combis(
         for ii, tr in enumerate(st):
             for jj in range(ii+1, len(st)):
                 tr1 = st[jj]
-                if ((tr.stats['network'] != tr1.stats['network']) or
-                        (tr.stats['station'] != tr1.stats['station'])):
+                n = tr.stats.network
+                n2 = tr1.stats.network
+                s = tr.stats.station
+                s2 = tr1.stats.station
+                if n != n2 or s != s2:
                     # check first whether this combi is in dict
                     if _compare_existing_data(ex_corr, tr, tr1):
+                        continue
+                    if rcombis is not None and not any(all(
+                        i0 in i1 for i0 in [
+                            n, n2, s, s2]) for i1 in rcombis):
+                        # If particular combis are requested, compute only
+                        # those
                         continue
                     combis.append((ii, jj))
     elif method == 'betweenComponents':
@@ -965,7 +986,8 @@ def sort_comb_name_alphabetically(
 
 def compute_network_station_combinations(
     netlist: list, statlist: list,
-        method: str = 'betweenStations') -> Tuple[list, list]:
+    method: str = 'betweenStations', combis: List[str] = None) -> Tuple[
+            list, list]:
     """
     Return the network and station codes of the correlations for the provided
     lists of networks and stations and the queried combination method.
@@ -992,6 +1014,14 @@ def compute_network_station_combinations(
                 n2 = netlist[jj]
                 s2 = statlist[jj]
                 if n != n2 or s != s2:
+                    if combis is not None and not any(all(
+                        i0 in i1 for i0 in [
+                            n, n2, s, s2]) for i1 in combis):
+                        continue
+                        # Expression above might look a bit complicated, but
+                        # essentially just checks whether any of the desired
+                        # combis matches with this combis. If it does not we
+                        # continue and skip this combi
                     nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
                     netcombs.append(nc)
                     statcombs.append(sc)
