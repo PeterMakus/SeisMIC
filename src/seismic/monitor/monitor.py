@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 28th September 2021 08:18:15 am
+Last Modified: Tuesday, 28th September 2021 08:18:56 am
 '''
 from copy import deepcopy
 import logging
@@ -291,7 +291,7 @@ and network combinations %s' % str(
         if method.lower() == 'autocomponents':
             ch = 'av-auto'
         elif method.lower() == 'crosscomponents':
-            ch = 'av-cc'
+            ch = 'av-xc'
         else:
             ch = 'av'
         while len(infiles):
