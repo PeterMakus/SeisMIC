@@ -34,6 +34,7 @@ jobs:
         conda config --add channels conda-forge
         conda update -q conda
         conda info -a
+        conda init
         conda env create -f environment.yml
         source activate seismic
         pip install -e .
