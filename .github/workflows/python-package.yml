@@ -26,21 +26,21 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-        bash miniconda.sh -b -p $HOME/miniconda
-        export PATH="$HOME/miniconda/bin:$PATH"
-        hash -r
-        conda config --set always_yes yes --set changeps1 no
-        conda config --add channels conda-forge
-        conda update -q conda
-        conda info -a
-        conda init
-        conda env create -f environment.yml
-        source activate seismic
-        pip install -e .
+        # wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+        # bash miniconda.sh -b -p $HOME/miniconda
+        # export PATH="$HOME/miniconda/bin:$PATH"
+        # hash -r
+        # conda config --set always_yes yes --set changeps1 no
+        # conda config --add channels conda-forge
+        # conda update -q conda
+        # conda info -a
+        # conda init
+        # conda env create -f environment.yml
+        # source activate seismic
         # pip install flake8
-        # python -m pip install --upgrade pip
-        # python -m pip install flake8 pytest
+        python -m pip install --upgrade pip
+        python -m pip install flake8 pytest
+        python pip install .
         # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     # - name: Lint with flake8
     #  run: |
@@ -50,5 +50,4 @@ jobs:
     #    flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        conda activate seismic
         pytest
