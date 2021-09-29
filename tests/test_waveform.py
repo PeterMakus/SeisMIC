@@ -4,7 +4,7 @@ UnitTests for the waveform module.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 15th March 2021 03:33:25 pm
-Last Modified: Tuesday, 27th July 2021 10:56:32 am
+Last Modified: Wednesday, 29th September 2021 12:00:42 pm
 '''
 
 import unittest
@@ -24,7 +24,7 @@ class TestStoreClient(unittest.TestCase):
     def setUp(self, isdir_mock, listdir_mock):
         isdir_mock.return_value = True
         listdir_mock.return_value = False
-        dir = os.path.join('/my', 'random', 'dir')
+        dir = os.path.join('%smy' % os.path.sep, 'random', 'dir')
         self.outdir = os.path.join(dir, 'mseed')
         self.net = 'mynet'
         self.stat = 'mystat'

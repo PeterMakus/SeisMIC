@@ -7,9 +7,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 6th July 2021 09:18:14 am
-Last Modified: Monday, 20th September 2021 11:47:28 am
+Last Modified: Wednesday, 29th September 2021 10:56:01 am
 '''
 
+import os
 import unittest
 from unittest.mock import patch
 
@@ -59,10 +60,14 @@ class TestMakeTimeList(unittest.TestCase):
 
 
 class TestCorrFindFilter(unittest.TestCase):
+    def setUp(self):
+        self.p = os.path.curdir + os.path.sep
+        return super().setUp()
+
     @patch('seismic.monitor.monitor.glob')
     def test_no_match_str(self, glob_mock):
         glob_mock.return_value = [
-            './b-b.a-a.h5', './a-a.b-b.h5']
+            '%sb-b.a-a.h5' % self.p, '%sa-a.b-b.h5' % self.p]
         net = {
             'network': 'AA',
             'station': 'BB'
@@ -73,7 +78,7 @@ class TestCorrFindFilter(unittest.TestCase):
     @patch('seismic.monitor.monitor.glob')
     def test_no_match_list0(self, glob_mock):
         glob_mock.return_value = [
-            './b-b.a-a.h5', './a-a.b-b.h5']
+            '%sb-b.a-a.h5' % self.p, '%sa-a.b-b.h5' % self.p]
         net = {
             'network': 'AA',
             'station': ['AA', 'BB']
@@ -84,7 +89,7 @@ class TestCorrFindFilter(unittest.TestCase):
     @patch('seismic.monitor.monitor.glob')
     def test_no_match_list1(self, glob_mock):
         glob_mock.return_value = [
-            './b-b.a-a.h5', './a-a.b-b.h5']
+            '%sb-b.a-a.h5' % self.p, '%sa-a.b-b.h5' % self.p]
         net = {
             'network': ['AA', 'BB'],
             'station': ['AA', 'BB']
@@ -95,7 +100,7 @@ class TestCorrFindFilter(unittest.TestCase):
     @patch('seismic.monitor.monitor.glob')
     def test_match_wildcard0(self, glob_mock):
         glob_mock.return_value = [
-            './b-b.a-a.h5', './a-a.b-b.h5']
+            '%sb-b.a-a.h5' % self.p, '%sa-a.b-b.h5' % self.p]
         net = {
             'network': '*',
             'station': '*'
@@ -104,48 +109,50 @@ class TestCorrFindFilter(unittest.TestCase):
 
         self.assertListEqual(['b-b', 'a-a'], n)
         self.assertListEqual(['a-a', 'b-b'], s)
-        self.assertListEqual(['./b-b.a-a.h5', './a-a.b-b.h5'], i)
+        self.assertListEqual(
+            ['%sb-b.a-a.h5' % self.p, '%sa-a.b-b.h5' % self.p], i)
 
     @patch('seismic.monitor.monitor.glob')
     def test_match_wildcard1(self, glob_mock):
         glob_mock.return_value = [
-            './b-b.a-a.h5', './a-a.b-b.h5']
+            '%sb-b.a-a.h5' % self.p, '%sa-a.b-b.h5' % self.p]
         net = {
             'network': 'a',
             'station': '*'
         }
-        n, s, i = monitor.corr_find_filter('.', net)
+        n, s, i = monitor.corr_find_filter(os.path.curdir, net)
         self.assertListEqual(['a-a'], n)
         self.assertListEqual(['b-b'], s)
-        self.assertListEqual(['./a-a.b-b.h5'], i)
+        self.assertListEqual(['%sa-a.b-b.h5' % self.p], i)
 
     @patch('seismic.monitor.monitor.glob')
     def test_match_list0(self, glob_mock):
         glob_mock.return_value = [
-            './b-b.a-a.h5', './a-a.b-b.h5']
+            '%sb-b.a-a.h5' % self.p, '%sa-a.b-b.h5' % self.p]
         net = {
             'network': ['a', 'b'],
             'station': ['a', 'b']
         }
-        n, s, i = monitor.corr_find_filter('.', net)
+        n, s, i = monitor.corr_find_filter(os.path.curdir, net)
 
         self.assertListEqual(['b-b', 'a-a'], n)
         self.assertListEqual(['a-a', 'b-b'], s)
-        self.assertListEqual(['./b-b.a-a.h5', './a-a.b-b.h5'], i)
+        self.assertListEqual(
+            ['%sb-b.a-a.h5' % self.p, '%sa-a.b-b.h5' % self.p], i)
 
     @patch('seismic.monitor.monitor.glob')
     def test_match_list1(self, glob_mock):
         glob_mock.return_value = [
-            './b-b.a-a.h5', './a-a.b-b.h5']
+            '%sb-b.a-a.h5' % self.p, '%sa-a.b-b.h5' % self.p]
         net = {
             'network': 'a',
             'station': ['a', 'b']
         }
-        n, s, i = monitor.corr_find_filter('.', net)
+        n, s, i = monitor.corr_find_filter(os.path.curdir, net)
 
         self.assertListEqual(['a-a'], n)
         self.assertListEqual(['b-b'], s)
-        self.assertListEqual(['./a-a.b-b.h5'], i)
+        self.assertListEqual(['%sa-a.b-b.h5' % self.p], i)
 
 
 class TestAverageComponents(unittest.TestCase):

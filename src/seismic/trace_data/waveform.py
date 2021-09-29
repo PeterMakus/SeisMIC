@@ -140,10 +140,10 @@ class Store_Client(object):
             os.path.join(self.sds_root, '????', network, '*'))
         statlist = []
         for path in oslist:
-            if not isinstance(eval(path.split('/')[-3]), int):
+            if not isinstance(eval(path.split(os.path.sep)[-3]), int):
                 continue
             # Add all network and station combinations to list
-            code = path.split('/')[-2:]
+            code = path.split(os.path.sep)[-2:]
             if code not in statlist:
                 statlist.append(code)
         if not statlist:
