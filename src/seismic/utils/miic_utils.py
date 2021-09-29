@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Tuesday, 27th July 2021 04:39:28 pm
+Last Modified: Tuesday, 17th August 2021 12:12:48 pm
 '''
 from typing import List, Tuple
 import logging
@@ -101,10 +101,9 @@ def inv_calc_az_baz_dist(inv1: Inventory, inv2: Inventory) -> Tuple[
         print("Update obspy.")
         return
 
-    dist, az, baz = gps2dist_azimuth(inv1[0][0].latitude,
-                                     inv1[0][0].longitude,
-                                     inv2[0][0].latitude,
-                                     inv2[0][0].longitude)
+    dist, az, baz = gps2dist_azimuth(
+        inv1[0][0].latitude, inv1[0][0].longitude, inv2[0][0].latitude,
+        inv2[0][0].longitude)
 
     return az, baz, dist
 
