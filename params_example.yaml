@@ -44,19 +44,25 @@ co:
     # New sampling rate in Hz. Note that it will try to decimate
     # if possible (i.e., there is an integer factor from the
     # native sampling_rate)
-    sampling_rate: 25
+    sampling_rate : 25
     # Remove the instrument response, will take substantially more time
-    remove_response: False
+    remove_response : False
 
     # Method to combine different traces
     combination_method : 'betweenStations'
+  
+    # If you want only specific combinations to be computed enter them here
+    # In the form [Net0-Net0.Stat0-Stat1]
+    # This option will only be consider if combination_method == 'betweenStations'
+    # Comment or set == None if not in use
+    xcombinations : None
 
     # preprocessing of the original length time series
     # these function work on an obspy.Stream object given as first argument
     # and return an obspy.Stream object.
     preProcessing : [
                     {'function':'seismic.correlate.preprocessing_stream.detrend_st',
-                    'args':{'type':'simple'}},
+                    'args':{'type':'linear'}},
                     {'function':'seismic.correlate.preprocessing_stream.cos_taper_st',
                       'args':{'taper_len': 10, # seconds
                               'taper_at_masked': True}},
@@ -87,7 +93,7 @@ co:
     # Standard functions reside in seismic.correlate.preprocessing_td
     corr_args : {'TDpreProcessing':[
                                     {'function':'seismic.correlate.preprocessing_td.detrend',
-                                    'args':{'type':'constant'}},
+                                    'args':{'type':'linear'}},
                                    {'function':'seismic.correlate.preprocessing_td.TDfilter',
                                    'args':{'type':'bandpass','freqmin':4,'freqmax':8}},
                                   # {'function':'seismic.correlate.preprocessing_td.taper',
@@ -147,4 +153,14 @@ dv:
     ### Range to try stretching
     stretch_range : 0.03
     stretch_steps : 1001
+
+    # preprocessing on the correlation bulk before stretch estimation
+    preprocessing: [
+                    {'function': 'smooth', 'args': {'wsize': 48, 'wtype': 'hanning', 'axis': 1}}
+    ]
+
+    # postprocessing of dv objects before saving and plotting
+    postprocessing: [
+                      {'function': 'smooth_sim_mat', 'args': {'win_len': 7}}
+    ]
 

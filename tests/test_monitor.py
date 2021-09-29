@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 6th July 2021 09:18:14 am
-Last Modified: Wednesday, 28th July 2021 10:35:18 am
+Last Modified: Monday, 20th September 2021 11:47:28 am
 '''
 
 import unittest
@@ -15,8 +15,10 @@ from unittest.mock import patch
 
 import numpy as np
 from obspy import UTCDateTime
+from seismic.correlate.stats import CorrStats
 
 from seismic.monitor import monitor
+from seismic.monitor.dv import DV
 
 
 class TestMakeTimeList(unittest.TestCase):
@@ -144,6 +146,45 @@ class TestCorrFindFilter(unittest.TestCase):
         self.assertListEqual(['a-a'], n)
         self.assertListEqual(['b-b'], s)
         self.assertListEqual(['./a-a.b-b.h5'], i)
+
+
+class TestAverageComponents(unittest.TestCase):
+    def test_differing_shape(self):
+        sim0 = np.zeros((5, 5))
+        sim1 = np.zeros((6, 6))
+        corr0 = np.zeros((5))
+        corr1 = np.zeros((6))
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], {})
+        dv1 = DV(corr1, corr1, ['stretch'], sim1, corr1, ['bla'], {})
+        with self.assertRaises(ValueError):
+            monitor.average_components([dv0, dv1])
+
+    def test_differing_methods(self):
+        sim0 = np.zeros((5, 5))
+        corr0 = np.zeros((5))
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], {})
+        dv1 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['blub'], {})
+        with self.assertRaises(TypeError):
+            monitor.average_components([dv0, dv1])
+
+    def test_contains_nans(self):
+        sim0 = np.random.random((5, 5))
+        sim1 = np.nan*np.ones((5, 5))
+        corr0 = np.zeros((5))
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], {})
+        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], {})
+        dv_av = monitor.average_components([dv0, dv1])
+        self.assertTrue(np.all(dv0.sim_mat == dv_av.sim_mat))
+
+    def test_result(self):
+        sim0 = np.random.random((5, 5))
+        sim1 = np.random.random((5, 5))
+        corr0 = np.zeros((5))
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], {})
+        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], {})
+        dv_av = monitor.average_components([dv0, dv1])
+        self.assertTrue(np.allclose(
+            np.mean([dv0.sim_mat, dv1.sim_mat], axis=0), dv_av.sim_mat))
 
 
 if __name__ == "__main__":

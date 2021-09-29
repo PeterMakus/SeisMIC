@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Tuesday, 27th July 2021 10:48:37 am
+Last Modified: Wednesday, 15th September 2021 02:24:23 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -322,7 +322,7 @@ class CorrBulk(object):
         """
         self.data = pcp.corr_mat_smooth(self.data, wsize, wtype, axis)
         self.stats.processing_bulk += [
-            'smooth. wsize: %s, wtype: %s, axis: %s'
+            'smooth. wsize: %ss, wtype: %s, axis: %s'
             % (str(wsize), wtype, str(axis))]
         return self
 

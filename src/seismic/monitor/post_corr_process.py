@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Wednesday, 28th July 2021 11:11:00 am
+Last Modified: Wednesday, 15th September 2021 04:18:39 pm
 '''
 
 from typing import List, Tuple
@@ -116,6 +116,8 @@ def corr_mat_smooth(
     :rtype: :class:`~numpy.ndarray`
     :return: **X**: Filtered matrix
     """
+    # Remove nans
+    np.nan_to_num(data, copy=False)
 
     # Degenerated corr_mat: single vector
     try:

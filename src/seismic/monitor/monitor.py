@@ -7,8 +7,9 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 13th September 2021 12:06:54 pm
+Last Modified: Tuesday, 28th September 2021 08:18:56 am
 '''
+from copy import deepcopy
 import logging
 import os
 from typing import List, Tuple
@@ -22,6 +23,7 @@ from obspy import UTCDateTime
 from tqdm import tqdm
 
 from seismic.db.corr_hdf5 import CorrelationDataBase
+from seismic.monitor.dv import DV, read_dv
 from seismic.utils.miic_utils import log_lvl
 
 
@@ -163,9 +165,17 @@ and network combinations %s' % str(
         del cst
         # Do the actual processing:
         cb.normalize(normtype='absmax')
+        # That is were the stacking is happening
         cb.resample(self.starttimes, self.endtimes)
         cb.filter(
             (self.options['dv']['freq_min'], self.options['dv']['freq_max']))
+
+        # Preprocessing on the correlation bulk
+        if 'preprocessing' in self.options['dv']:
+            for func in self.options['dv']['preprocessing']:
+                f = cb.__getattribute__(func['function'])
+                cb = f(**func['args'])
+
         # Now, we make a copy of the cm to be trimmed
         cbt = cb.copy().trim(
             -(self.options['dv']['tw_start']+self.options['dv']['tw_len']),
@@ -201,6 +211,13 @@ and network combinations %s' % str(
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],
             tw=tw)
+
+        # Postprocessing on the dv object
+        if 'postprocessing' in self.options['dv']:
+            for func in self.options['dv']['postprocessing']:
+                f = dv.__getattribute__(func['function'])
+                dv = f(**func['args'])
+
         outf = os.path.join(
             self.outdir, 'DV-%s.%s.%s' % (network, station, channel))
         dv.save(outf)
@@ -248,6 +265,96 @@ and network combinations %s' % str(
                     corr_file, tag, net, stat, cha)
             except Exception as e:
                 self.logger.error(e)
+
+    def compute_components_average(self, method: str = 'AutoComponents'):
+        """
+        Averages the Similarity matrix of different velocity changes in
+        the whole dv folder. Based upon those values, new dvs and correlations
+        are computed.
+
+        :param method: Which components should be averaged? Can be
+            'StationWide' if all component-combinations should be averaged,
+            'AutoComponents' if only the dv results of autocorrelation are to
+            be averaged, or 'CrossComponents' if you wish to average dvs from
+            the same station but only intercomponent corrrelations.
+            Defaults to 'AutoComponents'
+        :type method: str, optional
+        :raises ValueError: For Unknown combination methods.
+        """
+        if method.lower() not in (
+                'autocomponents', 'crosscomponents', 'stationwide'):
+            raise ValueError(
+                'Unknown averaging method. ' +
+                'Use "autocomponent" or "stationwide".'
+            )
+        infiles = glob(os.path.join(self.outdir, '*.npz'))
+        if method.lower() == 'autocomponents':
+            ch = 'av-auto'
+        elif method.lower() == 'crosscomponents':
+            ch = 'av-xc'
+        else:
+            ch = 'av'
+        while len(infiles):
+            print('\nlength: ', len(infiles))
+            # print('\nactual list: ', infiles)
+            # Find files belonging to same station
+            pat = '.'.join(infiles[0].split('.')[:-2]) + '*'
+            filtfil = fnmatch.filter(infiles, pat)
+            fffil = []  # Second filter
+            for f in filtfil:
+                if ch in f.split('.'):
+                    # Is already computed for this station
+                    # So let's remove all of them from the initial list
+                    for ff in filtfil:
+                        try:
+                            infiles.remove(ff)
+                        except ValueError:
+                            # Has already been removed by one of the other
+                            # check
+                            pass
+                    filtfil.clear()
+                    fffil.clear()
+                    self.logger.debug('Skipping already averaged dv...%s' % f)
+                    break
+                if method.lower() == 'autocomponents':
+                    # Remove those from combined channels
+                    components = f.split('.')[-2].split('-')
+                    if components[0] != components[1]:
+                        infiles.remove(f)
+                        continue
+                elif method.lower() == 'crosscomponents':
+                    # Remove those from equal channels
+                    components = f.split('.')[-2].split('-')
+                    if components[0] == components[1]:
+                        infiles.remove(f)
+                        continue
+                fffil.append(f)
+            dvs = []
+            for f in fffil:
+                dvs.append(read_dv(f))
+                # Remove so they are not processed again
+                infiles.remove(f)
+            if not len(dvs):
+                continue
+            elif len(dvs) == 1:
+                self.logger.warn(
+                    'Only one component found for station %s.%s... Skipping.'
+                    % (dvs[0].stats.network, dvs[0].stats.station))
+                continue
+            dv_av = average_components(dvs)
+            outf = os.path.join(
+                self.outdir, 'DV-%s.%s.%s' % (
+                    dv_av.stats.network, dv_av.stats.station, ch))
+            dv_av.save(outf)
+            if self.options['dv']['plot_vel_change']:
+                # plot if desired
+                fname = '%s_%s_%s' % (
+                    dv_av.stats.network, dv_av.stats.station, ch)
+                savedir = os.path.join(
+                    self.options['proj_dir'], self.options['fig_subdir'])
+                dv_av.plot(
+                    save_dir=savedir, figure_file_name=fname,
+                    normalize_simmat=True, sim_mat_Clim=[-1, 1])
 
 
 def make_time_list(
@@ -330,3 +437,42 @@ def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
         statlist.append(split[1])
         infiles.append(os.path.join(indir, f))
     return netlist, statlist, infiles
+
+
+def average_components(dvs: List[DV]) -> DV:
+    """
+    Averages the Similariy matrix of the three DV objects. Based on those,
+    it computes a new dv value and a new correlation value.
+
+    :param dvs: List of dvs from the different components to compute an
+            average from. Note that it is possible to use almost anything as
+            input (also from different stations). However, at the time,
+            the function requires the input to be of the same shape
+
+    :type dvs: List[class:`~seismic.monitor.dv.DV`]
+    :raises TypeError: for DVs that were computed with different methods
+    :return: A single dv with an averaged similarity matrix
+    :rtype: DV
+    """
+    shapes = []
+    for dv in dvs:
+        if dv.method != dvs[0].method:
+            raise TypeError('DV has to be computed with the same method.')
+        # adapt shape to maiximum
+        shapes.append(dv.sim_mat.shape)
+    #     if dv.sim_mat.shape[:-1] != shapes[0][:-1]:
+    #         raise ValueError(
+    #             'Only the time axis is allowed to have a different shape.' +
+    #             'Make sure you use the same number of stretching steps')
+    # shape = max(shapes)
+    sim_mats = [dv.sim_mat for dv in dvs]
+    av_sim_mat = np.nanmean(sim_mats, axis=0)
+    # Now we would have to recompute the dv value and corr value
+    corr = np.nanmax(av_sim_mat, axis=1)
+    strvec = dvs[0].second_axis
+    dt = strvec[np.nanargmax(np.nan_to_num(av_sim_mat), axis=1)]
+    stats = deepcopy(dvs[0].stats)
+    stats['channel'] = 'av'
+    dvout = DV(
+        corr, dt, dvs[0].value_type, av_sim_mat, strvec, dvs[0].method, stats)
+    return dvout

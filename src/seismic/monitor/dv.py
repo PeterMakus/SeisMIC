@@ -8,14 +8,16 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Tuesday, 27th July 2021 10:53:05 am
+Last Modified: Wednesday, 22nd September 2021 02:25:51 pm
 '''
 
 from datetime import datetime
 from typing import List, Tuple
-import numpy as np
-from seismic.plot.plot_dv import plot_dv
 
+import numpy as np
+from scipy.ndimage import convolve1d
+
+from seismic.plot.plot_dv import plot_dv
 from seismic.utils.miic_utils import save_header_to_np_array, \
     load_header_from_np_array
 from seismic.correlate.stats import CorrStats
@@ -36,7 +38,6 @@ class DV(object):
         self.sim_mat = sim_mat
         self.second_axis = second_axis
         self.method = method
-        # self.corr_start = stats.corr_start
         self.stats = stats
 
     def save(self, path: str):
@@ -63,6 +64,29 @@ class DV(object):
         plot_dv(
             self.__dict__, save_dir, figure_file_name, mark_time,
             normalize_simmat, sim_mat_Clim, figsize, dpi)
+
+    def smooth_sim_mat(self, win_len: int):
+        """
+        Smoothes the similarity matrix along the desired axis with a running
+        mean window.
+
+        :param win_len: Length of the window in number of samples.
+        :type win_len: int
+
+        :note::
+
+            This action is perfomed in-place.
+        """
+        # retrieve desired window
+        # Divide by window length to preserve energy / average
+        self.sim_mat = convolve1d(
+            np.nan_to_num(self.sim_mat), np.ones(win_len), axis=0)/win_len
+
+        # Compute the dependencies again
+        self.corr = np.nanmax(self.sim_mat, axis=1)
+        self.value = self.second_axis[
+            np.argmax(np.nan_to_num(self.sim_mat), axis=1)]
+        return self
 
 
 def read_dv(path: str) -> DV:
