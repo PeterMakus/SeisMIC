@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Wednesday, 28th July 2021 01:41:19 pm
+Last Modified: Thursday, 30th September 2021 01:48:32 pm
 '''
 from typing import List, Tuple
 
@@ -156,7 +156,9 @@ def velocity_change_estimate(
             raise ValueError(
                 'sides = %s not a valid option.' % sides)
 
-        mask = np.zeros((mat.shape[1],))
+        # mask = np.zeros((mat.shape[1],))
+        # Is the shape now correct? This raised an error before.
+        mask = np.zeros(len(tw),)
         mask[ctw] = 1
 
         ref_mask_mat = np.tile(mask, (nstr, 1))
