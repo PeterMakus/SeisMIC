@@ -1,8 +1,10 @@
 #
+# note that this file contains requirements for automatic deployments
+# Broader requirements are specified in the environment.yml
+
 geographiclib
 h5py
 matplotlib
-mpi4py
 numpy
 obspy
 pathlib
