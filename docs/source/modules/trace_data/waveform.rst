@@ -102,14 +102,3 @@ There are a couple of functions to help you:
         for which data is available (a network may or may not be defined).
     * :func:`~seismic.trace_data.waveform.Store_Client._get_times` returns the earliest and latest available
         starttimes for a certain station.
-
-
-
-.. autosummary::
-    :toctree: autogen
-    :nosignatures:
-    :noindex:
-        
-    Store_Client
-    FS_Client
-    read_from_filesystem
