@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 28th September 2021 08:18:56 am
+Last Modified: Thursday, 30th September 2021 10:39:05 am
 '''
 from copy import deepcopy
 import logging
@@ -264,7 +264,7 @@ and network combinations %s' % str(
                 self.compute_velocity_change(
                     corr_file, tag, net, stat, cha)
             except Exception as e:
-                self.logger.error(e)
+                self.logger.exception(e)
 
     def compute_components_average(self, method: str = 'AutoComponents'):
         """
