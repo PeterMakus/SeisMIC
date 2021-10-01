@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Wednesday, 28th July 2021 01:41:19 pm
+Last Modified: Friday, 1st October 2021 11:55:15 am
 '''
 from typing import List, Tuple
 
@@ -552,33 +552,31 @@ def estimate_reftr_shifts_from_dt_corr(
     :type multi_ref_panel: dictionay
     :param multi_ref_panel: It is a dictionary with one (key,value) pair
         for each reference trace. Its structure is described
-        in :py:class:`~miic.core.stretch_mod.multi_ref_vchange`
+        in :func:`~seismic.monitor.stretch_mod.multi_ref_vchange`
     :type return_sim_mat: bool
     :param return_sim_mat: If `True` the returning dictionary contains also the
-        similarity matrix `sim_mat'.
-
-    :rtype: Dictionary
+        similarity matrix `sim_mat`.
+    :rtype: dict
     :return: **dv**: Dictionary with the following keys
-
-        *corr*: 2d ndarray containing the correlation value for the best
-            match for each row of ``mat`` and for each time window.
-            Its dimension is: :func:(len(tw),mat.shape[1])
-        *value*: 2d ndarray containing the stretch amount corresponding to
-            the best match for each row of ``mat`` and for each time window.
-            Stretch is a relative value corresponding to the negative relative
-            velocity change -dv/v.
-            Its dimension is: :func:(len(tw),mat.shape[1])
-        *sim_mat*: 3d ndarray containing the similarity matricies that
-            indicate the correlation coefficient with the reference for the
-            different time windows, different times and different amount of
-            stretching.
-            Its dimension is: :py:func:`(len(tw),mat.shape[1],len(strvec))`
-        *second_axis*: It contains the stretch vector used for the velocity
-            change estimate.
-        *value_type*: It is equal to 'stretch' and specify the content of
-            the returned 'value'.
-        *method*: It is equal to 'single_ref' and specify in which "way" the
-            values have been obtained.
+        - *corr*: 2d ndarray containing the correlation value for the best
+        match for each row of `mat` and for each time window.
+        Its shape is: (len(tw),mat.shape[1])
+        - *value*: 2d ndarray containing the stretch amount corresponding to
+        the best match for each row of `mat` and for each time window.
+        Stretch is a relative value corresponding to the negative relative
+        velocity change -dv/v.
+        Its shape is: (len(tw),mat.shape[1])
+        - *sim_mat*: 3d array containing the similarity matricies that
+        indicate the correlation coefficient with the reference for the
+        different time windows, different times and different amount of
+        stretching.
+        Its shape is: (len(tw),mat.shape[1],len(strvec))
+        - *second_axis*: It contains the stretch vector used for the velocity
+        change estimate.
+        - *value_type*: It is equal to stretch and specify the content of
+        the returned value.
+        - *method*: It is equal to single_ref and specify in which way the
+        values have been obtained.
     """
 
     # Vector with the stretching amount
@@ -726,7 +724,7 @@ def multi_ref_vchange_and_align(
         center of the traces.
     :type return_sim_mat: bool
     :param return_sim_mat: If `True` the returning dictionary contains also the
-        similarity matrix `sim_mat'.
+        similarity matrix `sim_mat`.
     :type remove_nans: bool
     :param remove_nans: If `True` applay :func:`~numpy.nan_to_num` to the
         given correlation matrix before any other operation.
@@ -968,9 +966,9 @@ def time_stretch_apply(
     Stretch the time axis of traces e.g. to compensate a velocity shift in the
     propagation medium.
     Such shifts can occur in corrlation traces in case of a drifting clock.
-    This function ``applies`` the stretches. To correct for stretching
-    estimated with :class:`~miic.core.stretch_mod.time_stretch_estimate`you
-    need to apply negative stretching.
+    This function applies the stretches. To correct for stretching
+    estimated with :func:`~seismic.monitor.stretch_mod.time_stretch_estimate`
+    you need to apply negative stretching.
 
     :type corr_data: :class:`~numpy.ndarray`
     :param corr_data: 2d ndarray containing the correlation functions that are
