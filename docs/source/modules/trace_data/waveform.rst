@@ -108,6 +108,7 @@ There are a couple of functions to help you:
 .. autosummary::
     :toctree: autogen
     :nosignatures:
+    :noindex:
         
     Store_Client
     FS_Client
