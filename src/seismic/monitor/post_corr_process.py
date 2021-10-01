@@ -5,10 +5,10 @@
    (https://www.gnu.org/copyleft/lesser.html)
 :author:
     Christoph Sens-Schönefelder
-   Peter Makus (makus@gfz-potsdam.de)
+    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Wednesday, 15th September 2021 04:18:39 pm
+Last Modified: Friday, 1st October 2021 10:54:35 am
 '''
 
 from typing import List, Tuple

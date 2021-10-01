@@ -410,14 +410,15 @@ def read_from_filesystem(
     file structure. Each item of this list is translated in one level of the
     directory structure. The first element is a string indicating the
     base_directory. The following elements can be strings to indicate
-    one of the following
-     - %X as defined by datetime.strftime indicating an element of t
-     the time. e.g. %H
-     - %NET: network name or %net for lower case network name
-     - %STA: station name or %sta for lower case
-     - %CHA: channel name or %cha for lower case
-     - %LOC: location or %loc for lower case location code
-     - string with out %
+    one of the following:
+
+    - %X as defined by datetime.strftime indicating an element of t
+        the time. e.g. %H
+    - %NET: network name or %net for lower case network name
+    - %STA: station name or %sta for lower case
+    - %CHA: channel name or %cha for lower case
+    - %LOC: location or %loc for lower case location code
+    - string with out %
 
     The format strings are replaced either with an element of the starttime
     if they correspond to a datetime specifyer or with the respective part
@@ -431,18 +432,17 @@ def read_from_filesystem(
     different form.
 
     If fs is a single string it is interpreted as the base directory
-    ''SDSdir' of a SeisComP Data Structure (SDS) with TYPE fixed to D
-    <SDSdir>/Year/NET/STA/CHAN.TYPE/NET.STA.LOC.CHAN.TYPE.YEAR.DAY
-    This usage should be equvalent to obspy.clients.filesystem.sds client.
+    'SDSdir' of a SeisComP Data Structure (SDS) with TYPE fixed to D
+    `<SDSdir>/Year/NET/STA/CHAN.TYPE/NET.STA.LOC.CHAN.TYPE.YEAR.DAY`
+    This usage should be equivalent to `obspy.clients.filesystem.sds` client.
 
 
     :Example:
 
         Example for a station 'GJE' in network 'HEJSL' with channel 'BHZ' and
-        location '00' with the start time 2010-12-24_11:36:30 and \\
-        ``fs =
-        ['base_dir','%Y','%b','%NET,['%j','_','%STA'','_T_',"%CHA('BH','')",
-            '.mseed']]``
+        location '00' with the start time 2010-12-24_11:36:30 and
+        ``fs = ['base_dir','%Y','%b','%NET,['%j','_','%STA'','_T_',\
+            "%CHA('BH','')", '.mseed']]``
         will be translated in a linux filename
         ``base_dir/2010/Nov/HEJSL/317_GJE_T_Z.mseed``
 
@@ -451,6 +451,7 @@ def read_from_filesystem(
         If the data contain traces of different channels in the same file with
         different start and endtimes the routine will not work properly when a
         period spans multiple files.
+
     """
 
     # check input

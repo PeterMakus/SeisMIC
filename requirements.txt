@@ -1,0 +1,22 @@
+#
+# note that this file contains requirements for automatic deployments
+# Broader requirements are specified in the environment.yml
+
+geographiclib
+h5py
+matplotlib
+numpy
+obspy
+pathlib
+pip
+prov
+pyyaml
+scipy; 
+tqdm
+
+# Other requirements for tests and docs
+flake8
+sphinx_rtd_theme
+sphinxcontrib-mermaid
+pytest
+py
