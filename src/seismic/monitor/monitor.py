@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 1st October 2021 04:00:12 pm
+Last Modified: Monday, 4th October 2021 02:32:12 pm
 '''
 from copy import deepcopy
 import logging
@@ -295,8 +295,6 @@ and network combinations %s' % str(
         else:
             ch = 'av'
         while len(infiles):
-            print('\nlength: ', len(infiles))
-            # print('\nactual list: ', infiles)
             # Find files belonging to same station
             pat = '.'.join(infiles[0].split('.')[:-2]) + '*'
             filtfil = fnmatch.filter(infiles, pat)
@@ -331,7 +329,12 @@ and network combinations %s' % str(
                 fffil.append(f)
             dvs = []
             for f in fffil:
-                dvs.append(read_dv(f))
+                try:
+                    dvs.append(read_dv(f))
+                except Exception:
+                    self.logger.exception(
+                        'An unexpected error has ocurred ' +
+                        'while reading file %s.' % f)
                 # Remove so they are not processed again
                 infiles.remove(f)
             if not len(dvs):
