@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 28th September 2021 03:34:07 pm
+Last Modified: Monday, 4th October 2021 09:59:33 am
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -40,7 +40,8 @@ class Correlator(object):
         Initiates the Correlator object. When executing
         :func:`~seismic.correlate.correlate.Correlator.pxcorr()`, it will
         actually compute the correlations and save them in an hdf5 file that
-        can be handled using :class:`~seismic.db.corr_hdf5.CorrelationDataBase`.
+        can be handled using
+        :class:`~seismic.db.corr_hdf5.CorrelationDataBase`.
         Data has to be preprocessed before calling this (i.e., the data already
         has to be given in an ASDF format). Consult
         :class:`~seismic.trace_data.preprocess.Preprocessor` for information on
