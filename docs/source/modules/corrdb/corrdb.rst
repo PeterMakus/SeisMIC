@@ -35,7 +35,7 @@ The only function of this class is to return a :class:`~seismic.db.corr_hdf5.DBH
 "useful" functions. To call :class:`~seismic.db.corr_hdf5.CorrelationDataBase`, use a context manager like so:
 
 >>> from seismic.db.corr_hdf5 import CorrelationDataBase
->>> with CorrelationDataBase(myfile.h5) as cdb:
+>>> with CorrelationDataBase('/path/to/myfile.h5') as cdb:
 >>>     type(cdb)  # This is a DBHandler
 <class 'seismic.db.corr_hdf5.DBHandler'>
 
@@ -57,7 +57,7 @@ for you (as shown earlier). To do so, you can use the :meth:`~seismic.db.corr_hd
 method:
 
 >>> from seismic.db.corr_hdf5 import CorrelationDataBase
->>> with CorrelationDataBase(myfile.h5, mode='r') as cdb:
+>>> with CorrelationDataBase('/path/to/myfile.h5', mode='r') as cdb:
 >>>     cst = cdb.get_data(
 >>>         tag='subdivision', network='IU-IU', station='*', channel='??Z-??Z', corr_start=None, corr_end=None)
 >>> # cst is a CorrStream object on that we can use our known methods
@@ -125,7 +125,7 @@ you will have to pay attention to a couple of particularities:
     # Get your correlation dictionary
     with open('/path/to/my/params.yaml') as file:
         co = yaml.load(file, Loader=yaml.FullLoader)
-    with CorrelationDataBase(myfile.h5, mode='w', corr_options=co) as cdb:
+    with CorrelationDataBase('/path/to/myfile.h5', mode='w', corr_options=co) as cdb:
         cdb.add_correlation(cst, tag='my_sensible_tag')
 
 If there had been any data in our :class:`~seismic.correlate.stream.CorrStream`, we could retrieve it as shown above.
