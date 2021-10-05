@@ -30,9 +30,9 @@ of the station ``IU.HRV``).
     Correlations will always only be computed alphabetically. That is, **SeisMIC** will not compute a
     correlation for ``TA-IU.M58A-HRV`` but only for ``IU-TA.HRV-M58A``.
 
-As a user, you will only ever be calling the :class:`~seismic.db.corr_hdf5.CorrelationDataBase` class.
-The only function of this class is to return a :class:`~seismic.db.corr_hdf5.DBHandler`, which hold all the
-"useful" functions. To call :class:`~seismic.db.corr_hdf5.CorrelationDataBase`, use a context manager like so:
+As a user, you will only ever be calling the :py:class:`~seismic.db.corr_hdf5.CorrelationDataBase` class.
+The only function of this class is to return a :py:class:`~seismic.db.corr_hdf5.DBHandler`, which hold all the
+"useful" functions. To call :py:class:`~seismic.db.corr_hdf5.CorrelationDataBase`, use a context manager like so:
 
 >>> from seismic.db.corr_hdf5 import CorrelationDataBase
 >>> with CorrelationDataBase('/path/to/myfile.h5') as cdb:
@@ -41,19 +41,19 @@ The only function of this class is to return a :class:`~seismic.db.corr_hdf5.DBH
 
 .. warning::
 
-    Do not call :class:`~seismic.db.corr_hdf5.DBHandler` directly! This might lead to unexpected behaviour or
+    Do not call :py:class:`~seismic.db.corr_hdf5.DBHandler` directly! This might lead to unexpected behaviour or
     even dataloss due to corrupted hdf5 files.
 
 .. warning::
 
     If you should for some reason decide to not use the context manager, you will have to close the hdf5 file
-    with :meth:`seismic.db.corr_hdf5.DBHandler._close` to avoid corrupting your files!
+    with :py:meth:`seismic.db.corr_hdf5.DBHandler._close` to avoid corrupting your files!
 
 Reading Correlations
 ++++++++++++++++++++
 
 The most common usecase is probably that you will want to access correlations that **SeisMIC** computed
-for you (as shown earlier). To do so, you can use the :meth:`~seismic.db.corr_hdf5.DBHandler.get_data`
+for you (as shown earlier). To do so, you can use the :py:meth:`~seismic.db.corr_hdf5.DBHandler.get_data`
 method:
 
 >>> from seismic.db.corr_hdf5 import CorrelationDataBase
@@ -83,7 +83,7 @@ Obtain correlation parameters
 #############################
 
 You might want to get the dictionary that you used to produce the correlations in the file. You can do that by using
-:meth:`seismic.corr_hdf5.corrdb.DBHandler.get_corr_options`.
+:py:meth:`seismic.corr_hdf5.corrdb.DBHandler.get_corr_options`.
 
 Getting an overview over available data
 #######################################
@@ -91,10 +91,12 @@ Getting an overview over available data
 Once you have a suffieciently large dataset, you might be confused about which data you have already produced.
 In this case, **SeisMIC** offers several methods to make your life a little easier:
 
-1. :meth:`seismic.corr_hdf5.corrdb.DBHandler.get_available_starttimes`: Returns a dictionaryof available starttimes for your chosen network, station, and channel combinations (wildcards are allowed).
-2. :meth:`seismic.corr_hdf5.corrdb.DBHandler.get_available_channels` : Returns the available channel combinations for a given station combination.
-3. **Access the DBHandler like a dictionary**: Just like in h5py, it is possible to access the :class:`~seismic.db.corr_hdf5.corrdb.DBHandler` like a dictionary. The logic works as follows:
-    dbh[tag][netcomb][statcomb][chacomb][corr_start][corr_end]
+1. :py:meth:`seismic.corr_hdf5.corrdb.DBHandler.get_available_starttimes`: Returns a dictionary
+   of available starttimes for your chosen network, station, and channel combinations (wildcards are allowed).
+2. :py:meth:`seismic.corr_hdf5.corrdb.DBHandler.get_available_channels`:
+   Returns the available channel combinations for a given station combination.
+3. **Access the DBHandler like a dictionary**: Just like in h5py, it is possible to access the :py:class:`~seismic.db.corr_hdf5.corrdb.DBHandler` like a dictionary. The logic works as follows:
+   dbh[tag][netcomb][statcomb][chacomb][corr_start][corr_end]
 
 Following the logic of the structure above, we can get a list of all available tags as follows:
 
@@ -104,10 +106,13 @@ Following the logic of the structure above, we can get a list of all available t
 Writing Correlations
 ++++++++++++++++++++
 
-If you postprocess your correlations (e.g., stacking), you might want to save the data afterwards. When writing to the correlation hdf5 files,
+If you postprocess your correlations (e.g., stacking), you might want to save the data afterwards.
+When writing to the correlation hdf5 files,
 you will have to pay attention to a couple of particularities:
 
-1. You need to provide a ``corr_options`` dictionary to be able to open the file with ``mode!=r``. If you don't provide a dictionary or your dictionary is different from the one used to produce the data, the code will raise an error. This is meant to prevent mixing of differently processed data.
+1. You need to provide a ``corr_options`` dictionary to be able to open the file with ``mode!=r``.
+   If you don't provide a dictionary or your dictionary is different from the one used to produce the data, the code will raise an error.
+   This is meant to prevent mixing of differently processed data.
 2. You should consider using a sensible convention for your tags (if saving stacks, it's best to stick to the standard convention as discussed above).
 
 .. code-block:: python
@@ -128,7 +133,7 @@ you will have to pay attention to a couple of particularities:
     with CorrelationDataBase('/path/to/myfile.h5', mode='w', corr_options=co) as cdb:
         cdb.add_correlation(cst, tag='my_sensible_tag')
 
-If there had been any data in our :class:`~seismic.correlate.stream.CorrStream`, we could retrieve it as shown above.
-Network, station, and channel information are determined automatically from the :class:`~seismic.correlate.stream.CorrTrace` header.
+If there had been any data in our :py:class:`~seismic.correlate.stream.CorrStream`, we could retrieve it as shown above.
+Network, station, and channel information are determined automatically from the :py:class:`~seismic.correlate.stream.CorrTrace` header.
     
     

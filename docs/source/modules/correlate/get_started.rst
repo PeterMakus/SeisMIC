@@ -198,7 +198,8 @@ Project Wide Parameters
     # folder for figures
     fig_subdir : 'figures'
 
-Those are parameters that govern the logging and the file-structure. ``proj_dir`` is the root directory, we have chosen when initialising our :class:`~seismic.trace_data.waveform.Store_Client` as shown `here <../trace_data/waveform.html#download-data>`_ .
+Those are parameters that govern the logging and the file-structure. ``proj_dir`` is the root directory, we have chosen when initialising our 
+:py:class:`~seismic.trace_data.waveform.Store_Client` as shown `here <../trace_data/waveform.html#download-data>`_ .
 ``fig_dir`` and ``log_dir`` are just subdirectories for figures and logs, respectively, and the log level decides how much will actually be logged.
 
 Network Specific Parameters
@@ -275,7 +276,7 @@ Let's start by getting the most obvious parameters out of the way:
 
 + ``Sampling_rate`` is the new sampling rate you will want your data to have. **SeisMIC** will take care of anti-alias filtering and determine whether data can be decimated.
 + ``remove_response`` if you want the data to be corrected for the instrument response, set this to ``True``.
-+ ``combination_method`` decides which components you will want to correlate. See :func:`~seismic.correlate.correlate.calc_cross_combis` for allowed options.
++ ``combination_method`` decides which components you will want to correlate. See :py:func:`~seismic.correlate.correlate.calc_cross_combis` for allowed options.
 
 
 Preprocessing Arguments
@@ -314,7 +315,8 @@ An over view of available stream preprocessing functions can  be found in :mod:`
 
 **Preprocessing on arrays in time and frequency domain**
 The functions to use have to be provided in ``corr_args['TDpreProcecssing']`` and ``corr_args['FDpreProcecssing']``.
-A custom function would need to take a matrix as input, where each column is one waveform in time or frequency domain. Additionally, the ``args`` dictionary and a ``params`` dictionary will be passed.
+A custom function would need to take a matrix as input, where each column is one waveform in time or frequency domain.
+Additionally, the ``args`` dictionary and a ``params`` dictionary will be passed.
 
 .. code-block:: yaml
     :linenos:
