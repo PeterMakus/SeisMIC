@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 11th October 2021 03:42:52 pm
+Last Modified: Monday, 11th October 2021 03:52:22 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -1001,6 +1001,9 @@ def sort_comb_name_alphabetically(
             net1, stat1, net2, stat2))
     (['XN', 'XN'], ['NEP06', 'NEP07'])
     """
+    for arg in [network1, network2, station1, station2]:
+        if not isinstance(arg, str):
+            raise TypeError('All arguments have to be strings.')
     sort1 = network1 + station1
     sort2 = network2 + station2
     sort = [sort1, sort2]
