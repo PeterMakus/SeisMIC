@@ -81,7 +81,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 29th March 2021 07:58:18 am</span>
-<span class="sd">Last Modified: Monday, 11th October 2021 01:52:52 pm</span>
+<span class="sd">Last Modified: Monday, 11th October 2021 04:06:25 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 <span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
@@ -1074,6 +1074,9 @@
 <span class="sd">            net1, stat1, net2, stat2))</span>
 <span class="sd">    ([&#39;XN&#39;, &#39;XN&#39;], [&#39;NEP06&#39;, &#39;NEP07&#39;])</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="p">[</span><span class="n">network1</span><span class="p">,</span> <span class="n">network2</span><span class="p">,</span> <span class="n">station1</span><span class="p">,</span> <span class="n">station2</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;All arguments have to be strings.&#39;</span><span class="p">)</span>
     <span class="n">sort1</span> <span class="o">=</span> <span class="n">network1</span> <span class="o">+</span> <span class="n">station1</span>
     <span class="n">sort2</span> <span class="o">=</span> <span class="n">network2</span> <span class="o">+</span> <span class="n">station2</span>
     <span class="n">sort</span> <span class="o">=</span> <span class="p">[</span><span class="n">sort1</span><span class="p">,</span> <span class="n">sort2</span><span class="p">]</span>
@@ -1127,8 +1130,8 @@
                         <span class="c1"># combis matches with this combis. If it does not we</span>
                         <span class="c1"># continue and skip this combi</span>
                     <span class="n">nc</span><span class="p">,</span> <span class="n">sc</span> <span class="o">=</span> <span class="n">sort_comb_name_alphabetically</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">s2</span><span class="p">)</span>
-                    <span class="n">netcombs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nc</span><span class="p">)</span>
-                    <span class="n">statcombs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sc</span><span class="p">)</span>
+                    <span class="n">netcombs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">nc</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                    <span class="n">statcombs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sc</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
 
     <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;betweenComponents&#39;</span> <span class="ow">or</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;autoComponents&#39;</span><span class="p">:</span>
         <span class="n">netcombs</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="o">+</span><span class="s1">&#39;-&#39;</span><span class="o">+</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">netlist</span><span class="p">]</span>
@@ -1139,14 +1142,14 @@
                 <span class="n">n2</span> <span class="o">=</span> <span class="n">netlist</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span>
                 <span class="n">s2</span> <span class="o">=</span> <span class="n">statlist</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span>
                 <span class="n">nc</span><span class="p">,</span> <span class="n">sc</span> <span class="o">=</span> <span class="n">sort_comb_name_alphabetically</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">s2</span><span class="p">)</span>
-                <span class="n">netcombs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nc</span><span class="p">)</span>
-                <span class="n">statcombs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sc</span><span class="p">)</span>
+                <span class="n">netcombs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">nc</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="n">statcombs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sc</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
     <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;allCombinations&#39;</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">netlist</span><span class="p">,</span> <span class="n">statlist</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">n2</span><span class="p">,</span> <span class="n">s2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">netlist</span><span class="p">,</span> <span class="n">statlist</span><span class="p">):</span>
                 <span class="n">nc</span><span class="p">,</span> <span class="n">sc</span> <span class="o">=</span> <span class="n">sort_comb_name_alphabetically</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">s2</span><span class="p">)</span>
-                <span class="n">netcombs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nc</span><span class="p">)</span>
-                <span class="n">statcombs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sc</span><span class="p">)</span>
+                <span class="n">netcombs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">nc</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="n">statcombs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sc</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Method has to be one of (&#39;betweenStations&#39;, &quot;</span>
                          <span class="s2">&quot;&#39;betweenComponents&#39;, &#39;autoComponents&#39;, &quot;</span>
@@ -1211,7 +1214,6 @@
 
     <span class="k">if</span> <span class="n">remove_response</span><span class="p">:</span>
         <span class="c1"># taper before instrument response removal</span>
-        <span class="c1"># print(store_client.rclient.get_stations())</span>
         <span class="k">if</span> <span class="n">taper_len</span><span class="p">:</span>
             <span class="n">st</span> <span class="o">=</span> <span class="n">ppst</span><span class="o">.</span><span class="n">cos_taper_st</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
