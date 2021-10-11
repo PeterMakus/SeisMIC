@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 4th October 2021 09:59:33 am
+Last Modified: Monday, 11th October 2021 01:42:39 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -156,6 +156,31 @@ class Correlator(object):
                 ['{n}.{s}'.format(n=n, s=s) for n, s in station]))
 
         self.sampling_rate = self.options['sampling_rate']
+
+    def find_interstat_dist(self, dis: float):
+        """
+        Find stations in database with interstation distance smaller than
+        dis.
+
+        If no station inventories are available, they will be downloaded.
+
+        :param dis: Find all Stations with distance less than `dis` [in m]
+        :type dis: float
+
+        .. note:: only the subset of the in ``params.yaml`` defined
+            networks and stations will be queried.
+        """
+        # list of requested combinations
+        self.rcombis = []
+        # Update the store clients invetory
+        self.store_client.read_inventory()
+        for ii, (n0, s0) in enumerate(self.station):
+            inv0 = self.store_client.select_inventory_or_load_remote(n0, s0)
+            for n1, s1 in self.station[ii:]:
+                inv1 = self.store_client.select_inventory_or_load_remote(
+                    n1, s1)
+                if mu.filter_stat_dist(inv0, inv1, dis):
+                    self.rcombis.append('%s-%s.%s-%s' % (n0, n1, s0, s1))
 
     def find_existing_times(self, tag: str, channel: str = '*') -> dict:
         """
