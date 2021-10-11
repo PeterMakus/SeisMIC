@@ -98,7 +98,8 @@ graph LR
     classDef active fill:#f666, stroke-width:4px, stroke:#f06;
         </div><section id="the-correlator-object">
 <h1>The Correlator Object<a class="headerlink" href="#the-correlator-object" title="Permalink to this headline"></a></h1>
-<p>The Object governing the actual computation is <a class="reference internal" href="../API.html#seismic.correlate.correlate.Correlator" title="seismic.correlate.correlate.Correlator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Correlator</span></code></a>. It takes only two input arguments and the most important is the dictionary / yml file that we created in <a class="reference external" href="./get_started.html#download-data">the preceding step</a>.
+<p>The Object governing the actual computation is <a class="reference internal" href="../API.html#seismic.correlate.correlate.Correlator" title="seismic.correlate.correlate.Correlator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Correlator</span></code></a>.
+It takes only two input arguments and the most important is the dictionary / yml file that we created in <a class="reference external" href="./get_started.html#download-data">the preceding step</a>.
 The second input argument is the <a class="reference internal" href="../API.html#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> we used to <a class="reference external" href="../trace_data/waveform.html#download-data">download</a> our data.</p>
 <p>As Computing Ambient Noise Correlations is computationally very expensive, <strong>SeisMIC</strong> can be used in conjuction with MPI (e.g., openMPI) to enable processing with several cores or on HPCs.</p>
 <p>A script to start your correlation could look like this:</p>

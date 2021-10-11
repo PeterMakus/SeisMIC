@@ -73,7 +73,7 @@ Start the Computation
 +++++++++++++++++++++
 
 Again, the procedure is fairly similar to startin the correlation. Velocity stretch estimates are computed by the
-:class:`~seismic.monitor.monitor.Monitor` object. Once again, usage with mpi is possible. Your velocity stretch estimate
+:py:class:`~seismic.monitor.monitor.Monitor` object. Once again, usage with mpi is possible. Your velocity stretch estimate
 script could look something like this:
 
 .. code-block:: python
@@ -86,7 +86,7 @@ script could look something like this:
     m = Monitor(yaml_f)
     m.compute_velocity_change_bulk()
 
-Again, you will only want to use the method :meth:`seismic.monitor.monitor.Monitor.compute_velocity_change_bulk`.
+Again, you will only want to use the method :py:meth:`seismic.monitor.monitor.Monitor.compute_velocity_change_bulk`.
 You can start the script using mpi:
 
 .. code-block:: bash

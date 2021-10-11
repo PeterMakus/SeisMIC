@@ -81,7 +81,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 29th March 2021 07:58:18 am</span>
-<span class="sd">Last Modified: Tuesday, 28th September 2021 03:34:07 pm</span>
+<span class="sd">Last Modified: Monday, 11th October 2021 01:52:52 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 <span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
@@ -114,7 +114,8 @@
 <span class="sd">        Initiates the Correlator object. When executing</span>
 <span class="sd">        :func:`~seismic.correlate.correlate.Correlator.pxcorr()`, it will</span>
 <span class="sd">        actually compute the correlations and save them in an hdf5 file that</span>
-<span class="sd">        can be handled using :class:`~seismic.db.corr_hdf5.CorrelationDataBase`.</span>
+<span class="sd">        can be handled using</span>
+<span class="sd">        :class:`~seismic.db.corr_hdf5.CorrelationDataBase`.</span>
 <span class="sd">        Data has to be preprocessed before calling this (i.e., the data already</span>
 <span class="sd">        has to be given in an ASDF format). Consult</span>
 <span class="sd">        :class:`~seismic.trace_data.preprocess.Preprocessor` for information on</span>
@@ -229,6 +230,35 @@
                 <span class="p">[</span><span class="s1">&#39;</span><span class="si">{n}</span><span class="s1">.</span><span class="si">{s}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">station</span><span class="p">]))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="Correlator.find_interstat_dist"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.correlate.Correlator.find_interstat_dist">[docs]</a>    <span class="k">def</span> <span class="nf">find_interstat_dist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dis</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find stations in database with interstation distance smaller than</span>
+<span class="sd">        dis.</span>
+
+<span class="sd">        If no station inventories are available, they will be downloaded.</span>
+
+<span class="sd">        :param dis: Find all Stations with distance less than `dis` [in m]</span>
+<span class="sd">        :type dis: float</span>
+
+<span class="sd">        .. note:: only the subset of the in ``params.yaml`` defined</span>
+<span class="sd">            networks and stations will be queried.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combination_method&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;betweenStations&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;This function is only available if combination method &#39;</span> <span class="o">+</span>
+                <span class="s1">&#39;is set to &quot;betweenStations&quot;.&#39;</span><span class="p">)</span>
+        <span class="c1"># list of requested combinations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rcombis</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># Update the store clients invetory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">read_inventory</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="p">(</span><span class="n">n0</span><span class="p">,</span> <span class="n">s0</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">station</span><span class="p">):</span>
+            <span class="n">inv0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">select_inventory_or_load_remote</span><span class="p">(</span><span class="n">n0</span><span class="p">,</span> <span class="n">s0</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">n1</span><span class="p">,</span> <span class="n">s1</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">station</span><span class="p">[</span><span class="n">ii</span><span class="p">:]:</span>
+                <span class="n">inv1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">select_inventory_or_load_remote</span><span class="p">(</span>
+                    <span class="n">n1</span><span class="p">,</span> <span class="n">s1</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">mu</span><span class="o">.</span><span class="n">filter_stat_dist</span><span class="p">(</span><span class="n">inv0</span><span class="p">,</span> <span class="n">inv1</span><span class="p">,</span> <span class="n">dis</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">rcombis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n0</span><span class="p">,</span> <span class="n">n1</span><span class="p">,</span> <span class="n">s0</span><span class="p">,</span> <span class="n">s1</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Correlator.find_existing_times"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.correlate.Correlator.find_existing_times">[docs]</a>    <span class="k">def</span> <span class="nf">find_existing_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>

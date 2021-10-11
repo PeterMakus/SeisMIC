@@ -275,7 +275,8 @@ To achieve a better understanding of what each of the parameters do, let’s hav
 <span class="linenos">10</span><span class="nt">fig_subdir </span><span class="p">:</span> <span class="s">&#39;figures&#39;</span>
 </pre></div>
 </div>
-<p>Those are parameters that govern the logging and the file-structure. <code class="docutils literal notranslate"><span class="pre">proj_dir</span></code> is the root directory, we have chosen when initialising our <a class="reference internal" href="../API.html#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> as shown <a class="reference external" href="../trace_data/waveform.html#download-data">here</a> .
+<p>Those are parameters that govern the logging and the file-structure. <code class="docutils literal notranslate"><span class="pre">proj_dir</span></code> is the root directory, we have chosen when initialising our
+<a class="reference internal" href="../API.html#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> as shown <a class="reference external" href="../trace_data/waveform.html#download-data">here</a> .
 <code class="docutils literal notranslate"><span class="pre">fig_dir</span></code> and <code class="docutils literal notranslate"><span class="pre">log_dir</span></code> are just subdirectories for figures and logs, respectively, and the log level decides how much will actually be logged.</p>
 </section>
 <section id="network-specific-parameters">
@@ -376,7 +377,8 @@ An over view of available stream preprocessing functions can  be found in <a cla
 </div>
 <p><strong>Preprocessing on arrays in time and frequency domain</strong>
 The functions to use have to be provided in <code class="docutils literal notranslate"><span class="pre">corr_args['TDpreProcecssing']</span></code> and <code class="docutils literal notranslate"><span class="pre">corr_args['FDpreProcecssing']</span></code>.
-A custom function would need to take a matrix as input, where each column is one waveform in time or frequency domain. Additionally, the <code class="docutils literal notranslate"><span class="pre">args</span></code> dictionary and a <code class="docutils literal notranslate"><span class="pre">params</span></code> dictionary will be passed.</p>
+A custom function would need to take a matrix as input, where each column is one waveform in time or frequency domain.
+Additionally, the <code class="docutils literal notranslate"><span class="pre">args</span></code> dictionary and a <code class="docutils literal notranslate"><span class="pre">params</span></code> dictionary will be passed.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1"># parameters for correlation preprocessing</span>
 <span class="linenos"> 2</span><span class="c1"># Standard functions reside in seismic.correlate.preprocessing_td</span>
 <span class="linenos"> 3</span><span class="nt">corr_args </span><span class="p">:</span> <span class="p p-Indicator">{</span><span class="s">&#39;TDpreProcessing&#39;</span><span class="p p-Indicator">:[</span>

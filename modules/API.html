@@ -351,7 +351,7 @@ upon the argument passed as <code class="docutils literal notranslate"><span cla
 </dd>
 </dl>
 <p>Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 28th September 2021 03:34:07 pm</p>
+Last Modified: Monday, 11th October 2021 01:52:52 pm</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="seismic.correlate.correlate.Correlator">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">seismic.correlate.correlate.</span></span><span class="sig-name descname"><span class="pre">Correlator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">store_client</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><span class="pre">seismic.trace_data.waveform.Store_Client</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seismic/correlate/correlate.html#Correlator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.correlate.Correlator" title="Permalink to this definition"></a></dt>
@@ -361,7 +361,8 @@ for the database.</p>
 <p>Initiates the Correlator object. When executing
 <a class="reference internal" href="#seismic.correlate.correlate.Correlator.pxcorr" title="seismic.correlate.correlate.Correlator.pxcorr"><code class="xref py py-func docutils literal notranslate"><span class="pre">pxcorr()</span></code></a>, it will
 actually compute the correlations and save them in an hdf5 file that
-can be handled using <a class="reference internal" href="#seismic.db.corr_hdf5.CorrelationDataBase" title="seismic.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a>.
+can be handled using
+<a class="reference internal" href="#seismic.db.corr_hdf5.CorrelationDataBase" title="seismic.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a>.
 Data has to be preprocessed before calling this (i.e., the data already
 has to be given in an ASDF format). Consult
 <code class="xref py py-class docutils literal notranslate"><span class="pre">Preprocessor</span></code> for information on
@@ -373,6 +374,24 @@ Can also be a path to a yaml file containing all the keys required
 in options.</p>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="seismic.correlate.correlate.Correlator.find_interstat_dist">
+<span class="sig-name descname"><span class="pre">find_interstat_dist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dis</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seismic/correlate/correlate.html#Correlator.find_interstat_dist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.correlate.Correlator.find_interstat_dist" title="Permalink to this definition"></a></dt>
+<dd><p>Find stations in database with interstation distance smaller than
+dis.</p>
+<p>If no station inventories are available, they will be downloaded.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dis</strong> (<em>float</em>) – Find all Stations with distance less than <cite>dis</cite> [in m]</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>only the subset of the in <code class="docutils literal notranslate"><span class="pre">params.yaml</span></code> defined
+networks and stations will be queried.</p>
+</div>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="seismic.correlate.correlate.Correlator.find_existing_times">
 <span class="sig-name descname"><span class="pre">find_existing_times</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'*'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/seismic/correlate/correlate.html#Correlator.find_existing_times"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.correlate.Correlator.find_existing_times" title="Permalink to this definition"></a></dt>
@@ -1743,7 +1762,7 @@ cores available in the hosting machine.</p>
 </dd>
 </dl>
 <p>Created: Tuesday, 20th July 2021 03:24:01 pm
-Last Modified: Tuesday, 27th July 2021 10:52:22 am</p>
+Last Modified: Monday, 4th October 2021 10:08:22 am</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seismic.correlate.preprocessing_td.clip">
 <span class="sig-prename descclassname"><span class="pre">seismic.correlate.preprocessing_td.</span></span><span class="sig-name descname"><span class="pre">clip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span></span></span><a class="reference internal" href="../_modules/seismic/correlate/preprocessing_td.html#clip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.preprocessing_td.clip" title="Permalink to this definition"></a></dt>
@@ -2490,7 +2509,7 @@ hdf5 dataset.</p>
 </dd>
 </dl>
 <p>Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Thursday, 30th September 2021 10:39:05 am</p>
+Last Modified: Monday, 4th October 2021 02:32:12 pm</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="seismic.monitor.monitor.Monitor">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">seismic.monitor.monitor.</span></span><span class="sig-name descname"><span class="pre">Monitor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seismic/monitor/monitor.html#Monitor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.monitor.Monitor" title="Permalink to this definition"></a></dt>
@@ -3316,7 +3335,7 @@ correlation matrix.</p>
 </dd>
 </dl>
 <p>Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Friday, 1st October 2021 11:55:15 am</p>
+Last Modified: Tuesday, 5th October 2021 01:42:19 pm</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seismic.monitor.stretch_mod.time_windows_creation">
 <span class="sig-prename descclassname"><span class="pre">seismic.monitor.stretch_mod.</span></span><span class="sig-name descname"><span class="pre">time_windows_creation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">starting_list</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_width</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span></span></span><a class="reference internal" href="../_modules/seismic/monitor/stretch_mod.html#time_windows_creation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.stretch_mod.time_windows_creation" title="Permalink to this definition"></a></dt>
@@ -3859,7 +3878,7 @@ defaults to None (automatically chosen).</p></li>
 </dd>
 </dl>
 <p>Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Friday, 1st October 2021 10:44:31 am</p>
+Last Modified: Tuesday, 5th October 2021 11:49:43 am</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seismic.plot.plot_dv.plot_dv">
 <span class="sig-prename descclassname"><span class="pre">seismic.plot.plot_dv.</span></span><span class="sig-name descname"><span class="pre">plot_dv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_file_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_simmat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_mat_Clim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(9,</span> <span class="pre">11)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dpi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">72</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seismic/plot/plot_dv.html#plot_dv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.plot.plot_dv.plot_dv" title="Permalink to this definition"></a></dt>

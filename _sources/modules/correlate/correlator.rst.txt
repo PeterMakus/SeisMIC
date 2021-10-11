@@ -16,8 +16,9 @@
 The Correlator Object
 ---------------------
 
-The Object governing the actual computation is :class:`~seismic.correlate.correlate.Correlator`. It takes only two input arguments and the most important is the dictionary / yml file that we created in `the preceding step <./get_started.html#download-data>`_.
-The second input argument is the :class:`~seismic.trace_data.waveform.Store_Client` we used to `download <../trace_data/waveform.html#download-data>`_ our data.
+The Object governing the actual computation is :py:class:`~seismic.correlate.correlate.Correlator`.
+It takes only two input arguments and the most important is the dictionary / yml file that we created in `the preceding step <./get_started.html#download-data>`_.
+The second input argument is the :py:class:`~seismic.trace_data.waveform.Store_Client` we used to `download <../trace_data/waveform.html#download-data>`_ our data.
 
 As Computing Ambient Noise Correlations is computationally very expensive, **SeisMIC** can be used in conjuction with MPI (e.g., openMPI) to enable processing with several cores or on HPCs.
 
@@ -55,5 +56,5 @@ This script can be iniated in bash using:
 
     mpirun -n $number_cores$ python mycorrelation.py
 
-where ``$number_cores$`` is the number of cores you want to initialise. The only method of :class:`~seismic.correlate.correlate.Correlator`
-that you will want to use is :meth:`~seismic.correlate.correlate.Correlator.pxcorr()`, which does not require any (additional) input.
+where ``$number_cores$`` is the number of cores you want to initialise. The only method of :py:class:`~seismic.correlate.correlate.Correlator`
+that you will want to use is :py:meth:`~seismic.correlate.correlate.Correlator.pxcorr()`, which does not require any (additional) input.

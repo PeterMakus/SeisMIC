@@ -120,7 +120,7 @@ correlation for <code class="docutils literal notranslate"><span class="pre">TA-
 The only function of this class is to return a <a class="reference internal" href="../API.html#seismic.db.corr_hdf5.DBHandler" title="seismic.db.corr_hdf5.DBHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">DBHandler</span></code></a>, which hold all the
 “useful” functions. To call <a class="reference internal" href="../API.html#seismic.db.corr_hdf5.CorrelationDataBase" title="seismic.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a>, use a context manager like so:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">seismic.db.corr_hdf5</span> <span class="kn">import</span> <span class="n">CorrelationDataBase</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="n">myfile</span><span class="o">.</span><span class="n">h5</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="s1">&#39;/path/to/myfile.h5&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="nb">type</span><span class="p">(</span><span class="n">cdb</span><span class="p">)</span>  <span class="c1"># This is a DBHandler</span>
 <span class="go">&lt;class &#39;seismic.db.corr_hdf5.DBHandler&#39;&gt;</span>
 </pre></div>
@@ -141,7 +141,7 @@ with <code class="xref py py-meth docutils literal notranslate"><span class="pre
 for you (as shown earlier). To do so, you can use the <a class="reference internal" href="../API.html#seismic.db.corr_hdf5.DBHandler.get_data" title="seismic.db.corr_hdf5.DBHandler.get_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_data()</span></code></a>
 method:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">seismic.db.corr_hdf5</span> <span class="kn">import</span> <span class="n">CorrelationDataBase</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="n">myfile</span><span class="o">.</span><span class="n">h5</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="s1">&#39;/path/to/myfile.h5&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="n">cst</span> <span class="o">=</span> <span class="n">cdb</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span>
 <span class="gp">&gt;&gt;&gt; </span>        <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;subdivision&#39;</span><span class="p">,</span> <span class="n">network</span><span class="o">=</span><span class="s1">&#39;IU-IU&#39;</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="s1">&#39;??Z-??Z&#39;</span><span class="p">,</span> <span class="n">corr_start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">corr_end</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># cst is a CorrStream object on that we can use our known methods</span>
@@ -172,13 +172,12 @@ is similar to using a wildcard (i.e., load from earliest to latest available dat
 <p>Once you have a suffieciently large dataset, you might be confused about which data you have already produced.
 In this case, <strong>SeisMIC</strong> offers several methods to make your life a little easier:</p>
 <ol class="arabic simple">
-<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">seismic.corr_hdf5.corrdb.DBHandler.get_available_starttimes()</span></code>: Returns a dictionaryof available starttimes for your chosen network, station, and channel combinations (wildcards are allowed).</p></li>
-<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">seismic.corr_hdf5.corrdb.DBHandler.get_available_channels()</span></code> : Returns the available channel combinations for a given station combination.</p></li>
-<li><dl class="simple">
-<dt><strong>Access the DBHandler like a dictionary</strong>: Just like in h5py, it is possible to access the <code class="xref py py-class docutils literal notranslate"><span class="pre">DBHandler</span></code> like a dictionary. The logic works as follows:</dt><dd><p>dbh[tag][netcomb][statcomb][chacomb][corr_start][corr_end]</p>
-</dd>
-</dl>
-</li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">seismic.corr_hdf5.corrdb.DBHandler.get_available_starttimes()</span></code>: Returns a dictionary
+of available starttimes for your chosen network, station, and channel combinations (wildcards are allowed).</p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">seismic.corr_hdf5.corrdb.DBHandler.get_available_channels()</span></code>:
+Returns the available channel combinations for a given station combination.</p></li>
+<li><p><strong>Access the DBHandler like a dictionary</strong>: Just like in h5py, it is possible to access the <code class="xref py py-class docutils literal notranslate"><span class="pre">DBHandler</span></code> like a dictionary. The logic works as follows:
+dbh[tag][netcomb][statcomb][chacomb][corr_start][corr_end]</p></li>
 </ol>
 <p>Following the logic of the structure above, we can get a list of all available tags as follows:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">dbh</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
@@ -189,10 +188,13 @@ In this case, <strong>SeisMIC</strong> offers several methods to make your life 
 </section>
 <section id="writing-correlations">
 <h2>Writing Correlations<a class="headerlink" href="#writing-correlations" title="Permalink to this headline"></a></h2>
-<p>If you postprocess your correlations (e.g., stacking), you might want to save the data afterwards. When writing to the correlation hdf5 files,
+<p>If you postprocess your correlations (e.g., stacking), you might want to save the data afterwards.
+When writing to the correlation hdf5 files,
 you will have to pay attention to a couple of particularities:</p>
 <ol class="arabic simple">
-<li><p>You need to provide a <code class="docutils literal notranslate"><span class="pre">corr_options</span></code> dictionary to be able to open the file with <code class="docutils literal notranslate"><span class="pre">mode!=r</span></code>. If you don’t provide a dictionary or your dictionary is different from the one used to produce the data, the code will raise an error. This is meant to prevent mixing of differently processed data.</p></li>
+<li><p>You need to provide a <code class="docutils literal notranslate"><span class="pre">corr_options</span></code> dictionary to be able to open the file with <code class="docutils literal notranslate"><span class="pre">mode!=r</span></code>.
+If you don’t provide a dictionary or your dictionary is different from the one used to produce the data, the code will raise an error.
+This is meant to prevent mixing of differently processed data.</p></li>
 <li><p>You should consider using a sensible convention for your tags (if saving stacks, it’s best to stick to the standard convention as discussed above).</p></li>
 </ol>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span> <span class="nn">yaml</span>
@@ -207,7 +209,7 @@ you will have to pay attention to a couple of particularities:</p>
 <span class="linenos">10</span><span class="c1"># Get your correlation dictionary</span>
 <span class="linenos">11</span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;/path/to/my/params.yaml&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
 <span class="linenos">12</span>    <span class="n">co</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">Loader</span><span class="o">=</span><span class="n">yaml</span><span class="o">.</span><span class="n">FullLoader</span><span class="p">)</span>
-<span class="linenos">13</span><span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="n">myfile</span><span class="o">.</span><span class="n">h5</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">corr_options</span><span class="o">=</span><span class="n">co</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
+<span class="linenos">13</span><span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="s1">&#39;/path/to/myfile.h5&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">corr_options</span><span class="o">=</span><span class="n">co</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
 <span class="linenos">14</span>    <span class="n">cdb</span><span class="o">.</span><span class="n">add_correlation</span><span class="p">(</span><span class="n">cst</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;my_sensible_tag&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
