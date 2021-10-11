@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Tuesday, 28th September 2021 03:28:11 pm
+Last Modified: Monday, 11th October 2021 04:05:46 pm
 '''
 from calendar import c
 from copy import deepcopy
@@ -223,7 +223,7 @@ class TestComputeNetworkStationCombinations(unittest.TestCase):
         self.slist = ['B', 'C']
 
     def test_between_stations_0(self):
-        exp_result = ([['A', 'A']], [['B', 'C']])
+        exp_result = (['A-A'], ['B-C'])
         self.assertEqual(
             correlate.compute_network_station_combinations(
                 self.nlist, self.slist),
@@ -237,14 +237,14 @@ class TestComputeNetworkStationCombinations(unittest.TestCase):
             exp_result)
 
     def test_between_stations_2(self):
-        exp_result = ([['B', 'C']], [['A', 'A']])
+        exp_result = (['B-C'], ['A-A'])
         self.assertEqual(
             correlate.compute_network_station_combinations(
                 self.slist, self.nlist),
             exp_result)
 
     def test_rcombis(self):
-        exp_result = ([['A', 'A']], [['B', 'C']])
+        exp_result = (['A-A'], ['B-C'])
         nlist = ['A', 'A', 'B']
         slist = ['B', 'C', 'D']
         rcombis = ['A-A.B-C']

@@ -8,9 +8,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 5th October 2021 11:50:22 am
-Last Modified: Tuesday, 5th October 2021 01:42:06 pm
+Last Modified: Monday, 11th October 2021 03:26:26 pm
 '''
 
+from logging import warn
 import os
 from glob import glob
 from typing import Tuple
@@ -24,16 +25,47 @@ from seismic.plot.plot_utils import set_mpl_params
 
 
 def plot_multiple_dv(
-    indir: str, title: str = None, outfile: str = None, fmt: str = None,
-        dpi: int = 300, legend: bool = False, ylim: Tuple[float, float] = None,
+    indir: str, only_mean: bool = False, title: str = None,
+    outfile: str = None, fmt: str = None, dpi: int = 300, legend: bool = False,
+    ylim: Tuple[float, float] = None,
         xlim: Tuple[datetime, datetime] = None):
+    """
+    Plots several Velocity variations in one single plot
+
+    :param indir: directory in which the .npz DV files are located.
+    :type indir: str
+    :param only_mean: plot only the average of one station instead of all
+        of its components. **The averages have to be computed before**.
+        Defaults to false.
+    :type only_mean: bool, optional
+    :param title: Title for the figure, defaults to None
+    :type title: str, optional
+    :param outfile: File to save figure to, defaults to None
+    :type outfile: str, optional
+    :param fmt: Figure format, defaults to None
+    :type fmt: str, optional
+    :param dpi: DPI for pixel-based formats, defaults to 300
+    :type dpi: int, optional
+    :param legend: Should a legend be plotted, defaults to False
+    :type legend: bool, optional
+    :param ylim: y limit, defaults to None
+    :type ylim: Tuple[float, float], optional
+    :param xlim: x limit, defaults to None
+    :type xlim: Tuple[datetime, datetime], optional
+    """
     set_mpl_params()
-    pat = os.path.join(indir, '*.npz')
+    if only_mean:
+        pat = os.path.join(indir, '*.av-*.npz')
+    else:
+        pat = os.path.join(indir, '*.npz')
     statcodes = []
     for fi in glob(pat):
-        dv = read_dv(fi)
+        try:
+            dv = read_dv(fi)
+        except Exception:
+            warn('Corrupt file %s discovered...skipping.' % fi)
         rtime = [utcdt.datetime for utcdt in dv.stats['corr_start']]
-        plt.plot(rtime, -dv.value, '.', markersize=2)
+        plt.plot(rtime, -dv.value, '.', markersize=.5)
         ax = plt.gca()
         statcodes.append(dv.stats.station)
     ax.xaxis.set_major_locator(mpl.dates.AutoDateLocator())

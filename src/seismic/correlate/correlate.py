@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 11th October 2021 01:52:52 pm
+Last Modified: Monday, 11th October 2021 04:06:25 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -1000,6 +1000,9 @@ def sort_comb_name_alphabetically(
             net1, stat1, net2, stat2))
     (['XN', 'XN'], ['NEP06', 'NEP07'])
     """
+    for arg in [network1, network2, station1, station2]:
+        if not isinstance(arg, str):
+            raise TypeError('All arguments have to be strings.')
     sort1 = network1 + station1
     sort2 = network2 + station2
     sort = [sort1, sort2]
@@ -1053,8 +1056,8 @@ def compute_network_station_combinations(
                         # combis matches with this combis. If it does not we
                         # continue and skip this combi
                     nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
-                    netcombs.append(nc)
-                    statcombs.append(sc)
+                    netcombs.append('%s-%s' % (nc[0], nc[1]))
+                    statcombs.append('%s-%s' % (sc[0], sc[1]))
 
     elif method == 'betweenComponents' or method == 'autoComponents':
         netcombs = [n+'-'+n for n in netlist]
@@ -1065,14 +1068,14 @@ def compute_network_station_combinations(
                 n2 = netlist[jj]
                 s2 = statlist[jj]
                 nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
-                netcombs.append(nc)
-                statcombs.append(sc)
+                netcombs.append('%s-%s' % (nc[0], nc[1]))
+                statcombs.append('%s-%s' % (sc[0], sc[1]))
     elif method == 'allCombinations':
         for n, s in zip(netlist, statlist):
             for n2, s2 in zip(netlist, statlist):
                 nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
-                netcombs.append(nc)
-                statcombs.append(sc)
+                netcombs.append('%s-%s' % (nc[0], nc[1]))
+                statcombs.append('%s-%s' % (sc[0], sc[1]))
     else:
         raise ValueError("Method has to be one of ('betweenStations', "
                          "'betweenComponents', 'autoComponents', "
@@ -1137,7 +1140,6 @@ sample rate (%s Hz).' % (str(sampling_rate), str(
 
     if remove_response:
         # taper before instrument response removal
-        # print(store_client.rclient.get_stations())
         if taper_len:
             st = ppst.cos_taper_st(st, taper_len, False)
         try:
