@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 11th October 2021 01:42:39 pm
+Last Modified: Monday, 11th October 2021 01:52:52 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -170,6 +170,10 @@ class Correlator(object):
         .. note:: only the subset of the in ``params.yaml`` defined
             networks and stations will be queried.
         """
+        if not self.options['combination_method'] == 'betweenStations':
+            raise ValueError(
+                'This function is only available if combination method ' +
+                'is set to "betweenStations".')
         # list of requested combinations
         self.rcombis = []
         # Update the store clients invetory
