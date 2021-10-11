@@ -6,7 +6,7 @@
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
-BUILDDIR      = build
+BUILDDIR      = _build
 
 # Put it first so that "make" without argument is like "make help".
 help:
@@ -18,3 +18,21 @@ help:
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+gh-pages:
+	git checkout gh-pages
+	rm -rf $(BUILDDIR) _sources _static _modules chapters
+	git checkout main $(GH_PAGES_SOURCES) .gitignore
+	git reset HEAD
+	make html
+	#mv -fv $(BUILDDIR)/html/* ./
+	cp -frv $(BUILDDIR)/html/* ./ && rm -R docs/build/html/*
+	rm -rf $(GH_PAGES_SOURCES) build
+	git add -A
+	git commit -m "Generated gh-pages for `git log main -1 --pretty=short --abbrev-commit`" && git push origin gh-pages ; git checkout main
+
+dist:
+	python3 -m pip install --user --upgrade setuptools wheel
+	python3 setup.py sdist bdist_wheel
+	python3 -m twine upload dist/*
+
