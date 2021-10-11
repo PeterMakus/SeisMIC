@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 11th October 2021 01:52:52 pm
+Last Modified: Monday, 11th October 2021 03:42:52 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -213,6 +213,7 @@ class Correlator(object):
             combis=self.rcombis)
         ex_dict = {}
         for nc, sc in zip(netcombs, statcombs):
+            print(nc, sc)
             s0, s1 = sc.split('-')
             n0, n1 = nc.split('-')
             outf = os.path.join(
