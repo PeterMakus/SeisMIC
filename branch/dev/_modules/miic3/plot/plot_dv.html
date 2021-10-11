@@ -1,0 +1,434 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>miic3.plot.plot_dv &mdash; SeisMIIC 0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+        <script >mermaid.initialize({startOnLoad:true});</script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> SeisMIIC
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trace_data.html">Trace data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/correlate.html">Compute and Handle Correlations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/corrdb.html">Save and Load Correlations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/monitor.html">Monitor Velocity Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIIC</span></code> API</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SeisMIIC</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>miic3.plot.plot_dv</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for miic3.plot.plot_dv</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">:copyright:</span>
+<span class="sd">:license:</span>
+<span class="sd">   `GNU Lesser General Public License, Version 3 &lt;https://www.gnu.org/copyleft/lesser.html&gt;`</span>
+<span class="sd">:author:</span>
+<span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
+
+<span class="sd">Created: Friday, 16th July 2021 02:30:02 pm</span>
+<span class="sd">Last Modified: Friday, 16th July 2021 04:25:03 pm</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="nn">mpl</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">miic3.plot.plot_utils</span> <span class="kn">import</span> <span class="n">set_mpl_params</span>
+
+
+<div class="viewcode-block" id="plot_dv"><a class="viewcode-back" href="../../../modules/API.html#miic3.plot.plot_dv.plot_dv">[docs]</a><span class="k">def</span> <span class="nf">plot_dv</span><span class="p">(</span>
+    <span class="n">dv</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">figure_file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mark_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">normalize_simmat</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">sim_mat_Clim</span><span class="o">=</span><span class="p">[],</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">72</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Plot the &quot;extended&quot; dv dictionary</span>
+
+<span class="sd">    This function is thought to plot the result of the velocity change estimate</span>
+<span class="sd">    as output by :class:`~miic.core.stretch_mod.multi_ref_vchange_and_align`</span>
+<span class="sd">    and successively &quot;extended&quot; to contain also the timing in the form</span>
+<span class="sd">    {&#39;time&#39;: time_vect} where `time_vect` is a :class:`~numpy.ndarray` of</span>
+<span class="sd">    :class:`~datetime.datetime` objects.</span>
+<span class="sd">    This addition can be done, for example, using the function</span>
+<span class="sd">    :class:`~miic.core.miic_utils.add_var_to_dict`.</span>
+<span class="sd">    The produced figure is saved in `save_dir` that, if necessary, it is</span>
+<span class="sd">    created.</span>
+<span class="sd">    It is also possible to pass a &quot;special&quot; time value `mark_time` that will be</span>
+<span class="sd">    represented in the `dv/v` and `corr` plot as a vertical line; It can be</span>
+<span class="sd">    a string (i.e. YYYY-MM-DD) or directly a :class:`~datetime.datetime`</span>
+<span class="sd">    object.</span>
+<span class="sd">    if the `dv` dictionary also contains a &#39;comb_mseedid&#39; keyword, its `value`</span>
+<span class="sd">    (i.e. MUST be a string) will be reported in the title.</span>
+<span class="sd">    In case of the chosen filename exist in the `save_dir` directory, a prefix</span>
+<span class="sd">    _&lt;n&gt; with n:0..+Inf, is added.</span>
+<span class="sd">    The aspect of the plot may change depending on the matplotlib version. The</span>
+<span class="sd">    recommended one is matplotlib 1.1.1</span>
+
+<span class="sd">    :type dv: dict</span>
+<span class="sd">    :param dv: velocity change estimate dictionary as output by</span>
+<span class="sd">        :class:`~miic.core.stretch_mod.multi_ref_vchange_and_align` and</span>
+<span class="sd">        successively &quot;extended&quot; to contain also the timing in the form</span>
+<span class="sd">        {&#39;time&#39;: time_vect} where `time_vect` is a :class:`~numpy.ndarray` of</span>
+<span class="sd">        :class:`~datetime.datetime` objects.</span>
+<span class="sd">    :type save_dir: string</span>
+<span class="sd">    :param save_dir: Directory where to save the produced figure. It is created</span>
+<span class="sd">        if it doesn&#39;t exist.</span>
+<span class="sd">    :type figure_file_name: string</span>
+<span class="sd">    :param figure_file_name: filename to use for saving the figure. If None</span>
+<span class="sd">        the figure is displayed in interactive mode.</span>
+<span class="sd">    :type mark_time: string or :class:`~datetime.datetime` object</span>
+<span class="sd">    :param mark_time: It is a &quot;special&quot; time location that will be represented</span>
+<span class="sd">        in the `dv/v` and `corr` plot as a vertical line.</span>
+<span class="sd">    :type normalize_simmat: Bool</span>
+<span class="sd">    :param normalize_simmat: if True the simmat will be normalized to a maximum</span>
+<span class="sd">        of 1. Defaults to False</span>
+<span class="sd">    :type sim_mat_Clim: 2 element array_like</span>
+<span class="sd">    :param sim_mat_Clim: if non-empty it set the color scale limits of the</span>
+<span class="sd">        similarity matrix image</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">set_mpl_params</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">sim_mat_Clim</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">sim_mat_Clim</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Sim_mat_Clim has to be a list or Tuple of length 2.&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">figure_file_name</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Create a unique filename if TraitsUI-default is given</span>
+    <span class="k">if</span> <span class="n">figure_file_name</span> <span class="o">==</span> <span class="s1">&#39;plot_default&#39;</span><span class="p">:</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="n">figure_file_name</span> <span class="o">+</span> <span class="s1">&#39;_change.png&#39;</span>
+        <span class="n">exist</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">fname</span><span class="p">))</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="n">exist</span><span class="p">:</span>
+            <span class="n">fname</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">_</span><span class="si">%i</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">figure_file_name</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+            <span class="n">exist</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span>
+                                                <span class="n">fname</span> <span class="o">+</span> <span class="s1">&#39;_change.png&#39;</span><span class="p">))</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">figure_file_name</span> <span class="o">=</span> <span class="n">fname</span>
+
+    <span class="c1"># Extract the data from the dictionary</span>
+
+    <span class="n">value_type</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;value_type&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;method&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">corr</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;corr&#39;</span><span class="p">]</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+    <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;sim_mat&#39;</span><span class="p">]</span>
+    <span class="n">stretch_vect</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;second_axis&#39;</span><span class="p">]</span>
+
+    <span class="n">rtime</span> <span class="o">=</span> <span class="p">[</span><span class="n">utcdt</span><span class="o">.</span><span class="n">datetime</span> <span class="k">for</span> <span class="n">utcdt</span> <span class="ow">in</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">][</span><span class="s1">&#39;corr_start&#39;</span><span class="p">]]</span>
+
+    <span class="c1"># normalize simmat if requested</span>
+    <span class="k">if</span> <span class="n">normalize_simmat</span><span class="p">:</span>
+        <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">sim_mat</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">sim_mat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="n">sim_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
+
+    <span class="n">n_stretching</span> <span class="o">=</span> <span class="n">stretch_vect</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">stretching_amount</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">stretch_vect</span><span class="p">)</span>
+
+    <span class="c1"># Adapt plot details in agreement with the type of dictionary that</span>
+    <span class="c1"># has been passed</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">value_type</span> <span class="o">==</span> <span class="s1">&#39;stretch&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;single_ref&#39;</span><span class="p">):</span>
+
+        <span class="n">tit</span> <span class="o">=</span> <span class="s2">&quot;Single reference dv/v&quot;</span>
+        <span class="n">dv_tick_delta</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">stretch_vect</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># 0.01</span>
+        <span class="n">dv_y_label</span> <span class="o">=</span> <span class="s2">&quot;dv/v&quot;</span>
+        <span class="c1"># plotting velocity requires to flip the stretching axis</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">value_type</span> <span class="o">==</span> <span class="s1">&#39;stretch&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;multi_ref&#39;</span><span class="p">):</span>
+
+        <span class="n">tit</span> <span class="o">=</span> <span class="s2">&quot;Multi reference dv/v&quot;</span>
+        <span class="n">dv_tick_delta</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">stretch_vect</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># 0.01</span>
+        <span class="n">dv_y_label</span> <span class="o">=</span> <span class="s2">&quot;dv/v&quot;</span>
+        <span class="c1"># plotting velocity requires to flip the stretching axis</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">value_type</span> <span class="o">==</span> <span class="s1">&#39;shift&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;time_shift&#39;</span><span class="p">):</span>
+
+        <span class="n">tit</span> <span class="o">=</span> <span class="s2">&quot;Time shift&quot;</span>
+        <span class="n">dv_tick_delta</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="n">dv_y_label</span> <span class="o">=</span> <span class="s2">&quot;time shift (sample)&quot;</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unknown dv type!&quot;</span><span class="p">)</span>
+
+    <span class="n">f</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">)</span>
+
+    <span class="n">gs</span> <span class="o">=</span> <span class="n">mpl</span><span class="o">.</span><span class="n">gridspec</span><span class="o">.</span><span class="n">GridSpec</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">height_ratios</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="n">ax1</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">imh</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span>
+        <span class="n">sim_mat</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
+
+    <span class="c1">###</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">stretch_vect</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">stretch_vect</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="n">stretch_vect</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">mod_ind</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">((</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">offset</span><span class="p">)</span> <span class="o">/</span> <span class="n">scale</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span>
+    <span class="n">mod_ind</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">])]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">mod_ind</span><span class="p">,</span> <span class="s1">&#39;b.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s1">&#39;model_value&#39;</span> <span class="ow">in</span> <span class="n">dv</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">mod_ind</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">((</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;model_value&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">offset</span><span class="p">)</span> <span class="o">/</span> <span class="n">scale</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span>
+        <span class="n">mod_ind</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;model_value&#39;</span><span class="p">])]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">mod_ind</span><span class="p">,</span> <span class="s1">&#39;g.&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">sim_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">sim_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">value_type</span> <span class="o">==</span> <span class="s1">&#39;stretch&#39;</span><span class="p">:</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">invert_yaxis</span><span class="p">()</span>
+    <span class="c1">###</span>
+    <span class="k">if</span> <span class="n">sim_mat_Clim</span><span class="p">:</span>
+        <span class="n">imh</span><span class="o">.</span><span class="n">set_clim</span><span class="p">(</span><span class="n">sim_mat_Clim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sim_mat_Clim</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">get_xaxis</span><span class="p">()</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_stretching</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">value_type</span> <span class="o">==</span> <span class="s1">&#39;stretch&#39;</span><span class="p">:</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">([</span>
+            <span class="s2">&quot;</span><span class="si">%4.3f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">stretch_vect</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">n_stretching</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">7</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">)]])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">([</span>
+            <span class="s2">&quot;</span><span class="si">%4.3f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">stretch_vect</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_stretching</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">)]])</span>
+
+    <span class="n">stats</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">]</span>
+    <span class="n">comb_mseedid</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">],</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;station&#39;</span><span class="p">],</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">],</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">])</span>
+
+    <span class="n">tit</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> estimate (</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tit</span><span class="p">,</span> <span class="n">comb_mseedid</span><span class="p">)</span>
+
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">tit</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_position</span><span class="p">(</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+    <span class="c1"># ax1.yaxis.label.set_rotation(270)</span>
+    <span class="c1"># ax1.yaxis.set_label_coords(1.03, 0.5)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([])</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">dv_y_label</span><span class="p">)</span>
+
+    <span class="n">ax2</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rtime</span><span class="p">,</span> <span class="o">-</span><span class="n">dt</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s1">&#39;model_value&#39;</span> <span class="ow">in</span> <span class="n">dv</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rtime</span><span class="p">,</span> <span class="o">-</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;model_value&#39;</span><span class="p">],</span> <span class="s1">&#39;g.&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">([</span><span class="n">rtime</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">rtime</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">((</span><span class="o">-</span><span class="n">stretching_amount</span><span class="p">,</span> <span class="n">stretching_amount</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">mark_time</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">rtime</span> <span class="o">&lt;</span> <span class="n">mark_time</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">rtime</span> <span class="o">&gt;</span> <span class="n">mark_time</span><span class="p">)):</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">mark_time</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_position</span><span class="p">(</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_rotation</span><span class="p">(</span><span class="mi">270</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_coords</span><span class="p">(</span><span class="mf">1.03</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">dv_y_label</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">MultipleLocator</span><span class="p">(</span><span class="n">dv_tick_delta</span><span class="p">))</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;major&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;major&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([])</span>
+
+    <span class="n">ax3</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rtime</span><span class="p">,</span> <span class="n">corr</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s1">&#39;model_corr&#39;</span> <span class="ow">in</span> <span class="n">dv</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rtime</span><span class="p">,</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;model_corr&#39;</span><span class="p">],</span> <span class="s1">&#39;g.&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">([</span><span class="n">rtime</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">rtime</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Correlation&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">mark_time</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">rtime</span> <span class="o">&lt;</span> <span class="n">mark_time</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">rtime</span> <span class="o">&gt;</span> <span class="n">mark_time</span><span class="p">)):</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">mark_time</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">ax3</span><span class="o">.</span><span class="n">get_xticklabels</span><span class="p">(),</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">MultipleLocator</span><span class="p">(</span><span class="mf">0.2</span><span class="p">))</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;major&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;major&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">hspace</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">wspace</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">figure_file_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;saving to </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">figure_file_name</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">figure_file_name</span> <span class="o">+</span> <span class="s1">&#39;_change.png&#39;</span><span class="p">),</span>
+                  <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, C.S..
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

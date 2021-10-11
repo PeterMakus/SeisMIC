@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>seismic.monitor.monitor &mdash; SeisMIC 0.1 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+        <script>mermaid.initialize({startOnLoad:true});</script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> SeisMIC
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/get_started.html">Getting Started with SeisMIC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trace_data.html">Trace data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/correlate.html">Compute and Handle Correlations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/corrdb.html">Save and Load Correlations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/monitor.html">Monitor Velocity Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIC</span></code> API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SeisMIC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>seismic.monitor.monitor</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for seismic.monitor.monitor</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">:copyright:</span>
+<span class="sd">:license:</span>
+<span class="sd">   GNU Lesser General Public License, Version 3</span>
+<span class="sd">   (https://www.gnu.org/copyleft/lesser.html)</span>
+<span class="sd">:author:</span>
+<span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
+
+<span class="sd">Created: Thursday, 3rd June 2021 04:15:57 pm</span>
+<span class="sd">Last Modified: Thursday, 30th September 2021 10:39:05 am</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">import</span> <span class="nn">fnmatch</span>
+<span class="kn">from</span> <span class="nn">glob</span> <span class="kn">import</span> <span class="n">glob</span>
+
+<span class="kn">from</span> <span class="nn">mpi4py</span> <span class="kn">import</span> <span class="n">MPI</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">UTCDateTime</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span> <span class="nn">seismic.db.corr_hdf5</span> <span class="kn">import</span> <span class="n">CorrelationDataBase</span>
+<span class="kn">from</span> <span class="nn">seismic.monitor.dv</span> <span class="kn">import</span> <span class="n">DV</span><span class="p">,</span> <span class="n">read_dv</span>
+<span class="kn">from</span> <span class="nn">seismic.utils.miic_utils</span> <span class="kn">import</span> <span class="n">log_lvl</span>
+
+
+<div class="viewcode-block" id="Monitor"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.Monitor">[docs]</a><span class="k">class</span> <span class="nc">Monitor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="nb">dict</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Object that handles the computation of seismic velocity changes.</span>
+<span class="sd">        This will access correlations that have been computed previously with</span>
+<span class="sd">        the :class:`~seismic.correlate.correlate.Correlator` class.</span>
+
+<span class="sd">        Takes the parameter file as input (either as yaml or as dict).</span>
+
+<span class="sd">        :param options: Parameters for the monitor. Usually, they come in form</span>
+<span class="sd">            of a *yaml* file. If this parameter is a str, it will be</span>
+<span class="sd">            interpreted to be the path to said *yaml* file.</span>
+<span class="sd">        :type options: dict or str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">options</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                <span class="n">options</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">Loader</span><span class="o">=</span><span class="n">yaml</span><span class="o">.</span><span class="n">FullLoader</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">options</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">starttimes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">endtimes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_starttimes_list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">proj_dir</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;proj_dir&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">options</span><span class="p">[</span><span class="s1">&#39;proj_dir&#39;</span><span class="p">],</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;subdir&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">indir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">options</span><span class="p">[</span><span class="s1">&#39;proj_dir&#39;</span><span class="p">],</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;co&#39;</span><span class="p">][</span><span class="s1">&#39;subdir&#39;</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># init MPI</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comm</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">psize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">Get_size</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">()</span>
+
+        <span class="c1"># directories:</span>
+        <span class="n">logdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proj_dir</span><span class="p">,</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;log_subdir&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outdir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">logdir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Logging - rank dependent</span>
+        <span class="n">loglvl</span> <span class="o">=</span> <span class="n">log_lvl</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;log_level&#39;</span><span class="p">]]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">tstr</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">-%H:%M&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tstr</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">tstr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">tstr</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span>
+            <span class="s2">&quot;seismic.monitor.Monitor</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">loglvl</span><span class="p">)</span>
+
+        <span class="c1"># also catch the warnings</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">captureWarnings</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">warnlog</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;py.warnings&#39;</span><span class="p">)</span>
+        <span class="n">fh</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">logdir</span><span class="p">,</span> <span class="s1">&#39;monitor</span><span class="si">%s</span><span class="s1">rank</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="n">tstr</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">))))</span>
+        <span class="n">fh</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">loglvl</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
+        <span class="n">warnlog</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
+        <span class="n">fmt</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span>
+            <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> - </span><span class="si">%(levelname)s</span><span class="s1"> - </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">fh</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
+        <span class="n">consoleHandler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">()</span>
+        <span class="n">consoleHandler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">consoleHandler</span><span class="p">)</span>
+
+        <span class="c1"># Find available stations and network</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">netlist</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">statlist</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">infiles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_available_corrs</span><span class="p">(</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_starttimes_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns numpy array of starttimes and endtimes, for which each data</span>
+<span class="sd">        point of velocity change should be computed.</span>
+
+<span class="sd">        :return: A numpy array holding the starttimes and endtimes of the</span>
+<span class="sd">            computing time windows in seconds (as UTC timestamps).</span>
+<span class="sd">        :rtype: Tuple[np.ndarray, np.ndarray]</span>
+
+<span class="sd">        ..seealso:: For complete description,</span>
+<span class="sd">            :func:`~seismic.monitor.monitor.make_time_list`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">starttimes</span><span class="p">,</span> <span class="n">endtimes</span> <span class="o">=</span> <span class="n">make_time_list</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;start_date&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;end_date&#39;</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;date_inc&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;win_len&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">starttimes</span><span class="p">,</span> <span class="n">endtimes</span>
+
+    <span class="k">def</span> <span class="nf">_find_available_corrs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        1. Finds the files of available correlations.</span>
+<span class="sd">        2. Out of those files, it will extract the ones that are requested.</span>
+
+<span class="sd">        :return: list of network combination codes, list of station combination</span>
+<span class="sd">            codes, and list of the file paths to their corresponding</span>
+<span class="sd">            correlation files.</span>
+<span class="sd">        :rtype: Tuple[List[str], List[str], List[str]]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">netlist</span><span class="p">,</span> <span class="n">statlist</span><span class="p">,</span> <span class="n">infiles</span> <span class="o">=</span> <span class="n">corr_find_filter</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">indir</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Found correlation data for the following station </span><span class="se">\</span>
+<span class="s1">and network combinations </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span>
+                <span class="p">[</span><span class="s1">&#39;</span><span class="si">{n}</span><span class="s1">.</span><span class="si">{s}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                    <span class="n">netlist</span><span class="p">,</span> <span class="n">statlist</span><span class="p">)]))</span>
+        <span class="k">return</span> <span class="n">netlist</span><span class="p">,</span> <span class="n">statlist</span><span class="p">,</span> <span class="n">infiles</span>
+
+<div class="viewcode-block" id="Monitor.compute_velocity_change"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.Monitor.compute_velocity_change">[docs]</a>    <span class="k">def</span> <span class="nf">compute_velocity_change</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">corr_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes the velocity change for a cross (or auto) correlation</span>
+<span class="sd">        time-series. This process is executed &quot;per station combination&quot;.</span>
+<span class="sd">        Meaning, several processes of this method can be started via MPI</span>
+<span class="sd">        and the method</span>
+<span class="sd">        :meth:`~seismic.monitor.monitor.Monitor.compute_velocity_change_bulk`,</span>
+<span class="sd">        which is the function that should rather be acessed than this one.</span>
+<span class="sd">        Data will be written into the defined dv folder and plotted if this</span>
+<span class="sd">        option was previously set to True.</span>
+
+<span class="sd">        :param corr_file: File to read the correlation data from.</span>
+<span class="sd">        :type corr_file: str</span>
+<span class="sd">        :param tag: Tag of the data in the file (almost always `&#39;subdivision&#39;`)</span>
+<span class="sd">        :type tag: str</span>
+<span class="sd">        :param network: Network combination code</span>
+<span class="sd">        :type network: str</span>
+<span class="sd">        :param station: Station Combination Code</span>
+<span class="sd">        :type station: str</span>
+<span class="sd">        :param channel: Channel combination code</span>
+<span class="sd">        :type channel: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Computing velocity change for file: </span><span class="si">%s</span><span class="s1"> and channel:</span><span class="se">\</span>
+<span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">corr_file</span><span class="p">,</span> <span class="n">channel</span><span class="p">))</span>
+        <span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="n">corr_file</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
+            <span class="c1"># get the corrstream containing all the corrdata for this combi</span>
+            <span class="n">cst</span> <span class="o">=</span> <span class="n">cdb</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+        <span class="n">cb</span> <span class="o">=</span> <span class="n">cst</span><span class="o">.</span><span class="n">create_corr_bulk</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># for possible rest bits</span>
+        <span class="k">del</span> <span class="n">cst</span>
+        <span class="c1"># Do the actual processing:</span>
+        <span class="n">cb</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">normtype</span><span class="o">=</span><span class="s1">&#39;absmax&#39;</span><span class="p">)</span>
+        <span class="c1"># That is were the stacking is happening</span>
+        <span class="n">cb</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">starttimes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">endtimes</span><span class="p">)</span>
+        <span class="n">cb</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;freq_min&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;freq_max&#39;</span><span class="p">]))</span>
+
+        <span class="c1"># Preprocessing on the correlation bulk</span>
+        <span class="k">if</span> <span class="s1">&#39;preprocessing&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;preprocessing&#39;</span><span class="p">]:</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="n">func</span><span class="p">[</span><span class="s1">&#39;function&#39;</span><span class="p">])</span>
+                <span class="n">cb</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="o">**</span><span class="n">func</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">])</span>
+
+        <span class="c1"># Now, we make a copy of the cm to be trimmed</span>
+        <span class="n">cbt</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span>
+            <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]))</span>
+
+        <span class="k">if</span> <span class="n">cbt</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">20</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;CorrBulk extremely short.&#39;</span><span class="p">)</span>
+
+        <span class="n">tr</span> <span class="o">=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">extract_trace</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Compute time window</span>
+        <span class="n">tw</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">cbt</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">],</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span>
+                <span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">])</span><span class="o">*</span><span class="n">cbt</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)]</span>
+        <span class="n">dv</span> <span class="o">=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span>
+            <span class="n">ref_trc</span><span class="o">=</span><span class="n">tr</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">stretch_steps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;stretch_steps&#39;</span><span class="p">],</span>
+            <span class="n">stretch_range</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;stretch_range&#39;</span><span class="p">],</span>
+            <span class="n">tw</span><span class="o">=</span><span class="n">tw</span><span class="p">)</span>
+        <span class="n">ccb</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">correct_stretch</span><span class="p">(</span><span class="n">dv</span><span class="p">)</span>
+
+        <span class="n">ccb</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span>
+            <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]))</span>
+
+        <span class="c1"># extract the final reference trace (mean excluding very different</span>
+        <span class="c1"># traces)</span>
+        <span class="n">tr</span> <span class="o">=</span> <span class="n">ccb</span><span class="o">.</span><span class="n">extract_trace</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">)</span>
+        <span class="c1"># obtain an improved time shift measurement</span>
+        <span class="n">dv</span> <span class="o">=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span>
+            <span class="n">ref_trc</span><span class="o">=</span><span class="n">tr</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">stretch_steps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;stretch_steps&#39;</span><span class="p">],</span>
+            <span class="n">stretch_range</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;stretch_range&#39;</span><span class="p">],</span>
+            <span class="n">tw</span><span class="o">=</span><span class="n">tw</span><span class="p">)</span>
+
+        <span class="c1"># Postprocessing on the dv object</span>
+        <span class="k">if</span> <span class="s1">&#39;postprocessing&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;postprocessing&#39;</span><span class="p">]:</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">dv</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="n">func</span><span class="p">[</span><span class="s1">&#39;function&#39;</span><span class="p">])</span>
+                <span class="n">dv</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="o">**</span><span class="n">func</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">])</span>
+
+        <span class="n">outf</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">outdir</span><span class="p">,</span> <span class="s1">&#39;DV-</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">channel</span><span class="p">))</span>
+        <span class="n">dv</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">outf</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;plot_vel_change&#39;</span><span class="p">]:</span>
+            <span class="n">fname</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_</span><span class="si">%s</span><span class="s1">_</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="p">,</span> <span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="p">,</span> <span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span><span class="p">)</span>
+            <span class="n">savedir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;proj_dir&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;fig_subdir&#39;</span><span class="p">])</span>
+            <span class="n">dv</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                <span class="n">save_dir</span><span class="o">=</span><span class="n">savedir</span><span class="p">,</span> <span class="n">figure_file_name</span><span class="o">=</span><span class="n">fname</span><span class="p">,</span>
+                <span class="n">normalize_simmat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sim_mat_Clim</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="Monitor.compute_velocity_change_bulk"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.Monitor.compute_velocity_change_bulk">[docs]</a>    <span class="k">def</span> <span class="nf">compute_velocity_change_bulk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the velocity change for all correlations using MPI.</span>
+<span class="sd">        The parameters for the correlation defined in the *yaml* file will be</span>
+<span class="sd">        used.</span>
+
+<span class="sd">        This function will just call</span>
+<span class="sd">        :meth:`~seismic.monitor.monitor.Monitor.compute_velocity_change`</span>
+<span class="sd">        several times.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tag</span> <span class="o">=</span> <span class="s1">&#39;subdivision&#39;</span>
+        <span class="c1"># get number of available channel combis</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">plist</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">infiles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">netlist</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">statlist</span><span class="p">):</span>
+                <span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
+                    <span class="n">ch</span> <span class="o">=</span> <span class="n">cdb</span><span class="o">.</span><span class="n">get_available_channels</span><span class="p">(</span>
+                        <span class="n">tag</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+                    <span class="n">plist</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">f</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">ch</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">plist</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">plist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">plist</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">pmap</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">plist</span><span class="p">))</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">psize</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">plist</span><span class="p">)</span>
+        <span class="n">pmap</span> <span class="o">=</span> <span class="n">pmap</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">pmap</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">plist</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)[</span><span class="n">ind</span><span class="p">]</span>
+
+        <span class="c1"># Assign a task to each rank</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">ind</span><span class="p">):</span>
+            <span class="n">corr_file</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="n">cha</span> <span class="o">=</span> <span class="n">plist</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compute_velocity_change</span><span class="p">(</span>
+                    <span class="n">corr_file</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="n">cha</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Monitor.compute_components_average"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.Monitor.compute_components_average">[docs]</a>    <span class="k">def</span> <span class="nf">compute_components_average</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;AutoComponents&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Averages the Similarity matrix of different velocity changes in</span>
+<span class="sd">        the whole dv folder. Based upon those values, new dvs and correlations</span>
+<span class="sd">        are computed.</span>
+
+<span class="sd">        :param method: Which components should be averaged? Can be</span>
+<span class="sd">            &#39;StationWide&#39; if all component-combinations should be averaged,</span>
+<span class="sd">            &#39;AutoComponents&#39; if only the dv results of autocorrelation are to</span>
+<span class="sd">            be averaged, or &#39;CrossComponents&#39; if you wish to average dvs from</span>
+<span class="sd">            the same station but only intercomponent corrrelations.</span>
+<span class="sd">            Defaults to &#39;AutoComponents&#39;</span>
+<span class="sd">        :type method: str, optional</span>
+<span class="sd">        :raises ValueError: For Unknown combination methods.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="s1">&#39;autocomponents&#39;</span><span class="p">,</span> <span class="s1">&#39;crosscomponents&#39;</span><span class="p">,</span> <span class="s1">&#39;stationwide&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;Unknown averaging method. &#39;</span> <span class="o">+</span>
+                <span class="s1">&#39;Use &quot;autocomponent&quot; or &quot;stationwide&quot;.&#39;</span>
+            <span class="p">)</span>
+        <span class="n">infiles</span> <span class="o">=</span> <span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outdir</span><span class="p">,</span> <span class="s1">&#39;*.npz&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;autocomponents&#39;</span><span class="p">:</span>
+            <span class="n">ch</span> <span class="o">=</span> <span class="s1">&#39;av-auto&#39;</span>
+        <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;crosscomponents&#39;</span><span class="p">:</span>
+            <span class="n">ch</span> <span class="o">=</span> <span class="s1">&#39;av-xc&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ch</span> <span class="o">=</span> <span class="s1">&#39;av&#39;</span>
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">infiles</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">length: &#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">infiles</span><span class="p">))</span>
+            <span class="c1"># print(&#39;\nactual list: &#39;, infiles)</span>
+            <span class="c1"># Find files belonging to same station</span>
+            <span class="n">pat</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">infiles</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;*&#39;</span>
+            <span class="n">filtfil</span> <span class="o">=</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">infiles</span><span class="p">,</span> <span class="n">pat</span><span class="p">)</span>
+            <span class="n">fffil</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Second filter</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">filtfil</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">):</span>
+                    <span class="c1"># Is already computed for this station</span>
+                    <span class="c1"># So let&#39;s remove all of them from the initial list</span>
+                    <span class="k">for</span> <span class="n">ff</span> <span class="ow">in</span> <span class="n">filtfil</span><span class="p">:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">infiles</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">ff</span><span class="p">)</span>
+                        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                            <span class="c1"># Has already been removed by one of the other</span>
+                            <span class="c1"># check</span>
+                            <span class="k">pass</span>
+                    <span class="n">filtfil</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+                    <span class="n">fffil</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Skipping already averaged dv...</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">f</span><span class="p">)</span>
+                    <span class="k">break</span>
+                <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;autocomponents&#39;</span><span class="p">:</span>
+                    <span class="c1"># Remove those from combined channels</span>
+                    <span class="n">components</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">components</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">components</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                        <span class="n">infiles</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;crosscomponents&#39;</span><span class="p">:</span>
+                    <span class="c1"># Remove those from equal channels</span>
+                    <span class="n">components</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">components</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">components</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                        <span class="n">infiles</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                <span class="n">fffil</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">dvs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fffil</span><span class="p">:</span>
+                <span class="n">dvs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">read_dv</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
+                <span class="c1"># Remove so they are not processed again</span>
+                <span class="n">infiles</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">dvs</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">dvs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s1">&#39;Only one component found for station </span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">... Skipping.&#39;</span>
+                    <span class="o">%</span> <span class="p">(</span><span class="n">dvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="p">,</span> <span class="n">dvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="p">))</span>
+                <span class="k">continue</span>
+            <span class="n">dv_av</span> <span class="o">=</span> <span class="n">average_components</span><span class="p">(</span><span class="n">dvs</span><span class="p">)</span>
+            <span class="n">outf</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">outdir</span><span class="p">,</span> <span class="s1">&#39;DV-</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                    <span class="n">dv_av</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="p">,</span> <span class="n">dv_av</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="p">,</span> <span class="n">ch</span><span class="p">))</span>
+            <span class="n">dv_av</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">outf</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;plot_vel_change&#39;</span><span class="p">]:</span>
+                <span class="c1"># plot if desired</span>
+                <span class="n">fname</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_</span><span class="si">%s</span><span class="s1">_</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                    <span class="n">dv_av</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="p">,</span> <span class="n">dv_av</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="p">,</span> <span class="n">ch</span><span class="p">)</span>
+                <span class="n">savedir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;proj_dir&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;fig_subdir&#39;</span><span class="p">])</span>
+                <span class="n">dv_av</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                    <span class="n">save_dir</span><span class="o">=</span><span class="n">savedir</span><span class="p">,</span> <span class="n">figure_file_name</span><span class="o">=</span><span class="n">fname</span><span class="p">,</span>
+                    <span class="n">normalize_simmat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sim_mat_Clim</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span></div></div>
+
+
+<div class="viewcode-block" id="make_time_list"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.make_time_list">[docs]</a><span class="k">def</span> <span class="nf">make_time_list</span><span class="p">(</span>
+    <span class="n">start_date</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">end_date</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">date_inc</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">win_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns numpy array of starttimes and endtimes, for which each data point</span>
+<span class="sd">    of velocity change should be computed.</span>
+
+<span class="sd">    :param start_date: Date (including time) to start monitoring</span>
+<span class="sd">    :type start_date: str</span>
+<span class="sd">    :param end_date: Last date (including time) of monitoring</span>
+<span class="sd">    :type end_date: str</span>
+<span class="sd">    :param date_inc: Increment in seconds between each datapoint</span>
+<span class="sd">    :type date_inc: int</span>
+<span class="sd">    :param win_len: Window Length, for which each data point is computed.</span>
+<span class="sd">    :type win_len: int</span>
+<span class="sd">    :return: A numpy array holding the starttimes and endtimes of the computing</span>
+<span class="sd">        time windows in seconds (as UTC timestamps)</span>
+<span class="sd">    :rtype: Tuple[ np.ndarray, np.ndarray]</span>
+
+<span class="sd">    ..note::</span>
+
+<span class="sd">        see `obspy&#39;s documentation</span>
+<span class="sd">        &lt;https://docs.obspy.org/packages/autogen/obspy.core.utcdatetime.UTCDateTime.html&gt;`</span>
+<span class="sd">        for compatible input strings.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">date_inc</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">win_len</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;Negative increments or window length are not allowed.&#39;</span><span class="p">)</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="n">start_date</span><span class="p">)</span><span class="o">.</span><span class="n">timestamp</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="n">end_date</span><span class="p">)</span><span class="o">.</span><span class="n">timestamp</span>
+    <span class="k">if</span> <span class="n">start</span> <span class="o">&gt;=</span> <span class="n">end</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Start Date should be earlier than end date.&#39;</span><span class="p">)</span>
+    <span class="n">inc</span> <span class="o">=</span> <span class="n">date_inc</span>
+    <span class="n">starttimes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">inc</span><span class="p">)</span>
+    <span class="n">endtimes</span> <span class="o">=</span> <span class="n">starttimes</span> <span class="o">+</span> <span class="n">win_len</span>
+    <span class="k">return</span> <span class="n">starttimes</span><span class="p">,</span> <span class="n">endtimes</span></div>
+
+
+<div class="viewcode-block" id="corr_find_filter"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.corr_find_filter">[docs]</a><span class="k">def</span> <span class="nf">corr_find_filter</span><span class="p">(</span><span class="n">indir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">net</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+        <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    1. Finds the files of available correlations.</span>
+<span class="sd">    2. Out of those files, it will extract the ones that are requested.</span>
+
+<span class="sd">    :param indir: Directory that the correlations are saved in.</span>
+<span class="sd">    :type indir: str</span>
+<span class="sd">    :param net: Network dictionary from *yaml* file.</span>
+<span class="sd">    :type net: dict</span>
+<span class="sd">    :return: list of network combination codes, list of station combination</span>
+<span class="sd">        codes, and list of the file paths to their corresponding</span>
+<span class="sd">        correlation files.</span>
+<span class="sd">    :rtype: Tuple[List[str], List[str], List[str]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">netlist</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">statlist</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">infiles</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">indir</span><span class="p">,</span> <span class="s1">&#39;*-*.*-*.h5&#39;</span><span class="p">)):</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="n">split</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Find the files that should actually be processed</span>
+        <span class="n">nsplit</span> <span class="o">=</span> <span class="n">split</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
+        <span class="n">ssplit</span> <span class="o">=</span> <span class="n">split</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">net</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">nsplit</span><span class="p">,</span> <span class="n">net</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="n">nsplit</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">net</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">],</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+                <span class="n">nsplit</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">nsplit</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">net</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">]:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">net</span><span class="p">[</span><span class="s1">&#39;station&#39;</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">ssplit</span><span class="p">,</span> <span class="n">net</span><span class="p">[</span><span class="s1">&#39;station&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="n">ssplit</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">net</span><span class="p">[</span><span class="s1">&#39;station&#39;</span><span class="p">],</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+                <span class="n">ssplit</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">ssplit</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">net</span><span class="p">[</span><span class="s1">&#39;station&#39;</span><span class="p">]:</span>
+            <span class="k">continue</span>
+
+        <span class="n">netlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">split</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">statlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">split</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">infiles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">indir</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">netlist</span><span class="p">,</span> <span class="n">statlist</span><span class="p">,</span> <span class="n">infiles</span></div>
+
+
+<div class="viewcode-block" id="average_components"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.average_components">[docs]</a><span class="k">def</span> <span class="nf">average_components</span><span class="p">(</span><span class="n">dvs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DV</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Averages the Similariy matrix of the three DV objects. Based on those,</span>
+<span class="sd">    it computes a new dv value and a new correlation value.</span>
+
+<span class="sd">    :param dvs: List of dvs from the different components to compute an</span>
+<span class="sd">            average from. Note that it is possible to use almost anything as</span>
+<span class="sd">            input (also from different stations). However, at the time,</span>
+<span class="sd">            the function requires the input to be of the same shape</span>
+
+<span class="sd">    :type dvs: List[class:`~seismic.monitor.dv.DV`]</span>
+<span class="sd">    :raises TypeError: for DVs that were computed with different methods</span>
+<span class="sd">    :return: A single dv with an averaged similarity matrix</span>
+<span class="sd">    :rtype: DV</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">shapes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dvs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dv</span><span class="o">.</span><span class="n">method</span> <span class="o">!=</span> <span class="n">dvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">method</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;DV has to be computed with the same method.&#39;</span><span class="p">)</span>
+        <span class="c1"># adapt shape to maiximum</span>
+        <span class="n">shapes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">sim_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="c1">#     if dv.sim_mat.shape[:-1] != shapes[0][:-1]:</span>
+    <span class="c1">#         raise ValueError(</span>
+    <span class="c1">#             &#39;Only the time axis is allowed to have a different shape.&#39; +</span>
+    <span class="c1">#             &#39;Make sure you use the same number of stretching steps&#39;)</span>
+    <span class="c1"># shape = max(shapes)</span>
+    <span class="n">sim_mats</span> <span class="o">=</span> <span class="p">[</span><span class="n">dv</span><span class="o">.</span><span class="n">sim_mat</span> <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dvs</span><span class="p">]</span>
+    <span class="n">av_sim_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">sim_mats</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># Now we would have to recompute the dv value and corr value</span>
+    <span class="n">corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">av_sim_mat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">strvec</span> <span class="o">=</span> <span class="n">dvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">second_axis</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">strvec</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nanargmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">av_sim_mat</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
+    <span class="n">stats</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">dvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
+    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;av&#39;</span>
+    <span class="n">dvout</span> <span class="o">=</span> <span class="n">DV</span><span class="p">(</span>
+        <span class="n">corr</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">dvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value_type</span><span class="p">,</span> <span class="n">av_sim_mat</span><span class="p">,</span> <span class="n">strvec</span><span class="p">,</span> <span class="n">dvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="n">stats</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dvout</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, The SeisMIC development team..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

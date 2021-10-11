@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reading and Handling of DV objects &mdash; SeisMIC 0.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+        <script>mermaid.initialize({startOnLoad:true});</script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="SeisMIC API" href="../API.html" />
+    <link rel="prev" title="Compute Velocity Changes" href="monitor.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> SeisMIC
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Getting Started with SeisMIC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace_data.html">Trace data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../correlate.html">Compute and Handle Correlations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../corrdb.html">Save and Load Correlations</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../monitor.html">Monitor Velocity Changes</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="monitor.html">Compute Velocity Changes</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Reading and Handling of DV objects</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#read-a-dv-object-from-disk">Read a DV Object from Disk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plotting">Plotting</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIC</span></code> API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SeisMIC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../monitor.html">Monitor Velocity Changes</a> &raquo;</li>
+      <li>Reading and Handling of DV objects</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/modules/monitor/dv.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="mermaid">
+            %%{init: { 'logLevel': 'debug', 'theme': 'base' } }%%
+graph LR
+    waveform[Get Data] --&gt; correlate(Correlation)
+    correlate --&gt;|save| corrdb[(CorrDB/hdf5)]
+    corrdb --&gt; monitor
+    monitor[Measure dv] --&gt;|save| dv{{DV}}:::active
+    click waveform &quot;../trace_data.html&quot; &quot;trace_data&quot;
+    click correlate &quot;../correlate.html&quot; &quot;correlate&quot;
+    click monitor &quot;../monitor.html&quot; &quot;monitor&quot;
+    click corrdb &quot;../corrdb.html&quot; &quot;CorrDB&quot;
+    click dv &quot;../monitor/dv.html&quot; &quot;DV&quot;
+    classDef active fill:#f666, stroke-width:4px, stroke:#f06;
+        </div><section id="reading-and-handling-of-dv-objects">
+<h1>Reading and Handling of DV objects<a class="headerlink" href="#reading-and-handling-of-dv-objects" title="Permalink to this headline"></a></h1>
+<p><strong>SeisMIC</strong> uses <a class="reference internal" href="../API.html#seismic.monitor.dv.DV" title="seismic.monitor.dv.DV"><code class="xref py py-class docutils literal notranslate"><span class="pre">DV</span></code></a> objects to handle velocity changes. Those can for example saved, loaded, and plotted.</p>
+<section id="read-a-dv-object-from-disk">
+<h2>Read a DV Object from Disk<a class="headerlink" href="#read-a-dv-object-from-disk" title="Permalink to this headline"></a></h2>
+<p>Most likely, you will want to ready the velocity changes that were computed in the previous step. <strong>SeisMIC</strong> uses binary <code class="docutils literal notranslate"><span class="pre">npz</span></code> format to
+store those. You will find the files in the folder that you have defined earlier (i.e., in the yaml file).
+Load the object with <a class="reference internal" href="../API.html#seismic.monitor.dv.read_dv" title="seismic.monitor.dv.read_dv"><code class="xref py py-func docutils literal notranslate"><span class="pre">seismic.monitor.dv.read_dv()</span></code></a>. It only takes one argument: the path to the dv object.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">seismic.monitor.dv</span> <span class="kn">import</span> <span class="n">read_dv</span>
+
+<span class="n">dv</span> <span class="o">=</span> <span class="n">read_dv</span><span class="p">(</span><span class="s1">&#39;/path/to/my/dv/DV-net0-net1.stat0-stat1.ch0-ch1.npz&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="plotting">
+<h2>Plotting<a class="headerlink" href="#plotting" title="Permalink to this headline"></a></h2>
+<p>You can create a plot of the dv object with <a class="reference internal" href="../API.html#seismic.monitor.dv.DV.plot" title="seismic.monitor.dv.DV.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">seismic.monitor.dv.DV.plot()</span></code></a>. The result will look like this:</p>
+<img alt="../../_images/vchange.png" src="../../_images/vchange.png" />
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="monitor.html" class="btn btn-neutral float-left" title="Compute Velocity Changes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../API.html" class="btn btn-neutral float-right" title="SeisMIC API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, The SeisMIC development team..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

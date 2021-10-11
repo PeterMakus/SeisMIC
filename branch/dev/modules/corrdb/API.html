@@ -1,0 +1,555 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>miic3.db API &mdash; SeisMIIC 0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+        <script >mermaid.initialize({startOnLoad:true});</script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Monitor Velocity Changes" href="../monitor.html" />
+    <link rel="prev" title="CorrelationDataBase and DBHandler objects" href="corrdb.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> SeisMIIC
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace_data.html">Trace data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../correlate.html">Compute and Handle Correlations</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../corrdb.html">Save and Load Correlations</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="corrdb.html">CorrelationDataBase and DBHandler objects</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">miic3.db</span></code> API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#miic3-db-corr-hdf5">miic3.db.corr_hdf5</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../monitor.html">Monitor Velocity Changes</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SeisMIIC</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../corrdb.html">Save and Load Correlations</a> &raquo;</li>
+        
+      <li><code class="docutils literal notranslate"><span class="pre">miic3.db</span></code> API</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../_sources/modules/corrdb/API.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="miic3-db-api">
+<span id="api-label"></span><h1><code class="docutils literal notranslate"><span class="pre">miic3.db</span></code> API<a class="headerlink" href="#miic3-db-api" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="miic3-db-corr-hdf5">
+<h2>miic3.db.corr_hdf5<a class="headerlink" href="#miic3-db-corr-hdf5" title="Permalink to this headline">¶</a></h2>
+<p>Save your Correlations in h5 format.</p>
+<span class="target" id="module-miic3.db.corr_hdf5"></span><p>Manages the file format and class for correlations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">copyright</dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">license</dt>
+<dd class="field-even"><p>GNU Lesser General Public License, Version 3
+(<a class="reference external" href="https://www.gnu.org/copyleft/lesser.html">https://www.gnu.org/copyleft/lesser.html</a>)</p>
+</dd>
+<dt class="field-odd">author</dt>
+<dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
+</dd>
+</dl>
+<p>Created: Friday, 16th April 2021 03:21:30 pm
+Last Modified: Wednesday, 21st July 2021 05:29:59 pm</p>
+<dl class="py class">
+<dt id="miic3.db.corr_hdf5.DBHandler">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">miic3.db.corr_hdf5.</span></code><code class="sig-name descname"><span class="pre">DBHandler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compression</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">co</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic3/db/corr_hdf5.html#DBHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.db.corr_hdf5.DBHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">h5py._hl.files.File</span></code></p>
+<p>The actual file handler of the hdf5 correlation files.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><strong>Should not be accessed directly. Access
+:class:`~miic3.db.corr_hdf5.CorrelationDataBase` instead.</strong></p>
+</div>
+<p>Child object of <code class="xref py py-class docutils literal notranslate"><span class="pre">h5py.File</span></code> and inherets all its attributes and
+functions in addition to functions that are particularly useful for noise
+correlations.</p>
+<p>Create a new file object.</p>
+<p>See the h5py user guide for a detailed explanation of the options.</p>
+<dl class="simple">
+<dt>name</dt><dd><p>Name of the file on disk, or file-like object.  Note: for files
+created with the ‘core’ driver, HDF5 still requires this be
+non-empty.</p>
+</dd>
+<dt>mode</dt><dd><p>r        Readonly, file must exist (default)
+r+       Read/write, file must exist
+w        Create file, truncate if exists
+w- or x  Create file, fail if exists
+a        Read/write if exists, create otherwise</p>
+</dd>
+<dt>driver</dt><dd><p>Name of the driver to use.  Legal values are None (default,
+recommended), ‘core’, ‘sec2’, ‘stdio’, ‘mpio’, ‘ros3’.</p>
+</dd>
+<dt>libver</dt><dd><p>Library version bounds.  Supported values: ‘earliest’, ‘v108’,
+‘v110’, ‘v112’  and ‘latest’. The ‘v108’, ‘v110’ and ‘v112’
+options can only be specified with the HDF5 1.10.2 library or later.</p>
+</dd>
+<dt>userblock_size</dt><dd><p>Desired size of user block.  Only allowed when creating a new
+file (mode w, w- or x).</p>
+</dd>
+<dt>swmr</dt><dd><p>Open the file in SWMR read mode. Only used when mode = ‘r’.</p>
+</dd>
+<dt>rdcc_nbytes</dt><dd><p>Total size of the raw data chunk cache in bytes. The default size
+is 1024**2 (1 MB) per dataset.</p>
+</dd>
+<dt>rdcc_w0</dt><dd><p>The chunk preemption policy for all datasets.  This must be
+between 0 and 1 inclusive and indicates the weighting according to
+which chunks which have been fully read or written are penalized
+when determining which chunks to flush from cache.  A value of 0
+means fully read or written chunks are treated no differently than
+other chunks (the preemption is strictly LRU) while a value of 1
+means fully read or written chunks are always preempted before
+other chunks.  If your application only reads or writes data once,
+this can be safely set to 1.  Otherwise, this should be set lower
+depending on how often you re-read or re-write the same data.  The
+default value is 0.75.</p>
+</dd>
+<dt>rdcc_nslots</dt><dd><p>The number of chunk slots in the raw data chunk cache for this
+file. Increasing this value reduces the number of cache collisions,
+but slightly increases the memory used. Due to the hashing
+strategy, this value should ideally be a prime number. As a rule of
+thumb, this value should be at least 10 times the number of chunks
+that can fit in rdcc_nbytes bytes. For maximum performance, this
+value should be set approximately 100 times that number of
+chunks. The default value is 521.</p>
+</dd>
+<dt>track_order</dt><dd><p>Track dataset/group/attribute creation order under root group
+if True. If None use global default h5.get_config().track_order.</p>
+</dd>
+<dt>fs_strategy</dt><dd><p>The file space handling strategy to be used.  Only allowed when
+creating a new file (mode w, w- or x).  Defined as:
+“fsm”        FSM, Aggregators, VFD
+“page”       Paged FSM, VFD
+“aggregate”  Aggregators, VFD
+“none”       VFD
+If None use HDF5 defaults.</p>
+</dd>
+<dt>fs_persist</dt><dd><p>A boolean value to indicate whether free space should be persistent
+or not.  Only allowed when creating a new file.  The default value
+is False.</p>
+</dd>
+<dt>fs_threshold</dt><dd><p>The smallest free-space section size that the free space manager
+will track.  Only allowed when creating a new file.  The default
+value is 1.</p>
+</dd>
+<dt>Additional keywords</dt><dd><p>Passed on to the selected file driver.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="miic3.db.corr_hdf5.DBHandler.add_corr_options">
+<code class="sig-name descname"><span class="pre">add_corr_options</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">co</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic3/db/corr_hdf5.html#DBHandler.add_corr_options"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.db.corr_hdf5.DBHandler.add_corr_options" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="miic3.db.corr_hdf5.DBHandler.add_correlation">
+<code class="sig-name descname"><span class="pre">add_correlation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../correlate/API.html#miic3.correlate.stream.CorrTrace" title="miic3.correlate.stream.CorrTrace"><span class="pre">miic3.correlate.stream.CorrTrace</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'subdivision'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic3/db/corr_hdf5.html#DBHandler.add_correlation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.db.corr_hdf5.DBHandler.add_correlation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add correlation data to the hdf5 file. Can be accessed using the
+<a class="reference internal" href="#miic3.db.corr_hdf5.DBHandler.get_data" title="miic3.db.corr_hdf5.DBHandler.get_data"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_data()</span></code></a> method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<a class="reference internal" href="../correlate/API.html#miic3.correlate.stream.CorrTrace" title="miic3.correlate.stream.CorrTrace"><em>CorrTrace</em></a><em> or </em><a class="reference internal" href="../correlate/API.html#miic3.correlate.stream.CorrStream" title="miic3.correlate.stream.CorrStream"><em>CorrStream</em></a>) – Data to save. Either a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">CorrTrace</span></code> object or a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">CorrStream</span></code> holding one or
+several traces.</p></li>
+<li><p><strong>tag</strong> – The tag that the data should be saved under. By convention,
+unstacked correlations are saved with the tag <cite>‘subdivision’</cite>,
+whereas stacks are saved with the tag <cite>stack_$stacklen$</cite>, where
+$stacklen$ is to be replaced by the length of the stack in seconds.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>TypeError</strong> – for wrong data type.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="miic3.db.corr_hdf5.DBHandler.get_corr_options">
+<code class="sig-name descname"><span class="pre">get_corr_options</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <span class="pre">dict</span><a class="reference internal" href="../../_modules/miic3/db/corr_hdf5.html#DBHandler.get_corr_options"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.db.corr_hdf5.DBHandler.get_corr_options" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="miic3.db.corr_hdf5.DBHandler.get_data">
+<code class="sig-name descname"><span class="pre">get_data</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">network</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corr_start</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">obspy.core.utcdatetime.UTCDateTime</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corr_end</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">obspy.core.utcdatetime.UTCDateTime</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="../correlate/API.html#miic3.correlate.stream.CorrStream" title="miic3.correlate.stream.CorrStream"><span class="pre">miic3.correlate.stream.CorrStream</span></a><a class="reference internal" href="../../_modules/miic3/db/corr_hdf5.html#DBHandler.get_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.db.corr_hdf5.DBHandler.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a <code class="xref py py-class docutils literal notranslate"><span class="pre">CorrStream</span></code> holding
+all the requested data.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Wildcards are allowed for all parameters.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>network</strong> (<em>str</em>) – network (combination), e.g., IU-YP</p></li>
+<li><p><strong>station</strong> (<em>str</em>) – station (combination), e.g., HRV-BRK</p></li>
+<li><p><strong>channel</strong> (<em>str</em>) – channel (combination), e.g., BZ-BR</p></li>
+<li><p><strong>corr_start</strong> (<em>UTCDateTime</em><em>, </em><em>optional</em>) – starttime of the time windows used to computed this
+correlation, defaults to None</p></li>
+<li><p><strong>corr_end</strong> (<em>UTCDateTime</em><em>, </em><em>optional</em>) – endtime of the time windows used to computed this
+correlation, defaults to None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a <code class="xref py py-class docutils literal notranslate"><span class="pre">CorrStream</span></code> holding
+all the requested data.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="../correlate/API.html#miic3.correlate.stream.CorrStream" title="miic3.correlate.stream.CorrStream">CorrStream</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="miic3.db.corr_hdf5.DBHandler.get_available_starttimes">
+<code class="sig-name descname"><span class="pre">get_available_starttimes</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">network</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'*'</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">dict</span><a class="reference internal" href="../../_modules/miic3/db/corr_hdf5.html#DBHandler.get_available_starttimes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.db.corr_hdf5.DBHandler.get_available_starttimes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dictionary with channel codes as keys and available
+correlation starttimes as values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>network</strong> (<em>str</em>) – Network code (combined code, e.g., IU-YP)</p></li>
+<li><p><strong>station</strong> (<em>str</em>) – Station code (combined)</p></li>
+<li><p><strong>tag</strong> (<em>str</em>) – Tag</p></li>
+<li><p><strong>channel</strong> (<em>str</em><em>, </em><em>optional</em>) – Channel code (combined), wildcards allowed,
+defaults to ‘*’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dictionary holding the availabe starttimes for each channel
+combination</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="miic3.db.corr_hdf5.DBHandler.get_available_channels">
+<code class="sig-name descname"><span class="pre">get_available_channels</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">network</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><a class="reference internal" href="../../_modules/miic3/db/corr_hdf5.html#DBHandler.get_available_channels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.db.corr_hdf5.DBHandler.get_available_channels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of all available channels (i.e., their combination
+codes) in this file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tag</strong> (<em>str</em>) – The tag that this data was save as.</p></li>
+<li><p><strong>network</strong> (<em>str</em>) – Network combination code in the form <cite>net0-net1</cite></p></li>
+<li><p><strong>station</strong> (<em>str</em>) – Network combination code in the form <cite>stat0-stat1</cite></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of all channel combinations.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="miic3.db.corr_hdf5.CorrelationDataBase">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">miic3.db.corr_hdf5.</span></code><code class="sig-name descname"><span class="pre">CorrelationDataBase</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corr_options</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'a'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compression</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'gzip3'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic3/db/corr_hdf5.html#CorrelationDataBase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.db.corr_hdf5.CorrelationDataBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class to handle the hdf5 files that contain noise correlations.</p>
+<p>Access an hdf5 file holding correlations. The resulting file can be
+accessed using all functionalities of
+<a class="reference external" href="https://seismicdata.github.io/pyasdf">pyasdf</a>
+(for example as a dict)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Full path to the file</p></li>
+<li><p><strong>corr_options</strong> (<em>dict</em><em> or </em><em>None</em>) – The dictionary holding the parameters for the
+correlation. If set to <cite>None</cite>. The mode will be set to read-only
+<cite>= ‘r’</cite>. Defaults to None.</p></li>
+<li><p><strong>mode</strong> (<em>str</em><em>, </em><em>optional</em>) – Mode to access the file. Options are: ‘a’ for all, ‘w’ for
+write, ‘r+’ for writing in an already existing file, or ‘r’ for
+read-only , defaults to ‘a’.</p></li>
+<li><p><strong>compression</strong> (<em>str</em><em>, </em><em>optional</em>) – The compression algorithm and compression level
+that the arrays should be saved with. ‘gzip3’ tends to perform
+well, else you could choose ‘gzipx’ where x is a digit between
+1 and 9 (i.e., 9 is the highest compression) or None for fastest
+perfomance, defaults to ‘gzip3’.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><strong>Access only through a context manager (see below):</strong></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="n">myfile</span><span class="o">.</span><span class="n">h5</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="nb">type</span><span class="p">(</span><span class="n">cdb</span><span class="p">)</span>  <span class="c1"># This is a DBHandler</span>
+<span class="go">&lt;class &#39;miic3.db.corr_hdf5.DBHandler&#39;&gt;</span>
+</pre></div>
+</div>
+</div>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span>
+<span class="go">            &#39;/path/to/db/XN-XN.NEP06-NEP06.h5&#39;) as cdb:</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="c1"># find the available tags for existing db</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">cdb</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+<span class="go">[&#39;co&#39;, &#39;recombined&#39;, &#39;stack_86398&#39;, &#39;subdivision&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="c1"># find available channels with tag subdivision</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="nb">print</span><span class="p">(</span><span class="n">cdb</span><span class="o">.</span><span class="n">get_available_channels</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="s1">&#39;subdivision&#39;</span><span class="p">,</span> <span class="s1">&#39;XN-XN&#39;</span><span class="p">,</span> <span class="s1">&#39;NEP06-NEP06&#39;</span><span class="p">))</span>
+<span class="go">[&#39;HHE-HHN&#39;, &#39;HHE-HHZ&#39;, &#39;HHN-HHZ&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="c1"># Get Data from all times, specific channel and tag</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">st</span> <span class="o">=</span> <span class="n">cdb</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="s1">&#39;XN-XN&#39;</span><span class="p">,</span> <span class="s1">&#39;NEP06-NEP06&#39;</span><span class="p">,</span> <span class="s1">&#39;HHE-HHN&#39;</span><span class="p">,</span> <span class="s1">&#39;subdivision&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">count</span><span class="p">())</span>
+<span class="go">250</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.db.corr_hdf5.all_traces_recursive">
+<code class="sig-prename descclassname"><span class="pre">miic3.db.corr_hdf5.</span></code><code class="sig-name descname"><span class="pre">all_traces_recursive</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">h5py._hl.group.Group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="../correlate/API.html#miic3.correlate.stream.CorrStream" title="miic3.correlate.stream.CorrStream"><span class="pre">miic3.correlate.stream.CorrStream</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="../correlate/API.html#miic3.correlate.stream.CorrStream" title="miic3.correlate.stream.CorrStream"><span class="pre">miic3.correlate.stream.CorrStream</span></a><a class="reference internal" href="../../_modules/miic3/db/corr_hdf5.html#all_traces_recursive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.db.corr_hdf5.all_traces_recursive" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively, appends all traces in a h5py group to the input stream.
+In addition this will check whether the data matches a certain pattern.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>group</strong> (class:<cite>h5py._hl.group.Group</cite>) – group to search through</p></li>
+<li><p><strong>stream</strong> (<a class="reference internal" href="../correlate/API.html#miic3.correlate.stream.CorrStream" title="miic3.correlate.stream.CorrStream"><em>CorrStream</em></a>) – Stream to append the traces to</p></li>
+<li><p><strong>pattern</strong> (<em>str</em>) – pattern for the path in the hdf5 file, see fnmatch for
+details.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Stream with appended traces</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="../correlate/API.html#miic3.correlate.stream.CorrStream" title="miic3.correlate.stream.CorrStream">CorrStream</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.db.corr_hdf5.convert_header_to_hdf5">
+<code class="sig-prename descclassname"><span class="pre">miic3.db.corr_hdf5.</span></code><code class="sig-name descname"><span class="pre">convert_header_to_hdf5</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">h5py._hl.dataset.Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">obspy.core.trace.Stats</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic3/db/corr_hdf5.html#convert_header_to_hdf5"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.db.corr_hdf5.convert_header_to_hdf5" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert an <code class="xref py py-class docutils literal notranslate"><span class="pre">Stats</span></code> object and adds it to the provided
+hdf5 dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>h5py.Dataset</em>) – the dataset that the header should be added to</p></li>
+<li><p><strong>header</strong> (<em>Stats</em>) – The trace’s header</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.db.corr_hdf5.read_hdf5_header">
+<code class="sig-prename descclassname"><span class="pre">miic3.db.corr_hdf5.</span></code><code class="sig-name descname"><span class="pre">read_hdf5_header</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">h5py._hl.dataset.Dataset</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">obspy.core.trace.Stats</span><a class="reference internal" href="../../_modules/miic3/db/corr_hdf5.html#read_hdf5_header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.db.corr_hdf5.read_hdf5_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes an hdft5 dataset as input and returns the header of the CorrTrace.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dataset</strong> (<em>h5py.Dataset</em>) – The dataset to be read from</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The trace’s header</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Stats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="miic3.db.corr_hdf5.co_to_hdf5">
+<code class="sig-prename descclassname"><span class="pre">miic3.db.corr_hdf5.</span></code><code class="sig-name descname"><span class="pre">co_to_hdf5</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">co</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">dict</span><a class="reference internal" href="../../_modules/miic3/db/corr_hdf5.html#co_to_hdf5"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#miic3.db.corr_hdf5.co_to_hdf5" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../monitor.html" class="btn btn-neutral float-right" title="Monitor Velocity Changes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="corrdb.html" class="btn btn-neutral float-left" title="CorrelationDataBase and DBHandler objects" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, C.S..
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

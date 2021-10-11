@@ -1,0 +1,467 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>miic3.correlate.stats &mdash; SeisMIIC 0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+        <script >mermaid.initialize({startOnLoad:true});</script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> SeisMIIC
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trace_data.html">Trace data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/correlate.html">Compute and Handle Correlations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/corrdb.html">Save and Load Correlations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/monitor.html">Monitor Velocity Changes</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SeisMIIC</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>miic3.correlate.stats</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for miic3.correlate.stats</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">:copyright:</span>
+<span class="sd">:license:</span>
+<span class="sd">   GNU Lesser General Public License, Version 3</span>
+<span class="sd">   (https://www.gnu.org/copyleft/lesser.html)</span>
+<span class="sd">:author:</span>
+<span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
+
+<span class="sd">Created: Monday, 5th July 2021 02:44:13 pm</span>
+<span class="sd">Last Modified: Thursday, 8th July 2021 05:21:21 pm</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">from</span> <span class="nn">future.utils</span> <span class="kn">import</span> <span class="n">native_str</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">from</span> <span class="nn">obspy.core.util</span> <span class="kn">import</span> <span class="n">AttribDict</span>
+<span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">UTCDateTime</span>
+
+
+<div class="viewcode-block" id="CorrStats"><a class="viewcode-back" href="../../../modules/correlate/API.html#miic3.correlate.stats.CorrStats">[docs]</a><span class="k">class</span> <span class="nc">CorrStats</span><span class="p">(</span><span class="n">AttribDict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    From Obspy, but with the difference that some items can be lists and that</span>
+<span class="sd">    corr_start and corr_end are introduced, some other differences only for</span>
+<span class="sd">    correlations.</span>
+
+<span class="sd">    A container for additional header information of a ObsPy Trace object.</span>
+
+<span class="sd">    A ``Stats`` object may contain all header information (also known as meta</span>
+<span class="sd">    data) of a :class:`~miic3.correlate.stream.CorrTrace` object. Those headers</span>
+<span class="sd">    may be accessed or modified either in the dictionary style or directly via</span>
+<span class="sd">    a corresponding attribute. There are various default attributes which are</span>
+<span class="sd">    required by every waveform import and export modules within ObsPy such as</span>
+<span class="sd">    :mod:`obspy.io.mseed`.</span>
+
+<span class="sd">    :type header: dict or :class:`~obspy.core.trace.Stats`, optional</span>
+<span class="sd">    :param header: Dictionary containing meta information of a single</span>
+<span class="sd">        :class:`~obspy.core.trace.Trace` object. Possible keywords are</span>
+<span class="sd">        summarized in the following `Default Attributes`_ section.</span>
+
+<span class="sd">    .. rubric:: Basic Usage</span>
+
+<span class="sd">    &gt;&gt;&gt; stats = CorrStats()</span>
+<span class="sd">    &gt;&gt;&gt; stats.network = &#39;BW&#39;</span>
+<span class="sd">    &gt;&gt;&gt; print(stats[&#39;network&#39;])</span>
+<span class="sd">    BW</span>
+<span class="sd">    &gt;&gt;&gt; stats[&#39;station&#39;] = &#39;MANZ&#39;</span>
+<span class="sd">    &gt;&gt;&gt; print(stats.station)</span>
+<span class="sd">    MANZ</span>
+
+<span class="sd">    .. rubric:: _`Default Attributes`</span>
+
+<span class="sd">    ``sampling_rate`` : float, optional</span>
+<span class="sd">        Sampling rate in hertz (default value is 1.0).</span>
+<span class="sd">    ``delta`` : float, optional</span>
+<span class="sd">        Sample distance in seconds (default value is 1.0).</span>
+<span class="sd">    ``calib`` : float, optional</span>
+<span class="sd">        Calibration factor (default value is 1.0).</span>
+<span class="sd">    ``npts`` : int, optional</span>
+<span class="sd">        Number of sample points (default value is 0, which implies that no data</span>
+<span class="sd">        is present).</span>
+<span class="sd">    ``network`` : string, optional</span>
+<span class="sd">        Network code (default is an empty string).</span>
+<span class="sd">    ``location`` : string, optional</span>
+<span class="sd">        Location code (default is an empty string).</span>
+<span class="sd">    ``station`` : string, optional</span>
+<span class="sd">        Station code (default is an empty string).</span>
+<span class="sd">    ``channel`` : string, optional</span>
+<span class="sd">        Channel code (default is an empty string).</span>
+<span class="sd">    ``starttime`` : :class:`~obspy.core.utcdatetime.UTCDateTime`, optional</span>
+<span class="sd">        Date and time of the first data sample used for correlation in UTC</span>
+<span class="sd">        (default value is &quot;1970-01-01T00:00:00.0Z&quot;).</span>
+<span class="sd">    ``endtime`` : :class:`~obspy.core.utcdatetime.UTCDateTime`, optional</span>
+<span class="sd">        Date and time of the last data sample used for correlation in UTC</span>
+<span class="sd">        (default value is &quot;1970-01-01T00:00:00.0Z&quot;).</span>
+<span class="sd">    ``corr_start``: :class:`~obspy.core.utcdatetime.UTCDateTime`, optional</span>
+<span class="sd">        Date and time of the first data sample used for correlation in UTC</span>
+<span class="sd">        (default value is &quot;1970-01-01T00:00:00.0Z&quot;).</span>
+<span class="sd">    ``corr_end``: :class:`~obspy.core.utcdatetime.UTCDateTime`, optional</span>
+<span class="sd">        Date and time of the last data sample used for correlation in UTC</span>
+<span class="sd">        (default value is &quot;1970-01-01T00:00:00.0Z&quot;).</span>
+<span class="sd">    ``start_lag``: float, optional</span>
+<span class="sd">        Lag of the first sample in seconds (usually negative)</span>
+<span class="sd">    ``end_lag``: float, optional</span>
+<span class="sd">        Lag of the last sample in seconds.</span>
+
+<span class="sd">    .. rubric:: Notes</span>
+
+<span class="sd">    (1) The attributes ``sampling_rate`` and ``delta`` are linked to each</span>
+<span class="sd">        other. If one of the attributes is modified the other will be</span>
+<span class="sd">        recalculated.</span>
+
+<span class="sd">        &gt;&gt;&gt; stats = Stats()</span>
+<span class="sd">        &gt;&gt;&gt; stats.sampling_rate</span>
+<span class="sd">        1.0</span>
+<span class="sd">        &gt;&gt;&gt; stats.delta = 0.005</span>
+<span class="sd">        &gt;&gt;&gt; stats.sampling_rate</span>
+<span class="sd">        200.0</span>
+
+<span class="sd">    (2) The attributes ``start_lag``, ``npts``, ``sampling_rate`` and ``delta``</span>
+<span class="sd">        are monitored and used to automatically calculate the ``end_lag``.</span>
+
+<span class="sd">        &gt;&gt;&gt; stats = Stats()</span>
+<span class="sd">        &gt;&gt;&gt; stats.npts = 61</span>
+<span class="sd">        &gt;&gt;&gt; stats.delta = 1.0</span>
+<span class="sd">        &gt;&gt;&gt; stats.start_lag = -30</span>
+<span class="sd">        &gt;&gt;&gt; stats.end_lag</span>
+<span class="sd">        30</span>
+<span class="sd">        &gt;&gt;&gt; stats.delta = 0.5</span>
+<span class="sd">        &gt;&gt;&gt; stats.end_lag</span>
+<span class="sd">        0</span>
+
+<span class="sd">    (3) The attribute ``endtime``, ``end_lag``, and ``starttime`` are</span>
+<span class="sd">        read only and cannot be modified. ``starttime`` and ``endtime`` are</span>
+<span class="sd">        just simply aliases of ``corr_start`` and ``corr_end``.</span>
+
+<span class="sd">        &gt;&gt;&gt; stats = Stats()</span>
+<span class="sd">        &gt;&gt;&gt; stats.endtime = UTCDateTime(2009, 1, 1, 12, 0, 0)</span>
+<span class="sd">        Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">        AttributeError: Attribute &quot;endtime&quot; in Stats object is read only!</span>
+<span class="sd">        &gt;&gt;&gt; stats[&#39;endtime&#39;] = UTCDateTime(2009, 1, 1, 12, 0, 0)</span>
+<span class="sd">        Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">        AttributeError: Attribute &quot;endtime&quot; in Stats object is read only!</span>
+
+<span class="sd">    (4)</span>
+<span class="sd">        The attribute ``npts`` will be automatically updated from the</span>
+<span class="sd">        :class:`~miic3.correlate.stream.CorrTrace` object.</span>
+
+<span class="sd">        &gt;&gt;&gt; trace = CorrTrace()</span>
+<span class="sd">        &gt;&gt;&gt; trace.stats.npts</span>
+<span class="sd">        0</span>
+<span class="sd">        &gt;&gt;&gt; trace.data = np.array([1, 2, 3, 4])</span>
+<span class="sd">        &gt;&gt;&gt; trace.stats.npts</span>
+<span class="sd">        4</span>
+
+<span class="sd">    (5)</span>
+<span class="sd">        The attribute ``component`` can be used to get or set the component,</span>
+<span class="sd">        i.e. the last character of the ``channel`` attribute.</span>
+
+<span class="sd">        &gt;&gt;&gt; stats = Stats()</span>
+<span class="sd">        &gt;&gt;&gt; stats.channel = &#39;HHZ&#39;</span>
+<span class="sd">        &gt;&gt;&gt; stats.component  # doctest: +SKIP</span>
+<span class="sd">        &#39;Z&#39;</span>
+<span class="sd">        &gt;&gt;&gt; stats.component = &#39;L&#39;</span>
+<span class="sd">        &gt;&gt;&gt; stats.channel  # doctest: +SKIP</span>
+<span class="sd">        &#39;HHL&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># set of read only attrs</span>
+    <span class="n">readonly</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;endtime&#39;</span><span class="p">,</span> <span class="s1">&#39;end_lag&#39;</span><span class="p">,</span> <span class="s1">&#39;starttime&#39;</span><span class="p">]</span>
+    <span class="c1"># default values</span>
+    <span class="n">defaults</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;sampling_rate&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="s1">&#39;delta&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="s1">&#39;starttime&#39;</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+        <span class="s1">&#39;endtime&#39;</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+        <span class="s1">&#39;corr_start&#39;</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+        <span class="s1">&#39;corr_end&#39;</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+        <span class="s1">&#39;start_lag&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s1">&#39;end_lag&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s1">&#39;npts&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s1">&#39;calib&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="s1">&#39;network&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;station&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;location&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;channel&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="c1"># keys which need to refresh derived values</span>
+    <span class="n">_refresh_keys</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;delta&#39;</span><span class="p">,</span> <span class="s1">&#39;sampling_rate&#39;</span><span class="p">,</span> <span class="s1">&#39;corr_start&#39;</span><span class="p">,</span> <span class="s1">&#39;corr_end&#39;</span><span class="p">,</span> <span class="s1">&#39;npts&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;start_lag&#39;</span><span class="p">}</span>
+    <span class="c1"># dict of required types for certain attrs</span>
+    <span class="n">_types</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;network&#39;</span><span class="p">:</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">native_str</span><span class="p">),</span>
+        <span class="s1">&#39;station&#39;</span><span class="p">:</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">native_str</span><span class="p">),</span>
+        <span class="s1">&#39;channel&#39;</span><span class="p">:</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">native_str</span><span class="p">),</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="p">{}):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">CorrStats</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_keys</span><span class="p">:</span>
+            <span class="c1"># ensure correct data type</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;delta&#39;</span><span class="p">:</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;sampling_rate&#39;</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;sampling_rate&#39;</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;start_lag&#39;</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="c1"># elif key == &#39;corr_start&#39;:</span>
+            <span class="c1">#     value = UTCDateTime(value)</span>
+            <span class="c1"># elif key == &#39;corr_end&#39;:</span>
+            <span class="c1">#     value = UTCDateTime(value)</span>
+            <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;npts&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="c1"># set current key</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">CorrStats</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="c1"># set derived value: delta</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">delta</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+                <span class="n">delta</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="s1">&#39;delta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">delta</span>
+            <span class="c1"># set derived value: endtime</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">npts</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">timediff</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">timediff</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">npts</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">delta</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="s1">&#39;end_lag&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_lag</span> <span class="o">+</span> <span class="n">timediff</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="s1">&#39;endtime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">corr_end</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="s1">&#39;starttime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">corr_start</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;component&#39;</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;channel&#39;</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Component must be set with single character&#39;</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">value</span>
+            <span class="n">value</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># prevent a calibration factor of 0</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;calib&#39;</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Calibration factor set to 0.0!&#39;</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">UserWarning</span><span class="p">)</span>
+        <span class="c1"># all other keys</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">CorrStats</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">AttribDict</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">CorrStats</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="fm">__setattr__</span> <span class="o">=</span> <span class="fm">__setitem__</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;component&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">CorrStats</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="s1">&#39;channel&#39;</span><span class="p">,</span> <span class="n">default</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">CorrStats</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return better readable string representation of Stats object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">priorized_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">,</span> <span class="s1">&#39;station&#39;</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">,</span> <span class="s1">&#39;channel&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;corr_start&#39;</span><span class="p">,</span> <span class="s1">&#39;corr_end&#39;</span><span class="p">,</span> <span class="s1">&#39;start_lag&#39;</span><span class="p">,</span> <span class="s1">&#39;end_lag&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;sampling_rate&#39;</span><span class="p">,</span> <span class="s1">&#39;delta&#39;</span><span class="p">,</span> <span class="s1">&#39;npts&#39;</span><span class="p">,</span> <span class="s1">&#39;calib&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pretty_str</span><span class="p">(</span><span class="n">priorized_keys</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_repr_pretty_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">cycle</span><span class="p">):</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, C.S..
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compute Velocity Changes &mdash; SeisMIC 0.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+        <script>mermaid.initialize({startOnLoad:true});</script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Reading and Handling of DV objects" href="dv.html" />
+    <link rel="prev" title="Monitor Velocity Changes" href="../monitor.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> SeisMIC
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Getting Started with SeisMIC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace_data.html">Trace data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../correlate.html">Compute and Handle Correlations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../corrdb.html">Save and Load Correlations</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../monitor.html">Monitor Velocity Changes</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Compute Velocity Changes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#arguments-in-params-yaml">Arguments in <code class="docutils literal notranslate"><span class="pre">params.yaml</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#start-the-computation">Start the Computation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dv.html">Reading and Handling of DV objects</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIC</span></code> API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SeisMIC</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../monitor.html">Monitor Velocity Changes</a> &raquo;</li>
+      <li>Compute Velocity Changes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/modules/monitor/monitor.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="mermaid">
+            %%{init: { 'logLevel': 'debug', 'theme': 'base' } }%%
+graph LR
+    waveform[Get Data] --&gt; correlate(Correlation)
+    correlate --&gt;|save| corrdb[(CorrDB/hdf5)]
+    corrdb --&gt; monitor
+    monitor[Measure dv]:::active --&gt;|save| dv{{DV}}
+    click waveform &quot;../trace_data.html&quot; &quot;trace_data&quot;
+    click correlate &quot;../correlate.html&quot; &quot;correlate&quot;
+    click monitor &quot;../monitor.html&quot; &quot;monitor&quot;
+    click corrdb &quot;../corrdb.html&quot; &quot;CorrDB&quot;
+    click dv &quot;../monitor/dv.html&quot; &quot;DV&quot;
+    classDef active fill:#f666, stroke-width:4px, stroke:#f06;
+        </div><section id="compute-velocity-changes">
+<h1>Compute Velocity Changes<a class="headerlink" href="#compute-velocity-changes" title="Permalink to this headline"></a></h1>
+<p><strong>SeisMIC</strong> uses the stretching technique (Sens-Schönfelder &amp; Wegler, 2006) to estimate a spatially homogeneous velocity change between the
+stations (for Cross-Correlations) or in station vicinity (for inter-component or autocorrelations).
+This technique is grounded upon the assumption that a homogeneous change in velocity will result in a homogeneous stretching of the
+Green’s function.</p>
+<section id="arguments-in-params-yaml">
+<h2>Arguments in <code class="docutils literal notranslate"><span class="pre">params.yaml</span></code><a class="headerlink" href="#arguments-in-params-yaml" title="Permalink to this headline"></a></h2>
+<p>To set the arguments for our velocity change computation, we will once again use the yaml file as shown before. Right at the bottom
+of this file, you will find a section with the key <code class="docutils literal notranslate"><span class="pre">dv</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1">#### parameters for the estimation of time differences</span>
+<span class="linenos"> 2</span><span class="nt">dv</span><span class="p">:</span>
+<span class="linenos"> 3</span>    <span class="c1"># subfolder for storage of time difference results</span>
+<span class="linenos"> 4</span>    <span class="nt">subdir </span><span class="p">:</span> <span class="s">&#39;vel_change&#39;</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span>    <span class="c1"># Plotting</span>
+<span class="linenos"> 7</span>    <span class="nt">plot_vel_change </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span>    <span class="c1">### Definition of calender time windows for the time difference measurements</span>
+<span class="linenos">10</span>    <span class="nt">start_date </span><span class="p">:</span> <span class="s">&#39;2015-05-01</span><span class="nv"> </span><span class="s">00:00:00.0&#39;</span>   <span class="c1"># %Y-%m-%dT%H:%M:%S.%fZ&#39;</span>
+<span class="linenos">11</span>    <span class="nt">end_date </span><span class="p">:</span> <span class="s">&#39;2016-01-01</span><span class="nv"> </span><span class="s">00:00:00.0&#39;</span>
+<span class="linenos">12</span>    <span class="nt">win_len </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">86400</span>                         <span class="c1"># length of window in which EGFs are stacked</span>
+<span class="linenos">13</span>    <span class="nt">date_inc </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">86400</span>                        <span class="c1"># increment of measurements</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span>    <span class="c1">### Frequencies</span>
+<span class="linenos">16</span>    <span class="nt">freq_min </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.1</span>
+<span class="linenos">17</span>    <span class="nt">freq_max </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.5</span>
+<span class="linenos">18</span>
+<span class="linenos">19</span>    <span class="c1">### Definition of lapse time window</span>
+<span class="linenos">20</span>    <span class="nt">tw_start </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">20</span>     <span class="c1"># lapse time of first sample [s]</span>
+<span class="linenos">21</span>    <span class="nt">tw_len </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">60</span>       <span class="c1"># length of window [s]</span>
+<span class="linenos">22</span>
+<span class="linenos">23</span>    <span class="c1">### Range to try stretching</span>
+<span class="linenos">24</span>    <span class="nt">stretch_range </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.03</span>
+<span class="linenos">25</span>    <span class="nt">stretch_steps </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1001</span>
+</pre></div>
+</div>
+<p>As you can see, there are only fairly few settings that can be changed, some of which are very obvious again:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">subdir</span></code>: directory to save the dv objects in</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plot_vel_change</span></code>: Set this to <code class="docutils literal notranslate"><span class="pre">True</span></code> if you would like your velocity changes to be plotted to a file in the fig folder.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">start_date</span></code>, <code class="docutils literal notranslate"><span class="pre">end_date</span></code>: Start and end of the time series (Note that it will result in nans if there are no correlations available.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">win_len</span></code>, <code class="docutils literal notranslate"><span class="pre">date_inc</span></code>: Length of each datapoint in seconds and distance between the subsequent datapoints.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">freq_min</span></code>, <code class="docutils literal notranslate"><span class="pre">freq_max</span></code>: lower and upper frequencies for the bandpass filter.</p></li>
+</ul>
+<p>The other four parameters will actually influence the actual stretching. <code class="docutils literal notranslate"><span class="pre">tw</span></code> is the time window which should be stretched and
+compared with the lapsed correlations. <code class="docutils literal notranslate"><span class="pre">stretch_range</span></code> is the maximum absolute stretch to be tested and <code class="docutils literal notranslate"><span class="pre">stretch_steps</span></code> the number
+of increments that will be tested between the minimum and maximum stretching.</p>
+</section>
+<section id="start-the-computation">
+<h2>Start the Computation<a class="headerlink" href="#start-the-computation" title="Permalink to this headline"></a></h2>
+<p>Again, the procedure is fairly similar to startin the correlation. Velocity stretch estimates are computed by the
+<a class="reference internal" href="../API.html#seismic.monitor.monitor.Monitor" title="seismic.monitor.monitor.Monitor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Monitor</span></code></a> object. Once again, usage with mpi is possible. Your velocity stretch estimate
+script could look something like this:</p>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-text">compute_dv.py</span><a class="headerlink" href="#id1" title="Permalink to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="kn">from</span> <span class="nn">seismic.monitor.monitor</span> <span class="kn">import</span> <span class="n">Monitor</span>
+<span class="linenos">2</span>
+<span class="linenos">3</span><span class="n">yaml_f</span> <span class="o">=</span> <span class="s1">&#39;/home/pm/Documents/PhD/Chaku/params.yaml&#39;</span>
+<span class="linenos">4</span><span class="n">m</span> <span class="o">=</span> <span class="n">Monitor</span><span class="p">(</span><span class="n">yaml_f</span><span class="p">)</span>
+<span class="linenos">5</span><span class="n">m</span><span class="o">.</span><span class="n">compute_velocity_change_bulk</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>Again, you will only want to use the method <a class="reference internal" href="../API.html#seismic.monitor.monitor.Monitor.compute_velocity_change_bulk" title="seismic.monitor.monitor.Monitor.compute_velocity_change_bulk"><code class="xref py py-meth docutils literal notranslate"><span class="pre">seismic.monitor.monitor.Monitor.compute_velocity_change_bulk()</span></code></a>.
+You can start the script using mpi:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun -n <span class="nv">$number_of_cores</span>$ python <span class="nv">$path_to_file</span>$/compute_dv.py
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../monitor.html" class="btn btn-neutral float-left" title="Monitor Velocity Changes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="dv.html" class="btn btn-neutral float-right" title="Reading and Handling of DV objects" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, The SeisMIC development team..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
