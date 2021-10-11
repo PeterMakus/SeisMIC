@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Thursday, 30th September 2021 10:39:05 am
+Last Modified: Monday, 4th October 2021 02:32:12 pm
 '''
 from copy import deepcopy
 import logging
@@ -295,8 +295,6 @@ and network combinations %s' % str(
         else:
             ch = 'av'
         while len(infiles):
-            print('\nlength: ', len(infiles))
-            # print('\nactual list: ', infiles)
             # Find files belonging to same station
             pat = '.'.join(infiles[0].split('.')[:-2]) + '*'
             filtfil = fnmatch.filter(infiles, pat)
@@ -331,15 +329,21 @@ and network combinations %s' % str(
                 fffil.append(f)
             dvs = []
             for f in fffil:
-                dvs.append(read_dv(f))
+                try:
+                    dvs.append(read_dv(f))
+                except Exception:
+                    self.logger.exception(
+                        'An unexpected error has ocurred ' +
+                        'while reading file %s.' % f)
                 # Remove so they are not processed again
                 infiles.remove(f)
             if not len(dvs):
                 continue
             elif len(dvs) == 1:
                 self.logger.warn(
-                    'Only one component found for station %s.%s... Skipping.'
-                    % (dvs[0].stats.network, dvs[0].stats.station))
+                    'Only component %s found for station %s.%s... Skipping.'
+                    % (dvs[0].stats.channel, dvs[0].stats.network,
+                        dvs[0].stats.station))
                 continue
             dv_av = average_components(dvs)
             outf = os.path.join(

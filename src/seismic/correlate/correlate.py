@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 28th September 2021 03:34:07 pm
+Last Modified: Monday, 11th October 2021 01:52:52 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -40,7 +40,8 @@ class Correlator(object):
         Initiates the Correlator object. When executing
         :func:`~seismic.correlate.correlate.Correlator.pxcorr()`, it will
         actually compute the correlations and save them in an hdf5 file that
-        can be handled using :class:`~seismic.db.corr_hdf5.CorrelationDataBase`.
+        can be handled using
+        :class:`~seismic.db.corr_hdf5.CorrelationDataBase`.
         Data has to be preprocessed before calling this (i.e., the data already
         has to be given in an ASDF format). Consult
         :class:`~seismic.trace_data.preprocess.Preprocessor` for information on
@@ -155,6 +156,35 @@ class Correlator(object):
                 ['{n}.{s}'.format(n=n, s=s) for n, s in station]))
 
         self.sampling_rate = self.options['sampling_rate']
+
+    def find_interstat_dist(self, dis: float):
+        """
+        Find stations in database with interstation distance smaller than
+        dis.
+
+        If no station inventories are available, they will be downloaded.
+
+        :param dis: Find all Stations with distance less than `dis` [in m]
+        :type dis: float
+
+        .. note:: only the subset of the in ``params.yaml`` defined
+            networks and stations will be queried.
+        """
+        if not self.options['combination_method'] == 'betweenStations':
+            raise ValueError(
+                'This function is only available if combination method ' +
+                'is set to "betweenStations".')
+        # list of requested combinations
+        self.rcombis = []
+        # Update the store clients invetory
+        self.store_client.read_inventory()
+        for ii, (n0, s0) in enumerate(self.station):
+            inv0 = self.store_client.select_inventory_or_load_remote(n0, s0)
+            for n1, s1 in self.station[ii:]:
+                inv1 = self.store_client.select_inventory_or_load_remote(
+                    n1, s1)
+                if mu.filter_stat_dist(inv0, inv1, dis):
+                    self.rcombis.append('%s-%s.%s-%s' % (n0, n1, s0, s1))
 
     def find_existing_times(self, tag: str, channel: str = '*') -> dict:
         """

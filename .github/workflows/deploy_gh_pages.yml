@@ -1,29 +1,42 @@
-name: docs
-on: [push, pull_request]
 
-env:
-  DEFAULT_BRANCH: "main"
-  #SPHINXOPTS: "-W --keep-going -T"
-  # ^-- If these SPHINXOPTS are enabled, then be strict about the builds and fail on any warnings
+name: Documentation
+
+# Define on which aciton and on which branch to perform action
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
+
   build-and-deploy:
-    name: Build and gh-pages
+    name: Build Documentation and Push
     runs-on: ubuntu-latest
     steps:
+
       # https://github.com/marketplace/actions/checkout
-      - uses: actions/checkout@v2
+      - name: Start actions
+        uses: actions/checkout@v2
         with:
           fetch-depth: 0
           lfs: true
-      # https://github.com/marketplace/actions/setup-python
-      # ^-- This gives info on matrix testing.
-      - name: Install Python
-        uses: actions/setup-python@v2
+
+      # Cache Conda environment installattion
+      - name: Cache conda
+        uses: actions/cache@v2
+        env:
+          # Increase this value to reset cache if etc/example-environment.yml has not changed
+          CACHE_NUMBER: 0
         with:
-          python-version: 3.8
-      # https://docs.github.com/en/actions/guides/building-and-testing-python#caching-dependencies
-      # ^-- How to set up caching for pip on Ubuntu
+          path: ~/conda_pkgs_dir
+          key:
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+            hashFiles('environment.yml') }}
+      
+      # Setting Up Cache pip installations
       - name: Cache pip
         uses: actions/cache@v2
         with:
@@ -32,109 +45,55 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
             ${{ runner.os }}-
-      # https://docs.github.com/en/actions/guides/building-and-testing-python#installing-dependencies
-      # ^-- This gives info on installing dependencies with pip
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          # All dependecies are needed to generate the API
-          sudo apt-get install openmpi-bin
-          pip install mpi4py
-      - name: Debugging information
-        run: |
-          echo "github.ref:" ${{github.ref}}
-          echo "github.event_name:" ${{github.event_name}}
-          echo "github.head_ref:" ${{github.head_ref}}
-          echo "github.base_ref:" ${{github.base_ref}}
-          set -x
-          git rev-parse --abbrev-ref HEAD
-          git branch
-          git branch -a
-          git remote -v
-          python -V
-          pip list --not-required
-          pip list
-          
-      # Build
-      - uses: ammaraskar/sphinx-problem-matcher@master
-      - name: Build Sphinx docs
-        run: |
-          make html # make dirhtml
-          # This fixes broken copy button icons, as explained in
-          #   https://github.com/coderefinery/sphinx-lesson/issues/50
-          #   https://github.com/executablebooks/sphinx-copybutton/issues/110
-          # This can be removed once these PRs are accepted (but the
-          # fixes also need to propagate to other themes):
-          #   https://github.com/sphinx-doc/sphinx/pull/8524
-          #   https://github.com/readthedocs/sphinx_rtd_theme/pull/1025
-          sed -i 's/url_root="#"/url_root=""/' docs/build/html/index.html || true
-      # The following supports building all branches and combining on
-      # gh-pages
-
-      # Clone and set up the old gh-pages branch
-      - name: Clone old gh-pages
-        if: ${{ github.event_name == 'push' }}
-        run: |
-          set -x
-          git fetch
-          ( git branch gh-pages remotes/origin/gh-pages && git clone . --branch=gh-pages _gh-pages/ ) || mkdir _gh-pages
-          rm -rf _gh-pages/.git/
-          mkdir -p _gh-pages/branch/
-      # If a push and default branch, copy build to _gh-pages/ as the "main"
-      # deployment.
-      - name: Copy new build (default branch)
-        if: |
-          contains(github.event_name, 'push') &&
-          contains(github.ref, env.DEFAULT_BRANCH)
-        run: |
-          set -x
-          # Delete everything under _gh-pages/ that is from the
-          # primary branch deployment.  Eicludes the other branches
-          # _gh-pages/branch-* paths, and not including
-          # _gh-pages itself.
-          find _gh-pages/ -mindepth 1 ! -path '_gh-pages/branch*' -delete
-          rsync -a docs/build/html/ _gh-pages/
-      # If a push and not on default branch, then copy the build to
-      # _gh-pages/branch/$brname (transforming '/' into '--')
-      - name: Copy new build (branch)
-        if: |
-          contains(github.event_name, 'push') &&
-          !contains(github.ref, env.DEFAULT_BRANCH)
-        run: |
-          set -x
-          #brname=$(git rev-parse --abbrev-ref HEAD)
-          brname="${{github.ref}}"
-          brname="${brname##refs/heads/}"
-          brdir=${brname//\//--}   # replace '/' with '--'
-          rm -rf   _gh-pages/branch/${brdir}
-          rsync -a docs/build/html/ _gh-pages/branch/${brdir}
-      # Go through each branch in _gh-pages/branch/, if it's not a
-      # ref, then delete it.
-      - name: Delete old feature branches
-        if: ${{ github.event_name == 'push' }}
-        run: |
-          set -x
-          for brdir in `ls _gh-pages/branch/` ; do
-              brname=${brdir//--/\/}   # replace '--' with '/'
-              if ! git show-ref remotes/origin/$brname ; then
-                  echo "Removing $brdir"
-                  rm -r _gh-pages/branch/$brdir/
-              fi
-          done
-      # Add the .nojekyll file
-      - name: nojekyll
-        if: ${{ github.event_name == 'push' }}
-        run: |
-          touch _gh-pages/.nojekyll
-      # Deploy
-      # https://github.com/peaceiris/actions-gh-pages
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
-        if: ${{ github.event_name == 'push' }}
-        #if: ${{ success() && github.event_name == 'push' && github.ref == 'refs/heads/$defaultBranch' }}
+      - name: Prepare Environment
+        uses: conda-incubator/setup-miniconda@v2
         with:
-          publish_branch: gh-pages
+          activate-environment: seismic
+          environment-file: environment.yml
+          # python-version: 3.8
+          auto-activate-base: false
+          use-only-tar-bz2: true
+      
+      # To keep Conda activated you have to use 'shell: bash -l {0}' line
+      # To specifiy the shell
+      - name: INFO using bash shell
+        shell: bash -l {0}
+        run: |
+          conda info
+          conda list
+      
+      - name: Make Docs
+        shell: bash -l {0}
+        run: |
+          cd docs/
+          make html
+          cd -
+        
+      # Great extra actions to compose with:
+      # Create an artifact of the html output.
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: DocumentationHTML
+          path: docs/_build/html/
+
+      - name: Commit documentation changes
+        shell: bash -l {0}
+        run: |
+          git clone https://github.com/PeterMakus/SeisMIC.git --branch gh-pages --single-branch gh-pages
+          cp -r docs/_build/html/* gh-pages/
+          cd gh-pages
+          touch .nojekyll
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "Update documentation" -a || true
+          # The above command will fail if no changes were present, so we ignore
+          # that.
+      # Push the changes
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          branch: gh-pages
+          directory: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: _gh-pages/
-          force_orphan: true

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Tuesday, 17th August 2021 12:12:48 pm
+Last Modified: Saturday, 9th October 2021 05:45:15 pm
 '''
 from typing import List, Tuple
 import logging
@@ -48,7 +48,7 @@ def trace_calc_az_baz_dist(stats1: Stats, stats2: Stats) -> Tuple[
     :rtype: float
     :return: **baz**: Back-azimuth angle between tr1 and tr2
     :rtype: float
-    :return: **dist**: Distance between tr1 and tr2
+    :return: **dist**: Distance between tr1 and tr2 in m
     """
 
     if not isinstance(stats1, (Stats, AttribDict)):
@@ -70,6 +70,23 @@ def trace_calc_az_baz_dist(stats1: Stats, stats2: Stats) -> Tuple[
     return az, baz, dist
 
 
+def filter_stat_dist(inv1: Inventory, inv2: Inventory, thres: float) -> bool:
+    """
+    Very simple function to check whether to stations are closer than thres
+    to each other.
+
+    :param inv1: Inventory of station 1
+    :type inv1: Inventory
+    :param inv2: Inventory of station 2
+    :type inv2: Inventory
+    :param thres: Threshold distance in m
+    :type thres: float
+    :return: True if closer (or equal) than thres, False if not.
+    :rtype: bool
+    """
+    return inv_calc_az_baz_dist(inv1, inv2)[-1] <= thres
+
+
 def inv_calc_az_baz_dist(inv1: Inventory, inv2: Inventory) -> Tuple[
         float, float, float]:
     """ Return azimuth, back azimuth and distance between stat1 and stat2
@@ -85,7 +102,7 @@ def inv_calc_az_baz_dist(inv1: Inventory, inv2: Inventory) -> Tuple[
     :rtype: float
     :return: **baz**: Back-azimuth angle between stat2 and stat2
     :rtype: float
-    :return: **dist**: Distance between stat1 and stat2
+    :return: **dist**: Distance between stat1 and stat2 in m
     """
 
     if not isinstance(inv1, Inventory):

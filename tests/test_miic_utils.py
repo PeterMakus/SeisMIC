@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Tuesday, 27th July 2021 05:18:40 pm
+Last Modified: Monday, 11th October 2021 02:14:01 pm
 '''
 import unittest
 import math as mathematics
@@ -21,8 +21,6 @@ from obspy.core.inventory.network import Network
 from obspy.core.inventory.station import Station
 
 from seismic.utils.fetch_func_from_str import func_from_str
-from seismic.utils.miic_utils import discard_short_traces, stream_require_dtype, trace_calc_az_baz_dist,\
-    inv_calc_az_baz_dist, resample_or_decimate
 import seismic.utils.miic_utils as mu
 from seismic.correlate.stats import CorrStats
 
@@ -47,17 +45,17 @@ class TestBazCalc(unittest.TestCase):
             {'stla': self.latitude2, 'stlo': self.longitude2})
 
     def test_result_inv(self):
-        az, baz, dist = inv_calc_az_baz_dist(self.inv1, self.inv2)
+        az, baz, dist = mu.inv_calc_az_baz_dist(self.inv1, self.inv2)
         self.assertEqual(az, self.az)
         self.assertEqual(baz, self.baz)
         self.assertEqual(dist, self.dist)
 
     def test_identical_coords(self):
-        _, _, dist = inv_calc_az_baz_dist(self.inv1, self.inv1)
+        _, _, dist = mu.inv_calc_az_baz_dist(self.inv1, self.inv1)
         self.assertEqual(dist, 0)
 
     def test_result_tr(self):
-        az, baz, dist = trace_calc_az_baz_dist(self.st1, self.st2)
+        az, baz, dist = mu.trace_calc_az_baz_dist(self.st1, self.st2)
         self.assertEqual(az, self.az)
         self.assertEqual(baz, self.baz)
         self.assertEqual(dist, self.dist)
@@ -67,7 +65,7 @@ class TestResampleOrDecimate(unittest.TestCase):
     def test_decimate(self):
         st = read()
         freq_new = st[0].stats.sampling_rate//4
-        st_filt = resample_or_decimate(st, freq_new)
+        st_filt = mu.resample_or_decimate(st, freq_new)
         self.assertEqual(st_filt[0].stats.sampling_rate, freq_new)
         self.assertIn('decimate', st_filt[0].stats.processing[-1])
         self.assertIn('filter', st_filt[0].stats.processing[-2])
@@ -75,7 +73,7 @@ class TestResampleOrDecimate(unittest.TestCase):
     def test_resample(self):
         st = read()
         freq_new = st[0].stats.sampling_rate/2.5
-        st_filt = resample_or_decimate(st, freq_new, filter=False)
+        st_filt = mu.resample_or_decimate(st, freq_new, filter=False)
         self.assertEqual(st_filt[0].stats.sampling_rate, freq_new)
         self.assertIn('resample', st_filt[0].stats.processing[-1])
         self.assertIn('no_filter=True', st_filt[0].stats.processing[-1])
@@ -84,7 +82,7 @@ class TestResampleOrDecimate(unittest.TestCase):
         st = read()
         freq_new = st[0].stats.sampling_rate+5
         with self.assertRaises(ValueError):
-            _ = resample_or_decimate(st, freq_new, filter=False)
+            _ = mu.resample_or_decimate(st, freq_new, filter=False)
 
 
 class TestTrimTraceDelta(unittest.TestCase):
@@ -234,7 +232,7 @@ class TestStreamRequireDtype(unittest.TestCase):
     def test_result(self):
         st = read()
         self.assertNotEqual(st[0].data.dtype, np.float32)
-        stream_require_dtype(st, np.float32)
+        mu.stream_require_dtype(st, np.float32)
         self.assertEqual(st[0].data.dtype, np.float32)
 
 

@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Friday, 1st October 2021 11:55:15 am
+Last Modified: Tuesday, 5th October 2021 01:42:19 pm
 '''
 from typing import List, Tuple
 
@@ -676,7 +676,7 @@ def estimate_reftr_shifts_from_dt_corr(
                     'value': dt,
                     'second_axis': stretch_vect,
                     'value_type': np.array(['stretch']),
-                    'method': np.array(['multi_ref'])}
+                    'method': np.array(['mufti_ref'])}
 
         if return_sim_mat:
             ret_dict.update({'sim_mat': bsimmat})
