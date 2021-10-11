@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 11th October 2021 03:56:39 pm
+Last Modified: Monday, 11th October 2021 04:00:09 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -211,6 +211,7 @@ class Correlator(object):
         netcombs, statcombs = compute_network_station_combinations(
             netlist, statlist, method=self.options['combination_method'],
             combis=self.rcombis)
+        print(netcombs, statcombs)
         ex_dict = {}
         for nc, sc in zip(netcombs, statcombs):
             print(nc, sc)
@@ -1056,7 +1057,6 @@ def compute_network_station_combinations(
                         # essentially just checks whether any of the desired
                         # combis matches with this combis. If it does not we
                         # continue and skip this combi
-                    print(n, s, n2, s2)
                     nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
                     netcombs.append(nc)
                     statcombs.append(sc)
