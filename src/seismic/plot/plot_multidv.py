@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 5th October 2021 11:50:22 am
-Last Modified: Tuesday, 12th October 2021 11:41:02 am
+Last Modified: Tuesday, 12th October 2021 11:42:53 am
 '''
 
 from logging import warn
@@ -73,7 +73,7 @@ def plot_multiple_dv(
         statcodes.append(dv.stats.station)
     ax.xaxis.set_major_locator(mpl.dates.AutoDateLocator())
     if plot_mean:
-        mean = np.nanmean(vals)
+        mean = np.nanmean(vals, axis=0)
         plt.plot(rtime, mean, 'k')
 
     ax.xaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h'))
