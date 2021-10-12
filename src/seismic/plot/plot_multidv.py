@@ -8,13 +8,14 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 5th October 2021 11:50:22 am
-Last Modified: Tuesday, 12th October 2021 11:45:32 am
+Last Modified: Tuesday, 12th October 2021 12:09:52 pm
 '''
 
 from logging import warn
 import os
+import fnmatch
 from glob import glob
-from typing import Tuple
+from typing import List, Tuple
 from datetime import datetime
 
 import matplotlib as mpl
@@ -29,7 +30,7 @@ def plot_multiple_dv(
     indir: str, only_mean: bool = False, title: str = None,
     outfile: str = None, fmt: str = None, dpi: int = 300, legend: bool = False,
     plot_median: bool = False, ylim: Tuple[float, float] = None,
-        xlim: Tuple[datetime, datetime] = None):
+        xlim: Tuple[datetime, datetime] = None, statfilter: List[str] = None):
     """
     Plots several Velocity variations in one single plot
 
@@ -49,10 +50,18 @@ def plot_multiple_dv(
     :type dpi: int, optional
     :param legend: Should a legend be plotted, defaults to False
     :type legend: bool, optional
+    :param plot_median: Plot the median of all dataset as a black line.
+        Defaults to False.
+    :type plot_median: bool, optional.
     :param ylim: y limit, defaults to None
     :type ylim: Tuple[float, float], optional
     :param xlim: x limit, defaults to None
     :type xlim: Tuple[datetime, datetime], optional
+    :param statfilter: Only plot data from the station combinations with the
+        following codes. Given in the form
+        ['net0-net0.sta0-stat1.ch0-ch1', ...]. Note that wildcards are allowed.
+        Defaults to None.
+    :type statfilter: List[str]
     """
     set_mpl_params()
     if only_mean:
@@ -61,7 +70,14 @@ def plot_multiple_dv(
         pat = os.path.join(indir, '*.npz')
     statcodes = []
     vals = []
-    for fi in glob(pat):
+    infiles = glob(pat)
+    if statfilter is not None:
+        statfilter = ['*%s*' % filt for filt in statfilter]
+        infiles_new = []
+        for filt in statfilter:
+            infiles_new.extend(fnmatch.filter(infiles, filt))
+        infiles = infiles_new
+    for fi in infiles:
         try:
             dv = read_dv(fi)
         except Exception:
