@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 5th October 2021 11:50:22 am
-Last Modified: Tuesday, 12th October 2021 02:02:24 pm
+Last Modified: Tuesday, 12th October 2021 02:05:52 pm
 '''
 
 from logging import warn
@@ -31,7 +31,7 @@ def plot_multiple_dv(
     outfile: str = None, fmt: str = None, dpi: int = 300, legend: bool = False,
     plot_median: bool = False, ylim: Tuple[float, float] = None,
     xlim: Tuple[datetime, datetime] = None, statfilter: List[str] = None,
-        abs: bool = False):
+        plt_abs: bool = False):
     """
     Plots several Velocity variations in one single plot
 
@@ -63,8 +63,8 @@ def plot_multiple_dv(
         ['net0-net0.sta0-stat1.ch0-ch1', ...]. Note that wildcards are allowed.
         Defaults to None.
     :type statfilter: List[str]
-    :param abs: plot absolute values. Defaults to False
-    :type abs: bool, optional
+    :param plt_abs: plot absolute values. Defaults to False
+    :type plt_abs: bool, optional
     """
     set_mpl_params()
     if only_mean:
@@ -86,7 +86,7 @@ def plot_multiple_dv(
         except Exception:
             warn('Corrupt file %s discovered...skipping.' % fi)
         val = -dv.value
-        if abs:
+        if plt_abs:
             val = abs(val)
         vals.append(val)
         rtime = [utcdt.datetime for utcdt in dv.stats['corr_start']]
