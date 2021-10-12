@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 5th October 2021 11:50:22 am
-Last Modified: Monday, 11th October 2021 03:26:26 pm
+Last Modified: Tuesday, 12th October 2021 11:33:29 am
 '''
 
 from logging import warn
@@ -65,7 +65,7 @@ def plot_multiple_dv(
         except Exception:
             warn('Corrupt file %s discovered...skipping.' % fi)
         rtime = [utcdt.datetime for utcdt in dv.stats['corr_start']]
-        plt.plot(rtime, -dv.value, '.', markersize=.5)
+        plt.plot(rtime, -dv.value, '.', markersize=.25)
         ax = plt.gca()
         statcodes.append(dv.stats.station)
     ax.xaxis.set_major_locator(mpl.dates.AutoDateLocator())
