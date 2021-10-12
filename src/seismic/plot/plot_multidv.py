@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 5th October 2021 11:50:22 am
-Last Modified: Tuesday, 12th October 2021 11:42:53 am
+Last Modified: Tuesday, 12th October 2021 11:45:03 am
 '''
 
 from logging import warn
@@ -28,7 +28,7 @@ from seismic.plot.plot_utils import set_mpl_params
 def plot_multiple_dv(
     indir: str, only_mean: bool = False, title: str = None,
     outfile: str = None, fmt: str = None, dpi: int = 300, legend: bool = False,
-    plot_mean: bool = False, ylim: Tuple[float, float] = None,
+    plot_median: bool = False, ylim: Tuple[float, float] = None,
         xlim: Tuple[datetime, datetime] = None):
     """
     Plots several Velocity variations in one single plot
@@ -72,8 +72,8 @@ def plot_multiple_dv(
         ax = plt.gca()
         statcodes.append(dv.stats.station)
     ax.xaxis.set_major_locator(mpl.dates.AutoDateLocator())
-    if plot_mean:
-        mean = np.nanmean(vals, axis=0)
+    if plot_median:
+        mean = np.nanmedian(vals, axis=0)
         plt.plot(rtime, mean, 'k')
 
     ax.xaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h'))
