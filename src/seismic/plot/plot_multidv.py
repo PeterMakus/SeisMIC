@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 5th October 2021 11:50:22 am
-Last Modified: Tuesday, 12th October 2021 11:33:29 am
+Last Modified: Tuesday, 12th October 2021 11:41:02 am
 '''
 
 from logging import warn
@@ -19,6 +19,7 @@ from datetime import datetime
 
 import matplotlib as mpl
 from matplotlib import pyplot as plt
+import numpy as np
 
 from seismic.monitor.dv import read_dv
 from seismic.plot.plot_utils import set_mpl_params
@@ -27,7 +28,7 @@ from seismic.plot.plot_utils import set_mpl_params
 def plot_multiple_dv(
     indir: str, only_mean: bool = False, title: str = None,
     outfile: str = None, fmt: str = None, dpi: int = 300, legend: bool = False,
-    ylim: Tuple[float, float] = None,
+    plot_mean: bool = False, ylim: Tuple[float, float] = None,
         xlim: Tuple[datetime, datetime] = None):
     """
     Plots several Velocity variations in one single plot
@@ -59,6 +60,7 @@ def plot_multiple_dv(
     else:
         pat = os.path.join(indir, '*.npz')
     statcodes = []
+    vals = []
     for fi in glob(pat):
         try:
             dv = read_dv(fi)
@@ -66,9 +68,13 @@ def plot_multiple_dv(
             warn('Corrupt file %s discovered...skipping.' % fi)
         rtime = [utcdt.datetime for utcdt in dv.stats['corr_start']]
         plt.plot(rtime, -dv.value, '.', markersize=.25)
+        vals.append(-dv.value)
         ax = plt.gca()
         statcodes.append(dv.stats.station)
     ax.xaxis.set_major_locator(mpl.dates.AutoDateLocator())
+    if plot_mean:
+        mean = np.nanmean(vals)
+        plt.plot(rtime, mean, 'k')
 
     ax.xaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h'))
     plt.xticks(rotation='vertical')
