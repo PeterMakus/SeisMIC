@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 5th October 2021 11:50:22 am
-Last Modified: Tuesday, 12th October 2021 11:45:03 am
+Last Modified: Tuesday, 12th October 2021 11:45:32 am
 '''
 
 from logging import warn
@@ -75,6 +75,7 @@ def plot_multiple_dv(
     if plot_median:
         mean = np.nanmedian(vals, axis=0)
         plt.plot(rtime, mean, 'k')
+        statcodes.append('median')
 
     ax.xaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h'))
     plt.xticks(rotation='vertical')
