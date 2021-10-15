@@ -83,7 +83,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Friday, 16th April 2021 03:21:30 pm</span>
-<span class="sd">Last Modified: Tuesday, 27th July 2021 11:52:41 am</span>
+<span class="sd">Last Modified: Friday, 15th October 2021 03:39:25 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">ast</span>
 <span class="kn">import</span> <span class="nn">fnmatch</span>
@@ -265,22 +265,9 @@
             <span class="n">header</span> <span class="o">=</span> <span class="n">read_hdf5_header</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">path</span><span class="p">])</span>
             <span class="k">return</span> <span class="n">CorrStream</span><span class="p">(</span><span class="n">CorrTrace</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">_header</span><span class="o">=</span><span class="n">header</span><span class="p">))</span>
         <span class="c1"># Now, we need to differ between the fnmatch pattern and the actually</span>
-        <span class="c1"># acessed path</span>
+        <span class="c1"># accessed path</span>
         <span class="n">pattern</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;/*&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">corr_end</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">corr_start</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">channel</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">station</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
-                        <span class="k">if</span> <span class="n">network</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
-                            <span class="n">path</span> <span class="o">=</span> <span class="n">tag</span>
-                        <span class="k">else</span><span class="p">:</span>
-                            <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">4</span><span class="p">])</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">3</span><span class="p">])</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">all_traces_recursive</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">path</span><span class="p">],</span> <span class="n">CorrStream</span><span class="p">(),</span> <span class="n">pattern</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DBHandler.get_available_starttimes"><a class="viewcode-back" href="../../../modules/API.html#seismic.db.corr_hdf5.DBHandler.get_available_starttimes">[docs]</a>    <span class="k">def</span> <span class="nf">get_available_starttimes</span><span class="p">(</span>
@@ -445,10 +432,10 @@
 <span class="sd">    :rtype: CorrStream</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">fnmatch</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">pattern</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pattern</span><span class="p">:</span>
-            <span class="k">continue</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">_hl</span><span class="o">.</span><span class="n">group</span><span class="o">.</span><span class="n">Group</span><span class="p">):</span>
             <span class="n">all_traces_recursive</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">pattern</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">fnmatch</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">pattern</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pattern</span><span class="p">:</span>
+            <span class="k">continue</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">stream</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>

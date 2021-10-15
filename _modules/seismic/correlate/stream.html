@@ -81,7 +81,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 20th April 2021 04:19:35 pm</span>
-<span class="sd">Last Modified: Wednesday, 15th September 2021 02:24:23 pm</span>
+<span class="sd">Last Modified: Friday, 15th October 2021 03:20:33 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
@@ -783,7 +783,7 @@
         <span class="n">timelimits</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">ylimits</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">scalingfactor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">linewidth</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
-            <span class="n">outputfile</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">outputfile</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;heatmap&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Creates a section plot of all correlations in this stream.</span>
 
@@ -807,6 +807,9 @@
 <span class="sd">        :type outputfile: str, optional</span>
 <span class="sd">        :param title: Title of the plot, defaults to None</span>
 <span class="sd">        :type title: str, optional</span>
+<span class="sd">        :param type: Type of plot. Either `&#39;heatmap&#39;` for a heat plot or</span>
+<span class="sd">            `&#39;section&#39;` for a wiggle type plot. Defaults to heatmap.</span>
+<span class="sd">        :type title: str, optional</span>
 
 <span class="sd">        .. note:: If you would like to plot a subset of this stream, use</span>
 <span class="sd">            :func:`~seismic.correlate.stream.CorrStream.select`.</span>
@@ -814,7 +817,7 @@
         <span class="n">plot_cst</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">sort_by</span><span class="o">=</span><span class="n">sort_by</span><span class="p">,</span> <span class="n">timelimits</span><span class="o">=</span><span class="n">timelimits</span><span class="p">,</span> <span class="n">ylimits</span><span class="o">=</span><span class="n">ylimits</span><span class="p">,</span>
             <span class="n">scalingfactor</span><span class="o">=</span><span class="n">scalingfactor</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="n">linewidth</span><span class="p">,</span>
-            <span class="n">outputfile</span><span class="o">=</span><span class="n">outputfile</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">)</span></div>
+            <span class="n">outputfile</span><span class="o">=</span><span class="n">outputfile</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">type</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_to_matrix</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
