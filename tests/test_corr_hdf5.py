@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 1st June 2021 10:42:03 am
-Last Modified: Tuesday, 12th October 2021 09:02:08 am
+Last Modified: Friday, 15th October 2021 03:56:56 pm
 '''
 from copy import deepcopy
 import unittest
@@ -243,50 +243,54 @@ class TestDBHandler(unittest.TestCase):
         file_mock.assert_called_with(exp_path)
         self.assertEqual(out[0], self.ctr)
 
-    # @patch('seismic.db.corr_hdf5.all_traces_recursive')
-    # @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
-    # def test_get_data_wildcard(self, file_mock, all_tr_recursive_mock):
-    #     all_tr_recursive_mock.return_value = None
-    #     net = 'AB-CD'
-    #     stat = '*'
-    #     ch = '*'
-    #     tag = 'rand'
-    #     corr_start = UTCDateTime(0)
-    #     corr_end = UTCDateTime(100)
-    #     exp_path = corr_hdf5.hierarchy.format(
-    #                 tag=tag,
-    #                 network=net, station=stat, channel=ch,
-    #                 corr_st=corr_start.format_fissures(),
-    #                 corr_et=corr_end.format_fissures())
-    #     d = {exp_path: self.ctr.data, '/rand/net/': self.ctr.data}
-    #     file_mock.side_effect = d.__getitem__
+    @patch('seismic.db.corr_hdf5.all_traces_recursive')
+    @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
+    def test_get_data_wildcard(self, file_mock, all_tr_recursive_mock):
+        all_tr_recursive_mock.return_value = None
+        net = 'AB-CD'
+        stat = '*'
+        ch = '*'
+        tag = 'rand'
+        corr_start = UTCDateTime(0)
+        corr_end = UTCDateTime(100)
+        exp_path = corr_hdf5.hierarchy.format(
+                    tag=tag,
+                    network=net, station=stat, channel=ch,
+                    corr_st=corr_start.format_fissures(),
+                    corr_et=corr_end.format_fissures())
+        d = {exp_path: self.ctr.data, '/rand/AB-CD/': self.ctr.data}
+        file_mock.side_effect = d.__getitem__
 
-    #     _ = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
-    #     #print(file_mock.called_with)
-    #     #file_mock.assert_called_with(exp_path)
-    #     #all_tr_recursive_mock.assert_called_with('/rand/net/', CorrStream, '/rand/net/')
+        _ = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
+        file_mock.assert_called_with('/rand/AB-CD/')
+        all_tr_recursive_mock.assert_called_with(
+            d['/rand/AB-CD/'], CorrStream(), '/rand/AB-CD**/%s/%s' % (
+                corr_start.format_fissures(), corr_end.format_fissures()))
+        all_tr_recursive_mock.assert_called
 
-    # @patch('seismic.db.corr_hdf5.all_traces_recursive')
-    # @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
-    # def test_get_data_wildcard2(self, file_mock, all_tr_recursive_mock):
-    #     all_tr_recursive_mock.return_value = None
-    #     net = 'AB-CD'
-    #     stat = '*'
-    #     ch = '*'
-    #     tag = 'rand'
-    #     corr_start = '*'
-    #     corr_end = '*'
-    #     exp_path = corr_hdf5.hierarchy.format(
-    #                 tag=tag,
-    #                 network=net, station=stat, channel=ch,
-    #                 corr_st=corr_start,
-    #                 corr_et=corr_end)
-    #     exp_path = '/'.join(exp_path.split('/')[:-4])
-    #     d = {exp_path: self.ctr.data}
-    #     file_mock.side_effect = d.__getitem__
+    @patch('seismic.db.corr_hdf5.all_traces_recursive')
+    @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
+    def test_get_data_wildcard2(self, file_mock, all_tr_recursive_mock):
+        all_tr_recursive_mock.return_value = None
+        net = 'AB-CD'
+        stat = '*'
+        ch = '*'
+        tag = 'rand'
+        corr_start = '*'
+        corr_end = '*'
+        exp_path = corr_hdf5.hierarchy.format(
+                    tag=tag,
+                    network=net, station=stat, channel=ch,
+                    corr_st=corr_start,
+                    corr_et=corr_end)
+        exp_path = '/'.join(exp_path.split('/')[:-4])
+        d = {exp_path: self.ctr.data, '/rand/AB-CD/': self.ctr.data}
+        file_mock.side_effect = d.__getitem__
 
-    #     _ = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
-    #     file_mock.assert_called_with(exp_path)
+        _ = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
+        file_mock.assert_called_with('/rand/AB-CD/')
+        all_tr_recursive_mock.assert_called_with(
+            d['/rand/AB-CD/'], CorrStream(), '/rand/AB-CD****')
 
     @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_available_starttimes(self, file_mock):
