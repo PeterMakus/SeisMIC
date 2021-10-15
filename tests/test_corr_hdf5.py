@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 1st June 2021 10:42:03 am
-Last Modified: Tuesday, 27th July 2021 12:13:46 pm
+Last Modified: Friday, 15th October 2021 03:56:56 pm
 '''
 from copy import deepcopy
 import unittest
@@ -90,14 +90,15 @@ class TestAllTracesRecursive(unittest.TestCase):
     def test_is_np_array(self, read_header_mock):
         read_header_mock.return_value = None
         d = {
-            'a': create_group_mock({}, 'testname', False),
-            'b': create_group_mock({}, 'different_name', False)}
+            'a': create_group_mock({}, '/outer_group/testname', False),
+            'b': create_group_mock({}, '/outer_group/different_name', False)}
 
-        g = create_group_mock(d, 'outer_group', True)
+        g = create_group_mock(d, '/outer_group', True)
         st = CorrStream()
-        st = corr_hdf5.all_traces_recursive(g, st, 'testname')
+        st = corr_hdf5.all_traces_recursive(g, st, '/outer_group/testname')
         self.assertEqual(st.count(), 1)
-        st = corr_hdf5.all_traces_recursive(g, st.clear(), 'different_name')
+        st = corr_hdf5.all_traces_recursive(
+            g, st.clear(), '/outer_group/different_name')
         self.assertEqual(st.count(), 1)
         st = corr_hdf5.all_traces_recursive(g, st.clear(), '*name')
         self.assertEqual(st.count(), 2)
@@ -109,16 +110,21 @@ class TestAllTracesRecursive(unittest.TestCase):
         # For this we need to patch fnmatch as well, as the names here aren't
         # full path
         read_header_mock.return_value = None
-        d_inner = {
-            'a': create_group_mock({}, 'testname', False),
-            'b': create_group_mock({}, 'different_name', False)}
+        d_innera = {
+            'a': create_group_mock({}, '/outout/outer_group0/testname', False),
+            'b': create_group_mock(
+                {}, '/outout/outer_group0/different_name', False)}
+        d_innerb = {
+            'a': create_group_mock({}, '/outout/outer_group1/testname', False),
+            'b': create_group_mock(
+                {}, '/outout/outer_group1/different_name', False)}
         d_outer = {
-            'A': create_group_mock(d_inner, 'outer_group0', True),
-            'B': create_group_mock(d_inner, 'outer_group1', True)}
+            'A': create_group_mock(d_innera, '/outout/outer_group0', True),
+            'B': create_group_mock(d_innerb, '/outout/outer_group1', True)}
         g = create_group_mock(d_outer, 'outout', True)
         st = CorrStream()
         st = corr_hdf5.all_traces_recursive(
-            g, st, 'outout/outer_group0/testname')
+            g, st, '/outout/outer_group0/testname')
         self.assertEqual(st.count(), 1)
         st = corr_hdf5.all_traces_recursive(g, st.clear(), '*')
         self.assertEqual(st.count(), 4)
@@ -252,11 +258,15 @@ class TestDBHandler(unittest.TestCase):
                     network=net, station=stat, channel=ch,
                     corr_st=corr_start.format_fissures(),
                     corr_et=corr_end.format_fissures())
-        d = {exp_path: self.ctr.data}
+        d = {exp_path: self.ctr.data, '/rand/AB-CD/': self.ctr.data}
         file_mock.side_effect = d.__getitem__
 
         _ = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
-        file_mock.assert_called_with(exp_path)
+        file_mock.assert_called_with('/rand/AB-CD/')
+        all_tr_recursive_mock.assert_called_with(
+            d['/rand/AB-CD/'], CorrStream(), '/rand/AB-CD**/%s/%s' % (
+                corr_start.format_fissures(), corr_end.format_fissures()))
+        all_tr_recursive_mock.assert_called
 
     @patch('seismic.db.corr_hdf5.all_traces_recursive')
     @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
@@ -274,11 +284,13 @@ class TestDBHandler(unittest.TestCase):
                     corr_st=corr_start,
                     corr_et=corr_end)
         exp_path = '/'.join(exp_path.split('/')[:-4])
-        d = {exp_path: self.ctr.data}
+        d = {exp_path: self.ctr.data, '/rand/AB-CD/': self.ctr.data}
         file_mock.side_effect = d.__getitem__
 
         _ = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
-        file_mock.assert_called_with(exp_path)
+        file_mock.assert_called_with('/rand/AB-CD/')
+        all_tr_recursive_mock.assert_called_with(
+            d['/rand/AB-CD/'], CorrStream(), '/rand/AB-CD****')
 
     @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_available_starttimes(self, file_mock):

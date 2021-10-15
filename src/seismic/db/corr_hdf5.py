@@ -9,7 +9,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Tuesday, 27th July 2021 11:52:41 am
+Last Modified: Friday, 15th October 2021 03:39:25 pm
 '''
 import ast
 import fnmatch
@@ -191,22 +191,9 @@ omitted." % path, category=UserWarning)
             header = read_hdf5_header(self[path])
             return CorrStream(CorrTrace(data, _header=header))
         # Now, we need to differ between the fnmatch pattern and the actually
-        # acessed path
+        # accessed path
         pattern = path.replace('/*', '*')
-        if corr_end == '*':
-            if corr_start == '*':
-                if channel == '*':
-                    if station == '*':
-                        if network == '*':
-                            path = tag
-                        else:
-                            path = '/'.join(path.split('/')[:-4])
-                    else:
-                        path = '/'.join(path.split('/')[:-3])
-                else:
-                    path = '/'.join(path.split('/')[:-2])
-            else:
-                path = '/'.join(path.split('/')[:-1])
+        path = path.split('*')[0]
         return all_traces_recursive(self[path], CorrStream(), pattern)
 
     def get_available_starttimes(
@@ -371,10 +358,10 @@ def all_traces_recursive(
     :rtype: CorrStream
     """
     for v in group.values():
-        if not fnmatch.fnmatch(v.name, pattern) and v.name not in pattern:
-            continue
         if isinstance(v, h5py._hl.group.Group):
             all_traces_recursive(v, stream, pattern)
+        elif not fnmatch.fnmatch(v.name, pattern) and v.name not in pattern:
+            continue
         else:
             try:
                 stream.append(

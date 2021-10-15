@@ -8,17 +8,19 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 5th October 2021 11:50:22 am
-Last Modified: Monday, 11th October 2021 03:26:26 pm
+Last Modified: Tuesday, 12th October 2021 02:05:52 pm
 '''
 
 from logging import warn
 import os
+import fnmatch
 from glob import glob
-from typing import Tuple
+from typing import List, Tuple
 from datetime import datetime
 
 import matplotlib as mpl
 from matplotlib import pyplot as plt
+import numpy as np
 
 from seismic.monitor.dv import read_dv
 from seismic.plot.plot_utils import set_mpl_params
@@ -27,8 +29,9 @@ from seismic.plot.plot_utils import set_mpl_params
 def plot_multiple_dv(
     indir: str, only_mean: bool = False, title: str = None,
     outfile: str = None, fmt: str = None, dpi: int = 300, legend: bool = False,
-    ylim: Tuple[float, float] = None,
-        xlim: Tuple[datetime, datetime] = None):
+    plot_median: bool = False, ylim: Tuple[float, float] = None,
+    xlim: Tuple[datetime, datetime] = None, statfilter: List[str] = None,
+        plt_abs: bool = False):
     """
     Plots several Velocity variations in one single plot
 
@@ -48,10 +51,20 @@ def plot_multiple_dv(
     :type dpi: int, optional
     :param legend: Should a legend be plotted, defaults to False
     :type legend: bool, optional
+    :param plot_median: Plot the median of all dataset as a black line.
+        Defaults to False.
+    :type plot_median: bool, optional.
     :param ylim: y limit, defaults to None
     :type ylim: Tuple[float, float], optional
     :param xlim: x limit, defaults to None
     :type xlim: Tuple[datetime, datetime], optional
+    :param statfilter: Only plot data from the station combinations with the
+        following codes. Given in the form
+        ['net0-net0.sta0-stat1.ch0-ch1', ...]. Note that wildcards are allowed.
+        Defaults to None.
+    :type statfilter: List[str]
+    :param plt_abs: plot absolute values. Defaults to False
+    :type plt_abs: bool, optional
     """
     set_mpl_params()
     if only_mean:
@@ -59,16 +72,33 @@ def plot_multiple_dv(
     else:
         pat = os.path.join(indir, '*.npz')
     statcodes = []
-    for fi in glob(pat):
+    vals = []
+    infiles = glob(pat)
+    if statfilter is not None:
+        statfilter = ['*%s*' % filt for filt in statfilter]
+        infiles_new = []
+        for filt in statfilter:
+            infiles_new.extend(fnmatch.filter(infiles, filt))
+        infiles = infiles_new
+    for fi in infiles:
         try:
             dv = read_dv(fi)
         except Exception:
             warn('Corrupt file %s discovered...skipping.' % fi)
+        val = -dv.value
+        if plt_abs:
+            val = abs(val)
+        vals.append(val)
         rtime = [utcdt.datetime for utcdt in dv.stats['corr_start']]
-        plt.plot(rtime, -dv.value, '.', markersize=.5)
+        plt.plot(rtime, val, '.', markersize=.25)
+        vals.append(val)
         ax = plt.gca()
         statcodes.append(dv.stats.station)
     ax.xaxis.set_major_locator(mpl.dates.AutoDateLocator())
+    if plot_median:
+        mean = np.nanmedian(vals, axis=0)
+        plt.plot(rtime, mean, 'k')
+        statcodes.append('median')
 
     ax.xaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h'))
     plt.xticks(rotation='vertical')
