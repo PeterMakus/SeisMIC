@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 1st June 2021 10:42:03 am
-Last Modified: Friday, 15th October 2021 03:56:56 pm
+Last Modified: Tuesday, 19th October 2021 02:25:16 pm
 '''
 from copy import deepcopy
 import unittest
@@ -266,7 +266,6 @@ class TestDBHandler(unittest.TestCase):
         all_tr_recursive_mock.assert_called_with(
             d['/rand/AB-CD/'], CorrStream(), '/rand/AB-CD**/%s/%s' % (
                 corr_start.format_fissures(), corr_end.format_fissures()))
-        all_tr_recursive_mock.assert_called
 
     @patch('seismic.db.corr_hdf5.all_traces_recursive')
     @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
