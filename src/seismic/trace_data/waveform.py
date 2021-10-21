@@ -1,3 +1,16 @@
+'''
+:copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
+:license:
+    GNU Lesser General Public License, Version 3
+    (https://www.gnu.org/copyleft/lesser.html)
+:author:
+   Peter Makus (makus@gfz-potsdam.de)
+
+Created: Thursday, 18th February 2021 02:30:02 pm
+Last Modified: Thursday, 21st October 2021 02:43:34 pm
+'''
+
 import fnmatch
 import os
 import datetime
@@ -624,7 +637,7 @@ def _fs_translate(part: str, ID: str, starttime: datetime.datetime) -> str:
     """
     IDlist = ID.split('.')
     if ('(' in part) and (')' in part):
-        trans = re.search('\(.*?\)', part).group(0)
+        trans = re.search('(.*?)', part).group(0)
     else:
         trans = None
     # in case there is something to translate remove from the filepart

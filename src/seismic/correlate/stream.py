@@ -1,5 +1,6 @@
 '''
 :copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -7,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Friday, 15th October 2021 03:20:33 pm
+Last Modified: Thursday, 21st October 2021 02:39:03 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy

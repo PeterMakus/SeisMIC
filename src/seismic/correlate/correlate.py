@@ -1,5 +1,6 @@
 '''
 :copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -7,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 11th October 2021 04:06:25 pm
+Last Modified: Thursday, 21st October 2021 02:38:36 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn

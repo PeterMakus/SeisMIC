@@ -1,6 +1,6 @@
 '''
 :copyright:
-   The PyGLImER development team (makus@gfz-potsdam.de).
+   The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Wednesday, 22nd September 2021 02:25:51 pm
+Last Modified: Thursday, 21st October 2021 02:39:20 pm
 '''
 
 from datetime import datetime

@@ -1,5 +1,6 @@
 '''
 :copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -8,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Friday, 1st October 2021 10:54:35 am
+Last Modified: Thursday, 21st October 2021 02:42:39 pm
 '''
 
 from typing import List, Tuple
@@ -320,141 +321,6 @@ def corr_mat_resample(
     stats['corr_end'] = [UTCDateTime(et) for et in etime]
 
     return data, stats
-
-
-# def corr_mat_reverse(corr_mat):
-#     """ Reverse the data in a correlation matrix.
-
-#     If a correlation matrix was calculated for a pair of stations sta1-sta2
-#     this function reverses the causal and acausal parts of the correlation
-#     matrix as if the correlations were calculated for the pair sta2-sta1.
-
-#     :type corr_mat: dictionary
-#     :param corr_mat: correlation matrix dictionary as produced by
-#         :class:`~miic.core.macro.recombine_corr_data`
-
-#     :rtype: dictionary
-#     :return: **corr_mat**: is the same dictionary as the input but with
-#         reversed order of the station pair.
-#     """
-
-#     # check input
-#     if not isinstance(corr_mat, dict):
-#         raise TypeError("corr_mat needs to be correlation matrix dictionary.")
-
-#     if corr_mat_check(corr_mat)['is_incomplete']:
-#         raise ValueError("Error: corr_mat is not a valid correlation_matix \
-#             dictionary.")
-
-#     # check input
-#     zerotime = lag0
-
-#     # reverse the stats_tr1 and stats_tr2
-#     stats_tr1 = corr_mat['stats_tr1']
-#     corr_mat['stats_tr1'] = corr_mat['stats_tr2']
-#     corr_mat['stats_tr2'] = stats_tr1
-
-#     # reverse the locations in the stats
-#     stla = corr_mat['stats']['stla']
-#     stlo = corr_mat['stats']['stlo']
-#     stel = corr_mat['stats']['stel']
-#     corr_mat['stats']['stla'] = corr_mat['stats']['evla']
-#     corr_mat['stats']['stlo'] = corr_mat['stats']['evlo']
-#     corr_mat['stats']['stel'] = corr_mat['stats']['evel']
-#     corr_mat['stats']['evla'] = stla
-#     corr_mat['stats']['evlo'] = stlo
-#     corr_mat['stats']['evel'] = stel
-
-#     # reverse azimuth and backazimuth
-#     tmp = corr_mat['stats']['az']
-#     corr_mat['stats']['az'] = corr_mat['stats']['baz']
-#     corr_mat['stats']['baz'] = tmp
-
-#     # reverse the matrix
-#     corr_mat['corr_data'] = corr_mat['corr_data'][:, -1::-1]
-
-#     # adopt the starttime and endtime
-#     trace_length = timedelta(seconds=float(corr_mat['stats']['npts'] - 1) / \
-#                              corr_mat['stats']['sampling_rate'])
-#     endtime = convert_time([corr_mat['stats']['starttime']])[0] + trace_length
-#     starttime = zerotime - (endtime - zerotime)
-#     corr_mat['stats']['starttime'] = convert_time_to_string([starttime])[0]
-#     corr_mat['stats']['endtime'] = \
-#         convert_time_to_string([starttime + trace_length])[0]
-
-#     # reverse the seedID
-#     keywords = ['network', 'station', 'location', 'channel']
-#     for key in keywords:
-#         if key in corr_mat['stats_tr1'] and key in corr_mat['stats_tr2']:
-#             # empty loctions show up as empty lists -> convert in empty string
-#             if isinstance(corr_mat['stats_tr1'][key], list):
-#                 corr_mat['stats_tr1'][key] = ''
-#             if isinstance(corr_mat['stats_tr2'][key], list):
-#                 corr_mat['stats_tr2'][key] = ''
-#             corr_mat['stats'][key] = \
-#                 corr_mat['stats_tr1'][key] + '-' + corr_mat['stats_tr2'][key]
-
-#     return corr_mat
-
-
-# def corr_mat_time_select(corr_mat, starttime=None, endtime=None):
-#     """ Select time period from a correlation matrix.
-
-#     Select correlation  traces from a correlation matrix that fall into the
-#     time period `starttime`<= selected times <= `endtime` and return them in
-#     a correlation matrix.
-
-#     :type corr_mat: dictionary
-#     :param corr_mat: correlation matrix dictionary as produced by
-#         :class:`~miic.core.macro.recombine_corr_data`
-#     :type starttime: datetime.datetime object or time string
-#     :param starttime: beginning of the selected time period
-#     :type endtime: datetime.datetime object or time string
-#     :param endtime: end of the selected time period
-
-#     :rtype: dictionary
-#     :return: **corr_mat**: correlation matrix dictionary restricted to the
-#         selected time period.
-#     """
-
-#     # check input
-#     if not isinstance(corr_mat, dict):
-#         raise TypeError("corr_mat needs to be correlation matrix dictionary.")
-
-#     if corr_mat_check(corr_mat)['is_incomplete']:
-#         raise ValueError("Error: corr_mat is not a valid correlation_matix \
-#             dictionary.")
-
-#     smat = deepcopy(corr_mat)
-
-#     # convert time vector
-#     time = convert_time(corr_mat['time'])
-
-#     # convert starttime and endtime input.
-#     # if they are None take the first or last values of the time vector
-#     if starttime == None:
-#         starttime = time[0]
-#     else:
-#         if not isinstance(starttime, datetime):
-#             starttime = convert_time([starttime])[0]
-#     if endtime == None:
-#         endtime = time[-1]
-#     else:
-#         if not isinstance(endtime, datetime):
-#             endtime = convert_time([endtime])[0]
-
-#     # select period
-#     ind = np.nonzero((time >= starttime) * (time < endtime))[0]  # ind is
-#                                                 #  a list(tuple) for dimensions
-
-#     # trim the matrix
-#     smat['corr_data'] = corr_mat['corr_data'][ind, :]
-
-#     # adopt time vector
-#     smat['time'] = corr_mat['time'][ind]
-#     #smat['time'] = np.take(corr_mat['time'],ind)
-
-#     return smat
 
 
 # Probably not necessary
@@ -937,239 +803,10 @@ def corr_mat_extract_trace(
 class Error(Exception):
     pass
 
+
 class InputError(Error):
     def __init__(self,  msg):
         self.msg = msg
-
-
-def corr_mat_rotate(corr_mat_list):
-    """ Rotate correlation matrices from the NEZ in the RTZ frame. Corr_mat_list
-    contains the NN,NE,NZ,EN,EE,EZ,ZN,ZE,ZZ components of the Greens tensor. Time
-    vectors of all the correlation matricies must be identical.
-    """
-    cmd = {}
-    required_comp = ['NN','NE','NZ','EN','EE','EZ','ZN','ZE','ZZ']
-    times = corr_mat_list[0]['time']
-
-    # quick fix the empty locations
-    for cm in corr_mat_list:
-        if cm['stats_tr1']['location'] == []: cm['stats_tr1']['location'] = ''
-        if cm['stats_tr2']['location'] == []: cm['stats_tr2']['location'] = ''
-        if cm['stats']['location'] == []: cm['stats']['location'] = ''
-    
-    # check IDs
-    ID1 = (corr_mat_list[0]['stats_tr1']['network']+'.'+
-           corr_mat_list[0]['stats_tr1']['station']+'.'+
-           corr_mat_list[0]['stats_tr1']['location']+'.'+
-           corr_mat_list[0]['stats_tr1']['channel'][:-1])
-    ID2 = (corr_mat_list[0]['stats_tr2']['network']+'.'+
-           corr_mat_list[0]['stats_tr2']['station']+'.'+
-           corr_mat_list[0]['stats_tr2']['location']+'.'+
-           corr_mat_list[0]['stats_tr2']['channel'][:-1])
-    if ID1 == ID2:
-        raise InputError('IDs of stations in corr_mat_list[0] may not be identical.')
-        
-    for ind,cm in enumerate(corr_mat_list):
-        # check times match within 30 seconds
-        if (cm['time'] != times).any():
-            tol=30.0
-            for arg in np.where(cm['time'] != times) :
-                diff=np.abs(UTCDateTime(cm['time'][arg[0]])-UTCDateTime(times[arg[0]]))
-                if diff > tol :
-                    print(('Time vector mismatch greater than %ss for %s-%s %s %s' % \
-                        (str(tol),cm['stats_tr1']['station'],cm['stats_tr2']['station'], \
-                                cm['time'][arg[0]],times[arg[0]])))
-                    #raise InputError('Time vector of corr_mat_list[%d] does not match the first matrix.' % ind)
-        # check station IDs
-        if (cm['stats_tr1']['network']+'.'+
-            cm['stats_tr1']['station']+'.'+
-            cm['stats_tr1']['location']+'.'+
-            cm['stats_tr1']['channel'][:-1]) == ID1:
-            if (cm['stats_tr2']['network']+'.'+
-                cm['stats_tr2']['station']+'.'+
-                cm['stats_tr2']['location']+'.'+
-                cm['stats_tr2']['channel'][:-1]) != ID2:
-                raise InputError('IDs of stations in corr_mat_list[%d] do not match IDs of'
-                                 'corr_mat_list[0].' % ind)
-        if (cm['stats_tr1']['network']+'.'+
-            cm['stats_tr1']['station']+'.'+
-            cm['stats_tr1']['location']+'.'+
-            cm['stats_tr1']['channel'][:-1]) == ID2:
-            if (cm['stats_tr2']['network']+'.'+
-                cm['stats_tr2']['station']+'.'+
-                cm['stats_tr2']['location']+'.'+
-                cm['stats_tr2']['channel'][:-1]) != ID1:
-                raise InputError('IDs of stations in corr_mat_list[%d] do not match IDs of'
-                                 'corr_mat_list[0].' % ind)
-                # flip corrmat
-                cm = corr_mat_reverse(cm)
-        
-        cmd.update({cm['stats_tr1']['channel'][-1]+cm['stats_tr2']['channel'][-1]:cm})
-    
-    # check wheather all Greenstensor components are present
-    for rc in required_comp:
-        if rc not in list(cmd.keys()):
-            print(rc, 'not present')
-            #raise InputError('%s component is missing in corr_mat_list' % rc)
-
-    return _rotate_corr_dict(cmd)
-
-
-
-def corr_mat_rotate_horiz(corr_mat_list):
-    """ Rotate correlation matrices from the NE into the RT frame. Corr_mat_list
-    contains the NN,NE,EN,EE components of the Greens tensor. Time
-    vectors of all the correlation matricies must be identical.
-    """
-    cmd = {}
-    required_comp = ['NN','NE','EN','EE']
-    times = corr_mat_list[0]['time']
-    
-    # quick fix the empty locations
-    for cm in corr_mat_list:
-        if cm['stats_tr1']['location'] == []: cm['stats_tr1']['location'] = ''
-        if cm['stats_tr2']['location'] == []: cm['stats_tr2']['location'] = ''
-        if cm['stats']['location'] == []: cm['stats']['location'] = ''
-    
-    # check IDs
-    ID1 = (corr_mat_list[0]['stats_tr1']['network']+'.'+
-           corr_mat_list[0]['stats_tr1']['station']+'.'+
-           corr_mat_list[0]['stats_tr1']['location']+'.'+
-           corr_mat_list[0]['stats_tr1']['channel'][:-1])
-    ID2 = (corr_mat_list[0]['stats_tr2']['network']+'.'+
-           corr_mat_list[0]['stats_tr2']['station']+'.'+
-           corr_mat_list[0]['stats_tr2']['location']+'.'+
-           corr_mat_list[0]['stats_tr2']['channel'][:-1])
-    if ID1 == ID2:
-        raise InputError('IDs of stations in corr_mat_list[0] may not be identical.')
-        
-    for ind,cm in enumerate(corr_mat_list):
-        # check times match within 30 seconds
-        if (cm['time'] != times).any():
-            tol=30.0
-            for arg in np.where(cm['time'] != times) :
-                diff=np.abs(UTCDateTime(cm['time'][arg[0]])-UTCDateTime(times[arg[0]]))
-                if diff > tol :
-                    print(('Time vector mismatch greater than %ss for %s-%s %s %s' % \
-                        (str(tol),cm['stats_tr1']['station'],cm['stats_tr2']['station'], \
-                                cm['time'][arg[0]],times[arg[0]])))
-                    #raise InputError('Time vector of corr_mat_list[%d] does not match the first matrix.' % ind)
-        # check station IDs
-        if (cm['stats_tr1']['network']+'.'+
-            cm['stats_tr1']['station']+'.'+
-            cm['stats_tr1']['location']+'.'+
-            cm['stats_tr1']['channel'][:-1]) == ID1:
-            if (cm['stats_tr2']['network']+'.'+
-                cm['stats_tr2']['station']+'.'+
-                cm['stats_tr2']['location']+'.'+
-                cm['stats_tr2']['channel'][:-1]) != ID2:
-                raise InputError('IDs of stations in corr_mat_list[%d] do not match IDs of'
-                                 'corr_mat_list[0].' % ind)
-        if (cm['stats_tr1']['network']+'.'+
-            cm['stats_tr1']['station']+'.'+
-            cm['stats_tr1']['location']+'.'+
-            cm['stats_tr1']['channel'][:-1]) == ID2:
-            if (cm['stats_tr2']['network']+'.'+
-                cm['stats_tr2']['station']+'.'+
-                cm['stats_tr2']['location']+'.'+
-                cm['stats_tr2']['channel'][:-1]) != ID1:
-                raise InputError('IDs of stations in corr_mat_list[%d] do not match IDs of'
-                                 'corr_mat_list[0].' % ind)
-                # flip corrmat
-                cm = corr_mat_reverse(cm)
-        
-        cmd.update({cm['stats_tr1']['channel'][-1]+cm['stats_tr2']['channel'][-1]:cm})
-    
-    # check wheather all Greenstensor components are present
-    for rc in required_comp:
-        if rc not in list(cmd.keys()):
-            print(rc, 'not present')
-            #raise InputError('%s component is missing in corr_mat_list' % rc)
-
-    return _rotate_corr_dict(cmd, horiz_only=True)
-
-
-def _rotate_corr_dict(cmd, horiz_only=False):
-    """ Rotate correlation matrices in stream from the EE-EN-EZ-NE-NN-NZ-ZE-ZN-ZZ
-    system to the RR-RT-RZ-TR-TT-TZ-ZR-ZT-ZZ system. Input matrices are assumed
-    to be of same size and simultaneously sampled.
-    :type cmd: dictionary
-    :param cmd: dictionary of correlation matrix dictionares as produced by
-        :class:`~miic.core.macro.recombine_corr_data` where key names are the
-        component types listed above
-    :type horiz_only: boolean (default False)
-    :param horiz_only: If True, the input combinations in the stream are expected to
-    be EE-EN-NE-NN and are rotated into the RR-RT-TR-TT system.
-    """
-    
-    # rotation angles
-    # phi1 : counter clockwise angle between E and R(towards second station)
-    # the leading -1 accounts for the fact that we rotate the coordinates not a vector within them
-    phi1 = - np.pi/180*(90-cmd['EE']['stats']['az'])
-    # phi2 : counter clockwise angle between E and R(away from first station)
-    phi2 = - np.pi/180*(90-cmd['EE']['stats']['baz']+180)
-    
-    c1 = np.cos(phi1)
-    s1 = np.sin(phi1)
-    c2 = np.cos(phi2)
-    s2 = np.sin(phi2)
-    
-    RR = deepcopy(cmd['EE'])
-    RR['stats_tr1']['channel'] = RR['stats_tr1']['channel'][:-1] + 'R'
-    RR['stats_tr2']['channel'] = RR['stats_tr2']['channel'][:-1] + 'R'
-    RR['stats']['channel'] = RR['stats_tr1']['channel']+'-'+RR['stats_tr2']['channel']
-    RR['corr_data'] = (c1*c2*cmd['EE']['corr_data'] - c1*s2*cmd['EN']['corr_data'] - 
-                       s1*c2*cmd['NE']['corr_data'] + s1*s2*cmd['NN']['corr_data'])
-    
-    RT = deepcopy(cmd['EE'])
-    RT['stats_tr1']['channel'] = RT['stats_tr1']['channel'][:-1] + 'R'
-    RT['stats_tr2']['channel'] = RT['stats_tr2']['channel'][:-1] + 'T'
-    RT['stats']['channel'] = RT['stats_tr1']['channel']+'-'+RT['stats_tr2']['channel']
-    RT['corr_data'] = (c1*s2*cmd['EE']['corr_data'] + c1*c2*cmd['EN']['corr_data'] - 
-                       s1*s2*cmd['NE']['corr_data'] - s1*c2*cmd['NN']['corr_data'])
-
-    TR = deepcopy(cmd['EE'])
-    TR['stats_tr1']['channel'] = TR['stats_tr1']['channel'][:-1] + 'T'
-    TR['stats_tr2']['channel'] = TR['stats_tr2']['channel'][:-1] + 'R'
-    TR['stats']['channel'] = TR['stats_tr1']['channel']+'-'+TR['stats_tr2']['channel']
-    TR['corr_data'] = (s1*c2*cmd['EE']['corr_data'] - s1*s2*cmd['EN']['corr_data'] + 
-                       c1*c2*cmd['NE']['corr_data'] - c1*s2*cmd['NN']['corr_data'])
-    
-    TT = deepcopy(cmd['EE'])
-    TT['stats_tr1']['channel'] = TT['stats_tr1']['channel'][:-1] + 'T'
-    TT['stats_tr2']['channel'] = TT['stats_tr2']['channel'][:-1] + 'T'
-    TT['stats']['channel'] = TT['stats_tr1']['channel']+'-'+TT['stats_tr2']['channel']
-    TT['corr_data'] = (s1*s2*cmd['EE']['corr_data'] + s1*c2*cmd['EN']['corr_data'] + 
-                       c1*s2*cmd['NE']['corr_data'] + c1*c2*cmd['NN']['corr_data'])
-    if horiz_only :
-        return RR,RT,TR,TT
-
-    elif not horiz_only :
-        RZ = deepcopy(cmd['EE'])
-        RZ['stats_tr1']['channel'] = RZ['stats_tr1']['channel'][:-1] + 'R'
-        RZ['stats_tr2']['channel'] = RZ['stats_tr2']['channel'][:-1] + 'Z'
-        RZ['stats']['channel'] = RZ['stats_tr1']['channel']+'-'+RZ['stats_tr2']['channel']
-        RZ['corr_data'] = (c1*cmd['EZ']['corr_data'] - s1*cmd['NZ']['corr_data'])
-        
-        TZ = deepcopy(cmd['EE'])
-        TZ['stats_tr1']['channel'] = TZ['stats_tr1']['channel'][:-1] + 'T'
-        TZ['stats_tr2']['channel'] = TZ['stats_tr2']['channel'][:-1] + 'Z'
-        TZ['stats']['channel'] = TZ['stats_tr1']['channel']+'-'+TZ['stats_tr2']['channel']
-        TZ['corr_data'] = s1*cmd['EZ']['corr_data'] + c1*cmd['NZ']['corr_data']
-        
-        ZR = deepcopy(cmd['EE'])
-        ZR['stats_tr1']['channel'] = ZR['stats_tr1']['channel'][:-1] + 'Z'
-        ZR['stats_tr2']['channel'] = ZR['stats_tr2']['channel'][:-1] + 'R'
-        ZR['stats']['channel'] = ZR['stats_tr1']['channel']+'-'+ZR['stats_tr2']['channel']
-        ZR['corr_data'] = c2*cmd['ZE']['corr_data'] - s2*cmd['ZE']['corr_data']
-        
-        ZT = deepcopy(cmd['EE'])
-        ZT['stats_tr1']['channel'] = ZT['stats_tr1']['channel'][:-1] + 'Z'
-        ZT['stats_tr2']['channel'] = ZT['stats_tr2']['channel'][:-1] + 'T'
-        ZT['stats']['channel'] = ZT['stats_tr1']['channel']+'-'+ZT['stats_tr2']['channel']
-        ZT['corr_data'] = s2*cmd['ZE']['corr_data'] + c2*cmd['ZN']['corr_data']
-
-        return RR,RT,RZ,TR,TT,TZ,ZR,ZT,deepcopy(cmd['ZZ'])
 
 
 def corr_mat_stretch(
@@ -1375,8 +1012,8 @@ def corr_mat_shift(
     # reference also needs to be trimmed. To do so we append the reference to
     # the matrix, trimm it and remove the reference again
     if ref_trc is not None:
-        data = np.concatenate((data,
-                            np.atleast_2d(ref_trc)), 0)
+        data = np.concatenate((
+            data, np.atleast_2d(ref_trc)), 0)
 
     # trim the marices
     if sides == "single":
@@ -1393,7 +1030,6 @@ def corr_mat_shift(
     else:
         # extract and remove references from corr matrix again
         ref_trc = data[-1, :]
-        cdata = data[:-1, :]
 
     # set sides
     if sides == 'both':
@@ -1401,42 +1037,15 @@ def corr_mat_shift(
     elif sides == 'right':
         ss = True
     else:
-        raise ValueError("Error: side is not recognized. Use either both or\
-                            right.")
+        raise ValueError(
+            "Error: side is not recognized. Use either both or right.")
 
-    dt = time_shift_estimate(corr_mat['corr_data'],
-                      ref_trc=ref_trc,
-                      tw=tw,
-                      shift_range=shift_range,
-                      shift_steps=shift_steps,
-                      single_sided=ss,
-                      return_sim_mat=return_sim_mat)
+    dt = time_shift_estimate(
+        corr_mat['corr_data'], ref_trc=ref_trc, tw=tw, shift_range=shift_range,
+        shift_steps=shift_steps, single_sided=ss,
+        return_sim_mat=return_sim_mat)
 
     # add the keys the can directly be transferred from the correlation matrix
     dt['corr_start'] = stats['corr_start']
     dt['stats'] = stats
     return dt
-
-
-def corr_mat_correct_shift(corr_mat, dt):
-    """Correct shift of a correlation matrix
-
-    In the case of a clock error the correlation traces are shifted in lag time
-    This shifting can be measured with `corr_mat_shift`. The resulting `dt`
-    dictionary can be passed to this function to remove the shifhting from the
-    correlation matrix.
-
-    :type corr_mat: dictionary
-    :param corr_mat: correlation matrix dictionary as produced by
-        :class:`~miic.core.macro.recombine_corr_data`
-    :type dt: Dictionary
-    :param dt: velocity change dictionary
-
-    :rtype: Dictionary
-    :return: corrected correlation matrix dictionary
-    """
-
-    ccorr_mat = deepcopy(corr_mat)
-    ccorr_mat['corr_data'] = time_shift_apply(ccorr_mat['corr_data'],-1.*dt['value'])
-
-    return ccorr_mat

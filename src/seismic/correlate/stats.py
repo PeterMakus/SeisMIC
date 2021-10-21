@@ -1,5 +1,6 @@
 '''
 :copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -7,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 5th July 2021 02:44:13 pm
-Last Modified: Tuesday, 27th July 2021 10:52:29 am
+Last Modified: Thursday, 21st October 2021 02:38:58 pm
 '''
 
 from future.utils import native_str

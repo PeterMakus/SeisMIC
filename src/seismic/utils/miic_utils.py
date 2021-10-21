@@ -1,6 +1,6 @@
 '''
 :copyright:
-   The PyGLImER development team (makus@gfz-potsdam.de).
+   The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Saturday, 9th October 2021 05:45:15 pm
+Last Modified: Thursday, 21st October 2021 02:37:29 pm
 '''
 from typing import List, Tuple
 import logging
@@ -31,12 +31,12 @@ log_lvl = {
 
 def trace_calc_az_baz_dist(stats1: Stats, stats2: Stats) -> Tuple[
         float, float, float]:
-    """ Return azimuth, back azimhut and distance between tr1 and tr2
+    """
+    Return azimuth, back azimhut and distance between tr1 and tr2
     This funtions calculates the azimut, back azimut and distance between tr1
     and tr2 if both have geo information in their stats dictonary.
     Required fields are:
-        tr.stats.sac.stla
-        tr.stats.sac.stlo
+    ``tr.stats.sac.stla`` and ``tr.stats.sac.stlo``
 
     :type stats1: :class:`~obspy.core.Stats`
     :param stats1: First trace to account
@@ -167,7 +167,7 @@ def resample_or_decimate(
 def trim_stream_delta(
         st: Stream, start: float, end: float, *args, **kwargs) -> Stream:
     """
-    Cut all traces to starttime+start and endtime-end. *args and **kwargs will
+    Cut all traces to starttime+start and endtime-end. *args* and *kwargs* will
     be passed to :func:`~obspy.Stream.trim`
 
     :param st: Input Stream
@@ -194,7 +194,7 @@ def trim_stream_delta(
 def trim_trace_delta(
         tr: Trace, start: float, end: float, *args, **kwargs) -> Trace:
     """
-    Cut all traces to starttime+start and endtime-end. *args and **kwargs will
+    Cut all traces to starttime+start and endtime-end. *args* and *kwargs* will
     be passed to :func:`~obspy.Trace.trim`.
 
     :param st: Input Trace

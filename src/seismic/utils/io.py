@@ -1,12 +1,14 @@
 '''
 :copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   `GNU Lesser General Public License, Version 3 <https://www.gnu.org/copyleft/lesser.html>`
+    GNU Lesser General Public License, Version 3
+    (https://www.gnu.org/copyleft/lesser.html)
 :author:
-   Peter Makus (makus@gfz-potsdam.de)
+    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 8th July 2021 10:37:21 am
-Last Modified: Tuesday, 27th July 2021 10:54:36 am
+Last Modified: Thursday, 21st October 2021 02:45:38 pm
 '''
 from collections import Iterable
 

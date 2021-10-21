@@ -1,4 +1,6 @@
 '''
+:copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -6,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 9th April 2021 04:07:06 pm
-Last Modified: Friday, 4th June 2021 03:23:33 pm
+Last Modified: Thursday, 21st October 2021 02:45:38 pm
 '''
 
 

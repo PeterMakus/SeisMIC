@@ -1,14 +1,14 @@
 '''
 :copyright:
-   The PyGLImER development team (makus@gfz-potsdam.de).
+   The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   `GNU Lesser General Public License, Version 3 \
-       <https://www.gnu.org/copyleft/lesser.html>`
+    GNU Lesser General Public License, Version 3
+    (https://www.gnu.org/copyleft/lesser.html)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Friday, 15th October 2021 03:18:32 pm
+Last Modified: Thursday, 21st October 2021 02:37:52 pm
 '''
 import os
 import warnings
