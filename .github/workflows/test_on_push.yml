@@ -33,4 +33,5 @@ jobs:
             pytest tests
       - name: Lint
         run: |
+            conda install flake8
             python formatting_test/test_code_formatting.py
