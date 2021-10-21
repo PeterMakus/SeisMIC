@@ -32,6 +32,7 @@ jobs:
             conda install pytest
             pytest tests
       - name: Lint
+        shell: bash -l {0}
         run: |
             conda install flake8
             python formatting_test/test_code_formatting.py
