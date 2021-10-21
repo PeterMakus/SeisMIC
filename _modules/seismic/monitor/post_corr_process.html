@@ -1,79 +1,184 @@
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>seismic.monitor.post_corr_process &mdash; SeisMIC 0.1 documentation</title>
-      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-        <script src="../../../_static/jquery.js"></script>
-        <script src="../../../_static/underscore.js"></script>
-        <script src="../../../_static/doctools.js"></script>
-        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
-        <script>mermaid.initialize({startOnLoad:true});</script>
-    <script src="../../../_static/js/theme.js"></script>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>seismic.monitor.post_corr_process &#8212; SeisMIC</title>
+    
+  <link href="../../../_static/css/theme.css" rel="stylesheet">
+  <link href="../../../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/blank.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+    
+  <link rel="preload" as="script" href="../../../_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/clipboard.min.js"></script>
+    <script src="../../../_static/copybutton.js"></script>
+    <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true});</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" /> 
-</head>
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-            <a href="../../../index.html" class="icon icon-home"> SeisMIC
-          </a>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/get_started.html">Getting Started with SeisMIC</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/trace_data.html">Trace data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/correlate.html">Compute and Handle Correlations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/corrdb.html">Save and Load Correlations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/monitor.html">Monitor Velocity Changes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIC</span></code> API</a></li>
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+  <div id="navbar-start">
+    
+    
+<a class="navbar-brand" href="../../../index.html">
+<p class="title">SeisMIC</p>
+</a>
+
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../modules/intro.html">
+  Introduction: Noise Interferometry with Green’s Function Retrieval
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../modules/get_started.html">
+  Getting Started with SeisMIC
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../modules/trace_data.html">
+  Trace data
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../modules/correlate.html">
+  Compute and Handle Correlations
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../modules/corrdb.html">
+  Save and Load Correlations
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../modules/monitor.html">
+  Monitor Velocity Changes
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../modules/API.html">
+  <code class="docutils literal notranslate">
+   <span class="pre">
+    SeisMIC
+   </span>
+  </code>
+  API
+ </a>
+</li>
+
+    
 </ul>
-
-        </div>
       </div>
-    </nav>
+      
+    </div>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../../index.html">SeisMIC</a>
-      </nav>
-
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../../index.html">Module code</a> &raquo;</li>
-      <li>seismic.monitor.post_corr_process</li>
-      <li class="wy-breadcrumbs-aside">
-      </li>
-  </ul>
-  <hr/>
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/PeterMakus/SeisMIC" rel="noopener" target="_blank" title="GitHub">
+            <span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label>
+          </a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
 </div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+            
+            <!-- Only show if we have sidebars configured, else just a small margin  -->
+            <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    
+  </div>
+</nav>
+            </div>
+            
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+          </div>
+          
+
+          
+          
+            
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
   <h1>Source code for seismic.monitor.post_corr_process</h1><div class="highlight"><pre>
 <span></span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">:copyright:</span>
+<span class="sd">    The SeisMIC development team (makus@gfz-potsdam.de).</span>
 <span class="sd">:license:</span>
 <span class="sd">   GNU Lesser General Public License, Version 3</span>
 <span class="sd">   (https://www.gnu.org/copyleft/lesser.html)</span>
@@ -82,7 +187,7 @@
 <span class="sd">    Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 14th June 2021 08:50:57 am</span>
-<span class="sd">Last Modified: Friday, 1st October 2021 10:54:35 am</span>
+<span class="sd">Last Modified: Thursday, 21st October 2021 02:42:39 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
@@ -394,141 +499,6 @@
     <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;corr_end&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">et</span><span class="p">)</span> <span class="k">for</span> <span class="n">et</span> <span class="ow">in</span> <span class="n">etime</span><span class="p">]</span>
 
     <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">stats</span></div>
-
-
-<span class="c1"># def corr_mat_reverse(corr_mat):</span>
-<span class="c1">#     &quot;&quot;&quot; Reverse the data in a correlation matrix.</span>
-
-<span class="c1">#     If a correlation matrix was calculated for a pair of stations sta1-sta2</span>
-<span class="c1">#     this function reverses the causal and acausal parts of the correlation</span>
-<span class="c1">#     matrix as if the correlations were calculated for the pair sta2-sta1.</span>
-
-<span class="c1">#     :type corr_mat: dictionary</span>
-<span class="c1">#     :param corr_mat: correlation matrix dictionary as produced by</span>
-<span class="c1">#         :class:`~miic.core.macro.recombine_corr_data`</span>
-
-<span class="c1">#     :rtype: dictionary</span>
-<span class="c1">#     :return: **corr_mat**: is the same dictionary as the input but with</span>
-<span class="c1">#         reversed order of the station pair.</span>
-<span class="c1">#     &quot;&quot;&quot;</span>
-
-<span class="c1">#     # check input</span>
-<span class="c1">#     if not isinstance(corr_mat, dict):</span>
-<span class="c1">#         raise TypeError(&quot;corr_mat needs to be correlation matrix dictionary.&quot;)</span>
-
-<span class="c1">#     if corr_mat_check(corr_mat)[&#39;is_incomplete&#39;]:</span>
-<span class="c1">#         raise ValueError(&quot;Error: corr_mat is not a valid correlation_matix \</span>
-<span class="c1">#             dictionary.&quot;)</span>
-
-<span class="c1">#     # check input</span>
-<span class="c1">#     zerotime = lag0</span>
-
-<span class="c1">#     # reverse the stats_tr1 and stats_tr2</span>
-<span class="c1">#     stats_tr1 = corr_mat[&#39;stats_tr1&#39;]</span>
-<span class="c1">#     corr_mat[&#39;stats_tr1&#39;] = corr_mat[&#39;stats_tr2&#39;]</span>
-<span class="c1">#     corr_mat[&#39;stats_tr2&#39;] = stats_tr1</span>
-
-<span class="c1">#     # reverse the locations in the stats</span>
-<span class="c1">#     stla = corr_mat[&#39;stats&#39;][&#39;stla&#39;]</span>
-<span class="c1">#     stlo = corr_mat[&#39;stats&#39;][&#39;stlo&#39;]</span>
-<span class="c1">#     stel = corr_mat[&#39;stats&#39;][&#39;stel&#39;]</span>
-<span class="c1">#     corr_mat[&#39;stats&#39;][&#39;stla&#39;] = corr_mat[&#39;stats&#39;][&#39;evla&#39;]</span>
-<span class="c1">#     corr_mat[&#39;stats&#39;][&#39;stlo&#39;] = corr_mat[&#39;stats&#39;][&#39;evlo&#39;]</span>
-<span class="c1">#     corr_mat[&#39;stats&#39;][&#39;stel&#39;] = corr_mat[&#39;stats&#39;][&#39;evel&#39;]</span>
-<span class="c1">#     corr_mat[&#39;stats&#39;][&#39;evla&#39;] = stla</span>
-<span class="c1">#     corr_mat[&#39;stats&#39;][&#39;evlo&#39;] = stlo</span>
-<span class="c1">#     corr_mat[&#39;stats&#39;][&#39;evel&#39;] = stel</span>
-
-<span class="c1">#     # reverse azimuth and backazimuth</span>
-<span class="c1">#     tmp = corr_mat[&#39;stats&#39;][&#39;az&#39;]</span>
-<span class="c1">#     corr_mat[&#39;stats&#39;][&#39;az&#39;] = corr_mat[&#39;stats&#39;][&#39;baz&#39;]</span>
-<span class="c1">#     corr_mat[&#39;stats&#39;][&#39;baz&#39;] = tmp</span>
-
-<span class="c1">#     # reverse the matrix</span>
-<span class="c1">#     corr_mat[&#39;corr_data&#39;] = corr_mat[&#39;corr_data&#39;][:, -1::-1]</span>
-
-<span class="c1">#     # adopt the starttime and endtime</span>
-<span class="c1">#     trace_length = timedelta(seconds=float(corr_mat[&#39;stats&#39;][&#39;npts&#39;] - 1) / \</span>
-<span class="c1">#                              corr_mat[&#39;stats&#39;][&#39;sampling_rate&#39;])</span>
-<span class="c1">#     endtime = convert_time([corr_mat[&#39;stats&#39;][&#39;starttime&#39;]])[0] + trace_length</span>
-<span class="c1">#     starttime = zerotime - (endtime - zerotime)</span>
-<span class="c1">#     corr_mat[&#39;stats&#39;][&#39;starttime&#39;] = convert_time_to_string([starttime])[0]</span>
-<span class="c1">#     corr_mat[&#39;stats&#39;][&#39;endtime&#39;] = \</span>
-<span class="c1">#         convert_time_to_string([starttime + trace_length])[0]</span>
-
-<span class="c1">#     # reverse the seedID</span>
-<span class="c1">#     keywords = [&#39;network&#39;, &#39;station&#39;, &#39;location&#39;, &#39;channel&#39;]</span>
-<span class="c1">#     for key in keywords:</span>
-<span class="c1">#         if key in corr_mat[&#39;stats_tr1&#39;] and key in corr_mat[&#39;stats_tr2&#39;]:</span>
-<span class="c1">#             # empty loctions show up as empty lists -&gt; convert in empty string</span>
-<span class="c1">#             if isinstance(corr_mat[&#39;stats_tr1&#39;][key], list):</span>
-<span class="c1">#                 corr_mat[&#39;stats_tr1&#39;][key] = &#39;&#39;</span>
-<span class="c1">#             if isinstance(corr_mat[&#39;stats_tr2&#39;][key], list):</span>
-<span class="c1">#                 corr_mat[&#39;stats_tr2&#39;][key] = &#39;&#39;</span>
-<span class="c1">#             corr_mat[&#39;stats&#39;][key] = \</span>
-<span class="c1">#                 corr_mat[&#39;stats_tr1&#39;][key] + &#39;-&#39; + corr_mat[&#39;stats_tr2&#39;][key]</span>
-
-<span class="c1">#     return corr_mat</span>
-
-
-<span class="c1"># def corr_mat_time_select(corr_mat, starttime=None, endtime=None):</span>
-<span class="c1">#     &quot;&quot;&quot; Select time period from a correlation matrix.</span>
-
-<span class="c1">#     Select correlation  traces from a correlation matrix that fall into the</span>
-<span class="c1">#     time period `starttime`&lt;= selected times &lt;= `endtime` and return them in</span>
-<span class="c1">#     a correlation matrix.</span>
-
-<span class="c1">#     :type corr_mat: dictionary</span>
-<span class="c1">#     :param corr_mat: correlation matrix dictionary as produced by</span>
-<span class="c1">#         :class:`~miic.core.macro.recombine_corr_data`</span>
-<span class="c1">#     :type starttime: datetime.datetime object or time string</span>
-<span class="c1">#     :param starttime: beginning of the selected time period</span>
-<span class="c1">#     :type endtime: datetime.datetime object or time string</span>
-<span class="c1">#     :param endtime: end of the selected time period</span>
-
-<span class="c1">#     :rtype: dictionary</span>
-<span class="c1">#     :return: **corr_mat**: correlation matrix dictionary restricted to the</span>
-<span class="c1">#         selected time period.</span>
-<span class="c1">#     &quot;&quot;&quot;</span>
-
-<span class="c1">#     # check input</span>
-<span class="c1">#     if not isinstance(corr_mat, dict):</span>
-<span class="c1">#         raise TypeError(&quot;corr_mat needs to be correlation matrix dictionary.&quot;)</span>
-
-<span class="c1">#     if corr_mat_check(corr_mat)[&#39;is_incomplete&#39;]:</span>
-<span class="c1">#         raise ValueError(&quot;Error: corr_mat is not a valid correlation_matix \</span>
-<span class="c1">#             dictionary.&quot;)</span>
-
-<span class="c1">#     smat = deepcopy(corr_mat)</span>
-
-<span class="c1">#     # convert time vector</span>
-<span class="c1">#     time = convert_time(corr_mat[&#39;time&#39;])</span>
-
-<span class="c1">#     # convert starttime and endtime input.</span>
-<span class="c1">#     # if they are None take the first or last values of the time vector</span>
-<span class="c1">#     if starttime == None:</span>
-<span class="c1">#         starttime = time[0]</span>
-<span class="c1">#     else:</span>
-<span class="c1">#         if not isinstance(starttime, datetime):</span>
-<span class="c1">#             starttime = convert_time([starttime])[0]</span>
-<span class="c1">#     if endtime == None:</span>
-<span class="c1">#         endtime = time[-1]</span>
-<span class="c1">#     else:</span>
-<span class="c1">#         if not isinstance(endtime, datetime):</span>
-<span class="c1">#             endtime = convert_time([endtime])[0]</span>
-
-<span class="c1">#     # select period</span>
-<span class="c1">#     ind = np.nonzero((time &gt;= starttime) * (time &lt; endtime))[0]  # ind is</span>
-<span class="c1">#                                                 #  a list(tuple) for dimensions</span>
-
-<span class="c1">#     # trim the matrix</span>
-<span class="c1">#     smat[&#39;corr_data&#39;] = corr_mat[&#39;corr_data&#39;][ind, :]</span>
-
-<span class="c1">#     # adopt time vector</span>
-<span class="c1">#     smat[&#39;time&#39;] = corr_mat[&#39;time&#39;][ind]</span>
-<span class="c1">#     #smat[&#39;time&#39;] = np.take(corr_mat[&#39;time&#39;],ind)</span>
-
-<span class="c1">#     return smat</span>
 
 
 <span class="c1"># Probably not necessary</span>
@@ -1011,239 +981,10 @@
 <div class="viewcode-block" id="Error"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.Error">[docs]</a><span class="k">class</span> <span class="nc">Error</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="k">pass</span></div>
 
+
 <div class="viewcode-block" id="InputError"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.InputError">[docs]</a><span class="k">class</span> <span class="nc">InputError</span><span class="p">(</span><span class="n">Error</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>  <span class="n">msg</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span></div>
-
-
-<div class="viewcode-block" id="corr_mat_rotate"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_rotate">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_rotate</span><span class="p">(</span><span class="n">corr_mat_list</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; Rotate correlation matrices from the NEZ in the RTZ frame. Corr_mat_list</span>
-<span class="sd">    contains the NN,NE,NZ,EN,EE,EZ,ZN,ZE,ZZ components of the Greens tensor. Time</span>
-<span class="sd">    vectors of all the correlation matricies must be identical.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">cmd</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">required_comp</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;NN&#39;</span><span class="p">,</span><span class="s1">&#39;NE&#39;</span><span class="p">,</span><span class="s1">&#39;NZ&#39;</span><span class="p">,</span><span class="s1">&#39;EN&#39;</span><span class="p">,</span><span class="s1">&#39;EE&#39;</span><span class="p">,</span><span class="s1">&#39;EZ&#39;</span><span class="p">,</span><span class="s1">&#39;ZN&#39;</span><span class="p">,</span><span class="s1">&#39;ZE&#39;</span><span class="p">,</span><span class="s1">&#39;ZZ&#39;</span><span class="p">]</span>
-    <span class="n">times</span> <span class="o">=</span> <span class="n">corr_mat_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;time&#39;</span><span class="p">]</span>
-
-    <span class="c1"># quick fix the empty locations</span>
-    <span class="k">for</span> <span class="n">cm</span> <span class="ow">in</span> <span class="n">corr_mat_list</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[]:</span> <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
-        <span class="k">if</span> <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[]:</span> <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
-        <span class="k">if</span> <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[]:</span> <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
-    
-    <span class="c1"># check IDs</span>
-    <span class="n">ID1</span> <span class="o">=</span> <span class="p">(</span><span class="n">corr_mat_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;network&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-           <span class="n">corr_mat_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;station&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-           <span class="n">corr_mat_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-           <span class="n">corr_mat_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-    <span class="n">ID2</span> <span class="o">=</span> <span class="p">(</span><span class="n">corr_mat_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;network&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-           <span class="n">corr_mat_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;station&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-           <span class="n">corr_mat_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-           <span class="n">corr_mat_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-    <span class="k">if</span> <span class="n">ID1</span> <span class="o">==</span> <span class="n">ID2</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">InputError</span><span class="p">(</span><span class="s1">&#39;IDs of stations in corr_mat_list[0] may not be identical.&#39;</span><span class="p">)</span>
-        
-    <span class="k">for</span> <span class="n">ind</span><span class="p">,</span><span class="n">cm</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">corr_mat_list</span><span class="p">):</span>
-        <span class="c1"># check times match within 30 seconds</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">times</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-            <span class="n">tol</span><span class="o">=</span><span class="mf">30.0</span>
-            <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">times</span><span class="p">)</span> <span class="p">:</span>
-                <span class="n">diff</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">][</span><span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span><span class="o">-</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">times</span><span class="p">[</span><span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]]))</span>
-                <span class="k">if</span> <span class="n">diff</span> <span class="o">&gt;</span> <span class="n">tol</span> <span class="p">:</span>
-                    <span class="nb">print</span><span class="p">((</span><span class="s1">&#39;Time vector mismatch greater than </span><span class="si">%s</span><span class="s1">s for </span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> \
-                        <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tol</span><span class="p">),</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;station&#39;</span><span class="p">],</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;station&#39;</span><span class="p">],</span> \
-                                <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">][</span><span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span><span class="n">times</span><span class="p">[</span><span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]])))</span>
-                    <span class="c1">#raise InputError(&#39;Time vector of corr_mat_list[%d] does not match the first matrix.&#39; % ind)</span>
-        <span class="c1"># check station IDs</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;network&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-            <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;station&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-            <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-            <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">==</span> <span class="n">ID1</span><span class="p">:</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;network&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-                <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;station&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-                <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-                <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">!=</span> <span class="n">ID2</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">InputError</span><span class="p">(</span><span class="s1">&#39;IDs of stations in corr_mat_list[</span><span class="si">%d</span><span class="s1">] do not match IDs of&#39;</span>
-                                 <span class="s1">&#39;corr_mat_list[0].&#39;</span> <span class="o">%</span> <span class="n">ind</span><span class="p">)</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;network&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-            <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;station&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-            <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-            <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">==</span> <span class="n">ID2</span><span class="p">:</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;network&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-                <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;station&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-                <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-                <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">!=</span> <span class="n">ID1</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">InputError</span><span class="p">(</span><span class="s1">&#39;IDs of stations in corr_mat_list[</span><span class="si">%d</span><span class="s1">] do not match IDs of&#39;</span>
-                                 <span class="s1">&#39;corr_mat_list[0].&#39;</span> <span class="o">%</span> <span class="n">ind</span><span class="p">)</span>
-                <span class="c1"># flip corrmat</span>
-                <span class="n">cm</span> <span class="o">=</span> <span class="n">corr_mat_reverse</span><span class="p">(</span><span class="n">cm</span><span class="p">)</span>
-        
-        <span class="n">cmd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span><span class="n">cm</span><span class="p">})</span>
-    
-    <span class="c1"># check wheather all Greenstensor components are present</span>
-    <span class="k">for</span> <span class="n">rc</span> <span class="ow">in</span> <span class="n">required_comp</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">rc</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">cmd</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="n">rc</span><span class="p">,</span> <span class="s1">&#39;not present&#39;</span><span class="p">)</span>
-            <span class="c1">#raise InputError(&#39;%s component is missing in corr_mat_list&#39; % rc)</span>
-
-    <span class="k">return</span> <span class="n">_rotate_corr_dict</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="corr_mat_rotate_horiz"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_rotate_horiz">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_rotate_horiz</span><span class="p">(</span><span class="n">corr_mat_list</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; Rotate correlation matrices from the NE into the RT frame. Corr_mat_list</span>
-<span class="sd">    contains the NN,NE,EN,EE components of the Greens tensor. Time</span>
-<span class="sd">    vectors of all the correlation matricies must be identical.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">cmd</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">required_comp</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;NN&#39;</span><span class="p">,</span><span class="s1">&#39;NE&#39;</span><span class="p">,</span><span class="s1">&#39;EN&#39;</span><span class="p">,</span><span class="s1">&#39;EE&#39;</span><span class="p">]</span>
-    <span class="n">times</span> <span class="o">=</span> <span class="n">corr_mat_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;time&#39;</span><span class="p">]</span>
-    
-    <span class="c1"># quick fix the empty locations</span>
-    <span class="k">for</span> <span class="n">cm</span> <span class="ow">in</span> <span class="n">corr_mat_list</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[]:</span> <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
-        <span class="k">if</span> <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[]:</span> <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
-        <span class="k">if</span> <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[]:</span> <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
-    
-    <span class="c1"># check IDs</span>
-    <span class="n">ID1</span> <span class="o">=</span> <span class="p">(</span><span class="n">corr_mat_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;network&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-           <span class="n">corr_mat_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;station&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-           <span class="n">corr_mat_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-           <span class="n">corr_mat_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-    <span class="n">ID2</span> <span class="o">=</span> <span class="p">(</span><span class="n">corr_mat_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;network&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-           <span class="n">corr_mat_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;station&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-           <span class="n">corr_mat_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-           <span class="n">corr_mat_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-    <span class="k">if</span> <span class="n">ID1</span> <span class="o">==</span> <span class="n">ID2</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">InputError</span><span class="p">(</span><span class="s1">&#39;IDs of stations in corr_mat_list[0] may not be identical.&#39;</span><span class="p">)</span>
-        
-    <span class="k">for</span> <span class="n">ind</span><span class="p">,</span><span class="n">cm</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">corr_mat_list</span><span class="p">):</span>
-        <span class="c1"># check times match within 30 seconds</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">times</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-            <span class="n">tol</span><span class="o">=</span><span class="mf">30.0</span>
-            <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">times</span><span class="p">)</span> <span class="p">:</span>
-                <span class="n">diff</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">][</span><span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span><span class="o">-</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">times</span><span class="p">[</span><span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]]))</span>
-                <span class="k">if</span> <span class="n">diff</span> <span class="o">&gt;</span> <span class="n">tol</span> <span class="p">:</span>
-                    <span class="nb">print</span><span class="p">((</span><span class="s1">&#39;Time vector mismatch greater than </span><span class="si">%s</span><span class="s1">s for </span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> \
-                        <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tol</span><span class="p">),</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;station&#39;</span><span class="p">],</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;station&#39;</span><span class="p">],</span> \
-                                <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">][</span><span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span><span class="n">times</span><span class="p">[</span><span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]])))</span>
-                    <span class="c1">#raise InputError(&#39;Time vector of corr_mat_list[%d] does not match the first matrix.&#39; % ind)</span>
-        <span class="c1"># check station IDs</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;network&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-            <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;station&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-            <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-            <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">==</span> <span class="n">ID1</span><span class="p">:</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;network&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-                <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;station&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-                <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-                <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">!=</span> <span class="n">ID2</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">InputError</span><span class="p">(</span><span class="s1">&#39;IDs of stations in corr_mat_list[</span><span class="si">%d</span><span class="s1">] do not match IDs of&#39;</span>
-                                 <span class="s1">&#39;corr_mat_list[0].&#39;</span> <span class="o">%</span> <span class="n">ind</span><span class="p">)</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;network&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-            <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;station&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-            <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-            <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">==</span> <span class="n">ID2</span><span class="p">:</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;network&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-                <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;station&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-                <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span>
-                <span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">!=</span> <span class="n">ID1</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">InputError</span><span class="p">(</span><span class="s1">&#39;IDs of stations in corr_mat_list[</span><span class="si">%d</span><span class="s1">] do not match IDs of&#39;</span>
-                                 <span class="s1">&#39;corr_mat_list[0].&#39;</span> <span class="o">%</span> <span class="n">ind</span><span class="p">)</span>
-                <span class="c1"># flip corrmat</span>
-                <span class="n">cm</span> <span class="o">=</span> <span class="n">corr_mat_reverse</span><span class="p">(</span><span class="n">cm</span><span class="p">)</span>
-        
-        <span class="n">cmd</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">cm</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span><span class="n">cm</span><span class="p">})</span>
-    
-    <span class="c1"># check wheather all Greenstensor components are present</span>
-    <span class="k">for</span> <span class="n">rc</span> <span class="ow">in</span> <span class="n">required_comp</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">rc</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">cmd</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="n">rc</span><span class="p">,</span> <span class="s1">&#39;not present&#39;</span><span class="p">)</span>
-            <span class="c1">#raise InputError(&#39;%s component is missing in corr_mat_list&#39; % rc)</span>
-
-    <span class="k">return</span> <span class="n">_rotate_corr_dict</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">horiz_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
-
-
-<span class="k">def</span> <span class="nf">_rotate_corr_dict</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">horiz_only</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; Rotate correlation matrices in stream from the EE-EN-EZ-NE-NN-NZ-ZE-ZN-ZZ</span>
-<span class="sd">    system to the RR-RT-RZ-TR-TT-TZ-ZR-ZT-ZZ system. Input matrices are assumed</span>
-<span class="sd">    to be of same size and simultaneously sampled.</span>
-<span class="sd">    :type cmd: dictionary</span>
-<span class="sd">    :param cmd: dictionary of correlation matrix dictionares as produced by</span>
-<span class="sd">        :class:`~miic.core.macro.recombine_corr_data` where key names are the</span>
-<span class="sd">        component types listed above</span>
-<span class="sd">    :type horiz_only: boolean (default False)</span>
-<span class="sd">    :param horiz_only: If True, the input combinations in the stream are expected to</span>
-<span class="sd">    be EE-EN-NE-NN and are rotated into the RR-RT-TR-TT system.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    
-    <span class="c1"># rotation angles</span>
-    <span class="c1"># phi1 : counter clockwise angle between E and R(towards second station)</span>
-    <span class="c1"># the leading -1 accounts for the fact that we rotate the coordinates not a vector within them</span>
-    <span class="n">phi1</span> <span class="o">=</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="o">*</span><span class="p">(</span><span class="mi">90</span><span class="o">-</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EE&#39;</span><span class="p">][</span><span class="s1">&#39;stats&#39;</span><span class="p">][</span><span class="s1">&#39;az&#39;</span><span class="p">])</span>
-    <span class="c1"># phi2 : counter clockwise angle between E and R(away from first station)</span>
-    <span class="n">phi2</span> <span class="o">=</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="o">*</span><span class="p">(</span><span class="mi">90</span><span class="o">-</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EE&#39;</span><span class="p">][</span><span class="s1">&#39;stats&#39;</span><span class="p">][</span><span class="s1">&#39;baz&#39;</span><span class="p">]</span><span class="o">+</span><span class="mi">180</span><span class="p">)</span>
-    
-    <span class="n">c1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi1</span><span class="p">)</span>
-    <span class="n">s1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi1</span><span class="p">)</span>
-    <span class="n">c2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi2</span><span class="p">)</span>
-    <span class="n">s2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi2</span><span class="p">)</span>
-    
-    <span class="n">RR</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EE&#39;</span><span class="p">])</span>
-    <span class="n">RR</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RR</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;R&#39;</span>
-    <span class="n">RR</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RR</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;R&#39;</span>
-    <span class="n">RR</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RR</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;-&#39;</span><span class="o">+</span><span class="n">RR</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span>
-    <span class="n">RR</span><span class="p">[</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">c1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EE&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">c1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EN&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">-</span> 
-                       <span class="n">s1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;NE&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">s1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;NN&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">])</span>
-    
-    <span class="n">RT</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EE&#39;</span><span class="p">])</span>
-    <span class="n">RT</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RT</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;R&#39;</span>
-    <span class="n">RT</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RT</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;T&#39;</span>
-    <span class="n">RT</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RT</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;-&#39;</span><span class="o">+</span><span class="n">RT</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span>
-    <span class="n">RT</span><span class="p">[</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">c1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EE&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EN&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">-</span> 
-                       <span class="n">s1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;NE&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">s1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;NN&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">])</span>
-
-    <span class="n">TR</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EE&#39;</span><span class="p">])</span>
-    <span class="n">TR</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TR</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;T&#39;</span>
-    <span class="n">TR</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TR</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;R&#39;</span>
-    <span class="n">TR</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TR</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;-&#39;</span><span class="o">+</span><span class="n">TR</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span>
-    <span class="n">TR</span><span class="p">[</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">s1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EE&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">s1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EN&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">+</span> 
-                       <span class="n">c1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;NE&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">c1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;NN&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">])</span>
-    
-    <span class="n">TT</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EE&#39;</span><span class="p">])</span>
-    <span class="n">TT</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TT</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;T&#39;</span>
-    <span class="n">TT</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TT</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;T&#39;</span>
-    <span class="n">TT</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TT</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;-&#39;</span><span class="o">+</span><span class="n">TT</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span>
-    <span class="n">TT</span><span class="p">[</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">s1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EE&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">s1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EN&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">+</span> 
-                       <span class="n">c1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;NE&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;NN&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">])</span>
-    <span class="k">if</span> <span class="n">horiz_only</span> <span class="p">:</span>
-        <span class="k">return</span> <span class="n">RR</span><span class="p">,</span><span class="n">RT</span><span class="p">,</span><span class="n">TR</span><span class="p">,</span><span class="n">TT</span>
-
-    <span class="k">elif</span> <span class="ow">not</span> <span class="n">horiz_only</span> <span class="p">:</span>
-        <span class="n">RZ</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EE&#39;</span><span class="p">])</span>
-        <span class="n">RZ</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RZ</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;R&#39;</span>
-        <span class="n">RZ</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RZ</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;Z&#39;</span>
-        <span class="n">RZ</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RZ</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;-&#39;</span><span class="o">+</span><span class="n">RZ</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span>
-        <span class="n">RZ</span><span class="p">[</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">c1</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EZ&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">s1</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;NZ&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">])</span>
-        
-        <span class="n">TZ</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EE&#39;</span><span class="p">])</span>
-        <span class="n">TZ</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TZ</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;T&#39;</span>
-        <span class="n">TZ</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TZ</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;Z&#39;</span>
-        <span class="n">TZ</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TZ</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;-&#39;</span><span class="o">+</span><span class="n">TZ</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span>
-        <span class="n">TZ</span><span class="p">[</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">s1</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EZ&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;NZ&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span>
-        
-        <span class="n">ZR</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EE&#39;</span><span class="p">])</span>
-        <span class="n">ZR</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ZR</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;Z&#39;</span>
-        <span class="n">ZR</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ZR</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;R&#39;</span>
-        <span class="n">ZR</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ZR</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;-&#39;</span><span class="o">+</span><span class="n">ZR</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span>
-        <span class="n">ZR</span><span class="p">[</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">c2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;ZE&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">s2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;ZE&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span>
-        
-        <span class="n">ZT</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;EE&#39;</span><span class="p">])</span>
-        <span class="n">ZT</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ZT</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;Z&#39;</span>
-        <span class="n">ZT</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ZT</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;T&#39;</span>
-        <span class="n">ZT</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ZT</span><span class="p">[</span><span class="s1">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;-&#39;</span><span class="o">+</span><span class="n">ZT</span><span class="p">[</span><span class="s1">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span>
-        <span class="n">ZT</span><span class="p">[</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">s2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;ZE&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">c2</span><span class="o">*</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;ZN&#39;</span><span class="p">][</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span>
-
-        <span class="k">return</span> <span class="n">RR</span><span class="p">,</span><span class="n">RT</span><span class="p">,</span><span class="n">RZ</span><span class="p">,</span><span class="n">TR</span><span class="p">,</span><span class="n">TT</span><span class="p">,</span><span class="n">TZ</span><span class="p">,</span><span class="n">ZR</span><span class="p">,</span><span class="n">ZT</span><span class="p">,</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">cmd</span><span class="p">[</span><span class="s1">&#39;ZZ&#39;</span><span class="p">])</span>
 
 
 <div class="viewcode-block" id="corr_mat_stretch"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_stretch">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_stretch</span><span class="p">(</span>
@@ -1449,8 +1190,8 @@
     <span class="c1"># reference also needs to be trimmed. To do so we append the reference to</span>
     <span class="c1"># the matrix, trimm it and remove the reference again</span>
     <span class="k">if</span> <span class="n">ref_trc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">data</span><span class="p">,</span>
-                            <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">ref_trc</span><span class="p">)),</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span>
+            <span class="n">data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">ref_trc</span><span class="p">)),</span> <span class="mi">0</span><span class="p">)</span>
 
     <span class="c1"># trim the marices</span>
     <span class="k">if</span> <span class="n">sides</span> <span class="o">==</span> <span class="s2">&quot;single&quot;</span><span class="p">:</span>
@@ -1467,7 +1208,6 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># extract and remove references from corr matrix again</span>
         <span class="n">ref_trc</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
-        <span class="n">cdata</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
 
     <span class="c1"># set sides</span>
     <span class="k">if</span> <span class="n">sides</span> <span class="o">==</span> <span class="s1">&#39;both&#39;</span><span class="p">:</span>
@@ -1475,72 +1215,50 @@
     <span class="k">elif</span> <span class="n">sides</span> <span class="o">==</span> <span class="s1">&#39;right&#39;</span><span class="p">:</span>
         <span class="n">ss</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Error: side is not recognized. Use either both or</span><span class="se">\</span>
-<span class="s2">                            right.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Error: side is not recognized. Use either both or right.&quot;</span><span class="p">)</span>
 
-    <span class="n">dt</span> <span class="o">=</span> <span class="n">time_shift_estimate</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">[</span><span class="s1">&#39;corr_data&#39;</span><span class="p">],</span>
-                      <span class="n">ref_trc</span><span class="o">=</span><span class="n">ref_trc</span><span class="p">,</span>
-                      <span class="n">tw</span><span class="o">=</span><span class="n">tw</span><span class="p">,</span>
-                      <span class="n">shift_range</span><span class="o">=</span><span class="n">shift_range</span><span class="p">,</span>
-                      <span class="n">shift_steps</span><span class="o">=</span><span class="n">shift_steps</span><span class="p">,</span>
-                      <span class="n">single_sided</span><span class="o">=</span><span class="n">ss</span><span class="p">,</span>
-                      <span class="n">return_sim_mat</span><span class="o">=</span><span class="n">return_sim_mat</span><span class="p">)</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">time_shift_estimate</span><span class="p">(</span>
+        <span class="n">corr_mat</span><span class="p">[</span><span class="s1">&#39;corr_data&#39;</span><span class="p">],</span> <span class="n">ref_trc</span><span class="o">=</span><span class="n">ref_trc</span><span class="p">,</span> <span class="n">tw</span><span class="o">=</span><span class="n">tw</span><span class="p">,</span> <span class="n">shift_range</span><span class="o">=</span><span class="n">shift_range</span><span class="p">,</span>
+        <span class="n">shift_steps</span><span class="o">=</span><span class="n">shift_steps</span><span class="p">,</span> <span class="n">single_sided</span><span class="o">=</span><span class="n">ss</span><span class="p">,</span>
+        <span class="n">return_sim_mat</span><span class="o">=</span><span class="n">return_sim_mat</span><span class="p">)</span>
 
     <span class="c1"># add the keys the can directly be transferred from the correlation matrix</span>
     <span class="n">dt</span><span class="p">[</span><span class="s1">&#39;corr_start&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;corr_start&#39;</span><span class="p">]</span>
     <span class="n">dt</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats</span>
     <span class="k">return</span> <span class="n">dt</span></div>
-
-
-<div class="viewcode-block" id="corr_mat_correct_shift"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_correct_shift">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_correct_shift</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Correct shift of a correlation matrix</span>
-
-<span class="sd">    In the case of a clock error the correlation traces are shifted in lag time</span>
-<span class="sd">    This shifting can be measured with `corr_mat_shift`. The resulting `dt`</span>
-<span class="sd">    dictionary can be passed to this function to remove the shifhting from the</span>
-<span class="sd">    correlation matrix.</span>
-
-<span class="sd">    :type corr_mat: dictionary</span>
-<span class="sd">    :param corr_mat: correlation matrix dictionary as produced by</span>
-<span class="sd">        :class:`~miic.core.macro.recombine_corr_data`</span>
-<span class="sd">    :type dt: Dictionary</span>
-<span class="sd">    :param dt: velocity change dictionary</span>
-
-<span class="sd">    :rtype: Dictionary</span>
-<span class="sd">    :return: corrected correlation matrix dictionary</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">ccorr_mat</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">)</span>
-    <span class="n">ccorr_mat</span><span class="p">[</span><span class="s1">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_shift_apply</span><span class="p">(</span><span class="n">ccorr_mat</span><span class="p">[</span><span class="s1">&#39;corr_data&#39;</span><span class="p">],</span><span class="o">-</span><span class="mf">1.</span><span class="o">*</span><span class="n">dt</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">])</span>
-
-    <span class="k">return</span> <span class="n">ccorr_mat</span></div>
 </pre></div>
 
-           </div>
-          </div>
-          <footer>
+              </div>
+              
+              
+              <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+              
+          </main>
+          
 
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright 2021, The SeisMIC development team..</p>
-  </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
-</footer>
-        </div>
       </div>
-    </section>
+    </div>
+  
+  <script src="../../../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+<footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    
+    <div class="footer-item">
+      <p class="copyright">
+    &copy; Copyright 2021, The SeisMIC development team..<br>
+</p>
+    </div>
+    
+    <div class="footer-item">
+      <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.2.0.<br>
+</p>
+    </div>
+    
   </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
-
-</body>
+</footer>
+  </body>
 </html>

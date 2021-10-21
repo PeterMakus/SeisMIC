@@ -135,11 +135,11 @@ Plot velocity change time series.
     :members:
     :show-inheritance:
 
-seismic.plot.plt_spectra
-++++++++++++++++++++++++
-Plot noise spectra using Welch's method.
+seismic.plot.plot_multidv
++++++++++++++++++++++++++
+Plot velocity change time series.
 
-.. automodule:: seismic.plot.plt_spectra
+.. automodule:: seismic.plot.plot_multidv
     :members:
     :show-inheritance:
 
@@ -169,5 +169,12 @@ seismic.utils.fetch_func_from_str
 Import and Return a function
 
 .. automodule:: seismic.utils.fetch_func_from_str
+    :members:
+    :show-inheritance:
+
+seismic.utils.miic_utils
+++++++++++++++++++++++++
+
+.. automodule:: seismic.utils.miic_utils
     :members:
     :show-inheritance:

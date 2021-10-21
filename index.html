@@ -1,85 +1,230 @@
-<!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SeisMIC library documentation &mdash; SeisMIC 0.1 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
-        <script>mermaid.initialize({startOnLoad:true});</script>
-    <script src="_static/js/theme.js"></script>
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>SeisMIC library documentation &#8212; SeisMIC</title>
+    
+  <link href="_static/css/theme.css" rel="stylesheet">
+  <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/css/blank.css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    
+  <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+    <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true});</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Introduction: Noise Interferometry with Green’s Function Retrieval" href="modules/intro.html" /> 
-</head>
+    <link rel="next" title="Introduction: Noise Interferometry with Green’s Function Retrieval" href="modules/intro.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-            <a href="#" class="icon icon-home"> SeisMIC
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+  <div id="navbar-start">
+    
+    
+<a class="navbar-brand" href="#">
+<p class="title">SeisMIC</p>
+</a>
+
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="modules/intro.html">
+  Introduction: Noise Interferometry with Green’s Function Retrieval
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="modules/get_started.html">
+  Getting Started with SeisMIC
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="modules/trace_data.html">
+  Trace data
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="modules/correlate.html">
+  Compute and Handle Correlations
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="modules/corrdb.html">
+  Save and Load Correlations
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="modules/monitor.html">
+  Monitor Velocity Changes
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="modules/API.html">
+  <code class="docutils literal notranslate">
+   <span class="pre">
+    SeisMIC
+   </span>
+  </code>
+  API
+ </a>
+</li>
+
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/PeterMakus/SeisMIC" rel="noopener" target="_blank" title="GitHub">
+            <span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label>
           </a>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="modules/intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/get_started.html">Getting Started with SeisMIC</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/trace_data.html">Trace data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/correlate.html">Compute and Handle Correlations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/corrdb.html">Save and Load Correlations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/monitor.html">Monitor Velocity Changes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIC</span></code> API</a></li>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+            
+            <!-- Only show if we have sidebars configured, else just a small margin  -->
+            <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    
+  </div>
+</nav>
+            </div>
+            
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+              
+              <div class="toc-item">
+                
+<div class="tocsection onthispage pt-5 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#">
+   SeisMIC library documentation
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#interactive-flowchart">
+   Interactive Flowchart
+  </a>
+ </li>
+ <li class="toc-h1 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#indices-and-tables">
+   Indices and tables
+  </a>
+ </li>
 </ul>
 
-        </div>
-      </div>
-    </nav>
+</nav>
+              </div>
+              
+              <div class="toc-item">
+                
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">SeisMIC</a>
-      </nav>
-
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
-      <li>SeisMIC library documentation</li>
-      <li class="wy-breadcrumbs-aside">
-            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
-      </li>
-  </ul>
-  <hr/>
+<div class="tocsection editthispage">
+    <a href="https://github.com/PeterMakus/SeisMIC/edit/main/docs/index.rst">
+        <i class="fas fa-pencil-alt"></i> Edit this page
+    </a>
 </div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
+
+              </div>
+              
+            
+          </div>
+          
+
+          
+          
+            
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
   <section id="seismic-library-documentation">
-<h1>SeisMIC library documentation<a class="headerlink" href="#seismic-library-documentation" title="Permalink to this headline"></a></h1>
+<h1>SeisMIC library documentation<a class="headerlink" href="#seismic-library-documentation" title="Permalink to this headline">¶</a></h1>
 <p>SeisMIC (<strong>Seismological Monitoring using Interferometric Concepts</strong>) is a software that emerged from the miic library.
 <strong>SeisMIC</strong> provides functionality to apply some concepts of seismic interferometry to different data of elastic waves.
 Its main use case is the monitoring of temporal changes in a mediums Green’s Function (i.e., monitoring of temporal velocity changes).</p>
 <div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="modules/intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/get_started.html">Getting Started with SeisMIC</a><ul>
@@ -160,13 +305,14 @@ Its main use case is the monitoring of temporal changes in a mediums Green’s F
 <li class="toctree-l2"><a class="reference internal" href="modules/API.html#seismic-plot">seismic.plot</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-plot-plot-correlation">seismic.plot.plot_correlation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-plot-plot-dv">seismic.plot.plot_dv</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-plot-plt-spectra">seismic.plot.plt_spectra</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-plot-plot-multidv">seismic.plot.plot_multidv</a></li>
 <li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-plot-plot-utils">seismic.plot.plot_utils</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="modules/API.html#seismic-utils">seismic.utils</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-utils-io">seismic.utils.io</a></li>
 <li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-utils-fetch-func-from-str">seismic.utils.fetch_func_from_str</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/API.html#module-seismic.utils.miic_utils">seismic.utils.miic_utils</a></li>
 </ul>
 </li>
 </ul>
@@ -175,7 +321,7 @@ Its main use case is the monitoring of temporal changes in a mediums Green’s F
 </div>
 </section>
 <section id="interactive-flowchart">
-<h1>Interactive Flowchart<a class="headerlink" href="#interactive-flowchart" title="Permalink to this headline"></a></h1>
+<h1>Interactive Flowchart<a class="headerlink" href="#interactive-flowchart" title="Permalink to this headline">¶</a></h1>
 <div class="mermaid">
             %%{init: { 'logLevel': 'debug', 'theme': 'base' } }%%
 graph TD
@@ -209,7 +355,7 @@ graph TD
     classDef active fill:#f666, stroke-width:4px, stroke:#f06;
         </div></section>
 <section id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline"></a></h1>
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
@@ -218,33 +364,43 @@ graph TD
 </section>
 
 
-           </div>
-          </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="modules/intro.html" class="btn btn-neutral float-right" title="Introduction: Noise Interferometry with Green’s Function Retrieval" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+              </div>
+              
+              
+              <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+    <a class='right-next' id="next-link" href="modules/intro.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Introduction: Noise Interferometry with Green’s Function Retrieval</p>
     </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+              
+          </main>
+          
 
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright 2021, The SeisMIC development team..</p>
-  </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
-</footer>
-        </div>
       </div>
-    </section>
+    </div>
+  
+  <script src="_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+<footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    
+    <div class="footer-item">
+      <p class="copyright">
+    &copy; Copyright 2021, The SeisMIC development team..<br>
+</p>
+    </div>
+    
+    <div class="footer-item">
+      <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.2.0.<br>
+</p>
+    </div>
+    
   </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
-
-</body>
+</footer>
+  </body>
 </html>

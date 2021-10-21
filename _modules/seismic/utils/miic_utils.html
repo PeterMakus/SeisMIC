@@ -1,0 +1,568 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>seismic.utils.miic_utils &#8212; SeisMIC</title>
+    
+  <link href="../../../_static/css/theme.css" rel="stylesheet">
+  <link href="../../../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/blank.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+    
+  <link rel="preload" as="script" href="../../../_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/clipboard.min.js"></script>
+    <script src="../../../_static/copybutton.js"></script>
+    <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true});</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+    <nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="container-xl">
+
+  <div id="navbar-start">
+    
+    
+<a class="navbar-brand" href="../../../index.html">
+<p class="title">SeisMIC</p>
+</a>
+
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../modules/intro.html">
+  Introduction: Noise Interferometry with Green’s Function Retrieval
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../modules/get_started.html">
+  Getting Started with SeisMIC
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../modules/trace_data.html">
+  Trace data
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../modules/correlate.html">
+  Compute and Handle Correlations
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../modules/corrdb.html">
+  Save and Load Correlations
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../modules/monitor.html">
+  Monitor Velocity Changes
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../modules/API.html">
+  <code class="docutils literal notranslate">
+   <span class="pre">
+    SeisMIC
+   </span>
+  </code>
+  API
+ </a>
+</li>
+
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/PeterMakus/SeisMIC" rel="noopener" target="_blank" title="GitHub">
+            <span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label>
+          </a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+            
+            <!-- Only show if we have sidebars configured, else just a small margin  -->
+            <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    
+  </div>
+</nav>
+            </div>
+            
+          
+
+          
+          <div class="d-none d-xl-block col-xl-2 bd-toc">
+            
+          </div>
+          
+
+          
+          
+            
+          
+          <main class="col-12 col-md-9 col-xl-7 py-md-5 pl-md-5 pr-md-4 bd-content" role="main">
+              
+              <div>
+                
+  <h1>Source code for seismic.utils.miic_utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">:copyright:</span>
+<span class="sd">   The SeisMIC development team (makus@gfz-potsdam.de).</span>
+<span class="sd">:license:</span>
+<span class="sd">   GNU Lesser General Public License, Version 3</span>
+<span class="sd">   (https://www.gnu.org/copyleft/lesser.html)</span>
+<span class="sd">:author:</span>
+<span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
+
+<span class="sd">Created: Monday, 29th March 2021 12:54:05 pm</span>
+<span class="sd">Last Modified: Thursday, 21st October 2021 02:37:29 pm</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">Inventory</span><span class="p">,</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">UTCDateTime</span>
+<span class="kn">from</span> <span class="nn">obspy.core</span> <span class="kn">import</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">AttribDict</span>
+
+<span class="c1"># zero lag time</span>
+<span class="c1"># I don&#39;t think this is in use anymore</span>
+<span class="n">lag0</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">log_lvl</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;DEBUG&#39;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
+    <span class="s1">&#39;INFO&#39;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+    <span class="s1">&#39;WARNING&#39;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span>
+    <span class="s1">&#39;CRITICAL&#39;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">,</span>
+    <span class="s1">&#39;ERROR&#39;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="trace_calc_az_baz_dist"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.trace_calc_az_baz_dist">[docs]</a><span class="k">def</span> <span class="nf">trace_calc_az_baz_dist</span><span class="p">(</span><span class="n">stats1</span><span class="p">:</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">stats2</span><span class="p">:</span> <span class="n">Stats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+        <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return azimuth, back azimhut and distance between tr1 and tr2</span>
+<span class="sd">    This funtions calculates the azimut, back azimut and distance between tr1</span>
+<span class="sd">    and tr2 if both have geo information in their stats dictonary.</span>
+<span class="sd">    Required fields are:</span>
+<span class="sd">    ``tr.stats.sac.stla`` and ``tr.stats.sac.stlo``</span>
+
+<span class="sd">    :type stats1: :class:`~obspy.core.Stats`</span>
+<span class="sd">    :param stats1: First trace to account</span>
+<span class="sd">    :type stats2: :class:`~obspy.core.Stats`</span>
+<span class="sd">    :param stats2: Second trace to account</span>
+
+<span class="sd">    :rtype: float</span>
+<span class="sd">    :return: **az**: Azimuth angle between tr1 and tr2</span>
+<span class="sd">    :rtype: float</span>
+<span class="sd">    :return: **baz**: Back-azimuth angle between tr1 and tr2</span>
+<span class="sd">    :rtype: float</span>
+<span class="sd">    :return: **dist**: Distance between tr1 and tr2 in m</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stats1</span><span class="p">,</span> <span class="p">(</span><span class="n">Stats</span><span class="p">,</span> <span class="n">AttribDict</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;stats1 must be an obspy Stats object.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stats2</span><span class="p">,</span> <span class="p">(</span><span class="n">Stats</span><span class="p">,</span> <span class="n">AttribDict</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;stats2 must be an obspy Stats object.&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">obspy.geodetics</span> <span class="kn">import</span> <span class="n">gps2dist_azimuth</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Missed obspy funciton gps2dist_azimuth&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Update obspy.&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">dist</span><span class="p">,</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span> <span class="o">=</span> <span class="n">gps2dist_azimuth</span><span class="p">(</span>
+        <span class="n">stats1</span><span class="p">[</span><span class="s1">&#39;stla&#39;</span><span class="p">],</span> <span class="n">stats1</span><span class="p">[</span><span class="s1">&#39;stlo&#39;</span><span class="p">],</span> <span class="n">stats2</span><span class="p">[</span><span class="s1">&#39;stla&#39;</span><span class="p">],</span> <span class="n">stats2</span><span class="p">[</span><span class="s1">&#39;stlo&#39;</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span><span class="p">,</span> <span class="n">dist</span></div>
+
+
+<div class="viewcode-block" id="filter_stat_dist"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.filter_stat_dist">[docs]</a><span class="k">def</span> <span class="nf">filter_stat_dist</span><span class="p">(</span><span class="n">inv1</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">,</span> <span class="n">inv2</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">,</span> <span class="n">thres</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Very simple function to check whether to stations are closer than thres</span>
+<span class="sd">    to each other.</span>
+
+<span class="sd">    :param inv1: Inventory of station 1</span>
+<span class="sd">    :type inv1: Inventory</span>
+<span class="sd">    :param inv2: Inventory of station 2</span>
+<span class="sd">    :type inv2: Inventory</span>
+<span class="sd">    :param thres: Threshold distance in m</span>
+<span class="sd">    :type thres: float</span>
+<span class="sd">    :return: True if closer (or equal) than thres, False if not.</span>
+<span class="sd">    :rtype: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">inv_calc_az_baz_dist</span><span class="p">(</span><span class="n">inv1</span><span class="p">,</span> <span class="n">inv2</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">thres</span></div>
+
+
+<div class="viewcode-block" id="inv_calc_az_baz_dist"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.inv_calc_az_baz_dist">[docs]</a><span class="k">def</span> <span class="nf">inv_calc_az_baz_dist</span><span class="p">(</span><span class="n">inv1</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">,</span> <span class="n">inv2</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+        <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot; Return azimuth, back azimuth and distance between stat1 and stat2</span>
+
+
+<span class="sd">    :type tr1: :class:`~obspy.core.inventory.Inventory`</span>
+<span class="sd">    :param tr1: First trace to account</span>
+<span class="sd">    :type tr2: :class:`~obspy.core.inventory.Inventory`</span>
+<span class="sd">    :param tr2: Second trace to account</span>
+
+<span class="sd">    :rtype: float</span>
+<span class="sd">    :return: **az**: Azimuth angle between stat1 and stat2</span>
+<span class="sd">    :rtype: float</span>
+<span class="sd">    :return: **baz**: Back-azimuth angle between stat2 and stat2</span>
+<span class="sd">    :rtype: float</span>
+<span class="sd">    :return: **dist**: Distance between stat1 and stat2 in m</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inv1</span><span class="p">,</span> <span class="n">Inventory</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;inv1 must be an obspy Inventory.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inv2</span><span class="p">,</span> <span class="n">Inventory</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;inv2 must be an obspy Inventory.&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">obspy.geodetics</span> <span class="kn">import</span> <span class="n">gps2dist_azimuth</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Missing obspy funciton gps2dist_azimuth&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Update obspy.&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">dist</span><span class="p">,</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span> <span class="o">=</span> <span class="n">gps2dist_azimuth</span><span class="p">(</span>
+        <span class="n">inv1</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">latitude</span><span class="p">,</span> <span class="n">inv1</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">longitude</span><span class="p">,</span> <span class="n">inv2</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">latitude</span><span class="p">,</span>
+        <span class="n">inv2</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">longitude</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span><span class="p">,</span> <span class="n">dist</span></div>
+
+
+<div class="viewcode-block" id="resample_or_decimate"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.resample_or_decimate">[docs]</a><span class="k">def</span> <span class="nf">resample_or_decimate</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">Trace</span> <span class="ow">or</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">sampling_rate_new</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span> <span class="ow">or</span> <span class="n">Trace</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Decimates the data if the desired new sampling rate allows to do so.</span>
+<span class="sd">    Else the signal will be interpolated (a lot slower).</span>
+
+<span class="sd">    :param data: Stream to be resampled.</span>
+<span class="sd">    :type data: Stream</span>
+<span class="sd">    :param sampling_rate_new: The desired new sampling rate</span>
+<span class="sd">    :type sampling_rate_new: int</span>
+<span class="sd">    :return: The resampled stream</span>
+<span class="sd">    :rtype: Stream</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">Stream</span><span class="p">):</span>
+        <span class="n">sr</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">Trace</span><span class="p">):</span>
+        <span class="n">sr</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Data has to be an obspy Stream or Trace.&#39;</span><span class="p">)</span>
+
+    <span class="n">srn</span> <span class="o">=</span> <span class="n">sampling_rate_new</span>
+    <span class="k">if</span> <span class="n">srn</span> <span class="o">&gt;</span> <span class="n">sr</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;New sampling rate greater than old. This function </span><span class="se">\</span>
+<span class="s1">            is only intended for downsampling.&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">srn</span> <span class="o">==</span> <span class="n">sr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="c1"># Chosen this filter design as it&#39;s exactly the same as</span>
+    <span class="c1"># obspy.Stream.decimate uses</span>
+    <span class="k">if</span> <span class="nb">filter</span><span class="p">:</span>
+        <span class="n">freq</span> <span class="o">=</span> <span class="n">sr</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">sr</span><span class="o">/</span><span class="n">srn</span><span class="p">)</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="s1">&#39;lowpass_cheby_2&#39;</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="n">freq</span><span class="p">,</span> <span class="n">maxorder</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">sr</span><span class="o">/</span><span class="n">srn</span> <span class="o">==</span> <span class="n">sr</span><span class="o">//</span><span class="n">srn</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">decimate</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">sr</span><span class="o">//</span><span class="n">srn</span><span class="p">),</span> <span class="n">no_filter</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">srn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="trim_stream_delta"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.trim_stream_delta">[docs]</a><span class="k">def</span> <span class="nf">trim_stream_delta</span><span class="p">(</span>
+        <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Cut all traces to starttime+start and endtime-end. *args* and *kwargs* will</span>
+<span class="sd">    be passed to :func:`~obspy.Stream.trim`</span>
+
+<span class="sd">    :param st: Input Stream</span>
+<span class="sd">    :type st: Stream</span>
+<span class="sd">    :param start: Delta to add to old starttime (in seconds)</span>
+<span class="sd">    :type start: float</span>
+<span class="sd">    :param end: Delta to remove from old endtime (in seconds)</span>
+<span class="sd">    :type end: float</span>
+<span class="sd">    :return: The trimmed stream</span>
+<span class="sd">    :rtype: Stream</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        This operation is performed in place on the actual data arrays.</span>
+<span class="sd">        The raw data will no longer be accessible afterwards. To keep your</span>
+<span class="sd">        original data, use copy() to create a copy of your stream object.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
+        <span class="n">tr</span> <span class="o">=</span> <span class="n">trim_trace_delta</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">st</span></div>
+
+
+<div class="viewcode-block" id="trim_trace_delta"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.trim_trace_delta">[docs]</a><span class="k">def</span> <span class="nf">trim_trace_delta</span><span class="p">(</span>
+        <span class="n">tr</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Trace</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Cut all traces to starttime+start and endtime-end. *args* and *kwargs* will</span>
+<span class="sd">    be passed to :func:`~obspy.Trace.trim`.</span>
+
+<span class="sd">    :param st: Input Trace</span>
+<span class="sd">    :type st: Trace</span>
+<span class="sd">    :param start: Delta to add to old starttime (in seconds)</span>
+<span class="sd">    :type start: float</span>
+<span class="sd">    :param end: Delta to remove from old endtime (in seconds)</span>
+<span class="sd">    :type end: float</span>
+<span class="sd">    :return: The trimmed trace</span>
+<span class="sd">    :rtype: Trace</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        This operation is performed in place on the actual data arrays.</span>
+<span class="sd">        The raw data will no longer be accessible afterwards. To keep your</span>
+<span class="sd">        original data, use copy() to create a copy of your stream object.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">tr</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span>
+        <span class="n">starttime</span><span class="o">=</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="o">+</span><span class="n">start</span><span class="p">,</span> <span class="n">endtime</span><span class="o">=</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">endtime</span><span class="o">-</span><span class="n">end</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<span class="c1"># Time keys</span>
+<span class="n">t_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;starttime&#39;</span><span class="p">,</span> <span class="s1">&#39;endtime&#39;</span><span class="p">,</span> <span class="s1">&#39;corr_start&#39;</span><span class="p">,</span> <span class="s1">&#39;corr_end&#39;</span><span class="p">]</span>
+<span class="c1"># No stats, keys that are not in stats but attributes of the respective objects</span>
+<span class="n">no_stats</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;corr&#39;</span><span class="p">,</span> <span class="s1">&#39;value&#39;</span><span class="p">,</span> <span class="s1">&#39;sim_mat&#39;</span><span class="p">,</span> <span class="s1">&#39;second_axis&#39;</span><span class="p">,</span> <span class="s1">&#39;method_array&#39;</span><span class="p">,</span> <span class="s1">&#39;vt_array&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;data&#39;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="save_header_to_np_array"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.save_header_to_np_array">[docs]</a><span class="k">def</span> <span class="nf">save_header_to_np_array</span><span class="p">(</span><span class="n">stats</span><span class="p">:</span> <span class="n">Stats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts an obspy header to a format that allows it to be saved in an</span>
+<span class="sd">    npz file (i.e., several gzipped npy files)</span>
+
+<span class="sd">    :param stats: input Header</span>
+<span class="sd">    :type stats: Stats</span>
+<span class="sd">    :return: Dictionary, whose keys are the names of the arrays and the values</span>
+<span class="sd">        the arrays themselves. Can be fed into ``np.savez`` as `**kwargs`</span>
+<span class="sd">    :rtype: dict</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">array_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">stats</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">t_keys</span><span class="p">:</span>
+            <span class="n">array_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">convert_utc_to_timestamp</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">array_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">stats</span><span class="p">[</span><span class="n">k</span><span class="p">]])</span>
+    <span class="k">return</span> <span class="n">array_dict</span></div>
+
+
+<div class="viewcode-block" id="load_header_from_np_array"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.load_header_from_np_array">[docs]</a><span class="k">def</span> <span class="nf">load_header_from_np_array</span><span class="p">(</span><span class="n">array_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Takes the *dictionary-like* return-value of `np.load` and converts the</span>
+<span class="sd">    corresponding keywords into an obspy header.</span>
+
+<span class="sd">    :param array_dict: Return value of `np.load`</span>
+<span class="sd">    :type array_dict: dict</span>
+<span class="sd">    :return: The obspy header as dictionary</span>
+<span class="sd">    :rtype: dict</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">array_dict</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">no_stats</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">t_keys</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">convert_timestamp_to_utcdt</span><span class="p">(</span><span class="n">array_dict</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">array_dict</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">d</span></div>
+
+
+<div class="viewcode-block" id="convert_utc_to_timestamp"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.convert_utc_to_timestamp">[docs]</a><span class="k">def</span> <span class="nf">convert_utc_to_timestamp</span><span class="p">(</span>
+        <span class="n">utcdt</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="ow">or</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts :class:`obspy.core.utcdatetime.UTCDateTime` objects to floats.</span>
+
+<span class="sd">    :param utcdt: The input times, either a list of utcdatetimes or one</span>
+<span class="sd">        utcdatetime</span>
+<span class="sd">    :type utcdt: UTCDateTimeorList[UTCDateTime]</span>
+<span class="sd">    :return: A numpy array of timestamps</span>
+<span class="sd">    :rtype: np.ndarray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">utcdt</span><span class="p">,</span> <span class="n">UTCDateTime</span><span class="p">):</span>
+        <span class="n">utcdt</span> <span class="o">=</span> <span class="p">[</span><span class="n">utcdt</span><span class="p">]</span>
+    <span class="n">timestamp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">t</span><span class="o">.</span><span class="n">timestamp</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">utcdt</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">timestamp</span></div>
+
+
+<div class="viewcode-block" id="convert_timestamp_to_utcdt"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.convert_timestamp_to_utcdt">[docs]</a><span class="k">def</span> <span class="nf">convert_timestamp_to_utcdt</span><span class="p">(</span><span class="n">timestamp</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a numpy array holding timestamps (i.e., floats) to a list of</span>
+<span class="sd">    UTCDateTime objects</span>
+
+<span class="sd">    :param timestamp: numpy array holding timestamps</span>
+<span class="sd">    :type timestamp: np.ndarray</span>
+<span class="sd">    :return: a list of UTCDateTime objects</span>
+<span class="sd">    :rtype: List[UTCDateTime]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">timestamp</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">timestamp</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">timestamp</span><span class="p">):</span>
+        <span class="n">timestamp</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">timestamp</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">timestamp</span></div>
+
+
+<div class="viewcode-block" id="get_valid_traces"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.get_valid_traces">[docs]</a><span class="k">def</span> <span class="nf">get_valid_traces</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return only valid traces of a stream.</span>
+
+<span class="sd">    Remove traces that are 100% masked from a stream. This happens when</span>
+<span class="sd">    a masked trace is trimmed within a gap. The function works in place.</span>
+
+<span class="sd">    :type st: obspy.Stream</span>
+<span class="sd">    :param st: stream to work on</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">MaskedArray</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+    <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="discard_short_traces"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.discard_short_traces">[docs]</a><span class="k">def</span> <span class="nf">discard_short_traces</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Discard all traces from stream that are shorter than length.</span>
+
+<span class="sd">    :param st: inputer obspy Stream</span>
+<span class="sd">    :type st: Stream</span>
+<span class="sd">    :param length: Maxixmum Length that should be discarded (in seconds).</span>
+<span class="sd">    :type length: float</span>
+
+<span class="sd">    .. note:: Action is performed in place.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="o">/</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span> <span class="o">&lt;=</span> <span class="n">length</span><span class="p">:</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+    <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="stream_require_dtype"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.stream_require_dtype">[docs]</a><span class="k">def</span> <span class="nf">stream_require_dtype</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Often it might make sense to change the data type of seismic data before</span>
+<span class="sd">    saving or broadcasting (e.g., to save memory). This function allows</span>
+<span class="sd">    to do so</span>
+
+<span class="sd">    :param st: input Stream</span>
+<span class="sd">    :type st: Stream</span>
+<span class="sd">    :param dtype: desired datatype, e.g. np.float32</span>
+<span class="sd">    :type dtype: type</span>
+<span class="sd">    :return: Stream with data in new dtype</span>
+<span class="sd">    :rtype: Stream</span>
+
+<span class="sd">    .. note:: This operation is performed in place.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span></div>
+</pre></div>
+
+              </div>
+              
+              
+              <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+              
+          </main>
+          
+
+      </div>
+    </div>
+  
+  <script src="../../../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+<footer class="footer mt-5 mt-md-0">
+  <div class="container">
+    
+    <div class="footer-item">
+      <p class="copyright">
+    &copy; Copyright 2021, The SeisMIC development team..<br>
+</p>
+    </div>
+    
+    <div class="footer-item">
+      <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.2.0.<br>
+</p>
+    </div>
+    
+  </div>
+</footer>
+  </body>
+</html>
