@@ -1,5 +1,6 @@
 '''
 :copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -7,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Friday, 15th October 2021 03:20:33 pm
+Last Modified: Thursday, 21st October 2021 03:03:07 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -586,10 +587,9 @@ class CorrStream(Stream):
         if window_length < max(
                 tr.stats.corr_end-tr.stats.corr_start for tr in self):
             raise ValueError(
-                'The length of the requested time window has ' +
-                'to be larger or equal than the actual correlation length of' +
-                ' one window. i.e., correlations can not be sliced, only ' +
-                'selected.')
+                'The length of the requested time window has to be larger or'
+                + 'equal than the actual correlation length of one window.'
+                + 'i.e., correlations can not be sliced, only selected.')
 
         if step <= 0:
             raise ValueError('Step has to be larger than 0.')
@@ -643,15 +643,15 @@ class CorrStream(Stream):
         # the 2 seconds difference are to avoid accidental smoothing
         if include_partially_selected:
             for tr in self:
-                if (tr.stats.corr_end > starttime and
-                    tr.stats.corr_end < endtime) or \
-                        tr.stats.corr_end == endtime:
+                if (tr.stats.corr_end > starttime
+                    and tr.stats.corr_end < endtime) \
+                        or tr.stats.corr_end == endtime:
                     outst.append(tr)
             return outst
         # else
         for tr in self:
-            if tr.stats.corr_start >= starttime and\
-                 tr.stats.corr_end <= endtime:
+            if tr.stats.corr_start >= starttime \
+                    and tr.stats.corr_end <= endtime:
                 outst.append(tr)
         return outst
 
@@ -752,8 +752,8 @@ class CorrStream(Stream):
             np.ndarray, Iterator[Stats]]:
         """
         Creates a numpy array from the data in the
-        :class:`~seismic.correlate.stream.Stream` object. Also returns a list of
-        the Stats objects. The positional arguments are filter arguments.
+        :class:`~seismic.correlate.stream.Stream` object. Also returns a list
+        of the Stats objects. The positional arguments are filter arguments.
 
         :param st: Input Stream
         :type st: CorrStream
@@ -1084,11 +1084,11 @@ def compare_tr_id(tr0: Trace, tr1: Trace, regard_loc: bool = True) -> bool:
     :rtype: bool
     """
     if regard_loc:
-        return Compare_Str.format(**tr0.stats)\
-             == Compare_Str.format(**tr1.stats)
+        return Compare_Str.format(**tr0.stats) \
+            == Compare_Str.format(**tr1.stats)
     else:
-        return Compare_Str_No_Loc.format(**tr0.stats)\
-             == Compare_Str_No_Loc.format(**tr1.stats)
+        return Compare_Str_No_Loc.format(**tr0.stats) \
+            == Compare_Str_No_Loc.format(**tr1.stats)
 
 
 def stack_st_by_group(st: Stream, regard_loc: bool, weight: str) -> CorrStream:
@@ -1160,8 +1160,8 @@ def stack_st(st: CorrStream, weight: str, norm: bool = True) -> CorrTrace:
 def convert_statlist_to_bulk_stats(
         statlist: List[CorrStats], varying_loc: bool = False) -> CorrStats:
     """
-    Converts a list of :class:`~seismic.correlate.stream.CorrTrace` stats objects
-    to a single stats object that can be used for the creation of a
+    Converts a list of :class:`~seismic.correlate.stream.CorrTrace` stats
+    objects to a single stats object that can be used for the creation of a
     :class:`~seismic.correlate.stream.CorrBulk` object
 
     :param statlist: list of Stats

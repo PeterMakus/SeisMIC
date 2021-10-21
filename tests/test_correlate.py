@@ -7,9 +7,8 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Monday, 11th October 2021 04:05:46 pm
+Last Modified: Thursday, 21st October 2021 02:48:46 pm
 '''
-from calendar import c
 from copy import deepcopy
 import unittest
 import warnings
@@ -19,7 +18,6 @@ import numpy as np
 from obspy import read, Stream, Trace
 from obspy.core import AttribDict
 from obspy.core.inventory.inventory import read_inventory
-from obspy.core.utcdatetime import UTCDateTime
 
 from seismic.correlate import correlate
 
@@ -266,8 +264,7 @@ class TestPreProcessStream(unittest.TestCase):
             'taper_len': 0,
             'sampling_rate': 25,
             'remove_response': False,
-            'subdivision': {'corr_len': 20}
-            }
+            'subdivision': {'corr_len': 20}}
 
     def test_wrong_sr(self):
         x = np.random.randint(1, 100)

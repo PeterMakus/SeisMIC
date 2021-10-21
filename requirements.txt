@@ -16,7 +16,8 @@ tqdm
 
 # Other requirements for tests and docs
 flake8
-sphinx_rtd_theme
+pydata-sphinx-theme
+sphinx-copybutton
 sphinxcontrib-mermaid
 pytest
 py

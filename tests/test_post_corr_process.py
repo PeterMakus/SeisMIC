@@ -1,6 +1,6 @@
 '''
 :copyright:
-   The PyGLImER development team (makus@gfz-potsdam.de).
+   The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 25th June 2021 09:33:09 am
-Last Modified: Thursday, 29th July 2021 02:21:43 pm
+Last Modified: Thursday, 21st October 2021 02:59:03 pm
 '''
 
 import unittest
@@ -58,9 +58,9 @@ class TestSmooth(unittest.TestCase):
 class TestCorrMatFilter(unittest.TestCase):
     def setUp(self):
         self.data = np.tile([
-            np.cos(np.linspace(0, 4*np.pi, 512)) +  # .0625 Hz
-            np.cos(np.linspace(0, 400*np.pi, 512)) +  # 6.25 Hz
-            np.cos(np.linspace(0, 200*np.pi, 512))], (2, 1))  # 3.125 Hz
+            np.cos(np.linspace(0, 4*np.pi, 512))
+            + np.cos(np.linspace(0, 400*np.pi, 512))
+            + np.cos(np.linspace(0, 200*np.pi, 512))], (2, 1))
         self.dataft = abs(np.fft.rfft(self.data, axis=1))
         self.f = np.fft.rfftfreq(512, 1/16)
         self.stats = CorrStats({'sampling_rate': 16})
@@ -183,7 +183,7 @@ class TestCorrMatResample(unittest.TestCase):
 #                 (2, 1)
 #                 )
 #         self.stats = CorrStats({
-#             'sampling_rate': 1, 'npts': 501, 'start_lag': -50, 'end_lag': 50})
+#         'sampling_rate': 1, 'npts': 501, 'start_lag': -50, 'end_lag': 50})
 
 #     def test_result(self):
 #         corrected = pcp.corr_mat_correct_decay(

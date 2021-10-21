@@ -2,6 +2,7 @@
 Manages the file format and class for correlations.
 
 :copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -9,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Friday, 15th October 2021 03:39:25 pm
+Last Modified: Thursday, 21st October 2021 03:15:18 pm
 '''
 import ast
 import fnmatch
@@ -424,8 +425,7 @@ def co_to_hdf5(co: dict) -> dict:
     coc = deepcopy(co)
     remk = [
         'subdir', 'read_start', 'read_end', 'read_len', 'read_inc',
-        'combination_method', 'combinations', 'starttime'
-        ]
+        'combination_method', 'combinations', 'starttime']
     for key in remk:
         coc.pop(key, None)
     coc['corr_args'].pop('combinations', None)

@@ -1,5 +1,6 @@
 '''
 :copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -7,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 4th October 2021 02:32:12 pm
+Last Modified: Thursday, 21st October 2021 03:14:52 pm
 '''
 from copy import deepcopy
 import logging
@@ -92,8 +93,8 @@ class Monitor(object):
         self.logger.addHandler(consoleHandler)
 
         # Find available stations and network
-        self.netlist, self.statlist, self.infiles = self._find_available_corrs(
-            )
+        self.netlist, self.statlist, self.infiles = \
+            self._find_available_corrs()
 
     def _starttimes_list(self) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -124,8 +125,9 @@ class Monitor(object):
         """
         netlist, statlist, infiles = corr_find_filter(
             self.indir, **self.options)
-        self.logger.info('Found correlation data for the following station \
-and network combinations %s' % str(
+        self.logger.info(
+            'Found correlation data for the following station '
+            + 'and network combinations %s' % str(
                 ['{n}.{s}'.format(n=n, s=s) for n, s in zip(
                     netlist, statlist)]))
         return netlist, statlist, infiles
@@ -284,9 +286,8 @@ and network combinations %s' % str(
         if method.lower() not in (
                 'autocomponents', 'crosscomponents', 'stationwide'):
             raise ValueError(
-                'Unknown averaging method. ' +
-                'Use "autocomponent" or "stationwide".'
-            )
+                'Unknown averaging method. Use "autocomponent" or '
+                + '"stationwide".')
         infiles = glob(os.path.join(self.outdir, '*.npz'))
         if method.lower() == 'autocomponents':
             ch = 'av-auto'
@@ -333,8 +334,8 @@ and network combinations %s' % str(
                     dvs.append(read_dv(f))
                 except Exception:
                     self.logger.exception(
-                        'An unexpected error has ocurred ' +
-                        'while reading file %s.' % f)
+                        'An unexpected error has ocurred '
+                        + 'while reading file %s.' % f)
                 # Remove so they are not processed again
                 infiles.remove(f)
             if not len(dvs):

@@ -1,5 +1,6 @@
 '''
 :copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -7,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 11th October 2021 04:06:25 pm
+Last Modified: Thursday, 21st October 2021 03:10:18 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -133,19 +134,19 @@ class Correlator(object):
         elif isinstance(network, list) and isinstance(station, list):
             if len(network) != len(station):
                 raise ValueError(
-                    'Stations has to be either: \n' +
-                    '1. A list of the same length as the list of networks.\n' +
-                    '2. \'*\' That is, a wildcard (string).\n' +
-                    '3. A list and network is a string describing one ' +
-                    'station code.')
+                    'Stations has to be either: \n'
+                    + '1. A list of the same length as the list of networks.\n'
+                    + '2. \'*\' That is, a wildcard (string).\n'
+                    + '3. A list and network is a string describing one '
+                    + 'station code.')
             station = list([n, s] for n, s in zip(network, station))
         elif isinstance(station, str):
             raise ValueError(
-                'Stations has to be either: \n' +
-                '1. A list of the same length as the list of networks.\n' +
-                '2. \'*\' That is, a wildcard (string).\n' +
-                '3. A list and network is a string describing one ' +
-                'station code.')
+                'Stations has to be either: \n'
+                + '1. A list of the same length as the list of networks.\n'
+                + '2. \'*\' That is, a wildcard (string).\n'
+                + '3. A list and network is a string describing one '
+                + 'station code.')
         else:
             for ii, stat in enumerate(station):
                 station[ii] = [network, stat]
@@ -172,8 +173,8 @@ class Correlator(object):
         """
         if not self.options['combination_method'] == 'betweenStations':
             raise ValueError(
-                'This function is only available if combination method ' +
-                'is set to "betweenStations".')
+                'This function is only available if combination method '
+                + 'is set to "betweenStations".')
         # list of requested combinations
         self.rcombis = []
         # Update the store clients invetory
@@ -353,8 +354,8 @@ class Correlator(object):
 
         for ii in ind:
             outf = os.path.join(self.corr_dir, '%s.%s.h5' % (
-                    cstlist[ii][0].stats.network,
-                    cstlist[ii][0].stats.station))
+                cstlist[ii][0].stats.network,
+                cstlist[ii][0].stats.station))
             with CorrelationDataBase(outf, corr_options=self.options) as cdb:
                 cdb.add_correlation(cstlist[ii], tag)
 
@@ -552,21 +553,21 @@ class Correlator(object):
                 norm = (
                     np.sqrt(
                         2.*np.sum(B[:, self.options[
-                            'combinations'][ii][0]] *
-                            B[:, self.options['combinations'][ii][0]].conj()) -
-                        B[0, self.options['combinations'][ii][0]]**2) *
-                    np.sqrt(
+                            'combinations'][ii][0]]
+                            * B[:, self.options['combinations'][ii][0]].conj())
+                        - B[0, self.options['combinations'][ii][0]]**2)
+                    * np.sqrt(
                         2.*np.sum(B[:, self.options[
-                            'combinations'][ii][1]] *
-                            B[:, self.options['combinations'][ii][1]].conj()) -
-                        B[0, self.options['combinations'][ii][1]]**2) /
-                    irfftsize).real
+                            'combinations'][ii][1]]
+                            * B[:, self.options['combinations'][ii][1]].conj())
+                        - B[0, self.options['combinations'][ii][1]]**2)
+                    / irfftsize).real
             else:
                 norm = 1.
             M = (
-                B[:, self.options['combinations'][ii][0]].conj() *
-                B[:, self.options['combinations'][ii][1]] *
-                np.exp(1j * freqs * offset * 2 * np.pi))
+                B[:, self.options['combinations'][ii][0]].conj()
+                * B[:, self.options['combinations'][ii][1]]
+                * np.exp(1j * freqs * offset * 2 * np.pi))
 
             ######################################
             # frequency domain postProcessing
@@ -689,10 +690,10 @@ def calc_cross_combis(
         for ii, tr in enumerate(st):
             for jj in range(ii+1, len(st)):
                 tr1 = st[jj]
-                if ((tr.stats['network'] == tr1.stats['network']) and
-                    (tr.stats['station'] == tr1.stats['station']) and
-                    (tr.stats['channel'][-1] !=
-                        tr1.stats['channel'][-1])):
+                if ((tr.stats['network'] == tr1.stats['network'])
+                    and (tr.stats['station'] == tr1.stats['station'])
+                    and (
+                        tr.stats['channel'][-1] != tr1.stats['channel'][-1])):
                     if _compare_existing_data(ex_corr, tr, tr1):
                         continue
                     combis.append((ii, jj))
@@ -1020,7 +1021,7 @@ def sort_comb_name_alphabetically(
 def compute_network_station_combinations(
     netlist: list, statlist: list,
     method: str = 'betweenStations', combis: List[str] = None) -> Tuple[
-            list, list]:
+        list, list]:
     """
     Return the network and station codes of the correlations for the provided
     lists of networks and stations and the queried combination method.
@@ -1130,9 +1131,9 @@ def preprocess_stream(
     # Check sampling frequency
     if sampling_rate > st[0].stats.sampling_rate:
         raise ValueError(
-            'The new sample rate (%sHz) is higher than the trace\'s native\
-sample rate (%s Hz).' % (str(sampling_rate), str(
-                    st[0].stats.sampling_rate)))
+            'The new sample rate (%sHz) is higher than the trace\'s native' % (
+                str(sampling_rate))
+            + 'sample rate (%s Hz).' % (str(st[0].stats.sampling_rate)))
 
     # Downsample
     # AA-Filter is done in this function as well
