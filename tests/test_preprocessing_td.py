@@ -1,12 +1,14 @@
 '''
 :copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   `GNU Lesser General Public License, Version 3 <https://www.gnu.org/copyleft/lesser.html>`
+   GNU Lesser General Public License, Version 3
+   (https://www.gnu.org/copyleft/lesser.html)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:54:28 pm
-Last Modified: Tuesday, 27th July 2021 10:56:22 am
+Last Modified: Thursday, 21st October 2021 02:52:24 pm
 '''
 import unittest
 
@@ -163,8 +165,8 @@ class TestZeroPadding(unittest.TestCase):
 
     def test_result_avoid_wrap_fast_len(self):
         expected_len = next_fast_len(int(
-            self.A.shape[0] +
-            self.params['sampling_rate'] * self.params['lengthToSave']))
+            self.A.shape[0]
+            + self.params['sampling_rate'] * self.params['lengthToSave']))
         self.assertEqual(pptd.zeroPadding(
             self.A, {'type': 'avoidWrapFastLen'}, self.params).shape[0],
             expected_len)
@@ -176,16 +178,16 @@ class TestZeroPadding(unittest.TestCase):
             expected_len)
 
     def test_result_avoid_wrap_around_axis1(self):
-        expected_len = self.A.shape[1] + \
-            self.params['sampling_rate'] * self.params['lengthToSave']
+        expected_len = self.A.shape[1]\
+            + self.params['sampling_rate'] * self.params['lengthToSave']
         self.assertEqual(pptd.zeroPadding(
             self.A, {'type': 'avoidWrapAround'}, self.params, axis=1).shape[1],
             expected_len)
 
     def test_result_avoid_wrap_fast_len_axis1(self):
         expected_len = next_fast_len(int(
-            self.A.shape[1] +
-            self.params['sampling_rate'] * self.params['lengthToSave']))
+            self.A.shape[1]
+            + self.params['sampling_rate'] * self.params['lengthToSave']))
         self.assertEqual(pptd.zeroPadding(
             self.A,
             {'type': 'avoidWrapFastLen'}, self.params, axis=1).shape[1],

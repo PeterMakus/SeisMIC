@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Thursday, 21st October 2021 02:43:34 pm
+Last Modified: Thursday, 21st October 2021 03:11:50 pm
 '''
 
 import fnmatch
@@ -307,8 +307,8 @@ class Store_Client(object):
         if not len(inv):
             print('Station response not found ... loading from remote.')
             inv = self.rclient.get_stations(
-                    network=network, station=station,
-                    channel='*', level='response')
+                network=network, station=station,
+                channel='*', level='response')
             self._write_inventory(inv)
         return inv
 
@@ -570,8 +570,8 @@ def _adjacent_filepattern(
         if not isinstance(part, list):
             part = [part]
         for tpart in part[-1::-1]:
-            if (not ((('(' in tpart) and (')' in tpart)) or
-                (tpart in IDformat))
+            if (not ((('(' in tpart) and (')' in tpart))
+                or (tpart in IDformat))
                     and ('%' in tpart) and (flag == 0)):
                 flag = 1
                 if tpart in ['%H', '%I']:
@@ -702,8 +702,7 @@ def get_day_in_folder(
         # if the folder is empty julday will stay False
         year = dirlist[i0]
         julday = [i.split('.')[-1] for i in glob.glob(
-                os.path.join(
-                    root, year, network, station, channel, '*'))]
+            os.path.join(root, year, network, station, channel, '*'))]
         i0 += ii
     if not julday:
         raise FileNotFoundError(

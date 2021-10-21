@@ -1,5 +1,6 @@
 '''
 :copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -7,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 6th July 2021 09:18:14 am
-Last Modified: Wednesday, 29th September 2021 10:56:01 am
+Last Modified: Thursday, 21st October 2021 02:53:41 pm
 '''
 
 import os
@@ -16,7 +17,6 @@ from unittest.mock import patch
 
 import numpy as np
 from obspy import UTCDateTime
-from seismic.correlate.stats import CorrStats
 
 from seismic.monitor import monitor
 from seismic.monitor.dv import DV

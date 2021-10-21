@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Tuesday, 5th October 2021 01:42:19 pm
+Last Modified: Thursday, 21st October 2021 03:12:20 pm
 '''
 from typing import List, Tuple
 
@@ -596,10 +596,10 @@ def estimate_reftr_shifts_from_dt_corr(
                        if reftr != reftr1]
             for reftr2 in ref_idx:
                 ccorr, sshift = est_shift_from_dt_corr(
-                            np.squeeze(multi_ref_panel[reftr1]['value']),
-                            np.squeeze(multi_ref_panel[reftr2]['value']),
-                            np.squeeze(multi_ref_panel[reftr1]['corr']),
-                            np.squeeze(multi_ref_panel[reftr2]['corr']))
+                    np.squeeze(multi_ref_panel[reftr1]['value']),
+                    np.squeeze(multi_ref_panel[reftr2]['value']),
+                    np.squeeze(multi_ref_panel[reftr1]['corr']),
+                    np.squeeze(multi_ref_panel[reftr2]['corr']))
                 corr.append(ccorr)
                 shift.append(sshift)
 

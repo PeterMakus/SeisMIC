@@ -1,5 +1,6 @@
 '''
 :copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -7,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Monday, 11th October 2021 02:14:01 pm
+Last Modified: Thursday, 21st October 2021 02:53:20 pm
 '''
 import unittest
 import math as mathematics
@@ -113,8 +114,7 @@ class TestHeaderToNPArray(unittest.TestCase):
             'endtime': UTCDateTime(10),
             'corr_start': UTCDateTime(0),
             'corr_end': UTCDateTime(10),
-            'other': 'blub'
-            })
+            'other': 'blub'})
         exp = dict(st)
         for key in exp:
             if isinstance(exp[key], UTCDateTime):
@@ -130,8 +130,7 @@ class TestHeaderToNPArray(unittest.TestCase):
             'endtime': [UTCDateTime(ii+10) for ii in range(10)],
             'corr_start': [UTCDateTime(ii) for ii in range(10)],
             'corr_end': [UTCDateTime(ii+10) for ii in range(10)],
-            'other': 'blub'
-            })
+            'other': 'blub'})
         exp = dict(st)
         for key in exp:
             if isinstance(exp[key], list):
@@ -151,8 +150,7 @@ class TestLoadHeaderFromNPArray(unittest.TestCase):
             'endtime': UTCDateTime(10),
             'corr_start': UTCDateTime(0),
             'corr_end': UTCDateTime(10),
-            'other': 'blub'
-            })
+            'other': 'blub'})
 
     def test_integral(self):
         d = mu.save_header_to_np_array(self.st)
@@ -165,8 +163,7 @@ class TestLoadHeaderFromNPArray(unittest.TestCase):
             'endtime': [UTCDateTime(ii+10) for ii in range(10)],
             'corr_start': [UTCDateTime(ii) for ii in range(10)],
             'corr_end': [UTCDateTime(ii+10) for ii in range(10)],
-            'other': 'blub'
-            })
+            'other': 'blub'})
         d = mu.save_header_to_np_array(st)
         st2 = mu.load_header_from_np_array(d)
         self.assertDictEqual(st2, dict(st))

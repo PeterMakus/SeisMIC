@@ -1,5 +1,6 @@
 '''
 :copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -8,7 +9,7 @@
 
 Created: Tuesday, 1st June 2021 10:42:03 am
 
-Last Modified: Wednesday, 20th October 2021 04:24:15 pm
+Last Modified: Thursday, 21st October 2021 02:57:05 pm
 
 '''
 from copy import deepcopy
@@ -181,10 +182,10 @@ class TestDBHandler(unittest.TestCase):
     def test_add_already_available_data(self):
         st = self.ctr.stats
         path = corr_hdf5.hierarchy.format(
-                tag='subdivision',
-                network=st.network, station=st.station, channel=st.channel,
-                corr_st=st.corr_start.format_fissures(),
-                corr_et=st.corr_end.format_fissures())
+            tag='subdivision',
+            network=st.network, station=st.station, channel=st.channel,
+            corr_st=st.corr_start.format_fissures(),
+            corr_et=st.corr_end.format_fissures())
         with warnings.catch_warnings(record=True) as w:
             with patch.object(self.dbh, 'create_dataset') as create_ds_mock:
                 create_ds_mock.side_effect = ValueError('test')
@@ -212,10 +213,9 @@ class TestDBHandler(unittest.TestCase):
         corr_start = UTCDateTime(0)
         corr_end = UTCDateTime(100)
         exp_path = corr_hdf5.hierarchy.format(
-                    tag=tag,
-                    network=net, station=stat, channel=ch,
-                    corr_st=corr_start.format_fissures(),
-                    corr_et=corr_end.format_fissures())
+            tag=tag, network=net, station=stat, channel=ch,
+            corr_st=corr_start.format_fissures(),
+            corr_et=corr_end.format_fissures())
         d = {exp_path: self.ctr.data}
         file_mock.side_effect = d.__getitem__
         self.assertTrue(np.all(self.dbh[exp_path] == d[exp_path]))
@@ -235,10 +235,9 @@ class TestDBHandler(unittest.TestCase):
         corr_start = UTCDateTime(0)
         corr_end = UTCDateTime(100)
         exp_path = corr_hdf5.hierarchy.format(
-                    tag=tag,
-                    network='AB-CD', station='CD-AB', channel=ch,
-                    corr_st=corr_start.format_fissures(),
-                    corr_et=corr_end.format_fissures())
+            tag=tag, network='AB-CD', station='CD-AB', channel=ch,
+            corr_st=corr_start.format_fissures(),
+            corr_et=corr_end.format_fissures())
         d = {exp_path: self.ctr.data}
         file_mock.side_effect = d.__getitem__
         out = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
@@ -256,10 +255,9 @@ class TestDBHandler(unittest.TestCase):
         corr_start = UTCDateTime(0)
         corr_end = UTCDateTime(100)
         exp_path = corr_hdf5.hierarchy.format(
-                    tag=tag,
-                    network=net, station=stat, channel=ch,
-                    corr_st=corr_start.format_fissures(),
-                    corr_et=corr_end.format_fissures())
+            tag=tag, network=net, station=stat, channel=ch,
+            corr_st=corr_start.format_fissures(),
+            corr_et=corr_end.format_fissures())
         d = {exp_path: self.ctr.data, '/rand/AB-CD/': self.ctr.data}
         file_mock.side_effect = d.__getitem__
 
@@ -280,10 +278,8 @@ class TestDBHandler(unittest.TestCase):
         corr_start = '*'
         corr_end = '*'
         exp_path = corr_hdf5.hierarchy.format(
-                    tag=tag,
-                    network=net, station=stat, channel=ch,
-                    corr_st=corr_start,
-                    corr_et=corr_end)
+            tag=tag, network=net, station=stat, channel=ch,
+            corr_st=corr_start, corr_et=corr_end)
         exp_path = '/'.join(exp_path.split('/')[:-4])
         d = {exp_path: self.ctr.data, '/rand/AB-CD/': self.ctr.data}
         file_mock.side_effect = d.__getitem__

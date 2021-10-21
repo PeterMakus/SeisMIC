@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 5th July 2021 02:44:13 pm
-Last Modified: Thursday, 21st October 2021 02:38:58 pm
+Last Modified: Thursday, 21st October 2021 02:46:23 pm
 '''
 
 from future.utils import native_str
@@ -27,11 +27,11 @@ class CorrStats(AttribDict):
     A container for additional header information of a ObsPy Trace object.
 
     A ``Stats`` object may contain all header information (also known as meta
-    data) of a :class:`~seismic.correlate.stream.CorrTrace` object. Those headers
-    may be accessed or modified either in the dictionary style or directly via
-    a corresponding attribute. There are various default attributes which are
-    required by every waveform import and export modules within ObsPy such as
-    :mod:`obspy.io.mseed`.
+    data) of a :class:`~seismic.correlate.stream.CorrTrace` object. Those
+    headers may be accessed or modified either in the dictionary style or
+    directly via a corresponding attribute. There are various default
+    attributes which are required by every waveform import and export modules
+    within ObsPy such as :mod:`obspy.io.mseed`.
 
     :type header: dict or :class:`~obspy.core.trace.Stats`, optional
     :param header: Dictionary containing meta information of a single
