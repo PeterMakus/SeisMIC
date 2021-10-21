@@ -7,7 +7,9 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 1st June 2021 10:42:03 am
-Last Modified: Tuesday, 19th October 2021 02:25:16 pm
+
+Last Modified: Wednesday, 20th October 2021 04:24:15 pm
+
 '''
 from copy import deepcopy
 import unittest
@@ -24,7 +26,7 @@ from seismic.db import corr_hdf5
 from seismic.correlate.stream import CorrStream, CorrTrace
 
 
-with open('params.yaml') as file:
+with open('params_example.yaml') as file:
     co = yaml.load(file, Loader=yaml.FullLoader)['co']
     co['corr_args']['combinations'] = []
 
