@@ -31,3 +31,6 @@ jobs:
         run: |
             conda install pytest
             pytest tests
+      - name: Lint
+        run: |
+            python formatting_test/test_code_formatting.py
