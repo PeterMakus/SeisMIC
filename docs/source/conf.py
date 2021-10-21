@@ -36,7 +36,8 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.githubpages',
               'sphinx.ext.napoleon',
               'sphinx.ext.autosummary',
-              'sphinxcontrib.mermaid']
+              'sphinxcontrib.mermaid',
+              'sphinx_copybutton']
 # autosummary_generate = True
 
 # For docstring __init__ documentation
@@ -64,9 +65,35 @@ autodoc_default_options = {
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'pydata_sphinx_theme'  # 'sphinx_rtd_theme'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+
+html_title = "SeisMIC"
+# html_logo = "chapters/figures/logo.png"
+# html_favicon = "chapters/figures/favicon.ico"
+
+html_context = {
+    # "github_url": "https://github.com", # or your GitHub Enterprise
+    "github_user": 'PeterMakus',
+    "github_repo": 'SeisMIC',
+    "github_version": "main",
+    "doc_path": "docs",
+}
+
+html_theme_options = {
+    "github_url": "https://github.com/PeterMakus/SeisMIC",
+    "use_edit_page_button": True,
+    # "show_toc_level": 1,
+
+    "use_edit_page_button": True,
+
+    # "collapse_navigation": True,
+    "navigation_depth": 2,
+    # "navbar_align": "left"
+
+}
