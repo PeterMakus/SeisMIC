@@ -18,6 +18,7 @@ dependencies:
   - tqdm
   - pip:
     - sphinx
-    - sphinx-rtd-theme
+    - pydata-sphinx-theme
+    - sphinx-copybutton
     - sphinxcontrib-mermaid
     - -e .
