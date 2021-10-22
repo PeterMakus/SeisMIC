@@ -24,7 +24,7 @@ A few simple steps:
 
 ```bash
 # Change directory to the same directory that this repo is in (i.e., same directory as setup.py)
-cd $PathToThisRepo$
+cd $PathToThisRepository$
 
 # Create the conda environment and install dependencies
 conda env create -f environment.yml
