@@ -54,7 +54,7 @@ jobs:
       shell: bash -l {0}
       run: |
         pip install coverage
-        coverage run -m unittest
+        coverage run -m unittest tests/*.py
 
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v1
