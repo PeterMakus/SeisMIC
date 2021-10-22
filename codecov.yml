@@ -1,0 +1,5 @@
+ignore:
+  - "*/tests/*”
+  - "*/examples/*"
+  - "*/formatting_test"
+  - "*/plot/*"
