@@ -1,5 +1,5 @@
 ignore:
   - "*/tests/*"
   - "*/examples/*"
-  - "*/formatting_test"
+  - "*/formatting_test/*"
   - "*/plot/*"
