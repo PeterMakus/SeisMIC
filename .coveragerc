@@ -14,3 +14,4 @@ omit =
     formatting_test/*
     examples/*
     */plot/*
+    setup.py
