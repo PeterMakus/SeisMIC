@@ -57,5 +57,4 @@ jobs:
         coverage run -m unittest
 
     - name: Upload Coverage to Codecov
-      shell: bash -l {0}
       uses: codecov/codecov-action@v1
