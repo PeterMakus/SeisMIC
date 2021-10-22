@@ -1,0 +1,62 @@
+name: CodeCov
+on: [push, pull_request]
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      OS: ubuntu-latest
+      PYTHON: '3.9'
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: ‘2’
+
+    # Cache Conda environment installattion
+    - name: Cache conda
+      uses: actions/cache@v2
+      env:
+        # Increase this value to reset cache if etc/example-environment.yml has not changed
+        CACHE_NUMBER: 0
+      with:
+        path: ~/conda_pkgs_dir
+        key:
+          ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+          hashFiles('environment.yml') }}
+    
+    # Setting Up Cache pip installations
+    - name: Cache pip
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          ${{ runner.os }}-
+    - name: Prepare Environment
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        activate-environment: seismic
+        environment-file: environment.yml
+        # python-version: 3.8
+        auto-activate-base: false
+        use-only-tar-bz2: true
+
+    # To keep Conda activated you have to use 'shell: bash -l {0}' line
+    # To specifiy the shell
+    - name: INFO using bash shell
+      shell: bash -l {0}
+      run: |
+        conda info
+        conda list
+
+    - name: Generate Report
+      shell: bash -l {0}
+      run: |
+        pip install pytest-cov
+        pytest --cov=./ --cov-report=xml
+
+    - name: Upload Coverage to Codecov
+      uses: codecov/codecov-action@v1
+      with:
+        fail_ci_if_error: true
