@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Thursday, 21st October 2021 03:14:52 pm
+Last Modified: Monday, 25th October 2021 09:44:36 am
 '''
 from copy import deepcopy
 import logging
@@ -275,19 +275,22 @@ class Monitor(object):
         are computed.
 
         :param method: Which components should be averaged? Can be
-            'StationWide' if all component-combinations should be averaged,
-            'AutoComponents' if only the dv results of autocorrelation are to
-            be averaged, or 'CrossComponents' if you wish to average dvs from
-            the same station but only intercomponent corrrelations.
+            'StationWide' if all component-combinations for one station should
+            be averaged, 'AutoComponents' if only the dv results of
+            autocorrelations are to be averaged, 'CrossComponents' if you wish
+            to average dvs from the same station but only intercomponent
+            corrrelations, or 'CrossStations' if cross-station correlations
+            should be averaged (same station combination and all component
+            combinations).
             Defaults to 'AutoComponents'
         :type method: str, optional
         :raises ValueError: For Unknown combination methods.
         """
-        if method.lower() not in (
-                'autocomponents', 'crosscomponents', 'stationwide'):
-            raise ValueError(
-                'Unknown averaging method. Use "autocomponent" or '
-                + '"stationwide".')
+        av_methods = (
+            'autocomponents', 'crosscomponents', 'stationwide',
+            'crossstations')
+        if method.lower() not in av_methods:
+            raise ValueError('Averaging method not in %s.' % str(av_methods))
         infiles = glob(os.path.join(self.outdir, '*.npz'))
         if method.lower() == 'autocomponents':
             ch = 'av-auto'
@@ -315,16 +318,31 @@ class Monitor(object):
                     fffil.clear()
                     self.logger.debug('Skipping already averaged dv...%s' % f)
                     break
+                elif 'av' in f:
+                    # computed by another averaging method
+                    infiles.remove(f)
+                    continue
+                components = f.split('.')[-2].split('-')
+                stations = f.split('.')[-3].split('-')
                 if method.lower() == 'autocomponents':
                     # Remove those from combined channels
-                    components = f.split('.')[-2].split('-')
-                    if components[0] != components[1]:
+                    if components[0] != components[1] \
+                            or stations[0] != stations[1]:
                         infiles.remove(f)
                         continue
                 elif method.lower() == 'crosscomponents':
                     # Remove those from equal channels
                     components = f.split('.')[-2].split('-')
-                    if components[0] == components[1]:
+                    if components[0] == components[1] \
+                            or stations[0] != stations[1]:
+                        infiles.remove(f)
+                        continue
+                elif method.lower() == 'stationwide':
+                    if stations[0] != stations[1]:
+                        infiles.remove(f)
+                        continue
+                elif method.lower() == 'crossstations':
+                    if stations[0] == stations[1]:
                         infiles.remove(f)
                         continue
                 fffil.append(f)
