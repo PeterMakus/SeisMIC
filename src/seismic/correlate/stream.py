@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Thursday, 21st October 2021 03:03:07 pm
+Last Modified: Tuesday, 26th October 2021 05:15:10 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -225,6 +225,51 @@ class CorrBulk(object):
         self.ref_trc = outdata
         return outdata
 
+    def extract_multi_trace(
+        self, win_inc: int, method: str = 'mean',
+            percentile: float = 50.) -> List[np.ndarray]:
+        """
+        Extract several representative traces from a correlation matrix.
+        (one per time window `win_inc`)
+
+        Extract a correlation trace from the that best represents the
+        correlation matrix. ``Method`` decides about method to extract the
+        trace. The following possibilities are available
+
+        * ``mean`` averages all traces in the matrix
+        * ``norm_mean`` averages the traces normalized after normalizing for
+            maxima
+        * ``similarity_percentile`` averages the ``percentile`` % of traces
+            that best correlate with the mean of all traces. This will exclude
+            abnormal traces. ``percentile`` = 50 will return an average of
+            traces with correlation (with mean trace) above the median.
+
+        :param win_inc: Length of each window that a Trace should be extracted
+            from. Given in days
+        :type win_inc: int (number of days)
+        :type method: string
+        :param method: method to extract the trace
+        :type percentile: float
+        :param percentile: only used for method=='similarity_percentile'
+
+        :rtype: np.ndarray
+        :return: extracted trace
+
+        ..note:: the extracted traces will also be saved in self.ref_trc
+        """
+        ref_trcs = []
+        inc_s = win_inc*24*3600
+        start = min(self.stats.corr_start)
+        while start < max(self.stats.corr_end):
+            end = start + inc_s
+            ii = self._find_slice_index(start, end, True)
+            start = end
+            # stats don't need to be altered for this function
+            ref_trcs.append(pcp.corr_mat_extract_trace(
+                self.data[ii, :], self.stats, method, percentile))
+        self.ref_trc = ref_trcs
+        return ref_trcs
+
     def mirror(self):
         """
         Average the causal and acausal (i.e., right and left) parts of the
@@ -349,6 +394,37 @@ class CorrBulk(object):
         np.savez_compressed(
             path, data=self.data, **kwargs)
 
+    def slice(
+        self, starttime: UTCDateTime, endtime: UTCDateTime,
+            include_partial: bool = True):
+        """
+        return a subset of the current CorrelationBulk with data inside
+        the requested time window.
+
+        :param starttime: Earliest Starttime
+        :type starttime: UTCDateTime
+        :param endtime: Latest endtime
+        :type endtime: UTCDateTime
+        :param include_partial: Include time window if it's only
+            partially covered, defaults to True
+        :type include_partial: bool, optional
+        :return: Another CorrBulk object
+        :rtype: CorrBulk
+        """
+        ii = self._find_slice_index(starttime, endtime, include_partial)
+        data = self.data[ii, :]
+        stats = deepcopy(self.stats)
+        for key, value in stats.items():
+            try:
+                if isinstance(value, list):
+                    stats[key] = filter(lambda ii: ii, value)
+                elif isinstance(value, np.ndarray):
+                    stats[key] = value[ii]
+            except AttributeError:
+                continue
+                # Those will change automatically
+        return CorrBulk(data, stats)
+
     def taper(self, width: float):
         """
         Taper the data.
@@ -417,6 +493,31 @@ class CorrBulk(object):
         proc = ['trim: %s, %s' % (str(starttime), str(endtime))]
         self.stats.processing_bulk += proc
         return self
+
+    def _find_slice_index(
+        self, starttime: UTCDateTime, endtime: UTCDateTime,
+            include_partial: bool) -> np.ndarray:
+        """
+        Find the indices of the correlations in the requested time window.
+
+        :param starttime: start of the time window
+        :type starttime: UTCDateTime
+        :param endtime: end of the time window
+        :type endtime: UTCDateTime
+        :param include_partial: include corrs that are only partially covered
+        :type include_partial: bool
+        :return: An Array containing the boolean indices
+        :rtype: np.ndarray[bool]
+        """
+        if include_partial:
+            ii = np.logical_and(
+                np.array(self.stats.corr_end) >= starttime,
+                np.array(self.stats.corr_start) <= endtime)
+        else:
+            ii = np.logical_and(
+                np.array(self.stats.corr_start) >= starttime,
+                np.array(self.stats.corr_end) <= endtime)
+        return np.squeeze(ii)
 
 
 def read_corr_bulk(path: str) -> CorrBulk:
