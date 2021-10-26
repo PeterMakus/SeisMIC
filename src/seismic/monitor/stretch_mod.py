@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Thursday, 21st October 2021 03:12:20 pm
+Last Modified: Tuesday, 26th October 2021 05:36:42 pm
 '''
 from typing import List, Tuple
 
@@ -629,7 +629,10 @@ def estimate_reftr_shifts_from_dt_corr(
         m = m - np.mean(m)
 
         # How many samples (int) each sim matrix must be rolled
-        m = np.around(m / delta, out=np.zeros_like(m, dtype='int32'))
+        # PM October 2021 - require works the dtype casting in first
+        # step caused errors, should be fine now?
+        m = np.around(m / delta)  # , out=np.zeros_like(m, dtype='int32'))
+        m = np.require(m, dtype='int32')
 
         row, col = np.squeeze(multi_ref_panel['reftr_0']['sim_mat']).shape
 

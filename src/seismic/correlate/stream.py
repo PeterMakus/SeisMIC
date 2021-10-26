@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Tuesday, 26th October 2021 05:15:10 pm
+Last Modified: Tuesday, 26th October 2021 05:21:29 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -267,6 +267,7 @@ class CorrBulk(object):
             # stats don't need to be altered for this function
             ref_trcs.append(pcp.corr_mat_extract_trace(
                 self.data[ii, :], self.stats, method, percentile))
+        ref_trcs = np.array(ref_trcs)
         self.ref_trc = ref_trcs
         return ref_trcs
 
