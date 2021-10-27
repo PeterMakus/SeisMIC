@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Thursday, 21st October 2021 02:39:20 pm
+Last Modified: Wednesday, 27th October 2021 01:16:44 pm
 '''
 
 from datetime import datetime
@@ -67,8 +67,7 @@ class DV(object):
 
     def smooth_sim_mat(self, win_len: int):
         """
-        Smoothes the similarity matrix along the desired axis with a running
-        mean window.
+        Smoothes the similarity matrix along the correlation time axis.
 
         :param win_len: Length of the window in number of samples.
         :type win_len: int
