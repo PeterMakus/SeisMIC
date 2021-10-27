@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 25th October 2021 09:44:36 am
+Last Modified: Wednesday, 27th October 2021 12:29:37 pm
 '''
 from copy import deepcopy
 import logging
@@ -186,7 +186,7 @@ class Monitor(object):
         if cbt.data.shape[1] <= 20:
             raise ValueError('CorrBulk extremely short.')
 
-        tr = cbt.extract_trace(method='mean')
+        tr = cbt.extract_multi_trace(**self.options['dv']['dt_ref'])
 
         # Compute time window
         tw = [np.arange(
@@ -206,7 +206,7 @@ class Monitor(object):
 
         # extract the final reference trace (mean excluding very different
         # traces)
-        tr = ccb.extract_trace(method='mean')
+        tr = cbt.extract_multi_trace(**self.options['dv']['dt_ref'])
         # obtain an improved time shift measurement
         dv = cbt.stretch(
             ref_trc=tr, return_sim_mat=True,

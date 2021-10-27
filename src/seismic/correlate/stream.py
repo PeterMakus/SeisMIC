@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Tuesday, 26th October 2021 05:21:29 pm
+Last Modified: Wednesday, 27th October 2021 12:25:48 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -226,7 +226,7 @@ class CorrBulk(object):
         return outdata
 
     def extract_multi_trace(
-        self, win_inc: int, method: str = 'mean',
+        self, win_inc: int or List[int], method: str = 'mean',
             percentile: float = 50.) -> List[np.ndarray]:
         """
         Extract several representative traces from a correlation matrix.
@@ -245,8 +245,10 @@ class CorrBulk(object):
             traces with correlation (with mean trace) above the median.
 
         :param win_inc: Length of each window that a Trace should be extracted
-            from. Given in days
-        :type win_inc: int (number of days)
+            from. Given in days. Can be a list/np.ndarray or an int (constant
+            increment). **If set to 0, only one trace for the whole time will
+            be used.**
+        :type win_inc: int or List[int] (number of days)
         :type method: string
         :param method: method to extract the trace
         :type percentile: float
@@ -258,15 +260,28 @@ class CorrBulk(object):
         ..note:: the extracted traces will also be saved in self.ref_trc
         """
         ref_trcs = []
+        if isinstance(win_inc, list):
+            win_inc = np.array(win_inc)
+        elif win_inc == 0:
+            self.extract_trace(method, percentile)
+
         inc_s = win_inc*24*3600
         start = min(self.stats.corr_start)
-        while start < max(self.stats.corr_end):
-            end = start + inc_s
-            ii = self._find_slice_index(start, end, True)
-            start = end
-            # stats don't need to be altered for this function
-            ref_trcs.append(pcp.corr_mat_extract_trace(
-                self.data[ii, :], self.stats, method, percentile))
+        if isinstance(inc_s, np.ndarray):
+            for inc in inc_s:
+                end = start + inc
+                ii = self._find_slice_index(start, end, True)
+                start = end
+                ref_trcs.append(pcp.corr_mat_extract_trace(
+                    self.data[ii, :], self.stats, method, percentile))
+        else:
+            while start < max(self.stats.corr_end):
+                end = start + inc_s
+                ii = self._find_slice_index(start, end, True)
+                start = end
+                # stats don't need to be altered for this function
+                ref_trcs.append(pcp.corr_mat_extract_trace(
+                    self.data[ii, :], self.stats, method, percentile))
         ref_trcs = np.array(ref_trcs)
         self.ref_trc = ref_trcs
         return ref_trcs
@@ -794,14 +809,18 @@ class CorrStream(Stream):
         statlist = []
         # Double check sampling rate
         sr = st[0].stats.sampling_rate
+        mask = []
         for ii, tr in enumerate(st):
             if tr.stats.sampling_rate != sr:
                 warnings.warn('Sampling rate differs. Trace is skipped.')
+                mask.append(ii)
                 continue
             A[ii] = tr.data
             if inplace:
                 del tr.data
             statlist.append(tr.stats)
+        # Apply mask for skipped data
+        A = np.delete(A, mask, 0)
 
         stats = convert_statlist_to_bulk_stats(statlist)
         return CorrBulk(A, stats)
