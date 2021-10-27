@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Tuesday, 26th October 2021 05:36:42 pm
+Last Modified: Wednesday, 27th October 2021 03:36:00 pm
 '''
 from typing import List, Tuple
 
@@ -460,21 +460,25 @@ def est_shift_from_dt_corr(
     :pram corr2: Correlation between velocity corrected trace and reference B
     """
 
-    # Create maked arrays so that NaNs are handled properly
-    dt1 = np.ma.masked_array(dt1, mask=(np.isnan(dt1) | np.isinf(dt1)),
-                             fill_value=0)
-    dt2 = np.ma.masked_array(dt2, mask=(np.isnan(dt2) | np.isinf(dt2)),
-                             fill_value=0)
+    # Create masked arrays so that NaNs are handled properly
+    dt1 = np.ma.masked_array(
+        dt1, mask=(np.isnan(dt1) | np.isinf(dt1)), fill_value=0)
+    dt2 = np.ma.masked_array(
+        dt2, mask=(np.isnan(dt2) | np.isinf(dt2)), fill_value=0)
 
-    corr1 = np.ma.masked_array(corr1, mask=(np.isnan(corr1) | np.isinf(corr1)),
-                               fill_value=0)
-    corr2 = np.ma.masked_array(corr2, mask=(np.isnan(corr2) | np.isinf(corr2)),
-                               fill_value=0)
+    corr1 = np.ma.masked_array(
+        corr1, mask=(np.isnan(corr1) | np.isinf(corr1)), fill_value=0)
+    corr2 = np.ma.masked_array(
+        corr2, mask=(np.isnan(corr2) | np.isinf(corr2)), fill_value=0)
 
+    # October 21 - PM - Not entirely sure, why this is done?
+    # However, it leads to problems when creating the mask
+    # (because shape wrong). Two options: 1.DOn't do it or
+    # 2. Also remove the correspdoning points in the dt objects
     # Remove the points where the correlation is 0
-    no_zero = (corr1 > 0) & (corr2 > 0)
-    corr1 = corr1[no_zero]
-    corr2 = corr2[no_zero]
+    # no_zero = (corr1 > 0) & (corr2 > 0)
+    # corr1 = corr1[no_zero]
+    # corr2 = corr2[no_zero]
 
     # Estimate the point-variance for the two curves
     var1 = (1 - corr1 ** 2) / (4 * corr1 ** 2)
@@ -679,7 +683,7 @@ def estimate_reftr_shifts_from_dt_corr(
                     'value': dt,
                     'second_axis': stretch_vect,
                     'value_type': np.array(['stretch']),
-                    'method': np.array(['mufti_ref'])}
+                    'method': np.array(['multi_ref'])}
 
         if return_sim_mat:
             ret_dict.update({'sim_mat': bsimmat})
