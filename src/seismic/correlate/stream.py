@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Wednesday, 27th October 2021 12:25:48 pm
+Last Modified: Tuesday, 2nd November 2021 03:10:15 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -230,7 +230,9 @@ class CorrBulk(object):
             percentile: float = 50.) -> List[np.ndarray]:
         """
         Extract several representative traces from a correlation matrix.
-        (one per time window `win_inc`)
+        (one per time window `win_inc` with the length = 2*win_inc). That is,
+        the reference will be extracted with half increment overlap in each
+        direction.
 
         Extract a correlation trace from the that best represents the
         correlation matrix. ``Method`` decides about method to extract the
@@ -244,9 +246,10 @@ class CorrBulk(object):
             abnormal traces. ``percentile`` = 50 will return an average of
             traces with correlation (with mean trace) above the median.
 
-        :param win_inc: Length of each window that a Trace should be extracted
-            from. Given in days. Can be a list/np.ndarray or an int (constant
-            increment). **If set to 0, only one trace for the whole time will
+        :param win_inc: Increment between each window that a Trace should be
+            extracted from. Given in days. Can be a list/np.ndarray or an int
+            (constant increment). The windows' length will be twice the
+            increment. **If set to 0, only one trace for the whole time will
             be used.**
         :type win_inc: int or List[int] (number of days)
         :type method: string
@@ -270,8 +273,8 @@ class CorrBulk(object):
         if isinstance(inc_s, np.ndarray):
             for inc in inc_s:
                 end = start + inc
-                ii = self._find_slice_index(start, end, True)
-                start = end
+                ii = self._find_slice_index(start-inc/2, end+inc/2, True)
+                start = start + inc
                 ref_trcs.append(pcp.corr_mat_extract_trace(
                     self.data[ii, :], self.stats, method, percentile))
         else:
