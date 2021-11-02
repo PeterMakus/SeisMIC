@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Wednesday, 27th October 2021 03:36:00 pm
+Last Modified: Tuesday, 2nd November 2021 04:03:46 pm
 '''
 from typing import List, Tuple
 
@@ -476,17 +476,18 @@ def est_shift_from_dt_corr(
     # (because shape wrong). Two options: 1.DOn't do it or
     # 2. Also remove the correspdoning points in the dt objects
     # Remove the points where the correlation is 0
-    # no_zero = (corr1 > 0) & (corr2 > 0)
+    no_zero = (corr1 > 0) & (corr2 > 0)
     # corr1 = corr1[no_zero]
     # corr2 = corr2[no_zero]
 
     # Estimate the point-variance for the two curves
-    var1 = (1 - corr1 ** 2) / (4 * corr1 ** 2)
-    var2 = (1 - corr2 ** 2) / (4 * corr2 ** 2)
+    var1 = (1 - corr1[no_zero] ** 2) / (4 * corr1[no_zero] ** 2)
+    var2 = (1 - corr2[no_zero] ** 2) / (4 * corr2[no_zero] ** 2)
 
     # Calculate the point-weight
     wgt = 1 / (var1 + var2)
-    mask = (corr1 > 0.999) & (corr2 > 0.999)
+    # Insert he no_zero mask here instead.
+    mask = (corr1 > 0.999) & (corr2 > 0.999) & (~no_zero)
     wgt = wgt[~mask]
 
     # This saves from returning a masked value
