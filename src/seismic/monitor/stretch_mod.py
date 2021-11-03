@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Wednesday, 3rd November 2021 10:59:39 am
+Last Modified: Wednesday, 3rd November 2021 02:27:22 pm
 '''
 from typing import List, Tuple
 
@@ -60,6 +60,90 @@ def time_windows_creation(
             tw_list.append(np.arange(cstart, cstart + wlen, 1))
 
     return tw_list
+
+
+def compute_wfc(
+    mat: np.ndarray, tw: np.ndarray, refcorr: np.ndarray, sides: str,
+        remove_nans: bool = True) -> np.ndarray:
+    """
+    Computes the waveform coherency (**WFC**) between for the given reference
+    correlation and correlationmatrix.
+
+    See Steinmann, et. al. (2021) for details
+
+    :param mat: 2D Correlation Matrix (function of corrstart and time lag)
+    :type mat: np.ndarray
+    :param tw: Lag time window to use for the computation
+    :type tw: np.ndarray
+    :param refcorr: 1D reference Correlation Trace extracted from `mat`.
+    :type refcorr: np.ndarray
+    :param sides: Which sides to use. Can be `both`, `right`, `left`,
+        or `single`.
+    :type sides: str
+    :param remove_nans: Remove nans from CorrMatrix, defaults to True
+    :type remove_nans: bool, optional
+    :raises ValueError: unknown option in sides
+    :return: A 1D array with len=N(time windows)
+    :rtype: np.ndarray
+    """
+    # Mat must be a 2d vector in every case so
+    mat = np.atleast_2d(mat)
+
+    assert(len(refcorr) == mat.shape[1])
+
+    if remove_nans:
+        mat = np.nan_to_num(mat)
+
+    center_p = np.floor((mat.shape[1] - 1.) / 2.)
+
+    corr = np.zeros((len(tw), mat.shape[0]))
+
+    for (ii, ctw) in enumerate(tw):
+
+        if sides == 'both':
+            # ctw = np.hstack((center_p - ctw[::-1],
+            #                  center_p + ctw)).astype(np.int32)
+            if ctw[0] == 0:
+                ctw = np.hstack((
+                    center_p - ctw[::-1],
+                    center_p + ctw[1:])).astype(np.int32)
+            else:
+                ctw = np.hstack((
+                    center_p - ctw[::-1],
+                    center_p + ctw)).astype(np.int32)
+        elif sides == 'left':
+            ctw = (center_p - ctw[::-1]).astype(np.int32)
+        elif sides == 'right':
+            ctw = (center_p + ctw).astype(np.int32)
+        elif sides == 'single':
+            ctw = ctw.astype(np.int32)
+        else:
+            raise ValueError(
+                'sides = %s not a valid option.' % sides)
+
+        mask = np.zeros((mat.shape[1],))
+        mask[ctw] = 1
+
+        ref_mask_mat = mask
+        mat_mask_mat = np.tile(mask, (mat.shape[0], 1))
+
+        first = mat * mat_mask_mat
+        second = refcorr * ref_mask_mat
+
+        dprod = np.dot(first, second.T)
+
+        # Normalization
+        f_sq = np.sum(first ** 2, axis=1)
+        s_sq = np.sum(second ** 2)
+
+        f_sq = f_sq.reshape(1, len(f_sq))
+        # s_sq = s_sq.reshape(1, len(s_sq))
+
+        # den = np.sqrt(np.dot(f_sq.T, s_sq))
+        den = np.sqrt(np.dot(f_sq, s_sq))
+
+        corr[ii] = dprod/den
+    return corr
 
 
 def velocity_change_estimate(
@@ -410,7 +494,7 @@ def multi_ref_vchange(
     except ValueError:  # An array is passed
         reftr_count = 1
 
-    # Distionary that will hold all the results
+    # Dictionary that will hold all the results
     multi_ref_panel = {}
 
     # When there is just 1 reference trace no loop is necessary
