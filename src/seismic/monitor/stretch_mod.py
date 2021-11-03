@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Tuesday, 2nd November 2021 04:03:46 pm
+Last Modified: Wednesday, 3rd November 2021 10:59:39 am
 '''
 from typing import List, Tuple
 
@@ -481,8 +481,10 @@ def est_shift_from_dt_corr(
     # corr2 = corr2[no_zero]
 
     # Estimate the point-variance for the two curves
-    var1 = (1 - corr1[no_zero] ** 2) / (4 * corr1[no_zero] ** 2)
-    var2 = (1 - corr2[no_zero] ** 2) / (4 * corr2[no_zero] ** 2)
+    # var1 = (1 - corr1[no_zero] ** 2) / (4 * corr1[no_zero] ** 2)
+    # var2 = (1 - corr2[no_zero] ** 2) / (4 * corr2[no_zero] ** 2)
+    var1 = (1 - corr1 ** 2) / (4 * corr1 ** 2)
+    var2 = (1 - corr2 ** 2) / (4 * corr2 ** 2)
 
     # Calculate the point-weight
     wgt = 1 / (var1 + var2)
