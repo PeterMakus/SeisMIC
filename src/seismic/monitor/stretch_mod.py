@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Wednesday, 3rd November 2021 02:27:22 pm
+Last Modified: Wednesday, 3rd November 2021 02:46:26 pm
 '''
 from typing import List, Tuple
 
@@ -66,7 +66,7 @@ def compute_wfc(
     mat: np.ndarray, tw: np.ndarray, refcorr: np.ndarray, sides: str,
         remove_nans: bool = True) -> np.ndarray:
     """
-    Computes the waveform coherency (**WFC**) between for the given reference
+    Computes the waveform coherency (**WFC**) between the given reference
     correlation and correlationmatrix.
 
     See Steinmann, et. al. (2021) for details
@@ -101,8 +101,6 @@ def compute_wfc(
     for (ii, ctw) in enumerate(tw):
 
         if sides == 'both':
-            # ctw = np.hstack((center_p - ctw[::-1],
-            #                  center_p + ctw)).astype(np.int32)
             if ctw[0] == 0:
                 ctw = np.hstack((
                     center_p - ctw[::-1],
@@ -137,13 +135,66 @@ def compute_wfc(
         s_sq = np.sum(second ** 2)
 
         f_sq = f_sq.reshape(1, len(f_sq))
-        # s_sq = s_sq.reshape(1, len(s_sq))
 
-        # den = np.sqrt(np.dot(f_sq.T, s_sq))
         den = np.sqrt(np.dot(f_sq, s_sq))
 
         corr[ii] = dprod/den
     return corr
+
+
+def wfc_multi_reftr(
+    corr_data: np.ndarray, ref_trs: np.ndarray, tw: np.ndarray, sides: str,
+        remove_nans: bool = True) -> dict:
+    """
+    Computes the waveform coherency (**WFC**) between the given reference
+    correlation(s) and correlation matrix.
+    If several references are given, it will loop over these
+
+    See Steinmann, et. al. (2021) for details
+
+    :param corr_data: 2D Correlation Matrix
+        (function of corrstart and time lag)
+    :type corr_data: np.ndarray
+    :param refcorr: 1 or 2D reference Correlation Trace extracted from `mat`.
+        If 2D, it will be interpreted as one refcorr trace per row.
+    :type refcorr: np.ndarray
+    :param tw: Lag time window to use for the computation
+    :type tw: np.ndarray
+    :param sides: Which sides to use. Can be `both`, `right`, `left`,
+        or `single`.
+    :type sides: str
+    :param remove_nans: Remove nans from CorrMatrix, defaults to True
+    :return: A dictionary with one correlation array for each reference trace.
+    :rtype: dict
+    """
+    if remove_nans:
+        corr_data = np.nan_to_num(corr_data)
+        ref_trs = np.nan_to_num(ref_trs)
+
+    # remove 1-dimensions
+    ref_trs = np.squeeze(ref_trs)
+
+    multi_ref_panel = {}
+
+    # check how many reference traces have been passed
+    try:
+        reftr_count, _ = ref_trs.shape
+    except ValueError:  # An array is passed
+        reftr_count = 1
+    print(reftr_count)
+
+    if reftr_count == 1:
+        key = "reftr_0"
+        value = compute_wfc(
+            corr_data, tw, ref_trs, sides, remove_nans=remove_nans)
+        multi_ref_panel.update({key: value})
+    else:  # For multiple-traces loops
+        for i, rftr in enumerate(ref_trs):
+            key = "reftr_%d" % int(i)
+            value = value = compute_wfc(
+                corr_data, tw, rftr, sides, remove_nans=remove_nans)
+            multi_ref_panel.update({key: value})
+    return multi_ref_panel
 
 
 def velocity_change_estimate(
