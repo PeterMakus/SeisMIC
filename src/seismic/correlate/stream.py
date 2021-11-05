@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Tuesday, 2nd November 2021 03:10:15 pm
+Last Modified: Friday, 5th November 2021 08:41:48 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -23,8 +23,9 @@ from obspy.core import Stats
 from seismic.utils import miic_utils as m3ut
 from seismic.plot.plot_correlation import plot_cst, plot_ctr
 import seismic.monitor.post_corr_process as pcp
-from seismic.monitor.stretch_mod import time_stretch_apply
+from seismic.monitor.stretch_mod import time_stretch_apply, wfc_multi_reftr
 from seismic.monitor.dv import DV
+from seismic.monitor.wfc import WFC
 from seismic.correlate.stats import CorrStats
 
 
@@ -512,6 +513,35 @@ class CorrBulk(object):
         proc = ['trim: %s, %s' % (str(starttime), str(endtime))]
         self.stats.processing_bulk += proc
         return self
+
+    def wfc(
+            self, ref_trc: np.ndarray, time_window: np.ndarray, sides: str,
+            remove_nans: bool = True) -> WFC:
+        """
+        Computes the waveform coherency (**WFC**) between the given reference
+        correlation(s) and correlation matrix.
+        If several references are given, it will loop over these
+
+        See Steinmann, et. al. (2021) for details.
+
+        :param refcorr: 1 or 2D reference Correlation Trace extracted from the
+            correlation data.
+            If 2D, it will be interpreted as one refcorr trace per row.
+        :type refcorr: np.ndarray
+        :param tw: Lag time window to use for the computation
+        :type tw: np.ndarray
+        :param sides: Which sides to use. Can be `both`, `right`, `left`,
+            or `single`.
+        :type sides: str
+        :param remove_nans: Remove nans from CorrMatrix, defaults to True
+        :return: A dictionary with one correlation array for each reference
+            trace. The keys are using the syntax `reftr_%n`.
+        :rtype: dict
+        """
+        wfc_dict = wfc_multi_reftr(
+            self.data, ref_trc, time_window, sides, remove_nans)
+        wfc = WFC(wfc_dict)
+        return wfc
 
     def _find_slice_index(
         self, starttime: UTCDateTime, endtime: UTCDateTime,

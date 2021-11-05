@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 27th October 2021 12:29:37 pm
+Last Modified: Friday, 5th November 2021 01:05:37 pm
 '''
 from copy import deepcopy
 import logging
@@ -378,6 +378,56 @@ class Monitor(object):
                 dv_av.plot(
                     save_dir=savedir, figure_file_name=fname,
                     normalize_simmat=True, sim_mat_Clim=[-1, 1])
+
+    def compute_waveform_coherency(
+        self, corr_file: str, tag: str, network: str, station: str,
+            channel: str):
+        self.logger.info('Computing wfc for file: %s and channel: %s' % (
+            corr_file, channel))
+        with CorrelationDataBase(corr_file, mode='r') as cdb:
+            # get the corrstream containing all the corrdata for this combi
+            cst = cdb.get_data(network, station, channel, tag)
+        cb = cst.create_corr_bulk(inplace=True)
+
+        # for possible rest bits
+        del cst
+        # Do the actual processing:
+        cb.normalize(normtype='absmax')
+        # That is were the stacking is happening
+        starttimes, endtimes = make_time_list(
+            self.options['wfc']['start_date'], self.options['wfc']['end_date'],
+            self.options['wfc']['date_inc'], self.options['wfc']['win_len'])
+        cb.resample(self.starttimes, self.endtimes)
+        cb.filter(
+            (self.options['wfc']['freq_min'], self.options['wfc']['freq_max']))
+
+        # Preprocessing on the correlation bulk
+        if 'preprocessing' in self.options['wfc']:
+            for func in self.options['wfc']['preprocessing']:
+                f = cb.__getattribute__(func['function'])
+                cb = f(**func['args'])
+
+        # Now, we make a copy of the cm to be trimmed
+        cbt = cb.copy().trim(
+            -(self.options['wfc']['tw_start']+self.options['wfc']['tw_len']),
+            (self.options['wfc']['tw_start']+self.options['wfc']['tw_len']))
+
+        if cbt.data.shape[1] <= 20:
+            raise ValueError('CorrBulk extremely short.')
+
+        tr = cbt.extract_multi_trace(**self.options['dv']['dt_ref'])
+
+        # Compute time window
+        tw = [np.arange(
+            self.options['wfc']['tw_start']*cbt.stats['sampling_rate'],
+            (self.options['wfc']['tw_start']+self.options[
+                'wfc']['tw_len'])*cbt.stats['sampling_rate'], 1)]
+        wfc = cbt.wfc(tr, tw, sides='both')
+        # Compute the average over the whole time window
+        wfc.compute_average()
+        outf = os.path.join(
+            self.outdir, 'WFC-%s.%s.%s' % (network, station, channel))
+        wfc.save(outf)
 
 
 def make_time_list(

@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Wednesday, 3rd November 2021 02:46:26 pm
+Last Modified: Friday, 5th November 2021 08:15:28 am
 '''
 from typing import List, Tuple
 
@@ -155,7 +155,8 @@ def wfc_multi_reftr(
     :param corr_data: 2D Correlation Matrix
         (function of corrstart and time lag)
     :type corr_data: np.ndarray
-    :param refcorr: 1 or 2D reference Correlation Trace extracted from `mat`.
+    :param refcorr: 1 or 2D reference Correlation Trace extracted from
+        `corr_data`.
         If 2D, it will be interpreted as one refcorr trace per row.
     :type refcorr: np.ndarray
     :param tw: Lag time window to use for the computation
@@ -181,7 +182,6 @@ def wfc_multi_reftr(
         reftr_count, _ = ref_trs.shape
     except ValueError:  # An array is passed
         reftr_count = 1
-    print(reftr_count)
 
     if reftr_count == 1:
         key = "reftr_0"
@@ -190,7 +190,7 @@ def wfc_multi_reftr(
         multi_ref_panel.update({key: value})
     else:  # For multiple-traces loops
         for i, rftr in enumerate(ref_trs):
-            key = "reftr_%d" % int(i)
+            key = "reftr_%d" % i
             value = value = compute_wfc(
                 corr_data, tw, rftr, sides, remove_nans=remove_nans)
             multi_ref_panel.update({key: value})
