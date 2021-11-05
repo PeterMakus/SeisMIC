@@ -8,25 +8,30 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 5th November 2021 08:19:58 am
-Last Modified: Friday, 5th November 2021 08:52:59 am
+Last Modified: Friday, 5th November 2021 01:10:47 pm
 '''
 import numpy as np
 
+from seismic.correlate.stats import CorrStats
+from seismic.utils import miic_utils as mu
+
 
 class WFC(dict):
-    def __init__(self, wfc_dict: dict):
+    def __init__(self, wfc_dict: dict, stats: CorrStats):
         for k, v in wfc_dict.items():
             self[k] = v
         del wfc_dict
         # dict to hold averages
         self.av = {}
+        self.stats = stats
 
     def compute_average(self):
         for k, v in self.items():
             self.av['%s_av' % k] = np.mean(v, axis=0)
 
     def save(self, path: str):
-        np.savez_compressed(path, **self.av, **self)
+        kwargs = mu.save_header_to_np_array(self.stats)
+        np.savez_compressed(path, **self.av, **self, **kwargs)
 
 
 def read_wfc(path: str) -> WFC:

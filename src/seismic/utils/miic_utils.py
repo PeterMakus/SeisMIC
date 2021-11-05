@@ -8,10 +8,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Thursday, 21st October 2021 02:37:29 pm
+Last Modified: Friday, 5th November 2021 02:06:53 pm
 '''
 from typing import List, Tuple
 import logging
+import re
 
 import numpy as np
 from obspy import Inventory, Stream, Trace, UTCDateTime
@@ -258,7 +259,7 @@ def load_header_from_np_array(array_dict: dict) -> dict:
     """
     d = {}
     for k in array_dict:
-        if k in no_stats:
+        if k in no_stats or re.match('reftr', k):
             continue
         elif k in t_keys:
             d[k] = convert_timestamp_to_utcdt(array_dict[k])
