@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 8th November 2021 10:54:54 am
+Last Modified: Monday, 8th November 2021 11:44:47 am
 '''
 from copy import deepcopy
 import logging
@@ -381,6 +381,17 @@ class Monitor(object):
                     normalize_simmat=True, sim_mat_Clim=[-1, 1])
 
     def compute_waveform_coherency_bulk(self):
+        """
+        Compute the WFC for all specified (params file) correlations using MPI.
+        The parameters for the correlation defined in the *yaml* file will be
+        used.
+
+        This function will just call
+        :meth:`~seismic.monitor.monitor.Monitor.compute_waveform_coherency`
+        several times.
+        Subsequently, the average of the different component combinations will
+        be computed.
+        """
         tag = 'subdivision'
         # get number of available channel combis
         if self.rank == 0:
@@ -408,17 +419,28 @@ class Monitor(object):
             except Exception as e:
                 self.logger.exception(e)
 
+        outdir = os.path.join(
+            self.options['proj_dir'], self.options['wfc']['subdir'])
         # Compute averages and everything
         wfcl = self.comm.allgather(wfcl)
 
-        wfc = average_components_wfc(wfcl)
-        outdir = os.path.join(
-            self.options['proj_dir'], self.options['wfc']['subdir'])
-        outf = os.path.join(outdir, 'WFC-%s.%s.%s.f%a-%a.tw%a-%a' % (
-            wfc.stats.network, wfc.stats.station, wfc.stats.channel,
-            wfc.stats.freq_min, wfc.stats.freq_max, wfc.stats.tw_start,
-            wfc.stats.tw_length))
-        wfc.save(outf)
+        wfc_avl = []
+        while len(wfcl):
+            net = wfcl[0].stats.network
+            stat = wfcl[0].stats.station
+            # find identical components
+            wfc_avl = [wfc for wfc in wfcl if all(
+                [wfc.stats.network == net, wfc.stats.station == stat])]
+            # remove original from list
+            list(wfcl.pop(ii) for ii in (wfcl.index(wfc) for wfc in wfc_avl))
+            wfc = average_components_wfc(wfc_avl)
+
+            # Write files
+            outf = os.path.join(outdir, 'WFC-%s.%s.%s.f%a-%a.tw%a-%a' % (
+                wfc.stats.network, wfc.stats.station, wfc.stats.channel,
+                wfc.stats.freq_min, wfc.stats.freq_max, wfc.stats.tw_start,
+                wfc.stats.tw_length))
+            wfc.save(outf)
 
     def compute_waveform_coherency(
         self, corr_file: str, tag: str, network: str, station: str,
