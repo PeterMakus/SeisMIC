@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Monday, 8th November 2021 05:00:39 pm
+Last Modified: Monday, 8th November 2021 05:25:27 pm
 '''
 from copy import deepcopy
 import unittest
@@ -134,7 +134,7 @@ class TestCorrrelator(unittest.TestCase):
             self, makedirs_mock, logging_mock, open_mock):
         options = deepcopy(self.options)
         options['net']['network'] = [1, 2, 3]
-        options['net']['station'] = ['blub']
+        options['net']['station'] = ['blub', 'blib']
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = []
         with self.assertRaises(ValueError):
@@ -165,6 +165,50 @@ class TestCorrrelator(unittest.TestCase):
         sc_mock.get_available_stations.return_value = []
         with self.assertRaises(ValueError):
             correlate.Correlator(sc_mock, options)
+
+    @mock.patch('seismic.correlate.correlate.mu.filter_stat_dist')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_find_interstat_dis(
+            self, makedirs_mock, logging_mock, open_mock, statd_mock):
+        options = deepcopy(self.options)
+        options['net']['network'] = '*'
+        options['net']['station'] = '*'
+        options['co']['combination_method'] = 'betweenStations'
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [
+            ['lala', 'lolo'], ['lala', 'lili']]
+        c = correlate.Correlator(sc_mock, options)
+
+        sc_mock.select_inventory_or_load_remote.side_effect = [
+            'a', 'b', 'c', 'd', 'e', 'f']
+        statd_mock.return_value = True
+        c.find_interstat_dist(10000)
+        sc_mock.read_inventory.assert_called_once()
+        sc_mock.select_inventory_or_load_remote.assert_called_with(
+            'lala', 'lili')
+        self.assertListEqual(
+            c.rcombis,
+            [
+                'lala-lala.lolo-lolo',
+                'lala-lala.lolo-lili', 'lala-lala.lili-lili'])
+
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_find_interstat_dis_wrong_method(
+            self, makedirs_mock, logging_mock, open_mock):
+        options = deepcopy(self.options)
+        options['net']['network'] = '*'
+        options['net']['station'] = '*'
+        options['co']['combination_method'] = 'betweenComponents'
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [
+            ['lala', 'lolo'], ['lala', 'lili']]
+        c = correlate.Correlator(sc_mock, options)
+        with self.assertRaises(ValueError):
+            c.find_interstat_dist(100)
 
 
 class TestStToNpArray(unittest.TestCase):

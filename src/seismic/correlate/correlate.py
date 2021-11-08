@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 8th November 2021 04:53:53 pm
+Last Modified: Monday, 8th November 2021 05:21:03 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
