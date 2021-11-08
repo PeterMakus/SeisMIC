@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 8th November 2021 10:13:02 am
+Last Modified: Monday, 8th November 2021 10:54:54 am
 '''
 from copy import deepcopy
 import logging
@@ -412,7 +412,9 @@ class Monitor(object):
         wfcl = self.comm.allgather(wfcl)
 
         wfc = average_components_wfc(wfcl)
-        outf = os.path.join(self.outdir, 'WFC-%s.%s.%s.f%a-%a.tw%a-%a' % (
+        outdir = os.path.join(
+            self.options['proj_dir'], self.options['wfc']['subdir'])
+        outf = os.path.join(outdir, 'WFC-%s.%s.%s.f%a-%a.tw%a-%a' % (
             wfc.stats.network, wfc.stats.station, wfc.stats.channel,
             wfc.stats.freq_min, wfc.stats.freq_max, wfc.stats.tw_start,
             wfc.stats.tw_length))
@@ -427,6 +429,10 @@ class Monitor(object):
             # get the corrstream containing all the corrdata for this combi
             cst = cdb.get_data(network, station, channel, tag)
         cb = cst.create_corr_bulk(inplace=True)
+        outdir = os.path.join(
+            self.options['proj_dir'], self.options['wfc']['subdir'])
+        if self.rank == 0:
+            os.makedirs(outdir, exist_ok=True)
 
         # for possible rest bits
         del cst
@@ -467,10 +473,10 @@ class Monitor(object):
             self.options['wfc']['freq_max'])
         # Compute the average over the whole time window
         wfc.compute_average()
-        outf = os.path.join(self.outdir, 'WFC-%s.%s.%s.f%a-%a.tw%a-%a' % (
-            network, station, channel, wfc.stats.freq_min, wfc.stats.freq_max,
-            wfc.stats.tw_start, wfc.stats.tw_length))
         if self.options['wfc']['save_comps']:
+            outf = os.path.join(outdir, 'WFC-%s.%s.%s.f%a-%a.tw%a-%a' % (
+                network, station, channel, wfc.stats.freq_min,
+                wfc.stats.freq_max, wfc.stats.tw_start, wfc.stats.tw_length))
             wfc.save(outf)
         return wfc
 
