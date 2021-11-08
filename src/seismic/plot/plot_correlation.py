@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Thursday, 21st October 2021 02:37:52 pm
+Last Modified: Monday, 8th November 2021 02:49:23 pm
 '''
 import os
 import warnings
@@ -47,12 +47,6 @@ def plot_ctr(
     ydata = corr.data
 
     # Plot stuff into axes
-    # This would fill positive red and negative blue, probably not very nice
-    # for correlations
-    # ax.fill_between(times, 0, ydata, where=ydata > 0,
-    #                 interpolate=True, color=(0.9, 0.2, 0.2))
-    # ax.fill_between(times, 0, ydata, where=ydata < 0,
-    #                 interpolate=True, color=(0.2, 0.2, 0.7))
     ax.plot(times, ydata, 'k', lw=1)
 
     # Set limits

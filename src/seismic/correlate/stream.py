@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Monday, 8th November 2021 10:01:09 am
+Last Modified: Monday, 8th November 2021 01:12:38 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -534,6 +534,14 @@ class CorrBulk(object):
         :param sides: Which sides to use. Can be `both`, `right`, `left`,
             or `single`.
         :type sides: str
+        :param tw_start: Time window start in seconds lag time.
+        :type tw_start: float
+        :param tw_length: Length of the Lapse time window in seconds.
+        :type tw_length: float
+        :param freq_min: Highpass frequency used for the computed values. (Hz)
+        :type freq_min: float
+        :param freq_max: Lowpass frequency used for the computed values. (Hz)
+        :type freq_max: float
         :param remove_nans: Remove nans from CorrMatrix, defaults to True
         :return: A dictionary with one correlation array for each reference
             trace. The keys are using the syntax `reftr_%n`.

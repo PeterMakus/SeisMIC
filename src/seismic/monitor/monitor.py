@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 8th November 2021 11:44:47 am
+Last Modified: Monday, 8th November 2021 11:55:34 am
 '''
 from copy import deepcopy
 import logging
@@ -444,7 +444,32 @@ class Monitor(object):
 
     def compute_waveform_coherency(
         self, corr_file: str, tag: str, network: str, station: str,
-            channel: str):
+            channel: str) -> WFC:
+        """
+        Computes the waveform coherency corresponding to one correlation (i.e.,
+        one single file).
+
+        The waveform coherency can be used as a measure of stability of
+        a certain correlation. See Steinmann, et. al. (2021) for details.
+
+        :param corr_file: File to compute the wfc from
+        :type corr_file: str
+        :param tag: Tag inside of hdf5 file to retrieve corrs from.
+        :type tag: str
+        :param network: Network combination code.
+        :type network: str
+        :param station: Station combination code
+        :type station: str
+        :param channel: Channel combination code.
+        :type channel: str
+        :raises ValueError: For short correlations
+        :return: An object holding the waveform coherency
+        :rtype: :class:`~seismic.monitor.wfc.WFC`
+
+        .. seealso:: To compute wfc for several correlations use:
+            :meth:`~seismic.monitor.monitor.Monitor.compute.waveform_coherency\
+            _bulk`.
+        """
         self.logger.info('Computing wfc for file: %s and channel: %s' % (
             corr_file, channel))
         with CorrelationDataBase(corr_file, mode='r') as cdb:
