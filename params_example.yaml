@@ -204,3 +204,7 @@ wfc:
                     {'function': 'smooth', 'args': {'wsize': 48, 'wtype': 'hanning', 'axis': 1}}
     ]
 
+    ### SAVING
+    # save components separately or only their average?
+    save_comps: False
+

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 5th November 2021 08:19:58 am
-Last Modified: Friday, 5th November 2021 01:10:47 pm
+Last Modified: Monday, 8th November 2021 09:42:49 am
 '''
 import numpy as np
 
@@ -27,7 +27,7 @@ class WFC(dict):
 
     def compute_average(self):
         for k, v in self.items():
-            self.av['%s_av' % k] = np.mean(v, axis=0)
+            self.av['%s_av' % k] = np.nanmean(v, axis=0)
 
     def save(self, path: str):
         kwargs = mu.save_header_to_np_array(self.stats)
@@ -43,6 +43,6 @@ def read_wfc(path: str) -> WFC:
             av[k] = v
         else:
             d[k] = v
-    wfc = WFC(d)
+    wfc = WFC(d, stats=mu.load_header_from_np_array(loaded))
     wfc.av = av
     return wfc

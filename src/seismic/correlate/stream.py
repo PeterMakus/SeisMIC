@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Friday, 5th November 2021 08:41:48 am
+Last Modified: Monday, 8th November 2021 10:01:09 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -515,7 +515,8 @@ class CorrBulk(object):
         return self
 
     def wfc(
-            self, ref_trc: np.ndarray, time_window: np.ndarray, sides: str,
+        self, ref_trc: np.ndarray, time_window: np.ndarray, sides: str,
+        tw_start: float, tw_length: float, freq_min: float, freq_max: float,
             remove_nans: bool = True) -> WFC:
         """
         Computes the waveform coherency (**WFC**) between the given reference
@@ -540,7 +541,12 @@ class CorrBulk(object):
         """
         wfc_dict = wfc_multi_reftr(
             self.data, ref_trc, time_window, sides, remove_nans)
-        wfc = WFC(wfc_dict)
+        stats = deepcopy(self.stats)
+        stats['tw_start'] = tw_start
+        stats['tw_length'] = tw_length
+        stats['freq_min'] = freq_min
+        stats['freq_max'] = freq_max
+        wfc = WFC(wfc_dict, stats)
         return wfc
 
     def _find_slice_index(

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 5th November 2021 01:05:37 pm
+Last Modified: Monday, 8th November 2021 10:13:02 am
 '''
 from copy import deepcopy
 import logging
@@ -25,6 +25,7 @@ from tqdm import tqdm
 
 from seismic.db.corr_hdf5 import CorrelationDataBase
 from seismic.monitor.dv import DV, read_dv
+from seismic.monitor.wfc import WFC
 from seismic.utils.miic_utils import log_lvl
 
 
@@ -379,6 +380,44 @@ class Monitor(object):
                     save_dir=savedir, figure_file_name=fname,
                     normalize_simmat=True, sim_mat_Clim=[-1, 1])
 
+    def compute_waveform_coherency_bulk(self):
+        tag = 'subdivision'
+        # get number of available channel combis
+        if self.rank == 0:
+            plist = []
+            for f, n, s in zip(self.infiles, self.netlist, self.statlist):
+                with CorrelationDataBase(f, mode='r') as cdb:
+                    ch = cdb.get_available_channels(
+                        tag, n, s)
+                    plist.extend([f, n, s, c] for c in ch)
+        else:
+            plist = None
+        plist = self.comm.bcast(plist, root=0)
+        pmap = (np.arange(len(plist))*self.psize)/len(plist)
+        pmap = pmap.astype(np.int32)
+        ind = pmap == self.rank
+        ind = np.arange(len(plist), dtype=int)[ind]
+
+        # Assign a task to each rank
+        wfcl = []
+        for ii in tqdm(ind):
+            corr_file, net, stat, cha = plist[ii]
+            try:
+                wfcl.append(self.compute_waveform_coherency(
+                    corr_file, tag, net, stat, cha))
+            except Exception as e:
+                self.logger.exception(e)
+
+        # Compute averages and everything
+        wfcl = self.comm.allgather(wfcl)
+
+        wfc = average_components_wfc(wfcl)
+        outf = os.path.join(self.outdir, 'WFC-%s.%s.%s.f%a-%a.tw%a-%a' % (
+            wfc.stats.network, wfc.stats.station, wfc.stats.channel,
+            wfc.stats.freq_min, wfc.stats.freq_max, wfc.stats.tw_start,
+            wfc.stats.tw_length))
+        wfc.save(outf)
+
     def compute_waveform_coherency(
         self, corr_file: str, tag: str, network: str, station: str,
             channel: str):
@@ -397,7 +436,7 @@ class Monitor(object):
         starttimes, endtimes = make_time_list(
             self.options['wfc']['start_date'], self.options['wfc']['end_date'],
             self.options['wfc']['date_inc'], self.options['wfc']['win_len'])
-        cb.resample(self.starttimes, self.endtimes)
+        cb.resample(starttimes, endtimes)
         cb.filter(
             (self.options['wfc']['freq_min'], self.options['wfc']['freq_max']))
 
@@ -415,19 +454,25 @@ class Monitor(object):
         if cbt.data.shape[1] <= 20:
             raise ValueError('CorrBulk extremely short.')
 
-        tr = cbt.extract_multi_trace(**self.options['dv']['dt_ref'])
+        tr = cbt.extract_multi_trace(**self.options['wfc']['dt_ref'])
 
         # Compute time window
         tw = [np.arange(
             self.options['wfc']['tw_start']*cbt.stats['sampling_rate'],
             (self.options['wfc']['tw_start']+self.options[
                 'wfc']['tw_len'])*cbt.stats['sampling_rate'], 1)]
-        wfc = cbt.wfc(tr, tw, sides='both')
+        wfc = cbt.wfc(
+            tr, tw, 'both', self.options['wfc']['tw_start'],
+            self.options['wfc']['tw_length'], self.options['wfc']['freq_min'],
+            self.options['wfc']['freq_max'])
         # Compute the average over the whole time window
         wfc.compute_average()
-        outf = os.path.join(
-            self.outdir, 'WFC-%s.%s.%s' % (network, station, channel))
-        wfc.save(outf)
+        outf = os.path.join(self.outdir, 'WFC-%s.%s.%s.f%a-%a.tw%a-%a' % (
+            network, station, channel, wfc.stats.freq_min, wfc.stats.freq_max,
+            wfc.stats.tw_start, wfc.stats.tw_length))
+        if self.options['wfc']['save_comps']:
+            wfc.save(outf)
+        return wfc
 
 
 def make_time_list(
@@ -549,3 +594,30 @@ def average_components(dvs: List[DV]) -> DV:
     dvout = DV(
         corr, dt, dvs[0].value_type, av_sim_mat, strvec, dvs[0].method, stats)
     return dvout
+
+
+def average_components_wfc(wfcs: List[WFC]) -> WFC:
+    """
+    Averages the Similariy matrix of the three DV objects. Based on those,
+    it computes a new dv value and a new correlation value.
+
+    :param dvs: List of dvs from the different components to compute an
+            average from. Note that it is possible to use almost anything as
+            input (also from different stations). However, at the time,
+            the function requires the input to be of the same shape
+
+    :type dvs: List[class:`~seismic.monitor.dv.DV`]
+    :raises TypeError: for DVs that were computed with different methods
+    :return: A single dv with an averaged similarity matrix
+    :rtype: DV
+    """
+    stats = deepcopy(wfcs[0].stats)
+    stats['channel'] = 'av'
+    for k in ['tw_start', 'tw_length', 'freq_min', 'freq_max']:
+        if any((stats[k] != wfc.stats[k] for wfc in wfcs)):
+            raise ValueError('%s is not allowed to differ.' % k)
+    meandict = {}
+    for k in wfcs[0].keys():
+        meandict[k] = np.nanmean([wfc[k] for wfc in wfcs], axis=0)
+    wfcout = WFC(meandict, stats)
+    return wfcout
