@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 5th November 2021 08:19:58 am
-Last Modified: Monday, 8th November 2021 02:59:47 pm
+Last Modified: Monday, 8th November 2021 03:03:06 pm
 '''
 from typing import List
 import numpy as np
@@ -75,6 +75,10 @@ class WFC(dict):
 
 
 class WFCBulk(object):
+    """
+    Object to hold the waveform coherency for one station and subsequently plot
+    it against frequency and lapse time window.
+    """
     def __init__(self, wfcl: List[WFC]):
         # Compute averages if not available
         freq = []

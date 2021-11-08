@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Thursday, 21st October 2021 02:48:46 pm
+Last Modified: Monday, 8th November 2021 03:51:59 pm
 '''
 from copy import deepcopy
 import unittest
@@ -100,14 +100,7 @@ class TestCalcCrossCombis(unittest.TestCase):
                 xtras.append(s*ii)
         net.extend(xtran)
         stat.extend(xtras)
-        # Also, randomize the len of the channels
-        # The channels are combined if the last letter is different
-        randfact = np.random.randint(-2, 3)
-        xtrac = ['R', 'L', 'P']
-        if randfact <= 0:
-            channels = channels[:randfact]
-        else:
-            channels.extend(xtrac[:randfact])
+
         self.st = Stream()
         for station, network in zip(stat, net):
             for ch in channels:
@@ -165,13 +158,16 @@ class TestCalcCrossCombis(unittest.TestCase):
     @mock.patch('seismic.correlate.correlate._compare_existing_data')
     def test_existing_db(self, compare_mock):
         compare_mock.return_value = True
-        with warnings.catch_warnings(record=True) as w:
-            self.assertEqual(0, len(correlate.calc_cross_combis(
-                self.st, {}, method='betweenStations')))
-            self.assertEqual(len(w), 1)
+        for m in [
+            'betweenStations', 'betweenComponents', 'autoComponents',
+                'allSimpleCombinations', 'allCombinations']:
+            with warnings.catch_warnings(record=True) as w:
+                self.assertEqual(0, len(correlate.calc_cross_combis(
+                    self.st, {}, method=m)))
+                self.assertEqual(len(w), 1)
 
     def test_rcombis(self):
-        xlen = np.random.randint(0, 6)
+        xlen = np.random.randint(1, 6)
         rcombis = []
         for ii, tr in enumerate(self.st):
             if len(rcombis) == xlen:
@@ -189,6 +185,12 @@ class TestCalcCrossCombis(unittest.TestCase):
                 if len(rcombis) == xlen:
                     break
         expected_len = xlen*self.N_chan**2
+        self.assertEqual(expected_len, len(correlate.calc_cross_combis(
+            self.st, {}, method='betweenStations', rcombis=rcombis)))
+
+    def test_rcombis_not_available(self):
+        rcombis = ['is-not.in-db']
+        expected_len = 0
         self.assertEqual(expected_len, len(correlate.calc_cross_combis(
             self.st, {}, method='betweenStations', rcombis=rcombis)))
 
@@ -213,6 +215,14 @@ class TestSortCombnameAlphabetically(unittest.TestCase):
         self.assertEqual(
             correlate.sort_comb_name_alphabetically(net0, stat0, net1, stat1),
             exp_result)
+
+    def test_wrong_arg_type(self):
+        net0 = 1
+        net1 = 'A'
+        stat0 = 'Z'
+        stat1 = 'C'
+        with self.assertRaises(TypeError):
+            correlate.sort_comb_name_alphabetically(net0, stat0, net1, stat1)
 
 
 class TestComputeNetworkStationCombinations(unittest.TestCase):
@@ -241,6 +251,29 @@ class TestComputeNetworkStationCombinations(unittest.TestCase):
                 self.slist, self.nlist),
             exp_result)
 
+    def test_between_components(self):
+        exp_result = (['A-A', 'A-A'], ['B-B', 'C-C'])
+        for m in ['betweenComponents', 'autoComponents']:
+            self.assertEqual(
+                correlate.compute_network_station_combinations(
+                    self.nlist, self.slist, method=m),
+                exp_result)
+
+    def test_all_simple_combis(self):
+        exp_result = (['A-A', 'A-A', 'A-A'], ['B-B', 'B-C', 'C-C'])
+        self.assertEqual(
+            correlate.compute_network_station_combinations(
+                self.nlist, self.slist, method='allSimpleCombinations'),
+            exp_result)
+
+    def test_all_combis(self):
+        exp_result = (
+            ['A-A', 'A-A', 'A-A', 'A-A'], ['B-B', 'B-C', 'B-C', 'C-C'])
+        self.assertEqual(
+            correlate.compute_network_station_combinations(
+                self.nlist, self.slist, method='allCombinations'),
+            exp_result)
+
     def test_rcombis(self):
         exp_result = (['A-A'], ['B-C'])
         nlist = ['A', 'A', 'B']
@@ -249,6 +282,11 @@ class TestComputeNetworkStationCombinations(unittest.TestCase):
         self.assertEqual(
             correlate.compute_network_station_combinations(
                 nlist, slist, combis=rcombis), exp_result)
+
+    def test_unknown_method(self):
+        with self.assertRaises(ValueError):
+            correlate.compute_network_station_combinations(
+                self.nlist, self.slist, method='b')
 
 
 class TestPreProcessStream(unittest.TestCase):
@@ -265,6 +303,10 @@ class TestPreProcessStream(unittest.TestCase):
             'sampling_rate': 25,
             'remove_response': False,
             'subdivision': {'corr_len': 20}}
+
+    def test_empty_stream(self):
+        self.assertEqual(
+            correlate.preprocess_stream(Stream(), **self.kwargs), Stream())
 
     def test_wrong_sr(self):
         x = np.random.randint(1, 100)
@@ -343,6 +385,18 @@ class TestPreProcessStream(unittest.TestCase):
         # Check whether response was attached
         self.assertTrue(st[0].stats.response)
         sc_mock.rclient.get_stations.assert_called_once()
+
+    @mock.patch('seismic.correlate.correlate.func_from_str')
+    def test_additional_preprofunc(self, ffs_mock):
+        return_func = mock.MagicMock()
+        return_func.return_value = self.st.copy()
+        ffs_mock.return_value = return_func
+        kwargs = deepcopy(self.kwargs)
+        kwargs['preProcessing'] = [{'function': 'bla', 'args': {'arg': 'bla'}}]
+        correlate.preprocess_stream(self.st, **kwargs)
+        ffs_mock.assert_called_once_with('bla')
+        return_func.assert_called_once_with(
+            mock.ANY, arg='bla')
 
 
 class TestGenCorrInc(unittest.TestCase):
