@@ -7,23 +7,164 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Monday, 8th November 2021 03:51:59 pm
+Last Modified: Monday, 8th November 2021 05:00:39 pm
 '''
 from copy import deepcopy
 import unittest
 import warnings
 from unittest import mock
+import os
 
 import numpy as np
 from obspy import read, Stream, Trace
 from obspy.core import AttribDict
 from obspy.core.inventory.inventory import read_inventory
+import yaml
 
 from seismic.correlate import correlate
+from seismic.trace_data.waveform import Store_Client
 
 
-# class TestCorrrelator(unittest.TestCase):
-# have not figured how to test this
+class TestCorrrelator(unittest.TestCase):
+    def setUp(self):
+        os.path.join
+        # using the example parameters has the nice side effect that
+        # the parameter file is tested as well
+        self.param_example = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+            'params_example.yaml')
+        with open(self.param_example) as file:
+            self.options = yaml.load(file, Loader=yaml.FullLoader)
+
+    @mock.patch('seismic.correlate.correlate.yaml.load')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_init_options_from_yaml(
+            self, makedirs_mock, logging_mock, open_mock, yaml_mock):
+        yaml_mock.return_value = self.options
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = []
+        c = correlate.Correlator(sc_mock, self.param_example)
+        self.assertDictEqual(self.options['co'], c.options)
+        mkdir_calls = [
+            mock.call(os.path.join(
+                self.options['proj_dir'], self.options['co']['subdir']),
+                exist_ok=True),
+            mock.call(os.path.join(
+                self.options['proj_dir'], self.options['log_subdir']),
+                exist_ok=True)]
+        makedirs_mock.assert_has_calls(mkdir_calls)
+        open_mock.assert_any_call(self.param_example)
+
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_stat_net_str(
+            self, makedirs_mock, logging_mock, open_mock):
+        options = deepcopy(self.options)
+        options['net']['network'] = ['bla']
+        options['net']['station'] = ['blub']
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = []
+        c = correlate.Correlator(sc_mock, options)
+        self.assertDictEqual(self.options['co'], c.options)
+        self.assertListEqual(c.station, [['bla', 'blub']])
+
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_net_wc_stat_str(
+            self, makedirs_mock, logging_mock, open_mock):
+        options = deepcopy(self.options)
+        options['net']['network'] = '*'
+        options['net']['station'] = ['blub']
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = []
+        with self.assertRaises(ValueError):
+            correlate.Correlator(sc_mock, options)
+
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_net_wc(
+            self, makedirs_mock, logging_mock, open_mock):
+        options = deepcopy(self.options)
+        options['net']['network'] = '*'
+        options['net']['station'] = '*'
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [['lala', 'lolo']]
+        c = correlate.Correlator(sc_mock, options)
+        self.assertListEqual(c.station, [['lala', 'lolo']])
+
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_stat_wc(
+            self, makedirs_mock, logging_mock, open_mock):
+        options = deepcopy(self.options)
+        options['net']['network'] = 'lala'
+        options['net']['station'] = '*'
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [['lala', 'lolo']]
+        c = correlate.Correlator(sc_mock, options)
+        self.assertListEqual(c.station, [['lala', 'lolo']])
+        sc_mock.get_available_stations.assert_called_once_with('lala')
+
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_stat_wc_net_list(
+            self, makedirs_mock, logging_mock, open_mock):
+        options = deepcopy(self.options)
+        options['net']['network'] = ['lala', 'lolo']
+        options['net']['station'] = '*'
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [['lala', 'lolo']]
+        c = correlate.Correlator(sc_mock, options)
+        self.assertListEqual(
+            c.station, [['lala', 'lolo'], ['lala', 'lolo']])
+        calls = [mock.call('lala'), mock.call('lolo')]
+        sc_mock.get_available_stations.assert_has_calls(calls)
+
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_list_len_diff(
+            self, makedirs_mock, logging_mock, open_mock):
+        options = deepcopy(self.options)
+        options['net']['network'] = [1, 2, 3]
+        options['net']['station'] = ['blub']
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = []
+        with self.assertRaises(ValueError):
+            correlate.Correlator(sc_mock, options)
+
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_stat_net_list(
+            self, makedirs_mock, logging_mock, open_mock):
+        options = deepcopy(self.options)
+        options['net']['network'] = ['lala', 'lolo']
+        options['net']['station'] = ['le', 'li']
+        sc_mock = mock.Mock(Store_Client)
+        c = correlate.Correlator(sc_mock, options)
+        self.assertListEqual(
+            c.station, [['lala', 'le'], ['lolo', 'li']])
+
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_other_wrong(
+            self, makedirs_mock, logging_mock, open_mock):
+        options = deepcopy(self.options)
+        options['net']['network'] = 1
+        options['net']['station'] = ['blub']
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = []
+        with self.assertRaises(ValueError):
+            correlate.Correlator(sc_mock, options)
 
 
 class TestStToNpArray(unittest.TestCase):

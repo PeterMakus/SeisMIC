@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 8th November 2021 03:37:28 pm
+Last Modified: Monday, 8th November 2021 04:53:53 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -53,7 +53,6 @@ class Correlator(object):
             in options.
         :type options: dict or str
         """
-        super().__init__()
         if isinstance(options, str):
             with open(options) as file:
                 options = yaml.load(file, Loader=yaml.FullLoader)
@@ -79,7 +78,7 @@ class Correlator(object):
         rankstr = str(self.rank).zfill(3)
 
         loglvl = mu.log_lvl[options['log_level'].upper()]
-        self.logger = logging.Logger("seismic.Correlator%s" % rankstr)
+        self.logger = logging.getLogger("seismic.Correlator%s" % rankstr)
         self.logger.setLevel(loglvl)
         logging.captureWarnings(True)
         warnlog = logging.getLogger('py.warnings')
@@ -121,10 +120,17 @@ class Correlator(object):
         if isinstance(network, list) and len(network) == 1:
             network = network[0]
 
-        if network == '*':
+        if network == '*' and station == '*':
             station = store_client.get_available_stations()
         elif station == '*' and isinstance(network, str):
             station = store_client.get_available_stations(network)
+        elif network == '*':
+            raise ValueError(
+                'Stations has to be either: \n'
+                + '1. A list of the same length as the list of networks.\n'
+                + '2. \'*\' That is, a wildcard (string).\n'
+                + '3. A list and network is a string describing one '
+                + 'station code.')
         elif isinstance(station, str) and isinstance(network, str):
             station = [[network, station]]
         elif station == '*' and isinstance(network, list):
@@ -140,21 +146,20 @@ class Correlator(object):
                     + '3. A list and network is a string describing one '
                     + 'station code.')
             station = list([n, s] for n, s in zip(network, station))
-        elif isinstance(station, str):
+        elif isinstance(station, list) and isinstance(network, str):
+            for ii, stat in enumerate(station):
+                station[ii] = [network, stat]
+        else:
             raise ValueError(
                 'Stations has to be either: \n'
                 + '1. A list of the same length as the list of networks.\n'
                 + '2. \'*\' That is, a wildcard (string).\n'
                 + '3. A list and network is a string describing one '
                 + 'station code.')
-        else:
-            for ii, stat in enumerate(station):
-                station[ii] = [network, stat]
         self.station = station
-
         self.logger.debug(
-            'Fetching data from the following stations:\n%s' % str(
-                ['{n}.{s}'.format(n=n, s=s) for n, s in station]))
+            'Fetching data from the following stations:\n%a' % [
+                f'{n}.{s}' for n, s in station])
 
         self.sampling_rate = self.options['sampling_rate']
 
