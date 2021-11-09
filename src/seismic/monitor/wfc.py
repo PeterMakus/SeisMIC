@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 5th November 2021 08:19:58 am
-Last Modified: Monday, 8th November 2021 03:03:06 pm
+Last Modified: Tuesday, 9th November 2021 10:40:21 am
 '''
 from typing import List
 import numpy as np
@@ -40,8 +40,8 @@ class WFC(dict):
             bandpass filter and the used lapse time window.
         :type stats: CorrStats
         """
-        nec_keys = ['tw_start', 'tw_length', 'freq_min', 'freq_max']
-        if not all(k in wfc_dict for k in nec_keys):
+        nec_keys = ['tw_start', 'tw_len', 'freq_min', 'freq_max']
+        if not all(k in stats for k in nec_keys):
             raise ValueError(f'Stats has to contain the keys {nec_keys}.')
         for k, v in wfc_dict.items():
             self[k] = v
@@ -89,7 +89,7 @@ class WFCBulk(object):
             # Midpoint of bp-filter (centre frequency)
             freq.append((wfc.stats.freq_max + wfc.stats.freq_min) / 2)
             # midpoint of lapse window
-            lw.append(wfc.stats.tw_start + wfc.stats.tw_length/2)
+            lw.append(wfc.stats.tw_start + wfc.stats.tw_len/2)
             means.append(wfc.mean)
         freq, lw, means = zip(*sorted(zip(lw, freq, means)))
         # create grids

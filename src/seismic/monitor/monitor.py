@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 8th November 2021 11:55:34 am
+Last Modified: Tuesday, 9th November 2021 10:50:03 am
 '''
 from copy import deepcopy
 import logging
@@ -422,7 +422,10 @@ class Monitor(object):
         outdir = os.path.join(
             self.options['proj_dir'], self.options['wfc']['subdir'])
         # Compute averages and everything
-        wfcl = self.comm.allgather(wfcl)
+        wfclu = self.comm.allgather(wfcl)
+        # concatenate
+        wfcl = [j for i in wfclu for j in i]
+        del wfclu
 
         wfc_avl = []
         while len(wfcl):
@@ -439,7 +442,7 @@ class Monitor(object):
             outf = os.path.join(outdir, 'WFC-%s.%s.%s.f%a-%a.tw%a-%a' % (
                 wfc.stats.network, wfc.stats.station, wfc.stats.channel,
                 wfc.stats.freq_min, wfc.stats.freq_max, wfc.stats.tw_start,
-                wfc.stats.tw_length))
+                wfc.stats.tw_len))
             wfc.save(outf)
 
     def compute_waveform_coherency(
@@ -489,6 +492,7 @@ class Monitor(object):
         starttimes, endtimes = make_time_list(
             self.options['wfc']['start_date'], self.options['wfc']['end_date'],
             self.options['wfc']['date_inc'], self.options['wfc']['win_len'])
+        self.logger.debug('Timelist created.')
         cb.resample(starttimes, endtimes)
         cb.filter(
             (self.options['wfc']['freq_min'], self.options['wfc']['freq_max']))
@@ -504,10 +508,14 @@ class Monitor(object):
             -(self.options['wfc']['tw_start']+self.options['wfc']['tw_len']),
             (self.options['wfc']['tw_start']+self.options['wfc']['tw_len']))
 
+        self.logger.debug(
+            'Preprocessing finished.\nExtracting reference trace...')
+
         if cbt.data.shape[1] <= 20:
             raise ValueError('CorrBulk extremely short.')
 
         tr = cbt.extract_multi_trace(**self.options['wfc']['dt_ref'])
+        self.logger.debug('Reference trace created.\nComputing WFC...')
 
         # Compute time window
         tw = [np.arange(
@@ -516,14 +524,16 @@ class Monitor(object):
                 'wfc']['tw_len'])*cbt.stats['sampling_rate'], 1)]
         wfc = cbt.wfc(
             tr, tw, 'both', self.options['wfc']['tw_start'],
-            self.options['wfc']['tw_length'], self.options['wfc']['freq_min'],
+            self.options['wfc']['tw_len'], self.options['wfc']['freq_min'],
             self.options['wfc']['freq_max'])
+        self.logger.debug('WFC computed.\nAveraging over time axis...')
         # Compute the average over the whole time window
         wfc.compute_average()
         if self.options['wfc']['save_comps']:
             outf = os.path.join(outdir, 'WFC-%s.%s.%s.f%a-%a.tw%a-%a' % (
                 network, station, channel, wfc.stats.freq_min,
-                wfc.stats.freq_max, wfc.stats.tw_start, wfc.stats.tw_length))
+                wfc.stats.freq_max, wfc.stats.tw_start, wfc.stats.tw_len))
+            self.logger.info(f'Writing WFC to {outf}')
             wfc.save(outf)
         return wfc
 
@@ -666,7 +676,7 @@ def average_components_wfc(wfcs: List[WFC]) -> WFC:
     """
     stats = deepcopy(wfcs[0].stats)
     stats['channel'] = 'av'
-    for k in ['tw_start', 'tw_length', 'freq_min', 'freq_max']:
+    for k in ['tw_start', 'tw_len', 'freq_min', 'freq_max']:
         if any((stats[k] != wfc.stats[k] for wfc in wfcs)):
             raise ValueError('%s is not allowed to differ.' % k)
     meandict = {}

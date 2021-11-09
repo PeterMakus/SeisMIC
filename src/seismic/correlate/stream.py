@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Monday, 8th November 2021 01:12:38 pm
+Last Modified: Tuesday, 9th November 2021 10:40:30 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -267,7 +267,7 @@ class CorrBulk(object):
         if isinstance(win_inc, list):
             win_inc = np.array(win_inc)
         elif win_inc == 0:
-            self.extract_trace(method, percentile)
+            return self.extract_trace(method, percentile)
 
         inc_s = win_inc*24*3600
         start = min(self.stats.corr_start)
@@ -516,7 +516,7 @@ class CorrBulk(object):
 
     def wfc(
         self, ref_trc: np.ndarray, time_window: np.ndarray, sides: str,
-        tw_start: float, tw_length: float, freq_min: float, freq_max: float,
+        tw_start: float, tw_len: float, freq_min: float, freq_max: float,
             remove_nans: bool = True) -> WFC:
         """
         Computes the waveform coherency (**WFC**) between the given reference
@@ -536,8 +536,8 @@ class CorrBulk(object):
         :type sides: str
         :param tw_start: Time window start in seconds lag time.
         :type tw_start: float
-        :param tw_length: Length of the Lapse time window in seconds.
-        :type tw_length: float
+        :param tw_len: Length of the Lapse time window in seconds.
+        :type tw_len: float
         :param freq_min: Highpass frequency used for the computed values. (Hz)
         :type freq_min: float
         :param freq_max: Lowpass frequency used for the computed values. (Hz)
@@ -551,7 +551,7 @@ class CorrBulk(object):
             self.data, ref_trc, time_window, sides, remove_nans)
         stats = deepcopy(self.stats)
         stats['tw_start'] = tw_start
-        stats['tw_length'] = tw_length
+        stats['tw_len'] = tw_len
         stats['freq_min'] = freq_min
         stats['freq_max'] = freq_max
         wfc = WFC(wfc_dict, stats)
