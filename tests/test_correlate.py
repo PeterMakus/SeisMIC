@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Monday, 8th November 2021 05:25:27 pm
+Last Modified: Wednesday, 10th November 2021 03:33:49 pm
 '''
 from copy import deepcopy
 import unittest
@@ -22,12 +22,14 @@ from obspy.core.inventory.inventory import read_inventory
 import yaml
 
 from seismic.correlate import correlate
+from seismic.correlate.stream import CorrStream
 from seismic.trace_data.waveform import Store_Client
 
 
 class TestCorrrelator(unittest.TestCase):
     def setUp(self):
-        os.path.join
+        self.inv = read_inventory()
+        self.st = read()
         # using the example parameters has the nice side effect that
         # the parameter file is tested as well
         self.param_example = os.path.join(
@@ -209,6 +211,151 @@ class TestCorrrelator(unittest.TestCase):
         c = correlate.Correlator(sc_mock, options)
         with self.assertRaises(ValueError):
             c.find_interstat_dist(100)
+
+    @mock.patch('seismic.db.corr_hdf5.DBHandler')
+    @mock.patch('seismic.correlate.correlate.os.path.isfile')
+    @mock.patch(
+        'seismic.correlate.correlate.compute_network_station_combinations')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_find_existing_times(
+        self, makedirs_mock, logging_mock, open_mock, ccomb_mock, isfile_mock,
+            cdb_mock):
+        options = deepcopy(self.options)
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [
+            ['lala', 'lolo'], ['lala', 'lili']]
+        c = correlate.Correlator(sc_mock, options)
+        netcombs = ['AA-BB', 'AA-BB', 'AA-AA', 'AA-CC']
+        statcombs = ['00-00', '00-11', '22-33', '22-44']
+        ccomb_mock.return_value = (netcombs, statcombs)
+        isfile = [True, False, True, False]
+        isfile_mock.side_effect = isfile
+        times = [[0, 1, 2], [3, 4, 5, 6]]
+        cdb_mock().get_available_starttimes.side_effect = times
+        out = c.find_existing_times('mytag')
+        exp = {'AA.00': {'BB.00': [0, 1, 2]}, 'AA.22': {'AA.33': [3, 4, 5, 6]}}
+        self.assertDictEqual(out, exp)
+        isfile_calls = [mock.call(
+            os.path.join(c.corr_dir, f'{nc}.{sc}.h5')) for nc, sc in zip(
+                netcombs, statcombs)]
+        isfile_mock.assert_has_calls(isfile_calls)
+
+    @mock.patch('seismic.correlate.correlate.CorrStream')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_pxcorr(self, makedirs_mock, logging_mock, open_mock, cst_mock):
+        options = deepcopy(self.options)
+        options['co']['subdivision']['recombine_subdivision'] = True
+        options['co']['subdivision']['delete_subdivision'] = True
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [
+            ['lala', 'lolo'], ['lala', 'lili']]
+        c = correlate.Correlator(sc_mock, options)
+        sc_mock.read_inventory.return_value = self.inv
+        cst_mock().stack.return_value = 'bla'
+        cst_mock().count.return_value = True
+        with mock.patch.multiple(
+            c, _generate_data=mock.MagicMock(return_value=[[self.st, True]]),
+            _pxcorr_inner=mock.MagicMock(return_value=self.st),
+                _write=mock.MagicMock()):
+            c.pxcorr()
+            c._generate_data.assert_called_once()
+            c._pxcorr_inner.assert_called_once_with(self.st, self.inv)
+            cst_mock().stack.assert_called_with(regard_location=False)
+            cst_mock().count.assert_called()
+            write_calls = [
+                mock.call('bla', 'stack_86398'),
+                mock.call('bla', 'stack_86398')
+            ]
+            c._write.assert_has_calls(write_calls)
+        cst_mock().clear.assert_called_once()
+        cst_mock().extend.assert_called_once()
+
+    @mock.patch('seismic.correlate.correlate.CorrStream')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_pxcorr2(self, makedirs_mock, logging_mock, open_mock, cst_mock):
+        options = deepcopy(self.options)
+        options['co']['subdivision']['recombine_subdivision'] = False
+        options['co']['subdivision']['delete_subdivision'] = False
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [
+            ['lala', 'lolo'], ['lala', 'lili']]
+        c = correlate.Correlator(sc_mock, options)
+        sc_mock.read_inventory.return_value = self.inv
+        cst_mock().count.return_value = True
+        with mock.patch.multiple(
+            c, _generate_data=mock.MagicMock(return_value=[[self.st, True]]),
+            _pxcorr_inner=mock.MagicMock(return_value=self.st),
+                _write=mock.MagicMock()):
+            c.pxcorr()
+            c._generate_data.assert_called_once()
+            c._pxcorr_inner.assert_called_once_with(self.st, self.inv)
+            cst_mock().stack.assert_not_called()
+            cst_mock().count.assert_called()
+            write_calls = [
+                mock.call(mock.ANY, tag='subdivision'),
+                mock.call(mock.ANY, tag='subdivision')
+            ]
+            c._write.assert_has_calls(write_calls)
+        cst_mock().extend.assert_called_once()
+
+    @mock.patch('seismic.correlate.correlate.st_to_np_array')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_pxcorr_inner(
+            self, makedirs_mock, logging_mock, open_mock, st_a_mock):
+        options = deepcopy(self.options)
+        options['co']['combinations'] = [(0, 0), (0, 1), (0, 2)]
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [
+            ['lala', 'lolo'], ['lala', 'lili']]
+        c = correlate.Correlator(sc_mock, options)
+        st_a_mock.return_value = (np.zeros((3, 5)), self.st)
+        with mock.patch.object(c, '_pxcorr_matrix') as pxcm:
+            pxcm.return_value = (np.ones((5, 3)), np.arange(3))
+            cst = c._pxcorr_inner(self.st, self.inv)
+            pxcm.assert_called_once()
+        self.assertListEqual(
+            c.options['starttime'], [tr.stats.starttime for tr in self.st])
+        for ctr in cst:
+            np.testing.assert_array_equal(np.ones(5,), ctr.data)
+        self.assertEqual(cst.count(), 3)
+
+    @mock.patch('seismic.db.corr_hdf5.DBHandler')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_write(
+            self, makedirs_mock, logging_mock, open_mock, dbh_mock):
+        options = deepcopy(self.options)
+        options['co']['combinations'] = [(0, 0), (0, 1), (0, 2)]
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [
+            ['lala', 'lolo'], ['lala', 'lili']]
+        c = correlate.Correlator(sc_mock, options)
+        st2 = self.st.copy()
+        cst0 = CorrStream()
+        for tr in st2:
+            tr.stats.station = 'oo'
+            cst0.append(tr)
+        st2.extend(self.st)
+        cst1 = CorrStream()
+        for tr in self.st:
+            cst1.append(tr)
+        c._write(st2, 'mytag')
+        add_cst_calls = [
+            mock.call(mock.ANY, 'mytag'), mock.call(mock.ANY, 'mytag')]
+        dbh_mock().add_correlation.assert_has_calls(add_cst_calls)
+        # A bit cumbersome way to check whether all files were written
+        for call in dbh_mock().add_correlation.call_args_list:
+            self.assertEqual(3, call[0][0].count())
+
 
 
 class TestStToNpArray(unittest.TestCase):

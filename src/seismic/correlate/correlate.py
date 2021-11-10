@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 8th November 2021 05:21:03 pm
+Last Modified: Wednesday, 10th November 2021 03:14:24 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -219,8 +219,6 @@ class Correlator(object):
             combis=self.rcombis)
         ex_dict = {}
         for nc, sc in zip(netcombs, statcombs):
-            s0, s1 = sc.split('-')
-            n0, n1 = nc.split('-')
             outf = os.path.join(
                 self.corr_dir, '%s.%s.h5' % (nc, sc))
             if not os.path.isfile(outf):
@@ -228,6 +226,8 @@ class Correlator(object):
             with CorrelationDataBase(
                     outf, corr_options=self.options, mode='r') as cdb:
                 d = cdb.get_available_starttimes(nc, sc, tag, channel)
+            s0, s1 = sc.split('-')
+            n0, n1 = nc.split('-')
             ex_dict.setdefault('%s.%s' % (n0, s0), {})
             ex_dict['%s.%s' % (n0, s0)]['%s.%s' % (n1, s1)] = d
         return ex_dict
@@ -245,7 +245,6 @@ class Correlator(object):
             inv = None
         inv = self.comm.bcast(inv, root=0)
         for st, write_flag in self._generate_data():
-
             cst.extend(self._pxcorr_inner(st, inv))
             if write_flag:
                 # Here, we can recombine the correlations for the read_len
@@ -284,10 +283,6 @@ class Correlator(object):
                 starttime.append(tr.stats['starttime'])
                 npts.append(tr.stats['npts'])
             npts = np.max(np.array(npts))
-            # create numpy array - Do a QR detrend here?
-            # st = st.split()
-            # st.write('/home/pm/Documents/PhD/Chaku/input.mseed')
-
             A, st = st_to_np_array(st, npts)
             As = A.shape
         else:
@@ -329,8 +324,8 @@ class Correlator(object):
         """
         Write correlation stream to files.
 
-        :param cst: :class:`~mii3.correlate.stream.CorrStream`
-        :type cst: [type]
+        :param cst: CorrStream containing the correlations
+        :type cst: :class:`~mii3.correlate.stream.CorrStream`
         """
         if not cst.count():
             self.logger.debug('No new data written.')
@@ -342,14 +337,15 @@ class Correlator(object):
         st = CorrStream()
         for tr in cst:
             if tr.stats.station == station and tr.stats.network == network:
-                st.append(cst.pop(0))
+                st.append(tr)
             else:
                 cstlist.append(st.copy())
                 st.clear()
                 station = tr.stats.station
                 network = tr.stats.network
-                st.append(cst.pop(0))
+                st.append(tr)
         cstlist.append(st)
+        del cst
 
         # Decide which process writes to which station
         pmap = (np.arange(len(cstlist))*self.psize)/len(cstlist)
