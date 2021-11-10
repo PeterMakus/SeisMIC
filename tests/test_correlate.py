@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Wednesday, 10th November 2021 03:33:49 pm
+Last Modified: Wednesday, 10th November 2021 03:36:25 pm
 '''
 from copy import deepcopy
 import unittest
@@ -355,7 +355,6 @@ class TestCorrrelator(unittest.TestCase):
         # A bit cumbersome way to check whether all files were written
         for call in dbh_mock().add_correlation.call_args_list:
             self.assertEqual(3, call[0][0].count())
-
 
 
 class TestStToNpArray(unittest.TestCase):
