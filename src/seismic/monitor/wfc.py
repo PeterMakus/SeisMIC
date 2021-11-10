@@ -8,9 +8,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 5th November 2021 08:19:58 am
-Last Modified: Tuesday, 9th November 2021 10:40:21 am
+Last Modified: Wednesday, 10th November 2021 10:00:26 am
 '''
+import glob
 from typing import List
+
 import numpy as np
 
 from seismic.correlate.stats import CorrStats
@@ -108,12 +110,15 @@ class WFCBulk(object):
 def read_wfc(path: str) -> WFC:
     """
     Read a :class:`~seismic.monitor.wfc.WFC` object saved as *npz*.
+    Returns a list if wildcards are used
 
     :param path: Path to file
     :type path: str
     :return: The WFC object.
     :rtype: WFC
     """
+    if '*' in path:
+        return [read_wfc(f) for f in glob.glob(path, recursive=True)]
     loaded = np.load(path)
     d = {}
     av = {}
