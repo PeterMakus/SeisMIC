@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Wednesday, 10th November 2021 03:36:25 pm
+Last Modified: Wednesday, 10th November 2021 04:12:08 pm
 '''
 from copy import deepcopy
 import unittest
@@ -355,6 +355,37 @@ class TestCorrrelator(unittest.TestCase):
         # A bit cumbersome way to check whether all files were written
         for call in dbh_mock().add_correlation.call_args_list:
             self.assertEqual(3, call[0][0].count())
+
+    @mock.patch('seismic.correlate.correlate.calc_cross_combis')
+    @mock.patch('seismic.correlate.correlate.preprocess_stream')
+    @mock.patch('seismic.correlate.correlate.mu.get_valid_traces')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_generate(
+        self, makedirs_mock, logging_mock, open_mock, gvt_mock,
+            ppst_mock, ccc_mock):
+        options = deepcopy(self.options)
+        options['co']['subdivision']['corr_inc'] = 5
+        options['co']['subdivision']['corr_len'] = 5
+        ccc_mock.return_value = [(0, 0), (0, 1), (0, 2)]
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [
+            ['lala', 'lolo'], ['lala', 'lili']]
+        sc_mock.select_inventory_or_load_remote.return_value = self.inv
+        sc_mock._load_local.return_value = self.st
+        ppst_mock.return_value = self.st
+        c = correlate.Correlator(sc_mock, options)
+        c.station = [['AA', '00'], ['AA', '22'], ['AA', '33'], ['BB', '00']]
+        ostart = None
+        for win, write_flag in c._generate_data():
+            if ostart and not write_flag:
+                # Also, good way to check whether the write_flag comes at
+                # the right place
+                self.assertAlmostEqual(win[0].stats.starttime - ostart, 5)
+            ostart = win[0].stats.starttime
+            self.assertAlmostEqual(
+                win[0].stats.endtime-win[0].stats.starttime, 5, 1)
 
 
 class TestStToNpArray(unittest.TestCase):
