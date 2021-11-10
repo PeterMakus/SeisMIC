@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 5th November 2021 08:19:58 am
-Last Modified: Wednesday, 10th November 2021 10:36:20 am
+Last Modified: Wednesday, 10th November 2021 11:52:50 am
 '''
 import glob
 from typing import List
@@ -62,8 +62,8 @@ class WFC(dict):
         :type average_reftrcs: bool, optional
         """
         for k, v in self.items():
-            self.av['%s_av' % k] = np.nanmean(v, axis=0)
-        self.mean = np.nanmean([v for v in self.av.values()], axis=0)
+            self.av['%s_av' % k] = np.nanmean(v)
+        self.mean = np.nanmean([v for v in self.av.values()])
 
     def save(self, path: str):
         """
@@ -93,18 +93,25 @@ class WFCBulk(object):
             # midpoint of lapse window
             lw.append(wfc.stats.tw_start + wfc.stats.tw_len/2)
             means.append(wfc.mean)
-        freq, lw, means = zip(*sorted(zip(lw, freq, means)))
         # create grids
-        self.lw = np.array(list(set(lw)))
-        del lw
-        self.cfreq = np.array(list(set(freq)))
-        del freq
-        # Now the lapse window changes per column and freq per row
-        self.wfc = np.reshape(means, (len(self.cfreq), len(self.lw)))
+        lwg, freqg = np.meshgrid(sorted(set(lw)), sorted(set(freq)))
+        # actual wfc grid
+        self.wfc = np.full_like(lwg, np.nan)
+        for f, lwc, v in zip(freq, lw, means):
+            ii = np.argwhere(((lwg == lwc) & (freqg == f)))[0]
+            self.wfc[ii[0], ii[1]] = v
         del means
+        # create grids
+        self.lw = np.array(sorted(set(lw)))
+        self.lwg = lwg
+        del lw
+        self.cfreq = np.array(sorted(set(freq)))
+        self.cfreqg = freqg
+        del freq
 
-    def plot(self, title: str = None):
-        plot_wfc_bulk(self.lw, self.cfreq, self.wfc, title=title)
+    def plot(self, title: str = None, outfile: str = None):
+        plot_wfc_bulk(
+            self.lw, self.cfreq, self.wfc, title=title, outfile=outfile)
 
 
 def read_wfc(path: str) -> WFC:
@@ -122,14 +129,17 @@ def read_wfc(path: str) -> WFC:
     loaded = np.load(path)
     d = {}
     av = {}
+    stats = {}
     for k, v in loaded.items():
         if k[-3:] == '_av':
             av[k] = v
         elif k == 'mean':
             mean = v
-        else:
+        elif 'reftr' in k:
             d[k] = v
-    wfc = WFC(d, stats=CorrStats(mu.load_header_from_np_array(d)))
+        else:
+            stats[k] = v
+    wfc = WFC(d, stats=CorrStats(mu.load_header_from_np_array(stats)))
     wfc.av = av
     wfc.mean = mean
     return wfc
