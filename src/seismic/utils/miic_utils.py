@@ -8,11 +8,12 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Friday, 5th November 2021 02:06:53 pm
+Last Modified: Wednesday, 10th November 2021 10:31:11 am
 '''
 from typing import List, Tuple
 import logging
 import re
+import warnings
 
 import numpy as np
 from obspy import Inventory, Stream, Trace, UTCDateTime
@@ -264,7 +265,11 @@ def load_header_from_np_array(array_dict: dict) -> dict:
         elif k in t_keys:
             d[k] = convert_timestamp_to_utcdt(array_dict[k])
         else:
-            d[k] = array_dict[k][0]
+            try:
+                d[k] = array_dict[k][0]
+            except IndexError:
+                warnings.warn(
+                    'Key {k} could not be loaded into the header.')
     return d
 
 

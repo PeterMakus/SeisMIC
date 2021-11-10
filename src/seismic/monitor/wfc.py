@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 5th November 2021 08:19:58 am
-Last Modified: Wednesday, 10th November 2021 10:00:26 am
+Last Modified: Wednesday, 10th November 2021 10:28:54 am
 '''
 import glob
 from typing import List
@@ -53,7 +53,7 @@ class WFC(dict):
         self.stats = stats
         self.mean = np.array([])
 
-    def compute_average(self, average_reftrcs: bool = True):
+    def compute_average(self):
         """
         Computes the average of the waveform coherency over the time axis.
 
@@ -129,7 +129,7 @@ def read_wfc(path: str) -> WFC:
             mean = v
         else:
             d[k] = v
-    wfc = WFC(d, stats=mu.load_header_from_np_array(loaded))
+    wfc = WFC(d, stats=mu.load_header_from_np_array(d))
     wfc.av = av
     wfc.mean = mean
     return wfc
