@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Wednesday, 10th November 2021 04:12:08 pm
+Last Modified: Wednesday, 10th November 2021 05:21:17 pm
 '''
 from copy import deepcopy
 import unittest
@@ -386,6 +386,32 @@ class TestCorrrelator(unittest.TestCase):
             ostart = win[0].stats.starttime
             self.assertAlmostEqual(
                 win[0].stats.endtime-win[0].stats.starttime, 5, 1)
+
+    # @mock.patch('seismic.correlate.correlate.pptd.zeroPadding')
+    # @mock.patch('seismic.correlate.correlate.func_from_str')
+    # @mock.patch('builtins.open')
+    # @mock.patch('seismic.correlate.correlate.logging')
+    # @mock.patch('seismic.correlate.correlate.os.makedirs')
+    # def test_pxcorr_matrix(
+    #         self, makedirs_mock, logging_mock, open_mock, ffs_mock, zp_mock):
+    #     options = deepcopy(self.options)
+    #     options['co']['combinations'] = [(0, 0), (0, 1), (0, 2)]
+    #     sc_mock = mock.Mock(Store_Client)
+    #     sc_mock.get_available_stations.return_value = [
+    #         ['lala', 'lolo'], ['lala', 'lili']]
+    #     sc_mock.select_inventory_or_load_remote.return_value = self.inv
+    #     sc_mock._load_local.return_value = self.st
+    #     c = correlate.Correlator(sc_mock, options)
+    #     c.options['corr_args']['FDpreProcessing'] = [
+    #         {'function': 'FDPP', 'args': []}]
+    #     c.options['corr_args']['TDpreProcessing'] = [
+    #         {'function': 'TDPP', 'args': []}]
+    #     # 13 is the fft size
+    #     ffs_mock.return_value = mock.MagicMock(side_effect=[
+    #         np.ones((25, 25)), np.ones((13, 25))*3])
+    #     zp_mock.return_value = np.ones((25, 25))*2
+    #     c, startlags = c._pxcorr_matrix(np.zeros((25, 25)))
+
 
 
 class TestStToNpArray(unittest.TestCase):
