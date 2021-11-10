@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 5th November 2021 08:19:58 am
-Last Modified: Wednesday, 10th November 2021 10:28:54 am
+Last Modified: Wednesday, 10th November 2021 10:36:20 am
 '''
 import glob
 from typing import List
@@ -129,7 +129,7 @@ def read_wfc(path: str) -> WFC:
             mean = v
         else:
             d[k] = v
-    wfc = WFC(d, stats=mu.load_header_from_np_array(d))
+    wfc = WFC(d, stats=CorrStats(mu.load_header_from_np_array(d)))
     wfc.av = av
     wfc.mean = mean
     return wfc
