@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Thursday, 21st October 2021 03:03:07 pm
+Last Modified: Tuesday, 9th November 2021 10:40:30 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -23,8 +23,9 @@ from obspy.core import Stats
 from seismic.utils import miic_utils as m3ut
 from seismic.plot.plot_correlation import plot_cst, plot_ctr
 import seismic.monitor.post_corr_process as pcp
-from seismic.monitor.stretch_mod import time_stretch_apply
+from seismic.monitor.stretch_mod import time_stretch_apply, wfc_multi_reftr
 from seismic.monitor.dv import DV
+from seismic.monitor.wfc import WFC
 from seismic.correlate.stats import CorrStats
 
 
@@ -225,6 +226,70 @@ class CorrBulk(object):
         self.ref_trc = outdata
         return outdata
 
+    def extract_multi_trace(
+        self, win_inc: int or List[int], method: str = 'mean',
+            percentile: float = 50.) -> List[np.ndarray]:
+        """
+        Extract several representative traces from a correlation matrix.
+        (one per time window `win_inc` with the length = 2*win_inc). That is,
+        the reference will be extracted with half increment overlap in each
+        direction.
+
+        Extract a correlation trace from the that best represents the
+        correlation matrix. ``Method`` decides about method to extract the
+        trace. The following possibilities are available
+
+        * ``mean`` averages all traces in the matrix
+        * ``norm_mean`` averages the traces normalized after normalizing for
+            maxima
+        * ``similarity_percentile`` averages the ``percentile`` % of traces
+            that best correlate with the mean of all traces. This will exclude
+            abnormal traces. ``percentile`` = 50 will return an average of
+            traces with correlation (with mean trace) above the median.
+
+        :param win_inc: Increment between each window that a Trace should be
+            extracted from. Given in days. Can be a list/np.ndarray or an int
+            (constant increment). The windows' length will be twice the
+            increment. **If set to 0, only one trace for the whole time will
+            be used.**
+        :type win_inc: int or List[int] (number of days)
+        :type method: string
+        :param method: method to extract the trace
+        :type percentile: float
+        :param percentile: only used for method=='similarity_percentile'
+
+        :rtype: np.ndarray
+        :return: extracted trace
+
+        ..note:: the extracted traces will also be saved in self.ref_trc
+        """
+        ref_trcs = []
+        if isinstance(win_inc, list):
+            win_inc = np.array(win_inc)
+        elif win_inc == 0:
+            return self.extract_trace(method, percentile)
+
+        inc_s = win_inc*24*3600
+        start = min(self.stats.corr_start)
+        if isinstance(inc_s, np.ndarray):
+            for inc in inc_s:
+                end = start + inc
+                ii = self._find_slice_index(start-inc/2, end+inc/2, True)
+                start = start + inc
+                ref_trcs.append(pcp.corr_mat_extract_trace(
+                    self.data[ii, :], self.stats, method, percentile))
+        else:
+            while start < max(self.stats.corr_end):
+                end = start + inc_s
+                ii = self._find_slice_index(start, end, True)
+                start = end
+                # stats don't need to be altered for this function
+                ref_trcs.append(pcp.corr_mat_extract_trace(
+                    self.data[ii, :], self.stats, method, percentile))
+        ref_trcs = np.array(ref_trcs)
+        self.ref_trc = ref_trcs
+        return ref_trcs
+
     def mirror(self):
         """
         Average the causal and acausal (i.e., right and left) parts of the
@@ -349,6 +414,37 @@ class CorrBulk(object):
         np.savez_compressed(
             path, data=self.data, **kwargs)
 
+    def slice(
+        self, starttime: UTCDateTime, endtime: UTCDateTime,
+            include_partial: bool = True):
+        """
+        return a subset of the current CorrelationBulk with data inside
+        the requested time window.
+
+        :param starttime: Earliest Starttime
+        :type starttime: UTCDateTime
+        :param endtime: Latest endtime
+        :type endtime: UTCDateTime
+        :param include_partial: Include time window if it's only
+            partially covered, defaults to True
+        :type include_partial: bool, optional
+        :return: Another CorrBulk object
+        :rtype: CorrBulk
+        """
+        ii = self._find_slice_index(starttime, endtime, include_partial)
+        data = self.data[ii, :]
+        stats = deepcopy(self.stats)
+        for key, value in stats.items():
+            try:
+                if isinstance(value, list):
+                    stats[key] = filter(lambda ii: ii, value)
+                elif isinstance(value, np.ndarray):
+                    stats[key] = value[ii]
+            except AttributeError:
+                continue
+                # Those will change automatically
+        return CorrBulk(data, stats)
+
     def taper(self, width: float):
         """
         Taper the data.
@@ -417,6 +513,74 @@ class CorrBulk(object):
         proc = ['trim: %s, %s' % (str(starttime), str(endtime))]
         self.stats.processing_bulk += proc
         return self
+
+    def wfc(
+        self, ref_trc: np.ndarray, time_window: np.ndarray, sides: str,
+        tw_start: float, tw_len: float, freq_min: float, freq_max: float,
+            remove_nans: bool = True) -> WFC:
+        """
+        Computes the waveform coherency (**WFC**) between the given reference
+        correlation(s) and correlation matrix.
+        If several references are given, it will loop over these
+
+        See Steinmann, et. al. (2021) for details.
+
+        :param refcorr: 1 or 2D reference Correlation Trace extracted from the
+            correlation data.
+            If 2D, it will be interpreted as one refcorr trace per row.
+        :type refcorr: np.ndarray
+        :param tw: Lag time window to use for the computation
+        :type tw: np.ndarray
+        :param sides: Which sides to use. Can be `both`, `right`, `left`,
+            or `single`.
+        :type sides: str
+        :param tw_start: Time window start in seconds lag time.
+        :type tw_start: float
+        :param tw_len: Length of the Lapse time window in seconds.
+        :type tw_len: float
+        :param freq_min: Highpass frequency used for the computed values. (Hz)
+        :type freq_min: float
+        :param freq_max: Lowpass frequency used for the computed values. (Hz)
+        :type freq_max: float
+        :param remove_nans: Remove nans from CorrMatrix, defaults to True
+        :return: A dictionary with one correlation array for each reference
+            trace. The keys are using the syntax `reftr_%n`.
+        :rtype: dict
+        """
+        wfc_dict = wfc_multi_reftr(
+            self.data, ref_trc, time_window, sides, remove_nans)
+        stats = deepcopy(self.stats)
+        stats['tw_start'] = tw_start
+        stats['tw_len'] = tw_len
+        stats['freq_min'] = freq_min
+        stats['freq_max'] = freq_max
+        wfc = WFC(wfc_dict, stats)
+        return wfc
+
+    def _find_slice_index(
+        self, starttime: UTCDateTime, endtime: UTCDateTime,
+            include_partial: bool) -> np.ndarray:
+        """
+        Find the indices of the correlations in the requested time window.
+
+        :param starttime: start of the time window
+        :type starttime: UTCDateTime
+        :param endtime: end of the time window
+        :type endtime: UTCDateTime
+        :param include_partial: include corrs that are only partially covered
+        :type include_partial: bool
+        :return: An Array containing the boolean indices
+        :rtype: np.ndarray[bool]
+        """
+        if include_partial:
+            ii = np.logical_and(
+                np.array(self.stats.corr_end) >= starttime,
+                np.array(self.stats.corr_start) <= endtime)
+        else:
+            ii = np.logical_and(
+                np.array(self.stats.corr_start) >= starttime,
+                np.array(self.stats.corr_end) <= endtime)
+        return np.squeeze(ii)
 
 
 def read_corr_bulk(path: str) -> CorrBulk:
@@ -692,14 +856,18 @@ class CorrStream(Stream):
         statlist = []
         # Double check sampling rate
         sr = st[0].stats.sampling_rate
+        mask = []
         for ii, tr in enumerate(st):
             if tr.stats.sampling_rate != sr:
                 warnings.warn('Sampling rate differs. Trace is skipped.')
+                mask.append(ii)
                 continue
             A[ii] = tr.data
             if inplace:
                 del tr.data
             statlist.append(tr.stats)
+        # Apply mask for skipped data
+        A = np.delete(A, mask, 0)
 
         stats = convert_statlist_to_bulk_stats(statlist)
         return CorrBulk(A, stats)

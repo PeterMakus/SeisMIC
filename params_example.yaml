@@ -153,6 +153,14 @@ dv:
     ### Range to try stretching
     stretch_range : 0.03
     stretch_steps : 1001
+  
+    #### Reference trace extraction
+    #  win_inc : Length in days of each reference time window to be used for trace extraction
+    # If == 0, only one trace will be extracted
+    # If > 0, mutliple reference traces will be used for the dv calculation
+    # Can also be a list if the length of the windows should vary
+    # See seismic.correlate.stream.CorrBulk.extract_multi_trace for details on arguments
+    dt_ref : {'win_inc' : 0, 'method': 'mean', 'percentile': 50}
 
     # preprocessing on the correlation bulk before stretch estimation
     preprocessing: [
@@ -163,4 +171,40 @@ dv:
     postprocessing: [
                       {'function': 'smooth_sim_mat', 'args': {'win_len': 7}}
     ]
+
+#### parameters to compute the waveform coherence
+wfc:
+  # subfolder for storage of time difference results
+    subdir : 'wfc'
+
+    ### Definition of calender time windows for the time difference measurements
+    start_date : '2015-05-01 00:00:00.0'   # %Y-%m-%dT%H:%M:%S.%fZ'
+    end_date : '2016-01-01 00:00:00.0'
+    win_len : 86400                         # length of window in which EGFs are stacked
+    date_inc : 86400                        # increment of measurements
+
+    ### Frequencies
+    freq_min : 4
+    freq_max : 8
+
+    ### Definition of lapse time window
+    tw_start : 20     # lapse time of first sample [s]
+    tw_len : 60       # length of window [s]
+  
+    #### Reference trace extraction
+    #  win_inc : Length in days of each reference time window to be used for trace extraction
+    # If == 0, only one trace will be extracted
+    # If > 0, mutliple reference traces will be used for the dv calculation
+    # Can also be a list if the length of the windows should vary
+    # See seismic.correlate.stream.CorrBulk.extract_multi_trace for details on arguments
+    dt_ref : {'win_inc' : 0, 'method': 'mean', 'percentile': 50}
+
+    # preprocessing on the correlation bulk before stretch estimation
+    preprocessing: [
+                    {'function': 'smooth', 'args': {'wsize': 48, 'wtype': 'hanning', 'axis': 1}}
+    ]
+
+    ### SAVING
+    # save components separately or only their average?
+    save_comps: False
 

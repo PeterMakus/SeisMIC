@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Thursday, 21st October 2021 03:12:20 pm
+Last Modified: Friday, 5th November 2021 08:15:28 am
 '''
 from typing import List, Tuple
 
@@ -60,6 +60,141 @@ def time_windows_creation(
             tw_list.append(np.arange(cstart, cstart + wlen, 1))
 
     return tw_list
+
+
+def compute_wfc(
+    mat: np.ndarray, tw: np.ndarray, refcorr: np.ndarray, sides: str,
+        remove_nans: bool = True) -> np.ndarray:
+    """
+    Computes the waveform coherency (**WFC**) between the given reference
+    correlation and correlationmatrix.
+
+    See Steinmann, et. al. (2021) for details
+
+    :param mat: 2D Correlation Matrix (function of corrstart and time lag)
+    :type mat: np.ndarray
+    :param tw: Lag time window to use for the computation
+    :type tw: np.ndarray
+    :param refcorr: 1D reference Correlation Trace extracted from `mat`.
+    :type refcorr: np.ndarray
+    :param sides: Which sides to use. Can be `both`, `right`, `left`,
+        or `single`.
+    :type sides: str
+    :param remove_nans: Remove nans from CorrMatrix, defaults to True
+    :type remove_nans: bool, optional
+    :raises ValueError: unknown option in sides
+    :return: A 1D array with len=N(time windows)
+    :rtype: np.ndarray
+    """
+    # Mat must be a 2d vector in every case so
+    mat = np.atleast_2d(mat)
+
+    assert(len(refcorr) == mat.shape[1])
+
+    if remove_nans:
+        mat = np.nan_to_num(mat)
+
+    center_p = np.floor((mat.shape[1] - 1.) / 2.)
+
+    corr = np.zeros((len(tw), mat.shape[0]))
+
+    for (ii, ctw) in enumerate(tw):
+
+        if sides == 'both':
+            if ctw[0] == 0:
+                ctw = np.hstack((
+                    center_p - ctw[::-1],
+                    center_p + ctw[1:])).astype(np.int32)
+            else:
+                ctw = np.hstack((
+                    center_p - ctw[::-1],
+                    center_p + ctw)).astype(np.int32)
+        elif sides == 'left':
+            ctw = (center_p - ctw[::-1]).astype(np.int32)
+        elif sides == 'right':
+            ctw = (center_p + ctw).astype(np.int32)
+        elif sides == 'single':
+            ctw = ctw.astype(np.int32)
+        else:
+            raise ValueError(
+                'sides = %s not a valid option.' % sides)
+
+        mask = np.zeros((mat.shape[1],))
+        mask[ctw] = 1
+
+        ref_mask_mat = mask
+        mat_mask_mat = np.tile(mask, (mat.shape[0], 1))
+
+        first = mat * mat_mask_mat
+        second = refcorr * ref_mask_mat
+
+        dprod = np.dot(first, second.T)
+
+        # Normalization
+        f_sq = np.sum(first ** 2, axis=1)
+        s_sq = np.sum(second ** 2)
+
+        f_sq = f_sq.reshape(1, len(f_sq))
+
+        den = np.sqrt(np.dot(f_sq, s_sq))
+
+        corr[ii] = dprod/den
+    return corr
+
+
+def wfc_multi_reftr(
+    corr_data: np.ndarray, ref_trs: np.ndarray, tw: np.ndarray, sides: str,
+        remove_nans: bool = True) -> dict:
+    """
+    Computes the waveform coherency (**WFC**) between the given reference
+    correlation(s) and correlation matrix.
+    If several references are given, it will loop over these
+
+    See Steinmann, et. al. (2021) for details
+
+    :param corr_data: 2D Correlation Matrix
+        (function of corrstart and time lag)
+    :type corr_data: np.ndarray
+    :param refcorr: 1 or 2D reference Correlation Trace extracted from
+        `corr_data`.
+        If 2D, it will be interpreted as one refcorr trace per row.
+    :type refcorr: np.ndarray
+    :param tw: Lag time window to use for the computation
+    :type tw: np.ndarray
+    :param sides: Which sides to use. Can be `both`, `right`, `left`,
+        or `single`.
+    :type sides: str
+    :param remove_nans: Remove nans from CorrMatrix, defaults to True
+    :return: A dictionary with one correlation array for each reference trace.
+    :rtype: dict
+    """
+    if remove_nans:
+        corr_data = np.nan_to_num(corr_data)
+        ref_trs = np.nan_to_num(ref_trs)
+
+    # remove 1-dimensions
+    ref_trs = np.squeeze(ref_trs)
+
+    multi_ref_panel = {}
+
+    # check how many reference traces have been passed
+    try:
+        reftr_count, _ = ref_trs.shape
+    except ValueError:  # An array is passed
+        reftr_count = 1
+
+    if reftr_count == 1:
+        key = "reftr_0"
+        value = compute_wfc(
+            corr_data, tw, ref_trs, sides, remove_nans=remove_nans)
+        multi_ref_panel.update({key: value})
+    else:  # For multiple-traces loops
+        for i, rftr in enumerate(ref_trs):
+            key = "reftr_%d" % i
+            value = value = compute_wfc(
+                corr_data, tw, rftr, sides, remove_nans=remove_nans)
+            multi_ref_panel.update({key: value})
+    return multi_ref_panel
 
 
 def velocity_change_estimate(
@@ -410,7 +545,7 @@ def multi_ref_vchange(
     except ValueError:  # An array is passed
         reftr_count = 1
 
-    # Distionary that will hold all the results
+    # Dictionary that will hold all the results
     multi_ref_panel = {}
 
     # When there is just 1 reference trace no loop is necessary
@@ -460,29 +595,36 @@ def est_shift_from_dt_corr(
     :pram corr2: Correlation between velocity corrected trace and reference B
     """
 
-    # Create maked arrays so that NaNs are handled properly
-    dt1 = np.ma.masked_array(dt1, mask=(np.isnan(dt1) | np.isinf(dt1)),
-                             fill_value=0)
-    dt2 = np.ma.masked_array(dt2, mask=(np.isnan(dt2) | np.isinf(dt2)),
-                             fill_value=0)
+    # Create masked arrays so that NaNs are handled properly
+    dt1 = np.ma.masked_array(
+        dt1, mask=(np.isnan(dt1) | np.isinf(dt1)), fill_value=0)
+    dt2 = np.ma.masked_array(
+        dt2, mask=(np.isnan(dt2) | np.isinf(dt2)), fill_value=0)
 
-    corr1 = np.ma.masked_array(corr1, mask=(np.isnan(corr1) | np.isinf(corr1)),
-                               fill_value=0)
-    corr2 = np.ma.masked_array(corr2, mask=(np.isnan(corr2) | np.isinf(corr2)),
-                               fill_value=0)
+    corr1 = np.ma.masked_array(
+        corr1, mask=(np.isnan(corr1) | np.isinf(corr1)), fill_value=0)
+    corr2 = np.ma.masked_array(
+        corr2, mask=(np.isnan(corr2) | np.isinf(corr2)), fill_value=0)
 
+    # October 21 - PM - Not entirely sure, why this is done?
+    # However, it leads to problems when creating the mask
+    # (because shape wrong). Two options: 1.DOn't do it or
+    # 2. Also remove the correspdoning points in the dt objects
     # Remove the points where the correlation is 0
     no_zero = (corr1 > 0) & (corr2 > 0)
-    corr1 = corr1[no_zero]
-    corr2 = corr2[no_zero]
+    # corr1 = corr1[no_zero]
+    # corr2 = corr2[no_zero]
 
     # Estimate the point-variance for the two curves
+    # var1 = (1 - corr1[no_zero] ** 2) / (4 * corr1[no_zero] ** 2)
+    # var2 = (1 - corr2[no_zero] ** 2) / (4 * corr2[no_zero] ** 2)
     var1 = (1 - corr1 ** 2) / (4 * corr1 ** 2)
     var2 = (1 - corr2 ** 2) / (4 * corr2 ** 2)
 
     # Calculate the point-weight
     wgt = 1 / (var1 + var2)
-    mask = (corr1 > 0.999) & (corr2 > 0.999)
+    # Insert he no_zero mask here instead.
+    mask = (corr1 > 0.999) & (corr2 > 0.999) & (~no_zero)
     wgt = wgt[~mask]
 
     # This saves from returning a masked value
@@ -629,7 +771,10 @@ def estimate_reftr_shifts_from_dt_corr(
         m = m - np.mean(m)
 
         # How many samples (int) each sim matrix must be rolled
-        m = np.around(m / delta, out=np.zeros_like(m, dtype='int32'))
+        # PM October 2021 - require works the dtype casting in first
+        # step caused errors, should be fine now?
+        m = np.around(m / delta)  # , out=np.zeros_like(m, dtype='int32'))
+        m = np.require(m, dtype='int32')
 
         row, col = np.squeeze(multi_ref_panel['reftr_0']['sim_mat']).shape
 
@@ -676,7 +821,7 @@ def estimate_reftr_shifts_from_dt_corr(
                     'value': dt,
                     'second_axis': stretch_vect,
                     'value_type': np.array(['stretch']),
-                    'method': np.array(['mufti_ref'])}
+                    'method': np.array(['multi_ref'])}
 
         if return_sim_mat:
             ret_dict.update({'sim_mat': bsimmat})

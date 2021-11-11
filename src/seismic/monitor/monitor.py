@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Thursday, 21st October 2021 03:14:52 pm
+Last Modified: Tuesday, 9th November 2021 10:50:03 am
 '''
 from copy import deepcopy
 import logging
@@ -25,6 +25,7 @@ from tqdm import tqdm
 
 from seismic.db.corr_hdf5 import CorrelationDataBase
 from seismic.monitor.dv import DV, read_dv
+from seismic.monitor.wfc import WFC
 from seismic.utils.miic_utils import log_lvl
 
 
@@ -186,7 +187,7 @@ class Monitor(object):
         if cbt.data.shape[1] <= 20:
             raise ValueError('CorrBulk extremely short.')
 
-        tr = cbt.extract_trace(method='mean')
+        tr = cbt.extract_multi_trace(**self.options['dv']['dt_ref'])
 
         # Compute time window
         tw = [np.arange(
@@ -206,7 +207,7 @@ class Monitor(object):
 
         # extract the final reference trace (mean excluding very different
         # traces)
-        tr = ccb.extract_trace(method='mean')
+        tr = cbt.extract_multi_trace(**self.options['dv']['dt_ref'])
         # obtain an improved time shift measurement
         dv = cbt.stretch(
             ref_trc=tr, return_sim_mat=True,
@@ -275,19 +276,22 @@ class Monitor(object):
         are computed.
 
         :param method: Which components should be averaged? Can be
-            'StationWide' if all component-combinations should be averaged,
-            'AutoComponents' if only the dv results of autocorrelation are to
-            be averaged, or 'CrossComponents' if you wish to average dvs from
-            the same station but only intercomponent corrrelations.
+            'StationWide' if all component-combinations for one station should
+            be averaged, 'AutoComponents' if only the dv results of
+            autocorrelations are to be averaged, 'CrossComponents' if you wish
+            to average dvs from the same station but only intercomponent
+            corrrelations, or 'CrossStations' if cross-station correlations
+            should be averaged (same station combination and all component
+            combinations).
             Defaults to 'AutoComponents'
         :type method: str, optional
         :raises ValueError: For Unknown combination methods.
         """
-        if method.lower() not in (
-                'autocomponents', 'crosscomponents', 'stationwide'):
-            raise ValueError(
-                'Unknown averaging method. Use "autocomponent" or '
-                + '"stationwide".')
+        av_methods = (
+            'autocomponents', 'crosscomponents', 'stationwide',
+            'crossstations')
+        if method.lower() not in av_methods:
+            raise ValueError('Averaging method not in %s.' % str(av_methods))
         infiles = glob(os.path.join(self.outdir, '*.npz'))
         if method.lower() == 'autocomponents':
             ch = 'av-auto'
@@ -315,16 +319,31 @@ class Monitor(object):
                     fffil.clear()
                     self.logger.debug('Skipping already averaged dv...%s' % f)
                     break
+                elif 'av' in f:
+                    # computed by another averaging method
+                    infiles.remove(f)
+                    continue
+                components = f.split('.')[-2].split('-')
+                stations = f.split('.')[-3].split('-')
                 if method.lower() == 'autocomponents':
                     # Remove those from combined channels
-                    components = f.split('.')[-2].split('-')
-                    if components[0] != components[1]:
+                    if components[0] != components[1] \
+                            or stations[0] != stations[1]:
                         infiles.remove(f)
                         continue
                 elif method.lower() == 'crosscomponents':
                     # Remove those from equal channels
                     components = f.split('.')[-2].split('-')
-                    if components[0] == components[1]:
+                    if components[0] == components[1] \
+                            or stations[0] != stations[1]:
+                        infiles.remove(f)
+                        continue
+                elif method.lower() == 'stationwide':
+                    if stations[0] != stations[1]:
+                        infiles.remove(f)
+                        continue
+                elif method.lower() == 'crossstations':
+                    if stations[0] == stations[1]:
                         infiles.remove(f)
                         continue
                 fffil.append(f)
@@ -360,6 +379,163 @@ class Monitor(object):
                 dv_av.plot(
                     save_dir=savedir, figure_file_name=fname,
                     normalize_simmat=True, sim_mat_Clim=[-1, 1])
+
+    def compute_waveform_coherency_bulk(self):
+        """
+        Compute the WFC for all specified (params file) correlations using MPI.
+        The parameters for the correlation defined in the *yaml* file will be
+        used.
+
+        This function will just call
+        :meth:`~seismic.monitor.monitor.Monitor.compute_waveform_coherency`
+        several times.
+        Subsequently, the average of the different component combinations will
+        be computed.
+        """
+        tag = 'subdivision'
+        # get number of available channel combis
+        if self.rank == 0:
+            plist = []
+            for f, n, s in zip(self.infiles, self.netlist, self.statlist):
+                with CorrelationDataBase(f, mode='r') as cdb:
+                    ch = cdb.get_available_channels(
+                        tag, n, s)
+                    plist.extend([f, n, s, c] for c in ch)
+        else:
+            plist = None
+        plist = self.comm.bcast(plist, root=0)
+        pmap = (np.arange(len(plist))*self.psize)/len(plist)
+        pmap = pmap.astype(np.int32)
+        ind = pmap == self.rank
+        ind = np.arange(len(plist), dtype=int)[ind]
+
+        # Assign a task to each rank
+        wfcl = []
+        for ii in tqdm(ind):
+            corr_file, net, stat, cha = plist[ii]
+            try:
+                wfcl.append(self.compute_waveform_coherency(
+                    corr_file, tag, net, stat, cha))
+            except Exception as e:
+                self.logger.exception(e)
+
+        outdir = os.path.join(
+            self.options['proj_dir'], self.options['wfc']['subdir'])
+        # Compute averages and everything
+        wfclu = self.comm.allgather(wfcl)
+        # concatenate
+        wfcl = [j for i in wfclu for j in i]
+        del wfclu
+
+        wfc_avl = []
+        while len(wfcl):
+            net = wfcl[0].stats.network
+            stat = wfcl[0].stats.station
+            # find identical components
+            wfc_avl = [wfc for wfc in wfcl if all(
+                [wfc.stats.network == net, wfc.stats.station == stat])]
+            # remove original from list
+            list(wfcl.pop(ii) for ii in (wfcl.index(wfc) for wfc in wfc_avl))
+            wfc = average_components_wfc(wfc_avl)
+
+            # Write files
+            outf = os.path.join(outdir, 'WFC-%s.%s.%s.f%a-%a.tw%a-%a' % (
+                wfc.stats.network, wfc.stats.station, wfc.stats.channel,
+                wfc.stats.freq_min, wfc.stats.freq_max, wfc.stats.tw_start,
+                wfc.stats.tw_len))
+            wfc.save(outf)
+
+    def compute_waveform_coherency(
+        self, corr_file: str, tag: str, network: str, station: str,
+            channel: str) -> WFC:
+        """
+        Computes the waveform coherency corresponding to one correlation (i.e.,
+        one single file).
+
+        The waveform coherency can be used as a measure of stability of
+        a certain correlation. See Steinmann, et. al. (2021) for details.
+
+        :param corr_file: File to compute the wfc from
+        :type corr_file: str
+        :param tag: Tag inside of hdf5 file to retrieve corrs from.
+        :type tag: str
+        :param network: Network combination code.
+        :type network: str
+        :param station: Station combination code
+        :type station: str
+        :param channel: Channel combination code.
+        :type channel: str
+        :raises ValueError: For short correlations
+        :return: An object holding the waveform coherency
+        :rtype: :class:`~seismic.monitor.wfc.WFC`
+
+        .. seealso:: To compute wfc for several correlations use:
+            :meth:`~seismic.monitor.monitor.Monitor.compute.waveform_coherency\
+            _bulk`.
+        """
+        self.logger.info('Computing wfc for file: %s and channel: %s' % (
+            corr_file, channel))
+        with CorrelationDataBase(corr_file, mode='r') as cdb:
+            # get the corrstream containing all the corrdata for this combi
+            cst = cdb.get_data(network, station, channel, tag)
+        cb = cst.create_corr_bulk(inplace=True)
+        outdir = os.path.join(
+            self.options['proj_dir'], self.options['wfc']['subdir'])
+        if self.rank == 0:
+            os.makedirs(outdir, exist_ok=True)
+
+        # for possible rest bits
+        del cst
+        # Do the actual processing:
+        cb.normalize(normtype='absmax')
+        # That is were the stacking is happening
+        starttimes, endtimes = make_time_list(
+            self.options['wfc']['start_date'], self.options['wfc']['end_date'],
+            self.options['wfc']['date_inc'], self.options['wfc']['win_len'])
+        self.logger.debug('Timelist created.')
+        cb.resample(starttimes, endtimes)
+        cb.filter(
+            (self.options['wfc']['freq_min'], self.options['wfc']['freq_max']))
+
+        # Preprocessing on the correlation bulk
+        if 'preprocessing' in self.options['wfc']:
+            for func in self.options['wfc']['preprocessing']:
+                f = cb.__getattribute__(func['function'])
+                cb = f(**func['args'])
+
+        # Now, we make a copy of the cm to be trimmed
+        cbt = cb.copy().trim(
+            -(self.options['wfc']['tw_start']+self.options['wfc']['tw_len']),
+            (self.options['wfc']['tw_start']+self.options['wfc']['tw_len']))
+
+        self.logger.debug(
+            'Preprocessing finished.\nExtracting reference trace...')
+
+        if cbt.data.shape[1] <= 20:
+            raise ValueError('CorrBulk extremely short.')
+
+        tr = cbt.extract_multi_trace(**self.options['wfc']['dt_ref'])
+        self.logger.debug('Reference trace created.\nComputing WFC...')
+
+        # Compute time window
+        tw = [np.arange(
+            self.options['wfc']['tw_start']*cbt.stats['sampling_rate'],
+            (self.options['wfc']['tw_start']+self.options[
+                'wfc']['tw_len'])*cbt.stats['sampling_rate'], 1)]
+        wfc = cbt.wfc(
+            tr, tw, 'both', self.options['wfc']['tw_start'],
+            self.options['wfc']['tw_len'], self.options['wfc']['freq_min'],
+            self.options['wfc']['freq_max'])
+        self.logger.debug('WFC computed.\nAveraging over time axis...')
+        # Compute the average over the whole time window
+        wfc.compute_average()
+        if self.options['wfc']['save_comps']:
+            outf = os.path.join(outdir, 'WFC-%s.%s.%s.f%a-%a.tw%a-%a' % (
+                network, station, channel, wfc.stats.freq_min,
+                wfc.stats.freq_max, wfc.stats.tw_start, wfc.stats.tw_len))
+            self.logger.info(f'Writing WFC to {outf}')
+            wfc.save(outf)
+        return wfc
 
 
 def make_time_list(
@@ -481,3 +657,30 @@ def average_components(dvs: List[DV]) -> DV:
     dvout = DV(
         corr, dt, dvs[0].value_type, av_sim_mat, strvec, dvs[0].method, stats)
     return dvout
+
+
+def average_components_wfc(wfcs: List[WFC]) -> WFC:
+    """
+    Averages the Similariy matrix of the three DV objects. Based on those,
+    it computes a new dv value and a new correlation value.
+
+    :param dvs: List of dvs from the different components to compute an
+            average from. Note that it is possible to use almost anything as
+            input (also from different stations). However, at the time,
+            the function requires the input to be of the same shape
+
+    :type dvs: List[class:`~seismic.monitor.dv.DV`]
+    :raises TypeError: for DVs that were computed with different methods
+    :return: A single dv with an averaged similarity matrix
+    :rtype: DV
+    """
+    stats = deepcopy(wfcs[0].stats)
+    stats['channel'] = 'av'
+    for k in ['tw_start', 'tw_len', 'freq_min', 'freq_max']:
+        if any((stats[k] != wfc.stats[k] for wfc in wfcs)):
+            raise ValueError('%s is not allowed to differ.' % k)
+    meandict = {}
+    for k in wfcs[0].keys():
+        meandict[k] = np.nanmean([wfc[k] for wfc in wfcs], axis=0)
+    wfcout = WFC(meandict, stats)
+    return wfcout

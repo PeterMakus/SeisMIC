@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 21st October 2021 03:10:18 pm
+Last Modified: Wednesday, 10th November 2021 05:16:38 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -53,7 +53,6 @@ class Correlator(object):
             in options.
         :type options: dict or str
         """
-        super().__init__()
         if isinstance(options, str):
             with open(options) as file:
                 options = yaml.load(file, Loader=yaml.FullLoader)
@@ -79,7 +78,7 @@ class Correlator(object):
         rankstr = str(self.rank).zfill(3)
 
         loglvl = mu.log_lvl[options['log_level'].upper()]
-        self.logger = logging.Logger("seismic.Correlator%s" % rankstr)
+        self.logger = logging.getLogger("seismic.Correlator%s" % rankstr)
         self.logger.setLevel(loglvl)
         logging.captureWarnings(True)
         warnlog = logging.getLogger('py.warnings')
@@ -121,10 +120,17 @@ class Correlator(object):
         if isinstance(network, list) and len(network) == 1:
             network = network[0]
 
-        if network == '*':
+        if network == '*' and station == '*':
             station = store_client.get_available_stations()
         elif station == '*' and isinstance(network, str):
             station = store_client.get_available_stations(network)
+        elif network == '*':
+            raise ValueError(
+                'Stations has to be either: \n'
+                + '1. A list of the same length as the list of networks.\n'
+                + '2. \'*\' That is, a wildcard (string).\n'
+                + '3. A list and network is a string describing one '
+                + 'station code.')
         elif isinstance(station, str) and isinstance(network, str):
             station = [[network, station]]
         elif station == '*' and isinstance(network, list):
@@ -140,21 +146,20 @@ class Correlator(object):
                     + '3. A list and network is a string describing one '
                     + 'station code.')
             station = list([n, s] for n, s in zip(network, station))
-        elif isinstance(station, str):
+        elif isinstance(station, list) and isinstance(network, str):
+            for ii, stat in enumerate(station):
+                station[ii] = [network, stat]
+        else:
             raise ValueError(
                 'Stations has to be either: \n'
                 + '1. A list of the same length as the list of networks.\n'
                 + '2. \'*\' That is, a wildcard (string).\n'
                 + '3. A list and network is a string describing one '
                 + 'station code.')
-        else:
-            for ii, stat in enumerate(station):
-                station[ii] = [network, stat]
         self.station = station
-
         self.logger.debug(
-            'Fetching data from the following stations:\n%s' % str(
-                ['{n}.{s}'.format(n=n, s=s) for n, s in station]))
+            'Fetching data from the following stations:\n%a' % [
+                f'{n}.{s}' for n, s in station])
 
         self.sampling_rate = self.options['sampling_rate']
 
@@ -214,8 +219,6 @@ class Correlator(object):
             combis=self.rcombis)
         ex_dict = {}
         for nc, sc in zip(netcombs, statcombs):
-            s0, s1 = sc.split('-')
-            n0, n1 = nc.split('-')
             outf = os.path.join(
                 self.corr_dir, '%s.%s.h5' % (nc, sc))
             if not os.path.isfile(outf):
@@ -223,6 +226,8 @@ class Correlator(object):
             with CorrelationDataBase(
                     outf, corr_options=self.options, mode='r') as cdb:
                 d = cdb.get_available_starttimes(nc, sc, tag, channel)
+            s0, s1 = sc.split('-')
+            n0, n1 = nc.split('-')
             ex_dict.setdefault('%s.%s' % (n0, s0), {})
             ex_dict['%s.%s' % (n0, s0)]['%s.%s' % (n1, s1)] = d
         return ex_dict
@@ -240,7 +245,6 @@ class Correlator(object):
             inv = None
         inv = self.comm.bcast(inv, root=0)
         for st, write_flag in self._generate_data():
-
             cst.extend(self._pxcorr_inner(st, inv))
             if write_flag:
                 # Here, we can recombine the correlations for the read_len
@@ -279,10 +283,6 @@ class Correlator(object):
                 starttime.append(tr.stats['starttime'])
                 npts.append(tr.stats['npts'])
             npts = np.max(np.array(npts))
-            # create numpy array - Do a QR detrend here?
-            # st = st.split()
-            # st.write('/home/pm/Documents/PhD/Chaku/input.mseed')
-
             A, st = st_to_np_array(st, npts)
             As = A.shape
         else:
@@ -324,8 +324,8 @@ class Correlator(object):
         """
         Write correlation stream to files.
 
-        :param cst: :class:`~mii3.correlate.stream.CorrStream`
-        :type cst: [type]
+        :param cst: CorrStream containing the correlations
+        :type cst: :class:`~mii3.correlate.stream.CorrStream`
         """
         if not cst.count():
             self.logger.debug('No new data written.')
@@ -337,14 +337,15 @@ class Correlator(object):
         st = CorrStream()
         for tr in cst:
             if tr.stats.station == station and tr.stats.network == network:
-                st.append(cst.pop(0))
+                st.append(tr)
             else:
                 cstlist.append(st.copy())
                 st.clear()
                 station = tr.stats.station
                 network = tr.stats.network
-                st.append(cst.pop(0))
+                st.append(tr)
         cstlist.append(st)
+        del cst
 
         # Decide which process writes to which station
         pmap = (np.arange(len(cstlist))*self.psize)/len(cstlist)
@@ -724,233 +725,235 @@ def calc_cross_combis(
     return combis
 
 
-def rotate_multi_corr_stream(st: Stream) -> Stream:
-    """Rotate a stream with full Greens tensor from ENZ to RTZ
+# All the rotations are still untested, should do that at some point
 
-    Take a stream with numerous correlation traces and rotate the
-    combinations of ENZ components into combinations of RTZ components in case
-    all nine components of the Green's tensor are present. If not all nine
-    components are present no trace for this station combination is returned.
+# def rotate_multi_corr_stream(st: Stream) -> Stream:
+#     """Rotate a stream with full Greens tensor from ENZ to RTZ
 
-    :type st: obspy.stream
-    :param st: stream with data in ENZ system
-    :rtype: obspy.stream
-    :return: stream in the RTZ system
-    """
+#     Take a stream with numerous correlation traces and rotate the
+#     combinations of ENZ components into combinations of RTZ components in
+#     all nine components of the Green's tensor are present. If not all nine
+#     components are present no trace for this station combination is returned.
 
-    out_st = Stream()
-    while st:
-        tl = list(range(9))
-        tst = st.select(network=st[0].stats['network'],
-                        station=st[0].stats['station'])
-        cnt = 0
-        for ttr in tst:
-            if ttr.stats['channel'][2] == 'E':
-                if ttr.stats['channel'][6] == 'E':
-                    tl[0] = ttr
-                    cnt += 1
-                elif ttr.stats['channel'][6] == 'N':
-                    tl[1] = ttr
-                    cnt += 2
-                elif ttr.stats['channel'][6] == 'Z':
-                    tl[2] = ttr
-                    cnt += 4
-            elif ttr.stats['channel'][2] == 'N':
-                if ttr.stats['channel'][6] == 'E':
-                    tl[3] = ttr
-                    cnt += 8
-                elif ttr.stats['channel'][6] == 'N':
-                    tl[4] = ttr
-                    cnt += 16
-                elif ttr.stats['channel'][6] == 'Z':
-                    tl[5] = ttr
-                    cnt += 32
-            elif ttr.stats['channel'][2] == 'Z':
-                if ttr.stats['channel'][6] == 'E':
-                    tl[6] = ttr
-                    cnt += 64
-                elif ttr.stats['channel'][6] == 'N':
-                    tl[7] = ttr
-                    cnt += 128
-                elif ttr.stats['channel'][6] == 'Z':
-                    tl[8] = ttr
-                    cnt += 256
-        if cnt == 2**9-1:
-            st0 = Stream()
-            for t in tl:
-                st0.append(t)
-            st1 = _rotate_corr_stream(st0)
-            out_st += st1
-        elif cnt == 27:  # only horizontal component combinations present
-            st0 = Stream()
-            for t in [0, 1, 3, 4]:
-                st0.append(tl[t])
-            st1 = _rotate_corr_stream_horizontal(st0)
-            out_st += st1
-        elif cnt == 283:  # horizontal combinations + ZZ
-            st0 = Stream()
-            for t in [0, 1, 3, 4]:
-                st0.append(tl[t])
-            st1 = _rotate_corr_stream_horizontal(st0)
-            out_st += st1
-            out_st.append(tl[8])
-        for ttr in tst:
-            for ind, tr in enumerate(st):
-                if ttr.id == tr.id:
-                    st.pop(ind)
+#     :type st: obspy.stream
+#     :param st: stream with data in ENZ system
+#     :rtype: obspy.stream
+#     :return: stream in the RTZ system
+#     """
 
-    return out_st
+#     out_st = Stream()
+#     while st:
+#         tl = list(range(9))
+#         tst = st.select(network=st[0].stats['network'],
+#                         station=st[0].stats['station'])
+#         cnt = 0
+#         for ttr in tst:
+#             if ttr.stats['channel'][2] == 'E':
+#                 if ttr.stats['channel'][6] == 'E':
+#                     tl[0] = ttr
+#                     cnt += 1
+#                 elif ttr.stats['channel'][6] == 'N':
+#                     tl[1] = ttr
+#                     cnt += 2
+#                 elif ttr.stats['channel'][6] == 'Z':
+#                     tl[2] = ttr
+#                     cnt += 4
+#             elif ttr.stats['channel'][2] == 'N':
+#                 if ttr.stats['channel'][6] == 'E':
+#                     tl[3] = ttr
+#                     cnt += 8
+#                 elif ttr.stats['channel'][6] == 'N':
+#                     tl[4] = ttr
+#                     cnt += 16
+#                 elif ttr.stats['channel'][6] == 'Z':
+#                     tl[5] = ttr
+#                     cnt += 32
+#             elif ttr.stats['channel'][2] == 'Z':
+#                 if ttr.stats['channel'][6] == 'E':
+#                     tl[6] = ttr
+#                     cnt += 64
+#                 elif ttr.stats['channel'][6] == 'N':
+#                     tl[7] = ttr
+#                     cnt += 128
+#                 elif ttr.stats['channel'][6] == 'Z':
+#                     tl[8] = ttr
+#                     cnt += 256
+#         if cnt == 2**9-1:
+#             st0 = Stream()
+#             for t in tl:
+#                 st0.append(t)
+#             st1 = _rotate_corr_stream(st0)
+#             out_st += st1
+#         elif cnt == 27:  # only horizontal component combinations present
+#             st0 = Stream()
+#             for t in [0, 1, 3, 4]:
+#                 st0.append(tl[t])
+#             st1 = _rotate_corr_stream_horizontal(st0)
+#             out_st += st1
+#         elif cnt == 283:  # horizontal combinations + ZZ
+#             st0 = Stream()
+#             for t in [0, 1, 3, 4]:
+#                 st0.append(tl[t])
+#             st1 = _rotate_corr_stream_horizontal(st0)
+#             out_st += st1
+#             out_st.append(tl[8])
+#         for ttr in tst:
+#             for ind, tr in enumerate(st):
+#                 if ttr.id == tr.id:
+#                     st.pop(ind)
 
-
-def _rotate_corr_stream_horizontal(st: Stream) -> Stream:
-    """ Rotate traces in stream from the EE-EN-NE-NN system to
-    the RR-RT-TR-TT system. The letters give the component order
-    in the input and output streams. Input traces are assumed to be of same
-    length and simultaneously sampled.
-    """
-
-    # rotation angles
-    # phi1 : counter clockwise angle between E and R(towards second station)
-    # the leading -1 accounts fact that we rotate the coordinate system,
-    # not a vector
-    phi1 = - np.pi/180*(90-st[0].stats['sac']['az'])
-    # phi2 : counter clockwise angle between E and R(away from first station)
-    phi2 = - np.pi/180*(90-st[0].stats['sac']['baz']+180)
-
-    c1 = np.cos(phi1)
-    s1 = np.sin(phi1)
-    c2 = np.cos(phi2)
-    s2 = np.sin(phi2)
-
-    rt = Stream()
-    RR = st[0].copy()
-    RR.data = c1*c2*st[0].data - c1*s2*st[1].data - s1*c2*st[2].data +\
-        s1*s2*st[3].data
-    tcha = list(RR.stats['channel'])
-    tcha[2] = 'R'
-    tcha[6] = 'R'
-    RR.stats['channel'] = ''.join(tcha)
-    rt.append(RR)
-
-    RT = st[0].copy()
-    RT.data = c1*s2*st[0].data + c1*c2*st[1].data - s1*s2*st[2].data -\
-        s1*c2*st[3].data
-    tcha = list(RT.stats['channel'])
-    tcha[2] = 'R'
-    tcha[6] = 'T'
-    RT.stats['channel'] = ''.join(tcha)
-    rt.append(RT)
-
-    TR = st[0].copy()
-    TR.data = s1*c2*st[0].data - s1*s2*st[1].data + c1*c2*st[2].data -\
-        c1*s2*st[3].data
-    tcha = list(TR.stats['channel'])
-    tcha[2] = 'T'
-    tcha[6] = 'R'
-    TR.stats['channel'] = ''.join(tcha)
-    rt.append(TR)
-
-    TT = st[0].copy()
-    TT.data = s1*s2*st[0].data + s1*c2*st[1].data + c1*s2*st[2].data +\
-        c1*c2*st[3].data
-    tcha = list(TT.stats['channel'])
-    tcha[2] = 'T'
-    tcha[6] = 'T'
-    TT.stats['channel'] = ''.join(tcha)
-    rt.append(TT)
-
-    return rt
+#     return out_st
 
 
-def _rotate_corr_stream(st: Stream) -> Stream:
-    """ Rotate traces in stream from the EE-EN-EZ-NE-NN-NZ-ZE-ZN-ZZ system to
-    the RR-RT-RZ-TR-TT-TZ-ZR-ZT-ZZ system. The letters give the component order
-    in the input and output streams. Input traces are assumed to be of same
-    length and simultaneously sampled.
-    """
+# def _rotate_corr_stream_horizontal(st: Stream) -> Stream:
+#     """ Rotate traces in stream from the EE-EN-NE-NN system to
+#     the RR-RT-TR-TT system. The letters give the component order
+#     in the input and output streams. Input traces are assumed to be of same
+#     length and simultaneously sampled.
+#     """
 
-    # rotation angles
-    # phi1 : counter clockwise angle between E and R(towards second station)
-    # the leading -1 accounts fact that we rotate the coordinate system,
-    # not a vector
-    phi1 = - np.pi/180*(90-st[0].stats['sac']['az'])
-    # phi2 : counter clockwise angle between E and R(away from first station)
-    phi2 = - np.pi/180*(90-st[0].stats['sac']['baz']+180)
+#     # rotation angles
+#     # phi1 : counter clockwise angle between E and R(towards second station)
+#     # the leading -1 accounts fact that we rotate the coordinate system,
+#     # not a vector
+#     phi1 = - np.pi/180*(90-st[0].stats['sac']['az'])
+#     # phi2 : counter clockwise angle between E and R(away from first station)
+#     phi2 = - np.pi/180*(90-st[0].stats['sac']['baz']+180)
 
-    c1 = np.cos(phi1)
-    s1 = np.sin(phi1)
-    c2 = np.cos(phi2)
-    s2 = np.sin(phi2)
+#     c1 = np.cos(phi1)
+#     s1 = np.sin(phi1)
+#     c2 = np.cos(phi2)
+#     s2 = np.sin(phi2)
 
-    rtz = Stream()
-    RR = st[0].copy()
-    RR.data = c1*c2*st[0].data - c1*s2*st[1].data - s1*c2*st[3].data +\
-        s1*s2*st[4].data
-    tcha = list(RR.stats['channel'])
-    tcha[2] = 'R'
-    tcha[6] = 'R'
-    RR.stats['channel'] = ''.join(tcha)
-    rtz.append(RR)
+#     rt = Stream()
+#     RR = st[0].copy()
+#     RR.data = c1*c2*st[0].data - c1*s2*st[1].data - s1*c2*st[2].data +\
+#         s1*s2*st[3].data
+#     tcha = list(RR.stats['channel'])
+#     tcha[2] = 'R'
+#     tcha[6] = 'R'
+#     RR.stats['channel'] = ''.join(tcha)
+#     rt.append(RR)
 
-    RT = st[0].copy()
-    RT.data = c1*s2*st[0].data + c1*c2*st[1].data - s1*s2*st[3].data -\
-        s1*c2*st[4].data
-    tcha = list(RT.stats['channel'])
-    tcha[2] = 'R'
-    tcha[6] = 'T'
-    RT.stats['channel'] = ''.join(tcha)
-    rtz.append(RT)
+#     RT = st[0].copy()
+#     RT.data = c1*s2*st[0].data + c1*c2*st[1].data - s1*s2*st[2].data -\
+#         s1*c2*st[3].data
+#     tcha = list(RT.stats['channel'])
+#     tcha[2] = 'R'
+#     tcha[6] = 'T'
+#     RT.stats['channel'] = ''.join(tcha)
+#     rt.append(RT)
 
-    RZ = st[0].copy()
-    RZ.data = c1*st[2].data - s1*st[5].data
-    tcha = list(RZ.stats['channel'])
-    tcha[2] = 'R'
-    tcha[6] = 'Z'
-    RZ.stats['channel'] = ''.join(tcha)
-    rtz.append(RZ)
+#     TR = st[0].copy()
+#     TR.data = s1*c2*st[0].data - s1*s2*st[1].data + c1*c2*st[2].data -\
+#         c1*s2*st[3].data
+#     tcha = list(TR.stats['channel'])
+#     tcha[2] = 'T'
+#     tcha[6] = 'R'
+#     TR.stats['channel'] = ''.join(tcha)
+#     rt.append(TR)
 
-    TR = st[0].copy()
-    TR.data = s1*c2*st[0].data - s1*s2*st[1].data + c1*c2*st[3].data -\
-        c1*s2*st[4].data
-    tcha = list(TR.stats['channel'])
-    tcha[2] = 'T'
-    tcha[6] = 'R'
-    TR.stats['channel'] = ''.join(tcha)
-    rtz.append(TR)
+#     TT = st[0].copy()
+#     TT.data = s1*s2*st[0].data + s1*c2*st[1].data + c1*s2*st[2].data +\
+#         c1*c2*st[3].data
+#     tcha = list(TT.stats['channel'])
+#     tcha[2] = 'T'
+#     tcha[6] = 'T'
+#     TT.stats['channel'] = ''.join(tcha)
+#     rt.append(TT)
 
-    TT = st[0].copy()
-    TT.data = s1*s2*st[0].data + s1*c2*st[1].data + c1*s2*st[3].data +\
-        c1*c2*st[4].data
-    tcha = list(TT.stats['channel'])
-    tcha[2] = 'T'
-    tcha[6] = 'T'
-    TT.stats['channel'] = ''.join(tcha)
-    rtz.append(TT)
+#     return rt
 
-    TZ = st[0].copy()
-    TZ.data = s1*st[2].data + c1*st[5].data
-    tcha = list(TZ.stats['channel'])
-    tcha[2] = 'T'
-    tcha[6] = 'Z'
-    TZ.stats['channel'] = ''.join(tcha)
-    rtz.append(TZ)
 
-    ZR = st[0].copy()
-    ZR.data = c2*st[6].data - s2*st[7].data
-    tcha = list(ZR.stats['channel'])
-    tcha[2] = 'Z'
-    tcha[6] = 'R'
-    ZR.stats['channel'] = ''.join(tcha)
-    rtz.append(ZR)
+# def _rotate_corr_stream(st: Stream) -> Stream:
+#     """ Rotate traces in stream from the EE-EN-EZ-NE-NN-NZ-ZE-ZN-ZZ system to
+#     the RR-RT-RZ-TR-TT-TZ-ZR-ZT-ZZ system. The letters give the component
+#     in the input and output streams. Input traces are assumed to be of same
+#     length and simultaneously sampled.
+#     """
 
-    ZT = st[0].copy()
-    ZT.data = s2*st[6].data + c2*st[7].tuple
-    ZT.stats['channel'] = ''.join(tcha)
-    rtz.append(ZT)
+#     # rotation angles
+#     # phi1 : counter clockwise angle between E and R(towards second station)
+#     # the leading -1 accounts fact that we rotate the coordinate system,
+#     # not a vector
+#     phi1 = - np.pi/180*(90-st[0].stats['sac']['az'])
+#     # phi2 : counter clockwise angle between E and R(away from first station)
+#     phi2 = - np.pi/180*(90-st[0].stats['sac']['baz']+180)
 
-    rtz.append(st[8].copy())
+#     c1 = np.cos(phi1)
+#     s1 = np.sin(phi1)
+#     c2 = np.cos(phi2)
+#     s2 = np.sin(phi2)
 
-    return rtz
+#     rtz = Stream()
+#     RR = st[0].copy()
+#     RR.data = c1*c2*st[0].data - c1*s2*st[1].data - s1*c2*st[3].data +\
+#         s1*s2*st[4].data
+#     tcha = list(RR.stats['channel'])
+#     tcha[2] = 'R'
+#     tcha[6] = 'R'
+#     RR.stats['channel'] = ''.join(tcha)
+#     rtz.append(RR)
+
+#     RT = st[0].copy()
+#     RT.data = c1*s2*st[0].data + c1*c2*st[1].data - s1*s2*st[3].data -\
+#         s1*c2*st[4].data
+#     tcha = list(RT.stats['channel'])
+#     tcha[2] = 'R'
+#     tcha[6] = 'T'
+#     RT.stats['channel'] = ''.join(tcha)
+#     rtz.append(RT)
+
+#     RZ = st[0].copy()
+#     RZ.data = c1*st[2].data - s1*st[5].data
+#     tcha = list(RZ.stats['channel'])
+#     tcha[2] = 'R'
+#     tcha[6] = 'Z'
+#     RZ.stats['channel'] = ''.join(tcha)
+#     rtz.append(RZ)
+
+#     TR = st[0].copy()
+#     TR.data = s1*c2*st[0].data - s1*s2*st[1].data + c1*c2*st[3].data -\
+#         c1*s2*st[4].data
+#     tcha = list(TR.stats['channel'])
+#     tcha[2] = 'T'
+#     tcha[6] = 'R'
+#     TR.stats['channel'] = ''.join(tcha)
+#     rtz.append(TR)
+
+#     TT = st[0].copy()
+#     TT.data = s1*s2*st[0].data + s1*c2*st[1].data + c1*s2*st[3].data +\
+#         c1*c2*st[4].data
+#     tcha = list(TT.stats['channel'])
+#     tcha[2] = 'T'
+#     tcha[6] = 'T'
+#     TT.stats['channel'] = ''.join(tcha)
+#     rtz.append(TT)
+
+#     TZ = st[0].copy()
+#     TZ.data = s1*st[2].data + c1*st[5].data
+#     tcha = list(TZ.stats['channel'])
+#     tcha[2] = 'T'
+#     tcha[6] = 'Z'
+#     TZ.stats['channel'] = ''.join(tcha)
+#     rtz.append(TZ)
+
+#     ZR = st[0].copy()
+#     ZR.data = c2*st[6].data - s2*st[7].data
+#     tcha = list(ZR.stats['channel'])
+#     tcha[2] = 'Z'
+#     tcha[6] = 'R'
+#     ZR.stats['channel'] = ''.join(tcha)
+#     rtz.append(ZR)
+
+#     ZT = st[0].copy()
+#     ZT.data = s2*st[6].data + c2*st[7].tuple
+#     ZT.stats['channel'] = ''.join(tcha)
+#     rtz.append(ZT)
+
+#     rtz.append(st[8].copy())
+
+#     return rtz
 
 
 def sort_comb_name_alphabetically(
@@ -1001,9 +1004,9 @@ def sort_comb_name_alphabetically(
             net1, stat1, net2, stat2))
     (['XN', 'XN'], ['NEP06', 'NEP07'])
     """
-    for arg in [network1, network2, station1, station2]:
-        if not isinstance(arg, str):
-            raise TypeError('All arguments have to be strings.')
+    if not all([isinstance(arg, str) for arg in [
+            network1, network2, station1, station2]]):
+        raise TypeError('All arguments have to be strings.')
     sort1 = network1 + station1
     sort2 = network2 + station2
     sort = [sort1, sort2]
@@ -1065,7 +1068,7 @@ def compute_network_station_combinations(
         statcombs = [s+'-'+s for s in statlist]
     elif method == 'allSimpleCombinations':
         for ii, (n, s) in enumerate(zip(netlist, statlist)):
-            for jj in range(ii+1, len(netlist)):
+            for jj in range(ii, len(netlist)):
                 n2 = netlist[jj]
                 s2 = statlist[jj]
                 nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
@@ -1124,7 +1127,7 @@ def preprocess_stream(
     :return: The preprocessed stream.
     :rtype: :class:`obspy.core.stream.Stream`
     """
-    if not st:
+    if not st.count():
         return st
 
     st.sort(keys=['starttime'])
