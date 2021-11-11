@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Thursday, 11th November 2021 10:29:56 am
+Last Modified: Thursday, 11th November 2021 11:45:16 am
 '''
 from copy import deepcopy
 import unittest
@@ -387,30 +387,54 @@ class TestCorrrelator(unittest.TestCase):
             self.assertAlmostEqual(
                 win[0].stats.endtime-win[0].stats.starttime, 5, 1)
 
-    # @mock.patch('seismic.correlate.correlate.pptd.zeroPadding')
-    # @mock.patch('seismic.correlate.correlate.func_from_str')
-    # @mock.patch('builtins.open')
-    # @mock.patch('seismic.correlate.correlate.logging')
-    # @mock.patch('seismic.correlate.correlate.os.makedirs')
-    # def test_pxcorr_matrix(
-    #         self, makedirs_mock, logging_mock, open_mock, ffs_mock, zp_mock):
-    #     options = deepcopy(self.options)
-    #     options['co']['combinations'] = [(0, 0), (0, 1), (0, 2)]
-    #     sc_mock = mock.Mock(Store_Client)
-    #     sc_mock.get_available_stations.return_value = [
-    #         ['lala', 'lolo'], ['lala', 'lili']]
-    #     sc_mock.select_inventory_or_load_remote.return_value = self.inv
-    #     sc_mock._load_local.return_value = self.st
-    #     c = correlate.Correlator(sc_mock, options)
-    #     c.options['corr_args']['FDpreProcessing'] = [
-    #         {'function': 'FDPP', 'args': []}]
-    #     c.options['corr_args']['TDpreProcessing'] = [
-    #         {'function': 'TDPP', 'args': []}]
-    #     # 13 is the fft size
-    #     ffs_mock.return_value = mock.MagicMock(side_effect=[
-    #         np.ones((25, 25)), np.ones((13, 25))*3])
-    #     zp_mock.return_value = np.ones((25, 25))*2
-    #     c, startlags = c._pxcorr_matrix(np.zeros((25, 25)))
+    @mock.patch('seismic.correlate.correlate.pptd.zeroPadding')
+    @mock.patch('seismic.correlate.correlate.func_from_str')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_pxcorr_matrix(
+            self, makedirs_mock, logging_mock, open_mock, ffs_mock, zp_mock):
+        options = deepcopy(self.options)
+        options['co']['combinations'] = [(0, 0), (0, 1), (0, 2)]
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [
+            ['lala', 'lolo'], ['lala', 'lili']]
+        sc_mock.select_inventory_or_load_remote.return_value = self.inv
+        sc_mock._load_local.return_value = self.st
+        c = correlate.Correlator(sc_mock, options)
+        c.options['corr_args']['FDpreProcessing'] = [
+            {'function': 'FDPP', 'args': []}]
+        c.options['corr_args']['TDpreProcessing'] = [
+            {'function': 'TDPP', 'args': []}]
+        c.options['corr_args']['lengthToSave'] = 1
+        c.options.update(
+            {'starttime': [tr.stats.starttime for tr in self.st],
+                'sampling_rate': self.st[0].stats.sampling_rate})
+        # 13 is the fft size
+        shape = (101, 25)  # npts,ntrcs
+        ftshape = (51, 25)
+        return_func = mock.MagicMock(side_effect=[
+            np.ones(shape), np.ones(ftshape)*3])
+        ffs_mock.return_value = return_func
+        zp_mock.return_value = np.ones(shape)*2
+        C, startlags = c._pxcorr_matrix(np.zeros(shape))
+        ffs_mock.assert_any_call('FDPP')
+        ffs_mock.assert_any_call('TDPP')
+        # This is the same as asserthascalls, but it can also check np arrays
+        np.testing.assert_array_equal(
+            np.zeros(shape), return_func.call_args_list[0][0][0])
+        self.assertListEqual([], return_func.call_args_list[0][0][1])
+        # Check if the fft worked
+        np.testing.assert_array_almost_equal(
+            np.fft.rfft(np.ones(shape)*2, axis=0),
+            return_func.call_args_list[1][0][0])
+        np.testing.assert_array_equal(-np.ones((3,)), startlags)
+        # Correlation should be one in the middle
+        # Length is 51,3 as above
+        print(C.shape)
+        expC = np.zeros((51, 3))
+        expC[25] += 1
+        np.testing.assert_array_almost_equal(C, expC, decimal=2)
 
 
 class TestStToNpArray(unittest.TestCase):
