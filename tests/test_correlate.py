@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Wednesday, 10th November 2021 05:21:17 pm
+Last Modified: Thursday, 11th November 2021 10:29:56 am
 '''
 from copy import deepcopy
 import unittest
@@ -411,7 +411,6 @@ class TestCorrrelator(unittest.TestCase):
     #         np.ones((25, 25)), np.ones((13, 25))*3])
     #     zp_mock.return_value = np.ones((25, 25))*2
     #     c, startlags = c._pxcorr_matrix(np.zeros((25, 25)))
-
 
 
 class TestStToNpArray(unittest.TestCase):
