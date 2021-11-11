@@ -7,10 +7,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Tuesday, 27th July 2021 10:56:25 am
+Last Modified: Thursday, 11th November 2021 06:24:12 pm
 '''
 
 import unittest
+from unittest import mock
 import warnings
 
 import numpy as np
@@ -404,6 +405,39 @@ class TestCorrStream(unittest.TestCase):
         #     # The last three could be shorter
         tr = out[4]
         self.assertEqual(stacklen, tr.stats.corr_end-tr.stats.corr_start)
+
+    @mock.patch('seismic.correlate.stream.convert_statlist_to_bulk_stats')
+    def test_create_corrbulk(self, cstbs_mock):
+        st = self.st.copy()
+        qustart = st[0].stats.corr_start + 1
+        cstbs_mock.return_value = st[0].stats
+        with mock.patch.object(st, 'select') as sct_mock:
+            select_return = mock.MagicMock(name='select_mock')
+            select_return.select_corr_time.return_value = st
+            sct_mock.return_value = select_return
+            cb = st.create_corr_bulk(times=(qustart, st[0].stats.corr_end))
+            sct_mock.assert_any_call(
+                None, None, None, None)
+        select_return.select_corr_time.assert_called_once_with(
+            qustart, st[0].stats.corr_end
+        )
+        for ii, tr in enumerate(self.st):
+            np.testing.assert_array_equal(tr.data, cb.data[ii])
+        # Check in-place
+        for tr in st:
+            self.assertFalse(hasattr(tr, 'data'))
+
+    @mock.patch('seismic.correlate.stream.convert_statlist_to_bulk_stats')
+    def test_create_corrbulk_differing_sampling(self, cstbs_mock):
+        st = self.st.copy()
+        cstbs_mock.return_value = st[0].stats
+        st[-1].stats.sampling_rate /= 2
+        with warnings.catch_warnings(record=True) as w:
+            cb = st.create_corr_bulk()
+            self.assertEqual(len(w), 1)
+        self.assertEqual(cb.data.shape[0], self.st.count()-1)
+        for ii, tr in enumerate(self.st[:-1]):
+            np.testing.assert_array_equal(tr.data, cb.data[ii])
 
 
 class TestConvertStatlistToBulkStats(unittest.TestCase):
