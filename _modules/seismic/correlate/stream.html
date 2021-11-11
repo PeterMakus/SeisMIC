@@ -186,7 +186,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 20th April 2021 04:19:35 pm</span>
-<span class="sd">Last Modified: Thursday, 21st October 2021 03:03:07 pm</span>
+<span class="sd">Last Modified: Tuesday, 9th November 2021 10:40:30 am</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
@@ -201,8 +201,9 @@
 <span class="kn">from</span> <span class="nn">seismic.utils</span> <span class="kn">import</span> <span class="n">miic_utils</span> <span class="k">as</span> <span class="n">m3ut</span>
 <span class="kn">from</span> <span class="nn">seismic.plot.plot_correlation</span> <span class="kn">import</span> <span class="n">plot_cst</span><span class="p">,</span> <span class="n">plot_ctr</span>
 <span class="kn">import</span> <span class="nn">seismic.monitor.post_corr_process</span> <span class="k">as</span> <span class="nn">pcp</span>
-<span class="kn">from</span> <span class="nn">seismic.monitor.stretch_mod</span> <span class="kn">import</span> <span class="n">time_stretch_apply</span>
+<span class="kn">from</span> <span class="nn">seismic.monitor.stretch_mod</span> <span class="kn">import</span> <span class="n">time_stretch_apply</span><span class="p">,</span> <span class="n">wfc_multi_reftr</span>
 <span class="kn">from</span> <span class="nn">seismic.monitor.dv</span> <span class="kn">import</span> <span class="n">DV</span>
+<span class="kn">from</span> <span class="nn">seismic.monitor.wfc</span> <span class="kn">import</span> <span class="n">WFC</span>
 <span class="kn">from</span> <span class="nn">seismic.correlate.stats</span> <span class="kn">import</span> <span class="n">CorrStats</span>
 
 
@@ -403,6 +404,70 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">ref_trc</span> <span class="o">=</span> <span class="n">outdata</span>
         <span class="k">return</span> <span class="n">outdata</span></div>
 
+<div class="viewcode-block" id="CorrBulk.extract_multi_trace"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.extract_multi_trace">[docs]</a>    <span class="k">def</span> <span class="nf">extract_multi_trace</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">win_inc</span><span class="p">:</span> <span class="nb">int</span> <span class="ow">or</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span>
+            <span class="n">percentile</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">50.</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract several representative traces from a correlation matrix.</span>
+<span class="sd">        (one per time window `win_inc` with the length = 2*win_inc). That is,</span>
+<span class="sd">        the reference will be extracted with half increment overlap in each</span>
+<span class="sd">        direction.</span>
+
+<span class="sd">        Extract a correlation trace from the that best represents the</span>
+<span class="sd">        correlation matrix. ``Method`` decides about method to extract the</span>
+<span class="sd">        trace. The following possibilities are available</span>
+
+<span class="sd">        * ``mean`` averages all traces in the matrix</span>
+<span class="sd">        * ``norm_mean`` averages the traces normalized after normalizing for</span>
+<span class="sd">            maxima</span>
+<span class="sd">        * ``similarity_percentile`` averages the ``percentile`` % of traces</span>
+<span class="sd">            that best correlate with the mean of all traces. This will exclude</span>
+<span class="sd">            abnormal traces. ``percentile`` = 50 will return an average of</span>
+<span class="sd">            traces with correlation (with mean trace) above the median.</span>
+
+<span class="sd">        :param win_inc: Increment between each window that a Trace should be</span>
+<span class="sd">            extracted from. Given in days. Can be a list/np.ndarray or an int</span>
+<span class="sd">            (constant increment). The windows&#39; length will be twice the</span>
+<span class="sd">            increment. **If set to 0, only one trace for the whole time will</span>
+<span class="sd">            be used.**</span>
+<span class="sd">        :type win_inc: int or List[int] (number of days)</span>
+<span class="sd">        :type method: string</span>
+<span class="sd">        :param method: method to extract the trace</span>
+<span class="sd">        :type percentile: float</span>
+<span class="sd">        :param percentile: only used for method==&#39;similarity_percentile&#39;</span>
+
+<span class="sd">        :rtype: np.ndarray</span>
+<span class="sd">        :return: extracted trace</span>
+
+<span class="sd">        ..note:: the extracted traces will also be saved in self.ref_trc</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ref_trcs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">win_inc</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">win_inc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">win_inc</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">win_inc</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_trace</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">percentile</span><span class="p">)</span>
+
+        <span class="n">inc_s</span> <span class="o">=</span> <span class="n">win_inc</span><span class="o">*</span><span class="mi">24</span><span class="o">*</span><span class="mi">3600</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inc_s</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">inc</span> <span class="ow">in</span> <span class="n">inc_s</span><span class="p">:</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">inc</span>
+                <span class="n">ii</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_slice_index</span><span class="p">(</span><span class="n">start</span><span class="o">-</span><span class="n">inc</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">end</span><span class="o">+</span><span class="n">inc</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">inc</span>
+                <span class="n">ref_trcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_extract_trace</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:],</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">percentile</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">while</span> <span class="n">start</span> <span class="o">&lt;</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span><span class="p">):</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">inc_s</span>
+                <span class="n">ii</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_slice_index</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">end</span>
+                <span class="c1"># stats don&#39;t need to be altered for this function</span>
+                <span class="n">ref_trcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_extract_trace</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:],</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">percentile</span><span class="p">))</span>
+        <span class="n">ref_trcs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ref_trcs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ref_trc</span> <span class="o">=</span> <span class="n">ref_trcs</span>
+        <span class="k">return</span> <span class="n">ref_trcs</span></div>
+
 <div class="viewcode-block" id="CorrBulk.mirror"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.mirror">[docs]</a>    <span class="k">def</span> <span class="nf">mirror</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Average the causal and acausal (i.e., right and left) parts of the</span>
@@ -527,6 +592,37 @@
         <span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span>
             <span class="n">path</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="CorrBulk.slice"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.slice">[docs]</a>    <span class="k">def</span> <span class="nf">slice</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
+            <span class="n">include_partial</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        return a subset of the current CorrelationBulk with data inside</span>
+<span class="sd">        the requested time window.</span>
+
+<span class="sd">        :param starttime: Earliest Starttime</span>
+<span class="sd">        :type starttime: UTCDateTime</span>
+<span class="sd">        :param endtime: Latest endtime</span>
+<span class="sd">        :type endtime: UTCDateTime</span>
+<span class="sd">        :param include_partial: Include time window if it&#39;s only</span>
+<span class="sd">            partially covered, defaults to True</span>
+<span class="sd">        :type include_partial: bool, optional</span>
+<span class="sd">        :return: Another CorrBulk object</span>
+<span class="sd">        :rtype: CorrBulk</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ii</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_slice_index</span><span class="p">(</span><span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span> <span class="n">include_partial</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">stats</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">ii</span><span class="p">:</span> <span class="n">ii</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                    <span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="k">continue</span>
+                <span class="c1"># Those will change automatically</span>
+        <span class="k">return</span> <span class="n">CorrBulk</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">stats</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="CorrBulk.taper"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.taper">[docs]</a>    <span class="k">def</span> <span class="nf">taper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Taper the data.</span>
@@ -594,7 +690,75 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">)</span>
         <span class="n">proc</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;trim: </span><span class="si">%s</span><span class="s1">, </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">starttime</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">endtime</span><span class="p">))]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="n">proc</span>
-        <span class="k">return</span> <span class="bp">self</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="CorrBulk.wfc"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.wfc">[docs]</a>    <span class="k">def</span> <span class="nf">wfc</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">time_window</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">tw_start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tw_len</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">freq_min</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">freq_max</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="n">remove_nans</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WFC</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes the waveform coherency (**WFC**) between the given reference</span>
+<span class="sd">        correlation(s) and correlation matrix.</span>
+<span class="sd">        If several references are given, it will loop over these</span>
+
+<span class="sd">        See Steinmann, et. al. (2021) for details.</span>
+
+<span class="sd">        :param refcorr: 1 or 2D reference Correlation Trace extracted from the</span>
+<span class="sd">            correlation data.</span>
+<span class="sd">            If 2D, it will be interpreted as one refcorr trace per row.</span>
+<span class="sd">        :type refcorr: np.ndarray</span>
+<span class="sd">        :param tw: Lag time window to use for the computation</span>
+<span class="sd">        :type tw: np.ndarray</span>
+<span class="sd">        :param sides: Which sides to use. Can be `both`, `right`, `left`,</span>
+<span class="sd">            or `single`.</span>
+<span class="sd">        :type sides: str</span>
+<span class="sd">        :param tw_start: Time window start in seconds lag time.</span>
+<span class="sd">        :type tw_start: float</span>
+<span class="sd">        :param tw_len: Length of the Lapse time window in seconds.</span>
+<span class="sd">        :type tw_len: float</span>
+<span class="sd">        :param freq_min: Highpass frequency used for the computed values. (Hz)</span>
+<span class="sd">        :type freq_min: float</span>
+<span class="sd">        :param freq_max: Lowpass frequency used for the computed values. (Hz)</span>
+<span class="sd">        :type freq_max: float</span>
+<span class="sd">        :param remove_nans: Remove nans from CorrMatrix, defaults to True</span>
+<span class="sd">        :return: A dictionary with one correlation array for each reference</span>
+<span class="sd">            trace. The keys are using the syntax `reftr_%n`.</span>
+<span class="sd">        :rtype: dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">wfc_dict</span> <span class="o">=</span> <span class="n">wfc_multi_reftr</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">,</span> <span class="n">time_window</span><span class="p">,</span> <span class="n">sides</span><span class="p">,</span> <span class="n">remove_nans</span><span class="p">)</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tw_start</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tw_len</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;freq_min&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">freq_min</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;freq_max&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">freq_max</span>
+        <span class="n">wfc</span> <span class="o">=</span> <span class="n">WFC</span><span class="p">(</span><span class="n">wfc_dict</span><span class="p">,</span> <span class="n">stats</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">wfc</span></div>
+
+    <span class="k">def</span> <span class="nf">_find_slice_index</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
+            <span class="n">include_partial</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find the indices of the correlations in the requested time window.</span>
+
+<span class="sd">        :param starttime: start of the time window</span>
+<span class="sd">        :type starttime: UTCDateTime</span>
+<span class="sd">        :param endtime: end of the time window</span>
+<span class="sd">        :type endtime: UTCDateTime</span>
+<span class="sd">        :param include_partial: include corrs that are only partially covered</span>
+<span class="sd">        :type include_partial: bool</span>
+<span class="sd">        :return: An Array containing the boolean indices</span>
+<span class="sd">        :rtype: np.ndarray[bool]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">include_partial</span><span class="p">:</span>
+            <span class="n">ii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">starttime</span><span class="p">,</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">endtime</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">starttime</span><span class="p">,</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">endtime</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">ii</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="read_corr_bulk"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.read_corr_bulk">[docs]</a><span class="k">def</span> <span class="nf">read_corr_bulk</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrBulk</span><span class="p">:</span>
@@ -870,14 +1034,18 @@
         <span class="n">statlist</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c1"># Double check sampling rate</span>
         <span class="n">sr</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">tr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span> <span class="o">!=</span> <span class="n">sr</span><span class="p">:</span>
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Sampling rate differs. Trace is skipped.&#39;</span><span class="p">)</span>
+                <span class="n">mask</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ii</span><span class="p">)</span>
                 <span class="k">continue</span>
             <span class="n">A</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span>
             <span class="k">if</span> <span class="n">inplace</span><span class="p">:</span>
                 <span class="k">del</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span>
             <span class="n">statlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
+        <span class="c1"># Apply mask for skipped data</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 
         <span class="n">stats</span> <span class="o">=</span> <span class="n">convert_statlist_to_bulk_stats</span><span class="p">(</span><span class="n">statlist</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">CorrBulk</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">stats</span><span class="p">)</span></div>
@@ -1407,7 +1575,7 @@
     
     <div class="footer-item">
       <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.2.0.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.0.<br>
 </p>
     </div>
     

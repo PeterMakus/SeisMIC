@@ -196,6 +196,7 @@
  | <a href="#T"><strong>T</strong></a>
  | <a href="#U"><strong>U</strong></a>
  | <a href="#V"><strong>V</strong></a>
+ | <a href="#W"><strong>W</strong></a>
  | <a href="#Z"><strong>Z</strong></a>
  
 </div>
@@ -206,13 +207,15 @@
 </li>
       <li><a href="modules/API.html#seismic.db.corr_hdf5.DBHandler.add_correlation">add_correlation() (seismic.db.corr_hdf5.DBHandler method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/API.html#seismic.db.corr_hdf5.all_traces_recursive">all_traces_recursive() (in module seismic.db.corr_hdf5)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/API.html#seismic.correlate.stream.alphabetical_correlation">alphabetical_correlation() (in module seismic.correlate.stream)</a>
 </li>
       <li><a href="modules/API.html#seismic.monitor.monitor.average_components">average_components() (in module seismic.monitor.monitor)</a>
+</li>
+      <li><a href="modules/API.html#seismic.monitor.monitor.average_components_wfc">average_components_wfc() (in module seismic.monitor.monitor)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -238,6 +241,12 @@
 </li>
       <li><a href="modules/API.html#seismic.monitor.monitor.Monitor.compute_velocity_change_bulk">compute_velocity_change_bulk() (seismic.monitor.monitor.Monitor method)</a>
 </li>
+      <li><a href="modules/API.html#seismic.monitor.monitor.Monitor.compute_waveform_coherency">compute_waveform_coherency() (seismic.monitor.monitor.Monitor method)</a>
+</li>
+      <li><a href="modules/API.html#seismic.monitor.monitor.Monitor.compute_waveform_coherency_bulk">compute_waveform_coherency_bulk() (seismic.monitor.monitor.Monitor method)</a>
+</li>
+      <li><a href="modules/API.html#seismic.monitor.stretch_mod.compute_wfc">compute_wfc() (in module seismic.monitor.stretch_mod)</a>
+</li>
       <li><a href="modules/API.html#seismic.db.corr_hdf5.convert_header_to_hdf5">convert_header_to_hdf5() (in module seismic.db.corr_hdf5)</a>
 </li>
       <li><a href="modules/API.html#seismic.correlate.stream.convert_statlist_to_bulk_stats">convert_statlist_to_bulk_stats() (in module seismic.correlate.stream)</a>
@@ -260,12 +269,12 @@
 </li>
       <li><a href="modules/API.html#seismic.monitor.post_corr_process.corr_mat_filter">corr_mat_filter() (in module seismic.monitor.post_corr_process)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/API.html#seismic.monitor.post_corr_process.corr_mat_mirror">corr_mat_mirror() (in module seismic.monitor.post_corr_process)</a>
 </li>
       <li><a href="modules/API.html#seismic.monitor.post_corr_process.corr_mat_normalize">corr_mat_normalize() (in module seismic.monitor.post_corr_process)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/API.html#seismic.monitor.post_corr_process.corr_mat_resample">corr_mat_resample() (in module seismic.monitor.post_corr_process)</a>
 </li>
       <li><a href="modules/API.html#seismic.monitor.post_corr_process.corr_mat_resample_or_decimate">corr_mat_resample_or_decimate() (in module seismic.monitor.post_corr_process)</a>
@@ -342,11 +351,13 @@
 </li>
       <li><a href="modules/API.html#seismic.monitor.post_corr_process.Error">Error</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/API.html#seismic.monitor.stretch_mod.est_shift_from_dt_corr">est_shift_from_dt_corr() (in module seismic.monitor.stretch_mod)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/API.html#seismic.monitor.stretch_mod.estimate_reftr_shifts_from_dt_corr">estimate_reftr_shifts_from_dt_corr() (in module seismic.monitor.stretch_mod)</a>
+</li>
+      <li><a href="modules/API.html#seismic.correlate.stream.CorrBulk.extract_multi_trace">extract_multi_trace() (seismic.correlate.stream.CorrBulk method)</a>
 </li>
       <li><a href="modules/API.html#seismic.correlate.stream.CorrBulk.extract_trace">extract_trace() (seismic.correlate.stream.CorrBulk method)</a>
 </li>
@@ -557,10 +568,10 @@
 </li>
       <li><a href="modules/API.html#seismic.trace_data.waveform.Store_Client.read_inventory">read_inventory() (seismic.trace_data.waveform.Store_Client method)</a>
 </li>
-      <li><a href="modules/API.html#seismic.correlate.stats.CorrStats.readonly">readonly (seismic.correlate.stats.CorrStats attribute)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules/API.html#seismic.correlate.stats.CorrStats.readonly">readonly (seismic.correlate.stats.CorrStats attribute)</a>
+</li>
       <li><a href="modules/API.html#seismic.plot.plot_utils.remove_all">remove_all() (in module seismic.plot.plot_utils)</a>
 </li>
       <li><a href="modules/API.html#seismic.plot.plot_utils.remove_topright">remove_topright() (in module seismic.plot.plot_utils)</a>
@@ -570,8 +581,6 @@
       <li><a href="modules/API.html#seismic.utils.miic_utils.resample_or_decimate">resample_or_decimate() (in module seismic.utils.miic_utils)</a>
 </li>
       <li><a href="modules/API.html#seismic.correlate.stream.CorrBulk.resample_time_axis">resample_time_axis() (seismic.correlate.stream.CorrBulk method)</a>
-</li>
-      <li><a href="modules/API.html#seismic.correlate.correlate.rotate_multi_corr_stream">rotate_multi_corr_stream() (in module seismic.correlate.correlate)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -734,6 +743,8 @@
 </li>
       <li><a href="modules/API.html#seismic.correlate.preprocessing_td.signBitNormalization">signBitNormalization() (in module seismic.correlate.preprocessing_td)</a>
 </li>
+      <li><a href="modules/API.html#seismic.correlate.stream.CorrBulk.slice">slice() (seismic.correlate.stream.CorrBulk method)</a>
+</li>
       <li><a href="modules/API.html#seismic.correlate.stream.CorrStream.slide">slide() (seismic.correlate.stream.CorrStream method)</a>
 </li>
       <li><a href="modules/API.html#seismic.correlate.stream.CorrBulk.smooth">smooth() (seismic.correlate.stream.CorrBulk method)</a>
@@ -817,6 +828,18 @@
   </ul></td>
 </tr></table>
 
+<h2 id="W">W</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules/API.html#seismic.correlate.stream.CorrBulk.wfc">wfc() (seismic.correlate.stream.CorrBulk method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules/API.html#seismic.monitor.stretch_mod.wfc_multi_reftr">wfc_multi_reftr() (in module seismic.monitor.stretch_mod)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="Z">Z</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -852,7 +875,7 @@
     
     <div class="footer-item">
       <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.2.0.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.0.<br>
 </p>
     </div>
     

@@ -186,7 +186,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 29th March 2021 07:58:18 am</span>
-<span class="sd">Last Modified: Thursday, 21st October 2021 03:10:18 pm</span>
+<span class="sd">Last Modified: Wednesday, 10th November 2021 05:16:38 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 <span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
@@ -231,7 +231,6 @@
 <span class="sd">            in options.</span>
 <span class="sd">        :type options: dict or str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">options</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
                 <span class="n">options</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">Loader</span><span class="o">=</span><span class="n">yaml</span><span class="o">.</span><span class="n">FullLoader</span><span class="p">)</span>
@@ -257,7 +256,7 @@
         <span class="n">rankstr</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 
         <span class="n">loglvl</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">log_lvl</span><span class="p">[</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;log_level&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">(</span><span class="s2">&quot;seismic.Correlator</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">rankstr</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;seismic.Correlator</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">rankstr</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">loglvl</span><span class="p">)</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">captureWarnings</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">warnlog</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;py.warnings&#39;</span><span class="p">)</span>
@@ -299,10 +298,17 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">network</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">network</span> <span class="o">=</span> <span class="n">network</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
-        <span class="k">if</span> <span class="n">network</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">network</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span> <span class="ow">and</span> <span class="n">station</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
             <span class="n">station</span> <span class="o">=</span> <span class="n">store_client</span><span class="o">.</span><span class="n">get_available_stations</span><span class="p">()</span>
         <span class="k">elif</span> <span class="n">station</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">station</span> <span class="o">=</span> <span class="n">store_client</span><span class="o">.</span><span class="n">get_available_stations</span><span class="p">(</span><span class="n">network</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">network</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;Stations has to be either: </span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="o">+</span> <span class="s1">&#39;1. A list of the same length as the list of networks.</span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="o">+</span> <span class="s1">&#39;2. </span><span class="se">\&#39;</span><span class="s1">*</span><span class="se">\&#39;</span><span class="s1"> That is, a wildcard (string).</span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="o">+</span> <span class="s1">&#39;3. A list and network is a string describing one &#39;</span>
+                <span class="o">+</span> <span class="s1">&#39;station code.&#39;</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">station</span> <span class="o">=</span> <span class="p">[[</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">]]</span>
         <span class="k">elif</span> <span class="n">station</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
@@ -318,21 +324,20 @@
                     <span class="o">+</span> <span class="s1">&#39;3. A list and network is a string describing one &#39;</span>
                     <span class="o">+</span> <span class="s1">&#39;station code.&#39;</span><span class="p">)</span>
             <span class="n">station</span> <span class="o">=</span> <span class="nb">list</span><span class="p">([</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">stat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">station</span><span class="p">):</span>
+                <span class="n">station</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">network</span><span class="p">,</span> <span class="n">stat</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s1">&#39;Stations has to be either: </span><span class="se">\n</span><span class="s1">&#39;</span>
                 <span class="o">+</span> <span class="s1">&#39;1. A list of the same length as the list of networks.</span><span class="se">\n</span><span class="s1">&#39;</span>
                 <span class="o">+</span> <span class="s1">&#39;2. </span><span class="se">\&#39;</span><span class="s1">*</span><span class="se">\&#39;</span><span class="s1"> That is, a wildcard (string).</span><span class="se">\n</span><span class="s1">&#39;</span>
                 <span class="o">+</span> <span class="s1">&#39;3. A list and network is a string describing one &#39;</span>
                 <span class="o">+</span> <span class="s1">&#39;station code.&#39;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">stat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">station</span><span class="p">):</span>
-                <span class="n">station</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">network</span><span class="p">,</span> <span class="n">stat</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">station</span> <span class="o">=</span> <span class="n">station</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-            <span class="s1">&#39;Fetching data from the following stations:</span><span class="se">\n</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span>
-                <span class="p">[</span><span class="s1">&#39;</span><span class="si">{n}</span><span class="s1">.</span><span class="si">{s}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">station</span><span class="p">]))</span>
+            <span class="s1">&#39;Fetching data from the following stations:</span><span class="se">\n</span><span class="si">%a</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">[</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">station</span><span class="p">])</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">]</span>
 
@@ -392,8 +397,6 @@
             <span class="n">combis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rcombis</span><span class="p">)</span>
         <span class="n">ex_dict</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">nc</span><span class="p">,</span> <span class="n">sc</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">netcombs</span><span class="p">,</span> <span class="n">statcombs</span><span class="p">):</span>
-            <span class="n">s0</span><span class="p">,</span> <span class="n">s1</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
-            <span class="n">n0</span><span class="p">,</span> <span class="n">n1</span> <span class="o">=</span> <span class="n">nc</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
             <span class="n">outf</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">corr_dir</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">.h5&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nc</span><span class="p">,</span> <span class="n">sc</span><span class="p">))</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">outf</span><span class="p">):</span>
@@ -401,6 +404,8 @@
             <span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span>
                     <span class="n">outf</span><span class="p">,</span> <span class="n">corr_options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
                 <span class="n">d</span> <span class="o">=</span> <span class="n">cdb</span><span class="o">.</span><span class="n">get_available_starttimes</span><span class="p">(</span><span class="n">nc</span><span class="p">,</span> <span class="n">sc</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">channel</span><span class="p">)</span>
+            <span class="n">s0</span><span class="p">,</span> <span class="n">s1</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
+            <span class="n">n0</span><span class="p">,</span> <span class="n">n1</span> <span class="o">=</span> <span class="n">nc</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
             <span class="n">ex_dict</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n0</span><span class="p">,</span> <span class="n">s0</span><span class="p">),</span> <span class="p">{})</span>
             <span class="n">ex_dict</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n0</span><span class="p">,</span> <span class="n">s0</span><span class="p">)][</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">s1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">d</span>
         <span class="k">return</span> <span class="n">ex_dict</span></div>
@@ -418,7 +423,6 @@
             <span class="n">inv</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">inv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">inv</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">st</span><span class="p">,</span> <span class="n">write_flag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_data</span><span class="p">():</span>
-
             <span class="n">cst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pxcorr_inner</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">inv</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">write_flag</span><span class="p">:</span>
                 <span class="c1"># Here, we can recombine the correlations for the read_len</span>
@@ -457,10 +461,6 @@
                 <span class="n">starttime</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;starttime&#39;</span><span class="p">])</span>
                 <span class="n">npts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;npts&#39;</span><span class="p">])</span>
             <span class="n">npts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">npts</span><span class="p">))</span>
-            <span class="c1"># create numpy array - Do a QR detrend here?</span>
-            <span class="c1"># st = st.split()</span>
-            <span class="c1"># st.write(&#39;/home/pm/Documents/PhD/Chaku/input.mseed&#39;)</span>
-
             <span class="n">A</span><span class="p">,</span> <span class="n">st</span> <span class="o">=</span> <span class="n">st_to_np_array</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">npts</span><span class="p">)</span>
             <span class="n">As</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span>
         <span class="k">else</span><span class="p">:</span>
@@ -502,8 +502,8 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Write correlation stream to files.</span>
 
-<span class="sd">        :param cst: :class:`~mii3.correlate.stream.CorrStream`</span>
-<span class="sd">        :type cst: [type]</span>
+<span class="sd">        :param cst: CorrStream containing the correlations</span>
+<span class="sd">        :type cst: :class:`~mii3.correlate.stream.CorrStream`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">cst</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;No new data written.&#39;</span><span class="p">)</span>
@@ -515,14 +515,15 @@
         <span class="n">st</span> <span class="o">=</span> <span class="n">CorrStream</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">cst</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span> <span class="o">==</span> <span class="n">station</span> <span class="ow">and</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span> <span class="o">==</span> <span class="n">network</span><span class="p">:</span>
-                <span class="n">st</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cst</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">cstlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
                 <span class="n">st</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
                 <span class="n">station</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span>
                 <span class="n">network</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span>
-                <span class="n">st</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cst</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
         <span class="n">cstlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">st</span><span class="p">)</span>
+        <span class="k">del</span> <span class="n">cst</span>
 
         <span class="c1"># Decide which process writes to which station</span>
         <span class="n">pmap</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cstlist</span><span class="p">))</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">psize</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">cstlist</span><span class="p">)</span>
@@ -902,233 +903,235 @@
     <span class="k">return</span> <span class="n">combis</span></div>
 
 
-<div class="viewcode-block" id="rotate_multi_corr_stream"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.correlate.rotate_multi_corr_stream">[docs]</a><span class="k">def</span> <span class="nf">rotate_multi_corr_stream</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Rotate a stream with full Greens tensor from ENZ to RTZ</span>
+<span class="c1"># All the rotations are still untested, should do that at some point</span>
 
-<span class="sd">    Take a stream with numerous correlation traces and rotate the</span>
-<span class="sd">    combinations of ENZ components into combinations of RTZ components in case</span>
-<span class="sd">    all nine components of the Green&#39;s tensor are present. If not all nine</span>
-<span class="sd">    components are present no trace for this station combination is returned.</span>
+<span class="c1"># def rotate_multi_corr_stream(st: Stream) -&gt; Stream:</span>
+<span class="c1">#     &quot;&quot;&quot;Rotate a stream with full Greens tensor from ENZ to RTZ</span>
 
-<span class="sd">    :type st: obspy.stream</span>
-<span class="sd">    :param st: stream with data in ENZ system</span>
-<span class="sd">    :rtype: obspy.stream</span>
-<span class="sd">    :return: stream in the RTZ system</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="c1">#     Take a stream with numerous correlation traces and rotate the</span>
+<span class="c1">#     combinations of ENZ components into combinations of RTZ components in</span>
+<span class="c1">#     all nine components of the Green&#39;s tensor are present. If not all nine</span>
+<span class="c1">#     components are present no trace for this station combination is returned.</span>
 
-    <span class="n">out_st</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
-    <span class="k">while</span> <span class="n">st</span><span class="p">:</span>
-        <span class="n">tl</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">9</span><span class="p">))</span>
-        <span class="n">tst</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">network</span><span class="o">=</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">],</span>
-                        <span class="n">station</span><span class="o">=</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;station&#39;</span><span class="p">])</span>
-        <span class="n">cnt</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">for</span> <span class="n">ttr</span> <span class="ow">in</span> <span class="n">tst</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;E&#39;</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">][</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;E&#39;</span><span class="p">:</span>
-                    <span class="n">tl</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">ttr</span>
-                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">elif</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">][</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;N&#39;</span><span class="p">:</span>
-                    <span class="n">tl</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">ttr</span>
-                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">2</span>
-                <span class="k">elif</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">][</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Z&#39;</span><span class="p">:</span>
-                    <span class="n">tl</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">ttr</span>
-                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">4</span>
-            <span class="k">elif</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;N&#39;</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">][</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;E&#39;</span><span class="p">:</span>
-                    <span class="n">tl</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">ttr</span>
-                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">8</span>
-                <span class="k">elif</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">][</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;N&#39;</span><span class="p">:</span>
-                    <span class="n">tl</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">ttr</span>
-                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">16</span>
-                <span class="k">elif</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">][</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Z&#39;</span><span class="p">:</span>
-                    <span class="n">tl</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="n">ttr</span>
-                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">32</span>
-            <span class="k">elif</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Z&#39;</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">][</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;E&#39;</span><span class="p">:</span>
-                    <span class="n">tl</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="n">ttr</span>
-                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">64</span>
-                <span class="k">elif</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">][</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;N&#39;</span><span class="p">:</span>
-                    <span class="n">tl</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">=</span> <span class="n">ttr</span>
-                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">128</span>
-                <span class="k">elif</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">][</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Z&#39;</span><span class="p">:</span>
-                    <span class="n">tl</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">=</span> <span class="n">ttr</span>
-                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">256</span>
-        <span class="k">if</span> <span class="n">cnt</span> <span class="o">==</span> <span class="mi">2</span><span class="o">**</span><span class="mi">9</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-            <span class="n">st0</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tl</span><span class="p">:</span>
-                <span class="n">st0</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
-            <span class="n">st1</span> <span class="o">=</span> <span class="n">_rotate_corr_stream</span><span class="p">(</span><span class="n">st0</span><span class="p">)</span>
-            <span class="n">out_st</span> <span class="o">+=</span> <span class="n">st1</span>
-        <span class="k">elif</span> <span class="n">cnt</span> <span class="o">==</span> <span class="mi">27</span><span class="p">:</span>  <span class="c1"># only horizontal component combinations present</span>
-            <span class="n">st0</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]:</span>
-                <span class="n">st0</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tl</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
-            <span class="n">st1</span> <span class="o">=</span> <span class="n">_rotate_corr_stream_horizontal</span><span class="p">(</span><span class="n">st0</span><span class="p">)</span>
-            <span class="n">out_st</span> <span class="o">+=</span> <span class="n">st1</span>
-        <span class="k">elif</span> <span class="n">cnt</span> <span class="o">==</span> <span class="mi">283</span><span class="p">:</span>  <span class="c1"># horizontal combinations + ZZ</span>
-            <span class="n">st0</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]:</span>
-                <span class="n">st0</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tl</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
-            <span class="n">st1</span> <span class="o">=</span> <span class="n">_rotate_corr_stream_horizontal</span><span class="p">(</span><span class="n">st0</span><span class="p">)</span>
-            <span class="n">out_st</span> <span class="o">+=</span> <span class="n">st1</span>
-            <span class="n">out_st</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tl</span><span class="p">[</span><span class="mi">8</span><span class="p">])</span>
-        <span class="k">for</span> <span class="n">ttr</span> <span class="ow">in</span> <span class="n">tst</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">tr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">ttr</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">tr</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
-                    <span class="n">st</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>
+<span class="c1">#     :type st: obspy.stream</span>
+<span class="c1">#     :param st: stream with data in ENZ system</span>
+<span class="c1">#     :rtype: obspy.stream</span>
+<span class="c1">#     :return: stream in the RTZ system</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
 
-    <span class="k">return</span> <span class="n">out_st</span></div>
+<span class="c1">#     out_st = Stream()</span>
+<span class="c1">#     while st:</span>
+<span class="c1">#         tl = list(range(9))</span>
+<span class="c1">#         tst = st.select(network=st[0].stats[&#39;network&#39;],</span>
+<span class="c1">#                         station=st[0].stats[&#39;station&#39;])</span>
+<span class="c1">#         cnt = 0</span>
+<span class="c1">#         for ttr in tst:</span>
+<span class="c1">#             if ttr.stats[&#39;channel&#39;][2] == &#39;E&#39;:</span>
+<span class="c1">#                 if ttr.stats[&#39;channel&#39;][6] == &#39;E&#39;:</span>
+<span class="c1">#                     tl[0] = ttr</span>
+<span class="c1">#                     cnt += 1</span>
+<span class="c1">#                 elif ttr.stats[&#39;channel&#39;][6] == &#39;N&#39;:</span>
+<span class="c1">#                     tl[1] = ttr</span>
+<span class="c1">#                     cnt += 2</span>
+<span class="c1">#                 elif ttr.stats[&#39;channel&#39;][6] == &#39;Z&#39;:</span>
+<span class="c1">#                     tl[2] = ttr</span>
+<span class="c1">#                     cnt += 4</span>
+<span class="c1">#             elif ttr.stats[&#39;channel&#39;][2] == &#39;N&#39;:</span>
+<span class="c1">#                 if ttr.stats[&#39;channel&#39;][6] == &#39;E&#39;:</span>
+<span class="c1">#                     tl[3] = ttr</span>
+<span class="c1">#                     cnt += 8</span>
+<span class="c1">#                 elif ttr.stats[&#39;channel&#39;][6] == &#39;N&#39;:</span>
+<span class="c1">#                     tl[4] = ttr</span>
+<span class="c1">#                     cnt += 16</span>
+<span class="c1">#                 elif ttr.stats[&#39;channel&#39;][6] == &#39;Z&#39;:</span>
+<span class="c1">#                     tl[5] = ttr</span>
+<span class="c1">#                     cnt += 32</span>
+<span class="c1">#             elif ttr.stats[&#39;channel&#39;][2] == &#39;Z&#39;:</span>
+<span class="c1">#                 if ttr.stats[&#39;channel&#39;][6] == &#39;E&#39;:</span>
+<span class="c1">#                     tl[6] = ttr</span>
+<span class="c1">#                     cnt += 64</span>
+<span class="c1">#                 elif ttr.stats[&#39;channel&#39;][6] == &#39;N&#39;:</span>
+<span class="c1">#                     tl[7] = ttr</span>
+<span class="c1">#                     cnt += 128</span>
+<span class="c1">#                 elif ttr.stats[&#39;channel&#39;][6] == &#39;Z&#39;:</span>
+<span class="c1">#                     tl[8] = ttr</span>
+<span class="c1">#                     cnt += 256</span>
+<span class="c1">#         if cnt == 2**9-1:</span>
+<span class="c1">#             st0 = Stream()</span>
+<span class="c1">#             for t in tl:</span>
+<span class="c1">#                 st0.append(t)</span>
+<span class="c1">#             st1 = _rotate_corr_stream(st0)</span>
+<span class="c1">#             out_st += st1</span>
+<span class="c1">#         elif cnt == 27:  # only horizontal component combinations present</span>
+<span class="c1">#             st0 = Stream()</span>
+<span class="c1">#             for t in [0, 1, 3, 4]:</span>
+<span class="c1">#                 st0.append(tl[t])</span>
+<span class="c1">#             st1 = _rotate_corr_stream_horizontal(st0)</span>
+<span class="c1">#             out_st += st1</span>
+<span class="c1">#         elif cnt == 283:  # horizontal combinations + ZZ</span>
+<span class="c1">#             st0 = Stream()</span>
+<span class="c1">#             for t in [0, 1, 3, 4]:</span>
+<span class="c1">#                 st0.append(tl[t])</span>
+<span class="c1">#             st1 = _rotate_corr_stream_horizontal(st0)</span>
+<span class="c1">#             out_st += st1</span>
+<span class="c1">#             out_st.append(tl[8])</span>
+<span class="c1">#         for ttr in tst:</span>
+<span class="c1">#             for ind, tr in enumerate(st):</span>
+<span class="c1">#                 if ttr.id == tr.id:</span>
+<span class="c1">#                     st.pop(ind)</span>
 
-
-<span class="k">def</span> <span class="nf">_rotate_corr_stream_horizontal</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot; Rotate traces in stream from the EE-EN-NE-NN system to</span>
-<span class="sd">    the RR-RT-TR-TT system. The letters give the component order</span>
-<span class="sd">    in the input and output streams. Input traces are assumed to be of same</span>
-<span class="sd">    length and simultaneously sampled.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="c1"># rotation angles</span>
-    <span class="c1"># phi1 : counter clockwise angle between E and R(towards second station)</span>
-    <span class="c1"># the leading -1 accounts fact that we rotate the coordinate system,</span>
-    <span class="c1"># not a vector</span>
-    <span class="n">phi1</span> <span class="o">=</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="o">*</span><span class="p">(</span><span class="mi">90</span><span class="o">-</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sac&#39;</span><span class="p">][</span><span class="s1">&#39;az&#39;</span><span class="p">])</span>
-    <span class="c1"># phi2 : counter clockwise angle between E and R(away from first station)</span>
-    <span class="n">phi2</span> <span class="o">=</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="o">*</span><span class="p">(</span><span class="mi">90</span><span class="o">-</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sac&#39;</span><span class="p">][</span><span class="s1">&#39;baz&#39;</span><span class="p">]</span><span class="o">+</span><span class="mi">180</span><span class="p">)</span>
-
-    <span class="n">c1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi1</span><span class="p">)</span>
-    <span class="n">s1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi1</span><span class="p">)</span>
-    <span class="n">c2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi2</span><span class="p">)</span>
-    <span class="n">s2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi2</span><span class="p">)</span>
-
-    <span class="n">rt</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
-    <span class="n">RR</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">RR</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">c1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">c1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">s1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span>\
-        <span class="n">s1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
-    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">RR</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">])</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;R&#39;</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;R&#39;</span>
-    <span class="n">RR</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
-    <span class="n">rt</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">RR</span><span class="p">)</span>
-
-    <span class="n">RT</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">RT</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">c1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">s1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span>\
-        <span class="n">s1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
-    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">RT</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">])</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;R&#39;</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;T&#39;</span>
-    <span class="n">RT</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
-    <span class="n">rt</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">RT</span><span class="p">)</span>
-
-    <span class="n">TR</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">TR</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">s1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">s1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span>\
-        <span class="n">c1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
-    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">TR</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">])</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;T&#39;</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;R&#39;</span>
-    <span class="n">TR</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
-    <span class="n">rt</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TR</span><span class="p">)</span>
-
-    <span class="n">TT</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">TT</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">s1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">s1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span>\
-        <span class="n">c1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
-    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">TT</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">])</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;T&#39;</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;T&#39;</span>
-    <span class="n">TT</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
-    <span class="n">rt</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TT</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">rt</span>
+<span class="c1">#     return out_st</span>
 
 
-<span class="k">def</span> <span class="nf">_rotate_corr_stream</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot; Rotate traces in stream from the EE-EN-EZ-NE-NN-NZ-ZE-ZN-ZZ system to</span>
-<span class="sd">    the RR-RT-RZ-TR-TT-TZ-ZR-ZT-ZZ system. The letters give the component order</span>
-<span class="sd">    in the input and output streams. Input traces are assumed to be of same</span>
-<span class="sd">    length and simultaneously sampled.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="c1"># def _rotate_corr_stream_horizontal(st: Stream) -&gt; Stream:</span>
+<span class="c1">#     &quot;&quot;&quot; Rotate traces in stream from the EE-EN-NE-NN system to</span>
+<span class="c1">#     the RR-RT-TR-TT system. The letters give the component order</span>
+<span class="c1">#     in the input and output streams. Input traces are assumed to be of same</span>
+<span class="c1">#     length and simultaneously sampled.</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
 
-    <span class="c1"># rotation angles</span>
-    <span class="c1"># phi1 : counter clockwise angle between E and R(towards second station)</span>
-    <span class="c1"># the leading -1 accounts fact that we rotate the coordinate system,</span>
-    <span class="c1"># not a vector</span>
-    <span class="n">phi1</span> <span class="o">=</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="o">*</span><span class="p">(</span><span class="mi">90</span><span class="o">-</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sac&#39;</span><span class="p">][</span><span class="s1">&#39;az&#39;</span><span class="p">])</span>
-    <span class="c1"># phi2 : counter clockwise angle between E and R(away from first station)</span>
-    <span class="n">phi2</span> <span class="o">=</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="o">*</span><span class="p">(</span><span class="mi">90</span><span class="o">-</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sac&#39;</span><span class="p">][</span><span class="s1">&#39;baz&#39;</span><span class="p">]</span><span class="o">+</span><span class="mi">180</span><span class="p">)</span>
+<span class="c1">#     # rotation angles</span>
+<span class="c1">#     # phi1 : counter clockwise angle between E and R(towards second station)</span>
+<span class="c1">#     # the leading -1 accounts fact that we rotate the coordinate system,</span>
+<span class="c1">#     # not a vector</span>
+<span class="c1">#     phi1 = - np.pi/180*(90-st[0].stats[&#39;sac&#39;][&#39;az&#39;])</span>
+<span class="c1">#     # phi2 : counter clockwise angle between E and R(away from first station)</span>
+<span class="c1">#     phi2 = - np.pi/180*(90-st[0].stats[&#39;sac&#39;][&#39;baz&#39;]+180)</span>
 
-    <span class="n">c1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi1</span><span class="p">)</span>
-    <span class="n">s1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi1</span><span class="p">)</span>
-    <span class="n">c2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi2</span><span class="p">)</span>
-    <span class="n">s2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi2</span><span class="p">)</span>
+<span class="c1">#     c1 = np.cos(phi1)</span>
+<span class="c1">#     s1 = np.sin(phi1)</span>
+<span class="c1">#     c2 = np.cos(phi2)</span>
+<span class="c1">#     s2 = np.sin(phi2)</span>
 
-    <span class="n">rtz</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
-    <span class="n">RR</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">RR</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">c1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">c1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">s1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span>\
-        <span class="n">s1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
-    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">RR</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">])</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;R&#39;</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;R&#39;</span>
-    <span class="n">RR</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
-    <span class="n">rtz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">RR</span><span class="p">)</span>
+<span class="c1">#     rt = Stream()</span>
+<span class="c1">#     RR = st[0].copy()</span>
+<span class="c1">#     RR.data = c1*c2*st[0].data - c1*s2*st[1].data - s1*c2*st[2].data +\</span>
+<span class="c1">#         s1*s2*st[3].data</span>
+<span class="c1">#     tcha = list(RR.stats[&#39;channel&#39;])</span>
+<span class="c1">#     tcha[2] = &#39;R&#39;</span>
+<span class="c1">#     tcha[6] = &#39;R&#39;</span>
+<span class="c1">#     RR.stats[&#39;channel&#39;] = &#39;&#39;.join(tcha)</span>
+<span class="c1">#     rt.append(RR)</span>
 
-    <span class="n">RT</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">RT</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">c1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">s1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span>\
-        <span class="n">s1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
-    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">RT</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">])</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;R&#39;</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;T&#39;</span>
-    <span class="n">RT</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
-    <span class="n">rtz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">RT</span><span class="p">)</span>
+<span class="c1">#     RT = st[0].copy()</span>
+<span class="c1">#     RT.data = c1*s2*st[0].data + c1*c2*st[1].data - s1*s2*st[2].data -\</span>
+<span class="c1">#         s1*c2*st[3].data</span>
+<span class="c1">#     tcha = list(RT.stats[&#39;channel&#39;])</span>
+<span class="c1">#     tcha[2] = &#39;R&#39;</span>
+<span class="c1">#     tcha[6] = &#39;T&#39;</span>
+<span class="c1">#     RT.stats[&#39;channel&#39;] = &#39;&#39;.join(tcha)</span>
+<span class="c1">#     rt.append(RT)</span>
 
-    <span class="n">RZ</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">RZ</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">c1</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">s1</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
-    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">RZ</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">])</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;R&#39;</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Z&#39;</span>
-    <span class="n">RZ</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
-    <span class="n">rtz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">RZ</span><span class="p">)</span>
+<span class="c1">#     TR = st[0].copy()</span>
+<span class="c1">#     TR.data = s1*c2*st[0].data - s1*s2*st[1].data + c1*c2*st[2].data -\</span>
+<span class="c1">#         c1*s2*st[3].data</span>
+<span class="c1">#     tcha = list(TR.stats[&#39;channel&#39;])</span>
+<span class="c1">#     tcha[2] = &#39;T&#39;</span>
+<span class="c1">#     tcha[6] = &#39;R&#39;</span>
+<span class="c1">#     TR.stats[&#39;channel&#39;] = &#39;&#39;.join(tcha)</span>
+<span class="c1">#     rt.append(TR)</span>
 
-    <span class="n">TR</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">TR</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">s1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">s1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span>\
-        <span class="n">c1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
-    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">TR</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">])</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;T&#39;</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;R&#39;</span>
-    <span class="n">TR</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
-    <span class="n">rtz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TR</span><span class="p">)</span>
+<span class="c1">#     TT = st[0].copy()</span>
+<span class="c1">#     TT.data = s1*s2*st[0].data + s1*c2*st[1].data + c1*s2*st[2].data +\</span>
+<span class="c1">#         c1*c2*st[3].data</span>
+<span class="c1">#     tcha = list(TT.stats[&#39;channel&#39;])</span>
+<span class="c1">#     tcha[2] = &#39;T&#39;</span>
+<span class="c1">#     tcha[6] = &#39;T&#39;</span>
+<span class="c1">#     TT.stats[&#39;channel&#39;] = &#39;&#39;.join(tcha)</span>
+<span class="c1">#     rt.append(TT)</span>
 
-    <span class="n">TT</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">TT</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">s1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">s1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span>\
-        <span class="n">c1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
-    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">TT</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">])</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;T&#39;</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;T&#39;</span>
-    <span class="n">TT</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
-    <span class="n">rtz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TT</span><span class="p">)</span>
+<span class="c1">#     return rt</span>
 
-    <span class="n">TZ</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">TZ</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">s1</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
-    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">TZ</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">])</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;T&#39;</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Z&#39;</span>
-    <span class="n">TZ</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
-    <span class="n">rtz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TZ</span><span class="p">)</span>
 
-    <span class="n">ZR</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">ZR</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
-    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ZR</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">])</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Z&#39;</span>
-    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;R&#39;</span>
-    <span class="n">ZR</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
-    <span class="n">rtz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ZR</span><span class="p">)</span>
+<span class="c1"># def _rotate_corr_stream(st: Stream) -&gt; Stream:</span>
+<span class="c1">#     &quot;&quot;&quot; Rotate traces in stream from the EE-EN-EZ-NE-NN-NZ-ZE-ZN-ZZ system to</span>
+<span class="c1">#     the RR-RT-RZ-TR-TT-TZ-ZR-ZT-ZZ system. The letters give the component</span>
+<span class="c1">#     in the input and output streams. Input traces are assumed to be of same</span>
+<span class="c1">#     length and simultaneously sampled.</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
 
-    <span class="n">ZT</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">ZT</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">.</span><span class="n">tuple</span>
-    <span class="n">ZT</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
-    <span class="n">rtz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ZT</span><span class="p">)</span>
+<span class="c1">#     # rotation angles</span>
+<span class="c1">#     # phi1 : counter clockwise angle between E and R(towards second station)</span>
+<span class="c1">#     # the leading -1 accounts fact that we rotate the coordinate system,</span>
+<span class="c1">#     # not a vector</span>
+<span class="c1">#     phi1 = - np.pi/180*(90-st[0].stats[&#39;sac&#39;][&#39;az&#39;])</span>
+<span class="c1">#     # phi2 : counter clockwise angle between E and R(away from first station)</span>
+<span class="c1">#     phi2 = - np.pi/180*(90-st[0].stats[&#39;sac&#39;][&#39;baz&#39;]+180)</span>
 
-    <span class="n">rtz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+<span class="c1">#     c1 = np.cos(phi1)</span>
+<span class="c1">#     s1 = np.sin(phi1)</span>
+<span class="c1">#     c2 = np.cos(phi2)</span>
+<span class="c1">#     s2 = np.sin(phi2)</span>
 
-    <span class="k">return</span> <span class="n">rtz</span>
+<span class="c1">#     rtz = Stream()</span>
+<span class="c1">#     RR = st[0].copy()</span>
+<span class="c1">#     RR.data = c1*c2*st[0].data - c1*s2*st[1].data - s1*c2*st[3].data +\</span>
+<span class="c1">#         s1*s2*st[4].data</span>
+<span class="c1">#     tcha = list(RR.stats[&#39;channel&#39;])</span>
+<span class="c1">#     tcha[2] = &#39;R&#39;</span>
+<span class="c1">#     tcha[6] = &#39;R&#39;</span>
+<span class="c1">#     RR.stats[&#39;channel&#39;] = &#39;&#39;.join(tcha)</span>
+<span class="c1">#     rtz.append(RR)</span>
+
+<span class="c1">#     RT = st[0].copy()</span>
+<span class="c1">#     RT.data = c1*s2*st[0].data + c1*c2*st[1].data - s1*s2*st[3].data -\</span>
+<span class="c1">#         s1*c2*st[4].data</span>
+<span class="c1">#     tcha = list(RT.stats[&#39;channel&#39;])</span>
+<span class="c1">#     tcha[2] = &#39;R&#39;</span>
+<span class="c1">#     tcha[6] = &#39;T&#39;</span>
+<span class="c1">#     RT.stats[&#39;channel&#39;] = &#39;&#39;.join(tcha)</span>
+<span class="c1">#     rtz.append(RT)</span>
+
+<span class="c1">#     RZ = st[0].copy()</span>
+<span class="c1">#     RZ.data = c1*st[2].data - s1*st[5].data</span>
+<span class="c1">#     tcha = list(RZ.stats[&#39;channel&#39;])</span>
+<span class="c1">#     tcha[2] = &#39;R&#39;</span>
+<span class="c1">#     tcha[6] = &#39;Z&#39;</span>
+<span class="c1">#     RZ.stats[&#39;channel&#39;] = &#39;&#39;.join(tcha)</span>
+<span class="c1">#     rtz.append(RZ)</span>
+
+<span class="c1">#     TR = st[0].copy()</span>
+<span class="c1">#     TR.data = s1*c2*st[0].data - s1*s2*st[1].data + c1*c2*st[3].data -\</span>
+<span class="c1">#         c1*s2*st[4].data</span>
+<span class="c1">#     tcha = list(TR.stats[&#39;channel&#39;])</span>
+<span class="c1">#     tcha[2] = &#39;T&#39;</span>
+<span class="c1">#     tcha[6] = &#39;R&#39;</span>
+<span class="c1">#     TR.stats[&#39;channel&#39;] = &#39;&#39;.join(tcha)</span>
+<span class="c1">#     rtz.append(TR)</span>
+
+<span class="c1">#     TT = st[0].copy()</span>
+<span class="c1">#     TT.data = s1*s2*st[0].data + s1*c2*st[1].data + c1*s2*st[3].data +\</span>
+<span class="c1">#         c1*c2*st[4].data</span>
+<span class="c1">#     tcha = list(TT.stats[&#39;channel&#39;])</span>
+<span class="c1">#     tcha[2] = &#39;T&#39;</span>
+<span class="c1">#     tcha[6] = &#39;T&#39;</span>
+<span class="c1">#     TT.stats[&#39;channel&#39;] = &#39;&#39;.join(tcha)</span>
+<span class="c1">#     rtz.append(TT)</span>
+
+<span class="c1">#     TZ = st[0].copy()</span>
+<span class="c1">#     TZ.data = s1*st[2].data + c1*st[5].data</span>
+<span class="c1">#     tcha = list(TZ.stats[&#39;channel&#39;])</span>
+<span class="c1">#     tcha[2] = &#39;T&#39;</span>
+<span class="c1">#     tcha[6] = &#39;Z&#39;</span>
+<span class="c1">#     TZ.stats[&#39;channel&#39;] = &#39;&#39;.join(tcha)</span>
+<span class="c1">#     rtz.append(TZ)</span>
+
+<span class="c1">#     ZR = st[0].copy()</span>
+<span class="c1">#     ZR.data = c2*st[6].data - s2*st[7].data</span>
+<span class="c1">#     tcha = list(ZR.stats[&#39;channel&#39;])</span>
+<span class="c1">#     tcha[2] = &#39;Z&#39;</span>
+<span class="c1">#     tcha[6] = &#39;R&#39;</span>
+<span class="c1">#     ZR.stats[&#39;channel&#39;] = &#39;&#39;.join(tcha)</span>
+<span class="c1">#     rtz.append(ZR)</span>
+
+<span class="c1">#     ZT = st[0].copy()</span>
+<span class="c1">#     ZT.data = s2*st[6].data + c2*st[7].tuple</span>
+<span class="c1">#     ZT.stats[&#39;channel&#39;] = &#39;&#39;.join(tcha)</span>
+<span class="c1">#     rtz.append(ZT)</span>
+
+<span class="c1">#     rtz.append(st[8].copy())</span>
+
+<span class="c1">#     return rtz</span>
 
 
 <div class="viewcode-block" id="sort_comb_name_alphabetically"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.correlate.sort_comb_name_alphabetically">[docs]</a><span class="k">def</span> <span class="nf">sort_comb_name_alphabetically</span><span class="p">(</span>
@@ -1179,9 +1182,9 @@
 <span class="sd">            net1, stat1, net2, stat2))</span>
 <span class="sd">    ([&#39;XN&#39;, &#39;XN&#39;], [&#39;NEP06&#39;, &#39;NEP07&#39;])</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="p">[</span><span class="n">network1</span><span class="p">,</span> <span class="n">network2</span><span class="p">,</span> <span class="n">station1</span><span class="p">,</span> <span class="n">station2</span><span class="p">]:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;All arguments have to be strings.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="n">network1</span><span class="p">,</span> <span class="n">network2</span><span class="p">,</span> <span class="n">station1</span><span class="p">,</span> <span class="n">station2</span><span class="p">]]):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;All arguments have to be strings.&#39;</span><span class="p">)</span>
     <span class="n">sort1</span> <span class="o">=</span> <span class="n">network1</span> <span class="o">+</span> <span class="n">station1</span>
     <span class="n">sort2</span> <span class="o">=</span> <span class="n">network2</span> <span class="o">+</span> <span class="n">station2</span>
     <span class="n">sort</span> <span class="o">=</span> <span class="p">[</span><span class="n">sort1</span><span class="p">,</span> <span class="n">sort2</span><span class="p">]</span>
@@ -1243,7 +1246,7 @@
         <span class="n">statcombs</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">+</span><span class="s1">&#39;-&#39;</span><span class="o">+</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">statlist</span><span class="p">]</span>
     <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;allSimpleCombinations&#39;</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">netlist</span><span class="p">,</span> <span class="n">statlist</span><span class="p">)):</span>
-            <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ii</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">netlist</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">netlist</span><span class="p">)):</span>
                 <span class="n">n2</span> <span class="o">=</span> <span class="n">netlist</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span>
                 <span class="n">s2</span> <span class="o">=</span> <span class="n">statlist</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span>
                 <span class="n">nc</span><span class="p">,</span> <span class="n">sc</span> <span class="o">=</span> <span class="n">sort_comb_name_alphabetically</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">s2</span><span class="p">)</span>
@@ -1302,7 +1305,7 @@
 <span class="sd">    :return: The preprocessed stream.</span>
 <span class="sd">    :rtype: :class:`obspy.core.stream.Stream`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">st</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">st</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">st</span>
 
     <span class="n">st</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;starttime&#39;</span><span class="p">])</span>
@@ -1427,7 +1430,7 @@
     
     <div class="footer-item">
       <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.2.0.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.0.<br>
 </p>
     </div>
     
