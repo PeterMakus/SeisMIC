@@ -7,11 +7,12 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Thursday, 11th November 2021 06:24:12 pm
+Last Modified: Friday, 12th November 2021 04:45:04 pm
 '''
 
 import unittest
 from unittest import mock
+from unittest.case import TestCase
 import warnings
 
 import numpy as np
@@ -271,6 +272,15 @@ class TestCorrTrace(unittest.TestCase):
         exp_res['npts'] = 25
         self.assertEqual(ctr.stats, exp_res)
 
+    def test_times(self):
+        ctr = stream.CorrTrace(
+            np.empty(25), header1=self.st[0].stats, header2=self.st[1].stats,
+            start_lag=-10, end_lag=10)
+        exp = np.arange(
+            ctr.stats.start_lag, ctr.stats.end_lag + ctr.stats.delta,
+            ctr.stats.delta)
+        np.testing.assert_array_equal(exp, ctr.times())
+
 
 class TestCorrStream(unittest.TestCase):
     def setUp(self):
@@ -438,6 +448,24 @@ class TestCorrStream(unittest.TestCase):
         self.assertEqual(cb.data.shape[0], self.st.count()-1)
         for ii, tr in enumerate(self.st[:-1]):
             np.testing.assert_array_equal(tr.data, cb.data[ii])
+
+    def test_to_matrix(self):
+        st = self.st.copy()
+        with mock.patch.object(st, 'select') as sct_mock:
+            select_return = mock.MagicMock(name='select_mock')
+            select_return.select_corr_time.return_value = st
+            sct_mock.return_value = select_return
+            A, stats = st._to_matrix(
+                'net', 'stat', 'cha', 'loc', times=(
+                    st[0].stats.starttime, st[0].stats.endtime))
+            sct_mock.assert_called_once_with('net', 'stat', 'loc', 'cha')
+            select_return.select_corr_time.assert_called_once_with(
+                st[0].stats.starttime, st[0].stats.endtime)
+        statl = []
+        for ii, tr in enumerate(st):
+            np.testing.assert_array_equal(A[ii], tr.data)
+            statl.append(tr.stats)
+        self.assertListEqual(statl, stats)
 
 
 class TestConvertStatlistToBulkStats(unittest.TestCase):
