@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Friday, 12th November 2021 04:45:04 pm
+Last Modified: Friday, 12th November 2021 05:06:07 pm
 '''
 
 import unittest
@@ -122,6 +122,56 @@ class TestCombineStats(unittest.TestCase):
     def test_wrong_input(self):
         with self.assertRaises(TypeError):
             stream.combine_stats('bla', 4, 6, 3)
+
+    def test_wrong_input2(self):
+        with self.assertRaises(TypeError):
+            stream.combine_stats(self.st[0].stats, 4, 6, 3)
+
+    @mock.patch('seismic.correlate.stream.m3ut.trace_calc_az_baz_dist')
+    def test_add_coords(self, az_dist_mock):
+        # We test this by using two different components
+        az_dist_mock.return_value = (20, 160, 3000)
+        st0 = self.st[0].stats
+        st1 = self.st[1].stats
+        st0['stla'] = 0
+        st0['stlo'] = 0
+        st0['stel'] = 0
+        st1['stla'] = 0
+        st1['stlo'] = 0
+        st1['stel'] = 0
+        lag = np.random.randint(80, 120)
+        stc = stream.combine_stats(st0, st1, -lag, inv=self.inv)
+        keys = ['stla', 'stel', 'stlo', 'evla', 'evlo', 'evel']
+        for k in keys:
+            self.assertEqual(stc[k], 0)
+        self.assertEqual(stc['az'], 20)
+        self.assertEqual(stc['baz'], 160)
+        self.assertEqual(stc['dist'], 3)
+        az_dist_mock.assert_called_once_with(st0, st1)
+
+    @mock.patch('seismic.correlate.stream.m3ut.trace_calc_az_baz_dist')
+    def test_add_coords2(self, az_dist_mock):
+        # We test this by using two different components
+        az_dist_mock.return_value = (20, 160, 3000)
+        st0 = self.st[0].stats
+        st1 = self.st[1].stats
+        st0['sac'] = {}
+        st1['sac'] = {}
+        st0['sac']['stla'] = 0
+        st0['sac']['stlo'] = 0
+        st0['sac']['stel'] = 0
+        st1['sac']['stla'] = 0
+        st1['sac']['stlo'] = 0
+        st1['sac']['stel'] = 0
+        lag = np.random.randint(80, 120)
+        stc = stream.combine_stats(st0, st1, -lag, inv=self.inv)
+        keys = ['stla', 'stel', 'stlo', 'evla', 'evlo', 'evel']
+        for k in keys:
+            self.assertEqual(stc[k], 0)
+        self.assertEqual(stc['az'], 20)
+        self.assertEqual(stc['baz'], 160)
+        self.assertEqual(stc['dist'], 3)
+        az_dist_mock.assert_called_once_with(st0, st1)
 
 
 class TestCompareTr(unittest.TestCase):
