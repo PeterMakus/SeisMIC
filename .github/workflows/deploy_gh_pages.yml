@@ -1,0 +1,99 @@
+
+name: Documentation
+
+# Define on which aciton and on which branch to perform action
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+
+  build-and-deploy:
+    name: Build Documentation and Push
+    runs-on: ubuntu-latest
+    steps:
+
+      # https://github.com/marketplace/actions/checkout
+      - name: Start actions
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      # Cache Conda environment installattion
+      - name: Cache conda
+        uses: actions/cache@v2
+        env:
+          # Increase this value to reset cache if etc/example-environment.yml has not changed
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key:
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+            hashFiles('environment.yml') }}
+      
+      # Setting Up Cache pip installations
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+      - name: Prepare Environment
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: seismic
+          environment-file: environment.yml
+          # python-version: 3.8
+          auto-activate-base: false
+          use-only-tar-bz2: true
+      
+      # To keep Conda activated you have to use 'shell: bash -l {0}' line
+      # To specifiy the shell
+      - name: INFO using bash shell
+        shell: bash -l {0}
+        run: |
+          conda info
+          conda list
+      
+      - name: Make Docs
+        shell: bash -l {0}
+        run: |
+          cd docs/
+          make html
+          cd -
+        
+      # Great extra actions to compose with:
+      # Create an artifact of the html output.
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: DocumentationHTML
+          path: docs/_build/html/
+
+      - name: Commit documentation changes
+        shell: bash -l {0}
+        run: |
+          git clone https://github.com/PeterMakus/SeisMIC.git --branch gh-pages --single-branch gh-pages
+          cp -r docs/_build/html/* gh-pages/
+          cd gh-pages
+          touch .nojekyll
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "Update documentation" -a || true
+          # The above command will fail if no changes were present, so we ignore
+          # that.
+      # Push the changes
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          branch: gh-pages
+          directory: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,4 +1,4 @@
-# SeisMIC [![Build Status](https://travis-ci.com/PeterMakus/SeisMIC.svg?branch=main)](https://travis-ci.com/PeterMakus/SeisMIC) [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
+# SeisMIC [![Build Status](https://github.com/PeterMakus/SeisMIC/actions/workflows/test_on_push.yml/badge.svg)](https://github.com/PeterMakus/SeisMIC/actions/workflows/test_on_push.yml?branch=main) [![Documentation Status](https://github.com/PeterMakus/SeisMIC/actions/workflows/deploy_gh_pages.yml/badge.svg)](https://github.com/PeterMakus/SeisMIC/actions/workflows/deploy_gh_pages.yml) [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0) [![codecov](https://codecov.io/gh/PeterMakus/SeisMIC/branch/main/graph/badge.svg?token=DYVHODB6LN)](https://codecov.io/gh/PeterMakus/SeisMIC)
 
 ## Monitoring Velocity Changes using Ambient Seismic Noise
 SeisMIC (**Seismological Monitoring using Interferometric Concepts**) is a python software that emerged from the miic library. **SeisMIC** provides functionality to apply some concepts of seismic interferometry to different data of elastic waves. Its main use case is the monitoring of temporal changes in a mediums Green's Function (i.e., monitoring of temporal velocity changes).
@@ -20,9 +20,12 @@ SeisMIC (**Seismological Monitoring using Interferometric Concepts**) is a pytho
 A few simple steps:
 
 1. Download this package via GitHub
-2. Execute the following commands:
+2. Execute the following commands, in the directory that you downloaded the source code to:
 
 ```bash
+# Change directory to the same directory that this repo is in (i.e., same directory as setup.py)
+cd $PathToThisRepository$
+
 # Create the conda environment and install dependencies
 conda env create -f environment.yml
 
@@ -30,11 +33,11 @@ conda env create -f environment.yml
 conda activate seismic
 
 # Install your package
-pip install  $InstallationDirectory$
+pip install -e .
 ```
 
 ## Getting started
-Access SeisMIIC's documentation [here](https://petermakus.github.io/SeisMIC/index.html).
+Access SeisMIC's documentation [here](https://petermakus.github.io/SeisMIC/index.html).
 
 SeisMIC comes with a few tutorials (Jupyter notebooks). You can find those in the `examples/` directory.
 

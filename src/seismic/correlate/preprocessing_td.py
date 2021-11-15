@@ -2,13 +2,15 @@
 Module that contains functions for preprocessing in the time domain
 
 :copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   `GNU Lesser General Public License, Version 3 <https://www.gnu.org/copyleft/lesser.html>`
+   GNU Lesser General Public License, Version 3
+   (https://www.gnu.org/copyleft/lesser.html)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:24:01 pm
-Last Modified: Tuesday, 27th July 2021 10:52:22 am
+Last Modified: Thursday, 21st October 2021 02:38:52 pm
 '''
 from copy import deepcopy
 
@@ -55,8 +57,13 @@ def detrend(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """
     Remove trend from data
     """
-    A[np.logical_not(np.isnan(A))] = sp_detrend(
-        A[np.logical_not(np.isnan(A))], axis=0, overwrite_data=True, **args)
+    try:
+        A[np.logical_not(np.isnan(A))] = sp_detrend(
+            A[np.logical_not(np.isnan(A))], axis=0, overwrite_data=True,
+            **args)
+    except ZeroDivisionError:
+        # When the array is nothing but nans
+        return A
     return sp_detrend(A, axis=0, overwrite_data=True, **args)
 
 

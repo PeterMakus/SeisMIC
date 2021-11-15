@@ -1,5 +1,6 @@
 '''
 :copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -7,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 13th September 2021 12:03:02 pm
+Last Modified: Wednesday, 10th November 2021 05:16:38 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -40,7 +41,8 @@ class Correlator(object):
         Initiates the Correlator object. When executing
         :func:`~seismic.correlate.correlate.Correlator.pxcorr()`, it will
         actually compute the correlations and save them in an hdf5 file that
-        can be handled using :class:`~seismic.db.corr_hdf5.CorrelationDataBase`.
+        can be handled using
+        :class:`~seismic.db.corr_hdf5.CorrelationDataBase`.
         Data has to be preprocessed before calling this (i.e., the data already
         has to be given in an ASDF format). Consult
         :class:`~seismic.trace_data.preprocess.Preprocessor` for information on
@@ -51,7 +53,6 @@ class Correlator(object):
             in options.
         :type options: dict or str
         """
-        super().__init__()
         if isinstance(options, str):
             with open(options) as file:
                 options = yaml.load(file, Loader=yaml.FullLoader)
@@ -77,7 +78,7 @@ class Correlator(object):
         rankstr = str(self.rank).zfill(3)
 
         loglvl = mu.log_lvl[options['log_level'].upper()]
-        self.logger = logging.Logger("seismic.Correlator%s" % rankstr)
+        self.logger = logging.getLogger("seismic.Correlator%s" % rankstr)
         self.logger.setLevel(loglvl)
         logging.captureWarnings(True)
         warnlog = logging.getLogger('py.warnings')
@@ -101,6 +102,12 @@ class Correlator(object):
 
         self.options = options['co']
 
+        # requested combis?
+        if 'xcombinations' in self.options:
+            self.rcombis = self.options['xcombinations']
+        else:
+            self.rcombis = None
+
         # find the available data
         network = options['net']['network']
         station = options['net']['station']
@@ -113,10 +120,17 @@ class Correlator(object):
         if isinstance(network, list) and len(network) == 1:
             network = network[0]
 
-        if network == '*':
+        if network == '*' and station == '*':
             station = store_client.get_available_stations()
         elif station == '*' and isinstance(network, str):
             station = store_client.get_available_stations(network)
+        elif network == '*':
+            raise ValueError(
+                'Stations has to be either: \n'
+                + '1. A list of the same length as the list of networks.\n'
+                + '2. \'*\' That is, a wildcard (string).\n'
+                + '3. A list and network is a string describing one '
+                + 'station code.')
         elif isinstance(station, str) and isinstance(network, str):
             station = [[network, station]]
         elif station == '*' and isinstance(network, list):
@@ -126,29 +140,57 @@ class Correlator(object):
         elif isinstance(network, list) and isinstance(station, list):
             if len(network) != len(station):
                 raise ValueError(
-                    'Stations has to be either: \n' +
-                    '1. A list of the same length as the list of networks.\n' +
-                    '2. \'*\' That is, a wildcard (string).\n' +
-                    '3. A list and network is a string describing one ' +
-                    'station code.')
+                    'Stations has to be either: \n'
+                    + '1. A list of the same length as the list of networks.\n'
+                    + '2. \'*\' That is, a wildcard (string).\n'
+                    + '3. A list and network is a string describing one '
+                    + 'station code.')
             station = list([n, s] for n, s in zip(network, station))
-        elif isinstance(station, str):
-            raise ValueError(
-                'Stations has to be either: \n' +
-                '1. A list of the same length as the list of networks.\n' +
-                '2. \'*\' That is, a wildcard (string).\n' +
-                '3. A list and network is a string describing one ' +
-                'station code.')
-        else:
+        elif isinstance(station, list) and isinstance(network, str):
             for ii, stat in enumerate(station):
                 station[ii] = [network, stat]
+        else:
+            raise ValueError(
+                'Stations has to be either: \n'
+                + '1. A list of the same length as the list of networks.\n'
+                + '2. \'*\' That is, a wildcard (string).\n'
+                + '3. A list and network is a string describing one '
+                + 'station code.')
         self.station = station
-
         self.logger.debug(
-            'Fetching data from the following stations:\n%s' % str(
-                ['{n}.{s}'.format(n=n, s=s) for n, s in station]))
+            'Fetching data from the following stations:\n%a' % [
+                f'{n}.{s}' for n, s in station])
 
         self.sampling_rate = self.options['sampling_rate']
+
+    def find_interstat_dist(self, dis: float):
+        """
+        Find stations in database with interstation distance smaller than
+        dis.
+
+        If no station inventories are available, they will be downloaded.
+
+        :param dis: Find all Stations with distance less than `dis` [in m]
+        :type dis: float
+
+        .. note:: only the subset of the in ``params.yaml`` defined
+            networks and stations will be queried.
+        """
+        if not self.options['combination_method'] == 'betweenStations':
+            raise ValueError(
+                'This function is only available if combination method '
+                + 'is set to "betweenStations".')
+        # list of requested combinations
+        self.rcombis = []
+        # Update the store clients invetory
+        self.store_client.read_inventory()
+        for ii, (n0, s0) in enumerate(self.station):
+            inv0 = self.store_client.select_inventory_or_load_remote(n0, s0)
+            for n1, s1 in self.station[ii:]:
+                inv1 = self.store_client.select_inventory_or_load_remote(
+                    n1, s1)
+                if mu.filter_stat_dist(inv0, inv1, dis):
+                    self.rcombis.append('%s-%s.%s-%s' % (n0, n1, s0, s1))
 
     def find_existing_times(self, tag: str, channel: str = '*') -> dict:
         """
@@ -173,11 +215,10 @@ class Correlator(object):
         """
         netlist, statlist = list(zip(*self.station))
         netcombs, statcombs = compute_network_station_combinations(
-            netlist, statlist, method=self.options['combination_method'])
+            netlist, statlist, method=self.options['combination_method'],
+            combis=self.rcombis)
         ex_dict = {}
         for nc, sc in zip(netcombs, statcombs):
-            s0, s1 = sc.split('-')
-            n0, n1 = nc.split('-')
             outf = os.path.join(
                 self.corr_dir, '%s.%s.h5' % (nc, sc))
             if not os.path.isfile(outf):
@@ -185,6 +226,8 @@ class Correlator(object):
             with CorrelationDataBase(
                     outf, corr_options=self.options, mode='r') as cdb:
                 d = cdb.get_available_starttimes(nc, sc, tag, channel)
+            s0, s1 = sc.split('-')
+            n0, n1 = nc.split('-')
             ex_dict.setdefault('%s.%s' % (n0, s0), {})
             ex_dict['%s.%s' % (n0, s0)]['%s.%s' % (n1, s1)] = d
         return ex_dict
@@ -202,7 +245,6 @@ class Correlator(object):
             inv = None
         inv = self.comm.bcast(inv, root=0)
         for st, write_flag in self._generate_data():
-
             cst.extend(self._pxcorr_inner(st, inv))
             if write_flag:
                 # Here, we can recombine the correlations for the read_len
@@ -241,10 +283,6 @@ class Correlator(object):
                 starttime.append(tr.stats['starttime'])
                 npts.append(tr.stats['npts'])
             npts = np.max(np.array(npts))
-            # create numpy array - Do a QR detrend here?
-            # st = st.split()
-            # st.write('/home/pm/Documents/PhD/Chaku/input.mseed')
-
             A, st = st_to_np_array(st, npts)
             As = A.shape
         else:
@@ -286,8 +324,8 @@ class Correlator(object):
         """
         Write correlation stream to files.
 
-        :param cst: :class:`~mii3.correlate.stream.CorrStream`
-        :type cst: [type]
+        :param cst: CorrStream containing the correlations
+        :type cst: :class:`~mii3.correlate.stream.CorrStream`
         """
         if not cst.count():
             self.logger.debug('No new data written.')
@@ -299,14 +337,15 @@ class Correlator(object):
         st = CorrStream()
         for tr in cst:
             if tr.stats.station == station and tr.stats.network == network:
-                st.append(cst.pop(0))
+                st.append(tr)
             else:
                 cstlist.append(st.copy())
                 st.clear()
                 station = tr.stats.station
                 network = tr.stats.network
-                st.append(cst.pop(0))
+                st.append(tr)
         cstlist.append(st)
+        del cst
 
         # Decide which process writes to which station
         pmap = (np.arange(len(cstlist))*self.psize)/len(cstlist)
@@ -316,8 +355,8 @@ class Correlator(object):
 
         for ii in ind:
             outf = os.path.join(self.corr_dir, '%s.%s.h5' % (
-                    cstlist[ii][0].stats.network,
-                    cstlist[ii][0].stats.station))
+                cstlist[ii][0].stats.network,
+                cstlist[ii][0].stats.station))
             with CorrelationDataBase(outf, corr_options=self.options) as cdb:
                 cdb.add_correlation(cstlist[ii], tag)
 
@@ -403,7 +442,8 @@ class Correlator(object):
                 # Get correlation combinations
                 if self.rank == 0:
                     self.options['combinations'] = calc_cross_combis(
-                        win, self.ex_dict, self.options['combination_method'])
+                        win, self.ex_dict, self.options['combination_method'],
+                        rcombis=self.rcombis)
                 else:
                     self.options['combinations'] = None
                 self.options['combinations'] = self.comm.bcast(
@@ -514,21 +554,21 @@ class Correlator(object):
                 norm = (
                     np.sqrt(
                         2.*np.sum(B[:, self.options[
-                            'combinations'][ii][0]] *
-                            B[:, self.options['combinations'][ii][0]].conj()) -
-                        B[0, self.options['combinations'][ii][0]]**2) *
-                    np.sqrt(
+                            'combinations'][ii][0]]
+                            * B[:, self.options['combinations'][ii][0]].conj())
+                        - B[0, self.options['combinations'][ii][0]]**2)
+                    * np.sqrt(
                         2.*np.sum(B[:, self.options[
-                            'combinations'][ii][1]] *
-                            B[:, self.options['combinations'][ii][1]].conj()) -
-                        B[0, self.options['combinations'][ii][1]]**2) /
-                    irfftsize).real
+                            'combinations'][ii][1]]
+                            * B[:, self.options['combinations'][ii][1]].conj())
+                        - B[0, self.options['combinations'][ii][1]]**2)
+                    / irfftsize).real
             else:
                 norm = 1.
             M = (
-                B[:, self.options['combinations'][ii][0]].conj() *
-                B[:, self.options['combinations'][ii][1]] *
-                np.exp(1j * freqs * offset * 2 * np.pi))
+                B[:, self.options['combinations'][ii][0]].conj()
+                * B[:, self.options['combinations'][ii][1]]
+                * np.exp(1j * freqs * offset * 2 * np.pi))
 
             ######################################
             # frequency domain postProcessing
@@ -592,7 +632,8 @@ def _compare_existing_data(ex_corr: dict, tr0: Stream, tr1: Stream) -> bool:
 
 
 def calc_cross_combis(
-        st: Stream, ex_corr: dict, method: str = 'betweenStations') -> list:
+    st: Stream, ex_corr: dict, method: str = 'betweenStations',
+        rcombis: List[str] = None) -> list:
     """
     Calculate a list of all cross correlation combination
     of traces in the stream: i.e. all combination with two different
@@ -604,6 +645,9 @@ def calc_cross_combis(
     :type ex_corr: dict
     :type method: stringf
     :param method: Determines which traces of the strem are combined.
+    :param rcombis: requested combinations, only works if
+        `method==betweenStations`.
+    :type rcombis: List[str] strings are in form net0-net1.stat0-stat1
 
         ``'betweenStations'``:
             Traces are combined if either their station or
@@ -628,20 +672,29 @@ def calc_cross_combis(
         for ii, tr in enumerate(st):
             for jj in range(ii+1, len(st)):
                 tr1 = st[jj]
-                if ((tr.stats['network'] != tr1.stats['network']) or
-                        (tr.stats['station'] != tr1.stats['station'])):
+                n = tr.stats.network
+                n2 = tr1.stats.network
+                s = tr.stats.station
+                s2 = tr1.stats.station
+                if n != n2 or s != s2:
                     # check first whether this combi is in dict
                     if _compare_existing_data(ex_corr, tr, tr1):
+                        continue
+                    if rcombis is not None and not any(all(
+                        i0 in i1 for i0 in [
+                            n, n2, s, s2]) for i1 in rcombis):
+                        # If particular combis are requested, compute only
+                        # those
                         continue
                     combis.append((ii, jj))
     elif method == 'betweenComponents':
         for ii, tr in enumerate(st):
             for jj in range(ii+1, len(st)):
                 tr1 = st[jj]
-                if ((tr.stats['network'] == tr1.stats['network']) and
-                    (tr.stats['station'] == tr1.stats['station']) and
-                    (tr.stats['channel'][-1] !=
-                        tr1.stats['channel'][-1])):
+                if ((tr.stats['network'] == tr1.stats['network'])
+                    and (tr.stats['station'] == tr1.stats['station'])
+                    and (
+                        tr.stats['channel'][-1] != tr1.stats['channel'][-1])):
                     if _compare_existing_data(ex_corr, tr, tr1):
                         continue
                     combis.append((ii, jj))
@@ -672,233 +725,235 @@ def calc_cross_combis(
     return combis
 
 
-def rotate_multi_corr_stream(st: Stream) -> Stream:
-    """Rotate a stream with full Greens tensor from ENZ to RTZ
+# All the rotations are still untested, should do that at some point
 
-    Take a stream with numerous correlation traces and rotate the
-    combinations of ENZ components into combinations of RTZ components in case
-    all nine components of the Green's tensor are present. If not all nine
-    components are present no trace for this station combination is returned.
+# def rotate_multi_corr_stream(st: Stream) -> Stream:
+#     """Rotate a stream with full Greens tensor from ENZ to RTZ
 
-    :type st: obspy.stream
-    :param st: stream with data in ENZ system
-    :rtype: obspy.stream
-    :return: stream in the RTZ system
-    """
+#     Take a stream with numerous correlation traces and rotate the
+#     combinations of ENZ components into combinations of RTZ components in
+#     all nine components of the Green's tensor are present. If not all nine
+#     components are present no trace for this station combination is returned.
 
-    out_st = Stream()
-    while st:
-        tl = list(range(9))
-        tst = st.select(network=st[0].stats['network'],
-                        station=st[0].stats['station'])
-        cnt = 0
-        for ttr in tst:
-            if ttr.stats['channel'][2] == 'E':
-                if ttr.stats['channel'][6] == 'E':
-                    tl[0] = ttr
-                    cnt += 1
-                elif ttr.stats['channel'][6] == 'N':
-                    tl[1] = ttr
-                    cnt += 2
-                elif ttr.stats['channel'][6] == 'Z':
-                    tl[2] = ttr
-                    cnt += 4
-            elif ttr.stats['channel'][2] == 'N':
-                if ttr.stats['channel'][6] == 'E':
-                    tl[3] = ttr
-                    cnt += 8
-                elif ttr.stats['channel'][6] == 'N':
-                    tl[4] = ttr
-                    cnt += 16
-                elif ttr.stats['channel'][6] == 'Z':
-                    tl[5] = ttr
-                    cnt += 32
-            elif ttr.stats['channel'][2] == 'Z':
-                if ttr.stats['channel'][6] == 'E':
-                    tl[6] = ttr
-                    cnt += 64
-                elif ttr.stats['channel'][6] == 'N':
-                    tl[7] = ttr
-                    cnt += 128
-                elif ttr.stats['channel'][6] == 'Z':
-                    tl[8] = ttr
-                    cnt += 256
-        if cnt == 2**9-1:
-            st0 = Stream()
-            for t in tl:
-                st0.append(t)
-            st1 = _rotate_corr_stream(st0)
-            out_st += st1
-        elif cnt == 27:  # only horizontal component combinations present
-            st0 = Stream()
-            for t in [0, 1, 3, 4]:
-                st0.append(tl[t])
-            st1 = _rotate_corr_stream_horizontal(st0)
-            out_st += st1
-        elif cnt == 283:  # horizontal combinations + ZZ
-            st0 = Stream()
-            for t in [0, 1, 3, 4]:
-                st0.append(tl[t])
-            st1 = _rotate_corr_stream_horizontal(st0)
-            out_st += st1
-            out_st.append(tl[8])
-        for ttr in tst:
-            for ind, tr in enumerate(st):
-                if ttr.id == tr.id:
-                    st.pop(ind)
+#     :type st: obspy.stream
+#     :param st: stream with data in ENZ system
+#     :rtype: obspy.stream
+#     :return: stream in the RTZ system
+#     """
 
-    return out_st
+#     out_st = Stream()
+#     while st:
+#         tl = list(range(9))
+#         tst = st.select(network=st[0].stats['network'],
+#                         station=st[0].stats['station'])
+#         cnt = 0
+#         for ttr in tst:
+#             if ttr.stats['channel'][2] == 'E':
+#                 if ttr.stats['channel'][6] == 'E':
+#                     tl[0] = ttr
+#                     cnt += 1
+#                 elif ttr.stats['channel'][6] == 'N':
+#                     tl[1] = ttr
+#                     cnt += 2
+#                 elif ttr.stats['channel'][6] == 'Z':
+#                     tl[2] = ttr
+#                     cnt += 4
+#             elif ttr.stats['channel'][2] == 'N':
+#                 if ttr.stats['channel'][6] == 'E':
+#                     tl[3] = ttr
+#                     cnt += 8
+#                 elif ttr.stats['channel'][6] == 'N':
+#                     tl[4] = ttr
+#                     cnt += 16
+#                 elif ttr.stats['channel'][6] == 'Z':
+#                     tl[5] = ttr
+#                     cnt += 32
+#             elif ttr.stats['channel'][2] == 'Z':
+#                 if ttr.stats['channel'][6] == 'E':
+#                     tl[6] = ttr
+#                     cnt += 64
+#                 elif ttr.stats['channel'][6] == 'N':
+#                     tl[7] = ttr
+#                     cnt += 128
+#                 elif ttr.stats['channel'][6] == 'Z':
+#                     tl[8] = ttr
+#                     cnt += 256
+#         if cnt == 2**9-1:
+#             st0 = Stream()
+#             for t in tl:
+#                 st0.append(t)
+#             st1 = _rotate_corr_stream(st0)
+#             out_st += st1
+#         elif cnt == 27:  # only horizontal component combinations present
+#             st0 = Stream()
+#             for t in [0, 1, 3, 4]:
+#                 st0.append(tl[t])
+#             st1 = _rotate_corr_stream_horizontal(st0)
+#             out_st += st1
+#         elif cnt == 283:  # horizontal combinations + ZZ
+#             st0 = Stream()
+#             for t in [0, 1, 3, 4]:
+#                 st0.append(tl[t])
+#             st1 = _rotate_corr_stream_horizontal(st0)
+#             out_st += st1
+#             out_st.append(tl[8])
+#         for ttr in tst:
+#             for ind, tr in enumerate(st):
+#                 if ttr.id == tr.id:
+#                     st.pop(ind)
 
-
-def _rotate_corr_stream_horizontal(st: Stream) -> Stream:
-    """ Rotate traces in stream from the EE-EN-NE-NN system to
-    the RR-RT-TR-TT system. The letters give the component order
-    in the input and output streams. Input traces are assumed to be of same
-    length and simultaneously sampled.
-    """
-
-    # rotation angles
-    # phi1 : counter clockwise angle between E and R(towards second station)
-    # the leading -1 accounts fact that we rotate the coordinate system,
-    # not a vector
-    phi1 = - np.pi/180*(90-st[0].stats['sac']['az'])
-    # phi2 : counter clockwise angle between E and R(away from first station)
-    phi2 = - np.pi/180*(90-st[0].stats['sac']['baz']+180)
-
-    c1 = np.cos(phi1)
-    s1 = np.sin(phi1)
-    c2 = np.cos(phi2)
-    s2 = np.sin(phi2)
-
-    rt = Stream()
-    RR = st[0].copy()
-    RR.data = c1*c2*st[0].data - c1*s2*st[1].data - s1*c2*st[2].data +\
-        s1*s2*st[3].data
-    tcha = list(RR.stats['channel'])
-    tcha[2] = 'R'
-    tcha[6] = 'R'
-    RR.stats['channel'] = ''.join(tcha)
-    rt.append(RR)
-
-    RT = st[0].copy()
-    RT.data = c1*s2*st[0].data + c1*c2*st[1].data - s1*s2*st[2].data -\
-        s1*c2*st[3].data
-    tcha = list(RT.stats['channel'])
-    tcha[2] = 'R'
-    tcha[6] = 'T'
-    RT.stats['channel'] = ''.join(tcha)
-    rt.append(RT)
-
-    TR = st[0].copy()
-    TR.data = s1*c2*st[0].data - s1*s2*st[1].data + c1*c2*st[2].data -\
-        c1*s2*st[3].data
-    tcha = list(TR.stats['channel'])
-    tcha[2] = 'T'
-    tcha[6] = 'R'
-    TR.stats['channel'] = ''.join(tcha)
-    rt.append(TR)
-
-    TT = st[0].copy()
-    TT.data = s1*s2*st[0].data + s1*c2*st[1].data + c1*s2*st[2].data +\
-        c1*c2*st[3].data
-    tcha = list(TT.stats['channel'])
-    tcha[2] = 'T'
-    tcha[6] = 'T'
-    TT.stats['channel'] = ''.join(tcha)
-    rt.append(TT)
-
-    return rt
+#     return out_st
 
 
-def _rotate_corr_stream(st: Stream) -> Stream:
-    """ Rotate traces in stream from the EE-EN-EZ-NE-NN-NZ-ZE-ZN-ZZ system to
-    the RR-RT-RZ-TR-TT-TZ-ZR-ZT-ZZ system. The letters give the component order
-    in the input and output streams. Input traces are assumed to be of same
-    length and simultaneously sampled.
-    """
+# def _rotate_corr_stream_horizontal(st: Stream) -> Stream:
+#     """ Rotate traces in stream from the EE-EN-NE-NN system to
+#     the RR-RT-TR-TT system. The letters give the component order
+#     in the input and output streams. Input traces are assumed to be of same
+#     length and simultaneously sampled.
+#     """
 
-    # rotation angles
-    # phi1 : counter clockwise angle between E and R(towards second station)
-    # the leading -1 accounts fact that we rotate the coordinate system,
-    # not a vector
-    phi1 = - np.pi/180*(90-st[0].stats['sac']['az'])
-    # phi2 : counter clockwise angle between E and R(away from first station)
-    phi2 = - np.pi/180*(90-st[0].stats['sac']['baz']+180)
+#     # rotation angles
+#     # phi1 : counter clockwise angle between E and R(towards second station)
+#     # the leading -1 accounts fact that we rotate the coordinate system,
+#     # not a vector
+#     phi1 = - np.pi/180*(90-st[0].stats['sac']['az'])
+#     # phi2 : counter clockwise angle between E and R(away from first station)
+#     phi2 = - np.pi/180*(90-st[0].stats['sac']['baz']+180)
 
-    c1 = np.cos(phi1)
-    s1 = np.sin(phi1)
-    c2 = np.cos(phi2)
-    s2 = np.sin(phi2)
+#     c1 = np.cos(phi1)
+#     s1 = np.sin(phi1)
+#     c2 = np.cos(phi2)
+#     s2 = np.sin(phi2)
 
-    rtz = Stream()
-    RR = st[0].copy()
-    RR.data = c1*c2*st[0].data - c1*s2*st[1].data - s1*c2*st[3].data +\
-        s1*s2*st[4].data
-    tcha = list(RR.stats['channel'])
-    tcha[2] = 'R'
-    tcha[6] = 'R'
-    RR.stats['channel'] = ''.join(tcha)
-    rtz.append(RR)
+#     rt = Stream()
+#     RR = st[0].copy()
+#     RR.data = c1*c2*st[0].data - c1*s2*st[1].data - s1*c2*st[2].data +\
+#         s1*s2*st[3].data
+#     tcha = list(RR.stats['channel'])
+#     tcha[2] = 'R'
+#     tcha[6] = 'R'
+#     RR.stats['channel'] = ''.join(tcha)
+#     rt.append(RR)
 
-    RT = st[0].copy()
-    RT.data = c1*s2*st[0].data + c1*c2*st[1].data - s1*s2*st[3].data -\
-        s1*c2*st[4].data
-    tcha = list(RT.stats['channel'])
-    tcha[2] = 'R'
-    tcha[6] = 'T'
-    RT.stats['channel'] = ''.join(tcha)
-    rtz.append(RT)
+#     RT = st[0].copy()
+#     RT.data = c1*s2*st[0].data + c1*c2*st[1].data - s1*s2*st[2].data -\
+#         s1*c2*st[3].data
+#     tcha = list(RT.stats['channel'])
+#     tcha[2] = 'R'
+#     tcha[6] = 'T'
+#     RT.stats['channel'] = ''.join(tcha)
+#     rt.append(RT)
 
-    RZ = st[0].copy()
-    RZ.data = c1*st[2].data - s1*st[5].data
-    tcha = list(RZ.stats['channel'])
-    tcha[2] = 'R'
-    tcha[6] = 'Z'
-    RZ.stats['channel'] = ''.join(tcha)
-    rtz.append(RZ)
+#     TR = st[0].copy()
+#     TR.data = s1*c2*st[0].data - s1*s2*st[1].data + c1*c2*st[2].data -\
+#         c1*s2*st[3].data
+#     tcha = list(TR.stats['channel'])
+#     tcha[2] = 'T'
+#     tcha[6] = 'R'
+#     TR.stats['channel'] = ''.join(tcha)
+#     rt.append(TR)
 
-    TR = st[0].copy()
-    TR.data = s1*c2*st[0].data - s1*s2*st[1].data + c1*c2*st[3].data -\
-        c1*s2*st[4].data
-    tcha = list(TR.stats['channel'])
-    tcha[2] = 'T'
-    tcha[6] = 'R'
-    TR.stats['channel'] = ''.join(tcha)
-    rtz.append(TR)
+#     TT = st[0].copy()
+#     TT.data = s1*s2*st[0].data + s1*c2*st[1].data + c1*s2*st[2].data +\
+#         c1*c2*st[3].data
+#     tcha = list(TT.stats['channel'])
+#     tcha[2] = 'T'
+#     tcha[6] = 'T'
+#     TT.stats['channel'] = ''.join(tcha)
+#     rt.append(TT)
 
-    TT = st[0].copy()
-    TT.data = s1*s2*st[0].data + s1*c2*st[1].data + c1*s2*st[3].data +\
-        c1*c2*st[4].data
-    tcha = list(TT.stats['channel'])
-    tcha[2] = 'T'
-    tcha[6] = 'T'
-    TT.stats['channel'] = ''.join(tcha)
-    rtz.append(TT)
+#     return rt
 
-    TZ = st[0].copy()
-    TZ.data = s1*st[2].data + c1*st[5].data
-    tcha = list(TZ.stats['channel'])
-    tcha[2] = 'T'
-    tcha[6] = 'Z'
-    TZ.stats['channel'] = ''.join(tcha)
-    rtz.append(TZ)
 
-    ZR = st[0].copy()
-    ZR.data = c2*st[6].data - s2*st[7].data
-    tcha = list(ZR.stats['channel'])
-    tcha[2] = 'Z'
-    tcha[6] = 'R'
-    ZR.stats['channel'] = ''.join(tcha)
-    rtz.append(ZR)
+# def _rotate_corr_stream(st: Stream) -> Stream:
+#     """ Rotate traces in stream from the EE-EN-EZ-NE-NN-NZ-ZE-ZN-ZZ system to
+#     the RR-RT-RZ-TR-TT-TZ-ZR-ZT-ZZ system. The letters give the component
+#     in the input and output streams. Input traces are assumed to be of same
+#     length and simultaneously sampled.
+#     """
 
-    ZT = st[0].copy()
-    ZT.data = s2*st[6].data + c2*st[7].tuple
-    ZT.stats['channel'] = ''.join(tcha)
-    rtz.append(ZT)
+#     # rotation angles
+#     # phi1 : counter clockwise angle between E and R(towards second station)
+#     # the leading -1 accounts fact that we rotate the coordinate system,
+#     # not a vector
+#     phi1 = - np.pi/180*(90-st[0].stats['sac']['az'])
+#     # phi2 : counter clockwise angle between E and R(away from first station)
+#     phi2 = - np.pi/180*(90-st[0].stats['sac']['baz']+180)
 
-    rtz.append(st[8].copy())
+#     c1 = np.cos(phi1)
+#     s1 = np.sin(phi1)
+#     c2 = np.cos(phi2)
+#     s2 = np.sin(phi2)
 
-    return rtz
+#     rtz = Stream()
+#     RR = st[0].copy()
+#     RR.data = c1*c2*st[0].data - c1*s2*st[1].data - s1*c2*st[3].data +\
+#         s1*s2*st[4].data
+#     tcha = list(RR.stats['channel'])
+#     tcha[2] = 'R'
+#     tcha[6] = 'R'
+#     RR.stats['channel'] = ''.join(tcha)
+#     rtz.append(RR)
+
+#     RT = st[0].copy()
+#     RT.data = c1*s2*st[0].data + c1*c2*st[1].data - s1*s2*st[3].data -\
+#         s1*c2*st[4].data
+#     tcha = list(RT.stats['channel'])
+#     tcha[2] = 'R'
+#     tcha[6] = 'T'
+#     RT.stats['channel'] = ''.join(tcha)
+#     rtz.append(RT)
+
+#     RZ = st[0].copy()
+#     RZ.data = c1*st[2].data - s1*st[5].data
+#     tcha = list(RZ.stats['channel'])
+#     tcha[2] = 'R'
+#     tcha[6] = 'Z'
+#     RZ.stats['channel'] = ''.join(tcha)
+#     rtz.append(RZ)
+
+#     TR = st[0].copy()
+#     TR.data = s1*c2*st[0].data - s1*s2*st[1].data + c1*c2*st[3].data -\
+#         c1*s2*st[4].data
+#     tcha = list(TR.stats['channel'])
+#     tcha[2] = 'T'
+#     tcha[6] = 'R'
+#     TR.stats['channel'] = ''.join(tcha)
+#     rtz.append(TR)
+
+#     TT = st[0].copy()
+#     TT.data = s1*s2*st[0].data + s1*c2*st[1].data + c1*s2*st[3].data +\
+#         c1*c2*st[4].data
+#     tcha = list(TT.stats['channel'])
+#     tcha[2] = 'T'
+#     tcha[6] = 'T'
+#     TT.stats['channel'] = ''.join(tcha)
+#     rtz.append(TT)
+
+#     TZ = st[0].copy()
+#     TZ.data = s1*st[2].data + c1*st[5].data
+#     tcha = list(TZ.stats['channel'])
+#     tcha[2] = 'T'
+#     tcha[6] = 'Z'
+#     TZ.stats['channel'] = ''.join(tcha)
+#     rtz.append(TZ)
+
+#     ZR = st[0].copy()
+#     ZR.data = c2*st[6].data - s2*st[7].data
+#     tcha = list(ZR.stats['channel'])
+#     tcha[2] = 'Z'
+#     tcha[6] = 'R'
+#     ZR.stats['channel'] = ''.join(tcha)
+#     rtz.append(ZR)
+
+#     ZT = st[0].copy()
+#     ZT.data = s2*st[6].data + c2*st[7].tuple
+#     ZT.stats['channel'] = ''.join(tcha)
+#     rtz.append(ZT)
+
+#     rtz.append(st[8].copy())
+
+#     return rtz
 
 
 def sort_comb_name_alphabetically(
@@ -949,6 +1004,9 @@ def sort_comb_name_alphabetically(
             net1, stat1, net2, stat2))
     (['XN', 'XN'], ['NEP06', 'NEP07'])
     """
+    if not all([isinstance(arg, str) for arg in [
+            network1, network2, station1, station2]]):
+        raise TypeError('All arguments have to be strings.')
     sort1 = network1 + station1
     sort2 = network2 + station2
     sort = [sort1, sort2]
@@ -965,7 +1023,8 @@ def sort_comb_name_alphabetically(
 
 def compute_network_station_combinations(
     netlist: list, statlist: list,
-        method: str = 'betweenStations') -> Tuple[list, list]:
+    method: str = 'betweenStations', combis: List[str] = None) -> Tuple[
+        list, list]:
     """
     Return the network and station codes of the correlations for the provided
     lists of networks and stations and the queried combination method.
@@ -992,27 +1051,35 @@ def compute_network_station_combinations(
                 n2 = netlist[jj]
                 s2 = statlist[jj]
                 if n != n2 or s != s2:
+                    if combis is not None and not any(all(
+                        i0 in i1 for i0 in [
+                            n, n2, s, s2]) for i1 in combis):
+                        continue
+                        # Expression above might look a bit complicated, but
+                        # essentially just checks whether any of the desired
+                        # combis matches with this combis. If it does not we
+                        # continue and skip this combi
                     nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
-                    netcombs.append(nc)
-                    statcombs.append(sc)
+                    netcombs.append('%s-%s' % (nc[0], nc[1]))
+                    statcombs.append('%s-%s' % (sc[0], sc[1]))
 
     elif method == 'betweenComponents' or method == 'autoComponents':
         netcombs = [n+'-'+n for n in netlist]
         statcombs = [s+'-'+s for s in statlist]
     elif method == 'allSimpleCombinations':
         for ii, (n, s) in enumerate(zip(netlist, statlist)):
-            for jj in range(ii+1, len(netlist)):
+            for jj in range(ii, len(netlist)):
                 n2 = netlist[jj]
                 s2 = statlist[jj]
                 nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
-                netcombs.append(nc)
-                statcombs.append(sc)
+                netcombs.append('%s-%s' % (nc[0], nc[1]))
+                statcombs.append('%s-%s' % (sc[0], sc[1]))
     elif method == 'allCombinations':
         for n, s in zip(netlist, statlist):
             for n2, s2 in zip(netlist, statlist):
                 nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
-                netcombs.append(nc)
-                statcombs.append(sc)
+                netcombs.append('%s-%s' % (nc[0], nc[1]))
+                statcombs.append('%s-%s' % (sc[0], sc[1]))
     else:
         raise ValueError("Method has to be one of ('betweenStations', "
                          "'betweenComponents', 'autoComponents', "
@@ -1060,16 +1127,16 @@ def preprocess_stream(
     :return: The preprocessed stream.
     :rtype: :class:`obspy.core.stream.Stream`
     """
-    if not st:
+    if not st.count():
         return st
 
     st.sort(keys=['starttime'])
     # Check sampling frequency
     if sampling_rate > st[0].stats.sampling_rate:
         raise ValueError(
-            'The new sample rate (%sHz) is higher than the trace\'s native\
-sample rate (%s Hz).' % (str(sampling_rate), str(
-                    st[0].stats.sampling_rate)))
+            'The new sample rate (%sHz) is higher than the trace\'s native' % (
+                str(sampling_rate))
+            + 'sample rate (%s Hz).' % (str(st[0].stats.sampling_rate)))
 
     # Downsample
     # AA-Filter is done in this function as well
@@ -1077,7 +1144,6 @@ sample rate (%s Hz).' % (str(sampling_rate), str(
 
     if remove_response:
         # taper before instrument response removal
-        # print(store_client.rclient.get_stations())
         if taper_len:
             st = ppst.cos_taper_st(st, taper_len, False)
         try:

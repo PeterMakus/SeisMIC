@@ -6,7 +6,7 @@
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = docs/source
-BUILDDIR      = docs/build
+BUILDDIR      = docs/_build
 GH_PAGES_SOURCES = docs src/seismic Makefile
 
 # Put it first so that "make" without argument is like "make help".
@@ -22,13 +22,12 @@ help:
 
 gh-pages:
 	git checkout gh-pages
-	rm -rf build _sources _static _modules chapters
+	rm -rf $(BUILDDIR) _sources _static _modules chapters
 	git checkout main $(GH_PAGES_SOURCES) .gitignore
 	git reset HEAD
 	make html
-	#mv -fv docs/build/html/* ./
-	cp -frv docs/build/html/* ./ && rm -R docs/build/html/*
-	rm -rf $(GH_PAGES_SOURCES) build
+	cp -frv $(BUILDDIR)/html/* ./ && rm -R $(BUILDDIR)/html/*
+	rm -rf $(GH_PAGES_SOURCES) $(BUILDDIR)
 	git add -A
 	git commit -m "Generated gh-pages for `git log main -1 --pretty=short --abbrev-commit`" && git push origin gh-pages ; git checkout main
 

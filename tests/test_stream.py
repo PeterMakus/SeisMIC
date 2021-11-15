@@ -7,17 +7,71 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Tuesday, 27th July 2021 10:56:25 am
+Last Modified: Friday, 12th November 2021 05:52:22 pm
 '''
 
 import unittest
+from unittest import mock
 import warnings
+from copy import deepcopy
 
 import numpy as np
 from obspy import read, read_inventory, Stream
 from obspy.core.utcdatetime import UTCDateTime
 
 from seismic.correlate import stream
+
+
+class TestCorrBulk(unittest.TestCase):
+    def setUp(self):
+        st = read()
+        A = np.zeros((st.count(), st[0].stats.npts))
+        statl = []
+        keys = [
+            'stla', 'stlo', 'stel', 'evla', 'evlo', 'evel', 'dist',
+            'baz', 'az']
+        for k in keys:
+            st[0].stats[k] = 0
+        stats = stream.CorrStats(st[0].stats)
+        for ii, tr in enumerate(st):
+            stats.corr_start += 5
+            A[ii] = tr.data
+            statl.append(stats)
+        self.cb = stream.CorrBulk(A, statlist=statl)
+        np.testing.assert_array_equal(A, self.cb.data)
+
+    def test_setup_no_stats(self):
+        cb = stream.CorrBulk(np.zeros((5, 5)))
+        self.assertEqual(cb.stats.ntrcs, 5)
+        self.assertEqual(cb.stats.npts, 5)
+        self.assertEqual(cb.stats.processing_bulk, [])
+        self.assertIsNone(cb.ref_trc)
+        np.testing.assert_array_equal(np.zeros((5, 5)), cb.data)
+
+    def test_setup_ex_stats(self):
+        cb = stream.CorrBulk(np.zeros((5, 5)), stats=deepcopy(self.cb.stats))
+        for v0, v1 in zip(cb.stats.values(), self.cb.stats.values()):
+            self.assertEqual(v0, v1)
+        np.testing.assert_array_equal(cb.data, np.zeros((5, 5)))
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_normalize')
+    def test_normalize(self, cmn_mock):
+        cb = self.cb.copy()
+        cb.normalize(0, 0, 'blatest')
+        cmn_mock.assert_called_once_with(
+            mock.ANY, cb.stats, 0, 0, 'blatest')
+        self.assertIn(
+            'normalize; normtype: blatest, starttime: 0, endtime: 0',
+            cb.stats.processing_bulk)
+
+    def test_copy(self):
+        cb = self.cb.copy()
+        cb.data += 25
+        cb.stats['eg'] = 1
+        np.testing.assert_array_almost_equal(
+            cb.data-self.cb.data, 25*np.ones_like(cb.data))
+        with self.assertRaises(KeyError):
+            print(self.cb.stats['eg'])
 
 
 class TestCorrStats(unittest.TestCase):
@@ -120,6 +174,56 @@ class TestCombineStats(unittest.TestCase):
     def test_wrong_input(self):
         with self.assertRaises(TypeError):
             stream.combine_stats('bla', 4, 6, 3)
+
+    def test_wrong_input2(self):
+        with self.assertRaises(TypeError):
+            stream.combine_stats(self.st[0].stats, 4, 6, 3)
+
+    @mock.patch('seismic.correlate.stream.m3ut.trace_calc_az_baz_dist')
+    def test_add_coords(self, az_dist_mock):
+        # We test this by using two different components
+        az_dist_mock.return_value = (20, 160, 3000)
+        st0 = self.st[0].stats
+        st1 = self.st[1].stats
+        st0['stla'] = 0
+        st0['stlo'] = 0
+        st0['stel'] = 0
+        st1['stla'] = 0
+        st1['stlo'] = 0
+        st1['stel'] = 0
+        lag = np.random.randint(80, 120)
+        stc = stream.combine_stats(st0, st1, -lag, inv=self.inv)
+        keys = ['stla', 'stel', 'stlo', 'evla', 'evlo', 'evel']
+        for k in keys:
+            self.assertEqual(stc[k], 0)
+        self.assertEqual(stc['az'], 20)
+        self.assertEqual(stc['baz'], 160)
+        self.assertEqual(stc['dist'], 3)
+        az_dist_mock.assert_called_once_with(st0, st1)
+
+    @mock.patch('seismic.correlate.stream.m3ut.trace_calc_az_baz_dist')
+    def test_add_coords2(self, az_dist_mock):
+        # We test this by using two different components
+        az_dist_mock.return_value = (20, 160, 3000)
+        st0 = self.st[0].stats
+        st1 = self.st[1].stats
+        st0['sac'] = {}
+        st1['sac'] = {}
+        st0['sac']['stla'] = 0
+        st0['sac']['stlo'] = 0
+        st0['sac']['stel'] = 0
+        st1['sac']['stla'] = 0
+        st1['sac']['stlo'] = 0
+        st1['sac']['stel'] = 0
+        lag = np.random.randint(80, 120)
+        stc = stream.combine_stats(st0, st1, -lag, inv=self.inv)
+        keys = ['stla', 'stel', 'stlo', 'evla', 'evlo', 'evel']
+        for k in keys:
+            self.assertEqual(stc[k], 0)
+        self.assertEqual(stc['az'], 20)
+        self.assertEqual(stc['baz'], 160)
+        self.assertEqual(stc['dist'], 3)
+        az_dist_mock.assert_called_once_with(st0, st1)
 
 
 class TestCompareTr(unittest.TestCase):
@@ -270,6 +374,15 @@ class TestCorrTrace(unittest.TestCase):
         exp_res['npts'] = 25
         self.assertEqual(ctr.stats, exp_res)
 
+    def test_times(self):
+        ctr = stream.CorrTrace(
+            np.empty(25), header1=self.st[0].stats, header2=self.st[1].stats,
+            start_lag=-10, end_lag=10)
+        exp = np.arange(
+            ctr.stats.start_lag, ctr.stats.end_lag + ctr.stats.delta,
+            ctr.stats.delta)
+        np.testing.assert_array_equal(exp, ctr.times())
+
 
 class TestCorrStream(unittest.TestCase):
     def setUp(self):
@@ -404,6 +517,57 @@ class TestCorrStream(unittest.TestCase):
         #     # The last three could be shorter
         tr = out[4]
         self.assertEqual(stacklen, tr.stats.corr_end-tr.stats.corr_start)
+
+    @mock.patch('seismic.correlate.stream.convert_statlist_to_bulk_stats')
+    def test_create_corrbulk(self, cstbs_mock):
+        st = self.st.copy()
+        qustart = st[0].stats.corr_start + 1
+        cstbs_mock.return_value = st[0].stats
+        with mock.patch.object(st, 'select') as sct_mock:
+            select_return = mock.MagicMock(name='select_mock')
+            select_return.select_corr_time.return_value = st
+            sct_mock.return_value = select_return
+            cb = st.create_corr_bulk(times=(qustart, st[0].stats.corr_end))
+            sct_mock.assert_any_call(
+                None, None, None, None)
+        select_return.select_corr_time.assert_called_once_with(
+            qustart, st[0].stats.corr_end
+        )
+        for ii, tr in enumerate(self.st):
+            np.testing.assert_array_equal(tr.data, cb.data[ii])
+        # Check in-place
+        for tr in st:
+            self.assertFalse(hasattr(tr, 'data'))
+
+    @mock.patch('seismic.correlate.stream.convert_statlist_to_bulk_stats')
+    def test_create_corrbulk_differing_sampling(self, cstbs_mock):
+        st = self.st.copy()
+        cstbs_mock.return_value = st[0].stats
+        st[-1].stats.sampling_rate /= 2
+        with warnings.catch_warnings(record=True) as w:
+            cb = st.create_corr_bulk()
+            self.assertEqual(len(w), 1)
+        self.assertEqual(cb.data.shape[0], self.st.count()-1)
+        for ii, tr in enumerate(self.st[:-1]):
+            np.testing.assert_array_equal(tr.data, cb.data[ii])
+
+    def test_to_matrix(self):
+        st = self.st.copy()
+        with mock.patch.object(st, 'select') as sct_mock:
+            select_return = mock.MagicMock(name='select_mock')
+            select_return.select_corr_time.return_value = st
+            sct_mock.return_value = select_return
+            A, stats = st._to_matrix(
+                'net', 'stat', 'cha', 'loc', times=(
+                    st[0].stats.starttime, st[0].stats.endtime))
+            sct_mock.assert_called_once_with('net', 'stat', 'loc', 'cha')
+            select_return.select_corr_time.assert_called_once_with(
+                st[0].stats.starttime, st[0].stats.endtime)
+        statl = []
+        for ii, tr in enumerate(st):
+            np.testing.assert_array_equal(A[ii], tr.data)
+            statl.append(tr.stats)
+        self.assertListEqual(statl, stats)
 
 
 class TestConvertStatlistToBulkStats(unittest.TestCase):

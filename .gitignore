@@ -8,3 +8,5 @@ autogen/*.rst
 examples/data
 testnb.ipynb
 *.ipynb_checkpoints
+docs/_build
+.coverage

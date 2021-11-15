@@ -1,15 +1,17 @@
 '''
 :copyright:
-   The PyGLImER development team (makus@gfz-potsdam.de).
+   The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   `GNU Lesser General Public License, Version 3 <https://www.gnu.org/copyleft/lesser.html>`
+    GNU Lesser General Public License, Version 3
+    (https://www.gnu.org/copyleft/lesser.html)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Tuesday, 21st September 2021 10:55:11 am
+Last Modified: Monday, 8th November 2021 02:49:23 pm
 '''
 import os
+import warnings
 
 import matplotlib as mpl
 from matplotlib import pyplot as plt
@@ -45,12 +47,6 @@ def plot_ctr(
     ydata = corr.data
 
     # Plot stuff into axes
-    # This would fill positive red and negative blue, probably not very nice
-    # for correlations
-    # ax.fill_between(times, 0, ydata, where=ydata > 0,
-    #                 interpolate=True, color=(0.9, 0.2, 0.2))
-    # ax.fill_between(times, 0, ydata, where=ydata < 0,
-    #                 interpolate=True, color=(0.2, 0.2, 0.7))
     ax.plot(times, ydata, 'k', lw=1)
 
     # Set limits
@@ -103,9 +99,10 @@ def plot_cst(
     timelimits: list or tuple or None = None,
     ylimits: list or tuple or None = None, scalingfactor: float = 2.0,
     ax: plt.Axes = None, linewidth: float = 0.25,
-        outputfile: str or None = None, title: str or None = None):
+    outputfile: str or None = None, title: str or None = None,
+        type: str = 'heatmap'):
     """
-    Creates a section plot of all correlations in this stream.
+    Creates a section or heat plot of all correlations in this stream.
 
     :param cst: Input CorrelationStream
     :type cst: :class:`~seismic.correlate.stream.CorrStream`
@@ -129,6 +126,9 @@ def plot_cst(
     :type outputfile: str, optional
     :param title: Title of the plot, defaults to None
     :type title: str, optional
+    :param type: can be set to 'heat' for a heatmap or 'section' for
+        a wiggle type plot. Default to `heat`
+    :type type: str
     :return: returns the axes object.
     :rtype: `matplotlib.pyplot.Axes`
 
@@ -151,8 +151,18 @@ def plot_cst(
     # Plot traces
     if sort_by == 'corr_start':
         scalingfactor *= 1e5
-        times = sect_plot_corr_start(cst, ax, scalingfactor, linewidth)
+        if type == 'section':
+            times = sect_plot_corr_start(cst, ax, scalingfactor, linewidth)
+        elif type == 'heatmap':
+            times = heat_plot_corr_start(cst, ax)
+        else:
+            raise NotImplementedError(
+                'Unknown or not implemented plot type %s.' % type)
     elif sort_by == 'dist':
+        if type != 'section':
+            warnings.warn(
+                'Distance plot only supports section type.'
+            )
         scalingfactor *= 4
         times = sect_plot_dist(cst, ax, scalingfactor, linewidth)
     else:
@@ -198,6 +208,20 @@ def sect_plot_corr_start(
 
     ax.yaxis.set_major_locator(mpl.dates.AutoDateLocator())
 
+    ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h'))
+    return times
+
+
+def heat_plot_corr_start(cst: Stream, ax: plt.Axes):
+    data = np.empty((cst.count(), cst[0].stats.npts))
+    # y grid
+    y = []
+    for ii, ctr in enumerate(cst):
+        data[ii, :] = ctr.data
+        y.append(ctr.stats['corr_start'].datetime)
+        times = ctr.times()
+    plt.pcolormesh(times, np.array(y), data)
+    ax.yaxis.set_major_locator(mpl.dates.AutoDateLocator())
     ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h'))
     return times
 

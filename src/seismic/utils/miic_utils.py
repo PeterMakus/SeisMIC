@@ -1,6 +1,6 @@
 '''
 :copyright:
-   The PyGLImER development team (makus@gfz-potsdam.de).
+   The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -8,10 +8,12 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Tuesday, 27th July 2021 04:39:28 pm
+Last Modified: Wednesday, 10th November 2021 10:31:11 am
 '''
 from typing import List, Tuple
 import logging
+import re
+import warnings
 
 import numpy as np
 from obspy import Inventory, Stream, Trace, UTCDateTime
@@ -31,12 +33,12 @@ log_lvl = {
 
 def trace_calc_az_baz_dist(stats1: Stats, stats2: Stats) -> Tuple[
         float, float, float]:
-    """ Return azimuth, back azimhut and distance between tr1 and tr2
+    """
+    Return azimuth, back azimhut and distance between tr1 and tr2
     This funtions calculates the azimut, back azimut and distance between tr1
     and tr2 if both have geo information in their stats dictonary.
     Required fields are:
-        tr.stats.sac.stla
-        tr.stats.sac.stlo
+    ``tr.stats.sac.stla`` and ``tr.stats.sac.stlo``
 
     :type stats1: :class:`~obspy.core.Stats`
     :param stats1: First trace to account
@@ -48,7 +50,7 @@ def trace_calc_az_baz_dist(stats1: Stats, stats2: Stats) -> Tuple[
     :rtype: float
     :return: **baz**: Back-azimuth angle between tr1 and tr2
     :rtype: float
-    :return: **dist**: Distance between tr1 and tr2
+    :return: **dist**: Distance between tr1 and tr2 in m
     """
 
     if not isinstance(stats1, (Stats, AttribDict)):
@@ -70,6 +72,23 @@ def trace_calc_az_baz_dist(stats1: Stats, stats2: Stats) -> Tuple[
     return az, baz, dist
 
 
+def filter_stat_dist(inv1: Inventory, inv2: Inventory, thres: float) -> bool:
+    """
+    Very simple function to check whether to stations are closer than thres
+    to each other.
+
+    :param inv1: Inventory of station 1
+    :type inv1: Inventory
+    :param inv2: Inventory of station 2
+    :type inv2: Inventory
+    :param thres: Threshold distance in m
+    :type thres: float
+    :return: True if closer (or equal) than thres, False if not.
+    :rtype: bool
+    """
+    return inv_calc_az_baz_dist(inv1, inv2)[-1] <= thres
+
+
 def inv_calc_az_baz_dist(inv1: Inventory, inv2: Inventory) -> Tuple[
         float, float, float]:
     """ Return azimuth, back azimuth and distance between stat1 and stat2
@@ -85,7 +104,7 @@ def inv_calc_az_baz_dist(inv1: Inventory, inv2: Inventory) -> Tuple[
     :rtype: float
     :return: **baz**: Back-azimuth angle between stat2 and stat2
     :rtype: float
-    :return: **dist**: Distance between stat1 and stat2
+    :return: **dist**: Distance between stat1 and stat2 in m
     """
 
     if not isinstance(inv1, Inventory):
@@ -101,10 +120,9 @@ def inv_calc_az_baz_dist(inv1: Inventory, inv2: Inventory) -> Tuple[
         print("Update obspy.")
         return
 
-    dist, az, baz = gps2dist_azimuth(inv1[0][0].latitude,
-                                     inv1[0][0].longitude,
-                                     inv2[0][0].latitude,
-                                     inv2[0][0].longitude)
+    dist, az, baz = gps2dist_azimuth(
+        inv1[0][0].latitude, inv1[0][0].longitude, inv2[0][0].latitude,
+        inv2[0][0].longitude)
 
     return az, baz, dist
 
@@ -151,7 +169,7 @@ def resample_or_decimate(
 def trim_stream_delta(
         st: Stream, start: float, end: float, *args, **kwargs) -> Stream:
     """
-    Cut all traces to starttime+start and endtime-end. *args and **kwargs will
+    Cut all traces to starttime+start and endtime-end. *args* and *kwargs* will
     be passed to :func:`~obspy.Stream.trim`
 
     :param st: Input Stream
@@ -178,7 +196,7 @@ def trim_stream_delta(
 def trim_trace_delta(
         tr: Trace, start: float, end: float, *args, **kwargs) -> Trace:
     """
-    Cut all traces to starttime+start and endtime-end. *args and **kwargs will
+    Cut all traces to starttime+start and endtime-end. *args* and *kwargs* will
     be passed to :func:`~obspy.Trace.trim`.
 
     :param st: Input Trace
@@ -242,12 +260,16 @@ def load_header_from_np_array(array_dict: dict) -> dict:
     """
     d = {}
     for k in array_dict:
-        if k in no_stats:
+        if k in no_stats or re.match('reftr', k):
             continue
         elif k in t_keys:
             d[k] = convert_timestamp_to_utcdt(array_dict[k])
         else:
-            d[k] = array_dict[k][0]
+            try:
+                d[k] = array_dict[k][0]
+            except IndexError:
+                warnings.warn(
+                    'Key {k} could not be loaded into the header.')
     return d
 
 

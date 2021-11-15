@@ -1,6 +1,6 @@
 '''
 :copyright:
-
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
    GNU Lesser General Public License, Version 3
    (https://www.gnu.org/copyleft/lesser.html)
@@ -8,8 +8,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 17th May 2021 12:25:54 pm
-Last Modified: Tuesday, 20th July 2021 04:31:54 pm
+Last Modified: Thursday, 21st October 2021 02:43:59 pm
 '''
+
+import locale
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -54,6 +56,8 @@ def set_mpl_params():
         'legend.edgecolor': 'inherit'
     }
     mpl.rcParams.update(params)
+    # Show dates in English format
+    locale.setlocale(locale.LC_ALL, "en_GB.utf8")
 
 
 def remove_all(

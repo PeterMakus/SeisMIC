@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Wednesday, 28th July 2021 01:41:19 pm
+Last Modified: Friday, 5th November 2021 08:15:28 am
 '''
 from typing import List, Tuple
 
@@ -60,6 +60,141 @@ def time_windows_creation(
             tw_list.append(np.arange(cstart, cstart + wlen, 1))
 
     return tw_list
+
+
+def compute_wfc(
+    mat: np.ndarray, tw: np.ndarray, refcorr: np.ndarray, sides: str,
+        remove_nans: bool = True) -> np.ndarray:
+    """
+    Computes the waveform coherency (**WFC**) between the given reference
+    correlation and correlationmatrix.
+
+    See Steinmann, et. al. (2021) for details
+
+    :param mat: 2D Correlation Matrix (function of corrstart and time lag)
+    :type mat: np.ndarray
+    :param tw: Lag time window to use for the computation
+    :type tw: np.ndarray
+    :param refcorr: 1D reference Correlation Trace extracted from `mat`.
+    :type refcorr: np.ndarray
+    :param sides: Which sides to use. Can be `both`, `right`, `left`,
+        or `single`.
+    :type sides: str
+    :param remove_nans: Remove nans from CorrMatrix, defaults to True
+    :type remove_nans: bool, optional
+    :raises ValueError: unknown option in sides
+    :return: A 1D array with len=N(time windows)
+    :rtype: np.ndarray
+    """
+    # Mat must be a 2d vector in every case so
+    mat = np.atleast_2d(mat)
+
+    assert(len(refcorr) == mat.shape[1])
+
+    if remove_nans:
+        mat = np.nan_to_num(mat)
+
+    center_p = np.floor((mat.shape[1] - 1.) / 2.)
+
+    corr = np.zeros((len(tw), mat.shape[0]))
+
+    for (ii, ctw) in enumerate(tw):
+
+        if sides == 'both':
+            if ctw[0] == 0:
+                ctw = np.hstack((
+                    center_p - ctw[::-1],
+                    center_p + ctw[1:])).astype(np.int32)
+            else:
+                ctw = np.hstack((
+                    center_p - ctw[::-1],
+                    center_p + ctw)).astype(np.int32)
+        elif sides == 'left':
+            ctw = (center_p - ctw[::-1]).astype(np.int32)
+        elif sides == 'right':
+            ctw = (center_p + ctw).astype(np.int32)
+        elif sides == 'single':
+            ctw = ctw.astype(np.int32)
+        else:
+            raise ValueError(
+                'sides = %s not a valid option.' % sides)
+
+        mask = np.zeros((mat.shape[1],))
+        mask[ctw] = 1
+
+        ref_mask_mat = mask
+        mat_mask_mat = np.tile(mask, (mat.shape[0], 1))
+
+        first = mat * mat_mask_mat
+        second = refcorr * ref_mask_mat
+
+        dprod = np.dot(first, second.T)
+
+        # Normalization
+        f_sq = np.sum(first ** 2, axis=1)
+        s_sq = np.sum(second ** 2)
+
+        f_sq = f_sq.reshape(1, len(f_sq))
+
+        den = np.sqrt(np.dot(f_sq, s_sq))
+
+        corr[ii] = dprod/den
+    return corr
+
+
+def wfc_multi_reftr(
+    corr_data: np.ndarray, ref_trs: np.ndarray, tw: np.ndarray, sides: str,
+        remove_nans: bool = True) -> dict:
+    """
+    Computes the waveform coherency (**WFC**) between the given reference
+    correlation(s) and correlation matrix.
+    If several references are given, it will loop over these
+
+    See Steinmann, et. al. (2021) for details
+
+    :param corr_data: 2D Correlation Matrix
+        (function of corrstart and time lag)
+    :type corr_data: np.ndarray
+    :param refcorr: 1 or 2D reference Correlation Trace extracted from
+        `corr_data`.
+        If 2D, it will be interpreted as one refcorr trace per row.
+    :type refcorr: np.ndarray
+    :param tw: Lag time window to use for the computation
+    :type tw: np.ndarray
+    :param sides: Which sides to use. Can be `both`, `right`, `left`,
+        or `single`.
+    :type sides: str
+    :param remove_nans: Remove nans from CorrMatrix, defaults to True
+    :return: A dictionary with one correlation array for each reference trace.
+    :rtype: dict
+    """
+    if remove_nans:
+        corr_data = np.nan_to_num(corr_data)
+        ref_trs = np.nan_to_num(ref_trs)
+
+    # remove 1-dimensions
+    ref_trs = np.squeeze(ref_trs)
+
+    multi_ref_panel = {}
+
+    # check how many reference traces have been passed
+    try:
+        reftr_count, _ = ref_trs.shape
+    except ValueError:  # An array is passed
+        reftr_count = 1
+
+    if reftr_count == 1:
+        key = "reftr_0"
+        value = compute_wfc(
+            corr_data, tw, ref_trs, sides, remove_nans=remove_nans)
+        multi_ref_panel.update({key: value})
+    else:  # For multiple-traces loops
+        for i, rftr in enumerate(ref_trs):
+            key = "reftr_%d" % i
+            value = value = compute_wfc(
+                corr_data, tw, rftr, sides, remove_nans=remove_nans)
+            multi_ref_panel.update({key: value})
+    return multi_ref_panel
 
 
 def velocity_change_estimate(
@@ -410,7 +545,7 @@ def multi_ref_vchange(
     except ValueError:  # An array is passed
         reftr_count = 1
 
-    # Distionary that will hold all the results
+    # Dictionary that will hold all the results
     multi_ref_panel = {}
 
     # When there is just 1 reference trace no loop is necessary
@@ -460,29 +595,36 @@ def est_shift_from_dt_corr(
     :pram corr2: Correlation between velocity corrected trace and reference B
     """
 
-    # Create maked arrays so that NaNs are handled properly
-    dt1 = np.ma.masked_array(dt1, mask=(np.isnan(dt1) | np.isinf(dt1)),
-                             fill_value=0)
-    dt2 = np.ma.masked_array(dt2, mask=(np.isnan(dt2) | np.isinf(dt2)),
-                             fill_value=0)
+    # Create masked arrays so that NaNs are handled properly
+    dt1 = np.ma.masked_array(
+        dt1, mask=(np.isnan(dt1) | np.isinf(dt1)), fill_value=0)
+    dt2 = np.ma.masked_array(
+        dt2, mask=(np.isnan(dt2) | np.isinf(dt2)), fill_value=0)
 
-    corr1 = np.ma.masked_array(corr1, mask=(np.isnan(corr1) | np.isinf(corr1)),
-                               fill_value=0)
-    corr2 = np.ma.masked_array(corr2, mask=(np.isnan(corr2) | np.isinf(corr2)),
-                               fill_value=0)
+    corr1 = np.ma.masked_array(
+        corr1, mask=(np.isnan(corr1) | np.isinf(corr1)), fill_value=0)
+    corr2 = np.ma.masked_array(
+        corr2, mask=(np.isnan(corr2) | np.isinf(corr2)), fill_value=0)
 
+    # October 21 - PM - Not entirely sure, why this is done?
+    # However, it leads to problems when creating the mask
+    # (because shape wrong). Two options: 1.DOn't do it or
+    # 2. Also remove the correspdoning points in the dt objects
     # Remove the points where the correlation is 0
     no_zero = (corr1 > 0) & (corr2 > 0)
-    corr1 = corr1[no_zero]
-    corr2 = corr2[no_zero]
+    # corr1 = corr1[no_zero]
+    # corr2 = corr2[no_zero]
 
     # Estimate the point-variance for the two curves
+    # var1 = (1 - corr1[no_zero] ** 2) / (4 * corr1[no_zero] ** 2)
+    # var2 = (1 - corr2[no_zero] ** 2) / (4 * corr2[no_zero] ** 2)
     var1 = (1 - corr1 ** 2) / (4 * corr1 ** 2)
     var2 = (1 - corr2 ** 2) / (4 * corr2 ** 2)
 
     # Calculate the point-weight
     wgt = 1 / (var1 + var2)
-    mask = (corr1 > 0.999) & (corr2 > 0.999)
+    # Insert he no_zero mask here instead.
+    mask = (corr1 > 0.999) & (corr2 > 0.999) & (~no_zero)
     wgt = wgt[~mask]
 
     # This saves from returning a masked value
@@ -552,33 +694,31 @@ def estimate_reftr_shifts_from_dt_corr(
     :type multi_ref_panel: dictionay
     :param multi_ref_panel: It is a dictionary with one (key,value) pair
         for each reference trace. Its structure is described
-        in :py:class:`~miic.core.stretch_mod.multi_ref_vchange`
+        in :func:`~seismic.monitor.stretch_mod.multi_ref_vchange`
     :type return_sim_mat: bool
     :param return_sim_mat: If `True` the returning dictionary contains also the
-        similarity matrix `sim_mat'.
-
-    :rtype: Dictionary
+        similarity matrix `sim_mat`.
+    :rtype: dict
     :return: **dv**: Dictionary with the following keys
-
-        *corr*: 2d ndarray containing the correlation value for the best
-            match for each row of ``mat`` and for each time window.
-            Its dimension is: :func:(len(tw),mat.shape[1])
-        *value*: 2d ndarray containing the stretch amount corresponding to
-            the best match for each row of ``mat`` and for each time window.
-            Stretch is a relative value corresponding to the negative relative
-            velocity change -dv/v.
-            Its dimension is: :func:(len(tw),mat.shape[1])
-        *sim_mat*: 3d ndarray containing the similarity matricies that
-            indicate the correlation coefficient with the reference for the
-            different time windows, different times and different amount of
-            stretching.
-            Its dimension is: :py:func:`(len(tw),mat.shape[1],len(strvec))`
-        *second_axis*: It contains the stretch vector used for the velocity
-            change estimate.
-        *value_type*: It is equal to 'stretch' and specify the content of
-            the returned 'value'.
-        *method*: It is equal to 'single_ref' and specify in which "way" the
-            values have been obtained.
+        - *corr*: 2d ndarray containing the correlation value for the best
+        match for each row of `mat` and for each time window.
+        Its shape is: (len(tw),mat.shape[1])
+        - *value*: 2d ndarray containing the stretch amount corresponding to
+        the best match for each row of `mat` and for each time window.
+        Stretch is a relative value corresponding to the negative relative
+        velocity change -dv/v.
+        Its shape is: (len(tw),mat.shape[1])
+        - *sim_mat*: 3d array containing the similarity matricies that
+        indicate the correlation coefficient with the reference for the
+        different time windows, different times and different amount of
+        stretching.
+        Its shape is: (len(tw),mat.shape[1],len(strvec))
+        - *second_axis*: It contains the stretch vector used for the velocity
+        change estimate.
+        - *value_type*: It is equal to stretch and specify the content of
+        the returned value.
+        - *method*: It is equal to single_ref and specify in which way the
+        values have been obtained.
     """
 
     # Vector with the stretching amount
@@ -598,10 +738,10 @@ def estimate_reftr_shifts_from_dt_corr(
                        if reftr != reftr1]
             for reftr2 in ref_idx:
                 ccorr, sshift = est_shift_from_dt_corr(
-                            np.squeeze(multi_ref_panel[reftr1]['value']),
-                            np.squeeze(multi_ref_panel[reftr2]['value']),
-                            np.squeeze(multi_ref_panel[reftr1]['corr']),
-                            np.squeeze(multi_ref_panel[reftr2]['corr']))
+                    np.squeeze(multi_ref_panel[reftr1]['value']),
+                    np.squeeze(multi_ref_panel[reftr2]['value']),
+                    np.squeeze(multi_ref_panel[reftr1]['corr']),
+                    np.squeeze(multi_ref_panel[reftr2]['corr']))
                 corr.append(ccorr)
                 shift.append(sshift)
 
@@ -631,7 +771,10 @@ def estimate_reftr_shifts_from_dt_corr(
         m = m - np.mean(m)
 
         # How many samples (int) each sim matrix must be rolled
-        m = np.around(m / delta, out=np.zeros_like(m, dtype='int32'))
+        # PM October 2021 - require works the dtype casting in first
+        # step caused errors, should be fine now?
+        m = np.around(m / delta)  # , out=np.zeros_like(m, dtype='int32'))
+        m = np.require(m, dtype='int32')
 
         row, col = np.squeeze(multi_ref_panel['reftr_0']['sim_mat']).shape
 
@@ -726,7 +869,7 @@ def multi_ref_vchange_and_align(
         center of the traces.
     :type return_sim_mat: bool
     :param return_sim_mat: If `True` the returning dictionary contains also the
-        similarity matrix `sim_mat'.
+        similarity matrix `sim_mat`.
     :type remove_nans: bool
     :param remove_nans: If `True` applay :func:`~numpy.nan_to_num` to the
         given correlation matrix before any other operation.
@@ -968,9 +1111,9 @@ def time_stretch_apply(
     Stretch the time axis of traces e.g. to compensate a velocity shift in the
     propagation medium.
     Such shifts can occur in corrlation traces in case of a drifting clock.
-    This function ``applies`` the stretches. To correct for stretching
-    estimated with :class:`~miic.core.stretch_mod.time_stretch_estimate`you
-    need to apply negative stretching.
+    This function applies the stretches. To correct for stretching
+    estimated with :func:`~seismic.monitor.stretch_mod.time_stretch_estimate`
+    you need to apply negative stretching.
 
     :type corr_data: :class:`~numpy.ndarray`
     :param corr_data: 2d ndarray containing the correlation functions that are

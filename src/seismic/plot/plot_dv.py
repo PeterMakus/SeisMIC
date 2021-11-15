@@ -1,12 +1,14 @@
 '''
 :copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   `GNU Lesser General Public License, Version 3 <https://www.gnu.org/copyleft/lesser.html>`
+    GNU Lesser General Public License, Version 3
+    (https://www.gnu.org/copyleft/lesser.html)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Tuesday, 27th July 2021 10:53:53 am
+Last Modified: Thursday, 21st October 2021 02:37:44 pm
 '''
 
 import matplotlib as mpl

@@ -1,12 +1,14 @@
 '''
 :copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   `GNU Lesser General Public License, Version 3 <https://www.gnu.org/copyleft/lesser.html>`
+    GNU Lesser General Public License, Version 3
+    (https://www.gnu.org/copyleft/lesser.html)
 :author:
-   Peter Makus (makus@gfz-potsdam.de)
+    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 04:07:16 pm
-Last Modified: Tuesday, 27th July 2021 10:56:17 am
+Last Modified: Thursday, 21st October 2021 02:59:44 pm
 '''
 
 import unittest
@@ -53,7 +55,8 @@ class TestCosTaper(unittest.TestCase):
 
     def test_invalid_taper_len(self):
         with self.assertRaises(ValueError):
-            ppst.cos_taper(self.testtr.copy(), np.random.randint(-100, 0), False)
+            ppst.cos_taper(
+                self.testtr.copy(), np.random.randint(-100, 0), False)
         with self.assertRaises(ValueError):
             ppst.cos_taper(self.testtr.copy(), 501*self.sr, False)
 
