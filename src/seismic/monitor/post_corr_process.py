@@ -312,7 +312,8 @@ def corr_mat_resample(
             nmat[ii, :] = data[ind[0], :]
         elif len(ind[0]) > 1:
             # more than one measurement in range
-            nmat[ii, :] = np.mean(mm[ind[0], :], 0).filled(np.nan)
+            # nmat[ii, :] = np.mean(mm[ind[0], :], 0).filled(np.nan)
+            nmat[ii, :] = np.median(mm[ind[0], :], 0).filled(np.nan)
 
     # assign new data
     data = nmat
