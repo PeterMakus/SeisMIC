@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Thursday, 11th November 2021 11:45:16 am
+Last Modified: Thursday, 11th November 2021 11:50:40 am
 '''
 from copy import deepcopy
 import unittest
@@ -431,7 +431,6 @@ class TestCorrrelator(unittest.TestCase):
         np.testing.assert_array_equal(-np.ones((3,)), startlags)
         # Correlation should be one in the middle
         # Length is 51,3 as above
-        print(C.shape)
         expC = np.zeros((51, 3))
         expC[25] += 1
         np.testing.assert_array_almost_equal(C, expC, decimal=2)

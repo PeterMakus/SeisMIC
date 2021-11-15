@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Tuesday, 9th November 2021 10:40:30 am
+Last Modified: Friday, 12th November 2021 05:53:17 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -78,10 +78,9 @@ class CorrBulk(object):
         """
         self.data = pcp.corr_mat_normalize(
             self.data, self.stats, starttime, endtime, normtype)
-        proc_str = 'normalize; normtype: %s' % normtype
-        if starttime and endtime:
-            proc_str += ', starttime: %s, endtime: %s' % (
-                str(starttime), str(endtime))
+        proc_str = f'normalize; normtype: {normtype}'
+        if starttime is not None and endtime is not None:
+            proc_str += f', starttime: {starttime}, endtime: {endtime}'
         self.stats.processing_bulk += [proc_str]
         return self
 

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 9th November 2021 10:50:03 am
+Last Modified: Friday, 12th November 2021 03:11:59 pm
 '''
 from copy import deepcopy
 import logging
@@ -207,7 +207,7 @@ class Monitor(object):
 
         # extract the final reference trace (mean excluding very different
         # traces)
-        tr = cbt.extract_multi_trace(**self.options['dv']['dt_ref'])
+        tr = ccb.extract_multi_trace(**self.options['dv']['dt_ref'])
         # obtain an improved time shift measurement
         dv = cbt.stretch(
             ref_trc=tr, return_sim_mat=True,
