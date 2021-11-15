@@ -186,7 +186,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Thursday, 3rd June 2021 04:15:57 pm</span>
-<span class="sd">Last Modified: Tuesday, 9th November 2021 10:50:03 am</span>
+<span class="sd">Last Modified: Friday, 12th November 2021 03:11:59 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -385,7 +385,7 @@
 
         <span class="c1"># extract the final reference trace (mean excluding very different</span>
         <span class="c1"># traces)</span>
-        <span class="n">tr</span> <span class="o">=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">extract_multi_trace</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;dt_ref&#39;</span><span class="p">])</span>
+        <span class="n">tr</span> <span class="o">=</span> <span class="n">ccb</span><span class="o">.</span><span class="n">extract_multi_trace</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;dt_ref&#39;</span><span class="p">])</span>
         <span class="c1"># obtain an improved time shift measurement</span>
         <span class="n">dv</span> <span class="o">=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span>
             <span class="n">ref_trc</span><span class="o">=</span><span class="n">tr</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
