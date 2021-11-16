@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Friday, 12th November 2021 05:53:17 pm
+Last Modified: Monday, 15th November 2021 01:32:49 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -395,6 +395,28 @@ class CorrBulk(object):
         self, ref_trc: np.ndarray = None, tw: List[np.ndarray] = None,
         stretch_range: float = 0.1, stretch_steps: int = 100,
             sides: str = 'both', return_sim_mat: bool = False) -> DV:
+        """
+        Compute the velocity change with the stretching method
+        (see Sens-Schönfelder and Wegler, 2006).
+
+        :param ref_trc: Reference trace(s) to use for the computatio,
+            defaults to None. Will extract a single trace if = None.
+        :type ref_trc: np.ndarray, optional
+        :param tw: Lapse Time window to use for the computation,
+            defaults to None
+        :type tw: List[np.ndarray], optional
+        :param stretch_range: Maximum stretch value to test, defaults to 0.1
+        :type stretch_range: float, optional
+        :param stretch_steps: Number of stretch steps, defaults to 100
+        :type stretch_steps: int, optional
+        :param sides: Which sides to use. Can be 'left', 'right' (or 'single'),
+            or 'both'. Defaults to 'both'
+        :type sides: str, optional
+        :param return_sim_mat: Return the similarity matrix, defaults to False
+        :type return_sim_mat: bool, optional
+        :return: The velocity change as :class:`~seismic.monitor.dv.DV` object.
+        :rtype: DV
+        """
         if ref_trc is None:
             ref_trc = self.ref_trc
         dv_dict = pcp.corr_mat_stretch(
