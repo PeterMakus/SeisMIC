@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Thursday, 21st October 2021 02:42:39 pm
+Last Modified: Wednesday, 17th November 2021 09:37:40 am
 '''
 
 from typing import List, Tuple
@@ -312,8 +312,7 @@ def corr_mat_resample(
             nmat[ii, :] = data[ind[0], :]
         elif len(ind[0]) > 1:
             # more than one measurement in range
-            # nmat[ii, :] = np.mean(mm[ind[0], :], 0).filled(np.nan)
-            nmat[ii, :] = np.median(mm[ind[0], :], 0).filled(np.nan)
+            nmat[ii, :] = np.mean(mm[ind[0], :], 0).filled(np.nan)
 
     # assign new data
     data = nmat
