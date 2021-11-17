@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Wednesday, 17th November 2021 03:54:06 pm
+Last Modified: Wednesday, 17th November 2021 03:57:53 pm
 '''
 from copy import deepcopy
 import unittest
@@ -235,6 +235,7 @@ class TestNanMovingAv(unittest.TestCase):
     def test_result(self):
         out = mu.nan_moving_av(self.data, 50)
         # There will be a slight difference at the ends of the array
+        # as scipy will be less precise here (the weighting is not correct)
         # The first 50 elements
         np.testing.assert_allclose(self.exp[:50], out[:50], rtol=1e-1)
         np.testing.assert_allclose(self.exp[-50:], out[-50:], rtol=1e-1)

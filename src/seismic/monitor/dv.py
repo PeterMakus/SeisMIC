@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Wednesday, 17th November 2021 03:34:25 pm
+Last Modified: Wednesday, 17th November 2021 03:56:42 pm
 '''
 
 from datetime import datetime
@@ -74,10 +74,6 @@ class DV(object):
 
             This action is perfomed in-place.
         """
-        # retrieve desired window
-        # Divide by window length to preserve energy / average
-        # self.sim_mat = convolve1d(
-        #     np.nan_to_num(self.sim_mat), np.ones(win_len), axis=0)/win_len
         self.sim_mat = mu.nan_moving_av(self.sim_mat, int(win_len/2), axis=0)
 
         # Compute the dependencies again
