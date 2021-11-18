@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Friday, 12th November 2021 05:52:22 pm
+Last Modified: Thursday, 18th November 2021 01:00:31 pm
 '''
 
 import unittest
@@ -72,6 +72,69 @@ class TestCorrBulk(unittest.TestCase):
             cb.data-self.cb.data, 25*np.ones_like(cb.data))
         with self.assertRaises(KeyError):
             print(self.cb.stats['eg'])
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_correct_decay')
+    def test_correct_decay(self, decay_mock):
+        # Actually just need to feed in stuff. Algorithm is tested elsewhere
+        cb = self.cb.copy()
+        decay_mock.return_value = np.zeros((25, 25))
+        cb.correct_decay()
+        decay_mock.assert_called_once_with(mock.ANY, cb.stats)
+        np.testing.assert_array_equal(decay_mock.call_args[0][0], self.cb.data)
+        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
+        self.assertIn(
+            'Corrected for Amplitude Decay', cb.stats.processing_bulk)
+
+    @mock.patch('seismic.correlate.stream.time_stretch_apply')
+    def test_correct_stretch(self, stretch_mock):
+        cb = self.cb.copy()
+        stretch_mock.return_value = np.zeros((25, 25))
+        dvmock = mock.MagicMock()
+        dvmock.value = 1
+        cb.correct_stretch(dvmock)
+        stretch_mock.assert_called_once_with(mock.ANY, -1.*dvmock.value)
+        np.testing.assert_array_equal(
+            stretch_mock.call_args[0][0], self.cb.data)
+        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
+        self.assertIn(
+            'Applied time stretch', cb.stats.processing_bulk)
+
+    def test_create_corrstream(self):
+        # Lets's just create a CorrStream from stretch and then convert back
+        # and forth
+        st = read()
+        for tr in st:
+            # Else this will need too much time
+            tr.stats.sampling_rate = 1
+        cst = stream.CorrStream()
+        for tr in st:
+            delta = tr.stats.endtime - tr.stats.starttime
+            tr.data = np.ones_like(tr.data)
+            tr.stats['corr_start'] = tr.stats.starttime
+            tr.stats['corr_end'] = tr.stats.endtime
+            tr.stats['stla'] = 0
+            tr.stats['stlo'] = 0
+            tr.stats['stel'] = 0
+            tr.stats['evla'] = 0
+            tr.stats['evlo'] = 0
+            tr.stats['evel'] = 0
+            tr.stats['dist'] = 0
+            tr.stats['baz'] = 0
+            tr.stats['az'] = 0
+            tr.stats['channel'] = 'HHE'
+            tr = stream.CorrTrace(tr.data, _header=tr.stats)
+            for ii in range(60):
+                ntr = tr.copy()
+                ntr.data = np.empty(tr.data.shape)
+                ntr.stats['corr_start'] += delta*(ii+1)
+                ntr.stats['corr_end'] += delta*(ii+1)
+                cst.append(ntr)
+        cb = cst.create_corr_bulk(inplace=False)
+        cst2 = cb.create_corr_stream()
+        for tr0, tr in zip(cst, cst2):
+            np.testing.assert_array_equal(tr0.data, tr.data)
+            for k in tr0.stats.keys():
+                self.assertEqual(tr0.stats[k], tr.stats[k])
 
 
 class TestCorrStats(unittest.TestCase):
