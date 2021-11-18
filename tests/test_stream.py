@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Thursday, 18th November 2021 06:46:08 pm
+Last Modified: Thursday, 18th November 2021 06:46:26 pm
 '''
 
 import unittest
@@ -183,6 +183,7 @@ class TestCorrBulk(unittest.TestCase):
     #     wi = 5/(24*3600)  # 5s
     #     rtrcs = self.cb.extract_multi_trace(wi)
     #     self.assertEqual(len(rtrcs), 3)
+
 
 class TestCorrStats(unittest.TestCase):
     def setUp(self):
