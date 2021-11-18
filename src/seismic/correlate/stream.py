@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Tuesday, 16th November 2021 10:29:18 am
+Last Modified: Thursday, 18th November 2021 05:29:42 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -157,7 +157,7 @@ class CorrBulk(object):
         """
         Calculate the envelope of a correlation matrix.
 
-        The corrlation data of the correlation matrix are replaced by their
+        The correlation data of the correlation matrix are replaced by their
         Hilbert envelopes.
 
 
@@ -188,7 +188,7 @@ class CorrBulk(object):
             :func:`~seismic.correlate.stream.CorrelationBulk.copy()`.
         """
         self.data = pcp.corr_mat_filter(self.data, self.stats, freqs, order)
-        proc = ['filter; freqs: %s, order: %s' % (str(freqs), str(order))]
+        proc = [f'filter; freqs: {freqs}, order: {order}']
         self.stats.processing_bulk += proc
         return self
 

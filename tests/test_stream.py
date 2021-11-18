@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Thursday, 18th November 2021 01:00:31 pm
+Last Modified: Thursday, 18th November 2021 06:46:08 pm
 '''
 
 import unittest
@@ -32,9 +32,11 @@ class TestCorrBulk(unittest.TestCase):
             'baz', 'az']
         for k in keys:
             st[0].stats[k] = 0
-        stats = stream.CorrStats(st[0].stats)
+        statso = stream.CorrStats(st[0].stats)
         for ii, tr in enumerate(st):
-            stats.corr_start += 5
+            stats = deepcopy(statso)
+            stats.corr_start += 5*ii
+            stats.corr_end = stats.corr_start + stats.npts*stats.delta
             A[ii] = tr.data
             statl.append(stats)
         self.cb = stream.CorrBulk(A, statlist=statl)
@@ -123,7 +125,7 @@ class TestCorrBulk(unittest.TestCase):
             tr.stats['az'] = 0
             tr.stats['channel'] = 'HHE'
             tr = stream.CorrTrace(tr.data, _header=tr.stats)
-            for ii in range(60):
+            for ii in range(10):
                 ntr = tr.copy()
                 ntr.data = np.empty(tr.data.shape)
                 ntr.stats['corr_start'] += delta*(ii+1)
@@ -136,6 +138,51 @@ class TestCorrBulk(unittest.TestCase):
             for k in tr0.stats.keys():
                 self.assertEqual(tr0.stats[k], tr.stats[k])
 
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_envelope')
+    def test_envelope(self, envelope_mock):
+        envelope_mock.return_value = np.zeros((25, 25))
+        cb = self.cb.copy()
+        cb.envelope()
+        np.testing.assert_array_equal(
+            envelope_mock.call_args[0][0], self.cb.data)
+        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
+        self.assertIn('Computed Envelope', cb.stats.processing_bulk)
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_filter')
+    def test_filter(self, filter_mock):
+        filter_mock.return_value = np.zeros((25, 25))
+        cb = self.cb.copy()
+        cb.filter((1, 2), 17)
+        filter_mock.assert_called_once_with(mock.ANY, cb.stats, (1, 2), 17)
+        np.testing.assert_array_equal(
+            filter_mock.call_args[0][0], self.cb.data)
+        self.assertIn(
+            'filter; freqs: (1, 2), order: 17', cb.stats.processing_bulk)
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_extract_trace')
+    def test_extract_trace(self, extract_mock):
+        extract_mock.return_value = np.zeros((25,))
+        cb = self.cb.copy()
+        out = cb.extract_trace('bla', 25)
+        extract_mock.assert_called_once_with(mock.ANY, cb.stats, 'bla', 25)
+        np.testing.assert_array_equal(
+            extract_mock.call_args[0][0], self.cb.data)
+        np.testing.assert_array_equal(out, np.zeros((25,)))
+        np.testing.assert_array_equal(cb.ref_trc, np.zeros((25,)))
+
+    def test_extract_multi_trace_single(self):
+        with mock.patch.object(self.cb, 'extract_trace') as extract_mock:
+            extract_mock.return_value = 'test'
+            t = self.cb.extract_multi_trace(0, 'bla', 25)
+            extract_mock.assert_called_once_with('bla', 25)
+        self.assertEqual(t, 'test')
+
+    # @mock.patch('seismic.correlate.stream.pcp.corr_mat_extract_trace')
+    # def test_extract_multi_trace_win_inc_int(self, extract_mock):
+    #     extract_mock.return_value = np.zeros((25,))
+    #     wi = 5/(24*3600)  # 5s
+    #     rtrcs = self.cb.extract_multi_trace(wi)
+    #     self.assertEqual(len(rtrcs), 3)
 
 class TestCorrStats(unittest.TestCase):
     def setUp(self):
