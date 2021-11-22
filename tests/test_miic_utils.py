@@ -8,8 +8,9 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Thursday, 21st October 2021 02:53:20 pm
+Last Modified: Wednesday, 17th November 2021 03:57:53 pm
 '''
+from copy import deepcopy
 import unittest
 import math as mathematics
 
@@ -20,6 +21,7 @@ from obspy import Inventory, read, UTCDateTime, Trace
 from obspy.core import AttribDict
 from obspy.core.inventory.network import Network
 from obspy.core.inventory.station import Station
+from scipy.ndimage import convolve1d
 
 from seismic.utils.fetch_func_from_str import func_from_str
 import seismic.utils.miic_utils as mu
@@ -223,6 +225,38 @@ class TestDiscardShortTraces(unittest.TestCase):
         mu.discard_short_traces(stin, 10)
         self.assertEqual(st.count(), stin.count())
         self.assertEqual(st, stin)
+
+
+class TestNanMovingAv(unittest.TestCase):
+    def setUp(self) -> None:
+        self.data = np.random.random((500,))
+        self.exp = convolve1d(self.data, np.ones(101))/101
+
+    def test_result(self):
+        out = mu.nan_moving_av(self.data, 50)
+        # There will be a slight difference at the ends of the array
+        # as scipy will be less precise here (the weighting is not correct)
+        # The first 50 elements
+        np.testing.assert_allclose(self.exp[:50], out[:50], rtol=1e-1)
+        np.testing.assert_allclose(self.exp[-50:], out[-50:], rtol=1e-1)
+        np.testing.assert_allclose(self.exp[50:-50], out[50:-50])
+
+    def test_result_nan(self):
+        # test the same with nans
+        data = deepcopy(self.data)
+        data[125] = np.nan
+        out = mu.nan_moving_av(data, 50)
+        # Changing one element should be covered by 2% tolerance
+        np.testing.assert_allclose(self.exp[50:-50], out[50:-50], rtol=2e-2)
+
+    def test_axis2(self):
+        data = np.random.random((25, 25, 25))
+        for ax in [0, 1, 2]:
+            exp = convolve1d(data, np.ones(11), axis=ax)/11
+            out = mu.nan_moving_av(data, 5, axis=ax)
+            np.testing.assert_allclose(
+                exp.swapaxes(0, ax)[5:-5], out.swapaxes(0, ax)[5:-5])
+            # Let's ignore the edge effects for now
 
 
 class TestStreamRequireDtype(unittest.TestCase):

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 27th October 2021 12:58:15 pm
-Last Modified: Wednesday, 27th October 2021 01:41:58 pm
+Last Modified: Wednesday, 17th November 2021 04:02:00 pm
 '''
 
 import unittest
@@ -29,7 +29,7 @@ class TestDV(unittest.TestCase):
         value = second_axis[np.argmax(sim_mat, axis=1)]
         self.dv = dv.DV(corr, value, 'bla', sim_mat, second_axis, 'blub', {})
 
-    @patch('seismic.monitor.dv.save_header_to_np_array')
+    @patch('seismic.monitor.dv.mu.save_header_to_np_array')
     @patch('seismic.monitor.dv.np.savez_compressed')
     def test_save(self, savez_mock, save_header_mock):
         self.dv.save('/save/to/here')
@@ -56,7 +56,7 @@ class TestDV(unittest.TestCase):
 
 class TestReadDV(unittest.TestCase):
     @patch('seismic.monitor.dv.np.load')
-    @patch('seismic.monitor.dv.load_header_from_np_array')
+    @patch('seismic.monitor.dv.mu.load_header_from_np_array')
     def test(self, load_header_mock, npload_mock):
         load_header_mock.return_value = {}
         npload_mock.return_value = {

@@ -8,18 +8,16 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Wednesday, 27th October 2021 01:16:44 pm
+Last Modified: Wednesday, 17th November 2021 03:56:42 pm
 '''
 
 from datetime import datetime
 from typing import List, Tuple
 
 import numpy as np
-from scipy.ndimage import convolve1d
 
 from seismic.plot.plot_dv import plot_dv
-from seismic.utils.miic_utils import save_header_to_np_array, \
-    load_header_from_np_array
+from seismic.utils import miic_utils as mu
 from seismic.correlate.stats import CorrStats
 
 
@@ -50,7 +48,7 @@ class DV(object):
         """
         method_array = np.array([self.method])
         vt_array = np.array([self.value_type])
-        kwargs = save_header_to_np_array(self.stats)
+        kwargs = mu.save_header_to_np_array(self.stats)
         np.savez_compressed(
             path, corr=self.corr, value=self.value, sim_mat=self.sim_mat,
             second_axis=self.second_axis, method_array=method_array,
@@ -76,10 +74,7 @@ class DV(object):
 
             This action is perfomed in-place.
         """
-        # retrieve desired window
-        # Divide by window length to preserve energy / average
-        self.sim_mat = convolve1d(
-            np.nan_to_num(self.sim_mat), np.ones(win_len), axis=0)/win_len
+        self.sim_mat = mu.nan_moving_av(self.sim_mat, int(win_len/2), axis=0)
 
         # Compute the dependencies again
         self.corr = np.nanmax(self.sim_mat, axis=1)
@@ -98,7 +93,7 @@ def read_dv(path: str) -> DV:
     :rtype: DV
     """
     loaded = np.load(path)
-    stats = CorrStats(load_header_from_np_array(loaded))
+    stats = CorrStats(mu.load_header_from_np_array(loaded))
     return DV(
         loaded['corr'], loaded['value'], loaded['vt_array'][0],
         loaded['sim_mat'], loaded['second_axis'], loaded['method_array'][0],
