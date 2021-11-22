@@ -10,7 +10,7 @@ Module that contains functions for preprocessing on obspy streams
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:47:00 pm
-Last Modified: Thursday, 21st October 2021 02:38:48 pm
+Last Modified: Monday, 22nd November 2021 05:21:51 pm
 '''
 from warnings import warn
 
@@ -38,14 +38,12 @@ def cos_taper_st(
         original data use :func:`~obspy.core.stream.Stream.copy`.
     """
     if isinstance(st, Trace):
-        st = [st]
-    # out = Stream()
-    for tr in st:
+        st = Stream([st])
+    for ii, _ in enumerate(st):
         try:
-            tr = cos_taper(tr, taper_len, taper_at_masked)
+            st[ii] = cos_taper(st[ii], taper_len, taper_at_masked)
         except ValueError as e:
-            warn('%s, corresponding trace will be removed.' % e)
-            st.remove(tr)
+            warn('%s, corresponding trace not tapered.' % e)
     return st
 
 
@@ -168,6 +166,8 @@ def stream_filter(st: Stream, ftype: str, filter_option: dict) -> Stream:
         :func:`obspy.signal.filter.remezFIR`).
 
     """
+    if isinstance(st, Trace):
+        st = Stream([st])
     if not isinstance(st, Stream):
         raise TypeError("'st' must be a 'obspy.core.stream.Stream' object")
 
