@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Thursday, 18th November 2021 05:29:42 pm
+Last Modified: Monday, 22nd November 2021 02:24:49 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -332,8 +332,7 @@ class CorrBulk(object):
         self.data, self.stats = pcp.corr_mat_resample(
             self.data, self.stats, starttimes, endtimes)
         self.stats.processing_bulk += [
-            'Resampled. Starttimes: %s, Endtimes %s' % (
-                str(starttimes), str(endtimes))]
+            f'Resampled. Starttimes: {starttimes}, Endtimes: {endtimes}']
         return self
 
     def resample_time_axis(self, freq: float):
@@ -353,7 +352,7 @@ class CorrBulk(object):
         self.data, self.stats = pcp.corr_mat_resample_or_decimate(
             self.data, self.stats, freq)
         self.stats.processing_bulk += [
-            'Resampled time axis. New sampling rate: %s' % freq]
+            f'Resampled time axis. New sampling rate: {freq}Hz']
         return self
 
     def smooth(
@@ -387,8 +386,7 @@ class CorrBulk(object):
         """
         self.data = pcp.corr_mat_smooth(self.data, wsize, wtype, axis)
         self.stats.processing_bulk += [
-            'smooth. wsize: %ss, wtype: %s, axis: %s'
-            % (str(wsize), wtype, str(axis))]
+            f'Smoothed. wsize: {wsize}, wtype: {wtype}, axis: {axis}']
         return self
 
     def stretch(
@@ -457,8 +455,8 @@ class CorrBulk(object):
         stats = deepcopy(self.stats)
         for key, value in stats.items():
             try:
-                if isinstance(value, list):
-                    stats[key] = filter(lambda ii: ii, value)
+                if isinstance(value, list) and key != 'processing_bulk':
+                    stats[key] = [v for jj, v in zip(ii, value) if jj]
                 elif isinstance(value, np.ndarray):
                     stats[key] = value[ii]
             except AttributeError:
@@ -478,8 +476,9 @@ class CorrBulk(object):
             :func:`~seismic.correlate.stream.CorrelationBulk.copy()`
         """
         self.data = pcp.corr_mat_taper(self.data, self.stats, width)
-        proc = ['tapered: width=%ss' % width]
+        proc = [f'tapered: width={width}s']
         self.stats.processing_bulk += proc
+        return self
 
     def taper_center(self, width: float, slope_frac: float = 0.05):
         """
@@ -497,8 +496,8 @@ class CorrBulk(object):
         :param slope_frac: fraction of `width` used for soothing of edges,
             defaults to 0.05
         :type slope_frac: float, optional
-        :return: The tapered matrix
-        :rtype: np.ndarray
+        :return: self
+        :rtype: CorrBulk
 
         ..note:: This action is performed **in-place**. If you want to keep
             the original data use
@@ -506,9 +505,9 @@ class CorrBulk(object):
         """
         self.data = pcp.corr_mat_taper_center(
             self.data, self.stats, width, slope_frac=slope_frac)
-        proc = [
-            'tapered-centre: width=%ss, slope_frac=%s' % (width, slope_frac)]
+        proc = [f'tapered-centre: width={width}s, slope_frac={slope_frac}']
         self.stats.processing_bulk += proc
+        return self
 
     def trim(self, starttime: float, endtime: float):
         """
@@ -593,6 +592,8 @@ class CorrBulk(object):
         :return: An Array containing the boolean indices
         :rtype: np.ndarray[bool]
         """
+        if endtime <= starttime:
+            raise ValueError('End has to be after start!')
         if include_partial:
             ii = np.logical_and(
                 np.array(self.stats.corr_end) >= starttime,
@@ -601,7 +602,11 @@ class CorrBulk(object):
             ii = np.logical_and(
                 np.array(self.stats.corr_start) >= starttime,
                 np.array(self.stats.corr_end) <= endtime)
-        return np.squeeze(ii)
+        ii = np.squeeze(ii)
+        if not len(np.nonzero(ii)[0]):
+            warnings.warn(
+                'No slices found in the requested time. Returning empty arr.')
+        return ii
 
 
 def read_corr_bulk(path: str) -> CorrBulk:
