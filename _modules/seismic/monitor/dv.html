@@ -186,18 +186,16 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 15th June 2021 04:12:18 pm</span>
-<span class="sd">Last Modified: Wednesday, 27th October 2021 01:16:44 pm</span>
+<span class="sd">Last Modified: Wednesday, 17th November 2021 03:56:42 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">scipy.ndimage</span> <span class="kn">import</span> <span class="n">convolve1d</span>
 
 <span class="kn">from</span> <span class="nn">seismic.plot.plot_dv</span> <span class="kn">import</span> <span class="n">plot_dv</span>
-<span class="kn">from</span> <span class="nn">seismic.utils.miic_utils</span> <span class="kn">import</span> <span class="n">save_header_to_np_array</span><span class="p">,</span> \
-    <span class="n">load_header_from_np_array</span>
+<span class="kn">from</span> <span class="nn">seismic.utils</span> <span class="kn">import</span> <span class="n">miic_utils</span> <span class="k">as</span> <span class="n">mu</span>
 <span class="kn">from</span> <span class="nn">seismic.correlate.stats</span> <span class="kn">import</span> <span class="n">CorrStats</span>
 
 
@@ -228,7 +226,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">method_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">])</span>
         <span class="n">vt_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">value_type</span><span class="p">])</span>
-        <span class="n">kwargs</span> <span class="o">=</span> <span class="n">save_header_to_np_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">save_header_to_np_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
         <span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span>
             <span class="n">path</span><span class="p">,</span> <span class="n">corr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">corr</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">sim_mat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span><span class="p">,</span>
             <span class="n">second_axis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">second_axis</span><span class="p">,</span> <span class="n">method_array</span><span class="o">=</span><span class="n">method_array</span><span class="p">,</span>
@@ -254,10 +252,7 @@
 
 <span class="sd">            This action is perfomed in-place.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># retrieve desired window</span>
-        <span class="c1"># Divide by window length to preserve energy / average</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span> <span class="o">=</span> <span class="n">convolve1d</span><span class="p">(</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">win_len</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">/</span><span class="n">win_len</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">nan_moving_av</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">win_len</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
         <span class="c1"># Compute the dependencies again</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -276,7 +271,7 @@
 <span class="sd">    :rtype: DV</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">loaded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="n">stats</span> <span class="o">=</span> <span class="n">CorrStats</span><span class="p">(</span><span class="n">load_header_from_np_array</span><span class="p">(</span><span class="n">loaded</span><span class="p">))</span>
+    <span class="n">stats</span> <span class="o">=</span> <span class="n">CorrStats</span><span class="p">(</span><span class="n">mu</span><span class="o">.</span><span class="n">load_header_from_np_array</span><span class="p">(</span><span class="n">loaded</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">DV</span><span class="p">(</span>
         <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;corr&#39;</span><span class="p">],</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">],</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;vt_array&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
         <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;sim_mat&#39;</span><span class="p">],</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;second_axis&#39;</span><span class="p">],</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;method_array&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>

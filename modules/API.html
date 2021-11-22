@@ -876,7 +876,7 @@ correlation length and increment.</p></li>
 </dd>
 </dl>
 <p>Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Friday, 12th November 2021 05:53:17 pm</p>
+Last Modified: Monday, 22nd November 2021 02:24:49 pm</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="seismic.correlate.stream.CorrBulk">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seismic.correlate.stream.</span></span><span class="sig-name descname"><span class="pre">CorrBulk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#seismic.correlate.stats.CorrStats" title="seismic.correlate.stats.CorrStats"><span class="pre">seismic.correlate.stats.CorrStats</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">statlist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#seismic.correlate.stats.CorrStats" title="seismic.correlate.stats.CorrStats"><span class="pre">seismic.correlate.stats.CorrStats</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seismic/correlate/stream.html#CorrBulk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.stream.CorrBulk" title="Permalink to this definition">¶</a></dt>
@@ -988,7 +988,7 @@ file again.</p>
 <dt class="sig sig-object py" id="seismic.correlate.stream.CorrBulk.envelope">
 <span class="sig-name descname"><span class="pre">envelope</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seismic/correlate/stream.html#CorrBulk.envelope"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.stream.CorrBulk.envelope" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the envelope of a correlation matrix.</p>
-<p>The corrlation data of the correlation matrix are replaced by their
+<p>The correlation data of the correlation matrix are replaced by their
 Hilbert envelopes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -1211,7 +1211,30 @@ correlation lag time axis 1: smooth along time axis</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="seismic.correlate.stream.CorrBulk.stretch">
 <span class="sig-name descname"><span class="pre">stretch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_trc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stretch_range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stretch_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sides</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'both'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_sim_mat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#seismic.monitor.dv.DV" title="seismic.monitor.dv.DV"><span class="pre">seismic.monitor.dv.DV</span></a></span></span><a class="reference internal" href="../_modules/seismic/correlate/stream.html#CorrBulk.stretch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.stream.CorrBulk.stretch" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Compute the velocity change with the stretching method
+(see Sens-Schönfelder and Wegler, 2006).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ref_trc</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – Reference trace(s) to use for the computatio,
+defaults to None. Will extract a single trace if = None.</p></li>
+<li><p><strong>tw</strong> (<em>List</em><em>[</em><em>np.ndarray</em><em>]</em><em>, </em><em>optional</em>) – Lapse Time window to use for the computation,
+defaults to None</p></li>
+<li><p><strong>stretch_range</strong> (<em>float</em><em>, </em><em>optional</em>) – Maximum stretch value to test, defaults to 0.1</p></li>
+<li><p><strong>stretch_steps</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of stretch steps, defaults to 100</p></li>
+<li><p><strong>sides</strong> (<em>str</em><em>, </em><em>optional</em>) – Which sides to use. Can be ‘left’, ‘right’ (or ‘single’),
+or ‘both’. Defaults to ‘both’</p></li>
+<li><p><strong>return_sim_mat</strong> (<em>bool</em><em>, </em><em>optional</em>) – Return the similarity matrix, defaults to False</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The velocity change as <a class="reference internal" href="#seismic.monitor.dv.DV" title="seismic.monitor.dv.DV"><code class="xref py py-class docutils literal notranslate"><span class="pre">DV</span></code></a> object.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#seismic.monitor.dv.DV" title="seismic.monitor.dv.DV">DV</a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seismic.correlate.stream.CorrBulk.save">
@@ -1282,10 +1305,10 @@ defaults to 0.05</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The tapered matrix</p>
+<dd class="field-even"><p>self</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>np.ndarray</p>
+<dd class="field-odd"><p><a class="reference internal" href="#seismic.correlate.stream.CorrBulk" title="seismic.correlate.stream.CorrBulk">CorrBulk</a></p>
 </dd>
 </dl>
 <dl class="simple">
@@ -3090,7 +3113,7 @@ the function requires the input to be of the same shape</p>
 </dd>
 </dl>
 <p>Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Wednesday, 27th October 2021 01:16:44 pm</p>
+Last Modified: Wednesday, 17th November 2021 03:56:42 pm</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="seismic.monitor.dv.DV">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seismic.monitor.dv.</span></span><span class="sig-name descname"><span class="pre">DV</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">corr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_mat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#seismic.correlate.stats.CorrStats" title="seismic.correlate.stats.CorrStats"><span class="pre">seismic.correlate.stats.CorrStats</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seismic/monitor/dv.html#DV"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.dv.DV" title="Permalink to this definition">¶</a></dt>
@@ -4588,7 +4611,7 @@ function can be located in any module.</p>
 </dd>
 </dl>
 <p>Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Wednesday, 10th November 2021 10:31:11 am</p>
+Last Modified: Wednesday, 17th November 2021 03:31:29 pm</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seismic.utils.miic_utils.trace_calc_az_baz_dist">
 <span class="sig-prename descclassname"><span class="pre">seismic.utils.miic_utils.</span></span><span class="sig-name descname"><span class="pre">trace_calc_az_baz_dist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stats1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">obspy.core.trace.Stats</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">obspy.core.trace.Stats</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/seismic/utils/miic_utils.html#trace_calc_az_baz_dist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.utils.miic_utils.trace_calc_az_baz_dist" title="Permalink to this definition">¶</a></dt>
@@ -4858,6 +4881,28 @@ a masked trace is trimmed within a gap. The function works in place.</p>
 <p class="admonition-title">Note</p>
 <p>Action is performed in place.</p>
 </div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seismic.utils.miic_utils.nan_moving_av">
+<span class="sig-prename descclassname"><span class="pre">seismic.utils.miic_utils.</span></span><span class="sig-name descname"><span class="pre">nan_moving_av</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">win_half_len</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span></span></span><a class="reference internal" href="../_modules/seismic/utils/miic_utils.html#nan_moving_av"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.utils.miic_utils.nan_moving_av" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a filtered version of data, disregarding the nans.
+Moving mean window length is win_half_len*2+1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>np.ndarray</em>) – Array to be filtered</p></li>
+<li><p><strong>win_half_len</strong> (<em>int</em>) – Half length of the boxcar filter (len = halflen*2+1)</p></li>
+<li><p><strong>axis</strong> (<em>int</em><em>, </em><em>optional</em>) – Axis to filter along, defaults to -1</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The filtered array</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
