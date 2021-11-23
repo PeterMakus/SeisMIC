@@ -188,7 +188,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 20th July 2021 03:47:00 pm</span>
-<span class="sd">Last Modified: Thursday, 21st October 2021 02:38:48 pm</span>
+<span class="sd">Last Modified: Monday, 22nd November 2021 05:21:51 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
 
@@ -216,14 +216,12 @@
 <span class="sd">        original data use :func:`~obspy.core.stream.Stream.copy`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">Trace</span><span class="p">):</span>
-        <span class="n">st</span> <span class="o">=</span> <span class="p">[</span><span class="n">st</span><span class="p">]</span>
-    <span class="c1"># out = Stream()</span>
-    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">([</span><span class="n">st</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">tr</span> <span class="o">=</span> <span class="n">cos_taper</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">,</span> <span class="n">taper_at_masked</span><span class="p">)</span>
+            <span class="n">st</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">cos_taper</span><span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">taper_len</span><span class="p">,</span> <span class="n">taper_at_masked</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">warn</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">, corresponding trace will be removed.&#39;</span> <span class="o">%</span> <span class="n">e</span><span class="p">)</span>
-            <span class="n">st</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+            <span class="n">warn</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">, corresponding trace not tapered.&#39;</span> <span class="o">%</span> <span class="n">e</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">st</span></div>
 
 
@@ -346,6 +344,8 @@
 <span class="sd">        :func:`obspy.signal.filter.remezFIR`).</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">Trace</span><span class="p">):</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">([</span><span class="n">st</span><span class="p">])</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">Stream</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;st&#39; must be a &#39;obspy.core.stream.Stream&#39; object&quot;</span><span class="p">)</span>
 
