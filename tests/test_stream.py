@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Monday, 22nd November 2021 02:34:49 pm
+Last Modified: Thursday, 25th November 2021 08:37:01 am
 '''
 
 import unittest
@@ -434,6 +434,11 @@ class TestCorrStats(unittest.TestCase):
         self.cst['location'] = [1, 2, 3]
         self.assertIsInstance(self.cst['location'], list)
 
+    def test_set_comp(self):
+        self.cst['channel'] = 'HHE-HHZ'
+        self.cst['component'] = 'R-R'
+        self.assertEqual(self.cst.channel, 'HHR-HHR')
+
     def test_read_only(self):
         readonly = ['endtime', 'end_lag', 'starttime']
         for k in readonly:
@@ -470,6 +475,12 @@ class TestCorrStats(unittest.TestCase):
         self.assertEqual(
             self.cst.end_lag, self.cst.start_lag+self.cst.delta*float(
                 self.cst.npts-1))
+
+    def get_component(self):
+        cst = deepcopy(self.cst)
+        # Set channel
+        cst['channel'] = 'HHE-HHZ'
+        self.assertEqual(cst['component'], 'E-Z')
 
 
 class TestCombineStats(unittest.TestCase):

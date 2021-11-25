@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 5th July 2021 02:44:13 pm
-Last Modified: Thursday, 21st October 2021 02:46:23 pm
+Last Modified: Thursday, 25th November 2021 08:38:19 am
 '''
 
 from future.utils import native_str
@@ -225,15 +225,12 @@ class CorrStats(AttribDict):
         if key == 'component':
             key = 'channel'
             value = str(value)
-            if len(value) != 1:
-                msg = 'Component must be set with single character'
+            if len(value) != 3:
+                msg = 'Component must be set with three characters, e.g. E-Z'
                 raise ValueError(msg)
-            value = self.channel[:-1] + value
-            value[3] = value[-1]
-        # prevent a calibration factor of 0
-        if key == 'calib' and value == 0:
-            msg = 'Calibration factor set to 0.0!'
-            warnings.warn(msg, UserWarning)
+            a, b = self.channel.split('-')
+            an, bn = value.split('-')
+            value = a[:-1] + an + '-' + b[:-1] + bn
         # all other keys
         if isinstance(value, dict):
             super(CorrStats, self).__setitem__(key, AttribDict(value))
@@ -246,7 +243,9 @@ class CorrStats(AttribDict):
         """
         """
         if key == 'component':
-            return super(CorrStats, self).__getitem__('channel', default)[-1:]
+            ch = super(CorrStats, self).__getitem__('channel', default)
+            a, b = ch.split('-')
+            return(a[-1]+'-'+b[-1])
         else:
             return super(CorrStats, self).__getitem__(key, default)
 
