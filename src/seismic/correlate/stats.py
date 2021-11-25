@@ -8,11 +8,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 5th July 2021 02:44:13 pm
-Last Modified: Thursday, 25th November 2021 08:38:19 am
+Last Modified: Thursday, 25th November 2021 10:50:30 am
 '''
 
 from future.utils import native_str
-import warnings
 
 from obspy.core.util import AttribDict
 from obspy import UTCDateTime
