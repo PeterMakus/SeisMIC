@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Thursday, 2nd December 2021 12:19:10 pm
+Last Modified: Thursday, 2nd December 2021 05:11:10 pm
 '''
 
 from typing import Tuple
@@ -107,8 +107,6 @@ def plot_dv(
         sim_mat = sim_mat/np.tile(
             np.max(sim_mat, axis=1), (sim_mat.shape[1], 1)).T
 
-    n_stretching = stretch_vect.shape[0]
-
     stretching_amount = np.max(stretch_vect)
 
     # Adapt plot details in agreement with the type of dictionary that
@@ -141,39 +139,26 @@ def plot_dv(
 
     ax1 = f.add_subplot(gs[0])
     imh = plt.imshow(
-        sim_mat.T.astype(float), interpolation='none', aspect='auto')
+        np.flipud(sim_mat.T).astype(float), interpolation='none', aspect='auto')
+
+    # plotting value is way easier now
+    plt.plot(-dv['value'], 'b.')
+    # Set extent so we can treat the axes properly (mainly y)
+    imh.set_extent((0, sim_mat.shape[0], stretch_vect[-1], stretch_vect[0]))
 
     ###
-    scale = stretch_vect[1] - stretch_vect[0]
-    offset = stretch_vect[0]
-    mod_ind = (np.round((dv['value']-offset) / scale).astype(int))
-    mod_ind[np.isnan(dv['value'])] = 0
-    ax1.plot(mod_ind, 'b.')
-    if 'model_value' in dv.keys():
-        mod_ind = (np.round((dv['model_value']-offset) / scale).astype(int))
-        mod_ind[np.isnan(dv['model_value'])] = 0
-        ax1.plot(mod_ind, 'g.')
     ax1.set_xlim(0, sim_mat.shape[0])
-    if ylim:
-        plt.ylim(ylim)
-    ax1.set_ylim(0, sim_mat.shape[1])
+    plt.xlim(0, sim_mat.shape[0])
+
     if value_type == 'stretch':
         ax1.invert_yaxis()
-    ###
+    if ylim:
+        plt.ylim(ylim)
+    # ###
     if sim_mat_Clim:
         imh.set_clim(sim_mat_Clim[0], sim_mat_Clim[1])
 
     plt.gca().get_xaxis().set_visible(False)
-    ax1.set_yticks(np.floor(np.linspace(0, n_stretching - 1, 7)).astype('int'))
-
-    if value_type == 'stretch':
-        ax1.set_yticklabels([
-            "%4.3f" % x for x in stretch_vect[np.floor(
-                np.linspace(n_stretching - 1, 0, 7)).astype('int')]])
-    else:
-        ax1.set_yticklabels([
-            "%4.3f" % x for x in stretch_vect[np.floor(
-                np.linspace(0, n_stretching - 1, 7)).astype('int')]])
 
     stats = dv['stats']
     comb_mseedid = '%s.%s.%s.%s' % (
