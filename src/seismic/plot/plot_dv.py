@@ -8,9 +8,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Thursday, 21st October 2021 02:37:44 pm
+Last Modified: Thursday, 2nd December 2021 12:19:10 pm
 '''
 
+from typing import Tuple
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 import numpy as np
@@ -21,7 +22,8 @@ from seismic.plot.plot_utils import set_mpl_params
 
 def plot_dv(
     dv, save_dir='.', figure_file_name=None, mark_time=None,
-        normalize_simmat=False, sim_mat_Clim=[], figsize=(9, 11), dpi=72):
+    normalize_simmat=False, sim_mat_Clim=[], figsize=(9, 11), dpi=72,
+        ylim: Tuple[float, float] = None):
     """ Plot the "extended" dv dictionary
 
     This function is thought to plot the result of the velocity change estimate
@@ -65,6 +67,8 @@ def plot_dv(
     :type sim_mat_Clim: 2 element array_like
     :param sim_mat_Clim: if non-empty it set the color scale limits of the
         similarity matrix image
+    :param ylim: Limits for the stretch axis. Defaults to None
+    :type ylim: Tuple[float, float], optional
     """
     set_mpl_params()
 
@@ -150,6 +154,8 @@ def plot_dv(
         mod_ind[np.isnan(dv['model_value'])] = 0
         ax1.plot(mod_ind, 'g.')
     ax1.set_xlim(0, sim_mat.shape[0])
+    if ylim:
+        plt.ylim(ylim)
     ax1.set_ylim(0, sim_mat.shape[1])
     if value_type == 'stretch':
         ax1.invert_yaxis()
@@ -189,7 +195,10 @@ def plot_dv(
     if 'model_value' in dv.keys():
         plt.plot(rtime, -dv['model_value'], 'g.')
     plt.xlim([rtime[0], rtime[-1]])
-    plt.ylim((-stretching_amount, stretching_amount))
+    if ylim:
+        plt.ylim(ylim)
+    else:
+        plt.ylim((-stretching_amount, stretching_amount))
     if mark_time and not (
             np.all(rtime < mark_time) and np.all(rtime > mark_time)):
         plt.axvline(mark_time, lw=1, color='r')
