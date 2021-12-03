@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Monday, 22nd November 2021 02:24:49 pm
+Last Modified: Friday, 3rd December 2021 09:58:24 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -81,6 +81,28 @@ class CorrBulk(object):
         proc_str = f'normalize; normtype: {normtype}'
         if starttime is not None and endtime is not None:
             proc_str += f', starttime: {starttime}, endtime: {endtime}'
+        self.stats.processing_bulk += [proc_str]
+        return self
+
+    def clip(self, thres: float, axis=1):
+        """
+        Clip the correlation data's upper and lower bounds to a multiple of its
+        standard deviation. `thres` determines the factor and `axis` the axis
+        the std should be computed over
+
+        :param thres: factor of the standard deviation to clip by
+        :type thres: float
+        :param axis: Axis to compute the std over and, subsequently clip over.
+            Can be None, if you wish to compute floating point rather than a
+            vector. Then, the array will be clipped evenly.
+        :type axis: int
+
+        ..note:: This action is performed **in-place**. If you would like to
+                keep the original data use
+                :func:`~seismic.correlate.stream.CorrelationBulk.copy()`.
+        """
+        self.data = pcp.corr_mat_clip(self.data, thres, axis)
+        proc_str = f'Clipped; threshold: {thres}*std, axis={axis}'
         self.stats.processing_bulk += [proc_str]
         return self
 
