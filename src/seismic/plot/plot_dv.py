@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Thursday, 2nd December 2021 05:11:10 pm
+Last Modified: Friday, 3rd December 2021 08:20:14 am
 '''
 
 from typing import Tuple
@@ -139,7 +139,8 @@ def plot_dv(
 
     ax1 = f.add_subplot(gs[0])
     imh = plt.imshow(
-        np.flipud(sim_mat.T).astype(float), interpolation='none', aspect='auto')
+        np.flipud(sim_mat.T).astype(float), interpolation='none',
+        aspect='auto')
 
     # plotting value is way easier now
     plt.plot(-dv['value'], 'b.')
