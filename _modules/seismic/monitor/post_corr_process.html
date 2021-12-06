@@ -187,7 +187,7 @@
 <span class="sd">    Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 14th June 2021 08:50:57 am</span>
-<span class="sd">Last Modified: Wednesday, 17th November 2021 09:37:40 am</span>
+<span class="sd">Last Modified: Friday, 3rd December 2021 09:51:24 am</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
@@ -204,7 +204,29 @@
 <span class="kn">from</span> <span class="nn">seismic.correlate.stats</span> <span class="kn">import</span> <span class="n">CorrStats</span>
 
 
-<span class="c1"># This needs some tidying</span>
+<div class="viewcode-block" id="corr_mat_clip"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_clip">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_clip</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">thres</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Clip the Input Matrix upper and lower bounds to a multiple of its</span>
+<span class="sd">    standard deviation. `thres` determines the factor and `axis` the axis</span>
+<span class="sd">    the std should be computed over</span>
+
+<span class="sd">    :param A: Input Array to be clipped</span>
+<span class="sd">    :type A: np.ndarray</span>
+<span class="sd">    :param thres: factor of the standard deviation to clip by</span>
+<span class="sd">    :type thres: float</span>
+<span class="sd">    :param axis: Axis to compute the std over and, subsequently clip over.</span>
+<span class="sd">        Can be None, if you wish to compute floating point rather than a</span>
+<span class="sd">        vector. Then, the array will be clipped evenly.</span>
+<span class="sd">    :type axis: int</span>
+<span class="sd">    :return: The clipped array</span>
+<span class="sd">    :rtype: np.ndarray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">clipv</span> <span class="o">=</span> <span class="n">thres</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">axis</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="o">-</span><span class="n">clipv</span><span class="p">,</span> <span class="n">clipv</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="o">-</span><span class="n">clipv</span><span class="p">,</span> <span class="n">clipv</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">A</span></div>
 
 
 <span class="k">def</span> <span class="nf">_smooth</span><span class="p">(</span>
@@ -1254,7 +1276,7 @@
     
     <div class="footer-item">
       <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.0.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.1.<br>
 </p>
     </div>
     

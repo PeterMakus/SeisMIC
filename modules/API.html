@@ -595,7 +595,7 @@ upon the argument passed as <code class="docutils literal notranslate"><span cla
 </dd>
 </dl>
 <p>Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 10th November 2021 05:16:38 pm</p>
+Last Modified: Monday, 6th December 2021 12:37:44 pm</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="seismic.correlate.correlate.Correlator">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seismic.correlate.correlate.</span></span><span class="sig-name descname"><span class="pre">Correlator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">store_client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><span class="pre">seismic.trace_data.waveform.Store_Client</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seismic/correlate/correlate.html#Correlator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.correlate.Correlator" title="Permalink to this definition">¶</a></dt>
@@ -876,7 +876,7 @@ correlation length and increment.</p></li>
 </dd>
 </dl>
 <p>Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Monday, 22nd November 2021 02:24:49 pm</p>
+Last Modified: Friday, 3rd December 2021 09:58:24 am</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="seismic.correlate.stream.CorrBulk">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seismic.correlate.stream.</span></span><span class="sig-name descname"><span class="pre">CorrBulk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#seismic.correlate.stats.CorrStats" title="seismic.correlate.stats.CorrStats"><span class="pre">seismic.correlate.stats.CorrStats</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">statlist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#seismic.correlate.stats.CorrStats" title="seismic.correlate.stats.CorrStats"><span class="pre">seismic.correlate.stats.CorrStats</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seismic/correlate/stream.html#CorrBulk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.stream.CorrBulk" title="Permalink to this definition">¶</a></dt>
@@ -907,6 +907,29 @@ position.</p></li>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>Same object as in self, but normalised.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>..note:: This action is performed <strong>in-place</strong>. If you would like to</dt><dd><p>keep the original data use
+<code class="xref py py-func docutils literal notranslate"><span class="pre">copy()</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seismic.correlate.stream.CorrBulk.clip">
+<span class="sig-name descname"><span class="pre">clip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thres</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seismic/correlate/stream.html#CorrBulk.clip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.stream.CorrBulk.clip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clip the correlation data’s upper and lower bounds to a multiple of its
+standard deviation. <cite>thres</cite> determines the factor and <cite>axis</cite> the axis
+the std should be computed over</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>thres</strong> (<em>float</em>) – factor of the standard deviation to clip by</p></li>
+<li><p><strong>axis</strong> (<em>int</em>) – Axis to compute the std over and, subsequently clip over.
+Can be None, if you wish to compute floating point rather than a
+vector. Then, the array will be clipped evenly.</p></li>
+</ul>
 </dd>
 </dl>
 <dl class="simple">
@@ -2610,6 +2633,9 @@ creating a new file (mode w, w- or x).  Defined as:
 “none”       VFD
 If None use HDF5 defaults.</p>
 </dd>
+<dt>fs_page_size</dt><dd><p>File space page size in bytes. Only used when fs_strategy=”page”. If
+None use the HDF5 default (4096 bytes).</p>
+</dd>
 <dt>fs_persist</dt><dd><p>A boolean value to indicate whether free space should be persistent
 or not.  Only allowed when creating a new file.  The default value
 is False.</p>
@@ -2617,6 +2643,28 @@ is False.</p>
 <dt>fs_threshold</dt><dd><p>The smallest free-space section size that the free space manager
 will track.  Only allowed when creating a new file.  The default
 value is 1.</p>
+</dd>
+<dt>page_buf_size</dt><dd><p>Page buffer size in bytes. Only allowed for HDF5 files created with
+fs_strategy=”page”. Must be a power of two value and greater or
+equal than the file space page size when creating the file. It is
+not used by default.</p>
+</dd>
+<dt>min_meta_keep</dt><dd><p>Minimum percentage of metadata to keep in the page buffer before
+allowing pages containing metadata to be evicted. Applicable only if
+page_buf_size is set. Default value is zero.</p>
+</dd>
+<dt>min_raw_keep</dt><dd><p>Minimum percentage of raw data to keep in the page buffer before
+allowing pages containing raw data to be evicted. Applicable only if
+page_buf_size is set. Default value is zero.</p>
+</dd>
+<dt>locking</dt><dd><p>The file locking behavior. Defined as:
+False (or “false”)  Disable file locking
+True (or “true”)    Enable file locking
+“best-effort”       Enable file locking but ignore some errors
+None                Use HDF5 defaults
+Warning: The HDF5_USE_FILE_LOCKING environment variable can override
+this parameter.
+Only available with HDF5 &gt;= 1.12.1 or 1.10.x &gt;= 1.10.7.</p>
 </dd>
 <dt>Additional keywords</dt><dd><p>Passed on to the selected file driver.</p>
 </dd>
@@ -3113,7 +3161,7 @@ the function requires the input to be of the same shape</p>
 </dd>
 </dl>
 <p>Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Wednesday, 17th November 2021 03:56:42 pm</p>
+Last Modified: Thursday, 2nd December 2021 12:20:00 pm</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="seismic.monitor.dv.DV">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seismic.monitor.dv.</span></span><span class="sig-name descname"><span class="pre">DV</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">corr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_mat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#seismic.correlate.stats.CorrStats" title="seismic.correlate.stats.CorrStats"><span class="pre">seismic.correlate.stats.CorrStats</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seismic/monitor/dv.html#DV"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.dv.DV" title="Permalink to this definition">¶</a></dt>
@@ -3133,7 +3181,7 @@ later be read using <a class="reference internal" href="#seismic.monitor.dv.read
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seismic.monitor.dv.DV.plot">
-<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_file_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">datetime.datetime</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_simmat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_mat_Clim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(9,</span> <span class="pre">11)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dpi</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">72</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seismic/monitor/dv.html#DV.plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.dv.DV.plot" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_file_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">datetime.datetime</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_simmat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_mat_Clim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(9,</span> <span class="pre">11)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dpi</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">72</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seismic/monitor/dv.html#DV.plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.dv.DV.plot" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -3187,7 +3235,32 @@ Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-
 </dd>
 </dl>
 <p>Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Wednesday, 17th November 2021 09:37:40 am</p>
+Last Modified: Friday, 3rd December 2021 09:51:24 am</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="seismic.monitor.post_corr_process.corr_mat_clip">
+<span class="sig-prename descclassname"><span class="pre">seismic.monitor.post_corr_process.</span></span><span class="sig-name descname"><span class="pre">corr_mat_clip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thres</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span></span></span><a class="reference internal" href="../_modules/seismic/monitor/post_corr_process.html#corr_mat_clip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.post_corr_process.corr_mat_clip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clip the Input Matrix upper and lower bounds to a multiple of its
+standard deviation. <cite>thres</cite> determines the factor and <cite>axis</cite> the axis
+the std should be computed over</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A</strong> (<em>np.ndarray</em>) – Input Array to be clipped</p></li>
+<li><p><strong>thres</strong> (<em>float</em>) – factor of the standard deviation to clip by</p></li>
+<li><p><strong>axis</strong> (<em>int</em>) – Axis to compute the std over and, subsequently clip over.
+Can be None, if you wish to compute floating point rather than a
+vector. Then, the array will be clipped evenly.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The clipped array</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="seismic.monitor.post_corr_process.corr_mat_smooth">
 <span class="sig-prename descclassname"><span class="pre">seismic.monitor.post_corr_process.</span></span><span class="sig-name descname"><span class="pre">corr_mat_smooth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span></span></span><a class="reference internal" href="../_modules/seismic/monitor/post_corr_process.html#corr_mat_smooth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.post_corr_process.corr_mat_smooth" title="Permalink to this definition">¶</a></dt>
@@ -4269,7 +4342,7 @@ containing the stretches relative units.</p></li>
 </dd>
 </dl>
 <p>Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Monday, 8th November 2021 02:49:23 pm</p>
+Last Modified: Wednesday, 1st December 2021 04:24:05 pm</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seismic.plot.plot_correlation.plot_ctr">
 <span class="sig-prename descclassname"><span class="pre">seismic.plot.plot_correlation.</span></span><span class="sig-name descname"><span class="pre">plot_ctr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">corr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">obspy.core.trace.Trace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tlim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">matplotlib.axes._axes.Axes</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">matplotlib.axes._axes.Axes</span></span></span><a class="reference internal" href="../_modules/seismic/plot/plot_correlation.html#plot_ctr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.plot.plot_correlation.plot_ctr" title="Permalink to this definition">¶</a></dt>
@@ -4340,10 +4413,10 @@ a wiggle type plot. Default to <cite>heat</cite></p></li>
 </dd>
 </dl>
 <p>Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Thursday, 21st October 2021 02:37:44 pm</p>
+Last Modified: Friday, 3rd December 2021 08:20:14 am</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seismic.plot.plot_dv.plot_dv">
-<span class="sig-prename descclassname"><span class="pre">seismic.plot.plot_dv.</span></span><span class="sig-name descname"><span class="pre">plot_dv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_file_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_simmat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_mat_Clim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(9,</span> <span class="pre">11)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dpi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">72</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seismic/plot/plot_dv.html#plot_dv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.plot.plot_dv.plot_dv" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">seismic.plot.plot_dv.</span></span><span class="sig-name descname"><span class="pre">plot_dv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_file_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_simmat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_mat_Clim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(9,</span> <span class="pre">11)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dpi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">72</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seismic/plot/plot_dv.html#plot_dv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.plot.plot_dv.plot_dv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot the “extended” dv dictionary</p>
 <p>This function is thought to plot the result of the velocity change estimate
 as output by <code class="xref py py-class docutils literal notranslate"><span class="pre">multi_ref_vchange_and_align</span></code>
@@ -4382,6 +4455,7 @@ in the <cite>dv/v</cite> and <cite>corr</cite> plot as a vertical line.</p></li>
 of 1. Defaults to False</p></li>
 <li><p><strong>sim_mat_Clim</strong> (<em>2 element array_like</em>) – if non-empty it set the color scale limits of the
 similarity matrix image</p></li>
+<li><p><strong>ylim</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>, </em><em>optional</em>) – Limits for the stretch axis. Defaults to None</p></li>
 </ul>
 </dd>
 </dl>
@@ -4968,7 +5042,7 @@ to do so</p>
     
     <div class="footer-item">
       <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.0.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.1.<br>
 </p>
     </div>
     

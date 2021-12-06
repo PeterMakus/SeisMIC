@@ -186,7 +186,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 15th June 2021 04:12:18 pm</span>
-<span class="sd">Last Modified: Wednesday, 17th November 2021 03:56:42 pm</span>
+<span class="sd">Last Modified: Thursday, 2nd December 2021 12:20:00 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
@@ -235,11 +235,11 @@
 <div class="viewcode-block" id="DV.plot"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.dv.DV.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">figure_file_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">mark_time</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normalize_simmat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">sim_mat_Clim</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+        <span class="n">sim_mat_Clim</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">ylim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">figsize</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">),</span> <span class="n">dpi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">72</span><span class="p">):</span>
         <span class="n">plot_dv</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">,</span> <span class="n">figure_file_name</span><span class="p">,</span> <span class="n">mark_time</span><span class="p">,</span>
-            <span class="n">normalize_simmat</span><span class="p">,</span> <span class="n">sim_mat_Clim</span><span class="p">,</span> <span class="n">figsize</span><span class="p">,</span> <span class="n">dpi</span><span class="p">)</span></div>
+            <span class="n">normalize_simmat</span><span class="p">,</span> <span class="n">sim_mat_Clim</span><span class="p">,</span> <span class="n">figsize</span><span class="p">,</span> <span class="n">dpi</span><span class="p">,</span> <span class="n">ylim</span><span class="o">=</span><span class="n">ylim</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DV.smooth_sim_mat"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.dv.DV.smooth_sim_mat">[docs]</a>    <span class="k">def</span> <span class="nf">smooth_sim_mat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">win_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -303,7 +303,7 @@
     
     <div class="footer-item">
       <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.0.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.1.<br>
 </p>
     </div>
     
