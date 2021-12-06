@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Thursday, 11th November 2021 11:50:40 am
+Last Modified: Monday, 6th December 2021 12:44:41 pm
 '''
 from copy import deepcopy
 import unittest
@@ -271,7 +271,7 @@ class TestCorrrelator(unittest.TestCase):
                 mock.call('bla', 'stack_86398')
             ]
             c._write.assert_has_calls(write_calls)
-        cst_mock().clear.assert_called_once()
+        cst_mock().clear.assert_called()
         cst_mock().extend.assert_called_once()
 
     @mock.patch('seismic.correlate.correlate.CorrStream')
