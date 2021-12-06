@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Wednesday, 17th November 2021 09:37:40 am
+Last Modified: Friday, 3rd December 2021 09:51:24 am
 '''
 
 from typing import List, Tuple
@@ -26,7 +26,29 @@ from seismic.monitor.stretch_mod import multi_ref_vchange_and_align, \
 from seismic.correlate.stats import CorrStats
 
 
-# This needs some tidying
+def corr_mat_clip(A: np.ndarray, thres: float, axis: int) -> np.ndarray:
+    """
+    Clip the Input Matrix upper and lower bounds to a multiple of its
+    standard deviation. `thres` determines the factor and `axis` the axis
+    the std should be computed over
+
+    :param A: Input Array to be clipped
+    :type A: np.ndarray
+    :param thres: factor of the standard deviation to clip by
+    :type thres: float
+    :param axis: Axis to compute the std over and, subsequently clip over.
+        Can be None, if you wish to compute floating point rather than a
+        vector. Then, the array will be clipped evenly.
+    :type axis: int
+    :return: The clipped array
+    :rtype: np.ndarray
+    """
+    clipv = thres * np.std(A, axis=axis)
+    if axis == 1:
+        A = np.clip(A.T, -clipv, clipv).T
+    else:
+        A = np.clip(A, -clipv, clipv)
+    return A
 
 
 def _smooth(

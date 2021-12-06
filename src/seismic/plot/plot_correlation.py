@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Monday, 8th November 2021 02:49:23 pm
+Last Modified: Wednesday, 1st December 2021 04:24:05 pm
 '''
 import os
 import warnings
@@ -220,7 +220,8 @@ def heat_plot_corr_start(cst: Stream, ax: plt.Axes):
         data[ii, :] = ctr.data
         y.append(ctr.stats['corr_start'].datetime)
         times = ctr.times()
-    plt.pcolormesh(times, np.array(y), data)
+    ds = plt.pcolormesh(times, np.array(y), data, shading='auto')
+    plt.colorbar(ds)
     ax.yaxis.set_major_locator(mpl.dates.AutoDateLocator())
     ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h'))
     return times

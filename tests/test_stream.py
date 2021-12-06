@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Thursday, 25th November 2021 08:37:01 am
+Last Modified: Friday, 3rd December 2021 09:58:36 am
 '''
 
 import unittest
@@ -64,6 +64,18 @@ class TestCorrBulk(unittest.TestCase):
             mock.ANY, cb.stats, 0, 0, 'blatest')
         self.assertIn(
             'normalize; normtype: blatest, starttime: 0, endtime: 0',
+            cb.stats.processing_bulk)
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_clip')
+    def test_clip(self, clip_mock):
+        cb = self.cb.copy()
+        clip_mock.return_value = np.zeros((5,))
+        cb.clip(0, None)
+        clip_mock.assert_called_once_with(
+            mock.ANY, 0, None)
+        np.testing.assert_array_equal(cb.data, np.zeros((5,)))
+        self.assertIn(
+            'Clipped; threshold: 0*std, axis=None',
             cb.stats.processing_bulk)
 
     def test_copy(self):

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Wednesday, 17th November 2021 03:56:42 pm
+Last Modified: Thursday, 2nd December 2021 12:20:00 pm
 '''
 
 from datetime import datetime
@@ -57,11 +57,11 @@ class DV(object):
     def plot(
         self, save_dir: str = '.', figure_file_name: str = None,
         mark_time: datetime = None, normalize_simmat: bool = False,
-        sim_mat_Clim: List[float] = [],
+        sim_mat_Clim: List[float] = [], ylim: Tuple[int, int] = None,
             figsize: Tuple[float, float] = (9, 11), dpi: int = 72):
         plot_dv(
             self.__dict__, save_dir, figure_file_name, mark_time,
-            normalize_simmat, sim_mat_Clim, figsize, dpi)
+            normalize_simmat, sim_mat_Clim, figsize, dpi, ylim=ylim)
 
     def smooth_sim_mat(self, win_len: int):
         """
