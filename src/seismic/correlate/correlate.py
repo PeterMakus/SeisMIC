@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 10th November 2021 05:16:38 pm
+Last Modified: Monday, 6th December 2021 12:37:44 pm
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -259,6 +259,7 @@ class Correlator(object):
                     cst.clear()
                 elif cst.count():
                     self._write(cst, tag='subdivision')
+                cst.clear()
 
         # write the remaining data
         if self.options['subdivision']['recombine_subdivision'] and \
@@ -346,13 +347,11 @@ class Correlator(object):
                 st.append(tr)
         cstlist.append(st)
         del cst
-
         # Decide which process writes to which station
         pmap = (np.arange(len(cstlist))*self.psize)/len(cstlist)
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
         ind = np.arange(len(cstlist))[ind]
-
         for ii in ind:
             outf = os.path.join(self.corr_dir, '%s.%s.h5' % (
                 cstlist[ii][0].stats.network,
@@ -621,13 +620,21 @@ def st_to_np_array(st: Stream, npts: int) -> Tuple[np.ndarray, Stream]:
 def _compare_existing_data(ex_corr: dict, tr0: Stream, tr1: Stream) -> bool:
     try:
         if tr0.stats.starttime.format_fissures() in ex_corr[
-            '%s.%s' % (tr0.stats.network, tr0.stats.station)][
-            '%s.%s' % (tr1.stats.network, tr1.stats.station)][
+            f'{tr0.stats.network}.{tr0.stats.station}'][
+                f'{tr1.stats.network}.{tr1.stats.station}'][
             '%s-%s' % (
                 tr0.stats.channel, tr1.stats.channel)]:
             return True
     except KeyError:
-        pass
+        try:
+            if tr1.stats.starttime.format_fissures() in ex_corr[
+                f'{tr1.stats.network}.{tr1.stats.station}'][
+                    f'{tr0.stats.network}.{tr0.stats.station}'][
+                '%s-%s' % (
+                    tr1.stats.channel, tr0.stats.channel)]:
+                return True
+        except KeyError:
+            pass
     return False
 
 
