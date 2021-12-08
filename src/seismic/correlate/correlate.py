@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 6th December 2021 12:37:44 pm
+Last Modified: Wednesday, 8th December 2021 11:15:06 am
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -105,6 +105,9 @@ class Correlator(object):
         # requested combis?
         if 'xcombinations' in self.options:
             self.rcombis = self.options['xcombinations']
+            if self.rcombis == 'None':
+                # cumbersome, but someone used it wrong so let's hardcode
+                self.rcombis = None
         else:
             self.rcombis = None
 
