@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Wednesday, 17th November 2021 03:31:29 pm
+Last Modified: Wednesday, 8th December 2021 11:07:09 am
 '''
 from typing import List, Tuple
 import logging
@@ -156,8 +156,14 @@ def resample_or_decimate(
 
     # Chosen this filter design as it's exactly the same as
     # obspy.Stream.decimate uses
-    if filter:
-        freq = sr * 0.5 / float(sr/srn)
+    # Decimation factor
+    factor = float(sr)/float(srn)
+    if filter and factor <= 16:
+        freq = sr * 0.5 / factor
+        data.filter('lowpass_cheby_2', freq=freq, maxorder=12)
+    elif filter:
+        # Use a different filter
+        freq = sr * 0.45 / factor
         data.filter('lowpass_cheby_2', freq=freq, maxorder=12)
 
     if sr/srn == sr//srn:
