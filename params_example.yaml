@@ -95,17 +95,17 @@ co:
                                     {'function':'seismic.correlate.preprocessing_td.detrend',
                                     'args':{'type':'linear'}},
                                    {'function':'seismic.correlate.preprocessing_td.TDfilter',
-                                   'args':{'type':'bandpass','freqmin':4,'freqmax':8}},
-                                  # {'function':'seismic.correlate.preprocessing_td.taper',
-                                  #  'args': {'type':'cosine_taper','p':0.02}},
-                                    # {'function':'seismic.correlate.preprocessing_td.mute',
+                                   'args':{'type':'bandpass','freqmin':2,'freqmax':8}},
+                                    #{'function':'seismic.correlate.preprocessing_td.mute',
                                     # 'args':{'taper_len':100.,
-                                    #        'threshold':1000, absolute threshold
+                                           # 'threshold':1000, absolute threshold
                                     #         'std_factor':3,
                                     #         'filter':{'type':'bandpass','freqmin':2,'freqmax':4},
                                     #         'extend_gaps':True}},
                                    {'function':'seismic.correlate.preprocessing_td.clip',
-                                    'args':{'std_factor':3}},
+                                    'args':{'std_factor':2.5}},
+                                   {'function':'seismic.correlate.preprocessing_td.signBitNormalization',
+                                    'args': {}}
                                    ],
                   # Standard functions reside in seismic.correlate.preprocessing_fd
                  'FDpreProcessing':[
