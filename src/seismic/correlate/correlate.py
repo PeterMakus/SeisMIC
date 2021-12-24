@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 8th December 2021 11:15:06 am
+Last Modified: Friday, 17th December 2021 10:33:49 am
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
@@ -262,7 +262,7 @@ class Correlator(object):
                     cst.clear()
                 elif cst.count():
                     self._write(cst, tag='subdivision')
-                cst.clear()
+                    cst.clear()
 
         # write the remaining data
         if self.options['subdivision']['recombine_subdivision'] and \
