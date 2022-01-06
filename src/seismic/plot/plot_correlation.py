@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Friday, 17th December 2021 01:51:43 pm
+Last Modified: Thursday, 6th January 2022 02:29:22 pm
 '''
 import os
 import warnings
@@ -208,6 +208,7 @@ def sect_plot_corr_start(
     ax.yaxis.set_major_locator(mpl.dates.AutoDateLocator())
 
     ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h'))
+    ax.invert_yaxis()
     return times
 
 
@@ -223,6 +224,7 @@ def heat_plot_corr_start(cst: Stream, ax: plt.Axes):
     plt.colorbar(ds)
     ax.yaxis.set_major_locator(mpl.dates.AutoDateLocator())
     ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h'))
+    ax.invert_yaxis()
     return times
 
 
