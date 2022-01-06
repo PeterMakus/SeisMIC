@@ -6,7 +6,7 @@ dependencies:
   - h5py
   - matplotlib
   - mpi4py
-  - numpy=1.21.5
+  - numpy<1.22.0
   - obspy
   - pip
   - prov
