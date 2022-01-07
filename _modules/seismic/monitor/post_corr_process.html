@@ -187,7 +187,7 @@
 <span class="sd">    Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 14th June 2021 08:50:57 am</span>
-<span class="sd">Last Modified: Friday, 3rd December 2021 09:51:24 am</span>
+<span class="sd">Last Modified: Tuesday, 21st December 2021 08:23:05 am</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
@@ -477,7 +477,7 @@
 <span class="s2">            start_times.&quot;</span><span class="p">)</span>
 
     <span class="c1"># old sampling times</span>
-    <span class="n">otime</span> <span class="o">=</span> <span class="p">[</span><span class="n">ii</span><span class="o">.</span><span class="n">timestamp</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;corr_start&#39;</span><span class="p">]]</span>
+    <span class="n">otime</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ii</span><span class="o">.</span><span class="n">timestamp</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;corr_start&#39;</span><span class="p">]])</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">start_times</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">UTCDateTime</span><span class="p">):</span>
         <span class="n">start_times</span> <span class="o">=</span> <span class="p">[</span><span class="n">ii</span><span class="o">.</span><span class="n">timestamp</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">start_times</span><span class="p">]</span>
 
@@ -490,7 +490,7 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">start_times</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="c1"># there is only one start_time given and no end_time =&gt; average all</span>
-            <span class="n">etime</span> <span class="o">=</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;corr_end&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">etime</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;corr_end&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">timestamp</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">stime</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">stime</span><span class="p">)</span>  <span class="c1"># Cannot be a list for this operation</span>
             <span class="n">etime</span> <span class="o">=</span> <span class="n">stime</span> <span class="o">+</span> <span class="p">(</span><span class="n">stime</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">stime</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -1270,13 +1270,13 @@
     
     <div class="footer-item">
       <p class="copyright">
-    &copy; Copyright 2021, The SeisMIC development team..<br>
+    &copy; Copyright 2022, The SeisMIC development team..<br>
 </p>
     </div>
     
     <div class="footer-item">
       <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.1.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.2.<br>
 </p>
     </div>
     

@@ -254,31 +254,31 @@ Green’s function.</p>
 <h2>Arguments in <code class="docutils literal notranslate"><span class="pre">params.yaml</span></code><a class="headerlink" href="#arguments-in-params-yaml" title="Permalink to this headline">¶</a></h2>
 <p>To set the arguments for our velocity change computation, we will once again use the yaml file as shown before. Right at the bottom
 of this file, you will find a section with the key <code class="docutils literal notranslate"><span class="pre">dv</span></code>:</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1">#### parameters for the estimation of time differences</span>
-<span class="linenos"> 2</span><span class="nt">dv</span><span class="p">:</span>
-<span class="linenos"> 3</span>    <span class="c1"># subfolder for storage of time difference results</span>
-<span class="linenos"> 4</span>    <span class="nt">subdir </span><span class="p">:</span> <span class="s">&#39;vel_change&#39;</span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1">#### parameters for the estimation of time differences</span><span class="w"></span>
+<span class="linenos"> 2</span><span class="nt">dv</span><span class="p">:</span><span class="w"></span>
+<span class="linenos"> 3</span><span class="w">    </span><span class="c1"># subfolder for storage of time difference results</span><span class="w"></span>
+<span class="linenos"> 4</span><span class="w">    </span><span class="nt">subdir </span><span class="p">:</span><span class="w"> </span><span class="s">&#39;vel_change&#39;</span><span class="w"></span>
 <span class="linenos"> 5</span>
-<span class="linenos"> 6</span>    <span class="c1"># Plotting</span>
-<span class="linenos"> 7</span>    <span class="nt">plot_vel_change </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="c1"># Plotting</span><span class="w"></span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="nt">plot_vel_change </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span><span class="w"></span>
 <span class="linenos"> 8</span>
-<span class="linenos"> 9</span>    <span class="c1">### Definition of calender time windows for the time difference measurements</span>
-<span class="linenos">10</span>    <span class="nt">start_date </span><span class="p">:</span> <span class="s">&#39;2015-05-01</span><span class="nv"> </span><span class="s">00:00:00.0&#39;</span>   <span class="c1"># %Y-%m-%dT%H:%M:%S.%fZ&#39;</span>
-<span class="linenos">11</span>    <span class="nt">end_date </span><span class="p">:</span> <span class="s">&#39;2016-01-01</span><span class="nv"> </span><span class="s">00:00:00.0&#39;</span>
-<span class="linenos">12</span>    <span class="nt">win_len </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">86400</span>                         <span class="c1"># length of window in which EGFs are stacked</span>
-<span class="linenos">13</span>    <span class="nt">date_inc </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">86400</span>                        <span class="c1"># increment of measurements</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="c1">### Definition of calender time windows for the time difference measurements</span><span class="w"></span>
+<span class="linenos">10</span><span class="w">    </span><span class="nt">start_date </span><span class="p">:</span><span class="w"> </span><span class="s">&#39;2015-05-01</span><span class="nv"> </span><span class="s">00:00:00.0&#39;</span><span class="w">   </span><span class="c1"># %Y-%m-%dT%H:%M:%S.%fZ&#39;</span><span class="w"></span>
+<span class="linenos">11</span><span class="w">    </span><span class="nt">end_date </span><span class="p">:</span><span class="w"> </span><span class="s">&#39;2016-01-01</span><span class="nv"> </span><span class="s">00:00:00.0&#39;</span><span class="w"></span>
+<span class="linenos">12</span><span class="w">    </span><span class="nt">win_len </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">86400</span><span class="w">                         </span><span class="c1"># length of window in which EGFs are stacked</span><span class="w"></span>
+<span class="linenos">13</span><span class="w">    </span><span class="nt">date_inc </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">86400</span><span class="w">                        </span><span class="c1"># increment of measurements</span><span class="w"></span>
 <span class="linenos">14</span>
-<span class="linenos">15</span>    <span class="c1">### Frequencies</span>
-<span class="linenos">16</span>    <span class="nt">freq_min </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.1</span>
-<span class="linenos">17</span>    <span class="nt">freq_max </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.5</span>
+<span class="linenos">15</span><span class="w">    </span><span class="c1">### Frequencies</span><span class="w"></span>
+<span class="linenos">16</span><span class="w">    </span><span class="nt">freq_min </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span><span class="w"></span>
+<span class="linenos">17</span><span class="w">    </span><span class="nt">freq_max </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span><span class="w"></span>
 <span class="linenos">18</span>
-<span class="linenos">19</span>    <span class="c1">### Definition of lapse time window</span>
-<span class="linenos">20</span>    <span class="nt">tw_start </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">20</span>     <span class="c1"># lapse time of first sample [s]</span>
-<span class="linenos">21</span>    <span class="nt">tw_len </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">60</span>       <span class="c1"># length of window [s]</span>
+<span class="linenos">19</span><span class="w">    </span><span class="c1">### Definition of lapse time window</span><span class="w"></span>
+<span class="linenos">20</span><span class="w">    </span><span class="nt">tw_start </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span><span class="w">     </span><span class="c1"># lapse time of first sample [s]</span><span class="w"></span>
+<span class="linenos">21</span><span class="w">    </span><span class="nt">tw_len </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60</span><span class="w">       </span><span class="c1"># length of window [s]</span><span class="w"></span>
 <span class="linenos">22</span>
-<span class="linenos">23</span>    <span class="c1">### Range to try stretching</span>
-<span class="linenos">24</span>    <span class="nt">stretch_range </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.03</span>
-<span class="linenos">25</span>    <span class="nt">stretch_steps </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1001</span>
+<span class="linenos">23</span><span class="w">    </span><span class="c1">### Range to try stretching</span><span class="w"></span>
+<span class="linenos">24</span><span class="w">    </span><span class="nt">stretch_range </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.03</span><span class="w"></span>
+<span class="linenos">25</span><span class="w">    </span><span class="nt">stretch_steps </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1001</span><span class="w"></span>
 </pre></div>
 </div>
 <p>As you can see, there are only fairly few settings that can be changed, some of which are very obvious again:</p>
@@ -350,13 +350,13 @@ You can start the script using mpi:</p>
     
     <div class="footer-item">
       <p class="copyright">
-    &copy; Copyright 2021, The SeisMIC development team..<br>
+    &copy; Copyright 2022, The SeisMIC development team..<br>
 </p>
     </div>
     
     <div class="footer-item">
       <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.1.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.2.<br>
 </p>
     </div>
     

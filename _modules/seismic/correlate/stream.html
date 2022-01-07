@@ -186,7 +186,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 20th April 2021 04:19:35 pm</span>
-<span class="sd">Last Modified: Friday, 3rd December 2021 09:58:24 am</span>
+<span class="sd">Last Modified: Thursday, 6th January 2022 01:38:10 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
@@ -1586,14 +1586,15 @@
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">mutables</span><span class="p">:</span>
             <span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">trstat</span><span class="p">[</span><span class="n">key</span><span class="p">]]</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">immutables</span><span class="p">:</span>
-            <span class="n">ph</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]),</span> <span class="nb">str</span><span class="p">(</span><span class="n">trstat</span><span class="p">[</span><span class="n">key</span><span class="p">]),</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">],</span>
-                <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;station&#39;</span><span class="p">])</span>
-            <span class="k">if</span> <span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">!=</span> <span class="n">trstat</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s1">&#39;The stream contains data with different properties. </span><span class="se">\</span>
-<span class="s1">The differing property is </span><span class="si">%s</span><span class="s1">. With the values: </span><span class="si">%s</span><span class="s1"> and </span><span class="si">%s</span><span class="s1">. For station </span><span class="se">\</span>
-<span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">ph</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">!=</span> <span class="n">trstat</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s1">&#39;The stream contains data with different properties. &#39;</span>
+                        <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;The differing property is </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">. &#39;</span>
+                        <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;With the values: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s1"> and </span><span class="si">{</span><span class="n">trstat</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s1">. &#39;</span>
+                        <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;For station </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;network&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;station&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;No information about </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1"> in header.&#39;</span><span class="p">)</span>
     <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;ntrcs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">statlist</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">stats</span></div>
 </pre></div>
@@ -1617,13 +1618,13 @@
     
     <div class="footer-item">
       <p class="copyright">
-    &copy; Copyright 2021, The SeisMIC development team..<br>
+    &copy; Copyright 2022, The SeisMIC development team..<br>
 </p>
     </div>
     
     <div class="footer-item">
       <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.1.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.3.2.<br>
 </p>
     </div>
     
