@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Wednesday, 1st December 2021 04:24:05 pm
+Last Modified: Thursday, 6th January 2022 02:29:22 pm
 '''
 import os
 import warnings
@@ -178,7 +178,6 @@ def plot_cst(
         plt.xlim(times[0], times[-1])
     else:
         plt.xlim(timelimits)
-    ax.invert_yaxis()
 
     plt.xlabel(r"Lag Time [s]")
 
@@ -209,6 +208,7 @@ def sect_plot_corr_start(
     ax.yaxis.set_major_locator(mpl.dates.AutoDateLocator())
 
     ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h'))
+    ax.invert_yaxis()
     return times
 
 
@@ -224,6 +224,7 @@ def heat_plot_corr_start(cst: Stream, ax: plt.Axes):
     plt.colorbar(ds)
     ax.yaxis.set_major_locator(mpl.dates.AutoDateLocator())
     ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h'))
+    ax.invert_yaxis()
     return times
 
 
@@ -234,11 +235,12 @@ def sect_plot_dist(
         ydata = ctr.data
         times = ctr.times()
 
-        ytmp = ydata * scalingfactor + ctr.stats.dist/1000
+        ytmp = ydata * scalingfactor + ctr.stats.dist
 
         ax.plot(times, ytmp, 'k', lw=linewidth, zorder=-ii + 0.1)
         plt.ylabel(r"Distance [km]")
     # Set label locations.
-    step = round((cst[-1].stats.dist - cst[0].stats.dist)/10000)
-    plt.yticks(np.arange(0, ctr.stats.dist/1000+step, step, dtype=int))
+    # step = round((cst[-1].stats.dist - cst[0].stats.dist)/10000)
+    # plt.yticks(np.arange(0, ctr.stats.dist/1000+step, step, dtype=int))
+    plt.yticks(np.linspace(0, ctr.stats.dist, 10, dtype=int))
     return times

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Wednesday, 17th November 2021 03:57:53 pm
+Last Modified: Wednesday, 8th December 2021 11:07:22 am
 '''
 from copy import deepcopy
 import unittest
@@ -80,6 +80,18 @@ class TestResampleOrDecimate(unittest.TestCase):
         self.assertEqual(st_filt[0].stats.sampling_rate, freq_new)
         self.assertIn('resample', st_filt[0].stats.processing[-1])
         self.assertIn('no_filter=True', st_filt[0].stats.processing[-1])
+
+    def test_filter_w_high_factor(self):
+        # Here we filter 10% lower than Nyquist
+        st = read()
+        freq_new = 1
+        st_filt = mu.resample_or_decimate(st, freq_new)
+        self.assertEqual(st_filt[0].stats.sampling_rate, freq_new)
+        self.assertIn('decimate', st_filt[0].stats.processing[-1])
+        self.assertIn('filter', st_filt[0].stats.processing[-2])
+        self.assertIn(
+            "filter(options={'freq': 0.45, 'maxorder': 12}:"
+            + ":type='lowpass_cheby_2')", st_filt[0].stats.processing[-2])
 
     def test_new_freq_higher_than_native(self):
         st = read()

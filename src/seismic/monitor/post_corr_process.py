@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Friday, 3rd December 2021 09:51:24 am
+Last Modified: Tuesday, 21st December 2021 08:23:05 am
 '''
 
 from typing import List, Tuple
@@ -299,7 +299,7 @@ def corr_mat_resample(
             start_times.")
 
     # old sampling times
-    otime = [ii.timestamp for ii in stats['corr_start']]
+    otime = np.array([ii.timestamp for ii in stats['corr_start']])
     if isinstance(start_times[0], UTCDateTime):
         start_times = [ii.timestamp for ii in start_times]
 
@@ -312,7 +312,7 @@ def corr_mat_resample(
     else:
         if len(start_times) == 1:
             # there is only one start_time given and no end_time => average all
-            etime = stats['corr_end'][-1]
+            etime = np.array([stats['corr_end'][-1].timestamp])
         else:
             stime = np.array(stime)  # Cannot be a list for this operation
             etime = stime + (stime[1] - stime[0])

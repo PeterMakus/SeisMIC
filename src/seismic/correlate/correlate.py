@@ -8,13 +8,14 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 6th December 2021 12:37:44 pm
+Last Modified: Thursday, 6th January 2022 10:40:49 am
 '''
 from typing import Iterator, List, Tuple
 from warnings import warn
 import os
 import logging
 import json
+import warnings
 import yaml
 
 from mpi4py import MPI
@@ -105,6 +106,9 @@ class Correlator(object):
         # requested combis?
         if 'xcombinations' in self.options:
             self.rcombis = self.options['xcombinations']
+            if self.rcombis == 'None':
+                # cumbersome, but someone used it wrong so let's hardcode
+                self.rcombis = None
         else:
             self.rcombis = None
 
@@ -240,7 +244,18 @@ class Correlator(object):
         cst = CorrStream()
         # Fetch station coordinates
         if self.rank == 0:
-            inv = self.store_client.read_inventory()
+            try:
+                inv = self.store_client.read_inventory()
+            except Exception as e:
+                if self.options['remove_response']:
+                    raise FileNotFoundError(
+                        'No response information could be found.'
+                        + 'If you set remove_response to True, you will need'
+                        + 'a station inventory.')
+                logging.warning(e)
+                warnings.warn(
+                    'No Station Inventory found. Proceeding without.')
+                inv = None
         else:
             inv = None
         inv = self.comm.bcast(inv, root=0)
@@ -259,7 +274,7 @@ class Correlator(object):
                     cst.clear()
                 elif cst.count():
                     self._write(cst, tag='subdivision')
-                cst.clear()
+                    cst.clear()
 
         # write the remaining data
         if self.options['subdivision']['recombine_subdivision'] and \
@@ -412,7 +427,7 @@ class Correlator(object):
             for net, stat in np.array(self.station)[ind]:
                 # Load data
                 resp.extend(
-                    self.store_client.select_inventory_or_load_remote(
+                    self.store_client.inventory.select(
                         net, stat))
                 stext = self.store_client._load_local(
                     net, stat, '*', '*', startt, endt, True, False)
