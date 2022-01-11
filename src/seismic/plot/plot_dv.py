@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Friday, 3rd December 2021 08:20:14 am
+Last Modified: Tuesday, 11th January 2022 05:16:51 pm
 '''
 
 from typing import Tuple
@@ -23,7 +23,7 @@ from seismic.plot.plot_utils import set_mpl_params
 def plot_dv(
     dv, save_dir='.', figure_file_name=None, mark_time=None,
     normalize_simmat=False, sim_mat_Clim=[], figsize=(9, 11), dpi=72,
-        ylim: Tuple[float, float] = None):
+        ylim: Tuple[float, float] = None, title: str = None):
     """ Plot the "extended" dv dictionary
 
     This function is thought to plot the result of the velocity change estimate
@@ -165,8 +165,10 @@ def plot_dv(
     comb_mseedid = '%s.%s.%s.%s' % (
         stats['network'], stats['station'], stats['location'],
         stats['channel'])
-
-    tit = "%s estimate (%s)" % (tit, comb_mseedid)
+    if title:
+        tit = title
+    else:
+        tit = "%s estimate (%s)" % (tit, comb_mseedid)
 
     ax1.set_title(tit)
     ax1.yaxis.set_ticks_position('right')
