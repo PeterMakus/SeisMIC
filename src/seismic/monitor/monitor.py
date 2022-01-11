@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 12th November 2021 03:11:59 pm
+Last Modified: Tuesday, 11th January 2022 04:43:33 pm
 '''
 from copy import deepcopy
 import logging
@@ -74,6 +74,8 @@ class Monitor(object):
         else:
             tstr = None
         tstr = self.comm.bcast(tstr, root=0)
+        # replace colon in tstr
+        tstr = tstr.replace(':', '-')
         self.logger = logging.getLogger(
             "seismic.monitor.Monitor%s" % str(self.rank).zfill(3))
         self.logger.setLevel(loglvl)
@@ -81,8 +83,8 @@ class Monitor(object):
         # also catch the warnings
         logging.captureWarnings(True)
         warnlog = logging.getLogger('py.warnings')
-        fh = logging.FileHandler(os.path.join(logdir, 'monitor%srank%s' % (
-            tstr, str(self.rank).zfill(3))))
+        fh = logging.FileHandler(os.path.join(
+            logdir, f'monitor{tstr}rank{str(self.rank).zfill(3)}'))
         fh.setLevel(loglvl)
         self.logger.addHandler(fh)
         warnlog.addHandler(fh)
