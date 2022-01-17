@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 17th January 2022 04:04:09 pm
+Last Modified: Monday, 17th January 2022 04:08:54 pm
 '''
 from copy import deepcopy
 import logging
@@ -183,8 +183,13 @@ class Monitor(object):
         for start, end in zip(self.starttimes, self.endtimes):
             cb2 = cb.slice(start, end)
             # Reduce the correlation above using PCA
-            pc_n = pca.fit_transform(cb2.data.T)
-            data2.append(pc_n.T.sum(axis=0))
+            try:
+                pc_n = pca.fit_transform(np.nan_to_num(cb2.data.T))
+                data2.append(pc_n.T.sum(axis=0))
+            except ValueError:
+                pc_n = np.empty((cb.data.shape[1],))
+                pc_n[:] = np.NaN
+                data2.append(pc_n)
         data2 = np.array(data2)
 
         cb.resample(self.starttimes, self.endtimes)  # this stays
