@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 17th January 2022 04:02:54 pm
+Last Modified: Monday, 17th January 2022 04:04:56 pm
 '''
 from copy import deepcopy
 import logging
@@ -22,7 +22,6 @@ from mpi4py import MPI
 import numpy as np
 from obspy import UTCDateTime
 from tqdm import tqdm
-from sklearn.decomposition import PCA
 
 from seismic.db.corr_hdf5 import CorrelationDataBase
 from seismic.monitor.dv import DV, read_dv
