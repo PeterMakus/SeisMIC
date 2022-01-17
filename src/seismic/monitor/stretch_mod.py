@@ -565,6 +565,9 @@ def multi_ref_vchange(
                 remove_nans=remove_nans)
             multi_ref_panel.update({key: value})
 
+    import pickle
+    file_to_write = open("/home/makus/samovar/data/multi_ref_pan.pkl", "wb")
+    pickle.dump(multi_ref_panel, file_to_write)
     return multi_ref_panel
 
 
