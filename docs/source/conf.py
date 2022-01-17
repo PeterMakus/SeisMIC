@@ -19,11 +19,11 @@ sys.path.insert(0, os.path.abspath('../../src'))
 # -- Project information -----------------------------------------------------
 
 project = 'SeisMIC'
-copyright = '2021, The SeisMIC development team.'
+copyright = '2022, The SeisMIC development team.'
 author = 'The SeisMIC development Team'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1'
+release = '0.1.4'
 
 
 # -- General configuration ---------------------------------------------------

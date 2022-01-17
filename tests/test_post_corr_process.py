@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 25th June 2021 09:33:09 am
-Last Modified: Thursday, 21st October 2021 02:59:03 pm
+Last Modified: Friday, 3rd December 2021 09:55:21 am
 '''
 
 import unittest
@@ -18,6 +18,29 @@ from obspy import UTCDateTime
 
 from seismic.monitor import post_corr_process as pcp
 from seismic.correlate.stats import CorrStats
+
+
+class TestClip(unittest.TestCase):
+    def test_axisNone(self):
+        A = np.random.random((5, 5))*2 - 1
+        stdA = np.std(A)
+        A = pcp.corr_mat_clip(A, 1, None)
+        self.assertLessEqual(A.max(), stdA)
+        self.assertGreaterEqual(A.min(), -stdA)
+
+    def test_axis1(self):
+        A = np.random.random((5, 5))*2 - 1
+        stdA = np.std(A, axis=1)
+        A = pcp.corr_mat_clip(A, .5, 1)
+        np.testing.assert_array_less(A.max(axis=1), .5*stdA+1e-4)
+        np.testing.assert_array_less(abs(A.min(axis=1)), .5*stdA+1e-4)
+
+    def test_axis0(self):
+        A = np.random.random((5, 5))*2 - 1
+        stdA = np.std(A, axis=0)
+        A = pcp.corr_mat_clip(A, .5, 0)
+        np.testing.assert_array_less(A.max(axis=0), .5*stdA+1e-4)
+        np.testing.assert_array_less(abs(A.min(axis=0)), .5*stdA+1e-4)
 
 
 class TestSmooth(unittest.TestCase):

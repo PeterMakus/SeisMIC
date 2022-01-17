@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Thursday, 11th November 2021 11:50:40 am
+Last Modified: Thursday, 6th January 2022 10:46:42 am
 '''
 from copy import deepcopy
 import unittest
@@ -271,7 +271,7 @@ class TestCorrrelator(unittest.TestCase):
                 mock.call('bla', 'stack_86398')
             ]
             c._write.assert_has_calls(write_calls)
-        cst_mock().clear.assert_called_once()
+        cst_mock().clear.assert_called()
         cst_mock().extend.assert_called_once()
 
     @mock.patch('seismic.correlate.correlate.CorrStream')
@@ -372,7 +372,7 @@ class TestCorrrelator(unittest.TestCase):
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = [
             ['lala', 'lolo'], ['lala', 'lili']]
-        sc_mock.select_inventory_or_load_remote.return_value = self.inv
+        sc_mock.inventory = self.inv
         sc_mock._load_local.return_value = self.st
         ppst_mock.return_value = self.st
         c = correlate.Correlator(sc_mock, options)

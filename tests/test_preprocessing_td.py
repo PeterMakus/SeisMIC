@@ -8,9 +8,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:54:28 pm
-Last Modified: Thursday, 21st October 2021 02:52:24 pm
+Last Modified: Monday, 22nd November 2021 04:26:53 pm
 '''
+from copy import deepcopy
 import unittest
+from unittest import mock
 
 import numpy as np
 from scipy.fftpack import next_fast_len
@@ -35,6 +37,28 @@ class TestClip(unittest.TestCase):
         A = np.ones((100, 5))
         res = pptd.clip(A.copy(), args, {})
         self.assertTrue(np.all(res == np.zeros_like(A)))
+
+
+class TestDetrend(unittest.TestCase):
+    def test_contains_nan(self):
+        data = np.ones((50, 25))
+        data[1:3, 9:12] = np.nan
+        args = {'type': 'constant'}
+        out = pptd.detrend(data, args, {})
+        np.testing.assert_almost_equal(out[np.logical_not(np.isnan(out))], 0)
+
+    def test_result_linear(self):
+        data = np.arange(500)
+        args = {'type': 'linear'}
+        out = pptd.detrend(data, args, {})
+        np.testing.assert_almost_equal(out, 0)
+
+    def test_only_nans(self):
+        data = np.ones((50, 25))
+        data.fill(np.nan)
+        args = {'type': 'linear'}
+        out = pptd.detrend(data, args, {})
+        np.testing.assert_almost_equal(out, data)
 
 
 class TestMute(unittest.TestCase):
@@ -95,6 +119,21 @@ class TestMute(unittest.TestCase):
         self.assertLessEqual(
             res[:, 0].max(axis=0), args['threshold'])
 
+    @mock.patch('seismic.correlate.preprocessing_td.TDfilter')
+    def test_mute_absolute_w_filter(self, tdf_mock):
+        args = {}
+        args['taper_len'] = 1
+        args['extend_gaps'] = False
+        npts = np.random.randint(400, 749)
+        A = np.tile(gaussian(npts, 180), (2, 1)).T
+        args['threshold'] = A[:, 0].max(axis=0)/np.random.randint(2, 4)
+        args['filter'] = 'blub'
+        tdf_mock.return_value = deepcopy(A)
+        res = pptd.mute(A, args, self.params)
+        self.assertLessEqual(
+            res[:, 0].max(axis=0), args['threshold'])
+        tdf_mock.assert_called_once_with(A, 'blub', self.params)
+
 
 class TestNormalizeStd(unittest.TestCase):
     def test_result(self):
@@ -121,6 +160,25 @@ class TestFDSignBitNormalisation(unittest.TestCase):
             expected_result, pptd.signBitNormalization(A, {}, {})))
 
 
+class TestTaper(unittest.TestCase):
+    def test_cosine_filter(self):
+        data = np.ones((50, 2))
+        exp = deepcopy(data)
+        exp[0, :] = 0
+        exp[-1, :] = 0
+        exp[1, :] = 0.5
+        exp[-2, :] = .5
+        args = {'type': 'cosine_taper', 'p': 0.1}
+        out = pptd.taper(data, args, {})
+        np.testing.assert_allclose(out, exp)
+
+    def test_other_taper(self):
+        data = np.ones((50, 2))
+        args = {'type': 'hann'}
+        out = pptd.taper(deepcopy(data), args, {})
+        np.testing.assert_array_less(out, data)
+
+
 class TestTDNormalisation(unittest.TestCase):
     def setUp(self):
         self.params = {}
@@ -132,16 +190,40 @@ class TestTDNormalisation(unittest.TestCase):
         with self.assertRaises(ValueError):
             pptd.TDnormalization(np.ones((5, 2)), args, self.params)
 
-    # def test_result(self):
-    # Gotta think a little about that one
-    #     args = {}
-    #     args['windowLength'] = 4
-    #     args['filter'] = False
-    #     A = np.ones(
-    #         (np.random.randint(600, 920),
-    #             np.random.randint(2, 8)))*np.random.randint(2, 8)
-    #     res = pptd.TDnormalization(A.copy(), args, self.params)
-    #     self.assertLessEqual(res.max(), 1)
+    def test_result_no_smooth(self):
+        args = {}
+        args['windowLength'] = 1/25
+        args['filter'] = False
+        A = np.random.random((25, 25))
+        res = pptd.TDnormalization(A, args, self.params)
+        # instabilities cause the envelope to become higher
+        np.testing.assert_array_less(res, 1)
+        np.testing.assert_allclose(res, 1, atol=1)
+
+    @mock.patch('seismic.correlate.preprocessing_td.TDfilter')
+    def test_result_no_smooth_filt(self, tdf_mock):
+        args = {}
+        args['windowLength'] = 1/25
+        args['filter'] = 'blub'
+        A = np.random.random((25, 25))
+        tdf_mock.return_value = deepcopy(A)
+        res = pptd.TDnormalization(A, args, self.params)
+        # instabilities cause the envelope to become higher
+        np.testing.assert_array_less(res, 1)
+        np.testing.assert_allclose(res, 1, atol=1)
+        tdf_mock.assert_called_once_with(A, 'blub', self.params)
+
+
+class TestTDFilter(unittest.TestCase):
+    def setUp(self):
+        self.params = {}
+        self.params['sampling_rate'] = 100
+
+    def test_bandpass(self):
+        args = {'type': 'bandpass', 'freqmin': 0.01, 'freqmax': 0.02}
+        A = np.sin(np.linspace(0, 10*np.pi, 50)).T
+        out = pptd.TDfilter(A, args, self.params)
+        np.testing.assert_allclose(out, 0, atol=1e-8)
 
 
 class TestZeroPadding(unittest.TestCase):

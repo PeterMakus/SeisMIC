@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Wednesday, 10th November 2021 10:31:11 am
+Last Modified: Wednesday, 8th December 2021 11:07:09 am
 '''
 from typing import List, Tuple
 import logging
@@ -156,8 +156,14 @@ def resample_or_decimate(
 
     # Chosen this filter design as it's exactly the same as
     # obspy.Stream.decimate uses
-    if filter:
-        freq = sr * 0.5 / float(sr/srn)
+    # Decimation factor
+    factor = float(sr)/float(srn)
+    if filter and factor <= 16:
+        freq = sr * 0.5 / factor
+        data.filter('lowpass_cheby_2', freq=freq, maxorder=12)
+    elif filter:
+        # Use a different filter
+        freq = sr * 0.45 / factor
         data.filter('lowpass_cheby_2', freq=freq, maxorder=12)
 
     if sr/srn == sr//srn:
@@ -340,6 +346,34 @@ def discard_short_traces(st: Stream, length: float):
         if tr.stats.npts/tr.stats.sampling_rate <= length:
             st.remove(tr)
     return
+
+
+def nan_moving_av(
+        data: np.ndarray, win_half_len: int, axis: int = -1) -> np.ndarray:
+    """
+    Returns a filtered version of data, disregarding the nans.
+    Moving mean window length is win_half_len*2+1.
+
+    :param data: Array to be filtered
+    :type data: np.ndarray
+    :param win_half_len: Half length of the boxcar filter (len = halflen*2+1)
+    :type win_half_len: int
+    :param axis: Axis to filter along, defaults to -1
+    :type axis: int, optional
+    :return: The filtered array
+    :rtype: np.ndarray
+    """
+    # Swap axes, so we can work on queried axis
+    dataswap = data.swapaxes(0, axis)
+    data_smooth = np.empty_like(dataswap)
+    for ii in range(dataswap.shape[0]):
+        start = ii - win_half_len
+        if start < 0:
+            start = 0
+        # weighted average
+        data_smooth[ii] = np.nanmean(
+            dataswap[start:ii+win_half_len+1], axis=0)
+    return data_smooth.swapaxes(0, axis)
 
 
 def stream_require_dtype(st: Stream, dtype: type) -> Stream:

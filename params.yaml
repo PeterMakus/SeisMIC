@@ -1,11 +1,11 @@
 #### Project wide parameters
 # lowest level project directory
-proj_dir : '/path/to/project/root/'
+proj_dir : '/home/pm/Documents/PhD/samovar/'
 # directory for logging information
 log_subdir : 'log'
 # levels:
 # 'DEBUG', 'INFO', 'WARNING', 'ERROR', or 'CRITICAL'
-log_level: 'WARNING'
+log_level: 'DEBUG'
 # folder for figures
 fig_subdir : 'figures'  # not in use yet
 
@@ -15,7 +15,7 @@ net:
     # list of stations used in the project
     # type: list of strings or string, wildcards allowed
     network : 'D0'
-    station : ['BZG', 'ESO', 'KBG', 'KIR']
+    station : 'KBG' # ['BZG', 'ESO', 'KBG', 'KIR']
     # stations : ['D0.BZG', 'D0.ESO', 'D0.KBG', 'D0.KIR']
     # list of channels
     # type: list of strings
@@ -26,7 +26,7 @@ net:
 co:
     # subdirectory of 'proj_dir' to store correlation
     # type: string
-    subdir : 'corr'
+    subdir : 'corrs'
     # times sequences to read for cliping or muting on stream basis
     # These should be long enough for the reference (e.g. the standard
     # deviation) to be rather independent of the parts to remove
@@ -49,7 +49,7 @@ co:
     remove_response : False
 
     # Method to combine different traces
-    combination_method : 'betweenStations'
+    combination_method : 'autoComponents'
   
     # If you want only specific combinations to be computed enter them here
     # In the form [Net0-Net0.Stat0-Stat1]
@@ -95,17 +95,17 @@ co:
                                     {'function':'seismic.correlate.preprocessing_td.detrend',
                                     'args':{'type':'linear'}},
                                    {'function':'seismic.correlate.preprocessing_td.TDfilter',
-                                   'args':{'type':'bandpass','freqmin':2,'freqmax':8}},
-                                    #{'function':'seismic.correlate.preprocessing_td.mute',
+                                   'args':{'type':'bandpass','freqmin':4,'freqmax':8}},
+                                  # {'function':'seismic.correlate.preprocessing_td.taper',
+                                  #  'args': {'type':'cosine_taper','p':0.02}},
+                                    # {'function':'seismic.correlate.preprocessing_td.mute',
                                     # 'args':{'taper_len':100.,
-                                           # 'threshold':1000, absolute threshold
+                                    #        'threshold':1000, absolute threshold
                                     #         'std_factor':3,
                                     #         'filter':{'type':'bandpass','freqmin':2,'freqmax':4},
                                     #         'extend_gaps':True}},
                                    {'function':'seismic.correlate.preprocessing_td.clip',
-                                    'args':{'std_factor':2.5}},
-                                   {'function':'seismic.correlate.preprocessing_td.signBitNormalization',
-                                    'args': {}}
+                                    'args':{'std_factor':3}},
                                    ],
                   # Standard functions reside in seismic.correlate.preprocessing_fd
                  'FDpreProcessing':[

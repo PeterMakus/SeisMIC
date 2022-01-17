@@ -8,7 +8,8 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Monday, 15th November 2021 01:32:49 pm
+
+Last Modified: Thursday, 6th January 2022 01:38:10 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -81,6 +82,28 @@ class CorrBulk(object):
         proc_str = f'normalize; normtype: {normtype}'
         if starttime is not None and endtime is not None:
             proc_str += f', starttime: {starttime}, endtime: {endtime}'
+        self.stats.processing_bulk += [proc_str]
+        return self
+
+    def clip(self, thres: float, axis=1):
+        """
+        Clip the correlation data's upper and lower bounds to a multiple of its
+        standard deviation. `thres` determines the factor and `axis` the axis
+        the std should be computed over
+
+        :param thres: factor of the standard deviation to clip by
+        :type thres: float
+        :param axis: Axis to compute the std over and, subsequently clip over.
+            Can be None, if you wish to compute floating point rather than a
+            vector. Then, the array will be clipped evenly.
+        :type axis: int
+
+        ..note:: This action is performed **in-place**. If you would like to
+                keep the original data use
+                :func:`~seismic.correlate.stream.CorrelationBulk.copy()`.
+        """
+        self.data = pcp.corr_mat_clip(self.data, thres, axis)
+        proc_str = f'Clipped; threshold: {thres}*std, axis={axis}'
         self.stats.processing_bulk += [proc_str]
         return self
 
@@ -157,7 +180,7 @@ class CorrBulk(object):
         """
         Calculate the envelope of a correlation matrix.
 
-        The corrlation data of the correlation matrix are replaced by their
+        The correlation data of the correlation matrix are replaced by their
         Hilbert envelopes.
 
 
@@ -188,7 +211,7 @@ class CorrBulk(object):
             :func:`~seismic.correlate.stream.CorrelationBulk.copy()`.
         """
         self.data = pcp.corr_mat_filter(self.data, self.stats, freqs, order)
-        proc = ['filter; freqs: %s, order: %s' % (str(freqs), str(order))]
+        proc = [f'filter; freqs: {freqs}, order: {order}']
         self.stats.processing_bulk += proc
         return self
 
@@ -332,8 +355,7 @@ class CorrBulk(object):
         self.data, self.stats = pcp.corr_mat_resample(
             self.data, self.stats, starttimes, endtimes)
         self.stats.processing_bulk += [
-            'Resampled. Starttimes: %s, Endtimes %s' % (
-                str(starttimes), str(endtimes))]
+            f'Resampled. Starttimes: {starttimes}, Endtimes: {endtimes}']
         return self
 
     def resample_time_axis(self, freq: float):
@@ -353,7 +375,7 @@ class CorrBulk(object):
         self.data, self.stats = pcp.corr_mat_resample_or_decimate(
             self.data, self.stats, freq)
         self.stats.processing_bulk += [
-            'Resampled time axis. New sampling rate: %s' % freq]
+            f'Resampled time axis. New sampling rate: {freq}Hz']
         return self
 
     def smooth(
@@ -387,8 +409,7 @@ class CorrBulk(object):
         """
         self.data = pcp.corr_mat_smooth(self.data, wsize, wtype, axis)
         self.stats.processing_bulk += [
-            'smooth. wsize: %ss, wtype: %s, axis: %s'
-            % (str(wsize), wtype, str(axis))]
+            f'Smoothed. wsize: {wsize}, wtype: {wtype}, axis: {axis}']
         return self
 
     def stretch(
@@ -457,8 +478,8 @@ class CorrBulk(object):
         stats = deepcopy(self.stats)
         for key, value in stats.items():
             try:
-                if isinstance(value, list):
-                    stats[key] = filter(lambda ii: ii, value)
+                if isinstance(value, list) and key != 'processing_bulk':
+                    stats[key] = [v for jj, v in zip(ii, value) if jj]
                 elif isinstance(value, np.ndarray):
                     stats[key] = value[ii]
             except AttributeError:
@@ -478,8 +499,9 @@ class CorrBulk(object):
             :func:`~seismic.correlate.stream.CorrelationBulk.copy()`
         """
         self.data = pcp.corr_mat_taper(self.data, self.stats, width)
-        proc = ['tapered: width=%ss' % width]
+        proc = [f'tapered: width={width}s']
         self.stats.processing_bulk += proc
+        return self
 
     def taper_center(self, width: float, slope_frac: float = 0.05):
         """
@@ -497,8 +519,8 @@ class CorrBulk(object):
         :param slope_frac: fraction of `width` used for soothing of edges,
             defaults to 0.05
         :type slope_frac: float, optional
-        :return: The tapered matrix
-        :rtype: np.ndarray
+        :return: self
+        :rtype: CorrBulk
 
         ..note:: This action is performed **in-place**. If you want to keep
             the original data use
@@ -506,9 +528,9 @@ class CorrBulk(object):
         """
         self.data = pcp.corr_mat_taper_center(
             self.data, self.stats, width, slope_frac=slope_frac)
-        proc = [
-            'tapered-centre: width=%ss, slope_frac=%s' % (width, slope_frac)]
+        proc = [f'tapered-centre: width={width}s, slope_frac={slope_frac}']
         self.stats.processing_bulk += proc
+        return self
 
     def trim(self, starttime: float, endtime: float):
         """
@@ -593,6 +615,8 @@ class CorrBulk(object):
         :return: An Array containing the boolean indices
         :rtype: np.ndarray[bool]
         """
+        if endtime <= starttime:
+            raise ValueError('End has to be after start!')
         if include_partial:
             ii = np.logical_and(
                 np.array(self.stats.corr_end) >= starttime,
@@ -601,7 +625,11 @@ class CorrBulk(object):
             ii = np.logical_and(
                 np.array(self.stats.corr_start) >= starttime,
                 np.array(self.stats.corr_end) <= endtime)
-        return np.squeeze(ii)
+        ii = np.squeeze(ii)
+        if not len(np.nonzero(ii)[0]):
+            warnings.warn(
+                'No slices found in the requested time. Returning empty arr.')
+        return ii
 
 
 def read_corr_bulk(path: str) -> CorrBulk:
@@ -1381,13 +1409,14 @@ def convert_statlist_to_bulk_stats(
         for key in mutables:
             stats[key] += [trstat[key]]
         for key in immutables:
-            ph = (
-                key, str(stats[key]), str(trstat[key]), stats['network'],
-                stats['station'])
-            if stats[key] != trstat[key]:
-                raise ValueError(
-                    'The stream contains data with different properties. \
-The differing property is %s. With the values: %s and %s. For station \
-%s.%s' % ph)
+            try:
+                if stats[key] != trstat[key]:
+                    raise ValueError(
+                        'The stream contains data with different properties. '
+                        + f'The differing property is {key}. '
+                        + f'With the values: {stats[key]} and {trstat[key]}. '
+                        + f'For station {stats["network"]}.{stats["station"]}')
+            except KeyError:
+                warnings.warn(f'No information about {key} in header.')
     stats['ntrcs'] = len(statlist)
     return stats

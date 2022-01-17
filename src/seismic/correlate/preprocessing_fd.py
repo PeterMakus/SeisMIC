@@ -11,7 +11,7 @@ Module containing functions for preprocessing in the frequency domain
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:40:11 pm
-Last Modified: Thursday, 21st October 2021 02:38:43 pm
+Last Modified: Thursday, 25th November 2021 09:26:56 am
 '''
 from copy import deepcopy
 

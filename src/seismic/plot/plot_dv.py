@@ -8,9 +8,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Thursday, 21st October 2021 02:37:44 pm
+Last Modified: Tuesday, 11th January 2022 05:16:51 pm
 '''
 
+from typing import Tuple
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 import numpy as np
@@ -21,7 +22,8 @@ from seismic.plot.plot_utils import set_mpl_params
 
 def plot_dv(
     dv, save_dir='.', figure_file_name=None, mark_time=None,
-        normalize_simmat=False, sim_mat_Clim=[], figsize=(9, 11), dpi=72):
+    normalize_simmat=False, sim_mat_Clim=[], figsize=(9, 11), dpi=72,
+        ylim: Tuple[float, float] = None, title: str = None):
     """ Plot the "extended" dv dictionary
 
     This function is thought to plot the result of the velocity change estimate
@@ -65,6 +67,8 @@ def plot_dv(
     :type sim_mat_Clim: 2 element array_like
     :param sim_mat_Clim: if non-empty it set the color scale limits of the
         similarity matrix image
+    :param ylim: Limits for the stretch axis. Defaults to None
+    :type ylim: Tuple[float, float], optional
     """
     set_mpl_params()
 
@@ -103,8 +107,6 @@ def plot_dv(
         sim_mat = sim_mat/np.tile(
             np.max(sim_mat, axis=1), (sim_mat.shape[1], 1)).T
 
-    n_stretching = stretch_vect.shape[0]
-
     stretching_amount = np.max(stretch_vect)
 
     # Adapt plot details in agreement with the type of dictionary that
@@ -137,44 +139,36 @@ def plot_dv(
 
     ax1 = f.add_subplot(gs[0])
     imh = plt.imshow(
-        sim_mat.T.astype(float), interpolation='none', aspect='auto')
+        np.flipud(sim_mat.T).astype(float), interpolation='none',
+        aspect='auto')
+
+    # plotting value is way easier now
+    plt.plot(-dv['value'], 'b.')
+    # Set extent so we can treat the axes properly (mainly y)
+    imh.set_extent((0, sim_mat.shape[0], stretch_vect[-1], stretch_vect[0]))
 
     ###
-    scale = stretch_vect[1] - stretch_vect[0]
-    offset = stretch_vect[0]
-    mod_ind = (np.round((dv['value']-offset) / scale).astype(int))
-    mod_ind[np.isnan(dv['value'])] = 0
-    ax1.plot(mod_ind, 'b.')
-    if 'model_value' in dv.keys():
-        mod_ind = (np.round((dv['model_value']-offset) / scale).astype(int))
-        mod_ind[np.isnan(dv['model_value'])] = 0
-        ax1.plot(mod_ind, 'g.')
     ax1.set_xlim(0, sim_mat.shape[0])
-    ax1.set_ylim(0, sim_mat.shape[1])
+    plt.xlim(0, sim_mat.shape[0])
+
     if value_type == 'stretch':
         ax1.invert_yaxis()
-    ###
+    if ylim:
+        plt.ylim(ylim)
+    # ###
     if sim_mat_Clim:
         imh.set_clim(sim_mat_Clim[0], sim_mat_Clim[1])
 
     plt.gca().get_xaxis().set_visible(False)
-    ax1.set_yticks(np.floor(np.linspace(0, n_stretching - 1, 7)).astype('int'))
-
-    if value_type == 'stretch':
-        ax1.set_yticklabels([
-            "%4.3f" % x for x in stretch_vect[np.floor(
-                np.linspace(n_stretching - 1, 0, 7)).astype('int')]])
-    else:
-        ax1.set_yticklabels([
-            "%4.3f" % x for x in stretch_vect[np.floor(
-                np.linspace(0, n_stretching - 1, 7)).astype('int')]])
 
     stats = dv['stats']
     comb_mseedid = '%s.%s.%s.%s' % (
         stats['network'], stats['station'], stats['location'],
         stats['channel'])
-
-    tit = "%s estimate (%s)" % (tit, comb_mseedid)
+    if title:
+        tit = title
+    else:
+        tit = "%s estimate (%s)" % (tit, comb_mseedid)
 
     ax1.set_title(tit)
     ax1.yaxis.set_ticks_position('right')
@@ -189,7 +183,10 @@ def plot_dv(
     if 'model_value' in dv.keys():
         plt.plot(rtime, -dv['model_value'], 'g.')
     plt.xlim([rtime[0], rtime[-1]])
-    plt.ylim((-stretching_amount, stretching_amount))
+    if ylim:
+        plt.ylim(ylim)
+    else:
+        plt.ylim((-stretching_amount, stretching_amount))
     if mark_time and not (
             np.all(rtime < mark_time) and np.all(rtime > mark_time)):
         plt.axvline(mark_time, lw=1, color='r')

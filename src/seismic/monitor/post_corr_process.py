@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Thursday, 21st October 2021 02:42:39 pm
+Last Modified: Monday, 17th January 2022 02:16:51 pm
 '''
 
 from typing import List, Tuple
@@ -26,7 +26,29 @@ from seismic.monitor.stretch_mod import multi_ref_vchange_and_align, \
 from seismic.correlate.stats import CorrStats
 
 
-# This needs some tidying
+def corr_mat_clip(A: np.ndarray, thres: float, axis: int) -> np.ndarray:
+    """
+    Clip the Input Matrix upper and lower bounds to a multiple of its
+    standard deviation. `thres` determines the factor and `axis` the axis
+    the std should be computed over
+
+    :param A: Input Array to be clipped
+    :type A: np.ndarray
+    :param thres: factor of the standard deviation to clip by
+    :type thres: float
+    :param axis: Axis to compute the std over and, subsequently clip over.
+        Can be None, if you wish to compute floating point rather than a
+        vector. Then, the array will be clipped evenly.
+    :type axis: int
+    :return: The clipped array
+    :rtype: np.ndarray
+    """
+    clipv = thres * np.std(A, axis=axis)
+    if axis == 1:
+        A = np.clip(A.T, -clipv, clipv).T
+    else:
+        A = np.clip(A, -clipv, clipv)
+    return A
 
 
 def _smooth(
@@ -233,12 +255,16 @@ def corr_mat_trim(
 
     # select requested part from matrix
     # +1 is to include the last sample
-    data = data[:, start: end + 1]
+    if len(data.shape) == 1:
+        data = data[start:end+1]
+        stats['npts'] = len(data)
+    else:
+        data = data[:, start:end + 1]
+        stats['npts'] = data.shape[1]
 
     # set starttime, endtime and npts of the new stats
     stats['start_lag'] = starttime
 
-    stats['npts'] = data.shape[1]
     return data, stats
 
 
@@ -277,7 +303,7 @@ def corr_mat_resample(
             start_times.")
 
     # old sampling times
-    otime = [ii.timestamp for ii in stats['corr_start']]
+    otime = np.array([ii.timestamp for ii in stats['corr_start']])
     if isinstance(start_times[0], UTCDateTime):
         start_times = [ii.timestamp for ii in start_times]
 
@@ -290,7 +316,7 @@ def corr_mat_resample(
     else:
         if len(start_times) == 1:
             # there is only one start_time given and no end_time => average all
-            etime = stats['corr_end'][-1]
+            etime = np.array([stats['corr_end'][-1].timestamp])
         else:
             stime = np.array(stime)  # Cannot be a list for this operation
             etime = stime + (stime[1] - stime[0])
@@ -312,8 +338,7 @@ def corr_mat_resample(
             nmat[ii, :] = data[ind[0], :]
         elif len(ind[0]) > 1:
             # more than one measurement in range
-            # nmat[ii, :] = np.mean(mm[ind[0], :], 0).filled(np.nan)
-            nmat[ii, :] = np.median(mm[ind[0], :], 0).filled(np.nan)
+            nmat[ii, :] = np.mean(mm[ind[0], :], 0).filled(np.nan)
 
     # assign new data
     data = nmat

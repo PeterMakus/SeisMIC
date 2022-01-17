@@ -8,18 +8,16 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Wednesday, 27th October 2021 01:16:44 pm
+Last Modified: Monday, 17th January 2022 02:30:47 pm
 '''
 
 from datetime import datetime
 from typing import List, Tuple
 
 import numpy as np
-from scipy.ndimage import convolve1d
 
 from seismic.plot.plot_dv import plot_dv
-from seismic.utils.miic_utils import save_header_to_np_array, \
-    load_header_from_np_array
+from seismic.utils import miic_utils as mu
 from seismic.correlate.stats import CorrStats
 
 
@@ -40,6 +38,17 @@ class DV(object):
         self.method = method
         self.stats = stats
 
+    def __str__(self):
+        """
+        Print a prettier string.
+        """
+        code = f'{self.stats.network}.{self.stats.station}.'\
+            + self.stats.channel
+        out = f'{self.method} {self.value_type} velocity change estimate of '\
+            + f'{code}.\nstarttdate: {min(self.stats.corr_start).ctime()}\n'\
+            + f'enddate: {max(self.stats.corr_end).ctime()}'
+        return out
+
     def save(self, path: str):
         """
         Saves the dv object to a compressed numpy binary format. The DV can
@@ -50,7 +59,7 @@ class DV(object):
         """
         method_array = np.array([self.method])
         vt_array = np.array([self.value_type])
-        kwargs = save_header_to_np_array(self.stats)
+        kwargs = mu.save_header_to_np_array(self.stats)
         np.savez_compressed(
             path, corr=self.corr, value=self.value, sim_mat=self.sim_mat,
             second_axis=self.second_axis, method_array=method_array,
@@ -59,11 +68,13 @@ class DV(object):
     def plot(
         self, save_dir: str = '.', figure_file_name: str = None,
         mark_time: datetime = None, normalize_simmat: bool = False,
-        sim_mat_Clim: List[float] = [],
-            figsize: Tuple[float, float] = (9, 11), dpi: int = 72):
+        sim_mat_Clim: List[float] = [], ylim: Tuple[int, int] = None,
+        figsize: Tuple[float, float] = (9, 11), dpi: int = 72,
+            title: str = None):
         plot_dv(
             self.__dict__, save_dir, figure_file_name, mark_time,
-            normalize_simmat, sim_mat_Clim, figsize, dpi)
+            normalize_simmat, sim_mat_Clim, figsize, dpi, ylim=ylim,
+            title=title)
 
     def smooth_sim_mat(self, win_len: int):
         """
@@ -76,10 +87,7 @@ class DV(object):
 
             This action is perfomed in-place.
         """
-        # retrieve desired window
-        # Divide by window length to preserve energy / average
-        self.sim_mat = convolve1d(
-            np.nan_to_num(self.sim_mat), np.ones(win_len), axis=0)/win_len
+        self.sim_mat = mu.nan_moving_av(self.sim_mat, int(win_len/2), axis=0)
 
         # Compute the dependencies again
         self.corr = np.nanmax(self.sim_mat, axis=1)
@@ -98,8 +106,8 @@ def read_dv(path: str) -> DV:
     :rtype: DV
     """
     loaded = np.load(path)
-    stats = CorrStats(load_header_from_np_array(loaded))
+    stats = CorrStats(mu.load_header_from_np_array(loaded))
     return DV(
-        loaded['corr'], loaded['value'], loaded['vt_array'][0],
-        loaded['sim_mat'], loaded['second_axis'], loaded['method_array'][0],
+        loaded['corr'], loaded['value'], loaded['vt_array'][0][0],
+        loaded['sim_mat'], loaded['second_axis'], loaded['method_array'][0][0],
         stats=stats)
