@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Friday, 5th November 2021 08:15:28 am
+Last Modified: Monday, 17th January 2022 02:35:40 pm
 '''
 from typing import List, Tuple
 
@@ -829,7 +829,7 @@ def estimate_reftr_shifts_from_dt_corr(
         return ret_dict
 
     else:
-        print("For a single reference trace use the appropriate funtion")
+        print("For a single reference trace use the appropriate function")
         return None
 
 

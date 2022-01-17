@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Tuesday, 11th January 2022 05:17:15 pm
+Last Modified: Monday, 17th January 2022 02:30:47 pm
 '''
 
 from datetime import datetime
@@ -37,6 +37,17 @@ class DV(object):
         self.second_axis = second_axis
         self.method = method
         self.stats = stats
+
+    def __str__(self):
+        """
+        Print a prettier string.
+        """
+        code = f'{self.stats.network}.{self.stats.station}.'\
+            + self.stats.channel
+        out = f'{self.method} {self.value_type} velocity change estimate of '\
+            + f'{code}.\nstarttdate: {min(self.stats.corr_start).ctime()}\n'\
+            + f'enddate: {max(self.stats.corr_end).ctime()}'
+        return out
 
     def save(self, path: str):
         """
@@ -97,6 +108,6 @@ def read_dv(path: str) -> DV:
     loaded = np.load(path)
     stats = CorrStats(mu.load_header_from_np_array(loaded))
     return DV(
-        loaded['corr'], loaded['value'], loaded['vt_array'][0],
-        loaded['sim_mat'], loaded['second_axis'], loaded['method_array'][0],
+        loaded['corr'], loaded['value'], loaded['vt_array'][0][0],
+        loaded['sim_mat'], loaded['second_axis'], loaded['method_array'][0][0],
         stats=stats)
