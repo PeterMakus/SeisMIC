@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 27th October 2021 12:58:15 pm
-Last Modified: Wednesday, 17th November 2021 04:02:00 pm
+Last Modified: Monday, 17th January 2022 03:54:54 pm
 '''
 
 import unittest
@@ -60,13 +60,13 @@ class TestReadDV(unittest.TestCase):
     def test(self, load_header_mock, npload_mock):
         load_header_mock.return_value = {}
         npload_mock.return_value = {
-            'corr': 0, 'value': 1, 'vt_array': [2], 'sim_mat': 3,
-            'second_axis': 4, 'method_array': [5]}
+            'corr': 0, 'value': 1, 'vt_array': [[2]], 'sim_mat': 3,
+            'second_axis': 4, 'method_array': [[5]]}
         dvout = dv.read_dv('/my/dv_file')
         npload_mock.assert_called_once_with('/my/dv_file')
         load_header_mock.assert_called_once_with({
-            'corr': 0, 'value': 1, 'vt_array': [2], 'sim_mat': 3,
-            'second_axis': 4, 'method_array': [5]})
+            'corr': 0, 'value': 1, 'vt_array': [[2]], 'sim_mat': 3,
+            'second_axis': 4, 'method_array': [[5]]})
         self.assertDictEqual(dvout.__dict__, {
             'corr': 0, 'value': 1, 'value_type': 2, 'sim_mat': 3,
             'second_axis': 4, 'method': 5, 'stats': CorrStats()})

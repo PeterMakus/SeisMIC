@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 17th January 2022 11:57:58 am
+Last Modified: Monday, 17th January 2022 03:49:46 pm
 '''
 from copy import deepcopy
 import logging
@@ -22,6 +22,7 @@ from mpi4py import MPI
 import numpy as np
 from obspy import UTCDateTime
 from tqdm import tqdm
+from sklearn.decomposition import PCA
 
 from seismic.db.corr_hdf5 import CorrelationDataBase
 from seismic.monitor.dv import DV, read_dv
@@ -176,7 +177,21 @@ class Monitor(object):
         # Do the actual processing:
         cb.normalize(normtype='absmax')
         # That is were the stacking is happening
-        cb.resample(self.starttimes, self.endtimes)
+        # test part PCA
+        data2 = []
+        pca = PCA(n_components=10)
+        for start, end in zip(self.starttimes, self.endtimes):
+            cb2 = cb.slice(start, end)
+            # Reduce the correlation above using PCA
+            pc_n = pca.fit_transform(cb2.data.T)
+            data2.append(pc_n.T.sum(axis=0))
+        data2 = np.array(data2)
+
+        cb.resample(self.starttimes, self.endtimes)  # this stays
+        print(data2.shape, cb.data.shape)
+        cb.data = data2
+
+        # end test part
         cb.filter(
             (self.options['dv']['freq_min'], self.options['dv']['freq_max']))
 

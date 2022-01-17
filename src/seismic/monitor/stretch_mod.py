@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Monday, 17th January 2022 02:35:40 pm
+Last Modified: Monday, 17th January 2022 03:57:21 pm
 '''
 from typing import List, Tuple
 
@@ -564,10 +564,6 @@ def multi_ref_vchange(
                 stretch_steps=stretch_steps, sides=sides,
                 remove_nans=remove_nans)
             multi_ref_panel.update({key: value})
-
-    import pickle
-    file_to_write = open("/home/makus/samovar/data/multi_ref_pan.pkl", "wb")
-    pickle.dump(multi_ref_panel, file_to_write)
     return multi_ref_panel
 
 
