@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Wednesday, 19th January 2022 11:40:49 am
+Last Modified: Wednesday, 19th January 2022 12:45:05 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -959,6 +959,7 @@ class CorrStream(Stream):
         """
         if self.count() == 1:
             self[0].plot()
+            return
         plot_cst(
             self, sort_by=sort_by, timelimits=timelimits, ylimits=ylimits,
             scalingfactor=scalingfactor, ax=ax, linewidth=linewidth,
