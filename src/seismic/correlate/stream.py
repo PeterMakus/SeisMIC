@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Thursday, 6th January 2022 01:38:10 pm
+Last Modified: Wednesday, 19th January 2022 11:31:15 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -957,6 +957,8 @@ class CorrStream(Stream):
         .. note:: If you would like to plot a subset of this stream, use
             :func:`~seismic.correlate.stream.CorrStream.select`.
         """
+        if self.count() == 1:
+            self[0].plot()
         plot_cst(
             self, sort_by=sort_by, timelimits=timelimits, ylimits=ylimits,
             scalingfactor=scalingfactor, ax=ax, linewidth=linewidth,
