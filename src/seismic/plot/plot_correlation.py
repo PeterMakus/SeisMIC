@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Thursday, 6th January 2022 02:29:22 pm
+Last Modified: Thursday, 20th January 2022 11:27:06 am
 '''
 import os
 import warnings
@@ -184,9 +184,7 @@ def plot_cst(
     plt.title(title)
 
     # Set output directory
-    if outputfile is None:
-        plt.show()
-    else:
+    if outputfile is not None:
         plt.savefig(outputfile, dpi=300, transparent=True)
     return ax
 

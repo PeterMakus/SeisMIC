@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Wednesday, 19th January 2022 12:45:05 pm
+Last Modified: Thursday, 20th January 2022 11:24:44 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -960,10 +960,11 @@ class CorrStream(Stream):
         if self.count() == 1:
             self[0].plot()
             return
-        plot_cst(
+        ax = plot_cst(
             self, sort_by=sort_by, timelimits=timelimits, ylimits=ylimits,
             scalingfactor=scalingfactor, ax=ax, linewidth=linewidth,
             outputfile=outputfile, title=title, type=type)
+        return ax
 
     def _to_matrix(
         self, network: str = None, station: str = None, channel: str = None,
