@@ -9,7 +9,7 @@
 
 Created: Tuesday, 1st June 2021 10:42:03 am
 
-Last Modified: Thursday, 21st October 2021 02:57:05 pm
+Last Modified: Monday, 24th January 2022 03:32:09 pm
 
 '''
 from copy import deepcopy
@@ -28,7 +28,8 @@ from seismic.correlate.stream import CorrStream, CorrTrace
 
 
 with open('params_example.yaml') as file:
-    co = yaml.load(file, Loader=yaml.FullLoader)['co']
+    co = corr_hdf5.co_to_hdf5(
+        yaml.load(file, Loader=yaml.FullLoader)['co'])
     co['corr_args']['combinations'] = []
 
 
@@ -349,6 +350,17 @@ class TestDBHandler(unittest.TestCase):
         super_mock.return_value = self.file_mock
         oco = deepcopy(co)
         oco['sampling_rate'] = 100000
+        gco_mock.return_value = oco
+        with self.assertRaises(PermissionError):
+            corr_hdf5.DBHandler('a', 'a', 'gzip9', co)
+
+    @patch('seismic.db.corr_hdf5.DBHandler.get_corr_options')
+    @patch('seismic.db.corr_hdf5.h5py.File.__init__')
+    def test_wrong_co2(self, super_mock, gco_mock):
+        self.file_mock = MagicMock()
+        super_mock.return_value = self.file_mock
+        oco = deepcopy(co)
+        oco['nlub'] = 100000
         gco_mock.return_value = oco
         with self.assertRaises(PermissionError):
             corr_hdf5.DBHandler('a', 'a', 'gzip9', co)
