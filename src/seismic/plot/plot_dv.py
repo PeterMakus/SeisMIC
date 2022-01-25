@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Tuesday, 11th January 2022 05:16:51 pm
+Last Modified: Wednesday, 19th January 2022 02:44:28 pm
 '''
 
 from typing import Tuple
@@ -92,8 +92,8 @@ def plot_dv(
 
     # Extract the data from the dictionary
 
-    value_type = dv['value_type'][0]
-    method = dv['method'][0]
+    value_type = dv['value_type']
+    method = dv['method']
 
     corr = dv['corr']
     dt = dv['value']
@@ -131,7 +131,7 @@ def plot_dv(
         dv_y_label = "time shift (sample)"
 
     else:
-        raise ValueError("Unknown dv type!")
+        raise ValueError(f"Unknown dv type, {value_type}!")
 
     f = plt.figure(figsize=figsize, dpi=dpi)
 

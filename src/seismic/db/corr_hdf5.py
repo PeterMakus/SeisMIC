@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Tuesday, 25th January 2022 11:58:49 am
+Last Modified: Tuesday, 25th January 2022 12:03:49 pm
 '''
 import ast
 import fnmatch
@@ -73,9 +73,18 @@ class DBHandler(h5py.File):
             try:
                 co_old = self.get_corr_options()
                 if co_old != co_to_hdf5(co):
-                    raise PermissionError('The output file already exists and \
-contains data with different processing parameters. Those parameters are:\n\
-    %s.' % str(co_old))
+                    try:
+                        diff = {k: (v, co_old[k]) for k, v in co_to_hdf5(
+                            co).items() if v != co_old[k]}
+                    except KeyError as e:
+                        raise PermissionError(
+                            f'One option is not defined in new dict. {e}'
+                        )
+                    raise PermissionError(
+                        'The output file already exists and contains data with'
+                        + ' different processing parameters. Differences are:'
+                        + '\nFirst: New parameters; Second: Old parameters'
+                        + f'\n{diff}')
             except KeyError:
                 self.add_corr_options(co)
 
@@ -319,9 +328,10 @@ class CorrelationDataBase(object):
 
         if corr_options is None and mode != 'r':
             mode = 'r'
-            warnings.warn('Opening Correlation Databases without providing a \
-correlation options dictionary is only allowed in read only mode.\n\
-Setting mode read only `r`....')
+            warnings.warn(
+                'Opening Correlation Databases without providing a correlation'
+                + ' options dictionary is only allowed in read only mode.\n'
+                + 'Setting mode read only `r`....')
         # Create / read file
         if not path.split('.')[-1] == 'h5':
             path += '.h5'
