@@ -10,12 +10,14 @@ Module that contains functions for preprocessing on obspy streams
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:47:00 pm
-Last Modified: Monday, 22nd November 2021 05:21:51 pm
+Last Modified: Tuesday, 8th February 2022 05:21:00 pm
 '''
+from re import L
+from typing import List
 from warnings import warn
 
 import numpy as np
-from obspy import Stream, Trace
+from obspy import Stream, Trace, UTCDateTime
 
 
 def cos_taper_st(
@@ -186,3 +188,60 @@ def stream_filter(st: Stream, ftype: str, filter_option: dict) -> Stream:
     # Change the name to help blockcanvas readability
     st_filtered = st
     return st_filtered
+
+
+def stream_mute_mask(
+    st: Stream, starts: List[UTCDateTime], ends: List[UTCDateTime] = None,
+        masklen: float = None):
+    msg = 'Provide either the length of the mask or a list of ends with '\
+        + 'identical length as the list of starts.'
+    if masklen is None and ends is None:
+        raise ValueError(msg)
+    elif masklen is not None and ends is not None:
+        raise ValueError(msg)
+    elif ends is not None and len(ends) != len(starts):
+        raise ValueError('Ends must have the same length as starts.')
+    starts = np.array(starts)
+    if ends is None:
+        ends = starts + masklen
+    else:
+        ends = np.array(ends)
+    for tr in st:
+        trace_mute_mask(tr, starts, ends)
+
+
+def trace_mute_mask(
+        tr: Trace, starts: List[UTCDateTime], ends: List[UTCDateTime]):
+    start = tr.stats.starttime
+    end = tr.stats.endtime
+    # starts in trace
+    ii = starts < end * starts > start
+    # ends in trace
+    jj = ends < end * ends > start
+
+    # masks that are completlely in trace
+    kk = jj*ii
+    for s, e in zip(starts[kk], ends[kk]):
+        # Find start-index in trace
+        t = s-start
+        ns = int(np.floor(tr.stats.sampling_rate*t))
+        # find stop index
+        t = ends[ii][kk]-start
+        ne = int(np.ceil(tr.stats.sampling_rate*t))+1
+        tr.data[ns:ne] = 0
+
+    # only start of mask in trace
+    ll = ii * ~jj
+    for s in starts[ll]:
+        # Find start-index in trace
+        t = s-start
+        ns = int(np.floor(tr.stats.sampling_rate*t))
+        tr.data[ns:] = 0
+
+    # only end of mask in trace
+    ll = ~ii * jj
+    for e in ends[ll]:
+        # Find start-index in trace
+        t = ends[ii][kk]-start
+        ne = int(np.ceil(tr.stats.sampling_rate*t))+1
+        tr.data[:ne] = 0
