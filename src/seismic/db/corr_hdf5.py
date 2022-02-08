@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Tuesday, 25th January 2022 12:03:49 pm
+Last Modified: Tuesday, 8th February 2022 11:02:57 am
 '''
 import ast
 import fnmatch
@@ -196,7 +196,7 @@ omitted." % path, category=UserWarning)
             tag=tag, network=network, station=station, channel=channel,
             corr_st=corr_start, corr_et=corr_end)
         # Extremely ugly way of changing the path
-        if '*' not in path:
+        if '*' not in path and '?' not in path:
             data = np.array(self[path])
             header = read_hdf5_header(self[path])
             return CorrStream(CorrTrace(data, _header=header))
