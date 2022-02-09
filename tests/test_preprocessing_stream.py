@@ -8,7 +8,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 04:07:16 pm
-Last Modified: Wednesday, 9th February 2022 01:58:21 pm
+Last Modified: Wednesday, 9th February 2022 02:14:18 pm
 '''
 
 import unittest
@@ -224,8 +224,8 @@ class TestTraceMaskAtUTC(unittest.TestCase):
         self.tr = read()[0]
 
     def test_mask_inside(self):
-        startsdelta = np.array([1, 10]) + np.array(
-                [np.random.randint(0, 5), np.random.randint(0, 5)])
+        startsdelta = np.array([1, 10]) + np.array([
+            np.random.randint(0, 5), np.random.randint(0, 5)])
         starts = np.array([self.tr.stats.starttime]*2) \
             + startsdelta
         masklen = np.array([np.random.randint(1, 4), np.random.randint(1, 4)])
