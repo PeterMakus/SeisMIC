@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Friday, 3rd December 2021 09:58:36 am
+Last Modified: Wednesday, 9th February 2022 02:03:16 pm
 '''
 
 import unittest
@@ -726,7 +726,7 @@ class TestCorrTrace(unittest.TestCase):
         exp = np.arange(
             ctr.stats.start_lag, ctr.stats.end_lag + ctr.stats.delta,
             ctr.stats.delta)
-        np.testing.assert_array_equal(exp, ctr.times())
+        np.testing.assert_array_almost_equal(exp, ctr.times())
 
 
 class TestCorrStream(unittest.TestCase):
