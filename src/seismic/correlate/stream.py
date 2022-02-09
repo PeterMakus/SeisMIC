@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Thursday, 20th January 2022 11:24:44 am
+Last Modified: Wednesday, 9th February 2022 10:47:46 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -1115,9 +1115,10 @@ class CorrTrace(Trace):
         :return: Array with lag times
         :rtype: np.ndarray
         """
-        return np.arange(
-            self.stats.start_lag, self.stats.end_lag + self.stats.delta,
-            self.stats.delta)
+        # this way there won't be problems with numerical errors for small
+        # delta
+        return np.arange(self.stats.npts)*self.stats.delta\
+            + self.stats.start_lag
 
 
 def alphabetical_correlation(

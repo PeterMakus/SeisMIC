@@ -10,9 +10,8 @@ Module that contains functions for preprocessing on obspy streams
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:47:00 pm
-Last Modified: Tuesday, 8th February 2022 05:21:00 pm
+Last Modified: Wednesday, 9th February 2022 01:39:07 pm
 '''
-from re import L
 from typing import List
 from warnings import warn
 
@@ -190,9 +189,32 @@ def stream_filter(st: Stream, ftype: str, filter_option: dict) -> Stream:
     return st_filtered
 
 
-def stream_mute_mask(
+def stream_mask_at_utc(
     st: Stream, starts: List[UTCDateTime], ends: List[UTCDateTime] = None,
         masklen: float = None):
+    """
+    Mask the Data in the Stream between the times given by ``starts`` and
+    ``ends`` or between ``starts`` and ``starts``+``masklen``.
+
+    :param st: Input Strem to be tapered
+    :type st: Stream
+    :param starts: Start-time (in UTC) that the masked values should start from
+    :type starts: List[UTCDateTime]
+    :param ends: End times (in UTC) of the masked values. Has to have the same
+        length as starts. If None, `masklen` has to be defined,
+        defaults to None.
+    :type ends: List[UTCDateTime], optional
+    :param masklen: Alternatively to providing ends, one can provide a constant
+        length (in s) per mask, defaults to None.
+    :type masklen: float, optional
+    :raises ValueError: If `ends`, `starts`, and `masklen` are incompatible
+        with each other.
+
+    .. warning:: This function will not taper before and after the mask.
+        If you should desire to do so use.
+        :func:`~seismic.correlate.preprocessing_stream.cos_taper_st` and set
+        ``taper_at_mask`` to ``True``.
+    """
     msg = 'Provide either the length of the mask or a list of ends with '\
         + 'identical length as the list of starts.'
     if masklen is None and ends is None:
@@ -207,17 +229,24 @@ def stream_mute_mask(
     else:
         ends = np.array(ends)
     for tr in st:
-        trace_mute_mask(tr, starts, ends)
+        trace_mask_at_utc(tr, starts, ends)
 
 
-def trace_mute_mask(
-        tr: Trace, starts: List[UTCDateTime], ends: List[UTCDateTime]):
+def trace_mask_at_utc(
+    tr: Trace, starts: np.ndarray,
+        ends: np.ndarray):
+    """
+    .. seealso::
+        :func:`~seismic.correlate.preprocessing_stream.stream_mask_at_utc`
+    """
     start = tr.stats.starttime
     end = tr.stats.endtime
     # starts in trace
-    ii = starts < end * starts > start
+    ii = (starts < end) * (starts > start)
     # ends in trace
-    jj = ends < end * ends > start
+    jj = (ends < end) * (ends > start)
+
+    mask = np.zeros(tr.data.shape, dtype=bool)
 
     # masks that are completlely in trace
     kk = jj*ii
@@ -226,9 +255,9 @@ def trace_mute_mask(
         t = s-start
         ns = int(np.floor(tr.stats.sampling_rate*t))
         # find stop index
-        t = ends[ii][kk]-start
+        t = e-start
         ne = int(np.ceil(tr.stats.sampling_rate*t))+1
-        tr.data[ns:ne] = 0
+        mask[ns:ne] = True
 
     # only start of mask in trace
     ll = ii * ~jj
@@ -236,12 +265,16 @@ def trace_mute_mask(
         # Find start-index in trace
         t = s-start
         ns = int(np.floor(tr.stats.sampling_rate*t))
-        tr.data[ns:] = 0
+        mask[ns:] = True
 
     # only end of mask in trace
     ll = ~ii * jj
     for e in ends[ll]:
         # Find start-index in trace
-        t = ends[ii][kk]-start
+        t = e-start
         ne = int(np.ceil(tr.stats.sampling_rate*t))+1
-        tr.data[:ne] = 0
+        mask[:ne] = True
+
+    # Mask the array
+    tr.data = np.ma.array(tr.data, mask=mask, hard_mask=True, fill_value=0)
+    # Hard mask saves RAM as the data will essentially be discarded
