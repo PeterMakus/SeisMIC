@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Thursday, 21st October 2021 03:15:18 pm
+Last Modified: Tuesday, 8th February 2022 11:02:57 am
 '''
 import ast
 import fnmatch
@@ -73,9 +73,18 @@ class DBHandler(h5py.File):
             try:
                 co_old = self.get_corr_options()
                 if co_old != co_to_hdf5(co):
-                    raise PermissionError('The output file already exists and \
-contains data with different processing parameters. Those parameters are:\n\
-    %s.' % str(co_old))
+                    try:
+                        diff = {k: (v, co_old[k]) for k, v in co_to_hdf5(
+                            co).items() if v != co_old[k]}
+                    except KeyError as e:
+                        raise PermissionError(
+                            f'One option is not defined in new dict. {e}'
+                        )
+                    raise PermissionError(
+                        'The output file already exists and contains data with'
+                        + ' different processing parameters. Differences are:'
+                        + '\nFirst: New parameters; Second: Old parameters'
+                        + f'\n{diff}')
             except KeyError:
                 self.add_corr_options(co)
 
@@ -187,7 +196,7 @@ omitted." % path, category=UserWarning)
             tag=tag, network=network, station=station, channel=channel,
             corr_st=corr_start, corr_et=corr_end)
         # Extremely ugly way of changing the path
-        if '*' not in path:
+        if '*' not in path and '?' not in path:
             data = np.array(self[path])
             header = read_hdf5_header(self[path])
             return CorrStream(CorrTrace(data, _header=header))
@@ -319,9 +328,10 @@ class CorrelationDataBase(object):
 
         if corr_options is None and mode != 'r':
             mode = 'r'
-            warnings.warn('Opening Correlation Databases without providing a \
-correlation options dictionary is only allowed in read only mode.\n\
-Setting mode read only `r`....')
+            warnings.warn(
+                'Opening Correlation Databases without providing a correlation'
+                + ' options dictionary is only allowed in read only mode.\n'
+                + 'Setting mode read only `r`....')
         # Create / read file
         if not path.split('.')[-1] == 'h5':
             path += '.h5'
@@ -427,8 +437,20 @@ def co_to_hdf5(co: dict) -> dict:
         'subdir', 'read_start', 'read_end', 'read_len', 'read_inc',
         'combination_method', 'combinations', 'starttime']
     for key in remk:
-        coc.pop(key, None)
-    coc['corr_args'].pop('combinations', None)
-    coc['subdivision'].pop('recombine_subdivision', None)
-    coc['subdivision'].pop('delete_subdivision', None)
+        try:
+            coc.pop(key, None)
+        except KeyError:
+            pass
+    try:
+        coc['corr_args'].pop('combinations', None)
+    except KeyError:
+        pass
+    try:
+        coc['subdivision'].pop('recombine_subdivision', None)
+    except KeyError:
+        pass
+    try:
+        coc['subdivision'].pop('delete_subdivision', None)
+    except KeyError:
+        pass
     return coc

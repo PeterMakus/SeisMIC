@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Thursday, 2nd December 2021 12:20:00 pm
+Last Modified: Monday, 17th January 2022 02:30:47 pm
 '''
 
 from datetime import datetime
@@ -38,6 +38,17 @@ class DV(object):
         self.method = method
         self.stats = stats
 
+    def __str__(self):
+        """
+        Print a prettier string.
+        """
+        code = f'{self.stats.network}.{self.stats.station}.'\
+            + self.stats.channel
+        out = f'{self.method} {self.value_type} velocity change estimate of '\
+            + f'{code}.\nstarttdate: {min(self.stats.corr_start).ctime()}\n'\
+            + f'enddate: {max(self.stats.corr_end).ctime()}'
+        return out
+
     def save(self, path: str):
         """
         Saves the dv object to a compressed numpy binary format. The DV can
@@ -58,10 +69,12 @@ class DV(object):
         self, save_dir: str = '.', figure_file_name: str = None,
         mark_time: datetime = None, normalize_simmat: bool = False,
         sim_mat_Clim: List[float] = [], ylim: Tuple[int, int] = None,
-            figsize: Tuple[float, float] = (9, 11), dpi: int = 72):
+        figsize: Tuple[float, float] = (9, 11), dpi: int = 72,
+            title: str = None):
         plot_dv(
             self.__dict__, save_dir, figure_file_name, mark_time,
-            normalize_simmat, sim_mat_Clim, figsize, dpi, ylim=ylim)
+            normalize_simmat, sim_mat_Clim, figsize, dpi, ylim=ylim,
+            title=title)
 
     def smooth_sim_mat(self, win_len: int):
         """
@@ -95,6 +108,6 @@ def read_dv(path: str) -> DV:
     loaded = np.load(path)
     stats = CorrStats(mu.load_header_from_np_array(loaded))
     return DV(
-        loaded['corr'], loaded['value'], loaded['vt_array'][0],
-        loaded['sim_mat'], loaded['second_axis'], loaded['method_array'][0],
+        loaded['corr'], loaded['value'], loaded['vt_array'][0][0],
+        loaded['sim_mat'], loaded['second_axis'], loaded['method_array'][0][0],
         stats=stats)

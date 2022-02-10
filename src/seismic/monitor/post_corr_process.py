@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Tuesday, 21st December 2021 08:23:05 am
+Last Modified: Monday, 17th January 2022 02:16:51 pm
 '''
 
 from typing import List, Tuple
@@ -255,12 +255,16 @@ def corr_mat_trim(
 
     # select requested part from matrix
     # +1 is to include the last sample
-    data = data[:, start: end + 1]
+    if len(data.shape) == 1:
+        data = data[start:end+1]
+        stats['npts'] = len(data)
+    else:
+        data = data[:, start:end + 1]
+        stats['npts'] = data.shape[1]
 
     # set starttime, endtime and npts of the new stats
     stats['start_lag'] = starttime
 
-    stats['npts'] = data.shape[1]
     return data, stats
 
 

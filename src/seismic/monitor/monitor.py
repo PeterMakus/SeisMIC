@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 12th November 2021 03:11:59 pm
+Last Modified: Monday, 17th January 2022 04:04:56 pm
 '''
 from copy import deepcopy
 import logging
@@ -27,6 +27,7 @@ from seismic.db.corr_hdf5 import CorrelationDataBase
 from seismic.monitor.dv import DV, read_dv
 from seismic.monitor.wfc import WFC
 from seismic.utils.miic_utils import log_lvl
+import seismic.monitor.post_corr_process as pcp
 
 
 class Monitor(object):
@@ -74,6 +75,8 @@ class Monitor(object):
         else:
             tstr = None
         tstr = self.comm.bcast(tstr, root=0)
+        # replace colon in tstr
+        tstr = tstr.replace(':', '-')
         self.logger = logging.getLogger(
             "seismic.monitor.Monitor%s" % str(self.rank).zfill(3))
         self.logger.setLevel(loglvl)
@@ -81,8 +84,8 @@ class Monitor(object):
         # also catch the warnings
         logging.captureWarnings(True)
         warnlog = logging.getLogger('py.warnings')
-        fh = logging.FileHandler(os.path.join(logdir, 'monitor%srank%s' % (
-            tstr, str(self.rank).zfill(3))))
+        fh = logging.FileHandler(os.path.join(
+            logdir, f'monitor{tstr}rank{str(self.rank).zfill(3)}'))
         fh.setLevel(loglvl)
         self.logger.addHandler(fh)
         warnlog.addHandler(fh)
@@ -135,7 +138,7 @@ class Monitor(object):
 
     def compute_velocity_change(
         self, corr_file: str, tag: str, network: str, station: str,
-            channel: str):
+            channel: str, ref_trcs: np.ndarray = None):
         """
         Computes the velocity change for a cross (or auto) correlation
         time-series. This process is executed "per station combination".
@@ -156,6 +159,10 @@ class Monitor(object):
         :type station: str
         :param channel: Channel combination code
         :type channel: str
+        :param ref_trcs: Feed in on or several custom reference traces.
+            If None the program will determine a reference trace from
+            the chosen method in the config. Defaults to None
+        :type ref_trcs: np.ndarray, optional
         """
         self.logger.info('Computing velocity change for file: %s and channel:\
 %s' % (corr_file, channel))
@@ -180,20 +187,24 @@ class Monitor(object):
                 cb = f(**func['args'])
 
         # Now, we make a copy of the cm to be trimmed
-        cbt = cb.copy().trim(
-            -(self.options['dv']['tw_start']+self.options['dv']['tw_len']),
-            (self.options['dv']['tw_start']+self.options['dv']['tw_len']))
+        trim0 = -(self.options['dv']['tw_start']+self.options['dv']['tw_len'])
+        trim1 = (self.options['dv']['tw_start']+self.options['dv']['tw_len'])
+        cbt = cb.copy().trim(trim0, trim1)
 
         if cbt.data.shape[1] <= 20:
             raise ValueError('CorrBulk extremely short.')
 
-        tr = cbt.extract_multi_trace(**self.options['dv']['dt_ref'])
+        if ref_trcs is None:
+            tr = cbt.extract_multi_trace(**self.options['dv']['dt_ref'])
+        else:
+            tr = ref_trcs
+            if max(tr.shape) != cbt.data.shape[1]:
+                tr, _ = pcp.corr_mat_trim(tr, deepcopy(cb.stats), trim0, trim1)
 
         # Compute time window
         tw = [np.arange(
             self.options['dv']['tw_start']*cbt.stats['sampling_rate'],
-            (self.options['dv']['tw_start']+self.options[
-                'dv']['tw_len'])*cbt.stats['sampling_rate'], 1)]
+            trim1*cbt.stats['sampling_rate'], 1)]
         dv = cbt.stretch(
             ref_trc=tr, return_sim_mat=True,
             stretch_steps=self.options['dv']['stretch_steps'],
@@ -201,13 +212,13 @@ class Monitor(object):
             tw=tw)
         ccb = cb.correct_stretch(dv)
 
-        ccb.trim(
-            -(self.options['dv']['tw_start']+self.options['dv']['tw_len']),
-            (self.options['dv']['tw_start']+self.options['dv']['tw_len']))
+        ccb.trim(trim0, trim1)
 
         # extract the final reference trace (mean excluding very different
         # traces)
-        tr = ccb.extract_multi_trace(**self.options['dv']['dt_ref'])
+        if ref_trcs is None:
+            tr = ccb.extract_multi_trace(**self.options['dv']['dt_ref'])
+
         # obtain an improved time shift measurement
         dv = cbt.stretch(
             ref_trc=tr, return_sim_mat=True,

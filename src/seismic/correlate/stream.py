@@ -8,7 +8,8 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Thursday, 6th January 2022 01:38:10 pm
+
+Last Modified: Wednesday, 9th February 2022 10:47:46 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -956,10 +957,14 @@ class CorrStream(Stream):
         .. note:: If you would like to plot a subset of this stream, use
             :func:`~seismic.correlate.stream.CorrStream.select`.
         """
-        plot_cst(
+        if self.count() == 1:
+            self[0].plot()
+            return
+        ax = plot_cst(
             self, sort_by=sort_by, timelimits=timelimits, ylimits=ylimits,
             scalingfactor=scalingfactor, ax=ax, linewidth=linewidth,
             outputfile=outputfile, title=title, type=type)
+        return ax
 
     def _to_matrix(
         self, network: str = None, station: str = None, channel: str = None,
@@ -1110,9 +1115,10 @@ class CorrTrace(Trace):
         :return: Array with lag times
         :rtype: np.ndarray
         """
-        return np.arange(
-            self.stats.start_lag, self.stats.end_lag + self.stats.delta,
-            self.stats.delta)
+        # this way there won't be problems with numerical errors for small
+        # delta
+        return np.arange(self.stats.npts)*self.stats.delta\
+            + self.stats.start_lag
 
 
 def alphabetical_correlation(
@@ -1359,16 +1365,16 @@ def stack_st(st: CorrStream, weight: str, norm: bool = True) -> CorrTrace:
         dur.append(tr.stats.corr_end-tr.stats.corr_start)
     A = np.array(stack)
     if weight == 'mean' or weight == 'average':
-        data = np.average(A, axis=0)
+        data = np.nanmean(A, axis=0)
         if norm:
-            norm = np.max(np.abs(data))
+            norm = np.nanmax(np.abs(data))
             data /= norm  # np.tile(np.atleast_2d(norm).T, (1, A.shape[1]))
         return CorrTrace(data, _header=stats)
     elif weight == 'by_length':
         # Weight by the length of each trace
-        data = np.sum((A.T*np.array(dur)).T, axis=0)/np.sum(dur)
+        data = np.nansum((A.T*np.array(dur)).T, axis=0)/np.nansum(dur)
         if norm:
-            norm = np.max(np.abs(data))
+            norm = np.nanmax(np.abs(data))
             data /= norm  # np.tile(np.atleast_2d(norm).T, (1, A.shape[1]))
         return CorrTrace(data=data, _header=stats)
 
