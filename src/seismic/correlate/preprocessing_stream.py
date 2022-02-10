@@ -10,7 +10,7 @@ Module that contains functions for preprocessing on obspy streams
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:47:00 pm
-Last Modified: Wednesday, 9th February 2022 01:39:07 pm
+Last Modified: Thursday, 10th February 2022 09:44:08 am
 '''
 from typing import List
 from warnings import warn
@@ -191,7 +191,7 @@ def stream_filter(st: Stream, ftype: str, filter_option: dict) -> Stream:
 
 def stream_mask_at_utc(
     st: Stream, starts: List[UTCDateTime], ends: List[UTCDateTime] = None,
-        masklen: float = None):
+        masklen: float = None, reverse: bool = False):
     """
     Mask the Data in the Stream between the times given by ``starts`` and
     ``ends`` or between ``starts`` and ``starts``+``masklen``.
@@ -207,6 +207,9 @@ def stream_mask_at_utc(
     :param masklen: Alternatively to providing ends, one can provide a constant
         length (in s) per mask, defaults to None.
     :type masklen: float, optional
+    :param reverse: Only keep the data in the mask unmasked and mask everything
+        else. Defaults to False.
+    :type reverse: bool, optional
     :raises ValueError: If `ends`, `starts`, and `masklen` are incompatible
         with each other.
 
@@ -229,12 +232,12 @@ def stream_mask_at_utc(
     else:
         ends = np.array(ends)
     for tr in st:
-        trace_mask_at_utc(tr, starts, ends)
+        trace_mask_at_utc(tr, starts, ends, reverse)
 
 
 def trace_mask_at_utc(
     tr: Trace, starts: np.ndarray,
-        ends: np.ndarray):
+        ends: np.ndarray, reverse: bool):
     """
     .. seealso::
         :func:`~seismic.correlate.preprocessing_stream.stream_mask_at_utc`
@@ -275,6 +278,8 @@ def trace_mask_at_utc(
         ne = int(np.ceil(tr.stats.sampling_rate*t))+1
         mask[:ne] = True
 
+    if reverse:
+        mask = ~mask
     # Mask the array
     tr.data = np.ma.array(tr.data, mask=mask, hard_mask=True, fill_value=0)
     # Hard mask saves RAM as the data will essentially be discarded

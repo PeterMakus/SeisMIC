@@ -8,7 +8,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 04:07:16 pm
-Last Modified: Wednesday, 9th February 2022 02:14:18 pm
+Last Modified: Thursday, 10th February 2022 09:48:59 am
 '''
 
 import unittest
@@ -187,7 +187,7 @@ class TestStreamMaskAtUTC(unittest.TestCase):
         starts = np.array([self.st[0].stats.starttime]*2) + np.array([1, 7])
         calls = []
         for tr in self.st:
-            calls.append(mock.call(tr, mock.ANY, mock.ANY))
+            calls.append(mock.call(tr, mock.ANY, mock.ANY, False))
         ppst.stream_mask_at_utc(self.st, starts, masklen=length)
         tr_mask_mock.assert_has_calls(calls)
         np.testing.assert_array_equal(
@@ -206,7 +206,7 @@ class TestStreamMaskAtUTC(unittest.TestCase):
         ends = starts + length
         calls = []
         for tr in self.st:
-            calls.append(mock.call(tr, mock.ANY, mock.ANY))
+            calls.append(mock.call(tr, mock.ANY, mock.ANY, False))
         ppst.stream_mask_at_utc(self.st, starts, ends=ends)
         tr_mask_mock.assert_has_calls(calls)
         np.testing.assert_array_equal(
@@ -230,7 +230,7 @@ class TestTraceMaskAtUTC(unittest.TestCase):
             + startsdelta
         masklen = np.array([np.random.randint(1, 4), np.random.randint(1, 4)])
         ends = starts + masklen
-        ppst.trace_mask_at_utc(self.tr, starts, ends)
+        ppst.trace_mask_at_utc(self.tr, starts, ends, False)
         self.assertTrue(np.ma.is_masked(self.tr.data))
         self.assertFalse(np.ma.is_masked(
             self.tr.data[:int(startsdelta[0]*self.tr.stats.sampling_rate)]))
@@ -243,18 +243,30 @@ class TestTraceMaskAtUTC(unittest.TestCase):
         starts = np.array([self.tr.stats.starttime+startsdelta])
         masklen = np.random.randint(11, 15)
         ends = starts + masklen
-        ppst.trace_mask_at_utc(self.tr, starts, ends)
+        ppst.trace_mask_at_utc(self.tr, starts, ends, False)
         self.assertTrue(np.ma.is_masked(self.tr.data))
         self.assertFalse(np.ma.is_masked(
             self.tr.data[int((
                 startsdelta+masklen)*self.tr.stats.sampling_rate)+1:]))
+
+    def test_mask_at_start_rev(self):
+        startsdelta = -10 + np.random.randint(0, 5)
+        starts = np.array([self.tr.stats.starttime+startsdelta])
+        masklen = np.random.randint(11, 15)
+        ends = starts + masklen
+        # same but inverse
+        ppst.trace_mask_at_utc(self.tr, starts, ends, True)
+        self.assertTrue(np.ma.is_masked(self.tr.data))
+        self.assertFalse(np.ma.is_masked(
+            self.tr.data[:int((
+                startsdelta+masklen)*self.tr.stats.sampling_rate)]))
 
     def test_mask_at_end(self):
         startsdelta = -10 + np.random.randint(0, 5)
         starts = np.array([self.tr.stats.endtime+startsdelta])
         masklen = np.random.randint(11, 15)
         ends = starts + masklen
-        ppst.trace_mask_at_utc(self.tr, starts, ends)
+        ppst.trace_mask_at_utc(self.tr, starts, ends, False)
         self.assertTrue(np.ma.is_masked(self.tr.data))
         self.assertFalse(np.ma.is_masked(
             self.tr.data[:int(startsdelta*self.tr.stats.sampling_rate-2)]))
