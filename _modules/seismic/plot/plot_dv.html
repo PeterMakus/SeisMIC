@@ -188,7 +188,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Friday, 16th July 2021 02:30:02 pm</span>
-<span class="sd">Last Modified: Friday, 3rd December 2021 08:20:14 am</span>
+<span class="sd">Last Modified: Wednesday, 19th January 2022 02:44:28 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
@@ -203,7 +203,7 @@
 <div class="viewcode-block" id="plot_dv"><a class="viewcode-back" href="../../../modules/API.html#seismic.plot.plot_dv.plot_dv">[docs]</a><span class="k">def</span> <span class="nf">plot_dv</span><span class="p">(</span>
     <span class="n">dv</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">figure_file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mark_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">normalize_simmat</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">sim_mat_Clim</span><span class="o">=</span><span class="p">[],</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">72</span><span class="p">,</span>
-        <span class="n">ylim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="n">ylim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Plot the &quot;extended&quot; dv dictionary</span>
 
 <span class="sd">    This function is thought to plot the result of the velocity change estimate</span>
@@ -272,8 +272,8 @@
 
     <span class="c1"># Extract the data from the dictionary</span>
 
-    <span class="n">value_type</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;value_type&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">method</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;method&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">value_type</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;value_type&#39;</span><span class="p">]</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;method&#39;</span><span class="p">]</span>
 
     <span class="n">corr</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;corr&#39;</span><span class="p">]</span>
     <span class="n">dt</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
@@ -311,7 +311,7 @@
         <span class="n">dv_y_label</span> <span class="o">=</span> <span class="s2">&quot;time shift (sample)&quot;</span>
 
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unknown dv type!&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown dv type, </span><span class="si">{</span><span class="n">value_type</span><span class="si">}</span><span class="s2">!&quot;</span><span class="p">)</span>
 
     <span class="n">f</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">)</span>
 
@@ -345,8 +345,10 @@
     <span class="n">comb_mseedid</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
         <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">],</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;station&#39;</span><span class="p">],</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">],</span>
         <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">])</span>
-
-    <span class="n">tit</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> estimate (</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tit</span><span class="p">,</span> <span class="n">comb_mseedid</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
+        <span class="n">tit</span> <span class="o">=</span> <span class="n">title</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">tit</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> estimate (</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tit</span><span class="p">,</span> <span class="n">comb_mseedid</span><span class="p">)</span>
 
     <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">tit</span><span class="p">)</span>
     <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>

@@ -188,7 +188,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Thursday, 3rd June 2021 04:15:57 pm</span>
-<span class="sd">Last Modified: Friday, 12th November 2021 03:11:59 pm</span>
+<span class="sd">Last Modified: Monday, 17th January 2022 04:04:56 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -207,6 +207,7 @@
 <span class="kn">from</span> <span class="nn">seismic.monitor.dv</span> <span class="kn">import</span> <span class="n">DV</span><span class="p">,</span> <span class="n">read_dv</span>
 <span class="kn">from</span> <span class="nn">seismic.monitor.wfc</span> <span class="kn">import</span> <span class="n">WFC</span>
 <span class="kn">from</span> <span class="nn">seismic.utils.miic_utils</span> <span class="kn">import</span> <span class="n">log_lvl</span>
+<span class="kn">import</span> <span class="nn">seismic.monitor.post_corr_process</span> <span class="k">as</span> <span class="nn">pcp</span>
 
 
 <div class="viewcode-block" id="Monitor"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.Monitor">[docs]</a><span class="k">class</span> <span class="nc">Monitor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -254,6 +255,8 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">tstr</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">tstr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">tstr</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># replace colon in tstr</span>
+        <span class="n">tstr</span> <span class="o">=</span> <span class="n">tstr</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span>
             <span class="s2">&quot;seismic.monitor.Monitor</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">loglvl</span><span class="p">)</span>
@@ -261,8 +264,8 @@
         <span class="c1"># also catch the warnings</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">captureWarnings</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">warnlog</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;py.warnings&#39;</span><span class="p">)</span>
-        <span class="n">fh</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">logdir</span><span class="p">,</span> <span class="s1">&#39;monitor</span><span class="si">%s</span><span class="s1">rank</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
-            <span class="n">tstr</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">))))</span>
+        <span class="n">fh</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">logdir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;monitor</span><span class="si">{</span><span class="n">tstr</span><span class="si">}</span><span class="s1">rank</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
         <span class="n">fh</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">loglvl</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
         <span class="n">warnlog</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
@@ -315,7 +318,7 @@
 
 <div class="viewcode-block" id="Monitor.compute_velocity_change"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.Monitor.compute_velocity_change">[docs]</a>    <span class="k">def</span> <span class="nf">compute_velocity_change</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">corr_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-            <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ref_trcs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes the velocity change for a cross (or auto) correlation</span>
 <span class="sd">        time-series. This process is executed &quot;per station combination&quot;.</span>
@@ -336,6 +339,10 @@
 <span class="sd">        :type station: str</span>
 <span class="sd">        :param channel: Channel combination code</span>
 <span class="sd">        :type channel: str</span>
+<span class="sd">        :param ref_trcs: Feed in on or several custom reference traces.</span>
+<span class="sd">            If None the program will determine a reference trace from</span>
+<span class="sd">            the chosen method in the config. Defaults to None</span>
+<span class="sd">        :type ref_trcs: np.ndarray, optional</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Computing velocity change for file: </span><span class="si">%s</span><span class="s1"> and channel:</span><span class="se">\</span>
 <span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">corr_file</span><span class="p">,</span> <span class="n">channel</span><span class="p">))</span>
@@ -360,20 +367,24 @@
                 <span class="n">cb</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="o">**</span><span class="n">func</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">])</span>
 
         <span class="c1"># Now, we make a copy of the cm to be trimmed</span>
-        <span class="n">cbt</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span>
-            <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]),</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]))</span>
+        <span class="n">trim0</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">])</span>
+        <span class="n">trim1</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">])</span>
+        <span class="n">cbt</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">trim0</span><span class="p">,</span> <span class="n">trim1</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">cbt</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">20</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;CorrBulk extremely short.&#39;</span><span class="p">)</span>
 
-        <span class="n">tr</span> <span class="o">=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">extract_multi_trace</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;dt_ref&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">ref_trcs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tr</span> <span class="o">=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">extract_multi_trace</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;dt_ref&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tr</span> <span class="o">=</span> <span class="n">ref_trcs</span>
+            <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">tr</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_trim</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">cb</span><span class="o">.</span><span class="n">stats</span><span class="p">),</span> <span class="n">trim0</span><span class="p">,</span> <span class="n">trim1</span><span class="p">)</span>
 
         <span class="c1"># Compute time window</span>
         <span class="n">tw</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">cbt</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">],</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span>
-                <span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">])</span><span class="o">*</span><span class="n">cbt</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)]</span>
+            <span class="n">trim1</span><span class="o">*</span><span class="n">cbt</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)]</span>
         <span class="n">dv</span> <span class="o">=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span>
             <span class="n">ref_trc</span><span class="o">=</span><span class="n">tr</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">stretch_steps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;stretch_steps&#39;</span><span class="p">],</span>
@@ -381,13 +392,13 @@
             <span class="n">tw</span><span class="o">=</span><span class="n">tw</span><span class="p">)</span>
         <span class="n">ccb</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">correct_stretch</span><span class="p">(</span><span class="n">dv</span><span class="p">)</span>
 
-        <span class="n">ccb</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span>
-            <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]),</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]))</span>
+        <span class="n">ccb</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">trim0</span><span class="p">,</span> <span class="n">trim1</span><span class="p">)</span>
 
         <span class="c1"># extract the final reference trace (mean excluding very different</span>
         <span class="c1"># traces)</span>
-        <span class="n">tr</span> <span class="o">=</span> <span class="n">ccb</span><span class="o">.</span><span class="n">extract_multi_trace</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;dt_ref&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">ref_trcs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tr</span> <span class="o">=</span> <span class="n">ccb</span><span class="o">.</span><span class="n">extract_multi_trace</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;dt_ref&#39;</span><span class="p">])</span>
+
         <span class="c1"># obtain an improved time shift measurement</span>
         <span class="n">dv</span> <span class="o">=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span>
             <span class="n">ref_trc</span><span class="o">=</span><span class="n">tr</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
