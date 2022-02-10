@@ -17,14 +17,17 @@ SeisMIC (**Seismological Monitoring using Interferometric Concepts**) is a pytho
 
 ## Installation of this package
 
-A few simple steps:
-
-1. Download this package via GitHub
-2. Execute the following commands, in the directory that you downloaded the source code to:
+Download this package via GitHub and install it via bash terminal (the few steps shown below) or using the graphical user interface
 
 ```bash
+# Download via wget or web-browser
+wget https://github.com/PeterMakus/SeisMIC/tree/main
+
+# unzip the package
+unzip main.zip
+
 # Change directory to the same directory that this repo is in (i.e., same directory as setup.py)
-cd $PathToThisRepository$
+cd SeisMIC-main  # That's the standard name the folder should have
 
 # Create the conda environment and install dependencies
 conda env create -f environment.yml
