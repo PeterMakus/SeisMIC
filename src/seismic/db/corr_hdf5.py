@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Friday, 11th February 2022 08:59:51 am
+Last Modified: Friday, 11th February 2022 12:57:07 pm
 '''
 import ast
 import fnmatch
@@ -374,13 +374,16 @@ def all_traces_recursive(
         elif not fnmatch.fnmatch(v.name, pattern) and v.name not in pattern:
             continue
         else:
-            try:
-                stream.append(
-                    CorrTrace(np.array(v), _header=read_hdf5_header(v)))
-            except ValueError:
-                warnings.warn(
-                    'Header could not be converted. Attributes are: %s' % (
-                        str(v.attrs)))
+            # try:
+            stream.append(
+                CorrTrace(np.array(v), _header=read_hdf5_header(v)))
+            # This even necessary?
+            # except ValueError:
+            #     print(v)
+            #     print(v.attrs)
+            #     warnings.warn(
+            #         'Header could not be converted. Attributes are: %s' % (
+            #             str(v.attrs)))
     return stream
 
 
@@ -423,7 +426,17 @@ def read_hdf5_header(dataset: h5py.Dataset) -> Stats:
     header = {}
     for key in attrs:
         if key in time_keys:
-            header[key] = UTCDateTime(attrs[key])
+            try:
+                header[key] = UTCDateTime(attrs[key])
+            except ValueError as e:
+                # temporary fix of obspy's UTCDateTime issue. SHould be removed
+                # as soon as they release version 1.23
+                if attrs[key][4:8] == '360T':
+                    new = list(attrs[key])
+                    new[6] = '1'
+                    header[key] = UTCDateTime(''.join(new)) - 86400
+                else:
+                    raise e
         elif key == 'processing':
             header[key] = list(attrs[key])
         else:
