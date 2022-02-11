@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 11th February 2022 10:56:11 am
+Last Modified: Friday, 11th February 2022 12:07:49 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -100,7 +100,7 @@ class Correlator(object):
         if self.rank == 0:
             opt_dump = deepcopy(options)
             # json cannot write the UTCDateTime objects that might be in here
-            for step in opt_dump['co']['preprocessing']:
+            for step in opt_dump['co']['preProcessing']:
                 if 'stream_mask_at_utc' in step['function']:
                     startsstr = [
                         t.format_fissures() for t in step['args']['starts']]
