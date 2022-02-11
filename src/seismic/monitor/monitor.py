@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 17th January 2022 04:04:56 pm
+Last Modified: Friday, 11th February 2022 08:51:22 am
 '''
 from copy import deepcopy
 import logging
@@ -277,8 +277,13 @@ class Monitor(object):
             try:
                 self.compute_velocity_change(
                     corr_file, tag, net, stat, cha)
+            except KeyError:
+                self.logger.exception(
+                    f'No correlation data found for {net}.{stat}.{cha} with '
+                    + f'tag {tag} in file {corr_file}.'
+                )
             except Exception as e:
-                self.logger.exception(e)
+                self.logger.exception(f'{e} for file {corr_file}.')
 
     def compute_components_average(self, method: str = 'AutoComponents'):
         """
