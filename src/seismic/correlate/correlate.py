@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 11th February 2022 12:07:49 pm
+Last Modified: Friday, 11th February 2022 03:02:23 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
