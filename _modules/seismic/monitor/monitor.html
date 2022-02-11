@@ -188,7 +188,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Thursday, 3rd June 2021 04:15:57 pm</span>
-<span class="sd">Last Modified: Monday, 17th January 2022 04:04:56 pm</span>
+<span class="sd">Last Modified: Friday, 11th February 2022 08:51:22 am</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -457,8 +457,13 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">compute_velocity_change</span><span class="p">(</span>
                     <span class="n">corr_file</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="n">cha</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;No correlation data found for </span><span class="si">{</span><span class="n">net</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">stat</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">cha</span><span class="si">}</span><span class="s1"> with &#39;</span>
+                    <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;tag </span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s1"> in file </span><span class="si">{</span><span class="n">corr_file</span><span class="si">}</span><span class="s1">.&#39;</span>
+                <span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1"> for file </span><span class="si">{</span><span class="n">corr_file</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Monitor.compute_components_average"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.Monitor.compute_components_average">[docs]</a>    <span class="k">def</span> <span class="nf">compute_components_average</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;AutoComponents&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
