@@ -8,8 +8,9 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 6th January 2022 10:40:49 am
+Last Modified: Friday, 11th February 2022 10:56:11 am
 '''
+from copy import deepcopy
 from typing import Iterator, List, Tuple
 from warnings import warn
 import os
@@ -97,9 +98,20 @@ class Correlator(object):
 
         # Write the options dictionary to the log file
         if self.rank == 0:
+            opt_dump = deepcopy(options)
+            # json cannot write the UTCDateTime objects that might be in here
+            for step in opt_dump['co']['preprocessing']:
+                if 'stream_mask_at_utc' in step['function']:
+                    startsstr = [
+                        t.format_fissures() for t in step['args']['starts']]
+                    step['args']['starts'] = startsstr
+                    if 'ends' in step['args']:
+                        endsstr = [
+                            t.format_fissures() for t in step['args']['ends']]
+                        step['args']['ends'] = endsstr
             with open(os.path.join(
                     logdir, 'params%s.txt' % tstr), 'w') as file:
-                file.write(json.dumps(options, indent=1))
+                file.write(json.dumps(opt_dump, indent=1))
 
         self.options = options['co']
 
