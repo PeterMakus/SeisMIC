@@ -9,7 +9,7 @@
 
 Created: Tuesday, 1st June 2021 10:42:03 am
 
-Last Modified: Monday, 24th January 2022 03:32:09 pm
+Last Modified: Friday, 11th February 2022 01:00:34 pm
 
 '''
 from copy import deepcopy
@@ -56,12 +56,26 @@ class TestConvertHeaderToHDF5(unittest.TestCase):
 
 
 class TestReadHDF5Header(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tr = read()[0]
+
     def test_result(self):
+        dataset = MagicMock()
+        dataset.attrs = {}
+        self.tr.decimate(4)  # to put something into processing
+        stats = self.tr.stats
+        corr_hdf5.convert_header_to_hdf5(dataset, stats)
+        self.assertEqual(corr_hdf5.read_hdf5_header(dataset), stats)
+
+    def test_result_julday360(self):
+        # There was a bug with that
         dataset = MagicMock()
         dataset.attrs = {}
         tr = read()[0]
         tr.decimate(4)  # to put something into processing
         stats = tr.stats
+        self.tr.stats.starttime = UTCDateTime(
+            year=2015, julday=360, hour=15, minute=3)
         corr_hdf5.convert_header_to_hdf5(dataset, stats)
         self.assertEqual(corr_hdf5.read_hdf5_header(dataset), stats)
 

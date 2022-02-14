@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Thursday, 6th January 2022 10:46:42 am
+Last Modified: Friday, 11th February 2022 03:02:06 pm
 '''
 from copy import deepcopy
 import unittest
@@ -16,7 +16,7 @@ from unittest import mock
 import os
 
 import numpy as np
-from obspy import read, Stream, Trace
+from obspy import read, Stream, Trace, UTCDateTime
 from obspy.core import AttribDict
 from obspy.core.inventory.inventory import read_inventory
 import yaml
@@ -64,6 +64,12 @@ class TestCorrrelator(unittest.TestCase):
     @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_stat_net_str(
             self, makedirs_mock, logging_mock, open_mock):
+        # Test the change of UTCDateTime object
+        self.options['co']['preProcessing'].append(
+            {
+                'function': '...stream_mask_at_utc',
+                'args': {'starts': [UTCDateTime(0)], 'ends': [
+                    UTCDateTime(10)]}})
         options = deepcopy(self.options)
         options['net']['network'] = ['bla']
         options['net']['station'] = ['blub']
@@ -78,6 +84,11 @@ class TestCorrrelator(unittest.TestCase):
     @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_net_wc_stat_str(
             self, makedirs_mock, logging_mock, open_mock):
+        # Test the change of UTCDateTime object
+        self.options['co']['preProcessing'].append(
+            {
+                'function': '...stream_mask_at_utc',
+                'args': {'starts': [UTCDateTime(0)], 'masklen': 10}})
         options = deepcopy(self.options)
         options['net']['network'] = '*'
         options['net']['station'] = ['blub']
