@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 11th February 2022 08:51:22 am
+Last Modified: Monday, 14th February 2022 02:04:06 pm
 '''
 from copy import deepcopy
 import logging
@@ -305,13 +305,13 @@ class Monitor(object):
         """
         av_methods = (
             'autocomponents', 'crosscomponents', 'stationwide',
-            'crossstations')
+            'crossstations', 'betweenstations', 'betweencomponents')
         if method.lower() not in av_methods:
             raise ValueError('Averaging method not in %s.' % str(av_methods))
         infiles = glob(os.path.join(self.outdir, '*.npz'))
         if method.lower() == 'autocomponents':
             ch = 'av-auto'
-        elif method.lower() == 'crosscomponents':
+        elif method.lower() in ('betweencomponents', 'crosscomponents'):
             ch = 'av-xc'
         else:
             ch = 'av'
@@ -347,7 +347,8 @@ class Monitor(object):
                             or stations[0] != stations[1]:
                         infiles.remove(f)
                         continue
-                elif method.lower() == 'crosscomponents':
+                elif method.lower() in (
+                        'betweencomponents', 'crosscomponents'):
                     # Remove those from equal channels
                     components = f.split('.')[-2].split('-')
                     if components[0] == components[1] \
@@ -358,7 +359,7 @@ class Monitor(object):
                     if stations[0] != stations[1]:
                         infiles.remove(f)
                         continue
-                elif method.lower() == 'crossstations':
+                elif method.lower() in ('betweenstations', 'crossstations'):
                     if stations[0] == stations[1]:
                         infiles.remove(f)
                         continue
