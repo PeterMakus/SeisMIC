@@ -10,7 +10,7 @@ Module that contains functions for preprocessing on obspy streams
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:47:00 pm
-Last Modified: Thursday, 10th February 2022 09:44:08 am
+Last Modified: Monday, 14th February 2022 11:52:04 am
 '''
 from typing import List
 from warnings import warn
@@ -191,7 +191,7 @@ def stream_filter(st: Stream, ftype: str, filter_option: dict) -> Stream:
 
 def stream_mask_at_utc(
     st: Stream, starts: List[UTCDateTime], ends: List[UTCDateTime] = None,
-        masklen: float = None, reverse: bool = False):
+        masklen: float = None, reverse: bool = False) -> Stream:
     """
     Mask the Data in the Stream between the times given by ``starts`` and
     ``ends`` or between ``starts`` and ``starts``+``masklen``.
@@ -233,6 +233,7 @@ def stream_mask_at_utc(
         ends = np.array(ends)
     for tr in st:
         trace_mask_at_utc(tr, starts, ends, reverse)
+    return st
 
 
 def trace_mask_at_utc(
