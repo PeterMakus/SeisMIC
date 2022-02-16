@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 6th July 2021 09:18:14 am
-Last Modified: Thursday, 21st October 2021 02:53:41 pm
+Last Modified: Wednesday, 16th February 2022 04:32:53 pm
 '''
 
 import os
@@ -192,6 +192,28 @@ class TestAverageComponents(unittest.TestCase):
         dv_av = monitor.average_components([dv0, dv1])
         self.assertTrue(np.allclose(
             np.mean([dv0.sim_mat, dv1.sim_mat], axis=0), dv_av.sim_mat))
+
+    def test_contains_nans_std(self):
+        sim0 = np.random.random((5, 5))
+        sim1 = np.nan*np.ones((5, 5))
+        corr0 = np.zeros((5))
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], {})
+        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], {})
+        dv_av, std = monitor.average_components([dv0, dv1], True)
+        np.testing.assert_array_equal(std, 0)
+        self.assertTrue(np.all(dv0.sim_mat == dv_av.sim_mat))
+
+    def test_result_std(self):
+        sim0 = np.random.random((5, 5))
+        sim1 = np.random.random((5, 5))
+        corr0 = np.zeros((5))
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], {})
+        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], {})
+        dv_av, std = monitor.average_components([dv0, dv1], True)
+        np.testing.assert_allclose(
+            np.mean([dv0.sim_mat, dv1.sim_mat], axis=0), dv_av.sim_mat)
+        np.testing.assert_allclose(
+            np.std([dv0.sim_mat, dv1.sim_mat], axis=0), std)
 
 
 if __name__ == "__main__":

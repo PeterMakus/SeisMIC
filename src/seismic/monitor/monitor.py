@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 14th February 2022 02:04:06 pm
+Last Modified: Wednesday, 16th February 2022 10:55:29 am
 '''
 from copy import deepcopy
 import logging
@@ -637,7 +637,7 @@ def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
     return netlist, statlist, infiles
 
 
-def average_components(dvs: List[DV]) -> DV:
+def average_components(dvs: List[DV], return_std: bool = False) -> DV:
     """
     Averages the Similariy matrix of the three DV objects. Based on those,
     it computes a new dv value and a new correlation value.
@@ -646,11 +646,15 @@ def average_components(dvs: List[DV]) -> DV:
             average from. Note that it is possible to use almost anything as
             input (also from different stations). However, at the time,
             the function requires the input to be of the same shape
-
     :type dvs: List[class:`~seismic.monitor.dv.DV`]
+    :param return_std: Return the standard deviation of the similarity
+        matrices as a :class:`np.ndarray`. Defaults to False.
+    :type return_std: bool, optional
     :raises TypeError: for DVs that were computed with different methods
-    :return: A single dv with an averaged similarity matrix
-    :rtype: DV
+    :return: A single dv with an averaged similarity matrix. If `return_std`
+        arg is set to `True`. A matrix holding the standard deviation of the
+        similarity matrices is returned.
+    :rtype: DV, (np.ndarray)
     """
     shapes = []
     for dv in dvs:
@@ -665,6 +669,8 @@ def average_components(dvs: List[DV]) -> DV:
     # shape = max(shapes)
     sim_mats = [dv.sim_mat for dv in dvs]
     av_sim_mat = np.nanmean(sim_mats, axis=0)
+    if return_std:
+        std_sim_mat = np.nanstd(sim_mats, axis=0)
     # Now we would have to recompute the dv value and corr value
     corr = np.nanmax(av_sim_mat, axis=1)
     strvec = dvs[0].second_axis
@@ -673,6 +679,8 @@ def average_components(dvs: List[DV]) -> DV:
     stats['channel'] = 'av'
     dvout = DV(
         corr, dt, dvs[0].value_type, av_sim_mat, strvec, dvs[0].method, stats)
+    if return_std:
+        return dvout, std_sim_mat
     return dvout
 
 
