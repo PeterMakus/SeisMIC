@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Wednesday, 16th February 2022 10:03:47 am
+Last Modified: Wednesday, 16th February 2022 10:07:03 am
 '''
 from copy import deepcopy
 import unittest
@@ -81,7 +81,6 @@ class TestFilterStat_Dist(unittest.TestCase):
             np.random.randint(0, 360), np.random.randint(0, 360), dist)
         queried_dist = dist - np.random.randint(10, 1000)
         self.assertFalse(mu.filter_stat_dist('bla', 'blub', queried_dist))
-
 
 
 class TestResampleOrDecimate(unittest.TestCase):
