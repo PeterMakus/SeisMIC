@@ -9,7 +9,7 @@
 
 Created: Tuesday, 1st June 2021 10:42:03 am
 
-Last Modified: Friday, 11th February 2022 01:00:34 pm
+Last Modified: Tuesday, 15th February 2022 11:10:59 am
 
 '''
 from copy import deepcopy
@@ -439,12 +439,33 @@ class TestCorrelationDataBase(unittest.TestCase):
 class TestCoToHDF5(unittest.TestCase):
     def test_pop_keys(self):
         d = {
-            'subdir': 0, 'starttime': 15, 'corr_args': {}, 'subdivision': {}}
+            'subdir': 0, 'starttime': 15, 'corr_args': {'combinations': 3},
+            'subdivision': {
+                'recombine_subdivision': False,
+                'delete_subdivision': True},
+            'preProcessing': [
+                {'function': 'function1', 'args': 'bla'},
+                {'function': 'myimport.stream_mask_at_utc'}
+            ]}
         coc = corr_hdf5.co_to_hdf5(d)
-        self.assertEqual(coc, {'corr_args': {}, 'subdivision': {}})
+        self.assertDictEqual(coc, {
+            'corr_args': {}, 'subdivision': {},
+            'preProcessing': [{'function': 'function1', 'args': 'bla'}]})
         # Make sure that input is not altered
-        self.assertEqual(d, {
-            'subdir': 0, 'starttime': 15, 'corr_args': {}, 'subdivision': {}})
+        self.assertDictEqual(d, {
+            'subdir': 0, 'starttime': 15, 'corr_args': {'combinations': 3},
+            'subdivision': {
+                'recombine_subdivision': False,
+                'delete_subdivision': True},
+            'preProcessing': [
+                {'function': 'function1', 'args': 'bla'},
+                {'function': 'myimport.stream_mask_at_utc'}
+            ]})
+
+    def test_keyError_handling(self):
+        d = {}
+        coc = corr_hdf5.co_to_hdf5(d)
+        self.assertDictEqual({}, coc)
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Friday, 11th February 2022 12:57:07 pm
+Last Modified: Tuesday, 15th February 2022 11:02:06 am
 '''
 import ast
 import fnmatch
@@ -464,6 +464,12 @@ def co_to_hdf5(co: dict) -> dict:
         pass
     try:
         coc['subdivision'].pop('delete_subdivision', None)
+    except KeyError:
+        pass
+    try:
+        for step in coc['preProcessing']:
+            if 'stream_mask_at_utc' in step['function']:
+                coc['preProcessing'].remove(step)
     except KeyError:
         pass
     return coc
