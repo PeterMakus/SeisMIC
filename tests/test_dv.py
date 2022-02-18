@@ -8,10 +8,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 27th October 2021 12:58:15 pm
-Last Modified: Monday, 17th January 2022 03:54:54 pm
+Last Modified: Friday, 18th February 2022 11:31:06 am
 '''
 
 import unittest
+from unittest import mock
 from unittest.mock import patch
 from copy import deepcopy
 
@@ -70,6 +71,38 @@ class TestReadDV(unittest.TestCase):
         self.assertDictEqual(dvout.__dict__, {
             'corr': 0, 'value': 1, 'value_type': 2, 'sim_mat': 3,
             'second_axis': 4, 'method': 5, 'stats': CorrStats()})
+
+    @patch('seismic.monitor.dv.glob')
+    @patch('seismic.monitor.dv.np.load')
+    @patch('seismic.monitor.dv.mu.load_header_from_np_array')
+    def test_pattern(
+        self, load_header_mock: mock.MagicMock, npload_mock: mock.MagicMock,
+            glob_mock: mock.MagicMock):
+        load_header_mock.return_value = {}
+        npload_mock.side_effect = ({
+            'corr': 0, 'value': 1, 'vt_array': [[2]], 'sim_mat': 3,
+            'second_axis': 4, 'method_array': [[5]]},
+            {
+            'corr': 1, 'value': 2, 'vt_array': [[3]], 'sim_mat': 4,
+            'second_axis': 5, 'method_array': [[6]]})
+        glob_mock.return_value = ['/my/dv0', '/my/dv1']
+        dvout = dv.read_dv('/my/dv?')
+        npload_calls = [mock.call('/my/dv0'), mock.call('/my/dv1')]
+        npload_mock.assert_has_calls(npload_calls)
+        lheader_calls = [mock.call({
+            'corr': 0, 'value': 1, 'vt_array': [[2]], 'sim_mat': 3,
+            'second_axis': 4, 'method_array': [[5]]}),
+            mock.call({
+                'corr': 1, 'value': 2, 'vt_array': [[3]], 'sim_mat': 4,
+                'second_axis': 5, 'method_array': [[6]]})]
+        load_header_mock.assert_has_calls(lheader_calls)
+        self.assertDictEqual(dvout[0].__dict__, {
+            'corr': 0, 'value': 1, 'value_type': 2, 'sim_mat': 3,
+            'second_axis': 4, 'method': 5, 'stats': CorrStats()})
+        self.assertDictEqual(dvout[1].__dict__, {
+            'corr': 1, 'value': 2, 'value_type': 3, 'sim_mat': 4,
+            'second_axis': 5, 'method': 6, 'stats': CorrStats()})
+        self.assertEqual(len(dvout), 2)
 
 
 if __name__ == "__main__":

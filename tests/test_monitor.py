@@ -8,11 +8,12 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 6th July 2021 09:18:14 am
-Last Modified: Wednesday, 16th February 2022 04:32:53 pm
+Last Modified: Friday, 18th February 2022 10:51:39 am
 '''
 
 import os
 import unittest
+from unittest import mock
 from unittest.mock import patch
 
 import numpy as np
@@ -20,6 +21,7 @@ from obspy import UTCDateTime
 
 from seismic.monitor import monitor
 from seismic.monitor.dv import DV
+from seismic.correlate.stats import CorrStats
 
 
 class TestMakeTimeList(unittest.TestCase):
@@ -155,6 +157,79 @@ class TestCorrFindFilter(unittest.TestCase):
         self.assertListEqual(['%sa-a.b-b.h5' % self.p], i)
 
 
+class TestAverageDVbyCoords(unittest.TestCase):
+    def none_within_filt(self):
+        cstats = CorrStats()
+        lat = (-10, 10)
+        lon = (0, 10)
+        cstats['stla'] = cstats['evla'] = lat[1] + np.random.randint(1, 60)
+        cstats['stlo'] = cstats['evlo'] = lon[0] - np.random.randint(1, 89)
+        cstats['stel'] = cstats['evel'] = 0
+        dv = DV(
+            np.zeros(5), np.zeros(5), 'bla', np.zeros((5, 5)), np.zeros(5),
+            'dd', cstats)
+        with self.assertRaises(ValueError):
+            monitor.average_dvs_by_coords([dv], lat, lon)
+
+    @mock.patch('seismic.monitor.monitor.average_components')
+    def test_result(self, av_comp_mock: mock.MagicMock):
+        cstats = CorrStats()
+        lat = (-10, 10)
+        lon = (0, 10)
+        cstats['stla'] = cstats['evla'] = lat[1] + np.random.randint(1, 60)
+        cstats['stlo'] = cstats['evlo'] = lon[0] + np.random.randint(0, 10)
+        cstats['stel'] = cstats['evel'] = 0
+        dv = DV(
+            np.zeros(5), np.zeros(5), 'bla', np.zeros((5, 5)), np.zeros(5),
+            'dd', cstats)
+        cstats2 = CorrStats()
+        cstats2['stla'] = cstats2['evla'] = lat[1] - np.random.randint(0, 20)
+        cstats2['stlo'] = cstats2['evlo'] = lon[0] + np.random.randint(0, 10)
+        cstats2['stel'] = cstats2['evel'] = 0
+        dv2 = DV(
+            np.zeros(5), np.zeros(5), 'bla', np.zeros((5, 5)), np.zeros(5),
+            'dd', cstats2)
+        av_comp_mock.return_value = (dv2, 'blub')
+        av_dv, std = monitor.average_dvs_by_coords(
+            [dv, dv2], lat, lon, return_std=True)
+        av_comp_mock.assert_called_once_with([dv2], True)
+        s = av_dv.stats
+        np.testing.assert_array_equal([s.network, s.station], 'geoav')
+        np.testing.assert_array_equal([s.stel, s.evel], 2*[(-1e6, 1e6)])
+        np.testing.assert_array_equal([s.stlo, s.evlo], 2*[lon])
+        np.testing.assert_array_equal([s.stla, s.evla], 2*[lat])
+        self.assertEqual(std, 'blub')
+
+    @mock.patch('seismic.monitor.monitor.average_components')
+    def test_result2(self, av_comp_mock: mock.MagicMock):
+        cstats = CorrStats()
+        lat = (-10, 10)
+        lon = (0, 10)
+        cstats['stla'] = cstats['evla'] = lat[1] - np.random.randint(0, 20)
+        cstats['stlo'] = cstats['evlo'] = lon[0] + np.random.randint(0, 10)
+        cstats['stel'] = cstats['evel'] = 1000
+        dv = DV(
+            np.zeros(5), np.zeros(5), 'bla', np.zeros((5, 5)), np.zeros(5),
+            'dd', cstats)
+        cstats2 = CorrStats()
+        cstats2['stla'] = cstats2['evla'] = lat[1] - np.random.randint(0, 20)
+        cstats2['stlo'] = cstats2['evlo'] = lon[0] + np.random.randint(0, 10)
+        cstats2['stel'] = cstats2['evel'] = 0
+        dv2 = DV(
+            np.zeros(5), np.zeros(5), 'bla', np.zeros((5, 5)), np.zeros(5),
+            'dd', cstats2)
+        av_comp_mock.return_value = dv2
+        av_dv, std = monitor.average_dvs_by_coords(
+            [dv, dv2], lat, lon, el=(-100, 100), return_std=False)
+        av_comp_mock.assert_called_once_with([dv2], False)
+        s = av_dv.stats
+        np.testing.assert_array_equal([s.network, s.station], 'geoav')
+        np.testing.assert_array_equal([s.stel, s.evel], 2*[(-100, 100)])
+        np.testing.assert_array_equal([s.stlo, s.evlo], 2*[lon])
+        np.testing.assert_array_equal([s.stla, s.evla], 2*[lat])
+        self.assertIsNone(std)
+
+
 class TestAverageComponents(unittest.TestCase):
     def test_differing_shape(self):
         sim0 = np.zeros((5, 5))
@@ -172,6 +247,14 @@ class TestAverageComponents(unittest.TestCase):
         dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], {})
         dv1 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['blub'], {})
         with self.assertRaises(TypeError):
+            monitor.average_components([dv0, dv1])
+
+    def test_differing_2ndax(self):
+        sim0 = np.zeros((5, 5))
+        corr0 = np.zeros((5))
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], {})
+        dv1 = DV(corr0, corr0, ['stretch'], sim0, corr0+1, ['bla'], {})
+        with self.assertRaises(ValueError):
             monitor.average_components([dv0, dv1])
 
     def test_contains_nans(self):

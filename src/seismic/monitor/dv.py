@@ -8,10 +8,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Monday, 17th January 2022 02:30:47 pm
+Last Modified: Friday, 18th February 2022 11:28:53 am
 '''
 
 from datetime import datetime
+from glob import glob
 from typing import List, Tuple
 
 import numpy as np
@@ -105,6 +106,12 @@ def read_dv(path: str) -> DV:
     :return: the corresponding and converted DV object
     :rtype: DV
     """
+    if '*' in path or '?' in path:
+        dvl = [read_dv(p) for p in glob(path)]
+        if not len(dvl):
+            raise FileNotFoundError(
+                f'No files that adhere the pattern {path} found.')
+        return dvl
     loaded = np.load(path)
     stats = CorrStats(mu.load_header_from_np_array(loaded))
     return DV(
