@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 6th July 2021 09:18:14 am
-Last Modified: Friday, 18th February 2022 01:45:01 pm
+Last Modified: Friday, 18th February 2022 03:08:44 pm
 '''
 
 import os
@@ -222,6 +222,38 @@ class TestAverageDVbyCoords(unittest.TestCase):
         av_comp_mock.return_value = dv2
         av_dv, std = monitor.average_dvs_by_coords(
             [dv, dv2], lat, lon, el=(-100, 100), return_std=False)
+        av_comp_mock.assert_called_once_with([dv2], False)
+        s = av_dv.stats
+        np.testing.assert_array_equal([s.network, s.station], 'geoav')
+        np.testing.assert_array_equal([s.stel, s.evel], 2*[(-100, 100)])
+        np.testing.assert_array_equal([s.stlo, s.evlo], 2*[lon])
+        np.testing.assert_array_equal([s.stla, s.evla], 2*[lat])
+        self.assertIsNone(std)
+
+    @mock.patch('seismic.monitor.monitor.average_components')
+    def test_result_already_av(self, av_comp_mock: mock.MagicMock):
+        cstats = CorrStats()
+        lat = (-10, 10)
+        lon = (0, 10)
+        cstats['stla'] = cstats['evla'] = lat[1] - np.random.randint(0, 20)
+        cstats['stlo'] = cstats['evlo'] = lon[0] + np.random.randint(0, 10)
+        cstats['stel'] = cstats['evel'] = 1
+        cstats['channel'] = 'av'
+        dv = DV(
+            np.zeros(5), np.zeros(5), 'bla', np.zeros((5, 5)), np.zeros(5),
+            'dd', cstats)
+        cstats2 = CorrStats()
+        cstats2['stla'] = cstats2['evla'] = lat[1] - np.random.randint(0, 20)
+        cstats2['stlo'] = cstats2['evlo'] = lon[0] + np.random.randint(0, 10)
+        cstats2['stel'] = cstats2['evel'] = 0
+        dv2 = DV(
+            np.zeros(5), np.zeros(5), 'bla', np.zeros((5, 5)), np.zeros(5),
+            'dd', cstats2)
+        av_comp_mock.return_value = dv2
+        with warnings.catch_warnings(record=True) as w:
+            av_dv, std = monitor.average_dvs_by_coords(
+                [dv, dv2], lat, lon, el=(-100, 100), return_std=False)
+            self.assertEqual(len(w), 1)
         av_comp_mock.assert_called_once_with([dv2], False)
         s = av_dv.stats
         np.testing.assert_array_equal([s.network, s.station], 'geoav')

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 18th February 2022 01:43:36 pm
+Last Modified: Friday, 18th February 2022 02:52:24 pm
 '''
 from copy import deepcopy
 import logging
@@ -725,6 +725,9 @@ def average_dvs_by_coords(
     dv_filt = []
     for dv in dvs:
         s = dv.stats
+        if s.channel == 'av':
+            warnings.warn('Averaging of averaged dvs not allowed. Skipping dv')
+            continue
         if all((
             lat[0] <= s.stla <= lat[1], lat[0] <= s.evla <= lat[1],
             lon[0] <= s.stlo <= lon[1], lon[0] <= s.evlo <= lon[1],

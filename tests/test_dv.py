@@ -8,13 +8,15 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 27th October 2021 12:58:15 pm
-Last Modified: Friday, 18th February 2022 02:19:50 pm
+Last Modified: Friday, 18th February 2022 03:12:19 pm
 '''
 
 import unittest
 from unittest import mock
 from unittest.mock import patch
 from copy import deepcopy
+import warnings
+from zipfile import BadZipFile
 
 import numpy as np
 
@@ -109,6 +111,32 @@ class TestReadDV(unittest.TestCase):
         glob_mock.return_value = []
         with self.assertRaises(FileNotFoundError):
             dv.read_dv('/my/dv*')
+
+    @patch('seismic.monitor.dv.glob')
+    @patch('seismic.monitor.dv.np.load')
+    @patch('seismic.monitor.dv.mu.load_header_from_np_array')
+    def test_badzipfile(
+        self, load_header_mock: mock.MagicMock, npload_mock: mock.MagicMock,
+            glob_mock: mock.MagicMock):
+        load_header_mock.return_value = {}
+        npload_mock.side_effect = ({
+            'corr': 0, 'value': 1, 'vt_array': [[['b']]], 'sim_mat': 3,
+            'second_axis': 4, 'method_array': [[['xs']]]},
+            BadZipFile)
+        glob_mock.return_value = ['/my/dv0', '/my/dv1']
+        with warnings.catch_warnings(record=True) as w:
+            dvout = dv.read_dv('/my/dv?')
+            self.assertEqual(len(w), 1)
+        npload_calls = [mock.call('/my/dv0'), mock.call('/my/dv1')]
+        npload_mock.assert_has_calls(npload_calls)
+        lheader_calls = [mock.call({
+            'corr': 0, 'value': 1, 'vt_array': [[['b']]], 'sim_mat': 3,
+            'second_axis': 4, 'method_array': [[['xs']]]})]
+        load_header_mock.assert_has_calls(lheader_calls)
+        self.assertDictEqual(dvout[0].__dict__, {
+            'corr': 0, 'value': 1, 'value_type': 'b', 'sim_mat': 3,
+            'second_axis': 4, 'method': 'xs', 'stats': CorrStats()})
+        self.assertEqual(len(dvout), 1)
 
 
 if __name__ == "__main__":
