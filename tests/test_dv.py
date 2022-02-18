@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 27th October 2021 12:58:15 pm
-Last Modified: Friday, 18th February 2022 11:34:05 am
+Last Modified: Friday, 18th February 2022 02:19:50 pm
 '''
 
 import unittest
@@ -61,16 +61,16 @@ class TestReadDV(unittest.TestCase):
     def test(self, load_header_mock, npload_mock):
         load_header_mock.return_value = {}
         npload_mock.return_value = {
-            'corr': 0, 'value': 1, 'vt_array': [[2]], 'sim_mat': 3,
-            'second_axis': 4, 'method_array': [[5]]}
+            'corr': 0, 'value': 1, 'vt_array': [['s']], 'sim_mat': 3,
+            'second_axis': 4, 'method_array': [['d']]}
         dvout = dv.read_dv('/my/dv_file')
         npload_mock.assert_called_once_with('/my/dv_file')
         load_header_mock.assert_called_once_with({
-            'corr': 0, 'value': 1, 'vt_array': [[2]], 'sim_mat': 3,
-            'second_axis': 4, 'method_array': [[5]]})
+            'corr': 0, 'value': 1, 'vt_array': [['s']], 'sim_mat': 3,
+            'second_axis': 4, 'method_array': [['d']]})
         self.assertDictEqual(dvout.__dict__, {
-            'corr': 0, 'value': 1, 'value_type': 2, 'sim_mat': 3,
-            'second_axis': 4, 'method': 5, 'stats': CorrStats()})
+            'corr': 0, 'value': 1, 'value_type': 's', 'sim_mat': 3,
+            'second_axis': 4, 'method': 'd', 'stats': CorrStats()})
 
     @patch('seismic.monitor.dv.glob')
     @patch('seismic.monitor.dv.np.load')
@@ -80,28 +80,28 @@ class TestReadDV(unittest.TestCase):
             glob_mock: mock.MagicMock):
         load_header_mock.return_value = {}
         npload_mock.side_effect = ({
-            'corr': 0, 'value': 1, 'vt_array': [[2]], 'sim_mat': 3,
-            'second_axis': 4, 'method_array': [[5]]},
+            'corr': 0, 'value': 1, 'vt_array': [[['b']]], 'sim_mat': 3,
+            'second_axis': 4, 'method_array': [[['xs']]]},
             {
-            'corr': 1, 'value': 2, 'vt_array': [[3]], 'sim_mat': 4,
-            'second_axis': 5, 'method_array': [[6]]})
+            'corr': 1, 'value': 2, 'vt_array': [['3']], 'sim_mat': 4,
+            'second_axis': 5, 'method_array': [['d']]})
         glob_mock.return_value = ['/my/dv0', '/my/dv1']
         dvout = dv.read_dv('/my/dv?')
         npload_calls = [mock.call('/my/dv0'), mock.call('/my/dv1')]
         npload_mock.assert_has_calls(npload_calls)
         lheader_calls = [mock.call({
-            'corr': 0, 'value': 1, 'vt_array': [[2]], 'sim_mat': 3,
-            'second_axis': 4, 'method_array': [[5]]}),
+            'corr': 0, 'value': 1, 'vt_array': [[['b']]], 'sim_mat': 3,
+            'second_axis': 4, 'method_array': [[['xs']]]}),
             mock.call({
-                'corr': 1, 'value': 2, 'vt_array': [[3]], 'sim_mat': 4,
-                'second_axis': 5, 'method_array': [[6]]})]
+                'corr': 1, 'value': 2, 'vt_array': [['3']], 'sim_mat': 4,
+                'second_axis': 5, 'method_array': [['d']]})]
         load_header_mock.assert_has_calls(lheader_calls)
         self.assertDictEqual(dvout[0].__dict__, {
-            'corr': 0, 'value': 1, 'value_type': 2, 'sim_mat': 3,
-            'second_axis': 4, 'method': 5, 'stats': CorrStats()})
+            'corr': 0, 'value': 1, 'value_type': 'b', 'sim_mat': 3,
+            'second_axis': 4, 'method': 'xs', 'stats': CorrStats()})
         self.assertDictEqual(dvout[1].__dict__, {
-            'corr': 1, 'value': 2, 'value_type': 3, 'sim_mat': 4,
-            'second_axis': 5, 'method': 6, 'stats': CorrStats()})
+            'corr': 1, 'value': 2, 'value_type': '3', 'sim_mat': 4,
+            'second_axis': 5, 'method': 'd', 'stats': CorrStats()})
         self.assertEqual(len(dvout), 2)
 
     @patch('seismic.monitor.dv.glob')

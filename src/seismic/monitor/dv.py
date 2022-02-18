@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Friday, 18th February 2022 11:28:53 am
+Last Modified: Friday, 18th February 2022 02:15:49 pm
 '''
 
 from datetime import datetime
@@ -114,7 +114,13 @@ def read_dv(path: str) -> DV:
         return dvl
     loaded = np.load(path)
     stats = CorrStats(mu.load_header_from_np_array(loaded))
+    # to check that compatibility works
+    vt = loaded['vt_array']
+    while not isinstance(vt, str):
+        vt = vt[0]
+    method = loaded['method_array']
+    while not isinstance(method, str):
+        method = method[0]
     return DV(
-        loaded['corr'], loaded['value'], loaded['vt_array'][0][0],
-        loaded['sim_mat'], loaded['second_axis'], loaded['method_array'][0][0],
-        stats=stats)
+        loaded['corr'], loaded['value'], vt, loaded['sim_mat'],
+        loaded['second_axis'], method, stats=stats)
