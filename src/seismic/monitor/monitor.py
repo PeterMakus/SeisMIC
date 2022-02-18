@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 18th February 2022 01:35:41 pm
+Last Modified: Friday, 18th February 2022 01:43:36 pm
 '''
 from copy import deepcopy
 import logging
@@ -673,18 +673,19 @@ def average_components(dvs: List[DV], return_std: bool = False) -> DV:
             warnings.warn('Averaging of averaged dvs not allowed. Skipping dv')
             continue
         dv_use.append(dv)
-    sim_mats = [dv.sim_mat for dv in dvs]
+    sim_mats = [dv.sim_mat for dv in dv_use]
     av_sim_mat = np.nanmean(sim_mats, axis=0)
     if return_std:
         std_sim_mat = np.nanstd(sim_mats, axis=0)
     # Now we would have to recompute the dv value and corr value
     corr = np.nanmax(av_sim_mat, axis=1)
-    strvec = dvs[0].second_axis
+    strvec = dv_use[0].second_axis
     dt = strvec[np.nanargmax(np.nan_to_num(av_sim_mat), axis=1)]
-    stats = deepcopy(dvs[0].stats)
+    stats = deepcopy(dv_use[0].stats)
     stats['channel'] = 'av'
     dvout = DV(
-        corr, dt, dvs[0].value_type, av_sim_mat, strvec, dvs[0].method, stats)
+        corr, dt, dv_use[0].value_type, av_sim_mat, strvec,
+        dv_use[0].method, stats)
     if return_std:
         return dvout, std_sim_mat
     return dvout

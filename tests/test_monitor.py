@@ -8,13 +8,14 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 6th July 2021 09:18:14 am
-Last Modified: Friday, 18th February 2022 12:52:56 pm
+Last Modified: Friday, 18th February 2022 01:45:01 pm
 '''
 
 import os
 import unittest
 from unittest import mock
 from unittest.mock import patch
+import warnings
 
 import numpy as np
 from obspy import UTCDateTime
@@ -236,24 +237,25 @@ class TestAverageComponents(unittest.TestCase):
         sim1 = np.zeros((6, 6))
         corr0 = np.zeros((5))
         corr1 = np.zeros((6))
-        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], {})
-        dv1 = DV(corr1, corr1, ['stretch'], sim1, corr1, ['bla'], {})
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
+        dv1 = DV(corr1, corr1, ['stretch'], sim1, corr1, ['bla'], CorrStats())
         with self.assertRaises(ValueError):
             monitor.average_components([dv0, dv1])
 
     def test_differing_methods(self):
         sim0 = np.zeros((5, 5))
         corr0 = np.zeros((5))
-        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], {})
-        dv1 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['blub'], {})
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
+        dv1 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['blub'], CorrStats())
         with self.assertRaises(TypeError):
             monitor.average_components([dv0, dv1])
 
     def test_differing_2ndax(self):
         sim0 = np.zeros((5, 5))
         corr0 = np.zeros((5))
-        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], {})
-        dv1 = DV(corr0, corr0, ['stretch'], sim0, corr0+1, ['bla'], {})
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
+        dv1 = DV(
+            corr0, corr0, ['stretch'], sim0, corr0+1, ['bla'], CorrStats())
         with self.assertRaises(ValueError):
             monitor.average_components([dv0, dv1])
 
@@ -261,8 +263,8 @@ class TestAverageComponents(unittest.TestCase):
         sim0 = np.random.random((5, 5))
         sim1 = np.nan*np.ones((5, 5))
         corr0 = np.zeros((5))
-        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], {})
-        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], {})
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
+        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], CorrStats())
         dv_av = monitor.average_components([dv0, dv1])
         self.assertTrue(np.all(dv0.sim_mat == dv_av.sim_mat))
 
@@ -270,18 +272,30 @@ class TestAverageComponents(unittest.TestCase):
         sim0 = np.random.random((5, 5))
         sim1 = np.random.random((5, 5))
         corr0 = np.zeros((5))
-        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], {})
-        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], {})
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
+        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], CorrStats())
         dv_av = monitor.average_components([dv0, dv1])
         self.assertTrue(np.allclose(
             np.mean([dv0.sim_mat, dv1.sim_mat], axis=0), dv_av.sim_mat))
+
+    def test_result_already_av(self):
+        sim0 = np.random.random((5, 5))
+        sim1 = np.random.random((5, 5))
+        corr0 = np.zeros((5))
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
+        dv0.stats['channel'] = 'av'
+        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], CorrStats())
+        with warnings.catch_warnings(record=True) as w:
+            dv_av = monitor.average_components([dv0, dv1])
+            self.assertEqual(len(w), 1)
+        np.testing.assert_array_equal(dv1.sim_mat, dv_av.sim_mat)
 
     def test_contains_nans_std(self):
         sim0 = np.random.random((5, 5))
         sim1 = np.nan*np.ones((5, 5))
         corr0 = np.zeros((5))
-        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], {})
-        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], {})
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
+        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], CorrStats())
         dv_av, std = monitor.average_components([dv0, dv1], True)
         np.testing.assert_array_equal(std, 0)
         self.assertTrue(np.all(dv0.sim_mat == dv_av.sim_mat))
@@ -290,8 +304,8 @@ class TestAverageComponents(unittest.TestCase):
         sim0 = np.random.random((5, 5))
         sim1 = np.random.random((5, 5))
         corr0 = np.zeros((5))
-        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], {})
-        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], {})
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
+        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], CorrStats())
         dv_av, std = monitor.average_components([dv0, dv1], True)
         np.testing.assert_allclose(
             np.mean([dv0.sim_mat, dv1.sim_mat], axis=0), dv_av.sim_mat)
