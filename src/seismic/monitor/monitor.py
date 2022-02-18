@@ -8,12 +8,13 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 18th February 2022 11:14:44 am
+Last Modified: Friday, 18th February 2022 01:35:41 pm
 '''
 from copy import deepcopy
 import logging
 import os
 from typing import List, Tuple
+import warnings
 import yaml
 import fnmatch
 from glob import glob
@@ -655,13 +656,12 @@ def average_components(dvs: List[DV], return_std: bool = False) -> DV:
         similarity matrices is returned.
     :rtype: DV, (np.ndarray)
     """
-    shapes = []
+    dv_use = []
     for dv in dvs:
         if dv.method != dvs[0].method:
             raise TypeError('DV has to be computed with the same method.')
         # adapt shape to maiximum
-        shapes.append(dv.sim_mat.shape)
-        if dv.sim_mat.shape != shapes[0] or any(
+        if dv.sim_mat.shape != dvs[0].sim_mat.shape or any(
                 dv.second_axis != dvs[0].second_axis):
             raise ValueError(
                 'The shapes of the similarity matrices of the input DVs '
@@ -669,6 +669,10 @@ def average_components(dvs: List[DV], return_std: bool = False) -> DV:
                 + ' (i.e., start & end dates, date-inc, stretch increment, '
                 + 'and stretch steps.'
             )
+        if dv.stats.channel == 'av':
+            warnings.warn('Averaging of averaged dvs not allowed. Skipping dv')
+            continue
+        dv_use.append(dv)
     sim_mats = [dv.sim_mat for dv in dvs]
     av_sim_mat = np.nanmean(sim_mats, axis=0)
     if return_std:
