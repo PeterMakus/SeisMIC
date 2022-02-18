@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 27th October 2021 12:58:15 pm
-Last Modified: Friday, 18th February 2022 11:31:06 am
+Last Modified: Friday, 18th February 2022 11:34:05 am
 '''
 
 import unittest
@@ -103,6 +103,12 @@ class TestReadDV(unittest.TestCase):
             'corr': 1, 'value': 2, 'value_type': 3, 'sim_mat': 4,
             'second_axis': 5, 'method': 6, 'stats': CorrStats()})
         self.assertEqual(len(dvout), 2)
+
+    @patch('seismic.monitor.dv.glob')
+    def test_pattern_not_found(self, glob_mock: mock.MagicMock):
+        glob_mock.return_value = []
+        with self.assertRaises(FileNotFoundError):
+            dv.read_dv('/my/dv*')
 
 
 if __name__ == "__main__":
