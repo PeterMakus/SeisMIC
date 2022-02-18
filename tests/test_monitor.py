@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 6th July 2021 09:18:14 am
-Last Modified: Friday, 18th February 2022 10:51:39 am
+Last Modified: Friday, 18th February 2022 12:52:56 pm
 '''
 
 import os
@@ -158,7 +158,7 @@ class TestCorrFindFilter(unittest.TestCase):
 
 
 class TestAverageDVbyCoords(unittest.TestCase):
-    def none_within_filt(self):
+    def test_none_within_filt(self):
         cstats = CorrStats()
         lat = (-10, 10)
         lon = (0, 10)
