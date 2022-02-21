@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Wednesday, 19th January 2022 02:44:28 pm
+Last Modified: Monday, 21st February 2022 02:23:26 pm
 '''
 
 from typing import Tuple
@@ -23,7 +23,8 @@ from seismic.plot.plot_utils import set_mpl_params
 def plot_dv(
     dv, save_dir='.', figure_file_name=None, mark_time=None,
     normalize_simmat=False, sim_mat_Clim=[], figsize=(9, 11), dpi=72,
-        ylim: Tuple[float, float] = None, title: str = None):
+    ylim: Tuple[float, float] = None, title: str = None,
+        plot_std: bool = False):
     """ Plot the "extended" dv dictionary
 
     This function is thought to plot the result of the velocity change estimate
@@ -144,6 +145,9 @@ def plot_dv(
 
     # plotting value is way easier now
     plt.plot(-dv['value'], 'b.')
+    if plot_std:
+        plt.plot(-dv['value']+dv['std_val'], 'k--', alpha=.3)
+        plt.plot(-dv['value']-dv['std_val'], 'k--', alpha=.3)
     # Set extent so we can treat the axes properly (mainly y)
     imh.set_extent((0, sim_mat.shape[0], stretch_vect[-1], stretch_vect[0]))
 
@@ -202,6 +206,9 @@ def plot_dv(
 
     ax3 = f.add_subplot(gs[2])
     plt.plot(rtime, corr, '.')
+    if plot_std:
+        plt.plot(rtime, corr-dv['std_corr'], 'k--', alpha=.3)
+        plt.plot(rtime, corr+dv['std_corr'], 'k--', alpha=.3)
     if 'model_corr' in dv.keys():
         plt.plot(rtime, dv['model_corr'], 'g.')
     plt.xlim([rtime[0], rtime[-1]])

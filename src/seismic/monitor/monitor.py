@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 18th February 2022 02:52:24 pm
+Last Modified: Monday, 21st February 2022 02:14:31 pm
 '''
 from copy import deepcopy
 import logging
@@ -638,7 +638,7 @@ def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
     return netlist, statlist, infiles
 
 
-def average_components(dvs: List[DV], return_std: bool = False) -> DV:
+def average_components(dvs: List[DV], compute_std: bool = True) -> DV:
     """
     Averages the Similariy matrix of the DV objects. Based on those,
     it computes a new dv value and a new correlation value.
@@ -647,14 +647,14 @@ def average_components(dvs: List[DV], return_std: bool = False) -> DV:
         average from. Note that it is possible to use almost anything as
         input as long as the similarity matrices of the dvs have the same shape
     :type dvs: List[class:`~seismic.monitor.dv.DV`]
-    :param return_std: Return the standard deviation of the similarity
-        matrices as a :class:`np.ndarray`. Defaults to False.
-    :type return_std: bool, optional
+    :param compute_std: Compute the standard deviation of the similarity
+        matrices, pick the values corresponding to the maximum in the
+        similarity matrix and save them in the new
+        :class:`~seismic.monitor.dv.DV` object. Defaults to True.
+    :type compute_std: bool, optional
     :raises TypeError: for DVs that were computed with different methods
-    :return: A single dv with an averaged similarity matrix. If `return_std`
-        arg is set to `True`. A matrix holding the standard deviation of the
-        similarity matrices is returned.
-    :rtype: DV, (np.ndarray)
+    :return: A single dv with an averaged similarity matrix.
+    :rtype: DV
     """
     dv_use = []
     for dv in dvs:
@@ -675,19 +675,24 @@ def average_components(dvs: List[DV], return_std: bool = False) -> DV:
         dv_use.append(dv)
     sim_mats = [dv.sim_mat for dv in dv_use]
     av_sim_mat = np.nanmean(sim_mats, axis=0)
-    if return_std:
-        std_sim_mat = np.nanstd(sim_mats, axis=0)
     # Now we would have to recompute the dv value and corr value
+    iimax = np.nanargmax(np.nan_to_num(av_sim_mat), axis=1)
     corr = np.nanmax(av_sim_mat, axis=1)
     strvec = dv_use[0].second_axis
-    dt = strvec[np.nanargmax(np.nan_to_num(av_sim_mat), axis=1)]
+    dt = strvec[iimax]
+    if compute_std:
+        values = [dv.value for dv in dv_use]
+        std_val = np.nanstd(values, axis=0)
+        std = np.nanstd(sim_mats, axis=0)
+        m, n = np.unravel_index(iimax, av_sim_mat.shape)
+        std_corr = std[n, m]
+    else:
+        std = None
     stats = deepcopy(dv_use[0].stats)
     stats['channel'] = 'av'
     dvout = DV(
         corr, dt, dv_use[0].value_type, av_sim_mat, strvec,
-        dv_use[0].method, stats)
-    if return_std:
-        return dvout, std_sim_mat
+        dv_use[0].method, stats, std_val=std_val, std_corr=std_corr)
     return dvout
 
 
@@ -713,14 +718,12 @@ def average_dvs_by_coords(
         for cross-correlations both stations must be inside of the window.
         Defaults to (-1e6, 1e6) - i.e., no filter.
     :type el: Tuple[float, float], optional
-    :param return_std: Return the standard deviation of the similarity
-        matrices as a :class:`np.ndarray`. Defaults to False.
+    :param return_std: Save the standard deviation of the similarity
+        matrices into the dv object. Defaults to False.
     :type return_std: bool, optional
     :raises TypeError: for DVs that were computed with different methods
-    :return: A single dv with an averaged similarity matrix. If `return_std`
-        arg is set to `True`. A matrix holding the standard deviation of the
-        similarity matrices is returned else the second value is simply None
-    :rtype: DV, (np.ndarray)
+    :return: A single dv with an averaged similarity matrix.
+    :rtype: DV
     """
     dv_filt = []
     for dv in dvs:
@@ -736,18 +739,14 @@ def average_dvs_by_coords(
     if not len(dv_filt):
         raise ValueError(
             'No DVs within geographical constraints found.')
-    if return_std:
-        av_dv, std_sim_mat = average_components(dv_filt, return_std)
-    else:
-        av_dv = average_components(dv_filt, return_std)
-        std_sim_mat = None
+    av_dv = average_components(dv_filt, return_std)
     s = av_dv.stats
     # adapt header
     s['network'] = s['station'] = 'geoav'
     s['stel'] = s['evel'] = el
     s['stlo'] = s['evlo'] = lon
     s['stla'] = s['evla'] = lat
-    return av_dv, std_sim_mat
+    return av_dv
 
 
 def average_components_wfc(wfcs: List[WFC]) -> WFC:

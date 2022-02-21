@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 6th July 2021 09:18:14 am
-Last Modified: Friday, 18th February 2022 03:08:44 pm
+Last Modified: Monday, 21st February 2022 04:51:07 pm
 '''
 
 import os
@@ -190,8 +190,8 @@ class TestAverageDVbyCoords(unittest.TestCase):
         dv2 = DV(
             np.zeros(5), np.zeros(5), 'bla', np.zeros((5, 5)), np.zeros(5),
             'dd', cstats2)
-        av_comp_mock.return_value = (dv2, 'blub')
-        av_dv, std = monitor.average_dvs_by_coords(
+        av_comp_mock.return_value = dv2
+        av_dv = monitor.average_dvs_by_coords(
             [dv, dv2], lat, lon, return_std=True)
         av_comp_mock.assert_called_once_with([dv2], True)
         s = av_dv.stats
@@ -199,7 +199,6 @@ class TestAverageDVbyCoords(unittest.TestCase):
         np.testing.assert_array_equal([s.stel, s.evel], 2*[(-1e6, 1e6)])
         np.testing.assert_array_equal([s.stlo, s.evlo], 2*[lon])
         np.testing.assert_array_equal([s.stla, s.evla], 2*[lat])
-        self.assertEqual(std, 'blub')
 
     @mock.patch('seismic.monitor.monitor.average_components')
     def test_result2(self, av_comp_mock: mock.MagicMock):
@@ -220,7 +219,7 @@ class TestAverageDVbyCoords(unittest.TestCase):
             np.zeros(5), np.zeros(5), 'bla', np.zeros((5, 5)), np.zeros(5),
             'dd', cstats2)
         av_comp_mock.return_value = dv2
-        av_dv, std = monitor.average_dvs_by_coords(
+        av_dv = monitor.average_dvs_by_coords(
             [dv, dv2], lat, lon, el=(-100, 100), return_std=False)
         av_comp_mock.assert_called_once_with([dv2], False)
         s = av_dv.stats
@@ -228,7 +227,6 @@ class TestAverageDVbyCoords(unittest.TestCase):
         np.testing.assert_array_equal([s.stel, s.evel], 2*[(-100, 100)])
         np.testing.assert_array_equal([s.stlo, s.evlo], 2*[lon])
         np.testing.assert_array_equal([s.stla, s.evla], 2*[lat])
-        self.assertIsNone(std)
 
     @mock.patch('seismic.monitor.monitor.average_components')
     def test_result_already_av(self, av_comp_mock: mock.MagicMock):
@@ -251,7 +249,7 @@ class TestAverageDVbyCoords(unittest.TestCase):
             'dd', cstats2)
         av_comp_mock.return_value = dv2
         with warnings.catch_warnings(record=True) as w:
-            av_dv, std = monitor.average_dvs_by_coords(
+            av_dv = monitor.average_dvs_by_coords(
                 [dv, dv2], lat, lon, el=(-100, 100), return_std=False)
             self.assertEqual(len(w), 1)
         av_comp_mock.assert_called_once_with([dv2], False)
@@ -260,7 +258,8 @@ class TestAverageDVbyCoords(unittest.TestCase):
         np.testing.assert_array_equal([s.stel, s.evel], 2*[(-100, 100)])
         np.testing.assert_array_equal([s.stlo, s.evlo], 2*[lon])
         np.testing.assert_array_equal([s.stla, s.evla], 2*[lat])
-        self.assertIsNone(std)
+        self.assertIsNone(av_dv.std_val)
+        self.assertIsNone(av_dv.std_corr)
 
 
 class TestAverageComponents(unittest.TestCase):
@@ -328,21 +327,26 @@ class TestAverageComponents(unittest.TestCase):
         corr0 = np.zeros((5))
         dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
         dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], CorrStats())
-        dv_av, std = monitor.average_components([dv0, dv1], True)
-        np.testing.assert_array_equal(std, 0)
+        dv_av = monitor.average_components([dv0, dv1], True)
+        np.testing.assert_array_equal(dv_av.std_val, 0)
+        np.testing.assert_array_equal(dv_av.std_corr, 0)
         self.assertTrue(np.all(dv0.sim_mat == dv_av.sim_mat))
 
     def test_result_std(self):
         sim0 = np.random.random((5, 5))
         sim1 = np.random.random((5, 5))
-        corr0 = np.zeros((5))
-        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
-        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], CorrStats())
-        dv_av, std = monitor.average_components([dv0, dv1], True)
+        corr0 = np.max(sim0, axis=1)
+        corr1 = np.max(sim1, axis=1)
+        ax = np.arange(5)
+        val0 = ax[np.argmax(sim0, axis=1)]
+        val1 = ax[np.argmax(sim1, axis=1)]
+        dv0 = DV(corr0, val0, ['stretch'], sim0, ax, ['bla'], CorrStats())
+        dv1 = DV(corr1, val1, ['stretch'], sim1, ax, ['bla'], CorrStats())
+        dv_av = monitor.average_components([dv0, dv1], True)
         np.testing.assert_allclose(
             np.mean([dv0.sim_mat, dv1.sim_mat], axis=0), dv_av.sim_mat)
         np.testing.assert_allclose(
-            np.std([dv0.sim_mat, dv1.sim_mat], axis=0), std)
+            np.std([val0, val1], axis=0), dv_av.std_val)
 
 
 if __name__ == "__main__":
