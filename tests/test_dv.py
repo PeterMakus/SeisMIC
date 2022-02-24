@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 27th October 2021 12:58:15 pm
-Last Modified: Monday, 21st February 2022 04:59:39 pm
+Last Modified: Thursday, 24th February 2022 03:24:05 pm
 '''
 
 import unittest
@@ -42,8 +42,22 @@ class TestDV(unittest.TestCase):
             corr=self.dv.corr, value=self.dv.value, sim_mat=self.dv.sim_mat,
             second_axis=self.dv.second_axis,
             method_array=np.array([self.dv.method]),
-            vt_array=np.array([self.dv.value_type]), std_val=None,
-            std_corr=None)
+            vt_array=np.array([self.dv.value_type]))
+
+    @patch('seismic.monitor.dv.mu.save_header_to_np_array')
+    @patch('seismic.monitor.dv.np.savez_compressed')
+    def test_save2(self, savez_mock, save_header_mock):
+        self.dv.std_corr = np.random.random(5)
+        self.dv.std_val = np.random.random(5)
+        self.dv.save('/save/to/here')
+        save_header_mock.assert_called_once_with({})
+        savez_mock.assert_called_once_with(
+            '/save/to/here',
+            corr=self.dv.corr, value=self.dv.value, sim_mat=self.dv.sim_mat,
+            second_axis=self.dv.second_axis,
+            method_array=np.array([self.dv.method]),
+            vt_array=np.array([self.dv.value_type]), std_corr=self.dv.std_corr,
+            std_val=self.dv.std_val)
 
     def test_smooth_sim_mat(self):
         dvc = deepcopy(self.dv)

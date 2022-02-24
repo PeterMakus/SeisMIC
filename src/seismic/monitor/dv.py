@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Monday, 21st February 2022 02:17:52 pm
+Last Modified: Thursday, 24th February 2022 03:18:33 pm
 '''
 
 from datetime import datetime
@@ -96,11 +96,18 @@ class DV(object):
         method_array = np.array([self.method])
         vt_array = np.array([self.value_type])
         kwargs = mu.save_header_to_np_array(self.stats)
-        np.savez_compressed(
-            path, corr=self.corr, value=self.value, sim_mat=self.sim_mat,
-            second_axis=self.second_axis, method_array=method_array,
-            vt_array=vt_array, std_val=self.std_val, std_corr=self.std_corr,
-            **kwargs)
+        if self.std_val is None or self.std_corr is None:
+            np.savez_compressed(
+                path, corr=self.corr, value=self.value, sim_mat=self.sim_mat,
+                second_axis=self.second_axis, method_array=method_array,
+                vt_array=vt_array, **kwargs)
+        else:
+            np.savez_compressed(
+                path, corr=self.corr, value=self.value, sim_mat=self.sim_mat,
+                second_axis=self.second_axis, method_array=method_array,
+                vt_array=vt_array, std_val=self.std_val,
+                std_corr=self.std_corr,
+                **kwargs)
 
     def plot(
         self, save_dir: str = '.', figure_file_name: str = None,
