@@ -8,10 +8,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Thursday, 24th February 2022 03:18:33 pm
+Last Modified: Friday, 25th February 2022 02:01:15 pm
 '''
 
-from datetime import datetime
+from datetime import date, datetime
 from glob import glob
 from typing import List, Tuple
 import warnings
@@ -112,8 +112,9 @@ class DV(object):
     def plot(
         self, save_dir: str = '.', figure_file_name: str = None,
         mark_time: datetime = None, normalize_simmat: bool = False,
-        sim_mat_Clim: List[float] = [], ylim: Tuple[int, int] = None,
-        plot_std: bool = False, figsize: Tuple[float, float] = (9, 11),
+        sim_mat_Clim: List[float] = [], xlim: Tuple[datetime, datetime] = None,
+        ylim: Tuple[int, int] = None, plot_std: bool = False,
+        figsize: Tuple[float, float] = (9, 11),
             dpi: int = 144, title: str = None):
         """
         Plots the dv object into a *multi-panel-view* of `similarity matrix`
@@ -133,6 +134,8 @@ class DV(object):
         :param sim_mat_Clim: Color limits for the similarity matrix
             , defaults to []. Format is [low_limit, upper_limit]
         :type sim_mat_Clim: List[float], optional
+        :param xlim: Time Limits to plot, defaults to None.
+        :type xlim: Tuple[datetime, datetime], optional
         :param ylim: Y-limits (e.g., stretch) of the plot, defaults to None
         :type ylim: Tuple[int, int], optional
         :param plot_std: If set to True, the upper and lower limit of the
@@ -149,7 +152,7 @@ class DV(object):
         """
         plot_dv(
             self.__dict__, save_dir, figure_file_name, mark_time,
-            normalize_simmat, sim_mat_Clim, figsize, dpi, ylim=ylim,
+            normalize_simmat, sim_mat_Clim, figsize, dpi, xlim=xlim, ylim=ylim,
             title=title, plot_std=plot_std)
 
     def smooth_sim_mat(self, win_len: int):

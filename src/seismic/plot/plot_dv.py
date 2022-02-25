@@ -8,9 +8,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Monday, 21st February 2022 02:23:26 pm
+Last Modified: Friday, 25th February 2022 02:08:03 pm
 '''
 
+from datetime import datetime
 from typing import Tuple
 import matplotlib as mpl
 from matplotlib import pyplot as plt
@@ -23,8 +24,8 @@ from seismic.plot.plot_utils import set_mpl_params
 def plot_dv(
     dv, save_dir='.', figure_file_name=None, mark_time=None,
     normalize_simmat=False, sim_mat_Clim=[], figsize=(9, 11), dpi=72,
-    ylim: Tuple[float, float] = None, title: str = None,
-        plot_std: bool = False):
+    ylim: Tuple[float, float] = None, xlim: Tuple[datetime, datetime] = None,
+        title: str = None, plot_std: bool = False):
     """ Plot the "extended" dv dictionary
 
     This function is thought to plot the result of the velocity change estimate
@@ -101,7 +102,9 @@ def plot_dv(
     sim_mat = dv['sim_mat']
     stretch_vect = dv['second_axis']
 
-    rtime = [utcdt.datetime for utcdt in dv['stats']['corr_start']]
+    rtime = np.array(
+        [utcdt.datetime for utcdt in dv['stats']['corr_start']],
+        dtype=np.datetime64)
 
     # normalize simmat if requested
     if normalize_simmat:
@@ -152,8 +155,15 @@ def plot_dv(
     imh.set_extent((0, sim_mat.shape[0], stretch_vect[-1], stretch_vect[0]))
 
     ###
-    ax1.set_xlim(0, sim_mat.shape[0])
-    plt.xlim(0, sim_mat.shape[0])
+    if xlim:
+        xlim = (np.datetime64(xlim[0]), np.datetime64(xlim[1]))
+        xl0 = np.argmin(abs(rtime-xlim[0]))
+        xl1 = np.argmin(abs(rtime-xlim[1]))
+        ax1.set_xlim(xl0, xl1+1)
+        plt.xlim(xl0, xl1+1)
+    else:
+        ax1.set_xlim(0, sim_mat.shape[0])
+        plt.xlim(0, sim_mat.shape[0])
 
     if value_type == 'stretch':
         ax1.invert_yaxis()
@@ -186,7 +196,10 @@ def plot_dv(
     plt.plot(rtime, -dt, '.')
     if 'model_value' in dv.keys():
         plt.plot(rtime, -dv['model_value'], 'g.')
-    plt.xlim([rtime[0], rtime[-1]])
+    if xlim:
+        plt.xlim(xlim[0], xlim[1])
+    else:
+        plt.xlim([rtime[0], rtime[-1]])
     if ylim:
         plt.ylim(ylim)
     else:
@@ -211,7 +224,10 @@ def plot_dv(
         plt.plot(rtime, corr+dv['std_corr'], 'k--', alpha=.3)
     if 'model_corr' in dv.keys():
         plt.plot(rtime, dv['model_corr'], 'g.')
-    plt.xlim([rtime[0], rtime[-1]])
+    if xlim:
+        plt.xlim(xlim[0], xlim[1])
+    else:
+        plt.xlim([rtime[0], rtime[-1]])
     ax3.yaxis.set_ticks_position('right')
     ax3.set_ylabel("Correlation")
     plt.ylim((0, 1))
