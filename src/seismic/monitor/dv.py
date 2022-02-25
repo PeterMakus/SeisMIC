@@ -8,10 +8,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Friday, 25th February 2022 02:01:15 pm
+Last Modified: Friday, 25th February 2022 02:19:23 pm
 '''
 
-from datetime import date, datetime
+from datetime import datetime
 from glob import glob
 from typing import List, Tuple
 import warnings
