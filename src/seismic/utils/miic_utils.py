@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Thursday, 24th February 2022 02:43:51 pm
+Last Modified: Tuesday, 1st March 2022 10:04:56 am
 '''
 from typing import List, Tuple
 import logging
@@ -275,7 +275,7 @@ def load_header_from_np_array(array_dict: dict) -> dict:
                 d[k] = array_dict[k][0]
             except IndexError:
                 warnings.warn(
-                    'Key {k} could not be loaded into the header.')
+                    f'Key {k} could not be loaded into the header.')
     return d
 
 
