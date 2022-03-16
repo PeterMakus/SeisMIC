@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Friday, 25th February 2022 02:19:23 pm
+Last Modified: Wednesday, 16th March 2022 12:03:00 pm
 '''
 
 from datetime import datetime
@@ -32,7 +32,7 @@ class DV(object):
         self, corr: np.ndarray, value: np.ndarray, value_type: str,
         sim_mat: np.ndarray, second_axis: np.ndarray, method: str,
         stats: CorrStats, std_val: np.ndarray = None,
-            std_corr: np.ndarray = None):
+            std_corr: np.ndarray = None, n_stat: np.ndarray = None):
         """
         Creates an object designed to hold and process velocity changes.
 
@@ -62,6 +62,9 @@ class DV(object):
             deviation over all dvs' values. Same shape as corr and
             value, defaults to None
         :type std_corr: np.ndarray, optional
+        :param n_stat: Number of stations used for the stack at corr_start t.
+            Has the same shape as `value` and `corr`. Defaults to None
+        :type n_stat: np.ndarray, optional
         """
         # Allocate attributes
         self.value_type = value_type
@@ -70,6 +73,7 @@ class DV(object):
         self.sim_mat = sim_mat
         self.std_val = std_val
         self.std_corr = std_corr
+        self.n_stat = n_stat
         self.second_axis = second_axis
         self.method = method
         self.stats = stats
@@ -106,8 +110,7 @@ class DV(object):
                 path, corr=self.corr, value=self.value, sim_mat=self.sim_mat,
                 second_axis=self.second_axis, method_array=method_array,
                 vt_array=vt_array, std_val=self.std_val,
-                std_corr=self.std_corr,
-                **kwargs)
+                std_corr=self.std_corr, n_stat=self.n_stat, **kwargs)
 
     def plot(
         self, save_dir: str = '.', figure_file_name: str = None,
@@ -209,7 +212,11 @@ def read_dv(path: str) -> DV:
         std_corr = loaded['std_corr']
     except KeyError:
         std_val = std_corr = None
+    try:
+        n_stat = loaded['n_stat']
+    except KeyError:
+        n_stat = None
     return DV(
         loaded['corr'], loaded['value'], vt, loaded['sim_mat'],
         loaded['second_axis'], method, stats=stats, std_val=std_val,
-        std_corr=std_corr)
+        std_corr=std_corr, n_stat=n_stat)

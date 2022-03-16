@@ -5,7 +5,7 @@
 geographiclib
 h5py
 matplotlib
-numpy<1.22
+numpy
 obspy
 pip
 prov

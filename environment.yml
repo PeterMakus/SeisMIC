@@ -6,7 +6,7 @@ dependencies:
   - h5py
   - matplotlib
   - mpi4py
-  - numpy<1.22  # can only be updated once a newer obspy is realeased
+  - numpy
   - obspy
   - pip
   - prov

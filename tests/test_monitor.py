@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 6th July 2021 09:18:14 am
-Last Modified: Monday, 21st February 2022 04:51:07 pm
+Last Modified: Wednesday, 16th March 2022 01:15:28 pm
 '''
 
 import os
@@ -325,11 +325,13 @@ class TestAverageComponents(unittest.TestCase):
         sim0 = np.random.random((5, 5))
         sim1 = np.nan*np.ones((5, 5))
         corr0 = np.zeros((5))
+        corr1 = np.zeros((5)) + np.nan
         dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
-        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], CorrStats())
+        dv1 = DV(corr1, corr1, ['stretch'], sim1, corr0, ['bla'], CorrStats())
         dv_av = monitor.average_components([dv0, dv1], True)
         np.testing.assert_array_equal(dv_av.std_val, 0)
         np.testing.assert_array_equal(dv_av.std_corr, 0)
+        np.testing.assert_array_equal(dv_av.n_stat, 1)
         self.assertTrue(np.all(dv0.sim_mat == dv_av.sim_mat))
 
     def test_result_std(self):
@@ -347,6 +349,37 @@ class TestAverageComponents(unittest.TestCase):
             np.mean([dv0.sim_mat, dv1.sim_mat], axis=0), dv_av.sim_mat)
         np.testing.assert_allclose(
             np.std([val0, val1], axis=0), dv_av.std_val)
+        np.testing.assert_array_equal(dv_av.n_stat, 2)
+
+    def test_header(self):
+        sim0 = np.random.random((5, 5))
+        sim1 = np.random.random((5, 5))
+        corr0 = np.zeros((5))
+        stats0 = CorrStats()
+        stats0['network'] = stats0['station'] = stats0['channel'] = 'A'
+        stats1 = CorrStats()
+        stats1['network'] = stats1['station'] = stats1['channel'] = 'B'
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], stats0)
+        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], stats1)
+        dv_av = monitor.average_components([dv0, dv1])
+        self.assertEqual(dv_av.stats.station, 'av')
+        self.assertEqual(dv_av.stats.network, 'av')
+        self.assertEqual(dv_av.stats.channel, 'av')
+
+    def test_header2(self):
+        sim0 = np.random.random((5, 5))
+        sim1 = np.random.random((5, 5))
+        corr0 = np.zeros((5))
+        stats0 = CorrStats()
+        stats0['network'] = stats0['station'] = stats0['channel'] = 'A'
+        stats1 = CorrStats()
+        stats1['network'] = stats1['station'] = stats1['channel'] = 'A'
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], stats0)
+        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], stats1)
+        dv_av = monitor.average_components([dv0, dv1])
+        self.assertEqual(dv_av.stats.station, 'A')
+        self.assertEqual(dv_av.stats.network, 'A')
+        self.assertEqual(dv_av.stats.channel, 'A')
 
 
 if __name__ == "__main__":

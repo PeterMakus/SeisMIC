@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 21st February 2022 02:14:31 pm
+Last Modified: Wednesday, 16th March 2022 12:23:08 pm
 '''
 from copy import deepcopy
 import logging
@@ -669,7 +669,7 @@ def average_components(dvs: List[DV], compute_std: bool = True) -> DV:
                 + ' (i.e., start & end dates, date-inc, stretch increment, '
                 + 'and stretch steps.'
             )
-        if dv.stats.channel == 'av':
+        if 'av' in dv.stats.channel+dv.stats.network+dv.stats.station:
             warnings.warn('Averaging of averaged dvs not allowed. Skipping dv')
             continue
         dv_use.append(dv)
@@ -681,7 +681,11 @@ def average_components(dvs: List[DV], compute_std: bool = True) -> DV:
     strvec = dv_use[0].second_axis
     dt = strvec[iimax]
     if compute_std:
-        values = [dv.value for dv in dv_use]
+        values = np.array([dv.value for dv in dv_use])
+        # Number of stations per corr_start
+        n_stat = np.ones_like(values, dtype=int)
+        n_stat[np.where(np.isnan(values))] = 0
+        n_stat = np.sum(n_stat, axis=0)  # now this has the same shape as std
         std_val = np.nanstd(values, axis=0)
         std = np.nanstd(sim_mats, axis=0)
         m, n = np.unravel_index(iimax, av_sim_mat.shape)
@@ -689,10 +693,16 @@ def average_components(dvs: List[DV], compute_std: bool = True) -> DV:
     else:
         std = None
     stats = deepcopy(dv_use[0].stats)
-    stats['channel'] = 'av'
+    if not all(np.array([dv.stats.channel for dv in dv_use]) == stats.channel):
+        stats['channel'] = 'av'
+    if not all(np.array([dv.stats.station for dv in dv_use]) == stats.station):
+        stats['station'] = 'av'
+    if not all(np.array([dv.stats.network for dv in dv_use]) == stats.network):
+        stats['network'] = 'av'
     dvout = DV(
         corr, dt, dv_use[0].value_type, av_sim_mat, strvec,
-        dv_use[0].method, stats, std_val=std_val, std_corr=std_corr)
+        dv_use[0].method, stats, std_val=std_val, std_corr=std_corr,
+        n_stat=n_stat)
     return dvout
 
 

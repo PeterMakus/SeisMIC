@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Friday, 25th February 2022 02:08:03 pm
+Last Modified: Wednesday, 16th March 2022 01:08:14 pm
 '''
 
 from datetime import datetime
@@ -139,7 +139,10 @@ def plot_dv(
 
     f = plt.figure(figsize=figsize, dpi=dpi)
 
-    gs = mpl.gridspec.GridSpec(3, 1, height_ratios=[3, 1, 1])
+    if dv['n_stat'] is not None and plot_std:
+        gs = mpl.gridspec.GridSpec(4, 1, height_ratios=[12, 4, 4, 1])
+    else:
+        gs = mpl.gridspec.GridSpec(3, 1, height_ratios=[3, 1, 1])
 
     ax1 = f.add_subplot(gs[0])
     imh = plt.imshow(
@@ -148,9 +151,9 @@ def plot_dv(
 
     # plotting value is way easier now
     plt.plot(-dv['value'], 'b.')
-    if plot_std:
-        plt.plot(-dv['value']+dv['std_val'], 'k--', alpha=.3)
-        plt.plot(-dv['value']-dv['std_val'], 'k--', alpha=.3)
+    # if plot_std:
+    #     plt.plot(-dv['value']+dv['std_val'], 'k--', alpha=.3)
+    #     plt.plot(-dv['value']-dv['std_val'], 'k--', alpha=.3)
     # Set extent so we can treat the axes properly (mainly y)
     imh.set_extent((0, sim_mat.shape[0], stretch_vect[-1], stretch_vect[0]))
 
@@ -207,6 +210,12 @@ def plot_dv(
     if mark_time and not (
             np.all(rtime < mark_time) and np.all(rtime > mark_time)):
         plt.axvline(mark_time, lw=1, color='r')
+    if plot_std:
+        # plt.plot(rtime, corr-dv['std_corr'], 'k--', alpha=.3)
+        # plt.plot(rtime, corr+dv['std_corr'], 'k--', alpha=.3)
+        plt.fill_between(
+            rtime, -dt-dv['std_val'], -dt+dv['std_val'],
+            interpolate=False, color='grey', alpha=.3)
     ax2.yaxis.set_ticks_position('left')
     ax2.yaxis.set_label_position('right')
     ax2.yaxis.label.set_rotation(270)
@@ -220,8 +229,11 @@ def plot_dv(
     ax3 = f.add_subplot(gs[2])
     plt.plot(rtime, corr, '.')
     if plot_std:
-        plt.plot(rtime, corr-dv['std_corr'], 'k--', alpha=.3)
-        plt.plot(rtime, corr+dv['std_corr'], 'k--', alpha=.3)
+        # plt.plot(rtime, corr-dv['std_corr'], 'k--', alpha=.3)
+        # plt.plot(rtime, corr+dv['std_corr'], 'k--', alpha=.3)
+        plt.fill_between(
+            rtime, corr-dv['std_corr'], corr+dv['std_corr'],
+            interpolate=False, color='grey', alpha=.3)
     if 'model_corr' in dv.keys():
         plt.plot(rtime, dv['model_corr'], 'g.')
     if xlim:
@@ -234,10 +246,24 @@ def plot_dv(
     if mark_time and not (
             np.all(rtime < mark_time) and np.all(rtime > mark_time)):
         plt.axvline(mark_time, lw=1, color='r')
-    plt.setp(ax3.get_xticklabels(), rotation=45, ha='right')
-    ax3.yaxis.set_major_locator(plt.MultipleLocator(0.2))
     ax3.yaxis.grid(True, 'major', linewidth=1)
     ax3.xaxis.grid(True, 'major', linewidth=1)
+    ax3.yaxis.set_major_locator(plt.MultipleLocator(0.2))
+    # Plot number of stations
+    if dv['n_stat'] is not None and plot_std:
+        ax4 = f.add_subplot(gs[3])
+        plt.fill_between(
+            rtime, 0, dv['n_stat'], interpolate=False)
+        plt.setp(ax4.get_xticklabels(), rotation=45, ha='right')
+        ax4.yaxis.set_label_position('right')
+        ax4.set_ylabel("N")
+        plt.ylim(0, int(dv['n_stat'].max()*1.1))
+        if xlim:
+            plt.xlim(xlim[0], xlim[1])
+        else:
+            plt.xlim([rtime[0], rtime[-1]])
+    else:
+        plt.setp(ax3.get_xticklabels(), rotation=45, ha='right')
 
     plt.subplots_adjust(hspace=0, wspace=0)
 
