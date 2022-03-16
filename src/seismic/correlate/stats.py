@@ -8,11 +8,8 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 5th July 2021 02:44:13 pm
-Last Modified: Thursday, 25th November 2021 10:50:30 am
+Last Modified: Wednesday, 16th March 2022 04:02:34 pm
 '''
-
-from future.utils import native_str
-
 from obspy.core.util import AttribDict
 from obspy import UTCDateTime
 
@@ -172,9 +169,9 @@ class CorrStats(AttribDict):
         'start_lag'}
     # dict of required types for certain attrs
     _types = {
-        'network': (str, native_str),
-        'station': (str, native_str),
-        'channel': (str, native_str),
+        'network': (str),
+        'station': (str),
+        'channel': (str),
     }
 
     def __init__(self, header={}):
