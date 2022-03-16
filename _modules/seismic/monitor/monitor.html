@@ -188,12 +188,13 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Thursday, 3rd June 2021 04:15:57 pm</span>
-<span class="sd">Last Modified: Friday, 11th February 2022 08:51:22 am</span>
+<span class="sd">Last Modified: Wednesday, 16th March 2022 12:23:08 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">import</span> <span class="nn">yaml</span>
 <span class="kn">import</span> <span class="nn">fnmatch</span>
 <span class="kn">from</span> <span class="nn">glob</span> <span class="kn">import</span> <span class="n">glob</span>
@@ -485,13 +486,13 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">av_methods</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s1">&#39;autocomponents&#39;</span><span class="p">,</span> <span class="s1">&#39;crosscomponents&#39;</span><span class="p">,</span> <span class="s1">&#39;stationwide&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;crossstations&#39;</span><span class="p">)</span>
+            <span class="s1">&#39;crossstations&#39;</span><span class="p">,</span> <span class="s1">&#39;betweenstations&#39;</span><span class="p">,</span> <span class="s1">&#39;betweencomponents&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">av_methods</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Averaging method not in </span><span class="si">%s</span><span class="s1">.&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">av_methods</span><span class="p">))</span>
         <span class="n">infiles</span> <span class="o">=</span> <span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outdir</span><span class="p">,</span> <span class="s1">&#39;*.npz&#39;</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;autocomponents&#39;</span><span class="p">:</span>
             <span class="n">ch</span> <span class="o">=</span> <span class="s1">&#39;av-auto&#39;</span>
-        <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;crosscomponents&#39;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;betweencomponents&#39;</span><span class="p">,</span> <span class="s1">&#39;crosscomponents&#39;</span><span class="p">):</span>
             <span class="n">ch</span> <span class="o">=</span> <span class="s1">&#39;av-xc&#39;</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">ch</span> <span class="o">=</span> <span class="s1">&#39;av&#39;</span>
@@ -527,7 +528,8 @@
                             <span class="ow">or</span> <span class="n">stations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">stations</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
                         <span class="n">infiles</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
                         <span class="k">continue</span>
-                <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;crosscomponents&#39;</span><span class="p">:</span>
+                <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span>
+                        <span class="s1">&#39;betweencomponents&#39;</span><span class="p">,</span> <span class="s1">&#39;crosscomponents&#39;</span><span class="p">):</span>
                     <span class="c1"># Remove those from equal channels</span>
                     <span class="n">components</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">components</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">components</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> \
@@ -538,7 +540,7 @@
                     <span class="k">if</span> <span class="n">stations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">stations</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
                         <span class="n">infiles</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
                         <span class="k">continue</span>
-                <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;crossstations&#39;</span><span class="p">:</span>
+                <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;betweenstations&#39;</span><span class="p">,</span> <span class="s1">&#39;crossstations&#39;</span><span class="p">):</span>
                     <span class="k">if</span> <span class="n">stations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">stations</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
                         <span class="n">infiles</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
                         <span class="k">continue</span>
@@ -816,43 +818,125 @@
     <span class="k">return</span> <span class="n">netlist</span><span class="p">,</span> <span class="n">statlist</span><span class="p">,</span> <span class="n">infiles</span></div>
 
 
-<div class="viewcode-block" id="average_components"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.average_components">[docs]</a><span class="k">def</span> <span class="nf">average_components</span><span class="p">(</span><span class="n">dvs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DV</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
+<div class="viewcode-block" id="average_components"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.average_components">[docs]</a><span class="k">def</span> <span class="nf">average_components</span><span class="p">(</span><span class="n">dvs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DV</span><span class="p">],</span> <span class="n">compute_std</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Averages the Similariy matrix of the three DV objects. Based on those,</span>
+<span class="sd">    Averages the Similariy matrix of the DV objects. Based on those,</span>
 <span class="sd">    it computes a new dv value and a new correlation value.</span>
 
 <span class="sd">    :param dvs: List of dvs from the different components to compute an</span>
-<span class="sd">            average from. Note that it is possible to use almost anything as</span>
-<span class="sd">            input (also from different stations). However, at the time,</span>
-<span class="sd">            the function requires the input to be of the same shape</span>
-
+<span class="sd">        average from. Note that it is possible to use almost anything as</span>
+<span class="sd">        input as long as the similarity matrices of the dvs have the same shape</span>
 <span class="sd">    :type dvs: List[class:`~seismic.monitor.dv.DV`]</span>
+<span class="sd">    :param compute_std: Compute the standard deviation of the similarity</span>
+<span class="sd">        matrices, pick the values corresponding to the maximum in the</span>
+<span class="sd">        similarity matrix and save them in the new</span>
+<span class="sd">        :class:`~seismic.monitor.dv.DV` object. Defaults to True.</span>
+<span class="sd">    :type compute_std: bool, optional</span>
 <span class="sd">    :raises TypeError: for DVs that were computed with different methods</span>
-<span class="sd">    :return: A single dv with an averaged similarity matrix</span>
+<span class="sd">    :return: A single dv with an averaged similarity matrix.</span>
 <span class="sd">    :rtype: DV</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">shapes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dv_use</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dvs</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">dv</span><span class="o">.</span><span class="n">method</span> <span class="o">!=</span> <span class="n">dvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">method</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;DV has to be computed with the same method.&#39;</span><span class="p">)</span>
         <span class="c1"># adapt shape to maiximum</span>
-        <span class="n">shapes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">sim_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-    <span class="c1">#     if dv.sim_mat.shape[:-1] != shapes[0][:-1]:</span>
-    <span class="c1">#         raise ValueError(</span>
-    <span class="c1">#             &#39;Only the time axis is allowed to have a different shape.&#39; +</span>
-    <span class="c1">#             &#39;Make sure you use the same number of stretching steps&#39;)</span>
-    <span class="c1"># shape = max(shapes)</span>
-    <span class="n">sim_mats</span> <span class="o">=</span> <span class="p">[</span><span class="n">dv</span><span class="o">.</span><span class="n">sim_mat</span> <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dvs</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">dv</span><span class="o">.</span><span class="n">sim_mat</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">dvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sim_mat</span><span class="o">.</span><span class="n">shape</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="n">dv</span><span class="o">.</span><span class="n">second_axis</span> <span class="o">!=</span> <span class="n">dvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">second_axis</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;The shapes of the similarity matrices of the input DVs &#39;</span>
+                <span class="o">+</span> <span class="s1">&#39;vary. Make sure to compute the dvs with the same parameters&#39;</span>
+                <span class="o">+</span> <span class="s1">&#39; (i.e., start &amp; end dates, date-inc, stretch increment, &#39;</span>
+                <span class="o">+</span> <span class="s1">&#39;and stretch steps.&#39;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;av&#39;</span> <span class="ow">in</span> <span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span><span class="o">+</span><span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="o">+</span><span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Averaging of averaged dvs not allowed. Skipping dv&#39;</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">dv_use</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dv</span><span class="p">)</span>
+    <span class="n">sim_mats</span> <span class="o">=</span> <span class="p">[</span><span class="n">dv</span><span class="o">.</span><span class="n">sim_mat</span> <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dv_use</span><span class="p">]</span>
     <span class="n">av_sim_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">sim_mats</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="c1"># Now we would have to recompute the dv value and corr value</span>
+    <span class="n">iimax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanargmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">av_sim_mat</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">av_sim_mat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">strvec</span> <span class="o">=</span> <span class="n">dvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">second_axis</span>
-    <span class="n">dt</span> <span class="o">=</span> <span class="n">strvec</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nanargmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">av_sim_mat</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
-    <span class="n">stats</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">dvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
-    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;av&#39;</span>
+    <span class="n">strvec</span> <span class="o">=</span> <span class="n">dv_use</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">second_axis</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">strvec</span><span class="p">[</span><span class="n">iimax</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">compute_std</span><span class="p">:</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dv</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dv_use</span><span class="p">])</span>
+        <span class="c1"># Number of stations per corr_start</span>
+        <span class="n">n_stat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">n_stat</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">values</span><span class="p">))]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">n_stat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">n_stat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># now this has the same shape as std</span>
+        <span class="n">std_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">sim_mats</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">m</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="n">iimax</span><span class="p">,</span> <span class="n">av_sim_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">std_corr</span> <span class="o">=</span> <span class="n">std</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">std</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">stats</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">dv_use</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span> <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dv_use</span><span class="p">])</span> <span class="o">==</span> <span class="n">stats</span><span class="o">.</span><span class="n">channel</span><span class="p">):</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;av&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span> <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dv_use</span><span class="p">])</span> <span class="o">==</span> <span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="p">):</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;station&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;av&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span> <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dv_use</span><span class="p">])</span> <span class="o">==</span> <span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="p">):</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;av&#39;</span>
     <span class="n">dvout</span> <span class="o">=</span> <span class="n">DV</span><span class="p">(</span>
-        <span class="n">corr</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">dvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value_type</span><span class="p">,</span> <span class="n">av_sim_mat</span><span class="p">,</span> <span class="n">strvec</span><span class="p">,</span> <span class="n">dvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="n">stats</span><span class="p">)</span>
+        <span class="n">corr</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">dv_use</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value_type</span><span class="p">,</span> <span class="n">av_sim_mat</span><span class="p">,</span> <span class="n">strvec</span><span class="p">,</span>
+        <span class="n">dv_use</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="n">stats</span><span class="p">,</span> <span class="n">std_val</span><span class="o">=</span><span class="n">std_val</span><span class="p">,</span> <span class="n">std_corr</span><span class="o">=</span><span class="n">std_corr</span><span class="p">,</span>
+        <span class="n">n_stat</span><span class="o">=</span><span class="n">n_stat</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">dvout</span></div>
+
+
+<div class="viewcode-block" id="average_dvs_by_coords"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.average_dvs_by_coords">[docs]</a><span class="k">def</span> <span class="nf">average_dvs_by_coords</span><span class="p">(</span>
+    <span class="n">dvs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DV</span><span class="p">],</span> <span class="n">lat</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">lon</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">el</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">1e6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">),</span> <span class="n">return_std</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Averages the Similariy matrix of the DV objects if they are inside of the</span>
+<span class="sd">    queried coordionates. Based on those,</span>
+<span class="sd">    it computes a new dv value and a new correlation value.</span>
+
+<span class="sd">    :param dvs: List of dvs from the different components to compute an</span>
+<span class="sd">        average from. Note that it is possible to use almost anything as</span>
+<span class="sd">        input as long as the similarity matrices of the dvs have the same shape</span>
+<span class="sd">    :type dvs: List[class:`~seismic.monitor.dv.DV`]</span>
+<span class="sd">    :param lat: Minimum and maximum latitude of the stations(s). Note that</span>
+<span class="sd">        for cross-correlations both stations must be inside of the window.</span>
+<span class="sd">    :type lat: Tuple[float, float]</span>
+<span class="sd">    :param lon: Minimum and maximum longitude of the stations(s). Note that</span>
+<span class="sd">        for cross-correlations both stations must be inside of the window.</span>
+<span class="sd">    :type lon: Tuple[float, float]</span>
+<span class="sd">    :param el: Minimum and maximum elevation of the stations(s) in m. Note that</span>
+<span class="sd">        for cross-correlations both stations must be inside of the window.</span>
+<span class="sd">        Defaults to (-1e6, 1e6) - i.e., no filter.</span>
+<span class="sd">    :type el: Tuple[float, float], optional</span>
+<span class="sd">    :param return_std: Save the standard deviation of the similarity</span>
+<span class="sd">        matrices into the dv object. Defaults to False.</span>
+<span class="sd">    :type return_std: bool, optional</span>
+<span class="sd">    :raises TypeError: for DVs that were computed with different methods</span>
+<span class="sd">    :return: A single dv with an averaged similarity matrix.</span>
+<span class="sd">    :rtype: DV</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dv_filt</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dvs</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">dv</span><span class="o">.</span><span class="n">stats</span>
+        <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">channel</span> <span class="o">==</span> <span class="s1">&#39;av&#39;</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Averaging of averaged dvs not allowed. Skipping dv&#39;</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">((</span>
+            <span class="n">lat</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">s</span><span class="o">.</span><span class="n">stla</span> <span class="o">&lt;=</span> <span class="n">lat</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">lat</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">s</span><span class="o">.</span><span class="n">evla</span> <span class="o">&lt;=</span> <span class="n">lat</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">lon</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">s</span><span class="o">.</span><span class="n">stlo</span> <span class="o">&lt;=</span> <span class="n">lon</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">lon</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">s</span><span class="o">.</span><span class="n">evlo</span> <span class="o">&lt;=</span> <span class="n">lon</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">el</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">s</span><span class="o">.</span><span class="n">stel</span> <span class="o">&lt;=</span> <span class="n">el</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">el</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">s</span><span class="o">.</span><span class="n">evel</span> <span class="o">&lt;=</span> <span class="n">el</span><span class="p">[</span><span class="mi">1</span><span class="p">])):</span>
+            <span class="n">dv_filt</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dv</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">dv_filt</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;No DVs within geographical constraints found.&#39;</span><span class="p">)</span>
+    <span class="n">av_dv</span> <span class="o">=</span> <span class="n">average_components</span><span class="p">(</span><span class="n">dv_filt</span><span class="p">,</span> <span class="n">return_std</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">av_dv</span><span class="o">.</span><span class="n">stats</span>
+    <span class="c1"># adapt header</span>
+    <span class="n">s</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s1">&#39;station&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;geoav&#39;</span>
+    <span class="n">s</span><span class="p">[</span><span class="s1">&#39;stel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s1">&#39;evel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">el</span>
+    <span class="n">s</span><span class="p">[</span><span class="s1">&#39;stlo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s1">&#39;evlo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lon</span>
+    <span class="n">s</span><span class="p">[</span><span class="s1">&#39;stla&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s1">&#39;evla&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lat</span>
+    <span class="k">return</span> <span class="n">av_dv</span></div>
 
 
 <div class="viewcode-block" id="average_components_wfc"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.average_components_wfc">[docs]</a><span class="k">def</span> <span class="nf">average_components_wfc</span><span class="p">(</span><span class="n">wfcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">WFC</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">WFC</span><span class="p">:</span>

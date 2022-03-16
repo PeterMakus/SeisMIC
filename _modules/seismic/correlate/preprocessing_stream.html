@@ -190,7 +190,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 20th July 2021 03:47:00 pm</span>
-<span class="sd">Last Modified: Thursday, 10th February 2022 09:44:08 am</span>
+<span class="sd">Last Modified: Monday, 14th February 2022 11:52:04 am</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
 <span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
@@ -371,7 +371,7 @@
 
 <div class="viewcode-block" id="stream_mask_at_utc"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.preprocessing_stream.stream_mask_at_utc">[docs]</a><span class="k">def</span> <span class="nf">stream_mask_at_utc</span><span class="p">(</span>
     <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">starts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">],</span> <span class="n">ends</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">masklen</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="n">masklen</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Mask the Data in the Stream between the times given by ``starts`` and</span>
 <span class="sd">    ``ends`` or between ``starts`` and ``starts``+``masklen``.</span>
@@ -412,7 +412,8 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">ends</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ends</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
-        <span class="n">trace_mask_at_utc</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">starts</span><span class="p">,</span> <span class="n">ends</span><span class="p">,</span> <span class="n">reverse</span><span class="p">)</span></div>
+        <span class="n">trace_mask_at_utc</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">starts</span><span class="p">,</span> <span class="n">ends</span><span class="p">,</span> <span class="n">reverse</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">st</span></div>
 
 
 <div class="viewcode-block" id="trace_mask_at_utc"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.preprocessing_stream.trace_mask_at_utc">[docs]</a><span class="k">def</span> <span class="nf">trace_mask_at_utc</span><span class="p">(</span>

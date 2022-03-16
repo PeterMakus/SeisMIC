@@ -188,11 +188,8 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 5th July 2021 02:44:13 pm</span>
-<span class="sd">Last Modified: Thursday, 25th November 2021 10:50:30 am</span>
+<span class="sd">Last Modified: Wednesday, 16th March 2022 04:02:34 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
-
-<span class="kn">from</span> <span class="nn">future.utils</span> <span class="kn">import</span> <span class="n">native_str</span>
-
 <span class="kn">from</span> <span class="nn">obspy.core.util</span> <span class="kn">import</span> <span class="n">AttribDict</span>
 <span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">UTCDateTime</span>
 
@@ -352,9 +349,9 @@
         <span class="s1">&#39;start_lag&#39;</span><span class="p">}</span>
     <span class="c1"># dict of required types for certain attrs</span>
     <span class="n">_types</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;network&#39;</span><span class="p">:</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">native_str</span><span class="p">),</span>
-        <span class="s1">&#39;station&#39;</span><span class="p">:</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">native_str</span><span class="p">),</span>
-        <span class="s1">&#39;channel&#39;</span><span class="p">:</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">native_str</span><span class="p">),</span>
+        <span class="s1">&#39;network&#39;</span><span class="p">:</span> <span class="p">(</span><span class="nb">str</span><span class="p">),</span>
+        <span class="s1">&#39;station&#39;</span><span class="p">:</span> <span class="p">(</span><span class="nb">str</span><span class="p">),</span>
+        <span class="s1">&#39;channel&#39;</span><span class="p">:</span> <span class="p">(</span><span class="nb">str</span><span class="p">),</span>
     <span class="p">}</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="p">{}):</span>

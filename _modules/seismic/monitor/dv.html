@@ -188,11 +188,14 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 15th June 2021 04:12:18 pm</span>
-<span class="sd">Last Modified: Monday, 17th January 2022 02:30:47 pm</span>
+<span class="sd">Last Modified: Wednesday, 16th March 2022 12:03:00 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">glob</span> <span class="kn">import</span> <span class="n">glob</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">zipfile</span> <span class="kn">import</span> <span class="n">BadZipFile</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
@@ -208,12 +211,49 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">corr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">value_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">sim_mat</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">second_axis</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-            <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">):</span>
+        <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">std_val</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">std_corr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">n_stat</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates an object designed to hold and process velocity changes.</span>
+
+<span class="sd">        :param corr: Array with maximum Correlation coefficients.</span>
+<span class="sd">        :type corr: np.ndarray</span>
+<span class="sd">        :param value: Array with decimal velocity changes / stretches.</span>
+<span class="sd">        :type value: np.ndarray</span>
+<span class="sd">        :param value_type: Type of value (e.g., stretch)</span>
+<span class="sd">        :type value_type: str</span>
+<span class="sd">        :param sim_mat: Similarity Matrix with the dimensions time and stretch.</span>
+<span class="sd">        :type sim_mat: np.ndarray</span>
+<span class="sd">        :param second_axis: second axis (e.g., the stretch axis)</span>
+<span class="sd">        :type second_axis: np.ndarray</span>
+<span class="sd">        :param method: Stretching method that was used</span>
+<span class="sd">        :type method: str</span>
+<span class="sd">        :param stats: Stats of the correlation object that was used</span>
+<span class="sd">        :type stats: CorrStats</span>
+<span class="sd">        :param std_val: Standard deviation of the value (e.g., stretch).</span>
+<span class="sd">            In case this dv object holds an average</span>
+<span class="sd">            of several dvs, the user can choose to compute the standard</span>
+<span class="sd">            deviation over all dvs&#39; values. Same shape as corr and</span>
+<span class="sd">            value, defaults to None</span>
+<span class="sd">        :type std_val: np.ndarray, optional</span>
+<span class="sd">        :param std_corr: Standard deviation of the correlation coefficient.</span>
+<span class="sd">            In case this dv object holds an average</span>
+<span class="sd">            of several dvs, the user can choose to compute the standard</span>
+<span class="sd">            deviation over all dvs&#39; values. Same shape as corr and</span>
+<span class="sd">            value, defaults to None</span>
+<span class="sd">        :type std_corr: np.ndarray, optional</span>
+<span class="sd">        :param n_stat: Number of stations used for the stack at corr_start t.</span>
+<span class="sd">            Has the same shape as `value` and `corr`. Defaults to None</span>
+<span class="sd">        :type n_stat: np.ndarray, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Allocate attributes</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">value_type</span> <span class="o">=</span> <span class="n">value_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">corr</span> <span class="o">=</span> <span class="n">corr</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span> <span class="o">=</span> <span class="n">sim_mat</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">std_val</span> <span class="o">=</span> <span class="n">std_val</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">std_corr</span> <span class="o">=</span> <span class="n">std_corr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_stat</span> <span class="o">=</span> <span class="n">n_stat</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">second_axis</span> <span class="o">=</span> <span class="n">second_axis</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="n">stats</span>
@@ -240,21 +280,63 @@
         <span class="n">method_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">])</span>
         <span class="n">vt_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">value_type</span><span class="p">])</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">save_header_to_np_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span>
-            <span class="n">path</span><span class="p">,</span> <span class="n">corr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">corr</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">sim_mat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span><span class="p">,</span>
-            <span class="n">second_axis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">second_axis</span><span class="p">,</span> <span class="n">method_array</span><span class="o">=</span><span class="n">method_array</span><span class="p">,</span>
-            <span class="n">vt_array</span><span class="o">=</span><span class="n">vt_array</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_val</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_corr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span>
+                <span class="n">path</span><span class="p">,</span> <span class="n">corr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">corr</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">sim_mat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span><span class="p">,</span>
+                <span class="n">second_axis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">second_axis</span><span class="p">,</span> <span class="n">method_array</span><span class="o">=</span><span class="n">method_array</span><span class="p">,</span>
+                <span class="n">vt_array</span><span class="o">=</span><span class="n">vt_array</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span>
+                <span class="n">path</span><span class="p">,</span> <span class="n">corr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">corr</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">sim_mat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span><span class="p">,</span>
+                <span class="n">second_axis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">second_axis</span><span class="p">,</span> <span class="n">method_array</span><span class="o">=</span><span class="n">method_array</span><span class="p">,</span>
+                <span class="n">vt_array</span><span class="o">=</span><span class="n">vt_array</span><span class="p">,</span> <span class="n">std_val</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">std_val</span><span class="p">,</span>
+                <span class="n">std_corr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">std_corr</span><span class="p">,</span> <span class="n">n_stat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_stat</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DV.plot"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.dv.DV.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">figure_file_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">mark_time</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normalize_simmat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">sim_mat_Clim</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">ylim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">figsize</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">),</span> <span class="n">dpi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">72</span><span class="p">,</span>
-            <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="n">sim_mat_Clim</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">xlim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ylim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">plot_std</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">figsize</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">),</span>
+            <span class="n">dpi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">144</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plots the dv object into a *multi-panel-view* of `similarity matrix`</span>
+<span class="sd">        `dv-value`, and `correlation coefficient`.</span>
+
+<span class="sd">        :param save_dir: Directory to save the figure to, defaults to &#39;.&#39;</span>
+<span class="sd">        :type save_dir: str, optional</span>
+<span class="sd">        :param figure_file_name: Filename of the figure. If None, the figure</span>
+<span class="sd">            will not be save, defaults to None.</span>
+<span class="sd">        :type figure_file_name: str, optional</span>
+<span class="sd">        :param mark_time: times to put ticks to. If not set, they will be</span>
+<span class="sd">            determined automatically, defaults to None.</span>
+<span class="sd">        :type mark_time: datetime, optional</span>
+<span class="sd">        :param normalize_simmat: Normalise the similarity matrix?</span>
+<span class="sd">            Defaults to False.</span>
+<span class="sd">        :type normalize_simmat: bool, optional</span>
+<span class="sd">        :param sim_mat_Clim: Color limits for the similarity matrix</span>
+<span class="sd">            , defaults to []. Format is [low_limit, upper_limit]</span>
+<span class="sd">        :type sim_mat_Clim: List[float], optional</span>
+<span class="sd">        :param xlim: Time Limits to plot, defaults to None.</span>
+<span class="sd">        :type xlim: Tuple[datetime, datetime], optional</span>
+<span class="sd">        :param ylim: Y-limits (e.g., stretch) of the plot, defaults to None</span>
+<span class="sd">        :type ylim: Tuple[int, int], optional</span>
+<span class="sd">        :param plot_std: If set to True, the upper and lower limit of the</span>
+<span class="sd">            value&#39;s standard deviation will be plotted as bounds,</span>
+<span class="sd">            defaults to False.</span>
+<span class="sd">        :type plot_std: bool, optional</span>
+<span class="sd">        :param figsize: Size of the figure/canvas, defaults to (9, 11)</span>
+<span class="sd">        :type figsize: Tuple[float, float], optional</span>
+<span class="sd">        :param dpi: Pixels per inch, defaults to 144</span>
+<span class="sd">        :type dpi: int, optional</span>
+<span class="sd">        :param title: Define a custom title. Otherwise, an automatic title</span>
+<span class="sd">            will be created, defaults to None</span>
+<span class="sd">        :type title: str, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">plot_dv</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">,</span> <span class="n">figure_file_name</span><span class="p">,</span> <span class="n">mark_time</span><span class="p">,</span>
-            <span class="n">normalize_simmat</span><span class="p">,</span> <span class="n">sim_mat_Clim</span><span class="p">,</span> <span class="n">figsize</span><span class="p">,</span> <span class="n">dpi</span><span class="p">,</span> <span class="n">ylim</span><span class="o">=</span><span class="n">ylim</span><span class="p">,</span>
-            <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">)</span></div>
+            <span class="n">normalize_simmat</span><span class="p">,</span> <span class="n">sim_mat_Clim</span><span class="p">,</span> <span class="n">figsize</span><span class="p">,</span> <span class="n">dpi</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="n">xlim</span><span class="p">,</span> <span class="n">ylim</span><span class="o">=</span><span class="n">ylim</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">plot_std</span><span class="o">=</span><span class="n">plot_std</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DV.smooth_sim_mat"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.dv.DV.smooth_sim_mat">[docs]</a>    <span class="k">def</span> <span class="nf">smooth_sim_mat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">win_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -280,17 +362,44 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Reads a saved velocity change object from an **.npz** file.</span>
 
-<span class="sd">    :param path: Path to file</span>
+<span class="sd">    :param path: Path to file, wildcards allowed</span>
 <span class="sd">    :type path: str</span>
 <span class="sd">    :return: the corresponding and converted DV object</span>
-<span class="sd">    :rtype: DV</span>
+<span class="sd">    :rtype: DV, List[DV] if path contains wildcards</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s1">&#39;*&#39;</span> <span class="ow">in</span> <span class="n">path</span> <span class="ow">or</span> <span class="s1">&#39;?&#39;</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+        <span class="n">dvl</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">glob</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">dvl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">read_dv</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+            <span class="k">except</span><span class="p">(</span><span class="n">BadZipFile</span><span class="p">):</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;File </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s1"> corrupt, skipping..&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">dvl</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;No files that adhere the pattern </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1"> found.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dvl</span>
     <span class="n">loaded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="n">stats</span> <span class="o">=</span> <span class="n">CorrStats</span><span class="p">(</span><span class="n">mu</span><span class="o">.</span><span class="n">load_header_from_np_array</span><span class="p">(</span><span class="n">loaded</span><span class="p">))</span>
+    <span class="c1"># to check that compatibility works</span>
+    <span class="n">vt</span> <span class="o">=</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;vt_array&#39;</span><span class="p">]</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vt</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">vt</span> <span class="o">=</span> <span class="n">vt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;method_array&#39;</span><span class="p">]</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="n">method</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">std_val</span> <span class="o">=</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;std_val&#39;</span><span class="p">]</span>
+        <span class="n">std_corr</span> <span class="o">=</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;std_corr&#39;</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="n">std_val</span> <span class="o">=</span> <span class="n">std_corr</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">n_stat</span> <span class="o">=</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;n_stat&#39;</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="n">n_stat</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="n">DV</span><span class="p">(</span>
-        <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;corr&#39;</span><span class="p">],</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">],</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;vt_array&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
-        <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;sim_mat&#39;</span><span class="p">],</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;second_axis&#39;</span><span class="p">],</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;method_array&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
-        <span class="n">stats</span><span class="o">=</span><span class="n">stats</span><span class="p">)</span></div>
+        <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;corr&#39;</span><span class="p">],</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">],</span> <span class="n">vt</span><span class="p">,</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;sim_mat&#39;</span><span class="p">],</span>
+        <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;second_axis&#39;</span><span class="p">],</span> <span class="n">method</span><span class="p">,</span> <span class="n">stats</span><span class="o">=</span><span class="n">stats</span><span class="p">,</span> <span class="n">std_val</span><span class="o">=</span><span class="n">std_val</span><span class="p">,</span>
+        <span class="n">std_corr</span><span class="o">=</span><span class="n">std_corr</span><span class="p">,</span> <span class="n">n_stat</span><span class="o">=</span><span class="n">n_stat</span><span class="p">)</span></div>
 </pre></div>
 
               </div>
