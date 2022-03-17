@@ -57,17 +57,43 @@ of this file, you will find a section with the key ``dv``:
         stretch_range : 0.03
         stretch_steps : 1001
 
+        #### Reference trace extraction
+        #  win_inc : Length in days of each reference time window to be used for trace extraction
+        # If == 0, only one trace will be extracted
+        # If > 0, mutliple reference traces will be used for the dv calculation
+        # Can also be a list if the length of the windows should vary
+        # See seismic.correlate.stream.CorrBulk.extract_multi_trace for details on arguments
+        dt_ref : {'win_inc' : 0, 'method': 'mean', 'percentile': 50}
+
+        # preprocessing on the correlation bulk before stretch estimation
+        preprocessing: [
+                        {'function': 'smooth', 'args': {'wsize': 48, 'wtype': 'hanning', 'axis': 1}}
+        ]
+
+        # postprocessing of dv objects before saving and plotting
+        postprocessing: [
+                        {'function': 'smooth_sim_mat', 'args': {'win_len': 7}}
+        ]
+
 As you can see, there are only fairly few settings that can be changed, some of which are very obvious again:
 
 + ``subdir``: directory to save the dv objects in
 + ``plot_vel_change``: Set this to ``True`` if you would like your velocity changes to be plotted to a file in the fig folder.
 + ``start_date``, ``end_date``: Start and end of the time series (Note that it will result in nans if there are no correlations available.
-+ ``win_len``, ``date_inc``: Length of each datapoint in seconds and distance between the subsequent datapoints.
++ ``win_len``, ``date_inc``: Length of each datapoint (i.e., correlation) in seconds and distance between the subsequent datapoints. ``win_len`` has to be at least equal to the length of one correlation. If it is longer, correlations will be stacked.
 + ``freq_min``, ``freq_max``: lower and upper frequencies for the bandpass filter.
++ ``preprocessing``: List of functions that will be applied to the correlations prior to the interferometry. You can feed in your own custom functions. ``smooth`` does just simply apply a moving window along one axis. Physical window length is ``win_inc``*48 + 2*(``win_len`` - ``win_inc``).
++ ``postprocessing``: Functions that are applied to the :py:class:`~seismic.monitor.dv.DV` object. Same logic as for ``preprocessing``
 
 The other four parameters will actually influence the actual stretching. ``tw`` is the time window which should be stretched and
 compared with the lapsed correlations. ``stretch_range`` is the maximum absolute stretch to be tested and ``stretch_steps`` the number
 of increments that will be tested between the minimum and maximum stretching.
+
+Computing the Reference Trace
+=============================
+
+``dt_ref`` is the parameter governing the computation of the reference trace. We can opt for a single reference trace for the whole period (``dt_ref['win_inc']=0``) or multiple reference traces.
+Check out the docstring of :py:meth:`~seismic.correlate.stream.CorrBulk.extract_multi_trace` to learn more!
 
 Start the Computation
 +++++++++++++++++++++
@@ -91,4 +117,11 @@ You can start the script using mpi:
 
 .. code-block:: bash
 
-    mpirun -n $number_of_cores$ python $path_to_file$/compute_dv.py
+    mpirun -n $number_of_cores$ python $path_to_file$/compute_dv.py+
+
+.. note::
+
+    :py:meth:`~seismic.monitor.monitor.Monitor.compute_velocity_change_bulk` is the multi-core equivalent of
+    :py:meth:`~seismic.monitor.monitor.Monitor.compute_velocity_change`. The latter takes a particular `hdf5` file
+    as input, whereas the former will estimate the velocity changes of all `hdf5` files that are defined by
+    `co['subdir']` in the `params.yaml` file and fit the filters set in `net`.
