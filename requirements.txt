@@ -5,13 +5,12 @@
 geographiclib
 h5py
 matplotlib
-numpy<1.22
-obspy
-pathlib
+numpy
+obspy>=1.3
 pip
 prov
 pyyaml
-scipy; 
+scipy
 tqdm
 
 # Other requirements for tests and docs

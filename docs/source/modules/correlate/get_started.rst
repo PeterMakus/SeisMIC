@@ -37,7 +37,7 @@ Setting the parameters
     # 'DEBUG', 'INFO', 'WARNING', 'ERROR', or 'CRITICAL'
     log_level: 'WARNING'
     # folder for figures
-    fig_subdir : 'figures'
+    fig_subdir : 'figures'  # not in use yet
 
 
     #### parameters that are network specific
@@ -46,6 +46,7 @@ Setting the parameters
         # type: list of strings or string, wildcards allowed
         network : 'D0'
         station : ['BZG', 'ESO', 'KBG', 'KIR']
+        # stations : ['D0.BZG', 'D0.ESO', 'D0.KBG', 'D0.KIR']
         # list of channels
         # type: list of strings
         # actually not in use (yet)
@@ -73,26 +74,36 @@ Setting the parameters
         # New sampling rate in Hz. Note that it will try to decimate
         # if possible (i.e., there is an integer factor from the
         # native sampling_rate)
-        sampling_rate: 25
+        sampling_rate : 25
         # Remove the instrument response, will take substantially more time
-        remove_response: False
+        remove_response : False
 
         # Method to combine different traces
         combination_method : 'betweenStations'
+    
+        # If you want only specific combinations to be computed enter them here
+        # In the form [Net0-Net0.Stat0-Stat1]
+        # This option will only be consider if combination_method == 'betweenStations'
+        # Comment or set == None if not in use
+        xcombinations : None
 
         # preprocessing of the original length time series
         # these function work on an obspy.Stream object given as first argument
         # and return an obspy.Stream object.
         preProcessing : [
                         {'function':'seismic.correlate.preprocessing_stream.detrend_st',
-                        'args':{'type':'simple'}},
+                        'args':{'type':'linear'}},
                         {'function':'seismic.correlate.preprocessing_stream.cos_taper_st',
                         'args':{'taper_len': 10, # seconds
                                 'taper_at_masked': True}},
                         {'function':'seismic.correlate.preprocessing_stream.stream_filter',
                         'args':{'ftype':'bandpass',
                                 'filter_option':{'freqmin':0.01, #0.01
-                                                'freqmax':12.5}}}
+                                                'freqmax':12}}}
+                        #{'function':'seismic.correlate.preprocessing_stream.stream_mute',
+                        # 'args':{'taper_len':100,
+                        #         'mute_method':'std_factor',
+                        #         'mute_value':3}}
                         ]
         # subdivision of the read sequences for correlation
         # type: presence of this key
@@ -107,29 +118,24 @@ Setting the parameters
             # delete
             # type: booblean
             delete_subdivision : False
-        # Taper the time windows with a 5% Hann taper on each side. If this is True,
-        # the time windows will just simply be prolonged by the length of the taper,
-        # so that no data is lost
-        # This taper is probably obsolete
-        taper: False
 
         # parameters for correlation preprocessing
         # Standard functions reside in seismic.correlate.preprocessing_td
         corr_args : {'TDpreProcessing':[
                                         {'function':'seismic.correlate.preprocessing_td.detrend',
-                                        'args':{'type':'constant'}},
-                                      {'function':'seismic.correlate.preprocessing_td.TDfilter',
-                                      'args':{'type':'bandpass','freqmin':2,'freqmax':8}},
-                                    # {'function':'seismic.correlate.preprocessing_td.taper',
-                                    #  'args': {'type':'cosine_taper','p':0.02}},
-                                        # {'function':'seismic.correlate.preprocessing_td.mute',
+                                        'args':{'type':'linear'}},
+                                    {'function':'seismic.correlate.preprocessing_td.TDfilter',
+                                    'args':{'type':'bandpass','freqmin':2,'freqmax':8}},
+                                        #{'function':'seismic.correlate.preprocessing_td.mute',
                                         # 'args':{'taper_len':100.,
-                                        #        'threshold':1000, absolute threshold
+                                            # 'threshold':1000, absolute threshold
                                         #         'std_factor':3,
                                         #         'filter':{'type':'bandpass','freqmin':2,'freqmax':4},
                                         #         'extend_gaps':True}},
                                     {'function':'seismic.correlate.preprocessing_td.clip',
-                                        'args':{'std_factor':3}},
+                                        'args':{'std_factor':2.5}},
+                                    {'function':'seismic.correlate.preprocessing_td.signBitNormalization',
+                                        'args': {}}
                                     ],
                     # Standard functions reside in seismic.correlate.preprocessing_fd
                     'FDpreProcessing':[
@@ -167,8 +173,8 @@ Setting the parameters
         date_inc : 86400                        # increment of measurements
 
         ### Frequencies
-        freq_min : 0.1
-        freq_max : 0.5
+        freq_min : 4
+        freq_max : 8
 
         ### Definition of lapse time window
         tw_start : 20     # lapse time of first sample [s]
@@ -176,7 +182,25 @@ Setting the parameters
         
         ### Range to try stretching
         stretch_range : 0.03
-        stretch_steps : 1000
+        stretch_steps : 1001
+    
+        #### Reference trace extraction
+        #  win_inc : Length in days of each reference time window to be used for trace extraction
+        # If == 0, only one trace will be extracted
+        # If > 0, mutliple reference traces will be used for the dv calculation
+        # Can also be a list if the length of the windows should vary
+        # See seismic.correlate.stream.CorrBulk.extract_multi_trace for details on arguments
+        dt_ref : {'win_inc' : 0, 'method': 'mean', 'percentile': 50}
+
+        # preprocessing on the correlation bulk before stretch estimation
+        preprocessing: [
+                        {'function': 'smooth', 'args': {'wsize': 48, 'wtype': 'hanning', 'axis': 1}}
+        ]
+
+        # postprocessing of dv objects before saving and plotting
+        postprocessing: [
+                        {'function': 'smooth_sim_mat', 'args': {'win_len': 7}}
+        ]
 
 This might look a little intimidating at first glancec, but is actually quite straight-forward.
 To achieve a better understanding of what each of the parameters do, let's have a close look at them individually.
@@ -214,10 +238,6 @@ Network Specific Parameters
         # type: list of strings or string, wildcards allowed
         network : 'D0'
         station : ['BZG', 'ESO', 'KBG', 'KIR']
-        # list of channels
-        # type: list of strings
-        # actually not in use (yet)
-        # channels : ['HHZ','HHN','HHE']
 
 Here, we decide which data to use (i.e., which data the correlator will look for and read in). All parameters accept wildcards and can be strings or lists.
 
@@ -273,10 +293,17 @@ Let's start by getting the most obvious parameters out of the way:
 
         # Method to combine different traces
         combination_method : 'betweenStations'
+  
+        # If you want only specific combinations to be computed enter them here
+        # In the form [Net0-Net0.Stat0-Stat1]
+        # This option will only be consider if combination_method == 'betweenStations'
+        # Comment or set == None if not in use
+        xcombinations : None
 
 + ``Sampling_rate`` is the new sampling rate you will want your data to have. **SeisMIC** will take care of anti-alias filtering and determine whether data can be decimated.
 + ``remove_response`` if you want the data to be corrected for the instrument response, set this to ``True``.
 + ``combination_method`` decides which components you will want to correlate. See :py:func:`~seismic.correlate.correlate.calc_cross_combis` for allowed options.
++ ``xcombinations`` If you want to save some computational resources and only compute specific combinations, use this function. If you want to limit the maximum distance between stations to cross-correlate you can use :py:meth:`seismic.correlate.correlate.Correlator.find_interstat_dist`
 
 
 Preprocessing Arguments
@@ -310,6 +337,10 @@ An over view of available stream preprocessing functions can  be found in :mod:`
                         'args':{'ftype':'bandpass',
                                 'filter_option':{'freqmin':0.01,
                                                 'freqmax':12.5}}}
+                        #{'function':'seismic.correlate.preprocessing_stream.stream_mute',
+                        # 'args':{'taper_len':100,
+                        #         'mute_method':'std_factor',
+                        #         'mute_value':3}}
                         ]
 
 
@@ -325,26 +356,26 @@ Additionally, the ``args`` dictionary and a ``params`` dictionary will be passed
     # Standard functions reside in seismic.correlate.preprocessing_td
     corr_args : {'TDpreProcessing':[
                                     {'function':'seismic.correlate.preprocessing_td.detrend',
-                                    'args':{'type':'constant'}},
-                                  {'function':'seismic.correlate.preprocessing_td.TDfilter',
-                                  'args':{'type':'bandpass','freqmin':2,'freqmax':8}},
-                                # {'function':'seismic.correlate.preprocessing_td.taper',
-                                #  'args': {'type':'cosine_taper','p':0.02}},
-                                    # {'function':'seismic.correlate.preprocessing_td.mute',
+                                    'args':{'type':'linear'}},
+                                   {'function':'seismic.correlate.preprocessing_td.TDfilter',
+                                   'args':{'type':'bandpass','freqmin':2,'freqmax':8}},
+                                    #{'function':'seismic.correlate.preprocessing_td.mute',
                                     # 'args':{'taper_len':100.,
-                                    #        'threshold':1000, absolute threshold
+                                           # 'threshold':1000, absolute threshold
                                     #         'std_factor':3,
                                     #         'filter':{'type':'bandpass','freqmin':2,'freqmax':4},
                                     #         'extend_gaps':True}},
-                                {'function':'seismic.correlate.preprocessing_td.clip',
-                                    'args':{'std_factor':3}},
-                                ],
-                # Standard functions reside in seismic.correlate.preprocessing_fd
-                'FDpreProcessing':[
+                                   {'function':'seismic.correlate.preprocessing_td.clip',
+                                    'args':{'std_factor':2.5}},
+                                   {'function':'seismic.correlate.preprocessing_td.signBitNormalization',
+                                    'args': {}}
+                                   ],
+                  # Standard functions reside in seismic.correlate.preprocessing_fd
+                 'FDpreProcessing':[
                                     {'function':'seismic.correlate.preprocessing_fd.spectralWhitening',
-                                    'args':{'joint_norm':False}},
+                                     'args':{'joint_norm':False}},
                                     {'function':'seismic.correlate.preprocessing_fd.FDfilter',
-                                    'args':{'flimit':[0.01,0.02,9,10]}}
+                                     'args':{'flimit':[0.01,0.02,9,10]}}
                                     #  {'function':seismic.correlate.preprocessing_fd.FDsignBitNormalization,
                                     # 'args':{}}
                                     ]

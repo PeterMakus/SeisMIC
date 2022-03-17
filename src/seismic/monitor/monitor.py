@@ -8,12 +8,13 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 11th February 2022 08:51:22 am
+Last Modified: Wednesday, 16th March 2022 12:23:08 pm
 '''
 from copy import deepcopy
 import logging
 import os
 from typing import List, Tuple
+import warnings
 import yaml
 import fnmatch
 from glob import glob
@@ -305,13 +306,13 @@ class Monitor(object):
         """
         av_methods = (
             'autocomponents', 'crosscomponents', 'stationwide',
-            'crossstations')
+            'crossstations', 'betweenstations', 'betweencomponents')
         if method.lower() not in av_methods:
             raise ValueError('Averaging method not in %s.' % str(av_methods))
         infiles = glob(os.path.join(self.outdir, '*.npz'))
         if method.lower() == 'autocomponents':
             ch = 'av-auto'
-        elif method.lower() == 'crosscomponents':
+        elif method.lower() in ('betweencomponents', 'crosscomponents'):
             ch = 'av-xc'
         else:
             ch = 'av'
@@ -347,7 +348,8 @@ class Monitor(object):
                             or stations[0] != stations[1]:
                         infiles.remove(f)
                         continue
-                elif method.lower() == 'crosscomponents':
+                elif method.lower() in (
+                        'betweencomponents', 'crosscomponents'):
                     # Remove those from equal channels
                     components = f.split('.')[-2].split('-')
                     if components[0] == components[1] \
@@ -358,7 +360,7 @@ class Monitor(object):
                     if stations[0] != stations[1]:
                         infiles.remove(f)
                         continue
-                elif method.lower() == 'crossstations':
+                elif method.lower() in ('betweenstations', 'crossstations'):
                     if stations[0] == stations[1]:
                         infiles.remove(f)
                         continue
@@ -636,43 +638,125 @@ def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
     return netlist, statlist, infiles
 
 
-def average_components(dvs: List[DV]) -> DV:
+def average_components(dvs: List[DV], compute_std: bool = True) -> DV:
     """
-    Averages the Similariy matrix of the three DV objects. Based on those,
+    Averages the Similariy matrix of the DV objects. Based on those,
     it computes a new dv value and a new correlation value.
 
     :param dvs: List of dvs from the different components to compute an
-            average from. Note that it is possible to use almost anything as
-            input (also from different stations). However, at the time,
-            the function requires the input to be of the same shape
-
+        average from. Note that it is possible to use almost anything as
+        input as long as the similarity matrices of the dvs have the same shape
     :type dvs: List[class:`~seismic.monitor.dv.DV`]
+    :param compute_std: Compute the standard deviation of the similarity
+        matrices, pick the values corresponding to the maximum in the
+        similarity matrix and save them in the new
+        :class:`~seismic.monitor.dv.DV` object. Defaults to True.
+    :type compute_std: bool, optional
     :raises TypeError: for DVs that were computed with different methods
-    :return: A single dv with an averaged similarity matrix
+    :return: A single dv with an averaged similarity matrix.
     :rtype: DV
     """
-    shapes = []
+    dv_use = []
     for dv in dvs:
         if dv.method != dvs[0].method:
             raise TypeError('DV has to be computed with the same method.')
         # adapt shape to maiximum
-        shapes.append(dv.sim_mat.shape)
-    #     if dv.sim_mat.shape[:-1] != shapes[0][:-1]:
-    #         raise ValueError(
-    #             'Only the time axis is allowed to have a different shape.' +
-    #             'Make sure you use the same number of stretching steps')
-    # shape = max(shapes)
-    sim_mats = [dv.sim_mat for dv in dvs]
+        if dv.sim_mat.shape != dvs[0].sim_mat.shape or any(
+                dv.second_axis != dvs[0].second_axis):
+            raise ValueError(
+                'The shapes of the similarity matrices of the input DVs '
+                + 'vary. Make sure to compute the dvs with the same parameters'
+                + ' (i.e., start & end dates, date-inc, stretch increment, '
+                + 'and stretch steps.'
+            )
+        if 'av' in dv.stats.channel+dv.stats.network+dv.stats.station:
+            warnings.warn('Averaging of averaged dvs not allowed. Skipping dv')
+            continue
+        dv_use.append(dv)
+    sim_mats = [dv.sim_mat for dv in dv_use]
     av_sim_mat = np.nanmean(sim_mats, axis=0)
     # Now we would have to recompute the dv value and corr value
+    iimax = np.nanargmax(np.nan_to_num(av_sim_mat), axis=1)
     corr = np.nanmax(av_sim_mat, axis=1)
-    strvec = dvs[0].second_axis
-    dt = strvec[np.nanargmax(np.nan_to_num(av_sim_mat), axis=1)]
-    stats = deepcopy(dvs[0].stats)
-    stats['channel'] = 'av'
+    strvec = dv_use[0].second_axis
+    dt = strvec[iimax]
+    if compute_std:
+        values = np.array([dv.value for dv in dv_use])
+        # Number of stations per corr_start
+        n_stat = np.ones_like(values, dtype=int)
+        n_stat[np.where(np.isnan(values))] = 0
+        n_stat = np.sum(n_stat, axis=0)  # now this has the same shape as std
+        std_val = np.nanstd(values, axis=0)
+        std = np.nanstd(sim_mats, axis=0)
+        m, n = np.unravel_index(iimax, av_sim_mat.shape)
+        std_corr = std[n, m]
+    else:
+        std = None
+    stats = deepcopy(dv_use[0].stats)
+    if not all(np.array([dv.stats.channel for dv in dv_use]) == stats.channel):
+        stats['channel'] = 'av'
+    if not all(np.array([dv.stats.station for dv in dv_use]) == stats.station):
+        stats['station'] = 'av'
+    if not all(np.array([dv.stats.network for dv in dv_use]) == stats.network):
+        stats['network'] = 'av'
     dvout = DV(
-        corr, dt, dvs[0].value_type, av_sim_mat, strvec, dvs[0].method, stats)
+        corr, dt, dv_use[0].value_type, av_sim_mat, strvec,
+        dv_use[0].method, stats, std_val=std_val, std_corr=std_corr,
+        n_stat=n_stat)
     return dvout
+
+
+def average_dvs_by_coords(
+    dvs: List[DV], lat: Tuple[float, float], lon: Tuple[float, float],
+        el: Tuple[float, float] = (-1e6, 1e6), return_std: bool = False) -> DV:
+    """
+    Averages the Similariy matrix of the DV objects if they are inside of the
+    queried coordionates. Based on those,
+    it computes a new dv value and a new correlation value.
+
+    :param dvs: List of dvs from the different components to compute an
+        average from. Note that it is possible to use almost anything as
+        input as long as the similarity matrices of the dvs have the same shape
+    :type dvs: List[class:`~seismic.monitor.dv.DV`]
+    :param lat: Minimum and maximum latitude of the stations(s). Note that
+        for cross-correlations both stations must be inside of the window.
+    :type lat: Tuple[float, float]
+    :param lon: Minimum and maximum longitude of the stations(s). Note that
+        for cross-correlations both stations must be inside of the window.
+    :type lon: Tuple[float, float]
+    :param el: Minimum and maximum elevation of the stations(s) in m. Note that
+        for cross-correlations both stations must be inside of the window.
+        Defaults to (-1e6, 1e6) - i.e., no filter.
+    :type el: Tuple[float, float], optional
+    :param return_std: Save the standard deviation of the similarity
+        matrices into the dv object. Defaults to False.
+    :type return_std: bool, optional
+    :raises TypeError: for DVs that were computed with different methods
+    :return: A single dv with an averaged similarity matrix.
+    :rtype: DV
+    """
+    dv_filt = []
+    for dv in dvs:
+        s = dv.stats
+        if s.channel == 'av':
+            warnings.warn('Averaging of averaged dvs not allowed. Skipping dv')
+            continue
+        if all((
+            lat[0] <= s.stla <= lat[1], lat[0] <= s.evla <= lat[1],
+            lon[0] <= s.stlo <= lon[1], lon[0] <= s.evlo <= lon[1],
+                el[0] <= s.stel <= el[1], el[0] <= s.evel <= el[1])):
+            dv_filt.append(dv)
+    if not len(dv_filt):
+        raise ValueError(
+            'No DVs within geographical constraints found.')
+    av_dv = average_components(dv_filt, return_std)
+    s = av_dv.stats
+    # adapt header
+    s['network'] = s['station'] = 'geoav'
+    s['stel'] = s['evel'] = el
+    s['stlo'] = s['evlo'] = lon
+    s['stla'] = s['evla'] = lat
+    return av_dv
 
 
 def average_components_wfc(wfcs: List[WFC]) -> WFC:

@@ -8,11 +8,12 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Wednesday, 8th December 2021 11:07:22 am
+Last Modified: Wednesday, 16th February 2022 10:07:03 am
 '''
 from copy import deepcopy
 import unittest
 import math as mathematics
+from unittest import mock
 
 import numpy as np
 from obspy.core.trace import Stats
@@ -62,6 +63,24 @@ class TestBazCalc(unittest.TestCase):
         self.assertEqual(az, self.az)
         self.assertEqual(baz, self.baz)
         self.assertEqual(dist, self.dist)
+
+
+class TestFilterStat_Dist(unittest.TestCase):
+    @mock.patch('seismic.utils.miic_utils.inv_calc_az_baz_dist')
+    def test_result_True(self, calc_dist_mock: mock.MagicMock):
+        dist = np.random.randint(100, 1e6)  # in m
+        calc_dist_mock.return_value = (
+            np.random.randint(0, 360), np.random.randint(0, 360), dist)
+        queried_dist = dist + np.random.randint(10, 1000)
+        self.assertTrue(mu.filter_stat_dist('bla', 'blub', queried_dist))
+
+    @mock.patch('seismic.utils.miic_utils.inv_calc_az_baz_dist')
+    def test_result_False(self, calc_dist_mock: mock.MagicMock):
+        dist = np.random.randint(100, 1e6)  # in m
+        calc_dist_mock.return_value = (
+            np.random.randint(0, 360), np.random.randint(0, 360), dist)
+        queried_dist = dist - np.random.randint(10, 1000)
+        self.assertFalse(mu.filter_stat_dist('bla', 'blub', queried_dist))
 
 
 class TestResampleOrDecimate(unittest.TestCase):

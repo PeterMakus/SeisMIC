@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Wednesday, 8th December 2021 11:07:09 am
+Last Modified: Tuesday, 1st March 2022 10:04:56 am
 '''
 from typing import List, Tuple
 import logging
@@ -275,7 +275,7 @@ def load_header_from_np_array(array_dict: dict) -> dict:
                 d[k] = array_dict[k][0]
             except IndexError:
                 warnings.warn(
-                    'Key {k} could not be loaded into the header.')
+                    f'Key {k} could not be loaded into the header.')
     return d
 
 
@@ -345,6 +345,7 @@ def discard_short_traces(st: Stream, length: float):
     for tr in st:
         if tr.stats.npts/tr.stats.sampling_rate <= length:
             st.remove(tr)
+            logging.debug(f'Discarding short Trace {tr}.')
     return
 
 
