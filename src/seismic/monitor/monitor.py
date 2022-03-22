@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 16th March 2022 12:23:08 pm
+Last Modified: Tuesday, 22nd March 2022 04:11:29 pm
 '''
 from copy import deepcopy
 import logging
@@ -682,16 +682,19 @@ def average_components(dvs: List[DV], compute_std: bool = True) -> DV:
     dt = strvec[iimax]
     if compute_std:
         values = np.array([dv.value for dv in dv_use])
+        corrs = np.array([dv.corr for dv in dv_use])
         # Number of stations per corr_start
         n_stat = np.ones_like(values, dtype=int)
         n_stat[np.where(np.isnan(values))] = 0
         n_stat = np.sum(n_stat, axis=0)  # now this has the same shape as std
         std_val = np.nanstd(values, axis=0)
-        std = np.nanstd(sim_mats, axis=0)
-        m, n = np.unravel_index(iimax, av_sim_mat.shape)
-        std_corr = std[n, m]
+        # std = np.nanstd(sim_mats, axis=0)
+        # m, n = np.unravel_index(iimax, av_sim_mat.shape)
+        # std_corr = std[n, m]
+        std_corr = np.nanstd(corrs, axis=0)
     else:
-        std = None
+        std_val = None
+        std_corr = None
     stats = deepcopy(dv_use[0].stats)
     if not all(np.array([dv.stats.channel for dv in dv_use]) == stats.channel):
         stats['channel'] = 'av'
