@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 22nd March 2022 04:11:29 pm
+Last Modified: Wednesday, 23rd March 2022 09:11:41 pm
 '''
 from copy import deepcopy
 import logging
@@ -188,7 +188,11 @@ class Monitor(object):
                 cb = f(**func['args'])
 
         # Now, we make a copy of the cm to be trimmed
-        trim0 = -(self.options['dv']['tw_start']+self.options['dv']['tw_len'])
+        if self.options['dv']['sides'] == 'single':
+            trim0 = 0
+        else:
+            trim0 = -(
+                self.options['dv']['tw_start']+self.options['dv']['tw_len'])
         trim1 = (self.options['dv']['tw_start']+self.options['dv']['tw_len'])
         cbt = cb.copy().trim(trim0, trim1)
 
@@ -210,8 +214,8 @@ class Monitor(object):
             ref_trc=tr, return_sim_mat=True,
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],
-            tw=tw)
-        ccb = cb.correct_stretch(dv)
+            tw=tw, sides=self.options['dv']['sides'])
+        ccb = cb.correct_stretch(dv, self.options['dv']['sides'] == 'single')
 
         ccb.trim(trim0, trim1)
 
@@ -225,7 +229,7 @@ class Monitor(object):
             ref_trc=tr, return_sim_mat=True,
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],
-            tw=tw)
+            tw=tw, sides=self.options['dv']['sides'])
 
         # Postprocessing on the dv object
         if 'postprocessing' in self.options['dv']:
@@ -688,6 +692,8 @@ def average_components(dvs: List[DV], compute_std: bool = True) -> DV:
         n_stat[np.where(np.isnan(values))] = 0
         n_stat = np.sum(n_stat, axis=0)  # now this has the same shape as std
         std_val = np.nanstd(values, axis=0)
+        # std deviation of old maxima (corr) vs std at places of new maxima
+        # (i.e., corr of av_sim_mat)
         # std = np.nanstd(sim_mats, axis=0)
         # m, n = np.unravel_index(iimax, av_sim_mat.shape)
         # std_corr = std[n, m]

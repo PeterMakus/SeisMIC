@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Wednesday, 9th February 2022 10:47:46 am
+Last Modified: Wednesday, 23rd March 2022 09:11:17 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -134,7 +134,7 @@ class CorrBulk(object):
         self.stats.processing_bulk += ['Corrected for Amplitude Decay']
         return self
 
-    def correct_stretch(self, dv: DV):
+    def correct_stretch(self, dv: DV, single_sided: bool = False):
         """
         Correct stretching of correlation matrix
 
@@ -145,12 +145,15 @@ class CorrBulk(object):
 
         :param dv: Velocity Change object
         :type dv: DV
+        :param single_sided: set True for active source experiments where
+            the first sample is the trigger time. Defaults to False
+        type single_sided: bool, optional
 
         ..note:: This action is performed **in-place**. If you would like to
             keep the original data use
             :func:`~seismic.correlate.stream.CorrelationBulk.copy()`.
         """
-        self.data = time_stretch_apply(self.data, -1.*dv.value)
+        self.data = time_stretch_apply(self.data, -1.*dv.value, single_sided)
         self.stats.processing_bulk += ['Applied time stretch']
         return self
 
@@ -257,7 +260,7 @@ class CorrBulk(object):
         the reference will be extracted with half increment overlap in each
         direction.
 
-        Extract a correlation trace from the that best represents the
+        Extract a correlation trace from the one that best represents the
         correlation matrix. ``Method`` decides about method to extract the
         trace. The following possibilities are available
 

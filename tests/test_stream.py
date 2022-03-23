@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Wednesday, 9th February 2022 02:03:16 pm
+Last Modified: Wednesday, 23rd March 2022 09:13:02 pm
 '''
 
 import unittest
@@ -106,7 +106,7 @@ class TestCorrBulk(unittest.TestCase):
         dvmock = mock.MagicMock()
         dvmock.value = 1
         cb.correct_stretch(dvmock)
-        stretch_mock.assert_called_once_with(mock.ANY, -1.*dvmock.value)
+        stretch_mock.assert_called_once_with(mock.ANY, -1.*dvmock.value, False)
         np.testing.assert_array_equal(
             stretch_mock.call_args[0][0], self.cb.data)
         np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
