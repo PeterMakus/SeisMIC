@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 6th July 2021 09:18:14 am
-Last Modified: Wednesday, 16th March 2022 01:15:28 pm
+Last Modified: Monday, 28th March 2022 03:25:31 pm
 '''
 
 import os
@@ -270,7 +270,7 @@ class TestAverageComponents(unittest.TestCase):
         corr1 = np.zeros((6))
         dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
         dv1 = DV(corr1, corr1, ['stretch'], sim1, corr1, ['bla'], CorrStats())
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UserWarning):
             monitor.average_components([dv0, dv1])
 
     def test_differing_methods(self):
@@ -287,7 +287,7 @@ class TestAverageComponents(unittest.TestCase):
         dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
         dv1 = DV(
             corr0, corr0, ['stretch'], sim0, corr0+1, ['bla'], CorrStats())
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UserWarning):
             monitor.average_components([dv0, dv1])
 
     def test_contains_nans(self):

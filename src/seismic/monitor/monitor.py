@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 28th March 2022 03:22:53 pm
+Last Modified: Monday, 28th March 2022 03:24:27 pm
 '''
 from copy import deepcopy
 import logging
@@ -666,12 +666,13 @@ def average_components(dvs: List[DV], compute_std: bool = True) -> DV:
             continue
         if dv.sim_mat.shape != dvs[0].sim_mat.shape or any(
                 dv.second_axis != dvs[0].second_axis):
-            raise ValueError(
+            warnings.warn(
                 'The shapes of the similarity matrices of the input DVs '
                 + 'vary. Make sure to compute the dvs with the same parameters'
                 + ' (i.e., start & end dates, date-inc, stretch increment, '
-                + 'and stretch steps.'
+                + 'and stretch steps.\n\nThis dv will be skipped'
             )
+            continue
         dv_use.append(dv)
     sim_mats = [dv.sim_mat for dv in dv_use]
     av_sim_mat = np.nanmean(sim_mats, axis=0)
