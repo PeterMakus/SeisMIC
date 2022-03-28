@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 28th March 2022 02:01:25 pm
+Last Modified: Monday, 28th March 2022 03:22:53 pm
 '''
 from copy import deepcopy
 import logging
@@ -661,7 +661,9 @@ def average_components(dvs: List[DV], compute_std: bool = True) -> DV:
     for dv in dvs:
         if dv.method != dvs[0].method:
             raise TypeError('DV has to be computed with the same method.')
-        # adapt shape to maiximum
+        if 'av' in dv.stats.channel+dv.stats.network+dv.stats.station:
+            warnings.warn('Averaging of averaged dvs not allowed. Skipping dv')
+            continue
         if dv.sim_mat.shape != dvs[0].sim_mat.shape or any(
                 dv.second_axis != dvs[0].second_axis):
             raise ValueError(
@@ -670,9 +672,6 @@ def average_components(dvs: List[DV], compute_std: bool = True) -> DV:
                 + ' (i.e., start & end dates, date-inc, stretch increment, '
                 + 'and stretch steps.'
             )
-        if 'av' in dv.stats.channel+dv.stats.network+dv.stats.station:
-            warnings.warn('Averaging of averaged dvs not allowed. Skipping dv')
-            continue
         dv_use.append(dv)
     sim_mats = [dv.sim_mat for dv in dv_use]
     av_sim_mat = np.nanmean(sim_mats, axis=0)
