@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Monday, 28th March 2022 02:04:02 pm
+Last Modified: Monday, 28th March 2022 02:05:15 pm
 '''
 
 from datetime import datetime
@@ -279,6 +279,6 @@ def plot_dv(
         if figure_file_name.split('.')[-1].lower() not in [
                 'png', 'svg', 'pdf', 'jpg']:
             figure_file_name += '.png'
-        f.savefig(os.path.join(save_dir, figure_file_name + '_change.png'),
+        f.savefig(os.path.join(save_dir, figure_file_name),
                   dpi=dpi)
         plt.close()
