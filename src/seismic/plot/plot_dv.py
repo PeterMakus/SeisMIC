@@ -8,11 +8,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Wednesday, 16th March 2022 01:08:14 pm
+Last Modified: Monday, 28th March 2022 02:04:02 pm
 '''
 
 from datetime import datetime
-from typing import Tuple
+from typing import Tuple, List
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 import numpy as np
@@ -25,7 +25,8 @@ def plot_dv(
     dv, save_dir='.', figure_file_name=None, mark_time=None,
     normalize_simmat=False, sim_mat_Clim=[], figsize=(9, 11), dpi=72,
     ylim: Tuple[float, float] = None, xlim: Tuple[datetime, datetime] = None,
-        title: str = None, plot_std: bool = False):
+    title: str = None, plot_std: bool = False,
+        return_ax: bool = False) -> Tuple[plt.figure, List[plt.axis]]:
     """ Plot the "extended" dv dictionary
 
     This function is thought to plot the result of the velocity change estimate
@@ -71,6 +72,10 @@ def plot_dv(
         similarity matrix image
     :param ylim: Limits for the stretch axis. Defaults to None
     :type ylim: Tuple[float, float], optional
+    :param return_ax: Return plt.figure and list of axes. Defaults to False.
+        This overwrites any choice to save the figure.
+    :type return_ax: bool, optional
+    :returns: If `return_ax` is set to True it returns fig and axes.
     """
     set_mpl_params()
 
@@ -147,13 +152,11 @@ def plot_dv(
     ax1 = f.add_subplot(gs[0])
     imh = plt.imshow(
         np.flipud(sim_mat.T).astype(float), interpolation='none',
-        aspect='auto')
+        aspect='auto', zorder=0, origin='lower')
 
     # plotting value is way easier now
     plt.plot(-dv['value'], 'b.')
-    # if plot_std:
-    #     plt.plot(-dv['value']+dv['std_val'], 'k--', alpha=.3)
-    #     plt.plot(-dv['value']-dv['std_val'], 'k--', alpha=.3)
+
     # Set extent so we can treat the axes properly (mainly y)
     imh.set_extent((0, sim_mat.shape[0], stretch_vect[-1], stretch_vect[0]))
 
@@ -263,14 +266,19 @@ def plot_dv(
         else:
             plt.xlim([rtime[0], rtime[-1]])
     else:
+        ax4 = None
         plt.setp(ax3.get_xticklabels(), rotation=45, ha='right')
 
     plt.subplots_adjust(hspace=0, wspace=0)
-
+    if return_ax:
+        return f, [ax1, ax2, ax3, ax4]
     if figure_file_name is None:
         plt.show()
     else:
         print('saving to %s' % figure_file_name)
+        if figure_file_name.split('.')[-1].lower() not in [
+                'png', 'svg', 'pdf', 'jpg']:
+            figure_file_name += '.png'
         f.savefig(os.path.join(save_dir, figure_file_name + '_change.png'),
                   dpi=dpi)
         plt.close()

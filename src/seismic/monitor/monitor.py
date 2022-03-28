@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 23rd March 2022 09:11:41 pm
+Last Modified: Monday, 28th March 2022 02:01:25 pm
 '''
 from copy import deepcopy
 import logging
@@ -188,11 +188,8 @@ class Monitor(object):
                 cb = f(**func['args'])
 
         # Now, we make a copy of the cm to be trimmed
-        if self.options['dv']['sides'] == 'single':
-            trim0 = 0
-        else:
-            trim0 = -(
-                self.options['dv']['tw_start']+self.options['dv']['tw_len'])
+        trim0 = -(
+            self.options['dv']['tw_start']+self.options['dv']['tw_len'])
         trim1 = (self.options['dv']['tw_start']+self.options['dv']['tw_len'])
         cbt = cb.copy().trim(trim0, trim1)
 

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Wednesday, 16th March 2022 12:03:00 pm
+Last Modified: Monday, 28th March 2022 11:17:56 am
 '''
 
 from datetime import datetime
@@ -17,6 +17,7 @@ from typing import List, Tuple
 import warnings
 from zipfile import BadZipFile
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from seismic.plot.plot_dv import plot_dv
@@ -117,8 +118,9 @@ class DV(object):
         mark_time: datetime = None, normalize_simmat: bool = False,
         sim_mat_Clim: List[float] = [], xlim: Tuple[datetime, datetime] = None,
         ylim: Tuple[int, int] = None, plot_std: bool = False,
-        figsize: Tuple[float, float] = (9, 11),
-            dpi: int = 144, title: str = None):
+        figsize: Tuple[float, float] = (9, 11), dpi: int = 144,
+        title: str = None, return_ax=False) -> Tuple[
+                plt.figure, List[plt.axis]]:
         """
         Plots the dv object into a *multi-panel-view* of `similarity matrix`
         `dv-value`, and `correlation coefficient`.
@@ -152,11 +154,16 @@ class DV(object):
         :param title: Define a custom title. Otherwise, an automatic title
             will be created, defaults to None
         :type title: str, optional
+        :param return_ax: Return plt.figure and list of axes.
+            Defaults to False.
+            This overwrites any choice to save the figure.
+        :type return_ax: bool, optional
+        :returns: If `return_ax` is set to True it returns fig and axes.
         """
-        plot_dv(
+        return plot_dv(
             self.__dict__, save_dir, figure_file_name, mark_time,
             normalize_simmat, sim_mat_Clim, figsize, dpi, xlim=xlim, ylim=ylim,
-            title=title, plot_std=plot_std)
+            title=title, plot_std=plot_std, return_ax=return_ax)
 
     def smooth_sim_mat(self, win_len: int):
         """
