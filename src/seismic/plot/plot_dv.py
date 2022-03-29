@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Tuesday, 29th March 2022 01:21:19 pm
+Last Modified: Tuesday, 29th March 2022 04:31:55 pm
 '''
 
 from datetime import datetime
@@ -214,8 +214,6 @@ def plot_dv(
             np.all(rtime < mark_time) and np.all(rtime > mark_time)):
         plt.axvline(mark_time, lw=1, color='r')
     if plot_std:
-        # plt.plot(rtime, corr-dv['std_corr'], 'k--', alpha=.3)
-        # plt.plot(rtime, corr+dv['std_corr'], 'k--', alpha=.3)
         plt.fill_between(
             rtime, -dt-dv['std_val'], -dt+dv['std_val'],
             interpolate=False, color='grey', alpha=.3)
@@ -258,6 +256,7 @@ def plot_dv(
         plt.fill_between(
             rtime, 0, dv['n_stat'], interpolate=False)
         plt.setp(ax4.get_xticklabels(), rotation=45, ha='right')
+        ax3.set_xticklabels([])
         ax4.yaxis.set_label_position('right')
         ax4.set_ylabel("N")
         plt.ylim(0, int(dv['n_stat'].max()*1.1))
