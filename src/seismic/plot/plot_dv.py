@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Tuesday, 29th March 2022 01:15:24 pm
+Last Modified: Tuesday, 29th March 2022 01:21:19 pm
 '''
 
 from datetime import datetime
@@ -152,7 +152,7 @@ def plot_dv(
     ax1 = f.add_subplot(gs[0])
     imh = plt.imshow(
         np.flipud(sim_mat.T).astype(float), interpolation='none',
-        aspect='auto') #, zorder=0, origin='lower')
+        aspect='auto')
 
     # plotting value is way easier now
     plt.plot(-dv['value'], 'b.')
