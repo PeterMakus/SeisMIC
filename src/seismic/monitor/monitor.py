@@ -8,12 +8,12 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 28th March 2022 03:24:27 pm
+Last Modified: Friday, 1st April 2022 03:07:55 pm
 '''
 from copy import deepcopy
 import logging
 import os
-from typing import List, Tuple
+from typing import Iterator, List, Tuple
 import warnings
 import yaml
 import fnmatch
@@ -639,6 +639,88 @@ def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
     return netlist, statlist, infiles
 
 
+def average_components_mem_save(
+        dvs: Iterator[DV], compute_std: bool = True) -> DV:
+    """
+    Averages the Similariy matrix of the DV objects. Based on those,
+    it computes a new dv value and a new correlation value. Less memory intense
+    but slower than :func:`average_components`. Should be used if you run
+    out of memory using the former. Uses the sum of squares rule for the
+    standard deviation.
+
+    :param dvs: Iterator over dvs from the different components to compute an
+        average from. Note that it is possible to use almost anything as
+        input as long as the similarity matrices of the dvs have the same shape
+    :type dvs: Iterator[class:`~seismic.monitor.dv.DV`]
+    :param compute_std: Compute the standard deviation of the similarity
+        matrices, pick the values corresponding to the maximum in the
+        similarity matrix and save them in the new
+        :class:`~seismic.monitor.dv.DV` object. Defaults to True.
+    :type compute_std: bool, optional
+    :raises TypeError: for DVs that were computed with different methods
+    :return: A single dv with an averaged similarity matrix.
+    :rtype: DV
+    """
+    sim_mat_sum = np.zeros_like(dvs[0].sim_mat)
+    n_stat = np.zeros_like(dvs[0].corr)
+    corr_sum = np.zeros_like(dvs[0].corr)
+    corr_sos = np.zeros_like(dvs[0].corr)
+    val_sum = np.zeros_like(dvs[0].corr)
+    val_sos = np.zeros_like(dvs[0].corr)
+    stats = deepcopy(dvs[0].stats)
+    strvec = dvs[0].second_axis
+    value_type = dvs[0].value_type
+    method = dvs[0].method
+    statsl = []
+    for dv in dvs:
+        if dv.method != method:
+            raise TypeError('DV has to be computed with the same method.')
+        if 'av' in dv.stats.channel+dv.stats.network+dv.stats.station:
+            warnings.warn('Averaging of averaged dvs not allowed. Skipping dv')
+            continue
+        if dv.sim_mat.shape != sim_mat_sum.shape or any(
+                dv.second_axis != strvec):
+            warnings.warn(
+                'The shapes of the similarity matrices of the input DVs '
+                + 'vary. Make sure to compute the dvs with the same parameters'
+                + ' (i.e., start & end dates, date-inc, stretch increment, '
+                + 'and stretch steps.\n\nThis dv will be skipped'
+            )
+            continue
+        sim_mat_sum += np.nan_to_num(dv.sim_mat)
+        n_stat[~np.isnan(dv.value)] += 1
+        if compute_std:
+            corr_sum += np.nan_to_num(dv.corr)
+            corr_sos += np.nan_to_num(dv.corr)**2
+            val_sum += np.nan_to_num(dv.value)
+            val_sos += np.nan_to_num(dv.value)**2
+        statsl.append(dv.stats)
+    # Now inf where it was nan before
+    av_sim_mat = sim_mat_sum/n_stat
+    # Now we would have to recompute the dv value and corr value
+    iimax = np.nanargmax(np.nan_to_num(av_sim_mat), axis=1)
+    corr = np.nanmax(av_sim_mat, axis=1)
+    dt = strvec[iimax]
+    if compute_std:
+        # use sum of square for std
+        std_corr = np.sqrt((corr_sos - n_stat*(corr_sum/n_stat)**2)/(n_stat))
+        std_val = np.sqrt((val_sos - n_stat*(val_sum/n_stat)**2)/(n_stat))
+    else:
+        std_val = None
+        std_corr = None
+    if not all(np.array([st.channel for st in statsl]) == stats.channel):
+        stats['channel'] = 'av'
+    if not all(np.array([st.station for st in statsl]) == stats.station):
+        stats['station'] = 'av'
+    if not all(np.array([st.network for st in statsl]) == stats.network):
+        stats['network'] = 'av'
+    dvout = DV(
+        corr, dt, value_type, av_sim_mat, strvec,
+        method, stats, std_val=std_val, std_corr=std_corr,
+        n_stat=n_stat)
+    return dvout
+
+
 def average_components(dvs: List[DV], compute_std: bool = True) -> DV:
     """
     Averages the Similariy matrix of the DV objects. Based on those,
@@ -656,6 +738,10 @@ def average_components(dvs: List[DV], compute_std: bool = True) -> DV:
     :raises TypeError: for DVs that were computed with different methods
     :return: A single dv with an averaged similarity matrix.
     :rtype: DV
+
+    .. seealso::
+        If you should get an `OutOfMemoryError` consider using
+        :func:`average_components_mem_save`.
     """
     dv_use = []
     for dv in dvs:

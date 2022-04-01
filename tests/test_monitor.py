@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 6th July 2021 09:18:14 am
-Last Modified: Monday, 28th March 2022 03:25:31 pm
+Last Modified: Friday, 1st April 2022 03:04:17 pm
 '''
 
 import os
@@ -377,6 +377,127 @@ class TestAverageComponents(unittest.TestCase):
         dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], stats0)
         dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], stats1)
         dv_av = monitor.average_components([dv0, dv1])
+        self.assertEqual(dv_av.stats.station, 'A')
+        self.assertEqual(dv_av.stats.network, 'A')
+        self.assertEqual(dv_av.stats.channel, 'A')
+
+
+class TestAverageComponentsMemSave(unittest.TestCase):
+    def test_differing_shape(self):
+        sim0 = np.zeros((5, 5))
+        sim1 = np.zeros((6, 6))
+        corr0 = np.zeros((5))
+        corr1 = np.zeros((6))
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
+        dv1 = DV(corr1, corr1, ['stretch'], sim1, corr1, ['bla'], CorrStats())
+        with self.assertWarns(UserWarning):
+            monitor.average_components_mem_save([dv0, dv1])
+
+    def test_differing_methods(self):
+        sim0 = np.zeros((5, 5))
+        corr0 = np.zeros((5))
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
+        dv1 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['blub'], CorrStats())
+        with self.assertRaises(TypeError):
+            monitor.average_components_mem_save([dv0, dv1])
+
+    def test_differing_2ndax(self):
+        sim0 = np.zeros((5, 5))
+        corr0 = np.zeros((5))
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
+        dv1 = DV(
+            corr0, corr0, ['stretch'], sim0, corr0+1, ['bla'], CorrStats())
+        with self.assertWarns(UserWarning):
+            monitor.average_components_mem_save([dv0, dv1])
+
+    def test_contains_nans(self):
+        sim0 = np.random.random((5, 5))
+        sim1 = np.nan*np.ones((5, 5))
+        corr0 = np.zeros((5))
+        corr1 = np.zeros((5)) + np.nan
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
+        dv1 = DV(corr1, corr1, ['stretch'], sim1, corr0, ['bla'], CorrStats())
+        dv_av = monitor.average_components_mem_save([dv0, dv1])
+        np.testing.assert_array_equal(dv0.sim_mat, dv_av.sim_mat)
+
+    def test_result(self):
+        sim0 = np.random.random((5, 5))
+        sim1 = np.random.random((5, 5))
+        corr0 = np.zeros((5))
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
+        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], CorrStats())
+        dv_av = monitor.average_components_mem_save([dv0, dv1])
+        self.assertTrue(np.allclose(
+            np.mean([dv0.sim_mat, dv1.sim_mat], axis=0), dv_av.sim_mat))
+
+    def test_result_already_av(self):
+        sim0 = np.random.random((5, 5))
+        sim1 = np.random.random((5, 5))
+        corr0 = np.zeros((5))
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
+        dv0.stats['channel'] = 'av'
+        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], CorrStats())
+        with warnings.catch_warnings(record=True) as w:
+            dv_av = monitor.average_components_mem_save([dv0, dv1])
+            self.assertEqual(len(w), 1)
+        np.testing.assert_array_equal(dv1.sim_mat, dv_av.sim_mat)
+
+    def test_contains_nans_std(self):
+        sim0 = np.random.random((5, 5))
+        sim1 = np.nan*np.ones((5, 5))
+        corr0 = np.zeros((5))
+        corr1 = np.zeros((5)) + np.nan
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
+        dv1 = DV(corr1, corr1, ['stretch'], sim1, corr0, ['bla'], CorrStats())
+        dv_av = monitor.average_components_mem_save([dv0, dv1], True)
+        np.testing.assert_array_equal(dv_av.std_val, 0)
+        np.testing.assert_array_equal(dv_av.std_corr, 0)
+        np.testing.assert_array_equal(dv_av.n_stat, 1)
+        np.testing.assert_array_equal(dv0.sim_mat, dv_av.sim_mat)
+
+    def test_result_std(self):
+        sim0 = np.random.random((5, 5))
+        sim1 = np.random.random((5, 5))
+        corr0 = np.max(sim0, axis=1)
+        corr1 = np.max(sim1, axis=1)
+        ax = np.arange(5)
+        val0 = ax[np.argmax(sim0, axis=1)]
+        val1 = ax[np.argmax(sim1, axis=1)]
+        dv0 = DV(corr0, val0, ['stretch'], sim0, ax, ['bla'], CorrStats())
+        dv1 = DV(corr1, val1, ['stretch'], sim1, ax, ['bla'], CorrStats())
+        dv_av = monitor.average_components_mem_save([dv0, dv1], True)
+        np.testing.assert_allclose(
+            np.mean([dv0.sim_mat, dv1.sim_mat], axis=0), dv_av.sim_mat)
+        np.testing.assert_allclose(
+            np.std([val0, val1], axis=0), dv_av.std_val)
+        np.testing.assert_array_equal(dv_av.n_stat, 2)
+
+    def test_header(self):
+        sim0 = np.random.random((5, 5))
+        sim1 = np.random.random((5, 5))
+        corr0 = np.zeros((5))
+        stats0 = CorrStats()
+        stats0['network'] = stats0['station'] = stats0['channel'] = 'A'
+        stats1 = CorrStats()
+        stats1['network'] = stats1['station'] = stats1['channel'] = 'B'
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], stats0)
+        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], stats1)
+        dv_av = monitor.average_components_mem_save([dv0, dv1])
+        self.assertEqual(dv_av.stats.station, 'av')
+        self.assertEqual(dv_av.stats.network, 'av')
+        self.assertEqual(dv_av.stats.channel, 'av')
+
+    def test_header2(self):
+        sim0 = np.random.random((5, 5))
+        sim1 = np.random.random((5, 5))
+        corr0 = np.zeros((5))
+        stats0 = CorrStats()
+        stats0['network'] = stats0['station'] = stats0['channel'] = 'A'
+        stats1 = CorrStats()
+        stats1['network'] = stats1['station'] = stats1['channel'] = 'A'
+        dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], stats0)
+        dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], stats1)
+        dv_av = monitor.average_components_mem_save([dv0, dv1])
         self.assertEqual(dv_av.stats.station, 'A')
         self.assertEqual(dv_av.stats.network, 'A')
         self.assertEqual(dv_av.stats.channel, 'A')
