@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 1st April 2022 03:29:57 pm
+Last Modified: Friday, 1st April 2022 03:36:06 pm
 '''
 from copy import deepcopy
 import logging
@@ -698,7 +698,7 @@ def average_components_mem_save(
         statsl.append(dv.stats)
     # Now inf where it was nan before
     av_sim_mat = (sim_mat_sum.T/n_stat).T
-    av_sim_mat[np.isinf] = np.nan
+    av_sim_mat[np.isinf(av_sim_mat)] = np.nan
     # Now we would have to recompute the dv value and corr value
     iimax = np.nanargmax(np.nan_to_num(av_sim_mat), axis=1)
     corr = np.nanmax(av_sim_mat, axis=1)
@@ -707,8 +707,8 @@ def average_components_mem_save(
         # use sum of square for std
         std_corr = np.sqrt((corr_sos - n_stat*(corr_sum/n_stat)**2)/(n_stat))
         std_val = np.sqrt((val_sos - n_stat*(val_sum/n_stat)**2)/(n_stat))
-        std_corr[np.isinf] = np.nan
-        std_val[np.isinf] = np.nan
+        std_corr[np.isinf(std_corr)] = np.nan
+        std_val[np.isinf(std_val)] = np.nan
     else:
         std_val = None
         std_corr = None
