@@ -8,12 +8,12 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 1st April 2022 03:07:55 pm
+Last Modified: Friday, 1st April 2022 03:20:07 pm
 '''
 from copy import deepcopy
 import logging
 import os
-from typing import Iterator, List, Tuple
+from typing import Generator, Iterator, List, Tuple
 import warnings
 import yaml
 import fnmatch
@@ -640,7 +640,7 @@ def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
 
 
 def average_components_mem_save(
-        dvs: Iterator[DV], compute_std: bool = True) -> DV:
+        dvs: Generator[DV], compute_std: bool = True) -> DV:
     """
     Averages the Similariy matrix of the DV objects. Based on those,
     it computes a new dv value and a new correlation value. Less memory intense
@@ -661,18 +661,19 @@ def average_components_mem_save(
     :return: A single dv with an averaged similarity matrix.
     :rtype: DV
     """
-    sim_mat_sum = np.zeros_like(dvs[0].sim_mat)
-    n_stat = np.zeros_like(dvs[0].corr)
-    corr_sum = np.zeros_like(dvs[0].corr)
-    corr_sos = np.zeros_like(dvs[0].corr)
-    val_sum = np.zeros_like(dvs[0].corr)
-    val_sos = np.zeros_like(dvs[0].corr)
-    stats = deepcopy(dvs[0].stats)
-    strvec = dvs[0].second_axis
-    value_type = dvs[0].value_type
-    method = dvs[0].method
     statsl = []
-    for dv in dvs:
+    for ii, dv in enumerate(dvs):
+        if ii == 0:
+            sim_mat_sum = np.zeros_like(dv.sim_mat)
+            n_stat = np.zeros_like(dv.corr)
+            corr_sum = np.zeros_like(dv.corr)
+            corr_sos = np.zeros_like(dv.corr)
+            val_sum = np.zeros_like(dv.corr)
+            val_sos = np.zeros_like(dv.corr)
+            stats = deepcopy(dv.stats)
+            strvec = dv.second_axis
+            value_type = dv.value_type
+            method = dv.method
         if dv.method != method:
             raise TypeError('DV has to be computed with the same method.')
         if 'av' in dv.stats.channel+dv.stats.network+dv.stats.station:
