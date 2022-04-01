@@ -8,12 +8,12 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 1st April 2022 03:20:07 pm
+Last Modified: Friday, 1st April 2022 03:23:19 pm
 '''
 from copy import deepcopy
 import logging
 import os
-from typing import Generator, Iterator, List, Tuple
+from typing import Generator, List, Tuple
 import warnings
 import yaml
 import fnmatch
@@ -640,7 +640,7 @@ def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
 
 
 def average_components_mem_save(
-        dvs: Generator[DV], compute_std: bool = True) -> DV:
+        dvs: Generator[DV, None, None], compute_std: bool = True) -> DV:
     """
     Averages the Similariy matrix of the DV objects. Based on those,
     it computes a new dv value and a new correlation value. Less memory intense
