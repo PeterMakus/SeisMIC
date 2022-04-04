@@ -8,27 +8,24 @@
 
     <title>CorrTrace, CorrStream, and CorrBulk classes &#8212; SeisMIC</title>
     
-    <link href="../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
 <link href="../../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
-  
+
     
-    <link rel="stylesheet"
-      href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
-    <link rel="preload" as="font" type="font/woff2" crossorigin
-      href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
-    <link rel="preload" as="font" type="font/woff2" crossorigin
-      href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
-  
-    
-      
-  
-    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/pydata-sphinx-theme.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
     
-    <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
-  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
@@ -48,7 +45,7 @@
     <!-- Google Analytics -->
     
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
     
     <div class="container-fluid" id="banner"></div>
 
@@ -191,7 +188,7 @@
               
               <div class="toc-item">
                 
-<div class="tocsection onthispage pt-5 pb-3">
+<div class="tocsection onthispage mt-5 pt-1 pb-3">
     <i class="fas fa-list"></i> On this page
 </div>
 
@@ -254,12 +251,12 @@ graph LR
     click dv &quot;../monitor/dv.html&quot; &quot;DV&quot;
     classDef active fill:#f666, stroke-width:4px, stroke:#f06;
         </div><section id="corrtrace-corrstream-and-corrbulk-classes">
-<h1>CorrTrace, CorrStream, and CorrBulk classes<a class="headerlink" href="#corrtrace-corrstream-and-corrbulk-classes" title="Permalink to this headline">¶</a></h1>
+<h1>CorrTrace, CorrStream, and CorrBulk classes<a class="headerlink" href="#corrtrace-corrstream-and-corrbulk-classes" title="Permalink to this headline">#</a></h1>
 <p>Once the correlations are actually computed, they are assigned as <a class="reference internal" href="../API.html#seismic.correlate.stream.CorrTrace" title="seismic.correlate.stream.CorrTrace"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrTrace</span></code></a>
 and <a class="reference internal" href="../API.html#seismic.correlate.stream.CorrStream" title="seismic.correlate.stream.CorrStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrStream</span></code></a> objects.
 Both inherit most of their methods and attributes from their <a class="reference external" href="https://docs.obspy.org/">obspy</a> parents. However, there are some extra attributes and functionalities.</p>
 <section id="corrtrace">
-<h2>CorrTrace<a class="headerlink" href="#corrtrace" title="Permalink to this headline">¶</a></h2>
+<h2>CorrTrace<a class="headerlink" href="#corrtrace" title="Permalink to this headline">#</a></h2>
 <p>Most notably a new Header object (<a class="reference internal" href="../API.html#seismic.correlate.stats.CorrStats" title="seismic.correlate.stats.CorrStats"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrStats</span></code></a>) with different attributes is associated to this type of trace.
 The header takes care of saving vital information like lag times (<code class="docutils literal notranslate"><span class="pre">start_lag</span></code> and <code class="docutils literal notranslate"><span class="pre">end_lag</span></code>),
 the start- and the endtime of the waveforms that were used to compute the correlation (<code class="docutils literal notranslate"><span class="pre">corr_start</span></code> and <code class="docutils literal notranslate"><span class="pre">corr_end</span></code>, respectively),
@@ -269,14 +266,14 @@ and information about the coordinates of the stations.</p>
 <img alt="../../_images/corrtr.png" src="../../_images/corrtr.png" />
 </section>
 <section id="corrstream">
-<h2>CorrStream<a class="headerlink" href="#corrstream" title="Permalink to this headline">¶</a></h2>
+<h2>CorrStream<a class="headerlink" href="#corrstream" title="Permalink to this headline">#</a></h2>
 <p>Essentially, this class is just a fancy list of <a class="reference internal" href="../API.html#seismic.correlate.stream.CorrTrace" title="seismic.correlate.stream.CorrTrace"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrTrace</span></code></a> objects.
 However, it has methods to stack (<a class="reference internal" href="../API.html#seismic.correlate.stream.CorrStream.stack" title="seismic.correlate.stream.CorrStream.stack"><code class="xref py py-meth docutils literal notranslate"><span class="pre">stack()</span></code></a>),
 select (<a class="reference internal" href="../API.html#seismic.correlate.stream.CorrStream.select_corr_time" title="seismic.correlate.stream.CorrStream.select_corr_time"><code class="xref py py-meth docutils literal notranslate"><span class="pre">select_corr_time()</span></code></a>), or slide (<a class="reference internal" href="../API.html#seismic.correlate.stream.CorrStream.slide" title="seismic.correlate.stream.CorrStream.slide"><code class="xref py py-meth docutils literal notranslate"><span class="pre">slide()</span></code></a>) time windows.
 It also enables us to create section stacks, sorted by interstation distance or time:</p>
 <img alt="../../_images/cst.svg" src="../../_images/cst.svg" /></section>
 <section id="corrbulk">
-<h2>CorrBulk<a class="headerlink" href="#corrbulk" title="Permalink to this headline">¶</a></h2>
+<h2>CorrBulk<a class="headerlink" href="#corrbulk" title="Permalink to this headline">#</a></h2>
 <p><a class="reference internal" href="../API.html#seismic.correlate.stream.CorrStream" title="seismic.correlate.stream.CorrStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrStream</span></code></a> does also have a method to create a <a class="reference internal" href="../API.html#seismic.correlate.stream.CorrBulk" title="seismic.correlate.stream.CorrBulk"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrBulk</span></code></a> object
 (<a class="reference internal" href="../API.html#seismic.correlate.stream.CorrStream.create_corr_bulk" title="seismic.correlate.stream.CorrStream.create_corr_bulk"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create_corr_bulk()</span></code></a>). Instead of relying on a list of traces, this object is based on numpy arrays,
 which makes postprocessing computationally cheaper. Check out <a class="reference internal" href="../API.html#seismic.correlate.stream.CorrBulk" title="seismic.correlate.stream.CorrBulk"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrBulk</span></code></a> for available
@@ -312,8 +309,9 @@ post processing functions.</p>
       </div>
     </div>
   
-    <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
-  <footer class="footer mt-5 mt-md-0">
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+<footer class="footer mt-5 mt-md-0">
   <div class="container">
     
     <div class="footer-item">
@@ -324,7 +322,7 @@ post processing functions.</p>
     
     <div class="footer-item">
       <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.4.0.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.5.0.<br>
 </p>
     </div>
     

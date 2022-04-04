@@ -8,27 +8,24 @@
 
     <title>Module to Download and Read Waveform Data &#8212; SeisMIC</title>
     
-    <link href="../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
 <link href="../../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
-  
+
     
-    <link rel="stylesheet"
-      href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
-    <link rel="preload" as="font" type="font/woff2" crossorigin
-      href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
-    <link rel="preload" as="font" type="font/woff2" crossorigin
-      href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
-  
-    
-      
-  
-    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/pydata-sphinx-theme.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
     
-    <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
-  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
@@ -48,7 +45,7 @@
     <!-- Google Analytics -->
     
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
     
     <div class="container-fluid" id="banner"></div>
 
@@ -184,7 +181,7 @@
               
               <div class="toc-item">
                 
-<div class="tocsection onthispage pt-5 pb-3">
+<div class="tocsection onthispage mt-5 pt-1 pb-3">
     <i class="fas fa-list"></i> On this page
 </div>
 
@@ -249,13 +246,13 @@ graph LR
     click dv &quot;../monitor/dv.html&quot; &quot;DV&quot;
     classDef active fill:#f666, stroke-width:4px, stroke:#f06;
         </div><section id="module-to-download-and-read-waveform-data">
-<h1>Module to Download and Read Waveform Data<a class="headerlink" href="#module-to-download-and-read-waveform-data" title="Permalink to this headline">¶</a></h1>
+<h1>Module to Download and Read Waveform Data<a class="headerlink" href="#module-to-download-and-read-waveform-data" title="Permalink to this headline">#</a></h1>
 <p>The waveform module contains functions and classes that allow to read waveforms from a local database
 or download waveform data from <em>FDSN servers</em> by using the <a class="reference external" href="https://docs.obspy.org/packages/autogen/obspy.clients.fdsn.mass_downloader.html">Obspy Mass Downloader</a>.
 The downloaded data will then be written in a <em>seiscom data structure (SDS)</em>.
 Both data download and management of the raw database are handled using a <a class="reference internal" href="../API.html#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> object.</p>
 <section id="download-data">
-<h2>Download Data<a class="headerlink" href="#download-data" title="Permalink to this headline">¶</a></h2>
+<h2>Download Data<a class="headerlink" href="#download-data" title="Permalink to this headline">#</a></h2>
 <p>The recommended way to download continuous data for noise correlations is the method
 <a class="reference internal" href="../API.html#seismic.trace_data.waveform.Store_Client.download_waveforms_mdl" title="seismic.trace_data.waveform.Store_Client.download_waveforms_mdl"><code class="xref py py-func docutils literal notranslate"><span class="pre">download_waveforms_mdl()</span></code></a>. To use this method, we first need to initialise a <a class="reference internal" href="../API.html#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> object.
 The code block below shows and example for downloading data from the <strong>IU.HRV</strong> station.</p>
@@ -291,7 +288,7 @@ of clients.</p>
 </div>
 </section>
 <section id="access-data">
-<h2>Access Data<a class="headerlink" href="#access-data" title="Permalink to this headline">¶</a></h2>
+<h2>Access Data<a class="headerlink" href="#access-data" title="Permalink to this headline">#</a></h2>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>If you just want to compute some noise correlations (i.e., Green’s function estimations), you
@@ -335,7 +332,7 @@ and, if not, download them from remote (i.e., the FDSN server that we defined wh
 </dd>
 </dl>
 <section id="getting-an-overview-of-your-database">
-<h3>Getting an overview of your database<a class="headerlink" href="#getting-an-overview-of-your-database" title="Permalink to this headline">¶</a></h3>
+<h3>Getting an overview of your database<a class="headerlink" href="#getting-an-overview-of-your-database" title="Permalink to this headline">#</a></h3>
 <p>Once your database grows in size, you might not exactly know anymore, which data you have available.
 There are a couple of functions to help you:</p>
 <blockquote>
@@ -384,8 +381,9 @@ There are a couple of functions to help you:</p>
       </div>
     </div>
   
-    <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
-  <footer class="footer mt-5 mt-md-0">
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+<footer class="footer mt-5 mt-md-0">
   <div class="container">
     
     <div class="footer-item">
@@ -396,7 +394,7 @@ There are a couple of functions to help you:</p>
     
     <div class="footer-item">
       <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.4.0.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.5.0.<br>
 </p>
     </div>
     

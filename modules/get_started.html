@@ -8,27 +8,24 @@
 
     <title>Getting Started with SeisMIC &#8212; SeisMIC</title>
     
-    <link href="../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
 <link href="../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
-  
+
     
-    <link rel="stylesheet"
-      href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
-    <link rel="preload" as="font" type="font/woff2" crossorigin
-      href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
-    <link rel="preload" as="font" type="font/woff2" crossorigin
-      href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
-  
-    
-      
-  
-    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/pydata-sphinx-theme.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
     
-    <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
-  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
@@ -48,7 +45,7 @@
     <!-- Google Analytics -->
     
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
     
     <div class="container-fluid" id="banner"></div>
 
@@ -172,7 +169,7 @@
               
               <div class="toc-item">
                 
-<div class="tocsection onthispage pt-5 pb-3">
+<div class="tocsection onthispage mt-5 pt-1 pb-3">
     <i class="fas fa-list"></i> On this page
 </div>
 
@@ -246,19 +243,19 @@
               <div>
                 
   <section id="getting-started-with-seismic">
-<h1>Getting Started with SeisMIC<a class="headerlink" href="#getting-started-with-seismic" title="Permalink to this headline">¶</a></h1>
+<h1>Getting Started with SeisMIC<a class="headerlink" href="#getting-started-with-seismic" title="Permalink to this headline">#</a></h1>
 <section id="download-and-installation">
-<h2>Download and Installation<a class="headerlink" href="#download-and-installation" title="Permalink to this headline">¶</a></h2>
+<h2>Download and Installation<a class="headerlink" href="#download-and-installation" title="Permalink to this headline">#</a></h2>
 <section id="dependencies">
-<h3>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h3>
+<h3>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">#</a></h3>
 <section id="mpi">
-<h4>MPI<a class="headerlink" href="#mpi" title="Permalink to this headline">¶</a></h4>
+<h4>MPI<a class="headerlink" href="#mpi" title="Permalink to this headline">#</a></h4>
 <p>If you plan to compute correlations using MPI (e.g., because you want to use several cores), you will have to install an MPI.
 Most likely, your system will come with a preinstalled MPI. Else, we recommend <a class="reference external" href="https://www.open-mpi.org/">Open MPI</a>
 (head there for installation instructions).</p>
 </section>
 <section id="python-dependencies">
-<h4>Python Dependencies<a class="headerlink" href="#python-dependencies" title="Permalink to this headline">¶</a></h4>
+<h4>Python Dependencies<a class="headerlink" href="#python-dependencies" title="Permalink to this headline">#</a></h4>
 <p><strong>SeisMIC</strong> has been tested on Python3.8, but should in principle also be compatible with Python3.7 and later.
 If you follow the instructions below, it should not be necessary to install dependencies manually.
 <strong>SeisMIC</strong> depends on the following modules:</p>
@@ -283,11 +280,11 @@ If you follow the instructions below, it should not be necessary to install depe
 </section>
 </section>
 <section id="via-pypi">
-<h3>Via PyPi<a class="headerlink" href="#via-pypi" title="Permalink to this headline">¶</a></h3>
+<h3>Via PyPi<a class="headerlink" href="#via-pypi" title="Permalink to this headline">#</a></h3>
 <p><strong>*Not yet possible*</strong></p>
 </section>
 <section id="via-github">
-<h3>Via GitHub<a class="headerlink" href="#via-github" title="Permalink to this headline">¶</a></h3>
+<h3>Via GitHub<a class="headerlink" href="#via-github" title="Permalink to this headline">#</a></h3>
 <p>You can download the latest version of SeisMIC from <a class="reference external" href="https://github.com/PeterMakus/SeisMIC">GitHub</a>.</p>
 <p>After downloading just run the following commands <strong>in the repository’s folder</strong>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Change directory to the same directory that this repo is in (i.e., same directory as setup.py)</span>
@@ -311,7 +308,7 @@ or in the currently active environment by executing the last command.</p>
 </section>
 </section>
 <section id="tutorial">
-<h2>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h2>
+<h2>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">#</a></h2>
 <p>Along with the source code <strong>SeisMIC</strong> is distributed with a Jupyter notebook that provides you with an easy example on how
 to use the code in <cite>examples/tutorial.ipynb</cite>. Else, we recommend going throught this documentation.</p>
 </section>
@@ -345,8 +342,9 @@ to use the code in <cite>examples/tutorial.ipynb</cite>. Else, we recommend goin
       </div>
     </div>
   
-    <script src="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
-  <footer class="footer mt-5 mt-md-0">
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+<footer class="footer mt-5 mt-md-0">
   <div class="container">
     
     <div class="footer-item">
@@ -357,7 +355,7 @@ to use the code in <cite>examples/tutorial.ipynb</cite>. Else, we recommend goin
     
     <div class="footer-item">
       <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.4.0.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.5.0.<br>
 </p>
     </div>
     

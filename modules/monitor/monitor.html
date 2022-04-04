@@ -8,27 +8,24 @@
 
     <title>Compute Velocity Changes &#8212; SeisMIC</title>
     
-    <link href="../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
 <link href="../../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
-  
+
     
-    <link rel="stylesheet"
-      href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
-    <link rel="preload" as="font" type="font/woff2" crossorigin
-      href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
-    <link rel="preload" as="font" type="font/woff2" crossorigin
-      href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
-  
-    
-      
-  
-    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/pydata-sphinx-theme.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
     
-    <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
-  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
@@ -48,7 +45,7 @@
     <!-- Google Analytics -->
     
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
     
     <div class="container-fluid" id="banner"></div>
 
@@ -184,7 +181,7 @@
               
               <div class="toc-item">
                 
-<div class="tocsection onthispage pt-5 pb-3">
+<div class="tocsection onthispage mt-5 pt-1 pb-3">
     <i class="fas fa-list"></i> On this page
 </div>
 
@@ -254,13 +251,13 @@ graph LR
     click dv &quot;../monitor/dv.html&quot; &quot;DV&quot;
     classDef active fill:#f666, stroke-width:4px, stroke:#f06;
         </div><section id="compute-velocity-changes">
-<h1>Compute Velocity Changes<a class="headerlink" href="#compute-velocity-changes" title="Permalink to this headline">¶</a></h1>
+<h1>Compute Velocity Changes<a class="headerlink" href="#compute-velocity-changes" title="Permalink to this headline">#</a></h1>
 <p><strong>SeisMIC</strong> uses the stretching technique (Sens-Schönfelder &amp; Wegler, 2006) to estimate a spatially homogeneous velocity change between the
 stations (for Cross-Correlations) or in station vicinity (for inter-component or autocorrelations).
 This technique is grounded upon the assumption that a homogeneous change in velocity will result in a homogeneous stretching of the
 Green’s function.</p>
 <section id="arguments-in-params-yaml">
-<h2>Arguments in <code class="docutils literal notranslate"><span class="pre">params.yaml</span></code><a class="headerlink" href="#arguments-in-params-yaml" title="Permalink to this headline">¶</a></h2>
+<h2>Arguments in <code class="docutils literal notranslate"><span class="pre">params.yaml</span></code><a class="headerlink" href="#arguments-in-params-yaml" title="Permalink to this headline">#</a></h2>
 <p>To set the arguments for our velocity change computation, we will once again use the yaml file as shown before. Right at the bottom
 of this file, you will find a section with the key <code class="docutils literal notranslate"><span class="pre">dv</span></code>:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1">#### parameters for the estimation of time differences</span><span class="w"></span>
@@ -322,18 +319,18 @@ of this file, you will find a section with the key <code class="docutils literal
 compared with the lapsed correlations. <code class="docutils literal notranslate"><span class="pre">stretch_range</span></code> is the maximum absolute stretch to be tested and <code class="docutils literal notranslate"><span class="pre">stretch_steps</span></code> the number
 of increments that will be tested between the minimum and maximum stretching.</p>
 <section id="computing-the-reference-trace">
-<h3>Computing the Reference Trace<a class="headerlink" href="#computing-the-reference-trace" title="Permalink to this headline">¶</a></h3>
+<h3>Computing the Reference Trace<a class="headerlink" href="#computing-the-reference-trace" title="Permalink to this headline">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">dt_ref</span></code> is the parameter governing the computation of the reference trace. We can opt for a single reference trace for the whole period (<code class="docutils literal notranslate"><span class="pre">dt_ref['win_inc']=0</span></code>) or multiple reference traces.
 Check out the docstring of <a class="reference internal" href="../API.html#seismic.correlate.stream.CorrBulk.extract_multi_trace" title="seismic.correlate.stream.CorrBulk.extract_multi_trace"><code class="xref py py-meth docutils literal notranslate"><span class="pre">extract_multi_trace()</span></code></a> to learn more!</p>
 </section>
 </section>
 <section id="start-the-computation">
-<h2>Start the Computation<a class="headerlink" href="#start-the-computation" title="Permalink to this headline">¶</a></h2>
+<h2>Start the Computation<a class="headerlink" href="#start-the-computation" title="Permalink to this headline">#</a></h2>
 <p>Again, the procedure is fairly similar to startin the correlation. Velocity stretch estimates are computed by the
 <a class="reference internal" href="../API.html#seismic.monitor.monitor.Monitor" title="seismic.monitor.monitor.Monitor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Monitor</span></code></a> object. Once again, usage with mpi is possible. Your velocity stretch estimate
 script could look something like this:</p>
 <div class="literal-block-wrapper docutils container" id="id1">
-<div class="code-block-caption"><span class="caption-text">compute_dv.py</span><a class="headerlink" href="#id1" title="Permalink to this code">¶</a></div>
+<div class="code-block-caption"><span class="caption-text">compute_dv.py</span><a class="headerlink" href="#id1" title="Permalink to this code">#</a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="kn">from</span> <span class="nn">seismic.monitor.monitor</span> <span class="kn">import</span> <span class="n">Monitor</span>
 <span class="linenos">2</span>
 <span class="linenos">3</span><span class="n">yaml_f</span> <span class="o">=</span> <span class="s1">&#39;/home/pm/Documents/PhD/Chaku/params.yaml&#39;</span>
@@ -385,8 +382,9 @@ as input, whereas the former will estimate the velocity changes of all <cite>hdf
       </div>
     </div>
   
-    <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
-  <footer class="footer mt-5 mt-md-0">
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+<footer class="footer mt-5 mt-md-0">
   <div class="container">
     
     <div class="footer-item">
@@ -397,7 +395,7 @@ as input, whereas the former will estimate the velocity changes of all <cite>hdf
     
     <div class="footer-item">
       <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.4.0.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.5.0.<br>
 </p>
     </div>
     

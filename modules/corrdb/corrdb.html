@@ -8,27 +8,24 @@
 
     <title>CorrelationDataBase and DBHandler objects &#8212; SeisMIC</title>
     
-    <link href="../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
 <link href="../../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
-  
+
     
-    <link rel="stylesheet"
-      href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
-    <link rel="preload" as="font" type="font/woff2" crossorigin
-      href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
-    <link rel="preload" as="font" type="font/woff2" crossorigin
-      href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
-  
-    
-      
-  
-    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/pydata-sphinx-theme.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
     
-    <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
-  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
@@ -48,7 +45,7 @@
     <!-- Google Analytics -->
     
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
     
     <div class="container-fluid" id="banner"></div>
 
@@ -179,7 +176,7 @@
               
               <div class="toc-item">
                 
-<div class="tocsection onthispage pt-5 pb-3">
+<div class="tocsection onthispage mt-5 pt-1 pb-3">
     <i class="fas fa-list"></i> On this page
 </div>
 
@@ -254,7 +251,7 @@ graph LR
     click dv &quot;../monitor/dv.html&quot; &quot;DV&quot;
     classDef active fill:#f666, stroke-width:4px, stroke:#f06;
         </div><section id="correlationdatabase-and-dbhandler-objects">
-<h1>CorrelationDataBase and DBHandler objects<a class="headerlink" href="#correlationdatabase-and-dbhandler-objects" title="Permalink to this headline">¶</a></h1>
+<h1>CorrelationDataBase and DBHandler objects<a class="headerlink" href="#correlationdatabase-and-dbhandler-objects" title="Permalink to this headline">#</a></h1>
 <p>In <strong>SeisMIC</strong>, correlations are stored in <a class="reference external" href="https://www.hdfgroup.org/downloads/hdf5/">HDF5</a> container files.
 This has the advantage of avoiding potential overhead caused by large amounts of correlation files.
 SeisMIC’s implementation relies on modified <a class="reference external" href="https://www.h5py.org/">h5py</a> classes. After computing your
@@ -289,7 +286,7 @@ even dataloss due to corrupted hdf5 files.</p>
 with <code class="xref py py-meth docutils literal notranslate"><span class="pre">seismic.db.corr_hdf5.DBHandler._close()</span></code> to avoid corrupting your files!</p>
 </div>
 <section id="reading-correlations">
-<h2>Reading Correlations<a class="headerlink" href="#reading-correlations" title="Permalink to this headline">¶</a></h2>
+<h2>Reading Correlations<a class="headerlink" href="#reading-correlations" title="Permalink to this headline">#</a></h2>
 <p>The most common usecase is probably that you will want to access correlations that <strong>SeisMIC</strong> computed
 for you (as shown earlier). To do so, you can use the <a class="reference internal" href="../API.html#seismic.db.corr_hdf5.DBHandler.get_data" title="seismic.db.corr_hdf5.DBHandler.get_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_data()</span></code></a>
 method:</p>
@@ -308,7 +305,7 @@ method:</p>
 The data we are loading are correlations from waveforms recorded between <code class="docutils literal notranslate"><span class="pre">corr_start</span></code> and <code class="docutils literal notranslate"><span class="pre">corr_end</span></code>. Setting those arguments to <code class="docutils literal notranslate"><span class="pre">None</span></code>
 is similar to using a wildcard (i.e., load from earliest to latest available data).</p>
 <section id="tags">
-<h3>Tags<a class="headerlink" href="#tags" title="Permalink to this headline">¶</a></h3>
+<h3>Tags<a class="headerlink" href="#tags" title="Permalink to this headline">#</a></h3>
 <p><strong>SeisMIC</strong> uses the following standard tags:</p>
 <ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">subdivision</span></code>: Are the unstacked correlations with the the correlation length of <code class="docutils literal notranslate"><span class="pre">corr_len</span></code> as defined in our <a class="reference external" href="../correlate/get_started.html#setting-the-parameters">yaml file</a>.</p></li>
@@ -316,12 +313,12 @@ is similar to using a wildcard (i.e., load from earliest to latest available dat
 </ol>
 </section>
 <section id="obtain-correlation-parameters">
-<h3>Obtain correlation parameters<a class="headerlink" href="#obtain-correlation-parameters" title="Permalink to this headline">¶</a></h3>
+<h3>Obtain correlation parameters<a class="headerlink" href="#obtain-correlation-parameters" title="Permalink to this headline">#</a></h3>
 <p>You might want to get the dictionary that you used to produce the correlations in the file. You can do that by using
 <code class="xref py py-meth docutils literal notranslate"><span class="pre">seismic.corr_hdf5.corrdb.DBHandler.get_corr_options()</span></code>.</p>
 </section>
 <section id="getting-an-overview-over-available-data">
-<h3>Getting an overview over available data<a class="headerlink" href="#getting-an-overview-over-available-data" title="Permalink to this headline">¶</a></h3>
+<h3>Getting an overview over available data<a class="headerlink" href="#getting-an-overview-over-available-data" title="Permalink to this headline">#</a></h3>
 <p>Once you have a suffieciently large dataset, you might be confused about which data you have already produced.
 In this case, <strong>SeisMIC</strong> offers several methods to make your life a little easier:</p>
 <ol class="arabic simple">
@@ -340,7 +337,7 @@ dbh[tag][netcomb][statcomb][chacomb][corr_start][corr_end]</p></li>
 </section>
 </section>
 <section id="writing-correlations">
-<h2>Writing Correlations<a class="headerlink" href="#writing-correlations" title="Permalink to this headline">¶</a></h2>
+<h2>Writing Correlations<a class="headerlink" href="#writing-correlations" title="Permalink to this headline">#</a></h2>
 <p>If you postprocess your correlations (e.g., stacking), you might want to save the data afterwards.
 When writing to the correlation hdf5 files,
 you will have to pay attention to a couple of particularities:</p>
@@ -399,8 +396,9 @@ Network, station, and channel information are determined automatically from the 
       </div>
     </div>
   
-    <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
-  <footer class="footer mt-5 mt-md-0">
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+<footer class="footer mt-5 mt-md-0">
   <div class="container">
     
     <div class="footer-item">
@@ -411,7 +409,7 @@ Network, station, and channel information are determined automatically from the 
     
     <div class="footer-item">
       <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.4.0.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.5.0.<br>
 </p>
     </div>
     

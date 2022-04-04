@@ -8,27 +8,24 @@
 
     <title>Get Started (Compute your first Noise Correlations) &#8212; SeisMIC</title>
     
-    <link href="../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
 <link href="../../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
-  
+
     
-    <link rel="stylesheet"
-      href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
-    <link rel="preload" as="font" type="font/woff2" crossorigin
-      href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
-    <link rel="preload" as="font" type="font/woff2" crossorigin
-      href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
-  
-    
-      
-  
-    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/pydata-sphinx-theme.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
     
-    <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
-  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
@@ -48,7 +45,7 @@
     <!-- Google Analytics -->
     
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
     
     <div class="container-fluid" id="banner"></div>
 
@@ -191,7 +188,7 @@
               
               <div class="toc-item">
                 
-<div class="tocsection onthispage pt-5 pb-3">
+<div class="tocsection onthispage mt-5 pt-1 pb-3">
     <i class="fas fa-list"></i> On this page
 </div>
 
@@ -273,14 +270,14 @@ graph LR
     click dv &quot;../monitor/dv.html&quot; &quot;DV&quot;
     classDef active fill:#f666, stroke-width:4px, stroke:#f06;
         </div><section id="get-started-compute-your-first-noise-correlations">
-<h1>Get Started (Compute your first Noise Correlations)<a class="headerlink" href="#get-started-compute-your-first-noise-correlations" title="Permalink to this headline">¶</a></h1>
+<h1>Get Started (Compute your first Noise Correlations)<a class="headerlink" href="#get-started-compute-your-first-noise-correlations" title="Permalink to this headline">#</a></h1>
 <p>After having downloaded your data as shown <a class="reference external" href="../trace_data/waveform.html#download-data">here</a> (or retrieved seismic data any other way),
 we are ready to compute our first noise correlation!
 In <strong>SeisMIC</strong>, parameters for the <em>preprocessing</em>, the <em>correlation</em>, and, subsequently,
 measuring the <em>change in seismic velocity</em> are provided as a <em>.yaml</em> file or as a python <em>dictionary</em>.
 An example for such a <em>.yaml</em> file is shown below (and provided in the repository as <code class="docutils literal notranslate"><span class="pre">params_example.yaml</span></code>).</p>
 <section id="setting-the-parameters">
-<h2>Setting the parameters<a class="headerlink" href="#setting-the-parameters" title="Permalink to this headline">¶</a></h2>
+<h2>Setting the parameters<a class="headerlink" href="#setting-the-parameters" title="Permalink to this headline">#</a></h2>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="c1">#### Project wide parameters</span><span class="w"></span>
 <span class="linenos">  2</span><span class="c1"># lowest level project directory</span><span class="w"></span>
 <span class="linenos">  3</span><span class="nt">proj_dir </span><span class="p">:</span><span class="w"> </span><span class="s">&#39;/path/to/project/root/&#39;</span><span class="w"></span>
@@ -459,7 +456,7 @@ An example for such a <em>.yaml</em> file is shown below (and provided in the re
 <p>This might look a little intimidating at first glancec, but is actually quite straight-forward.
 To achieve a better understanding of what each of the parameters do, let’s have a close look at them individually.</p>
 <section id="project-wide-parameters">
-<h3>Project Wide Parameters<a class="headerlink" href="#project-wide-parameters" title="Permalink to this headline">¶</a></h3>
+<h3>Project Wide Parameters<a class="headerlink" href="#project-wide-parameters" title="Permalink to this headline">#</a></h3>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1">#### Project wide parameters</span><span class="w"></span>
 <span class="linenos"> 2</span><span class="c1"># lowest level project directory</span><span class="w"></span>
 <span class="linenos"> 3</span><span class="nt">proj_dir </span><span class="p">:</span><span class="w"> </span><span class="s">&#39;/path/to/project/root/&#39;</span><span class="w"></span>
@@ -477,7 +474,7 @@ To achieve a better understanding of what each of the parameters do, let’s hav
 <code class="docutils literal notranslate"><span class="pre">fig_dir</span></code> and <code class="docutils literal notranslate"><span class="pre">log_dir</span></code> are just subdirectories for figures and logs, respectively, and the log level decides how much will actually be logged.</p>
 </section>
 <section id="network-specific-parameters">
-<h3>Network Specific Parameters<a class="headerlink" href="#network-specific-parameters" title="Permalink to this headline">¶</a></h3>
+<h3>Network Specific Parameters<a class="headerlink" href="#network-specific-parameters" title="Permalink to this headline">#</a></h3>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1">#### parameters that are network specific</span><span class="w"></span>
 <span class="linenos">2</span><span class="nt">net</span><span class="p">:</span><span class="w"></span>
 <span class="linenos">3</span><span class="w">    </span><span class="c1"># list of stations used in the project</span><span class="w"></span>
@@ -493,7 +490,7 @@ To achieve a better understanding of what each of the parameters do, let’s hav
 </div>
 </section>
 <section id="correlation-arguments">
-<h3>Correlation Arguments<a class="headerlink" href="#correlation-arguments" title="Permalink to this headline">¶</a></h3>
+<h3>Correlation Arguments<a class="headerlink" href="#correlation-arguments" title="Permalink to this headline">#</a></h3>
 <p>This is the really juicy stuff and probably the part that will have the strongest influence on your results.
 Let’s start by getting the most obvious parameters out of the way:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1">#### parameters for correlation (emperical Green&#39;s function creation)</span><span class="w"></span>
@@ -550,7 +547,7 @@ Let’s start by getting the most obvious parameters out of the way:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">xcombinations</span></code> If you want to save some computational resources and only compute specific combinations, use this function. If you want to limit the maximum distance between stations to cross-correlate you can use <a class="reference internal" href="../API.html#seismic.correlate.correlate.Correlator.find_interstat_dist" title="seismic.correlate.correlate.Correlator.find_interstat_dist"><code class="xref py py-meth docutils literal notranslate"><span class="pre">seismic.correlate.correlate.Correlator.find_interstat_dist()</span></code></a></p></li>
 </ul>
 <section id="preprocessing-arguments">
-<h4>Preprocessing Arguments<a class="headerlink" href="#preprocessing-arguments" title="Permalink to this headline">¶</a></h4>
+<h4>Preprocessing Arguments<a class="headerlink" href="#preprocessing-arguments" title="Permalink to this headline">#</a></h4>
 <p><strong>SeisMIC</strong> is coded in a manner that makes it easy for the user to pass custom preprocessing functions. Custom functions can be defined in the three parameters <code class="docutils literal notranslate"><span class="pre">preProcessing</span></code>, <code class="docutils literal notranslate"><span class="pre">TDpreProcessing</span></code>, and <code class="docutils literal notranslate"><span class="pre">FDpreprocessing</span></code>.
 All these parameters expect a <code class="docutils literal notranslate"><span class="pre">list</span></code> of <code class="docutils literal notranslate"><span class="pre">dictionaries</span></code> as input. Each dictionary must have the keys <code class="docutils literal notranslate"><span class="pre">function</span></code> and <code class="docutils literal notranslate"><span class="pre">args</span></code>. The value for function is a string describing the complete import path of the preprocessing function in the form <strong>‘package.module.sobmodule.function’</strong>.
 <code class="docutils literal notranslate"><span class="pre">args</span></code> is simply a keyword argument dictionary that will be passed to the function.</p>
@@ -615,7 +612,7 @@ Additionally, the <code class="docutils literal notranslate"><span class="pre">a
 </div>
 </section>
 <section id="arguments-for-the-actual-correlation">
-<h4>Arguments for the actual correlation<a class="headerlink" href="#arguments-for-the-actual-correlation" title="Permalink to this headline">¶</a></h4>
+<h4>Arguments for the actual correlation<a class="headerlink" href="#arguments-for-the-actual-correlation" title="Permalink to this headline">#</a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">Subdivision</span></code> is the parameter that decides about the length and increment of the noise recordings to be preprocessed and correlated.
 If <code class="docutils literal notranslate"><span class="pre">recombine_subdivision=True</span></code>, the correlations will be stacked to <code class="docutils literal notranslate"><span class="pre">read_len</span></code>.</p>
 <ul class="simple">
@@ -680,8 +677,9 @@ If <code class="docutils literal notranslate"><span class="pre">recombine_subdiv
       </div>
     </div>
   
-    <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
-  <footer class="footer mt-5 mt-md-0">
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+<footer class="footer mt-5 mt-md-0">
   <div class="container">
     
     <div class="footer-item">
@@ -692,7 +690,7 @@ If <code class="docutils literal notranslate"><span class="pre">recombine_subdiv
     
     <div class="footer-item">
       <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.4.0.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 4.5.0.<br>
 </p>
     </div>
     
