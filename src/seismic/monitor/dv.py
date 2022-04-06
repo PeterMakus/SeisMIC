@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Wednesday, 6th April 2022 10:28:56 am
+Last Modified: Wednesday, 6th April 2022 02:57:42 pm
 '''
 
 from datetime import datetime
@@ -32,8 +32,8 @@ class DV(object):
     def __init__(
         self, corr: np.ndarray, value: np.ndarray, value_type: str,
         sim_mat: np.ndarray, second_axis: np.ndarray, method: str,
-        stats: CorrStats, std_val: np.ndarray = None,
-            std_corr: np.ndarray = None, n_stat: np.ndarray = None):
+        stats: CorrStats, values: np.ndarray = None,
+            corrs: np.ndarray = None, n_stat: np.ndarray = None):
         """
         Creates an object designed to hold and process velocity changes.
 
@@ -51,18 +51,16 @@ class DV(object):
         :type method: str
         :param stats: Stats of the correlation object that was used
         :type stats: CorrStats
-        :param std_val: Standard deviation of the value (e.g., stretch).
+        :param values: Scatter of the value (e.g., stretch).
             In case this dv object holds an average
-            of several dvs, the user can choose to compute the standard
-            deviation over all dvs' values. Same shape as corr and
-            value, defaults to None
-        :type std_val: np.ndarray, optional
-        :param std_corr: Standard deviation of the correlation coefficient.
+            of several dvs, the user can choose to keep all dvs' values.
+            defaults to None
+        :type values: np.ndarray, optional
+        :param corrs: Scatter of the correlation coefficient (e.g., stretch).
             In case this dv object holds an average
-            of several dvs, the user can choose to compute the standard
-            deviation over all dvs' values. Same shape as corr and
-            value, defaults to None
-        :type std_corr: np.ndarray, optional
+            of several dvs, the user can choose to keep all dvs' corrs.
+            defaults to None
+        :type corrs: np.ndarray, optional
         :param n_stat: Number of stations used for the stack at corr_start t.
             Has the same shape as `value` and `corr`. Defaults to None
         :type n_stat: np.ndarray, optional
@@ -72,8 +70,8 @@ class DV(object):
         self.corr = corr
         self.value = value
         self.sim_mat = sim_mat
-        self.std_val = std_val
-        self.std_corr = std_corr
+        self.corrs = corrs
+        self.values = values
         self.n_stat = n_stat
         self.second_axis = second_axis
         self.method = method
@@ -101,7 +99,7 @@ class DV(object):
         method_array = np.array([self.method])
         vt_array = np.array([self.value_type])
         kwargs = mu.save_header_to_np_array(self.stats)
-        if self.std_val is None or self.std_corr is None:
+        if self.corrs is None or self.values is None:
             np.savez_compressed(
                 path, corr=self.corr, value=self.value, sim_mat=self.sim_mat,
                 second_axis=self.second_axis, method_array=method_array,
@@ -110,8 +108,8 @@ class DV(object):
             np.savez_compressed(
                 path, corr=self.corr, value=self.value, sim_mat=self.sim_mat,
                 second_axis=self.second_axis, method_array=method_array,
-                vt_array=vt_array, std_val=self.std_val,
-                std_corr=self.std_corr, n_stat=self.n_stat, **kwargs)
+                vt_array=vt_array, values=self.values,
+                corrs=self.corrs, n_stat=self.n_stat, **kwargs)
 
     def plot(
         self, save_dir: str = '.', figure_file_name: str = None,
@@ -143,23 +141,8 @@ class DV(object):
         :type xlim: Tuple[datetime, datetime], optional
         :param ylim: Y-limits (e.g., stretch) of the plot, defaults to None
         :type ylim: Tuple[int, int], optional
-        :param plot_scatter: If set to True, the upper and lower bounds of the
-            value's and correlation coefficients scattering will be plotted.
-            Only Works for stacked dvs. Scattering is defined as:
-
-            .. math::
-
-                scat = \frac{\sqrt{\sum(x_i - \mean{x})^2}}{n-1}
-
-            Where *x_i* and *x* with the bar are the individual values and
-            the mean of correlation coefficient or value (e.g., stretch),
-            respectively. Thus, the scattering is defined as the standard
-            deviation over these values divided by the squareroot of n-1,
-            where *n* is the number of samples. Note that the standard
-            deviation over the correlation coefficient is not equivalent
-            to the standard deviation over our stack. Those two standard
-            deviation merely correspond to the standard deviations of
-            the similarity matrices' maxima and locations of maxima.
+        :param plot_scatter: If set to True, the scatter of all used
+            combinations is plotted in form of a histogram.
             Defaults to False.
         :type plot_scatter: bool, optional
         :param figsize: Size of the figure/canvas, defaults to (9, 11)
@@ -178,7 +161,7 @@ class DV(object):
         return plot_dv(
             self.__dict__, save_dir, figure_file_name, mark_time,
             normalize_simmat, sim_mat_Clim, figsize, dpi, xlim=xlim, ylim=ylim,
-            title=title, plot_std=plot_scatter, return_ax=return_ax)
+            title=title, plot_scatter=plot_scatter, return_ax=return_ax)
 
     def smooth_sim_mat(self, win_len: int):
         """
@@ -230,15 +213,15 @@ def read_dv(path: str) -> DV:
     while not isinstance(method, str):
         method = method[0]
     try:
-        std_val = loaded['std_val']
-        std_corr = loaded['std_corr']
+        values = loaded['values']
+        corrs = loaded['corrs']
     except KeyError:
-        std_val = std_corr = None
+        values = corrs = None
     try:
         n_stat = loaded['n_stat']
     except KeyError:
         n_stat = None
     return DV(
         loaded['corr'], loaded['value'], vt, loaded['sim_mat'],
-        loaded['second_axis'], method, stats=stats, std_val=std_val,
-        std_corr=std_corr, n_stat=n_stat)
+        loaded['second_axis'], method, stats=stats, values=values,
+        corrs=corrs, n_stat=n_stat)

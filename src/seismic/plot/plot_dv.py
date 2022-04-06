@@ -8,15 +8,17 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Wednesday, 6th April 2022 10:02:25 am
+Last Modified: Wednesday, 6th April 2022 03:57:10 pm
 '''
 
 from datetime import datetime
 from typing import Tuple, List
+import os
+
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 import numpy as np
-import os
+from obspy import UTCDateTime
 
 from seismic.plot.plot_utils import set_mpl_params
 
@@ -25,7 +27,7 @@ def plot_dv(
     dv, save_dir='.', figure_file_name=None, mark_time=None,
     normalize_simmat=False, sim_mat_Clim=[], figsize=(9, 11), dpi=72,
     ylim: Tuple[float, float] = None, xlim: Tuple[datetime, datetime] = None,
-    title: str = None, plot_std: bool = False,
+    title: str = None, plot_scatter: bool = False,
         return_ax: bool = False) -> Tuple[plt.figure, List[plt.axis]]:
     """ Plot the "extended" dv dictionary
 
@@ -148,7 +150,7 @@ def plot_dv(
 
     f = plt.figure(figsize=figsize, dpi=dpi)
 
-    if dv['n_stat'] is not None and plot_std:
+    if dv['n_stat'] is not None and plot_scatter:
         gs = mpl.gridspec.GridSpec(4, 1, height_ratios=[12, 4, 4, 1])
     else:
         gs = mpl.gridspec.GridSpec(3, 1, height_ratios=[3, 1, 1])
@@ -203,7 +205,26 @@ def plot_dv(
     ax1.set_ylabel(dv_y_label)
 
     ax2 = f.add_subplot(gs[1])
-    plt.plot(rtime, -dt, '.')
+    if plot_scatter:
+        # reshape so we can plot a histogram
+        histt = np.array([t.timestamp for t in dv['stats']['corr_start']])
+        histt = np.tile(histt, dv['values'].shape[0])
+        histcorrs = np.reshape(dv['corrs'], -1)
+        histvalues = np.reshape(dv['values'], -1)
+        n_bins = np.array(dv['sim_mat'].shape)//50
+        # remove nans
+        nanmask = ~np.isnan(histcorrs)
+        histt = histt[nanmask]
+        histcorrs = histcorrs[nanmask]
+        histvalues = histvalues[nanmask]
+        # create histograms
+        H_c, xedges_c, yedges_c = np.histogram2d(histt, histcorrs, bins=n_bins)
+        H_v, xedges_v, yedges_v = np.histogram2d(
+            histt, histvalues, bins=n_bins)
+        xedges_c = [UTCDateTime(xe).datetime for xe in xedges_c]
+        xedges_v = [UTCDateTime(xe).datetime for xe in xedges_v]
+        plt.pcolor(xedges_v, yedges_v, H_v.T, cmap='binary')
+    plt.plot(rtime, -dt, '.', markersize=3)
     if 'model_value' in dv.keys():
         plt.plot(rtime, -dv['model_value'], 'g.')
     if xlim:
@@ -217,15 +238,6 @@ def plot_dv(
     if mark_time and not (
             np.all(rtime < mark_time) and np.all(rtime > mark_time)):
         plt.axvline(mark_time, lw=1, color='r')
-    if plot_std:
-        # To avoid zero division errors std is zero there anyways
-        norm_scatter = dv['n_stat'] - 1
-        norm_scatter[np.where(norm_scatter == 0)] = 1
-        norm_scatter = np.sqrt(norm_scatter)
-        plt.fill_between(
-            rtime, -dt-dv['std_val']/norm_scatter,
-            -dt+dv['std_val']/norm_scatter,
-            interpolate=False, color='grey', alpha=.3)
     ax2.yaxis.set_ticks_position('left')
     ax2.yaxis.set_label_position('right')
     ax2.yaxis.label.set_rotation(270)
@@ -237,12 +249,9 @@ def plot_dv(
     ax2.set_xticklabels([])
 
     ax3 = f.add_subplot(gs[2])
-    plt.plot(rtime, corr, '.')
-    if plot_std:
-        plt.fill_between(
-            rtime, corr-dv['std_corr']/norm_scatter,
-            corr+dv['std_corr']/norm_scatter, interpolate=False,
-            color='grey', alpha=.3)
+    if plot_scatter:
+        plt.pcolor(xedges_c, yedges_c, H_c.T, cmap='binary')
+    plt.plot(rtime, corr, '.', markersize=3)
     if 'model_corr' in dv.keys():
         plt.plot(rtime, dv['model_corr'], 'g.')
     if xlim:
@@ -259,7 +268,7 @@ def plot_dv(
     ax3.xaxis.grid(True, 'major', linewidth=1)
     ax3.yaxis.set_major_locator(plt.MultipleLocator(0.2))
     # Plot number of stations
-    if dv['n_stat'] is not None and plot_std:
+    if dv['n_stat'] is not None and plot_scatter:
         ax4 = f.add_subplot(gs[3])
         plt.fill_between(
             rtime, 0, dv['n_stat'], interpolate=False)

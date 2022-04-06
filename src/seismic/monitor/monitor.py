@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 1st April 2022 03:36:06 pm
+Last Modified: Wednesday, 6th April 2022 02:56:12 pm
 '''
 from copy import deepcopy
 import logging
@@ -660,7 +660,7 @@ def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
 
 
 def average_components_mem_save(
-        dvs: Generator[DV, None, None], compute_std: bool = True) -> DV:
+        dvs: Generator[DV, None, None], save_scatter: bool = True) -> DV:
     """
     Averages the Similariy matrix of the DV objects. Based on those,
     it computes a new dv value and a new correlation value. Less memory intense
@@ -672,24 +672,21 @@ def average_components_mem_save(
         average from. Note that it is possible to use almost anything as
         input as long as the similarity matrices of the dvs have the same shape
     :type dvs: Iterator[class:`~seismic.monitor.dv.DV`]
-    :param compute_std: Compute the standard deviation of the similarity
-        matrices, pick the values corresponding to the maximum in the
-        similarity matrix and save them in the new
-        :class:`~seismic.monitor.dv.DV` object. Defaults to True.
-    :type compute_std: bool, optional
+    :param save_scatter: Saves the scattering of old values and correlation
+        coefficients to later provide a statistical measure. Defaults to True.
+    :type save_scatter: bool, optional
     :raises TypeError: for DVs that were computed with different methods
     :return: A single dv with an averaged similarity matrix.
     :rtype: DV
     """
     statsl = []
+    corrs = []
+    values = []
     for ii, dv in enumerate(dvs):
         if ii == 0:
             sim_mat_sum = np.zeros_like(dv.sim_mat)
             n_stat = np.zeros_like(dv.corr)
-            corr_sum = np.zeros_like(dv.corr)
-            corr_sos = np.zeros_like(dv.corr)
-            val_sum = np.zeros_like(dv.corr)
-            val_sos = np.zeros_like(dv.corr)
+
             stats = deepcopy(dv.stats)
             strvec = dv.second_axis
             value_type = dv.value_type
@@ -710,11 +707,9 @@ def average_components_mem_save(
             continue
         sim_mat_sum += np.nan_to_num(dv.sim_mat)
         n_stat[~np.isnan(dv.value)] += 1
-        if compute_std:
-            corr_sum += np.nan_to_num(dv.corr)
-            corr_sos += np.nan_to_num(dv.corr)**2
-            val_sum += np.nan_to_num(dv.value)
-            val_sos += np.nan_to_num(dv.value)**2
+        if save_scatter:
+            corrs.append(dv.corr)
+            values.append(dv.value)
         statsl.append(dv.stats)
     # Now inf where it was nan before
     av_sim_mat = (sim_mat_sum.T/n_stat).T
@@ -723,15 +718,13 @@ def average_components_mem_save(
     iimax = np.nanargmax(np.nan_to_num(av_sim_mat), axis=1)
     corr = np.nanmax(av_sim_mat, axis=1)
     dt = strvec[iimax]
-    if compute_std:
+    if save_scatter:
         # use sum of square for std
-        std_corr = np.sqrt((corr_sos - n_stat*(corr_sum/n_stat)**2)/(n_stat))
-        std_val = np.sqrt((val_sos - n_stat*(val_sum/n_stat)**2)/(n_stat))
-        std_corr[np.isinf(std_corr)] = np.nan
-        std_val[np.isinf(std_val)] = np.nan
+        corrs = np.array(corrs)
+        values = np.array(values)
     else:
-        std_val = None
-        std_corr = None
+        corrs = None
+        values = None
     if not all(np.array([st.channel for st in statsl]) == stats.channel):
         stats['channel'] = 'av'
     if not all(np.array([st.station for st in statsl]) == stats.station):
@@ -740,12 +733,12 @@ def average_components_mem_save(
         stats['network'] = 'av'
     dvout = DV(
         corr, dt, value_type, av_sim_mat, strvec,
-        method, stats, std_val=std_val, std_corr=std_corr,
+        method, stats, values=values, corrs=corrs,
         n_stat=n_stat)
     return dvout
 
 
-def average_components(dvs: List[DV], compute_std: bool = True) -> DV:
+def average_components(dvs: List[DV], save_scatter: bool = True) -> DV:
     """
     Averages the Similariy matrix of the DV objects. Based on those,
     it computes a new dv value and a new correlation value.
@@ -754,11 +747,9 @@ def average_components(dvs: List[DV], compute_std: bool = True) -> DV:
         average from. Note that it is possible to use almost anything as
         input as long as the similarity matrices of the dvs have the same shape
     :type dvs: List[class:`~seismic.monitor.dv.DV`]
-    :param compute_std: Compute the standard deviation of the similarity
-        matrices, pick the values corresponding to the maximum in the
-        similarity matrix and save them in the new
-        :class:`~seismic.monitor.dv.DV` object. Defaults to True.
-    :type compute_std: bool, optional
+    :param save_scatter: Saves the scattering of old values and correlation
+        coefficients to later provide a statistical measure. Defaults to True.
+    :type save_scatter: bool, optional
     :raises TypeError: for DVs that were computed with different methods
     :return: A single dv with an averaged similarity matrix.
     :rtype: DV
@@ -791,23 +782,16 @@ def average_components(dvs: List[DV], compute_std: bool = True) -> DV:
     corr = np.nanmax(av_sim_mat, axis=1)
     strvec = dv_use[0].second_axis
     dt = strvec[iimax]
-    if compute_std:
+    if save_scatter:
         values = np.array([dv.value for dv in dv_use])
         corrs = np.array([dv.corr for dv in dv_use])
-        # Number of stations per corr_start
+        # # Number of stations per corr_start
         n_stat = np.ones_like(values, dtype=int)
         n_stat[np.where(np.isnan(values))] = 0
         n_stat = np.sum(n_stat, axis=0)  # now this has the same shape as std
-        std_val = np.nanstd(values, axis=0)
-        # std deviation of old maxima (corr) vs std at places of new maxima
-        # (i.e., corr of av_sim_mat)
-        # std = np.nanstd(sim_mats, axis=0)
-        # m, n = np.unravel_index(iimax, av_sim_mat.shape)
-        # std_corr = std[n, m]
-        std_corr = np.nanstd(corrs, axis=0)
     else:
-        std_val = None
-        std_corr = None
+        values = None
+        corrs = None
     stats = deepcopy(dv_use[0].stats)
     if not all(np.array([dv.stats.channel for dv in dv_use]) == stats.channel):
         stats['channel'] = 'av'
@@ -817,7 +801,7 @@ def average_components(dvs: List[DV], compute_std: bool = True) -> DV:
         stats['network'] = 'av'
     dvout = DV(
         corr, dt, dv_use[0].value_type, av_sim_mat, strvec,
-        dv_use[0].method, stats, std_val=std_val, std_corr=std_corr,
+        dv_use[0].method, stats, values=values, corrs=corrs,
         n_stat=n_stat)
     return dvout
 
