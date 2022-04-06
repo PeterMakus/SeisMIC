@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Wednesday, 6th April 2022 10:15:32 am
+Last Modified: Wednesday, 6th April 2022 10:28:56 am
 '''
 
 from datetime import datetime
@@ -121,7 +121,7 @@ class DV(object):
         figsize: Tuple[float, float] = (9, 11), dpi: int = 144,
         title: str = None, return_ax=False) -> Tuple[
             plt.figure, List[plt.axis]]:
-        """
+        r"""
         Plots the dv object into a *multi-panel-view* of `similarity matrix`
         `dv-value`, and `correlation coefficient`.
 
