@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Monday, 28th March 2022 02:38:17 pm
+Last Modified: Wednesday, 6th April 2022 10:15:32 am
 '''
 
 from datetime import datetime
@@ -117,7 +117,7 @@ class DV(object):
         self, save_dir: str = '.', figure_file_name: str = None,
         mark_time: datetime = None, normalize_simmat: bool = False,
         sim_mat_Clim: List[float] = [], xlim: Tuple[datetime, datetime] = None,
-        ylim: Tuple[int, int] = None, plot_std: bool = False,
+        ylim: Tuple[int, int] = None, plot_scatter: bool = False,
         figsize: Tuple[float, float] = (9, 11), dpi: int = 144,
         title: str = None, return_ax=False) -> Tuple[
             plt.figure, List[plt.axis]]:
@@ -143,10 +143,25 @@ class DV(object):
         :type xlim: Tuple[datetime, datetime], optional
         :param ylim: Y-limits (e.g., stretch) of the plot, defaults to None
         :type ylim: Tuple[int, int], optional
-        :param plot_std: If set to True, the upper and lower limit of the
-            value's standard deviation will be plotted as bounds,
-            defaults to False.
-        :type plot_std: bool, optional
+        :param plot_scatter: If set to True, the upper and lower bounds of the
+            value's and correlation coefficients scattering will be plotted.
+            Only Works for stacked dvs. Scattering is defined as:
+
+            .. math::
+
+                scat = \frac{\sqrt{\sum(x_i - \mean{x})^2}}{n-1}
+
+            Where *x_i* and *x* with the bar are the individual values and
+            the mean of correlation coefficient or value (e.g., stretch),
+            respectively. Thus, the scattering is defined as the standard
+            deviation over these values divided by the squareroot of n-1,
+            where *n* is the number of samples. Note that the standard
+            deviation over the correlation coefficient is not equivalent
+            to the standard deviation over our stack. Those two standard
+            deviation merely correspond to the standard deviations of
+            the similarity matrices' maxima and locations of maxima.
+            Defaults to False.
+        :type plot_scatter: bool, optional
         :param figsize: Size of the figure/canvas, defaults to (9, 11)
         :type figsize: Tuple[float, float], optional
         :param dpi: Pixels per inch, defaults to 144
@@ -163,7 +178,7 @@ class DV(object):
         return plot_dv(
             self.__dict__, save_dir, figure_file_name, mark_time,
             normalize_simmat, sim_mat_Clim, figsize, dpi, xlim=xlim, ylim=ylim,
-            title=title, plot_std=plot_std, return_ax=return_ax)
+            title=title, plot_std=plot_scatter, return_ax=return_ax)
 
     def smooth_sim_mat(self, win_len: int):
         """

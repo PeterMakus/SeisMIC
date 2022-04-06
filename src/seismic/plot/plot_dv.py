@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Tuesday, 29th March 2022 04:31:55 pm
+Last Modified: Wednesday, 6th April 2022 10:02:25 am
 '''
 
 from datetime import datetime
@@ -124,13 +124,17 @@ def plot_dv(
     if (value_type == 'stretch') and (method == 'single_ref'):
 
         tit = "Single reference dv/v"
-        dv_tick_delta = round(stretch_vect.max()/5, 2)  # 0.01
+        # Find order of magnitude of max strech
+        oom = -int(np.floor(np.log10(stretch_vect.max()/5)))
+        dv_tick_delta = round(stretch_vect.max()/5, oom)
         dv_y_label = "dv/v"
         # plotting velocity requires to flip the stretching axis
     elif (value_type == 'stretch') and (method == 'multi_ref'):
 
+        # Find order of magnitude of max strech
+        oom = -int(np.floor(np.log10(stretch_vect.max()/5)))
         tit = "Multi reference dv/v"
-        dv_tick_delta = round(stretch_vect.max()/5, 2)  # 0.01
+        dv_tick_delta = round(stretch_vect.max()/5, oom)
         dv_y_label = "dv/v"
         # plotting velocity requires to flip the stretching axis
     elif (value_type == 'shift') and (method == 'time_shift'):
@@ -214,8 +218,13 @@ def plot_dv(
             np.all(rtime < mark_time) and np.all(rtime > mark_time)):
         plt.axvline(mark_time, lw=1, color='r')
     if plot_std:
+        # To avoid zero division errors std is zero there anyways
+        norm_scatter = dv['n_stat'] - 1
+        norm_scatter[np.where(norm_scatter == 0)] = 1
+        norm_scatter = np.sqrt(norm_scatter)
         plt.fill_between(
-            rtime, -dt-dv['std_val'], -dt+dv['std_val'],
+            rtime, -dt-dv['std_val']/norm_scatter,
+            -dt+dv['std_val']/norm_scatter,
             interpolate=False, color='grey', alpha=.3)
     ax2.yaxis.set_ticks_position('left')
     ax2.yaxis.set_label_position('right')
@@ -230,11 +239,10 @@ def plot_dv(
     ax3 = f.add_subplot(gs[2])
     plt.plot(rtime, corr, '.')
     if plot_std:
-        # plt.plot(rtime, corr-dv['std_corr'], 'k--', alpha=.3)
-        # plt.plot(rtime, corr+dv['std_corr'], 'k--', alpha=.3)
         plt.fill_between(
-            rtime, corr-dv['std_corr'], corr+dv['std_corr'],
-            interpolate=False, color='grey', alpha=.3)
+            rtime, corr-dv['std_corr']/norm_scatter,
+            corr+dv['std_corr']/norm_scatter, interpolate=False,
+            color='grey', alpha=.3)
     if 'model_corr' in dv.keys():
         plt.plot(rtime, dv['model_corr'], 'g.')
     if xlim:
