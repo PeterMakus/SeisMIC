@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Thursday, 7th April 2022 09:43:11 am
+Last Modified: Thursday, 7th April 2022 03:04:55 pm
 '''
 
 from datetime import datetime
@@ -211,7 +211,7 @@ def plot_dv(
         histt = np.tile(histt, dv['values'].shape[0])
         histcorrs = np.reshape(dv['corrs'], -1)
         histvalues = np.reshape(-dv['values'], -1)
-        n_bins = np.array(dv['sim_mat'].shape)//50
+        n_bins = np.flip(np.array(dv['sim_mat'].shape))//10
         # remove nans
         nanmask = ~np.isnan(histcorrs)
         histt = histt[nanmask]
