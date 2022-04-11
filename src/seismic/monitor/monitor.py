@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 6th April 2022 04:27:43 pm
+Last Modified: Monday, 11th April 2022 11:04:23 am
 '''
 from copy import deepcopy
 import logging
@@ -661,7 +661,7 @@ def average_components_mem_save(
     """
     statsl = []
     corrs = []
-    values = []
+    stretches = []
     for ii, dv in enumerate(dvs):
         if ii == 0:
             sim_mat_sum = np.zeros_like(dv.sim_mat)
@@ -689,7 +689,7 @@ def average_components_mem_save(
         n_stat[~np.isnan(dv.value)] += 1
         if save_scatter:
             corrs.append(dv.corr)
-            values.append(dv.value)
+            stretches.append(dv.value)
         statsl.append(dv.stats)
     # Now inf where it was nan before
     av_sim_mat = (sim_mat_sum.T/n_stat).T
@@ -701,10 +701,10 @@ def average_components_mem_save(
     if save_scatter:
         # use sum of square for std
         corrs = np.array(corrs)
-        values = np.array(values)
+        stretches = np.array(stretches)
     else:
         corrs = None
-        values = None
+        stretches = None
     if not all(np.array([st.channel for st in statsl]) == stats.channel):
         stats['channel'] = 'av'
     if not all(np.array([st.station for st in statsl]) == stats.station):
@@ -713,7 +713,7 @@ def average_components_mem_save(
         stats['network'] = 'av'
     dvout = DV(
         corr, dt, value_type, av_sim_mat, strvec,
-        method, stats, values=values, corrs=corrs,
+        method, stats, stretches=stretches, corrs=corrs,
         n_stat=n_stat)
     return dvout
 
@@ -763,14 +763,14 @@ def average_components(dvs: List[DV], save_scatter: bool = True) -> DV:
     strvec = dv_use[0].second_axis
     dt = strvec[iimax]
     if save_scatter:
-        values = np.array([dv.value for dv in dv_use])
+        stretches = np.array([dv.value for dv in dv_use])
         corrs = np.array([dv.corr for dv in dv_use])
         # # Number of stations per corr_start
-        n_stat = np.ones_like(values, dtype=int)
-        n_stat[np.where(np.isnan(values))] = 0
+        n_stat = np.ones_like(stretches, dtype=int)
+        n_stat[np.where(np.isnan(stretches))] = 0
         n_stat = np.sum(n_stat, axis=0)  # now this has the same shape as std
     else:
-        values = None
+        stretches = None
         corrs = None
     stats = deepcopy(dv_use[0].stats)
     if not all(np.array([dv.stats.channel for dv in dv_use]) == stats.channel):
@@ -781,7 +781,7 @@ def average_components(dvs: List[DV], save_scatter: bool = True) -> DV:
         stats['network'] = 'av'
     dvout = DV(
         corr, dt, dv_use[0].value_type, av_sim_mat, strvec,
-        dv_use[0].method, stats, values=values, corrs=corrs,
+        dv_use[0].method, stats, stretches=stretches, corrs=corrs,
         n_stat=n_stat)
     return dvout
 

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 6th July 2021 09:18:14 am
-Last Modified: Wednesday, 6th April 2022 03:15:58 pm
+Last Modified: Monday, 11th April 2022 11:03:12 am
 '''
 
 import os
@@ -258,7 +258,7 @@ class TestAverageDVbyCoords(unittest.TestCase):
         np.testing.assert_array_equal([s.stel, s.evel], 2*[(-100, 100)])
         np.testing.assert_array_equal([s.stlo, s.evlo], 2*[lon])
         np.testing.assert_array_equal([s.stla, s.evla], 2*[lat])
-        self.assertIsNone(av_dv.values)
+        self.assertIsNone(av_dv.stretches)
         self.assertIsNone(av_dv.corrs)
 
 

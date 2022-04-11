@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Thursday, 7th April 2022 03:04:55 pm
+Last Modified: Monday, 11th April 2022 11:03:30 am
 '''
 
 from datetime import datetime
@@ -208,19 +208,19 @@ def plot_dv(
     if plot_scatter:
         # reshape so we can plot a histogram
         histt = np.array([t.timestamp for t in dv['stats']['corr_start']])
-        histt = np.tile(histt, dv['values'].shape[0])
+        histt = np.tile(histt, dv['stretches'].shape[0])
         histcorrs = np.reshape(dv['corrs'], -1)
-        histvalues = np.reshape(-dv['values'], -1)
+        histstretches = np.reshape(-dv['stretches'], -1)
         n_bins = np.flip(np.array(dv['sim_mat'].shape))//10
         # remove nans
         nanmask = ~np.isnan(histcorrs)
         histt = histt[nanmask]
         histcorrs = histcorrs[nanmask]
-        histvalues = histvalues[nanmask]
+        histstretches = histstretches[nanmask]
         # create histograms
         H_c, xedges_c, yedges_c = np.histogram2d(histt, histcorrs, bins=n_bins)
         H_v, xedges_v, yedges_v = np.histogram2d(
-            histt, histvalues, bins=n_bins)
+            histt, histstretches, bins=n_bins)
         xedges_c = [UTCDateTime(xe).datetime for xe in xedges_c]
         xedges_v = [UTCDateTime(xe).datetime for xe in xedges_v]
         plt.pcolor(xedges_v, yedges_v, H_v.T, cmap='binary')
