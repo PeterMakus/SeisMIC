@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Tuesday, 1st March 2022 10:04:56 am
+Last Modified: Wednesday, 13th April 2022 02:46:18 pm
 '''
 from typing import List, Tuple
 import logging
@@ -142,6 +142,17 @@ def resample_or_decimate(
     """
     if isinstance(data, Stream):
         sr = data[0].stats.sampling_rate
+        srl = [tr.stats.sampling_rate for tr in data]
+        if len(set(srl)) != 1:
+            # differing sampling rates in stream
+            for tr in data:
+                try:
+                    tr = resample_or_decimate(tr, sampling_rate_new, filter)
+                except ValueError:
+                    warnings.warn(
+                        f'Trace {tr} not downsampled. Sampling rate is lower'
+                        + ' than requested sampling rate.')
+            return data
     elif isinstance(data, Trace):
         sr = data.stats.sampling_rate
     else:
@@ -165,7 +176,6 @@ def resample_or_decimate(
         # Use a different filter
         freq = sr * 0.45 / factor
         data.filter('lowpass_cheby_2', freq=freq, maxorder=12)
-
     if sr/srn == sr//srn:
         return data.decimate(int(sr//srn), no_filter=True)
     else:
