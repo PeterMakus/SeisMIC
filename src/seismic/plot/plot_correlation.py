@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Thursday, 20th January 2022 11:27:06 am
+Last Modified: Tuesday, 26th April 2022 04:41:23 pm
 '''
 import os
 import warnings
@@ -69,8 +69,8 @@ def plot_ctr(
         ax.set_ylabel("Correlation")
         # Start time in station stack does not make sense
         text = '%s - %s\n%s' % (
-            corr.stats.corr_start._strftime_replacement('%Y/%m/%d %H:%M'),
-            corr.stats.corr_end._strftime_replacement('%Y/%m/%d %H:%M'),
+            corr.stats.corr_start.strftime('%Y/%m/%d %H:%M'),
+            corr.stats.corr_end.strftime('%Y/%m/%d %H:%M'),
             corr.get_id())
         # corr.stats.corr_start.isoformat(sep=" ") + "\n" + corr.get_id()
         ax.text(0.995, 1.0-0.005*ratio, text, transform=ax.transAxes,
@@ -88,7 +88,7 @@ def plot_ctr(
     if outputdir is not None:
         filename = os.path.join(
             outputdir, corr.get_id() + "_"
-            + corr.stats.starttime._strftime_replacement('%Y%m%dT%H%M%S')
+            + corr.stats.starttime.strftime('%Y%m%dT%H%M%S')
             + ".pdf")
         plt.savefig(filename, format="pdf")
     return ax
