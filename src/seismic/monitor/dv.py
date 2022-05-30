@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Wednesday, 16th March 2022 12:03:00 pm
+Last Modified: Monday, 11th April 2022 11:05:55 am
 '''
 
 from datetime import datetime
@@ -17,6 +17,7 @@ from typing import List, Tuple
 import warnings
 from zipfile import BadZipFile
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from seismic.plot.plot_dv import plot_dv
@@ -31,8 +32,8 @@ class DV(object):
     def __init__(
         self, corr: np.ndarray, value: np.ndarray, value_type: str,
         sim_mat: np.ndarray, second_axis: np.ndarray, method: str,
-        stats: CorrStats, std_val: np.ndarray = None,
-            std_corr: np.ndarray = None, n_stat: np.ndarray = None):
+        stats: CorrStats, stretches: np.ndarray = None,
+            corrs: np.ndarray = None, n_stat: np.ndarray = None):
         """
         Creates an object designed to hold and process velocity changes.
 
@@ -50,18 +51,16 @@ class DV(object):
         :type method: str
         :param stats: Stats of the correlation object that was used
         :type stats: CorrStats
-        :param std_val: Standard deviation of the value (e.g., stretch).
+        :param stretches: Scatter of the value (e.g., stretch).
             In case this dv object holds an average
-            of several dvs, the user can choose to compute the standard
-            deviation over all dvs' values. Same shape as corr and
-            value, defaults to None
-        :type std_val: np.ndarray, optional
-        :param std_corr: Standard deviation of the correlation coefficient.
+            of several dvs, the user can choose to keep all dvs' stretches.
+            defaults to None
+        :type stretches: np.ndarray, optional
+        :param corrs: Scatter of the correlation coefficient (e.g., stretch).
             In case this dv object holds an average
-            of several dvs, the user can choose to compute the standard
-            deviation over all dvs' values. Same shape as corr and
-            value, defaults to None
-        :type std_corr: np.ndarray, optional
+            of several dvs, the user can choose to keep all dvs' corrs.
+            defaults to None
+        :type corrs: np.ndarray, optional
         :param n_stat: Number of stations used for the stack at corr_start t.
             Has the same shape as `value` and `corr`. Defaults to None
         :type n_stat: np.ndarray, optional
@@ -71,8 +70,8 @@ class DV(object):
         self.corr = corr
         self.value = value
         self.sim_mat = sim_mat
-        self.std_val = std_val
-        self.std_corr = std_corr
+        self.corrs = corrs
+        self.stretches = stretches
         self.n_stat = n_stat
         self.second_axis = second_axis
         self.method = method
@@ -100,7 +99,7 @@ class DV(object):
         method_array = np.array([self.method])
         vt_array = np.array([self.value_type])
         kwargs = mu.save_header_to_np_array(self.stats)
-        if self.std_val is None or self.std_corr is None:
+        if self.corrs is None or self.stretches is None:
             np.savez_compressed(
                 path, corr=self.corr, value=self.value, sim_mat=self.sim_mat,
                 second_axis=self.second_axis, method_array=method_array,
@@ -109,17 +108,18 @@ class DV(object):
             np.savez_compressed(
                 path, corr=self.corr, value=self.value, sim_mat=self.sim_mat,
                 second_axis=self.second_axis, method_array=method_array,
-                vt_array=vt_array, std_val=self.std_val,
-                std_corr=self.std_corr, n_stat=self.n_stat, **kwargs)
+                vt_array=vt_array, stretches=self.stretches,
+                corrs=self.corrs, n_stat=self.n_stat, **kwargs)
 
     def plot(
         self, save_dir: str = '.', figure_file_name: str = None,
         mark_time: datetime = None, normalize_simmat: bool = False,
         sim_mat_Clim: List[float] = [], xlim: Tuple[datetime, datetime] = None,
-        ylim: Tuple[int, int] = None, plot_std: bool = False,
-        figsize: Tuple[float, float] = (9, 11),
-            dpi: int = 144, title: str = None):
-        """
+        ylim: Tuple[int, int] = None, plot_scatter: bool = False,
+        figsize: Tuple[float, float] = (9, 11), dpi: int = 144,
+        title: str = None, return_ax=False) -> Tuple[
+            plt.figure, List[plt.axis]]:
+        r"""
         Plots the dv object into a *multi-panel-view* of `similarity matrix`
         `dv-value`, and `correlation coefficient`.
 
@@ -141,10 +141,10 @@ class DV(object):
         :type xlim: Tuple[datetime, datetime], optional
         :param ylim: Y-limits (e.g., stretch) of the plot, defaults to None
         :type ylim: Tuple[int, int], optional
-        :param plot_std: If set to True, the upper and lower limit of the
-            value's standard deviation will be plotted as bounds,
-            defaults to False.
-        :type plot_std: bool, optional
+        :param plot_scatter: If set to True, the scatter of all used
+            combinations is plotted in form of a histogram.
+            Defaults to False.
+        :type plot_scatter: bool, optional
         :param figsize: Size of the figure/canvas, defaults to (9, 11)
         :type figsize: Tuple[float, float], optional
         :param dpi: Pixels per inch, defaults to 144
@@ -152,11 +152,16 @@ class DV(object):
         :param title: Define a custom title. Otherwise, an automatic title
             will be created, defaults to None
         :type title: str, optional
+        :param return_ax: Return plt.figure and list of axes.
+            Defaults to False.
+            This overwrites any choice to save the figure.
+        :type return_ax: bool, optional
+        :returns: If `return_ax` is set to True it returns fig and axes.
         """
-        plot_dv(
+        return plot_dv(
             self.__dict__, save_dir, figure_file_name, mark_time,
             normalize_simmat, sim_mat_Clim, figsize, dpi, xlim=xlim, ylim=ylim,
-            title=title, plot_std=plot_std)
+            title=title, plot_scatter=plot_scatter, return_ax=return_ax)
 
     def smooth_sim_mat(self, win_len: int):
         """
@@ -208,15 +213,15 @@ def read_dv(path: str) -> DV:
     while not isinstance(method, str):
         method = method[0]
     try:
-        std_val = loaded['std_val']
-        std_corr = loaded['std_corr']
+        stretches = loaded['stretches']
+        corrs = loaded['corrs']
     except KeyError:
-        std_val = std_corr = None
+        stretches = corrs = None
     try:
         n_stat = loaded['n_stat']
     except KeyError:
         n_stat = None
     return DV(
         loaded['corr'], loaded['value'], vt, loaded['sim_mat'],
-        loaded['second_axis'], method, stats=stats, std_val=std_val,
-        std_corr=std_corr, n_stat=n_stat)
+        loaded['second_axis'], method, stats=stats, stretches=stretches,
+        corrs=corrs, n_stat=n_stat)

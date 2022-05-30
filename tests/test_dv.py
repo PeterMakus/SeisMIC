@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 27th October 2021 12:58:15 pm
-Last Modified: Wednesday, 16th March 2022 01:25:42 pm
+Last Modified: Monday, 11th April 2022 11:04:43 am
 '''
 
 import unittest
@@ -47,8 +47,8 @@ class TestDV(unittest.TestCase):
     @patch('seismic.monitor.dv.mu.save_header_to_np_array')
     @patch('seismic.monitor.dv.np.savez_compressed')
     def test_save2(self, savez_mock, save_header_mock):
-        self.dv.std_corr = np.random.random(5)
-        self.dv.std_val = np.random.random(5)
+        self.dv.corrs = np.random.random((5, 5))
+        self.dv.stretches = np.random.random((5, 5))
         self.dv.n_stat = np.ones(5, dtype=int)
         self.dv.save('/save/to/here')
         save_header_mock.assert_called_once_with({})
@@ -57,8 +57,8 @@ class TestDV(unittest.TestCase):
             corr=self.dv.corr, value=self.dv.value, sim_mat=self.dv.sim_mat,
             second_axis=self.dv.second_axis,
             method_array=np.array([self.dv.method]),
-            vt_array=np.array([self.dv.value_type]), std_corr=self.dv.std_corr,
-            std_val=self.dv.std_val, n_stat=self.dv.n_stat)
+            vt_array=np.array([self.dv.value_type]), corrs=self.dv.corrs,
+            stretches=self.dv.stretches, n_stat=self.dv.n_stat)
 
     def test_smooth_sim_mat(self):
         dvc = deepcopy(self.dv)
@@ -89,7 +89,7 @@ class TestReadDV(unittest.TestCase):
         self.assertDictEqual(dvout.__dict__, {
             'corr': 0, 'value': 1, 'value_type': 's', 'sim_mat': 3,
             'second_axis': 4, 'method': 'd', 'stats': CorrStats(),
-            'std_corr': None, 'std_val': None, 'n_stat': None})
+            'corrs': None, 'stretches': None, 'n_stat': None})
 
     @patch('seismic.monitor.dv.np.load')
     @patch('seismic.monitor.dv.mu.load_header_from_np_array')
@@ -98,17 +98,17 @@ class TestReadDV(unittest.TestCase):
         npload_mock.return_value = {
             'corr': 0, 'value': 1, 'vt_array': [['s']], 'sim_mat': 3,
             'second_axis': 4, 'method_array': [['d']],
-            'std_val': 3, 'std_corr': 5}
+            'stretches': 3, 'corrs': 5}
         dvout = dv.read_dv('/my/dv_file')
         npload_mock.assert_called_once_with('/my/dv_file')
         load_header_mock.assert_called_once_with({
             'corr': 0, 'value': 1, 'vt_array': [['s']], 'sim_mat': 3,
             'second_axis': 4, 'method_array': [['d']],
-            'std_corr': 5, 'std_val': 3})
+            'corrs': 5, 'stretches': 3})
         self.assertDictEqual(dvout.__dict__, {
             'corr': 0, 'value': 1, 'value_type': 's', 'sim_mat': 3,
             'second_axis': 4, 'method': 'd', 'stats': CorrStats(),
-            'std_corr': 5, 'std_val': 3, 'n_stat': None})
+            'corrs': 5, 'stretches': 3, 'n_stat': None})
 
     @patch('seismic.monitor.dv.np.load')
     @patch('seismic.monitor.dv.mu.load_header_from_np_array')
@@ -117,17 +117,17 @@ class TestReadDV(unittest.TestCase):
         npload_mock.return_value = {
             'corr': 0, 'value': 1, 'vt_array': [['s']], 'sim_mat': 3,
             'second_axis': 4, 'method_array': [['d']],
-            'std_val': 3, 'std_corr': 5, 'n_stat': 1}
+            'stretches': 3, 'corrs': 5, 'n_stat': 1}
         dvout = dv.read_dv('/my/dv_file')
         npload_mock.assert_called_once_with('/my/dv_file')
         load_header_mock.assert_called_once_with({
             'corr': 0, 'value': 1, 'vt_array': [['s']], 'sim_mat': 3,
             'second_axis': 4, 'method_array': [['d']],
-            'std_corr': 5, 'std_val': 3, 'n_stat': 1})
+            'corrs': 5, 'stretches': 3, 'n_stat': 1})
         self.assertDictEqual(dvout.__dict__, {
             'corr': 0, 'value': 1, 'value_type': 's', 'sim_mat': 3,
             'second_axis': 4, 'method': 'd', 'stats': CorrStats(),
-            'std_corr': 5, 'std_val': 3, 'n_stat': 1})
+            'corrs': 5, 'stretches': 3, 'n_stat': 1})
 
     @patch('seismic.monitor.dv.glob')
     @patch('seismic.monitor.dv.np.load')
@@ -156,11 +156,11 @@ class TestReadDV(unittest.TestCase):
         self.assertDictEqual(dvout[0].__dict__, {
             'corr': 0, 'value': 1, 'value_type': 'b', 'sim_mat': 3,
             'second_axis': 4, 'method': 'xs', 'stats': CorrStats(),
-            'std_corr': None, 'std_val': None, 'n_stat': None})
+            'corrs': None, 'stretches': None, 'n_stat': None})
         self.assertDictEqual(dvout[1].__dict__, {
             'corr': 1, 'value': 2, 'value_type': '3', 'sim_mat': 4,
             'second_axis': 5, 'method': 'd', 'stats': CorrStats(),
-            'std_corr': None, 'std_val': None, 'n_stat': None})
+            'corrs': None, 'stretches': None, 'n_stat': None})
         self.assertEqual(len(dvout), 2)
 
     @patch('seismic.monitor.dv.glob')
@@ -193,7 +193,7 @@ class TestReadDV(unittest.TestCase):
         self.assertDictEqual(dvout[0].__dict__, {
             'corr': 0, 'value': 1, 'value_type': 'b', 'sim_mat': 3,
             'second_axis': 4, 'method': 'xs', 'stats': CorrStats(),
-            'std_corr': None, 'std_val': None, 'n_stat': None})
+            'corrs': None, 'stretches': None, 'n_stat': None})
         self.assertEqual(len(dvout), 1)
 
 

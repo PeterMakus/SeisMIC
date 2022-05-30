@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Tuesday, 15th February 2022 11:02:06 am
+Last Modified: Tuesday, 29th March 2022 11:00:42 am
 '''
 import ast
 import fnmatch
@@ -431,6 +431,8 @@ def read_hdf5_header(dataset: h5py.Dataset) -> Stats:
             except ValueError as e:
                 # temporary fix of obspy's UTCDateTime issue. SHould be removed
                 # as soon as they release version 1.23
+                # Actually, I can leave it. Obspy 1.23 fixes this issue, but
+                # for users with older obspy it's good to be kepy
                 if attrs[key][4:8] == '360T':
                     new = list(attrs[key])
                     new[6] = '1'

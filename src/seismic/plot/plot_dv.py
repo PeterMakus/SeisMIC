@@ -8,15 +8,17 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Wednesday, 16th March 2022 01:08:14 pm
+Last Modified: Monday, 11th April 2022 11:03:30 am
 '''
 
 from datetime import datetime
-from typing import Tuple
+from typing import Tuple, List
+import os
+
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 import numpy as np
-import os
+from obspy import UTCDateTime
 
 from seismic.plot.plot_utils import set_mpl_params
 
@@ -25,7 +27,8 @@ def plot_dv(
     dv, save_dir='.', figure_file_name=None, mark_time=None,
     normalize_simmat=False, sim_mat_Clim=[], figsize=(9, 11), dpi=72,
     ylim: Tuple[float, float] = None, xlim: Tuple[datetime, datetime] = None,
-        title: str = None, plot_std: bool = False):
+    title: str = None, plot_scatter: bool = False,
+        return_ax: bool = False) -> Tuple[plt.figure, List[plt.axis]]:
     """ Plot the "extended" dv dictionary
 
     This function is thought to plot the result of the velocity change estimate
@@ -71,6 +74,10 @@ def plot_dv(
         similarity matrix image
     :param ylim: Limits for the stretch axis. Defaults to None
     :type ylim: Tuple[float, float], optional
+    :param return_ax: Return plt.figure and list of axes. Defaults to False.
+        This overwrites any choice to save the figure.
+    :type return_ax: bool, optional
+    :returns: If `return_ax` is set to True it returns fig and axes.
     """
     set_mpl_params()
 
@@ -119,13 +126,17 @@ def plot_dv(
     if (value_type == 'stretch') and (method == 'single_ref'):
 
         tit = "Single reference dv/v"
-        dv_tick_delta = round(stretch_vect.max()/5, 2)  # 0.01
+        # Find order of magnitude of max strech
+        oom = -int(np.floor(np.log10(stretch_vect.max()/5)))
+        dv_tick_delta = round(stretch_vect.max()/5, oom)
         dv_y_label = "dv/v"
         # plotting velocity requires to flip the stretching axis
     elif (value_type == 'stretch') and (method == 'multi_ref'):
 
+        # Find order of magnitude of max strech
+        oom = -int(np.floor(np.log10(stretch_vect.max()/5)))
         tit = "Multi reference dv/v"
-        dv_tick_delta = round(stretch_vect.max()/5, 2)  # 0.01
+        dv_tick_delta = round(stretch_vect.max()/5, oom)
         dv_y_label = "dv/v"
         # plotting velocity requires to flip the stretching axis
     elif (value_type == 'shift') and (method == 'time_shift'):
@@ -139,7 +150,7 @@ def plot_dv(
 
     f = plt.figure(figsize=figsize, dpi=dpi)
 
-    if dv['n_stat'] is not None and plot_std:
+    if dv['n_stat'] is not None and plot_scatter:
         gs = mpl.gridspec.GridSpec(4, 1, height_ratios=[12, 4, 4, 1])
     else:
         gs = mpl.gridspec.GridSpec(3, 1, height_ratios=[3, 1, 1])
@@ -151,9 +162,7 @@ def plot_dv(
 
     # plotting value is way easier now
     plt.plot(-dv['value'], 'b.')
-    # if plot_std:
-    #     plt.plot(-dv['value']+dv['std_val'], 'k--', alpha=.3)
-    #     plt.plot(-dv['value']-dv['std_val'], 'k--', alpha=.3)
+
     # Set extent so we can treat the axes properly (mainly y)
     imh.set_extent((0, sim_mat.shape[0], stretch_vect[-1], stretch_vect[0]))
 
@@ -196,7 +205,26 @@ def plot_dv(
     ax1.set_ylabel(dv_y_label)
 
     ax2 = f.add_subplot(gs[1])
-    plt.plot(rtime, -dt, '.')
+    if plot_scatter:
+        # reshape so we can plot a histogram
+        histt = np.array([t.timestamp for t in dv['stats']['corr_start']])
+        histt = np.tile(histt, dv['stretches'].shape[0])
+        histcorrs = np.reshape(dv['corrs'], -1)
+        histstretches = np.reshape(-dv['stretches'], -1)
+        n_bins = np.flip(np.array(dv['sim_mat'].shape))//10
+        # remove nans
+        nanmask = ~np.isnan(histcorrs)
+        histt = histt[nanmask]
+        histcorrs = histcorrs[nanmask]
+        histstretches = histstretches[nanmask]
+        # create histograms
+        H_c, xedges_c, yedges_c = np.histogram2d(histt, histcorrs, bins=n_bins)
+        H_v, xedges_v, yedges_v = np.histogram2d(
+            histt, histstretches, bins=n_bins)
+        xedges_c = [UTCDateTime(xe).datetime for xe in xedges_c]
+        xedges_v = [UTCDateTime(xe).datetime for xe in xedges_v]
+        plt.pcolor(xedges_v, yedges_v, H_v.T, cmap='binary')
+    plt.plot(rtime, -dt, '.', markersize=3)
     if 'model_value' in dv.keys():
         plt.plot(rtime, -dv['model_value'], 'g.')
     if xlim:
@@ -210,12 +238,6 @@ def plot_dv(
     if mark_time and not (
             np.all(rtime < mark_time) and np.all(rtime > mark_time)):
         plt.axvline(mark_time, lw=1, color='r')
-    if plot_std:
-        # plt.plot(rtime, corr-dv['std_corr'], 'k--', alpha=.3)
-        # plt.plot(rtime, corr+dv['std_corr'], 'k--', alpha=.3)
-        plt.fill_between(
-            rtime, -dt-dv['std_val'], -dt+dv['std_val'],
-            interpolate=False, color='grey', alpha=.3)
     ax2.yaxis.set_ticks_position('left')
     ax2.yaxis.set_label_position('right')
     ax2.yaxis.label.set_rotation(270)
@@ -227,13 +249,9 @@ def plot_dv(
     ax2.set_xticklabels([])
 
     ax3 = f.add_subplot(gs[2])
-    plt.plot(rtime, corr, '.')
-    if plot_std:
-        # plt.plot(rtime, corr-dv['std_corr'], 'k--', alpha=.3)
-        # plt.plot(rtime, corr+dv['std_corr'], 'k--', alpha=.3)
-        plt.fill_between(
-            rtime, corr-dv['std_corr'], corr+dv['std_corr'],
-            interpolate=False, color='grey', alpha=.3)
+    if plot_scatter:
+        plt.pcolor(xedges_c, yedges_c, H_c.T, cmap='binary')
+    plt.plot(rtime, corr, '.', markersize=3)
     if 'model_corr' in dv.keys():
         plt.plot(rtime, dv['model_corr'], 'g.')
     if xlim:
@@ -250,11 +268,12 @@ def plot_dv(
     ax3.xaxis.grid(True, 'major', linewidth=1)
     ax3.yaxis.set_major_locator(plt.MultipleLocator(0.2))
     # Plot number of stations
-    if dv['n_stat'] is not None and plot_std:
+    if dv['n_stat'] is not None and plot_scatter:
         ax4 = f.add_subplot(gs[3])
         plt.fill_between(
             rtime, 0, dv['n_stat'], interpolate=False)
         plt.setp(ax4.get_xticklabels(), rotation=45, ha='right')
+        ax3.set_xticklabels([])
         ax4.yaxis.set_label_position('right')
         ax4.set_ylabel("N")
         plt.ylim(0, int(dv['n_stat'].max()*1.1))
@@ -263,14 +282,19 @@ def plot_dv(
         else:
             plt.xlim([rtime[0], rtime[-1]])
     else:
+        ax4 = None
         plt.setp(ax3.get_xticklabels(), rotation=45, ha='right')
 
     plt.subplots_adjust(hspace=0, wspace=0)
-
+    if return_ax:
+        return f, [ax1, ax2, ax3, ax4]
     if figure_file_name is None:
         plt.show()
     else:
         print('saving to %s' % figure_file_name)
-        f.savefig(os.path.join(save_dir, figure_file_name + '_change.png'),
+        if figure_file_name.split('.')[-1].lower() not in [
+                'png', 'svg', 'pdf', 'jpg']:
+            figure_file_name += '.png'
+        f.savefig(os.path.join(save_dir, figure_file_name),
                   dpi=dpi)
         plt.close()

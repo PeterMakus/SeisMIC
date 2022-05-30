@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Wednesday, 16th February 2022 10:07:03 am
+Last Modified: Wednesday, 13th April 2022 02:53:06 pm
 '''
 from copy import deepcopy
 import unittest
@@ -117,6 +117,17 @@ class TestResampleOrDecimate(unittest.TestCase):
         freq_new = st[0].stats.sampling_rate+5
         with self.assertRaises(ValueError):
             _ = mu.resample_or_decimate(st, freq_new, filter=False)
+
+    def test_st_differing_sr(self):
+        st = read()
+        st[0].decimate(2)
+        st[1].decimate(4)
+        freq_new = st[0].stats.sampling_rate
+        with self.assertWarns(UserWarning):
+            st_out = mu.resample_or_decimate(st, freq_new, filter=False)
+        self.assertEqual(st_out[2].stats.sampling_rate, freq_new)
+        self.assertEqual(st_out[0].stats.sampling_rate, freq_new)
+        self.assertEqual(st_out[1].stats.sampling_rate, freq_new/2)
 
 
 class TestTrimTraceDelta(unittest.TestCase):
