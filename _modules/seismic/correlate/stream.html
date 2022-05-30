@@ -186,7 +186,7 @@
 
 <span class="sd">Created: Tuesday, 20th April 2021 04:19:35 pm</span>
 
-<span class="sd">Last Modified: Wednesday, 9th February 2022 10:47:46 am</span>
+<span class="sd">Last Modified: Wednesday, 23rd March 2022 09:11:17 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
@@ -311,7 +311,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;Corrected for Amplitude Decay&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.correct_stretch"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.correct_stretch">[docs]</a>    <span class="k">def</span> <span class="nf">correct_stretch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dv</span><span class="p">:</span> <span class="n">DV</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.correct_stretch"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.correct_stretch">[docs]</a>    <span class="k">def</span> <span class="nf">correct_stretch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dv</span><span class="p">:</span> <span class="n">DV</span><span class="p">,</span> <span class="n">single_sided</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Correct stretching of correlation matrix</span>
 
@@ -322,12 +322,15 @@
 
 <span class="sd">        :param dv: Velocity Change object</span>
 <span class="sd">        :type dv: DV</span>
+<span class="sd">        :param single_sided: set True for active source experiments where</span>
+<span class="sd">            the first sample is the trigger time. Defaults to False</span>
+<span class="sd">        type single_sided: bool, optional</span>
 
 <span class="sd">        ..note:: This action is performed **in-place**. If you would like to</span>
 <span class="sd">            keep the original data use</span>
 <span class="sd">            :func:`~seismic.correlate.stream.CorrelationBulk.copy()`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">time_stretch_apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span><span class="o">*</span><span class="n">dv</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">time_stretch_apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span><span class="o">*</span><span class="n">dv</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">single_sided</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;Applied time stretch&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
@@ -434,7 +437,7 @@
 <span class="sd">        the reference will be extracted with half increment overlap in each</span>
 <span class="sd">        direction.</span>
 
-<span class="sd">        Extract a correlation trace from the that best represents the</span>
+<span class="sd">        Extract a correlation trace from the one that best represents the</span>
 <span class="sd">        correlation matrix. ``Method`` decides about method to extract the</span>
 <span class="sd">        trace. The following possibilities are available</span>
 

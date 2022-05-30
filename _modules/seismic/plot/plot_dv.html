@@ -185,15 +185,17 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Friday, 16th July 2021 02:30:02 pm</span>
-<span class="sd">Last Modified: Wednesday, 16th March 2022 01:08:14 pm</span>
+<span class="sd">Last Modified: Monday, 11th April 2022 11:03:30 am</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
 <span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="nn">mpl</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">UTCDateTime</span>
 
 <span class="kn">from</span> <span class="nn">seismic.plot.plot_utils</span> <span class="kn">import</span> <span class="n">set_mpl_params</span>
 
@@ -202,7 +204,8 @@
     <span class="n">dv</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">figure_file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mark_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">normalize_simmat</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">sim_mat_Clim</span><span class="o">=</span><span class="p">[],</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">72</span><span class="p">,</span>
     <span class="n">ylim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">xlim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">plot_std</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">plot_scatter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">return_ax</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">]]:</span>
     <span class="sd">&quot;&quot;&quot; Plot the &quot;extended&quot; dv dictionary</span>
 
 <span class="sd">    This function is thought to plot the result of the velocity change estimate</span>
@@ -248,6 +251,10 @@
 <span class="sd">        similarity matrix image</span>
 <span class="sd">    :param ylim: Limits for the stretch axis. Defaults to None</span>
 <span class="sd">    :type ylim: Tuple[float, float], optional</span>
+<span class="sd">    :param return_ax: Return plt.figure and list of axes. Defaults to False.</span>
+<span class="sd">        This overwrites any choice to save the figure.</span>
+<span class="sd">    :type return_ax: bool, optional</span>
+<span class="sd">    :returns: If `return_ax` is set to True it returns fig and axes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">set_mpl_params</span><span class="p">()</span>
 
@@ -296,13 +303,17 @@
     <span class="k">if</span> <span class="p">(</span><span class="n">value_type</span> <span class="o">==</span> <span class="s1">&#39;stretch&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;single_ref&#39;</span><span class="p">):</span>
 
         <span class="n">tit</span> <span class="o">=</span> <span class="s2">&quot;Single reference dv/v&quot;</span>
-        <span class="n">dv_tick_delta</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">stretch_vect</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># 0.01</span>
+        <span class="c1"># Find order of magnitude of max strech</span>
+        <span class="n">oom</span> <span class="o">=</span> <span class="o">-</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">stretch_vect</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">/</span><span class="mi">5</span><span class="p">)))</span>
+        <span class="n">dv_tick_delta</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">stretch_vect</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="n">oom</span><span class="p">)</span>
         <span class="n">dv_y_label</span> <span class="o">=</span> <span class="s2">&quot;dv/v&quot;</span>
         <span class="c1"># plotting velocity requires to flip the stretching axis</span>
     <span class="k">elif</span> <span class="p">(</span><span class="n">value_type</span> <span class="o">==</span> <span class="s1">&#39;stretch&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;multi_ref&#39;</span><span class="p">):</span>
 
+        <span class="c1"># Find order of magnitude of max strech</span>
+        <span class="n">oom</span> <span class="o">=</span> <span class="o">-</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">stretch_vect</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">/</span><span class="mi">5</span><span class="p">)))</span>
         <span class="n">tit</span> <span class="o">=</span> <span class="s2">&quot;Multi reference dv/v&quot;</span>
-        <span class="n">dv_tick_delta</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">stretch_vect</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># 0.01</span>
+        <span class="n">dv_tick_delta</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">stretch_vect</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="n">oom</span><span class="p">)</span>
         <span class="n">dv_y_label</span> <span class="o">=</span> <span class="s2">&quot;dv/v&quot;</span>
         <span class="c1"># plotting velocity requires to flip the stretching axis</span>
     <span class="k">elif</span> <span class="p">(</span><span class="n">value_type</span> <span class="o">==</span> <span class="s1">&#39;shift&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;time_shift&#39;</span><span class="p">):</span>
@@ -316,7 +327,7 @@
 
     <span class="n">f</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;n_stat&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">plot_std</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;n_stat&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">plot_scatter</span><span class="p">:</span>
         <span class="n">gs</span> <span class="o">=</span> <span class="n">mpl</span><span class="o">.</span><span class="n">gridspec</span><span class="o">.</span><span class="n">GridSpec</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">height_ratios</span><span class="o">=</span><span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">gs</span> <span class="o">=</span> <span class="n">mpl</span><span class="o">.</span><span class="n">gridspec</span><span class="o">.</span><span class="n">GridSpec</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">height_ratios</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
@@ -328,9 +339,7 @@
 
     <span class="c1"># plotting value is way easier now</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="o">-</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">],</span> <span class="s1">&#39;b.&#39;</span><span class="p">)</span>
-    <span class="c1"># if plot_std:</span>
-    <span class="c1">#     plt.plot(-dv[&#39;value&#39;]+dv[&#39;std_val&#39;], &#39;k--&#39;, alpha=.3)</span>
-    <span class="c1">#     plt.plot(-dv[&#39;value&#39;]-dv[&#39;std_val&#39;], &#39;k--&#39;, alpha=.3)</span>
+
     <span class="c1"># Set extent so we can treat the axes properly (mainly y)</span>
     <span class="n">imh</span><span class="o">.</span><span class="n">set_extent</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">sim_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">stretch_vect</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">stretch_vect</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
 
@@ -373,7 +382,26 @@
     <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">dv_y_label</span><span class="p">)</span>
 
     <span class="n">ax2</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rtime</span><span class="p">,</span> <span class="o">-</span><span class="n">dt</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">plot_scatter</span><span class="p">:</span>
+        <span class="c1"># reshape so we can plot a histogram</span>
+        <span class="n">histt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">t</span><span class="o">.</span><span class="n">timestamp</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">][</span><span class="s1">&#39;corr_start&#39;</span><span class="p">]])</span>
+        <span class="n">histt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">histt</span><span class="p">,</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;stretches&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">histcorrs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;corrs&#39;</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">histstretches</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;stretches&#39;</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">n_bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;sim_mat&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span><span class="o">//</span><span class="mi">10</span>
+        <span class="c1"># remove nans</span>
+        <span class="n">nanmask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">histcorrs</span><span class="p">)</span>
+        <span class="n">histt</span> <span class="o">=</span> <span class="n">histt</span><span class="p">[</span><span class="n">nanmask</span><span class="p">]</span>
+        <span class="n">histcorrs</span> <span class="o">=</span> <span class="n">histcorrs</span><span class="p">[</span><span class="n">nanmask</span><span class="p">]</span>
+        <span class="n">histstretches</span> <span class="o">=</span> <span class="n">histstretches</span><span class="p">[</span><span class="n">nanmask</span><span class="p">]</span>
+        <span class="c1"># create histograms</span>
+        <span class="n">H_c</span><span class="p">,</span> <span class="n">xedges_c</span><span class="p">,</span> <span class="n">yedges_c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram2d</span><span class="p">(</span><span class="n">histt</span><span class="p">,</span> <span class="n">histcorrs</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">n_bins</span><span class="p">)</span>
+        <span class="n">H_v</span><span class="p">,</span> <span class="n">xedges_v</span><span class="p">,</span> <span class="n">yedges_v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram2d</span><span class="p">(</span>
+            <span class="n">histt</span><span class="p">,</span> <span class="n">histstretches</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">n_bins</span><span class="p">)</span>
+        <span class="n">xedges_c</span> <span class="o">=</span> <span class="p">[</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">xe</span><span class="p">)</span><span class="o">.</span><span class="n">datetime</span> <span class="k">for</span> <span class="n">xe</span> <span class="ow">in</span> <span class="n">xedges_c</span><span class="p">]</span>
+        <span class="n">xedges_v</span> <span class="o">=</span> <span class="p">[</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">xe</span><span class="p">)</span><span class="o">.</span><span class="n">datetime</span> <span class="k">for</span> <span class="n">xe</span> <span class="ow">in</span> <span class="n">xedges_v</span><span class="p">]</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">pcolor</span><span class="p">(</span><span class="n">xedges_v</span><span class="p">,</span> <span class="n">yedges_v</span><span class="p">,</span> <span class="n">H_v</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;binary&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rtime</span><span class="p">,</span> <span class="o">-</span><span class="n">dt</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
     <span class="k">if</span> <span class="s1">&#39;model_value&#39;</span> <span class="ow">in</span> <span class="n">dv</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rtime</span><span class="p">,</span> <span class="o">-</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;model_value&#39;</span><span class="p">],</span> <span class="s1">&#39;g.&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">xlim</span><span class="p">:</span>
@@ -387,12 +415,6 @@
     <span class="k">if</span> <span class="n">mark_time</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
             <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">rtime</span> <span class="o">&lt;</span> <span class="n">mark_time</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">rtime</span> <span class="o">&gt;</span> <span class="n">mark_time</span><span class="p">)):</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">mark_time</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">plot_std</span><span class="p">:</span>
-        <span class="c1"># plt.plot(rtime, corr-dv[&#39;std_corr&#39;], &#39;k--&#39;, alpha=.3)</span>
-        <span class="c1"># plt.plot(rtime, corr+dv[&#39;std_corr&#39;], &#39;k--&#39;, alpha=.3)</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span>
-            <span class="n">rtime</span><span class="p">,</span> <span class="o">-</span><span class="n">dt</span><span class="o">-</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;std_val&#39;</span><span class="p">],</span> <span class="o">-</span><span class="n">dt</span><span class="o">+</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;std_val&#39;</span><span class="p">],</span>
-            <span class="n">interpolate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">.3</span><span class="p">)</span>
     <span class="n">ax2</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
     <span class="n">ax2</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_position</span><span class="p">(</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
     <span class="n">ax2</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_rotation</span><span class="p">(</span><span class="mi">270</span><span class="p">)</span>
@@ -404,13 +426,9 @@
     <span class="n">ax2</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([])</span>
 
     <span class="n">ax3</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rtime</span><span class="p">,</span> <span class="n">corr</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">plot_std</span><span class="p">:</span>
-        <span class="c1"># plt.plot(rtime, corr-dv[&#39;std_corr&#39;], &#39;k--&#39;, alpha=.3)</span>
-        <span class="c1"># plt.plot(rtime, corr+dv[&#39;std_corr&#39;], &#39;k--&#39;, alpha=.3)</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span>
-            <span class="n">rtime</span><span class="p">,</span> <span class="n">corr</span><span class="o">-</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;std_corr&#39;</span><span class="p">],</span> <span class="n">corr</span><span class="o">+</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;std_corr&#39;</span><span class="p">],</span>
-            <span class="n">interpolate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">.3</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">plot_scatter</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">pcolor</span><span class="p">(</span><span class="n">xedges_c</span><span class="p">,</span> <span class="n">yedges_c</span><span class="p">,</span> <span class="n">H_c</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;binary&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rtime</span><span class="p">,</span> <span class="n">corr</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
     <span class="k">if</span> <span class="s1">&#39;model_corr&#39;</span> <span class="ow">in</span> <span class="n">dv</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rtime</span><span class="p">,</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;model_corr&#39;</span><span class="p">],</span> <span class="s1">&#39;g.&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">xlim</span><span class="p">:</span>
@@ -427,11 +445,12 @@
     <span class="n">ax3</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;major&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">ax3</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">MultipleLocator</span><span class="p">(</span><span class="mf">0.2</span><span class="p">))</span>
     <span class="c1"># Plot number of stations</span>
-    <span class="k">if</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;n_stat&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">plot_std</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;n_stat&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">plot_scatter</span><span class="p">:</span>
         <span class="n">ax4</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span>
             <span class="n">rtime</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;n_stat&#39;</span><span class="p">],</span> <span class="n">interpolate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">ax4</span><span class="o">.</span><span class="n">get_xticklabels</span><span class="p">(),</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
+        <span class="n">ax3</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([])</span>
         <span class="n">ax4</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_position</span><span class="p">(</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
         <span class="n">ax4</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;N&quot;</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;n_stat&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">*</span><span class="mf">1.1</span><span class="p">))</span>
@@ -440,15 +459,20 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">([</span><span class="n">rtime</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">rtime</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
     <span class="k">else</span><span class="p">:</span>
+        <span class="n">ax4</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">ax3</span><span class="o">.</span><span class="n">get_xticklabels</span><span class="p">(),</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
 
     <span class="n">plt</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">hspace</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">wspace</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-
+    <span class="k">if</span> <span class="n">return_ax</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">f</span><span class="p">,</span> <span class="p">[</span><span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">,</span> <span class="n">ax3</span><span class="p">,</span> <span class="n">ax4</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">figure_file_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;saving to </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">figure_file_name</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">figure_file_name</span> <span class="o">+</span> <span class="s1">&#39;_change.png&#39;</span><span class="p">),</span>
+        <span class="k">if</span> <span class="n">figure_file_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span>
+                <span class="s1">&#39;png&#39;</span><span class="p">,</span> <span class="s1">&#39;svg&#39;</span><span class="p">,</span> <span class="s1">&#39;pdf&#39;</span><span class="p">,</span> <span class="s1">&#39;jpg&#39;</span><span class="p">]:</span>
+            <span class="n">figure_file_name</span> <span class="o">+=</span> <span class="s1">&#39;.png&#39;</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">figure_file_name</span><span class="p">),</span>
                   <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 </pre></div>
