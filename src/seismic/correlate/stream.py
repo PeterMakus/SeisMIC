@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Wednesday, 23rd March 2022 09:11:17 pm
+Last Modified: Wednesday, 8th June 2022 03:57:21 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -315,6 +315,42 @@ class CorrBulk(object):
         self.ref_trc = ref_trcs
         return ref_trcs
 
+    def find_clock_shift(
+        self, ref_trc: np.ndarray = None, tw: List[np.ndarray] = None,
+        shift_range: int = 10, shift_steps: int = 101,
+            sides: str = 'both', return_sim_mat: bool = False) -> DV:
+        """
+        Compute the shift of correlations as they can occur due to a clock
+        drift.
+
+        :param ref_trc: Reference trace to use for the computation,
+            defaults to None. Will extract a single trace if = None.
+        :type ref_trc: np.ndarray, optional
+        :param tw: Lapse Time window to use for the computation,
+            defaults to None
+        :type tw: List[np.ndarray], optional
+        :param shift_range: Maximum shift value to test
+            (in n samples not seconds!). Defaults to 10.
+        :type shift_range: int, optional
+        :param shift_steps: Number of shift steps, defaults to 101
+        :type shift_steps: int, optional
+        :param sides: Which sides to use. Can be 'right',
+            or 'both'. Defaults to 'both'
+        :type sides: str, optional
+        :param return_sim_mat: Return the similarity matrix, defaults to False
+        :type return_sim_mat: bool, optional
+        :return: The shift as :class:`~seismic.monitor.dv.DV` object.
+        :rtype: DV
+        """
+        if ref_trc is None:
+            ref_trc = self.ref_trc
+        dv_dict = pcp.corr_mat_shift(
+            self.data, self.stats, ref_trc, tw, shift_range, shift_steps,
+            sides, return_sim_mat)
+        if not return_sim_mat:
+            dv_dict['sim_mat'] = np.array([])
+        return DV(**dv_dict)
+
     def mirror(self):
         """
         Average the causal and acausal (i.e., right and left) parts of the
@@ -417,7 +453,7 @@ class CorrBulk(object):
 
     def stretch(
         self, ref_trc: np.ndarray = None, tw: List[np.ndarray] = None,
-        stretch_range: float = 0.1, stretch_steps: int = 100,
+        stretch_range: float = 0.1, stretch_steps: int = 101,
             sides: str = 'both', return_sim_mat: bool = False) -> DV:
         """
         Compute the velocity change with the stretching method
@@ -431,7 +467,7 @@ class CorrBulk(object):
         :type tw: List[np.ndarray], optional
         :param stretch_range: Maximum stretch value to test, defaults to 0.1
         :type stretch_range: float, optional
-        :param stretch_steps: Number of stretch steps, defaults to 100
+        :param stretch_steps: Number of stretch steps, defaults to 101
         :type stretch_steps: int, optional
         :param sides: Which sides to use. Can be 'left', 'right' (or 'single'),
             or 'both'. Defaults to 'both'
@@ -446,6 +482,8 @@ class CorrBulk(object):
         dv_dict = pcp.corr_mat_stretch(
             self.data, self.stats, ref_trc, tw, stretch_range, stretch_steps,
             sides, return_sim_mat)
+        if not return_sim_mat:
+            dv_dict['sim_mat'] = np.array([])
         return DV(**dv_dict)
 
     def save(self, path: str):

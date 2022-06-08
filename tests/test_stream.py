@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Wednesday, 23rd March 2022 09:13:02 pm
+Last Modified: Wednesday, 8th June 2022 03:58:41 pm
 '''
 
 import unittest
@@ -262,6 +262,32 @@ class TestCorrBulk(unittest.TestCase):
             cb.stats.processing_bulk)
 
     @mock.patch('seismic.correlate.stream.DV')
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_shift')
+    def test_shift(self, shift_mock, dv_mock):
+        shift_mock.return_value = {'test': 0}
+        self.cb.find_clock_shift(
+            np.zeros((25,)), [1, 2, 3], 0.5, 105, 'bla', True)
+        shift_mock.assert_called_once_with(
+            mock.ANY, self.cb.stats, mock.ANY, [1, 2, 3], 0.5, 105, 'bla',
+            True)
+        np.testing.assert_array_equal(
+            shift_mock.call_args[0][2], np.zeros((25,)))
+        dv_mock.assert_called_once_with(test=0)
+
+    @mock.patch('seismic.correlate.stream.DV')
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_shift')
+    def test_shift2(self, shift_mock, dv_mock):
+        shift_mock.return_value = {'test': 0}
+        self.cb.ref_trc = 'ha_funny!'
+        self.cb.find_clock_shift()
+        shift_mock.assert_called_once_with(
+            mock.ANY, self.cb.stats, 'ha_funny!', None, 10, 101, 'both',
+            False)
+        np.testing.assert_array_equal(
+            shift_mock.call_args[0][0], self.cb.data)
+        dv_mock.assert_called_once_with(test=0, sim_mat=mock.ANY)
+
+    @mock.patch('seismic.correlate.stream.DV')
     @mock.patch('seismic.correlate.stream.pcp.corr_mat_stretch')
     def test_stretch(self, stretch_mock, dv_mock):
         stretch_mock.return_value = {'test': 0}
@@ -280,11 +306,11 @@ class TestCorrBulk(unittest.TestCase):
         self.cb.ref_trc = 'ha_funny!'
         self.cb.stretch()
         stretch_mock.assert_called_once_with(
-            mock.ANY, self.cb.stats, 'ha_funny!', None, 0.1, 100, 'both',
+            mock.ANY, self.cb.stats, 'ha_funny!', None, 0.1, 101, 'both',
             False)
         np.testing.assert_array_equal(
             stretch_mock.call_args[0][0], self.cb.data)
-        dv_mock.assert_called_once_with(test=0)
+        dv_mock.assert_called_once_with(test=0, sim_mat=mock.ANY)
 
     @mock.patch('seismic.correlate.stream.m3ut.save_header_to_np_array')
     @mock.patch('seismic.correlate.stream.np.savez_compressed')

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 24th June 2021 02:23:40 pm
-Last Modified: Tuesday, 27th July 2021 10:56:28 am
+Last Modified: Wednesday, 8th June 2022 03:35:36 pm
 '''
 
 import unittest
@@ -75,6 +75,35 @@ class TestTimeStretchEstimate(unittest.TestCase):
         dv = sm.time_stretch_estimate(corr[:-1, :], ref, stretch_steps=101)
         self.assertTrue(
             np.allclose(dv['value'], -np.flip(stretch[:-1]), atol=0.004))
+
+
+class TestTimeShiftEstimate(unittest.TestCase):
+    def setUp(self):
+        self.n = 1000
+        self.ref = np.cos(np.linspace(0, 40*np.pi, self.n, endpoint=True))
+
+    def test_result(self):
+        shift = np.arange(0, 10, 1)
+        # number of points for new
+        corr = np.empty((len(shift), self.n))
+        for ii in range(corr.shape[0]):
+            corr[ii] = np.roll(self.ref, ii)
+        dv = sm.time_shift_estimate(corr, self.ref, shift_steps=21)
+        np.testing.assert_array_equal(dv['value'], shift)
+
+    def test_no_stretch(self):
+        corr = np.tile(self.ref, (4, 1))
+        dv = sm.time_shift_estimate(corr, self.ref, shift_steps=101)
+        np.testing.assert_array_equal(dv['value'], [0, 0, 0, 0])
+
+    def test_neg_shift(self):
+        shift = -np.arange(0, 10, 1)
+        # number of points for new
+        corr = np.empty((len(shift), self.n))
+        for ii in range(corr.shape[0]):
+            corr[ii] = np.roll(self.ref, -ii)
+        dv = sm.time_shift_estimate(corr, self.ref, shift_steps=21)
+        np.testing.assert_array_equal(dv['value'], shift)
 
 
 if __name__ == "__main__":

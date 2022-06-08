@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Monday, 17th January 2022 03:57:21 pm
+Last Modified: Wednesday, 8th June 2022 02:48:22 pm
 '''
 from typing import List, Tuple
 
@@ -419,7 +419,10 @@ def time_stretch_estimate(
     # generate time window if not given (use the full length of the correlation
     # trace)
     if tw is None:
-        tw = time_windows_creation([0], [int(np.floor(mat.shape[1] / 2.))])
+        if sides == 'single':
+            tw = time_windows_creation([0], [mat.shape[1]])
+        else:
+            tw = time_windows_creation([0], [int(np.floor(mat.shape[1] / 2.))])
 
     # taper and extend the reference trace to avoid interpolation
     # artefacts at the ends of the trace
@@ -1020,22 +1023,25 @@ def time_shift_estimate(
             tw = time_windows_creation(
                 [0], [int(np.floor(mat.shape[1] / 2.))])
 
-    # taper and extend the reference trace to avoid interpolation
-    # artefacts at the ends of the trace
-    taper = cosine_taper(len(ref_trc), 0.05)
-    ref_trc *= taper
+    # # taper and extend the reference trace to avoid interpolation
+    # # artefacts at the ends of the trace
+    # taper = cosine_taper(len(ref_trc), 0.05)
+    # ref_trc *= taper
 
     # different values of shifting to be tested
     shifts = np.linspace(-shift_range, shift_range, shift_steps)
 
     # time axis
-    time_idx = np.arange(len(ref_trc))
+    if single_sided:
+        time_idx = np.arange(len(ref_trc)) - (len(ref_trc) - 1.) / 2.
+    else:
+        time_idx = np.arange(len(ref_trc))
 
     # create the array to hold the shifted traces
     ref_shift = np.zeros((len(shifts), len(ref_trc)))
 
     # create a spline object for the reference trace
-    ref_tr_spline = UnivariateSpline(time_idx, ref_trc, s=0)
+    ref_tr_spline = UnivariateSpline(time_idx, ref_trc, s=0, ext='const')
 
     # evaluate the spline object at different points and put in the prepared
     # array
@@ -1052,36 +1058,6 @@ def time_shift_estimate(
         sim_mat = vdict['sim_mat']
 
     else:
-        """
-        # estimate shifts for causal and acausal part individually and avarage
-        # to avoid apparent shift from velocity change and asymmetric
-        # amplitudes
-        lvdict = velocity_change_estimete(mat, tw, ref_shift,
-                                          shifts,
-                                          sides='left',
-                                          return_sim_mat=True,
-                                          remove_nans=remove_nans)
-        lcorr = lvdict['corr']
-        lshift = lvdict['value']
-        lsim_mat = lvdict['sim_mat']
-
-        rvdict = velocity_change_estimete(mat, tw, ref_shift,
-                                          shifts,
-                                          sides='right',
-                                          return_sim_mat=True,
-                                          remove_nans=remove_nans)
-        rcorr = rvdict['corr']
-        rshift = rvdict['value']
-        rsim_mat = rvdict['sim_mat']
-
-        shift = np.zeros_like(lshift)
-        corr = np.zeros_like(lshift)
-        sim_mat = np.zeros_like(lsim_mat)
-
-        corr = (lcorr + rcorr) / 2.
-        shift = (lshift + rshift) / 2.
-        sim_mat = (lsim_mat + rsim_mat) / 2.
-        """
         dtdict = velocity_change_estimate(
             mat, tw, ref_shift, shifts, sides='both', return_sim_mat=True,
             remove_nans=remove_nans)

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 25th June 2021 09:33:09 am
-Last Modified: Friday, 3rd December 2021 09:55:21 am
+Last Modified: Wednesday, 8th June 2022 03:43:02 pm
 '''
 
 import unittest
@@ -528,6 +528,39 @@ class TestCorrMatStretch(unittest.TestCase):
         # Flips the result as it assumes 0 lag to be on index 0
         self.assertTrue(np.allclose(
             [0, 0.04], list(dv['value'])))
+
+
+class TestCorrMatShift(unittest.TestCase):
+    def setUp(self):
+        reftr = np.zeros(101)
+        reftr[np.array([25, -25])] = 1
+        self.reftr = reftr
+        self.stats = CorrStats({
+            'start_lag': -50,
+            'sampling_rate': 1,
+            'corr_start': [UTCDateTime(ii) for ii in range(2)],
+            'corr_end': [UTCDateTime(10+ii) for ii in range(2)]
+        })
+
+    def test_shift_0(self):
+        data = np.tile(self.reftr, (2, 1))
+        dv = pcp.corr_mat_shift(
+            data, self.stats, self.reftr, shift_steps=21)
+        self.assertListEqual([0, 0], list(dv['value']))
+
+    def test_shift(self):
+        s = np.roll(self.reftr, 1)
+        data = np.vstack((self.reftr, s))
+        dv = pcp.corr_mat_shift(
+            data, self.stats, self.reftr, shift_steps=21)
+        np.testing.assert_array_equal([0, 1], dv['value'])
+
+    def test_shift_single(self):
+        s = np.roll(self.reftr, 1)
+        data = np.vstack((self.reftr, s))
+        dv = pcp.corr_mat_shift(
+            data, self.stats, self.reftr, shift_steps=21)
+        np.testing.assert_array_equal([0, 1], dv['value'])
 
 
 if __name__ == "__main__":
