@@ -10,8 +10,9 @@ SeisMIC (**Seismological Monitoring using Interferometric Concepts**) is a pytho
 + Plotting tools for correlations
 + Database management of ambient seismic noise correlations
 + Adaptable postprocessing of correlations
-+ Computation of velocity change time series
-+ Plotting of dv time-series
++ Computation of velocity change (dv/v) time series
++ Postprocessing of dv/v time series
++ Plotting of dv/v time-series
 
 **SeisMIC** handles correlations and data in an [ObsPy](https://github.com/obspy/obspy)-like manner.
 
