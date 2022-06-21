@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Wednesday, 8th June 2022 03:53:38 pm
+Last Modified: Tuesday, 21st June 2022 05:06:49 pm
 '''
 
 from typing import List, Tuple
@@ -1049,7 +1049,7 @@ def corr_mat_shift(
         stats['corr_start'] = np.concatenate((stats['corr_start'], reft), 0)
 
     # trim the marices
-    if sides == "single":
+    if sides == "single" or sides == 'right':
         # extract the time>0 part of the matrix
         data, stats = corr_mat_trim(data, stats, 0, dte)
     else:
@@ -1069,7 +1069,7 @@ def corr_mat_shift(
     # set sides
     if sides == 'both':
         ss = False
-    elif sides == 'right':
+    elif sides == 'right' or sides == 'single':
         ss = True
     else:
         raise ValueError(
