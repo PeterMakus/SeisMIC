@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Tuesday, 26th April 2022 04:41:23 pm
+Last Modified: Monday, 4th July 2022 02:10:12 pm
 '''
 import os
 import warnings
@@ -100,7 +100,7 @@ def plot_cst(
     ylimits: list or tuple or None = None, scalingfactor: float = 2.0,
     ax: plt.Axes = None, linewidth: float = 0.25,
     outputfile: str or None = None, title: str or None = None,
-        type: str = 'heatmap'):
+        type: str = 'heatmap', cmap: str = 'inferno'):
     """
     Creates a section or heat plot of all correlations in this stream.
 
@@ -128,7 +128,10 @@ def plot_cst(
     :type title: str, optional
     :param type: can be set to 'heat' for a heatmap or 'section' for
         a wiggle type plot. Default to `heat`
-    :type type: str
+    :type type: str, optional
+    :param cmap: Decides about colormap if type == 'heatmap'.
+        Defaults to 'inferno'.
+    :type cmap: str, optional
     :return: returns the axes object.
     :rtype: `matplotlib.pyplot.Axes`
 
@@ -154,7 +157,7 @@ def plot_cst(
         if type == 'section':
             times = sect_plot_corr_start(cst, ax, scalingfactor, linewidth)
         elif type == 'heatmap':
-            times = heat_plot_corr_start(cst, ax)
+            times = heat_plot_corr_start(cst, ax, cmap=cmap)
         else:
             raise NotImplementedError(
                 'Unknown or not implemented plot type %s.' % type)
@@ -179,7 +182,7 @@ def plot_cst(
     else:
         plt.xlim(timelimits)
 
-    plt.xlabel(r"Lag Time [s]")
+    plt.xlabel(r"$\tau$ [s]")
 
     plt.title(title)
 
@@ -210,7 +213,7 @@ def sect_plot_corr_start(
     return times
 
 
-def heat_plot_corr_start(cst: Stream, ax: plt.Axes):
+def heat_plot_corr_start(cst: Stream, ax: plt.Axes, cmap: str):
     data = np.empty((cst.count(), cst[0].stats.npts))
     # y grid
     y = []
@@ -218,8 +221,8 @@ def heat_plot_corr_start(cst: Stream, ax: plt.Axes):
         data[ii, :] = ctr.data
         y.append(ctr.stats['corr_start'].datetime)
         times = ctr.times()
-    ds = plt.pcolormesh(times, np.array(y), data, shading='auto')
-    plt.colorbar(ds)
+    ds = plt.pcolormesh(times, np.array(y), data, shading='auto', cmap=cmap)
+    plt.colorbar(ds, label='correlation coefficient', shrink=.6, orientation='horizontal')
     ax.yaxis.set_major_locator(mpl.dates.AutoDateLocator())
     ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h'))
     ax.invert_yaxis()

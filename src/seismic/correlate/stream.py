@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Wednesday, 8th June 2022 03:57:21 pm
+Last Modified: Monday, 4th July 2022 11:23:59 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -967,7 +967,8 @@ class CorrStream(Stream):
         timelimits: Tuple[float, float] = None,
         ylimits: Tuple[float, float] = None, scalingfactor: float = None,
         ax: plt.Axes = None, linewidth: float = 0.25,
-            outputfile: str = None, title: str = None, type: str = 'heatmap'):
+        outputfile: str = None, title: str = None, type: str = 'heatmap',
+            cmap: str = 'inferno'):
         """
         Creates a section plot of all correlations in this stream.
 
@@ -994,6 +995,9 @@ class CorrStream(Stream):
         :param type: Type of plot. Either `'heatmap'` for a heat plot or
             `'section'` for a wiggle type plot. Defaults to heatmap.
         :type title: str, optional
+        :param cmap: Decides about colormap if type == 'heatmap'.
+        Defaults to 'inferno'.
+        :type cmap: str, optional
 
         .. note:: If you would like to plot a subset of this stream, use
             :func:`~seismic.correlate.stream.CorrStream.select`.
@@ -1004,7 +1008,7 @@ class CorrStream(Stream):
         ax = plot_cst(
             self, sort_by=sort_by, timelimits=timelimits, ylimits=ylimits,
             scalingfactor=scalingfactor, ax=ax, linewidth=linewidth,
-            outputfile=outputfile, title=title, type=type)
+            outputfile=outputfile, title=title, type=type, cmap=cmap)
         return ax
 
     def _to_matrix(
