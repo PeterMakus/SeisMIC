@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Monday, 18th July 2022 10:31:45 am
+Last Modified: Monday, 18th July 2022 11:52:50 am
 '''
 from multiprocessing.sharedctypes import Value
 from typing import Iterator, List, Tuple
@@ -25,7 +25,8 @@ from obspy.core import Stats
 from seismic.utils import miic_utils as m3ut
 from seismic.plot.plot_correlation import plot_cst, plot_ctr
 import seismic.monitor.post_corr_process as pcp
-from seismic.monitor.stretch_mod import time_shift_apply, time_stretch_apply, wfc_multi_reftr
+from seismic.monitor.stretch_mod import time_shift_apply, time_stretch_apply,\
+    wfc_multi_reftr
 from seismic.monitor.dv import DV
 from seismic.monitor.wfc import WFC
 from seismic.correlate.stats import CorrStats
