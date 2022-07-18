@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 24th June 2021 02:23:40 pm
-Last Modified: Wednesday, 8th June 2022 03:35:36 pm
+Last Modified: Monday, 18th July 2022 11:45:45 am
 '''
 
 import unittest
@@ -75,6 +75,53 @@ class TestTimeStretchEstimate(unittest.TestCase):
         dv = sm.time_stretch_estimate(corr[:-1, :], ref, stretch_steps=101)
         self.assertTrue(
             np.allclose(dv['value'], -np.flip(stretch[:-1]), atol=0.004))
+
+
+class TestTimeShiftApply(unittest.TestCase):
+    def test_result(self):
+        shift = (np.random.random()*10) - 5
+        shifta = np.array([shift])
+        # number of points for new
+        corr = np.arange(100, dtype=np.float64)
+        corr_shift = sm.time_shift_apply(corr, shifta, single_sided=True)
+        shift = int(np.ceil(np.abs(shift))*np.sign(shift))
+        # Zeros on edges
+        if shift > 0:
+            self.assertTrue(np.all(np.isnan(corr_shift[0][:shift])))
+            np.testing.assert_equal(
+                np.floor(corr_shift[0][shift:]), corr[:-shift])
+        else:
+            self.assertTrue(np.all(np.isnan(corr_shift[0][shift:])))
+            np.testing.assert_equal(
+                np.floor(corr_shift[0][:shift]), corr[-shift-1:-1])
+
+    def test_result_two_sided(self):
+        shift = (np.random.random()*10) - 5
+        shifta = np.array([shift])
+        # number of points for new
+        corr = np.arange(-50, 51, dtype=np.float64)
+        corr_shift = sm.time_shift_apply(corr, shifta, single_sided=False)
+        shift = int(np.ceil(np.abs(shift))*np.sign(shift))
+
+        # Zeros on edges
+        if shift > 0:
+            self.assertTrue(np.all(np.isnan(corr_shift[0][:shift])))
+            np.testing.assert_equal(
+                np.floor(corr_shift[0][shift:]), corr[:-shift])
+        else:
+            self.assertTrue(np.all(np.isnan(corr_shift[0][shift:])))
+            np.testing.assert_equal(
+                np.floor(corr_shift[0][:shift]), corr[-shift-1:-1])
+
+    def test_result_inconstant(self):
+        shift = np.atleast_2d(np.concatenate((np.zeros(50), -np.ones(50))))
+        # number of points for new
+        corr = np.arange(100, dtype=np.float64)
+        corr_shift = sm.time_shift_apply(corr, shift, single_sided=True)
+        # Zeros on edges
+        np.testing.assert_equal(corr_shift[0][:50], corr[:50])
+        np.testing.assert_equal(corr_shift[0][50:-1], corr[51:])
+        self.assertTrue(np.isnan(corr_shift[0][-1]))
 
 
 class TestTimeShiftEstimate(unittest.TestCase):
