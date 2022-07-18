@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Monday, 18th July 2022 11:53:09 am
+Last Modified: Monday, 18th July 2022 01:00:15 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -161,8 +161,8 @@ class CorrBulk(object):
         if (shift is None and dv is None) or (
                 shift is not None and dv is not None):
             raise ValueError(
-                'Provide either shift values or a DV object containing time ' +
-                'shift estimates')
+                'Provide either shift values or a DV object containing time '
+                + 'shift estimates')
         if dv is not None:
             if dv.value_type != 'shift':
                 raise ValueError('dv values have to be of type "shift".')

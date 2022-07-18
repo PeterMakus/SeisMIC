@@ -7,10 +7,9 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Monday, 18th July 2022 10:33:30 am
+Last Modified: Monday, 18th July 2022 01:00:24 pm
 '''
 
-from multiprocessing.sharedctypes import Value
 import unittest
 from unittest import mock
 import warnings
