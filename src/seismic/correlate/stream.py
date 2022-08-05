@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Monday, 18th July 2022 01:00:15 pm
+Last Modified: Friday, 5th August 2022 01:02:51 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -166,7 +166,7 @@ class CorrBulk(object):
         if dv is not None:
             if dv.value_type != 'shift':
                 raise ValueError('dv values have to be of type "shift".')
-            shift = dv.value
+            shift = -dv.value
         self.data = time_shift_apply(
             self.data, shift, single_sided=single_sided)
         self.stats.processing_bulk += ['Applied time shift']

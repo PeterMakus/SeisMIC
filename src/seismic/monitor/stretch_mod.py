@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Monday, 18th July 2022 11:22:27 am
+Last Modified: Friday, 5th August 2022 12:52:52 pm
 '''
 from typing import List, Tuple
 
@@ -1128,7 +1128,7 @@ def time_shift_apply(
         # s = UnivariateSpline(time_idx, ctr, s=2, ext='zeros')
         # shifted_mat[ii, :] = s(time_idx - delta)
         s = interp1d(
-            time_idx, ctr, kind='linear', bounds_error=False)
+            time_idx, ctr, kind='linear', bounds_error=False, fill_value=0)
         shifted_mat[ii, :] = s(time_idx - delta)
 
     return shifted_mat

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 24th June 2021 02:23:40 pm
-Last Modified: Monday, 18th July 2022 11:45:45 am
+Last Modified: Friday, 5th August 2022 01:01:19 pm
 '''
 
 import unittest
@@ -87,11 +87,11 @@ class TestTimeShiftApply(unittest.TestCase):
         shift = int(np.ceil(np.abs(shift))*np.sign(shift))
         # Zeros on edges
         if shift > 0:
-            self.assertTrue(np.all(np.isnan(corr_shift[0][:shift])))
+            np.testing.assert_array_equal(corr_shift[0][:shift], 0)
             np.testing.assert_equal(
                 np.floor(corr_shift[0][shift:]), corr[:-shift])
         else:
-            self.assertTrue(np.all(np.isnan(corr_shift[0][shift:])))
+            np.testing.assert_array_equal(corr_shift[0][shift:], 0)
             np.testing.assert_equal(
                 np.floor(corr_shift[0][:shift]), corr[-shift-1:-1])
 
@@ -105,11 +105,11 @@ class TestTimeShiftApply(unittest.TestCase):
 
         # Zeros on edges
         if shift > 0:
-            self.assertTrue(np.all(np.isnan(corr_shift[0][:shift])))
+            np.testing.assert_equal(corr_shift[0][:shift], 0)
             np.testing.assert_equal(
                 np.floor(corr_shift[0][shift:]), corr[:-shift])
         else:
-            self.assertTrue(np.all(np.isnan(corr_shift[0][shift:])))
+            np.assert_equal(corr_shift[0][shift:], 0)
             np.testing.assert_equal(
                 np.floor(corr_shift[0][:shift]), corr[-shift-1:-1])
 
@@ -121,7 +121,7 @@ class TestTimeShiftApply(unittest.TestCase):
         # Zeros on edges
         np.testing.assert_equal(corr_shift[0][:50], corr[:50])
         np.testing.assert_equal(corr_shift[0][50:-1], corr[51:])
-        self.assertTrue(np.isnan(corr_shift[0][-1]))
+        np.testing.assert_equal(corr_shift[0][-1], 0)
 
 
 class TestTimeShiftEstimate(unittest.TestCase):
