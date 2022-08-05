@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Monday, 18th July 2022 01:00:24 pm
+Last Modified: Friday, 5th August 2022 01:04:06 pm
 '''
 
 import unittest
@@ -108,7 +108,7 @@ class TestCorrBulk(unittest.TestCase):
         dvmock.value_type = 'shift'
         cb.correct_shift(dv=dvmock)
         shift_mock.assert_called_once_with(
-            mock.ANY, dvmock.value, single_sided=False)
+            mock.ANY, -dvmock.value, single_sided=False)
         np.testing.assert_array_equal(
             shift_mock.call_args[0][0], self.cb.data)
         np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
