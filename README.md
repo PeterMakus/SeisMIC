@@ -1,4 +1,4 @@
-# SeisMIC [![Build Status](https://github.com/PeterMakus/SeisMIC/actions/workflows/test_on_push.yml/badge.svg)](https://github.com/PeterMakus/SeisMIC/actions/workflows/test_on_push.yml?branch=main) [![Documentation Status](https://github.com/PeterMakus/SeisMIC/actions/workflows/deploy_gh_pages.yml/badge.svg)](https://github.com/PeterMakus/SeisMIC/actions/workflows/deploy_gh_pages.yml) [![License: EUPL v1.2](https://img.shields.io/badge/license-EUPL--1.2-blue)](https://joinup.ec.europa.eu/collection/eupl/introduction-eupl-licence) [![codecov](https://codecov.io/gh/PeterMakus/SeisMIC/branch/main/graph/badge.svg?token=DYVHODB6LN)](https://codecov.io/gh/PeterMakus/SeisMIC)
+# SeisMIC [![Build Status](https://github.com/PeterMakus/SeisMIC/actions/workflows/test_on_push.yml/badge.svg)](https://github.com/PeterMakus/SeisMIC/actions/workflows/test_on_push.yml?branch=main) [![Documentation Status](https://github.com/PeterMakus/SeisMIC/actions/workflows/deploy_gh_pages.yml/badge.svg)](https://github.com/PeterMakus/SeisMIC/actions/workflows/deploy_gh_pages.yml) [![License: EUPL v1.2](https://img.shields.io/badge/license-EUPL--1.2-blue)](https://joinup.ec.europa.eu/collection/eupl/introduction-eupl-licence) [![codecov](https://codecov.io/gh/PeterMakus/SeisMIC/branch/main/graph/badge.svg?token=DYVHODB6LN)](https://codecov.io/gh/PeterMakus/SeisMIC) [![DOI](https://img.shields.io/badge/DOI-10.5880%2FGFZ.2.4.2022.002-blue)](https://doi.org/10.5880/GFZ.2.4.2022.002)
 
 ## Monitoring Velocity Changes using Ambient Seismic Noise
 SeisMIC (**Seismological Monitoring using Interferometric Concepts**) is a python software that emerged from the miic library. **SeisMIC** provides functionality to apply some concepts of seismic interferometry to different data of elastic waves. Its main use case is the monitoring of temporal changes in a mediums Green's Function (i.e., monitoring of temporal velocity changes).
@@ -10,8 +10,9 @@ SeisMIC (**Seismological Monitoring using Interferometric Concepts**) is a pytho
 + Plotting tools for correlations
 + Database management of ambient seismic noise correlations
 + Adaptable postprocessing of correlations
-+ Computation of velocity change time series
-+ Plotting of dv time-series
++ Computation of velocity change (dv/v) time series
++ Postprocessing of dv/v time series
++ Plotting of dv/v time-series
 
 **SeisMIC** handles correlations and data in an [ObsPy](https://github.com/obspy/obspy)-like manner.
 
@@ -43,6 +44,9 @@ pip install -e .
 Access SeisMIC's documentation [here](https://petermakus.github.io/SeisMIC/index.html).
 
 SeisMIC comes with a few tutorials (Jupyter notebooks). You can find those in the `examples/` directory.
+
+## Acknowledging the Use of SeisMIC in your Work
+If you should use SeisMIC to create published scientific content please cite [Makus, Peter; Sens-Schönfelder, Christoph (2022): Seismological Monitoring using Interferometric Concepts (SeisMIC). V. 0.1.27. GFZ Data Services. doi: 10.5880/GFZ.2.4.2022.002](https://doi.org/10.5880/GFZ.2.4.2022.002).
 
 ## Reporting Bugs / Contact the developers
 This version is an early release. If you encounter any issues or unexpected behaviour, please [open an issue](https://github.com/PeterMakus/SeisMIC/issues/new) here on GitHub or [contact the developers](mailto:makus@gfz-potsdam.de).
