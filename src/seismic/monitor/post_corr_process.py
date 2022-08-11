@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Monday, 17th January 2022 02:16:51 pm
+Last Modified: Tuesday, 21st June 2022 05:06:49 pm
 '''
 
 from typing import List, Tuple
@@ -960,7 +960,7 @@ def corr_mat_stretch(
 def corr_mat_shift(
     data: np.ndarray, stats: CorrStats, ref_trc: np.ndarray = None,
     tw: List[np.ndarray] = None, shift_range: float = 10,
-    shift_steps: int = 100, sides: str = 'both',
+    shift_steps: int = 101, sides: str = 'both',
         return_sim_mat: bool = False) -> dict:
     """ Time shift estimate through shifting and comparison.
 
@@ -1027,7 +1027,7 @@ def corr_mat_shift(
 
     data = deepcopy(data)
 
-    dta = stats.start_lag
+    dta = -stats.start_lag
     dte = stats.end_lag
 
     # format (trimm) the matrix for zero-time to be either at the beginning
@@ -1038,40 +1038,48 @@ def corr_mat_shift(
     # reference also needs to be trimmed. To do so we append the reference to
     # the matrix, trimm it and remove the reference again
     if ref_trc is not None:
+        rts = ref_trc.shape
+        if len(rts) == 1:
+            nr = 1
+        else:
+            nr = rts[0]
         data = np.concatenate((
             data, np.atleast_2d(ref_trc)), 0)
+        reft = np.tile([UTCDateTime(1900, 1, 1)], (nr))
+        stats['corr_start'] = np.concatenate((stats['corr_start'], reft), 0)
 
     # trim the marices
-    if sides == "single":
+    if sides == "single" or sides == 'right':
         # extract the time>0 part of the matrix
-        corr_mat = corr_mat_trim(data, stats, 0, dte)
+        data, stats = corr_mat_trim(data, stats, 0, dte)
     else:
         # extract the central symmetric part (if dt<0 the trim will fail)
         dt = min(dta, dte)
-        corr_mat = corr_mat_trim(data, stats, -dt, dt)
+        data, stats = corr_mat_trim(data, stats, -dt, dt)
 
     # create or extract references
     if ref_trc is None:
         ref_trc = corr_mat_extract_trace(data, stats)
     else:
         # extract and remove references from corr matrix again
-        ref_trc = data[-1, :]
+        ref_trc = np.squeeze(data[-nr:, :])
+        data = data[:-nr, :]
+        stats['corr_start'] = stats['corr_start'][:-nr]
 
     # set sides
     if sides == 'both':
         ss = False
-    elif sides == 'right':
+    elif sides == 'right' or sides == 'single':
         ss = True
     else:
         raise ValueError(
             "Error: side is not recognized. Use either both or right.")
 
     dt = time_shift_estimate(
-        corr_mat['corr_data'], ref_trc=ref_trc, tw=tw, shift_range=shift_range,
+        data, ref_trc=ref_trc, tw=tw, shift_range=shift_range,
         shift_steps=shift_steps, single_sided=ss,
         return_sim_mat=return_sim_mat)
 
     # add the keys the can directly be transferred from the correlation matrix
-    dt['corr_start'] = stats['corr_start']
     dt['stats'] = stats
     return dt

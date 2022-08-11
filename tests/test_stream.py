@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Wednesday, 23rd March 2022 09:13:02 pm
+Last Modified: Friday, 5th August 2022 01:04:06 pm
 '''
 
 import unittest
@@ -99,12 +99,57 @@ class TestCorrBulk(unittest.TestCase):
         self.assertIn(
             'Corrected for Amplitude Decay', cb.stats.processing_bulk)
 
+    @mock.patch('seismic.correlate.stream.time_shift_apply')
+    def test_correct_shift(self, shift_mock):
+        cb = self.cb.copy()
+        shift_mock.return_value = np.zeros((25, 25))
+        dvmock = mock.MagicMock()
+        dvmock.value = 1
+        dvmock.value_type = 'shift'
+        cb.correct_shift(dv=dvmock)
+        shift_mock.assert_called_once_with(
+            mock.ANY, -dvmock.value, single_sided=False)
+        np.testing.assert_array_equal(
+            shift_mock.call_args[0][0], self.cb.data)
+        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
+        self.assertIn(
+            'Applied time shift', cb.stats.processing_bulk)
+
+    @mock.patch('seismic.correlate.stream.time_shift_apply')
+    def test_correct_shift2(self, shift_mock):
+        cb = self.cb.copy()
+        shift_mock.return_value = np.zeros((25, 25))
+        value = 1
+        cb.correct_shift(shift=value)
+        shift_mock.assert_called_once_with(mock.ANY, value, single_sided=False)
+        np.testing.assert_array_equal(
+            shift_mock.call_args[0][0], self.cb.data)
+        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
+        self.assertIn(
+            'Applied time shift', cb.stats.processing_bulk)
+
+    def test_correct_shift_wrong_type(self):
+        dvmock = mock.MagicMock()
+        dvmock.value = 1
+        dvmock.value_type = 'bla'
+        with self.assertRaises(ValueError):
+            self.cb.correct_shift(dv=dvmock)
+
+    def test_correct_shift_no_args(self):
+        with self.assertRaises(ValueError):
+            self.cb.correct_shift()
+
+    def test_correct_shift_two_args(self):
+        with self.assertRaises(ValueError):
+            self.cb.correct_shift(dv='bla', shift='blub')
+
     @mock.patch('seismic.correlate.stream.time_stretch_apply')
     def test_correct_stretch(self, stretch_mock):
         cb = self.cb.copy()
         stretch_mock.return_value = np.zeros((25, 25))
         dvmock = mock.MagicMock()
         dvmock.value = 1
+        dvmock.value_type = 'stretch'
         cb.correct_stretch(dvmock)
         stretch_mock.assert_called_once_with(mock.ANY, -1.*dvmock.value, False)
         np.testing.assert_array_equal(
@@ -112,6 +157,13 @@ class TestCorrBulk(unittest.TestCase):
         np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
         self.assertIn(
             'Applied time stretch', cb.stats.processing_bulk)
+
+    def test_correct_stretch_wrong_type(self):
+        dvmock = mock.MagicMock()
+        dvmock.value = 1
+        dvmock.value_type = 'bla'
+        with self.assertRaises(ValueError):
+            self.cb.correct_stretch(dvmock)
 
     def test_create_corrstream(self):
         # Lets's just create a CorrStream from stretch and then convert back
@@ -262,6 +314,32 @@ class TestCorrBulk(unittest.TestCase):
             cb.stats.processing_bulk)
 
     @mock.patch('seismic.correlate.stream.DV')
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_shift')
+    def test_shift(self, shift_mock, dv_mock):
+        shift_mock.return_value = {'test': 0}
+        self.cb.find_clock_shift(
+            np.zeros((25,)), [1, 2, 3], 0.5, 105, 'bla', True)
+        shift_mock.assert_called_once_with(
+            mock.ANY, self.cb.stats, mock.ANY, [1, 2, 3], 0.5, 105, 'bla',
+            True)
+        np.testing.assert_array_equal(
+            shift_mock.call_args[0][2], np.zeros((25,)))
+        dv_mock.assert_called_once_with(test=0)
+
+    @mock.patch('seismic.correlate.stream.DV')
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_shift')
+    def test_shift2(self, shift_mock, dv_mock):
+        shift_mock.return_value = {'test': 0}
+        self.cb.ref_trc = 'ha_funny!'
+        self.cb.find_clock_shift()
+        shift_mock.assert_called_once_with(
+            mock.ANY, self.cb.stats, 'ha_funny!', None, 10, 101, 'both',
+            False)
+        np.testing.assert_array_equal(
+            shift_mock.call_args[0][0], self.cb.data)
+        dv_mock.assert_called_once_with(test=0, sim_mat=mock.ANY)
+
+    @mock.patch('seismic.correlate.stream.DV')
     @mock.patch('seismic.correlate.stream.pcp.corr_mat_stretch')
     def test_stretch(self, stretch_mock, dv_mock):
         stretch_mock.return_value = {'test': 0}
@@ -280,11 +358,11 @@ class TestCorrBulk(unittest.TestCase):
         self.cb.ref_trc = 'ha_funny!'
         self.cb.stretch()
         stretch_mock.assert_called_once_with(
-            mock.ANY, self.cb.stats, 'ha_funny!', None, 0.1, 100, 'both',
+            mock.ANY, self.cb.stats, 'ha_funny!', None, 0.1, 101, 'both',
             False)
         np.testing.assert_array_equal(
             stretch_mock.call_args[0][0], self.cb.data)
-        dv_mock.assert_called_once_with(test=0)
+        dv_mock.assert_called_once_with(test=0, sim_mat=mock.ANY)
 
     @mock.patch('seismic.correlate.stream.m3ut.save_header_to_np_array')
     @mock.patch('seismic.correlate.stream.np.savez_compressed')

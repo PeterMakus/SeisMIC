@@ -10,7 +10,7 @@ obspy>=1.3
 pip
 prov
 pyyaml
-scipy
+scipy<1.9
 tqdm
 
 # Other requirements for tests and docs

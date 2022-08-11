@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Wednesday, 23rd March 2022 09:11:17 pm
+Last Modified: Friday, 5th August 2022 01:02:51 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -24,7 +24,8 @@ from obspy.core import Stats
 from seismic.utils import miic_utils as m3ut
 from seismic.plot.plot_correlation import plot_cst, plot_ctr
 import seismic.monitor.post_corr_process as pcp
-from seismic.monitor.stretch_mod import time_stretch_apply, wfc_multi_reftr
+from seismic.monitor.stretch_mod import time_shift_apply, time_stretch_apply,\
+    wfc_multi_reftr
 from seismic.monitor.dv import DV
 from seismic.monitor.wfc import WFC
 from seismic.correlate.stats import CorrStats
@@ -134,6 +135,43 @@ class CorrBulk(object):
         self.stats.processing_bulk += ['Corrected for Amplitude Decay']
         return self
 
+    def correct_shift(
+        self, dv: DV = None, shift: np.ndarray = None,
+            single_sided: bool = False):
+        """
+        Correct shift / clock drift of a correlation matrix.
+        Input argument can either be a matrix holding the shifts in n_samples
+        or a DV object with value_type==shift
+
+        :param dv: A dv object with value_type == shift, defaults to None
+        :type dv: DV, optional
+        :param shift: A 1 or 2D array holding the shift per CorrTrace (1D) or
+            per CorrTrace and sample (2D), defaults to None
+        :type shift: np.ndarray, optional
+        :param single_sided: self.data only contains causal side,
+            defaults to False
+        :type single_sided: bool, optional
+        :raises ValueError: mismatched inputs
+        :return: shifted CorrBulk
+
+        ..note:: This action is performed **in-place**. If you would like to
+            keep the original data use
+            :func:`~seismic.correlate.stream.CorrelationBulk.copy()`.
+        """
+        if (shift is None and dv is None) or (
+                shift is not None and dv is not None):
+            raise ValueError(
+                'Provide either shift values or a DV object containing time '
+                + 'shift estimates')
+        if dv is not None:
+            if dv.value_type != 'shift':
+                raise ValueError('dv values have to be of type "shift".')
+            shift = -dv.value
+        self.data = time_shift_apply(
+            self.data, shift, single_sided=single_sided)
+        self.stats.processing_bulk += ['Applied time shift']
+        return self
+
     def correct_stretch(self, dv: DV, single_sided: bool = False):
         """
         Correct stretching of correlation matrix
@@ -153,6 +191,8 @@ class CorrBulk(object):
             keep the original data use
             :func:`~seismic.correlate.stream.CorrelationBulk.copy()`.
         """
+        if dv.value_type != 'stretch':
+            raise ValueError('DV object does not hold any stretch values.')
         self.data = time_stretch_apply(self.data, -1.*dv.value, single_sided)
         self.stats.processing_bulk += ['Applied time stretch']
         return self
@@ -315,6 +355,42 @@ class CorrBulk(object):
         self.ref_trc = ref_trcs
         return ref_trcs
 
+    def find_clock_shift(
+        self, ref_trc: np.ndarray = None, tw: List[np.ndarray] = None,
+        shift_range: int = 10, shift_steps: int = 101,
+            sides: str = 'both', return_sim_mat: bool = False) -> DV:
+        """
+        Compute the shift of correlations as they can occur due to a clock
+        drift.
+
+        :param ref_trc: Reference trace to use for the computation,
+            defaults to None. Will extract a single trace if = None.
+        :type ref_trc: np.ndarray, optional
+        :param tw: Lapse Time window to use for the computation,
+            defaults to None
+        :type tw: List[np.ndarray], optional
+        :param shift_range: Maximum shift value to test
+            (in n samples not seconds!). Defaults to 10.
+        :type shift_range: int, optional
+        :param shift_steps: Number of shift steps, defaults to 101
+        :type shift_steps: int, optional
+        :param sides: Which sides to use. Can be 'right',
+            or 'both'. Defaults to 'both'
+        :type sides: str, optional
+        :param return_sim_mat: Return the similarity matrix, defaults to False
+        :type return_sim_mat: bool, optional
+        :return: The shift as :class:`~seismic.monitor.dv.DV` object.
+        :rtype: DV
+        """
+        if ref_trc is None:
+            ref_trc = self.ref_trc
+        dv_dict = pcp.corr_mat_shift(
+            self.data, self.stats, ref_trc, tw, shift_range, shift_steps,
+            sides, return_sim_mat)
+        if not return_sim_mat:
+            dv_dict['sim_mat'] = np.array([])
+        return DV(**dv_dict)
+
     def mirror(self):
         """
         Average the causal and acausal (i.e., right and left) parts of the
@@ -417,7 +493,7 @@ class CorrBulk(object):
 
     def stretch(
         self, ref_trc: np.ndarray = None, tw: List[np.ndarray] = None,
-        stretch_range: float = 0.1, stretch_steps: int = 100,
+        stretch_range: float = 0.1, stretch_steps: int = 101,
             sides: str = 'both', return_sim_mat: bool = False) -> DV:
         """
         Compute the velocity change with the stretching method
@@ -431,7 +507,7 @@ class CorrBulk(object):
         :type tw: List[np.ndarray], optional
         :param stretch_range: Maximum stretch value to test, defaults to 0.1
         :type stretch_range: float, optional
-        :param stretch_steps: Number of stretch steps, defaults to 100
+        :param stretch_steps: Number of stretch steps, defaults to 101
         :type stretch_steps: int, optional
         :param sides: Which sides to use. Can be 'left', 'right' (or 'single'),
             or 'both'. Defaults to 'both'
@@ -446,6 +522,8 @@ class CorrBulk(object):
         dv_dict = pcp.corr_mat_stretch(
             self.data, self.stats, ref_trc, tw, stretch_range, stretch_steps,
             sides, return_sim_mat)
+        if not return_sim_mat:
+            dv_dict['sim_mat'] = np.array([])
         return DV(**dv_dict)
 
     def save(self, path: str):
@@ -929,7 +1007,8 @@ class CorrStream(Stream):
         timelimits: Tuple[float, float] = None,
         ylimits: Tuple[float, float] = None, scalingfactor: float = None,
         ax: plt.Axes = None, linewidth: float = 0.25,
-            outputfile: str = None, title: str = None, type: str = 'heatmap'):
+        outputfile: str = None, title: str = None, type: str = 'heatmap',
+            cmap: str = 'inferno'):
         """
         Creates a section plot of all correlations in this stream.
 
@@ -956,6 +1035,9 @@ class CorrStream(Stream):
         :param type: Type of plot. Either `'heatmap'` for a heat plot or
             `'section'` for a wiggle type plot. Defaults to heatmap.
         :type title: str, optional
+        :param cmap: Decides about colormap if type == 'heatmap'.
+        Defaults to 'inferno'.
+        :type cmap: str, optional
 
         .. note:: If you would like to plot a subset of this stream, use
             :func:`~seismic.correlate.stream.CorrStream.select`.
@@ -966,7 +1048,7 @@ class CorrStream(Stream):
         ax = plot_cst(
             self, sort_by=sort_by, timelimits=timelimits, ylimits=ylimits,
             scalingfactor=scalingfactor, ax=ax, linewidth=linewidth,
-            outputfile=outputfile, title=title, type=type)
+            outputfile=outputfile, title=title, type=type, cmap=cmap)
         return ax
 
     def _to_matrix(

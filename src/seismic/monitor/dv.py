@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Monday, 11th April 2022 11:05:55 am
+Last Modified: Thursday, 11th August 2022 02:04:22 pm
 '''
 
 from datetime import datetime
@@ -86,6 +86,10 @@ class DV(object):
         out = f'{self.method} {self.value_type} velocity change estimate of '\
             + f'{code}.\nstarttdate: {min(self.stats.corr_start).ctime()}\n'\
             + f'enddate: {max(self.stats.corr_end).ctime()}'
+        if self.method == np.array(['time_shift']):
+            out = f'Time shift estimate of {code}.\nstarttdate: '\
+                + f'{min(self.stats.corr_start).ctime()}\nenddate: '\
+                + f'{max(self.stats.corr_end).ctime()}'
         return out
 
     def save(self, path: str):
@@ -197,7 +201,7 @@ def read_dv(path: str) -> DV:
         for p in glob(path):
             try:
                 dvl.append(read_dv(p))
-            except(BadZipFile):
+            except BadZipFile:
                 warnings.warn(f'File {p} corrupt, skipping..')
         if not len(dvl):
             raise FileNotFoundError(

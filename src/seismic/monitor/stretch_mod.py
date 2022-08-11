@@ -7,13 +7,13 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Monday, 17th January 2022 03:57:21 pm
+Last Modified: Thursday, 11th August 2022 02:03:24 pm
 '''
 from typing import List, Tuple
 
 import numpy as np
 from obspy.signal.invsim import cosine_taper
-from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import UnivariateSpline, interp1d
 
 
 def time_windows_creation(
@@ -89,7 +89,7 @@ def compute_wfc(
     # Mat must be a 2d vector in every case so
     mat = np.atleast_2d(mat)
 
-    assert(len(refcorr) == mat.shape[1])
+    assert len(refcorr) == mat.shape[1]
 
     if remove_nans:
         mat = np.nan_to_num(mat)
@@ -255,7 +255,7 @@ def velocity_change_estimate(
     # Mat must be a 2d vector in every case so
     mat = np.atleast_2d(mat)
 
-    assert(strrefmat.shape[1] == mat.shape[1])
+    assert strrefmat.shape[1] == mat.shape[1]
 
     if remove_nans:
         mat = np.nan_to_num(mat)
@@ -325,8 +325,8 @@ def velocity_change_estimate(
     dv = {'corr': np.squeeze(corr),
           'value': np.squeeze(dt),
           'second_axis': strvec,
-          'value_type': np.array(['stretch']),
-          'method': np.array(['single_ref'])}
+          'value_type': 'stretch',
+          'method': 'single_ref'}
 
     if return_sim_mat:
         dv.update({'sim_mat': np.squeeze(sim_mat)})
@@ -419,7 +419,10 @@ def time_stretch_estimate(
     # generate time window if not given (use the full length of the correlation
     # trace)
     if tw is None:
-        tw = time_windows_creation([0], [int(np.floor(mat.shape[1] / 2.))])
+        if sides == 'single':
+            tw = time_windows_creation([0], [mat.shape[1]])
+        else:
+            tw = time_windows_creation([0], [int(np.floor(mat.shape[1] / 2.))])
 
     # taper and extend the reference trace to avoid interpolation
     # artefacts at the ends of the trace
@@ -819,8 +822,8 @@ def estimate_reftr_shifts_from_dt_corr(
         ret_dict = {'corr': corr,
                     'value': dt,
                     'second_axis': stretch_vect,
-                    'value_type': np.array(['stretch']),
-                    'method': np.array(['multi_ref'])}
+                    'value_type': 'stretch',
+                    'method': 'multi_ref'}
 
         if return_sim_mat:
             ret_dict.update({'sim_mat': bsimmat})
@@ -1020,22 +1023,25 @@ def time_shift_estimate(
             tw = time_windows_creation(
                 [0], [int(np.floor(mat.shape[1] / 2.))])
 
-    # taper and extend the reference trace to avoid interpolation
-    # artefacts at the ends of the trace
-    taper = cosine_taper(len(ref_trc), 0.05)
-    ref_trc *= taper
+    # # taper and extend the reference trace to avoid interpolation
+    # # artefacts at the ends of the trace
+    # taper = cosine_taper(len(ref_trc), 0.05)
+    # ref_trc *= taper
 
     # different values of shifting to be tested
     shifts = np.linspace(-shift_range, shift_range, shift_steps)
 
     # time axis
-    time_idx = np.arange(len(ref_trc))
+    if single_sided:
+        time_idx = np.arange(len(ref_trc)) - (len(ref_trc) - 1.) / 2.
+    else:
+        time_idx = np.arange(len(ref_trc))
 
     # create the array to hold the shifted traces
     ref_shift = np.zeros((len(shifts), len(ref_trc)))
 
     # create a spline object for the reference trace
-    ref_tr_spline = UnivariateSpline(time_idx, ref_trc, s=0)
+    ref_tr_spline = UnivariateSpline(time_idx, ref_trc, s=0, ext='const')
 
     # evaluate the spline object at different points and put in the prepared
     # array
@@ -1052,36 +1058,6 @@ def time_shift_estimate(
         sim_mat = vdict['sim_mat']
 
     else:
-        """
-        # estimate shifts for causal and acausal part individually and avarage
-        # to avoid apparent shift from velocity change and asymmetric
-        # amplitudes
-        lvdict = velocity_change_estimete(mat, tw, ref_shift,
-                                          shifts,
-                                          sides='left',
-                                          return_sim_mat=True,
-                                          remove_nans=remove_nans)
-        lcorr = lvdict['corr']
-        lshift = lvdict['value']
-        lsim_mat = lvdict['sim_mat']
-
-        rvdict = velocity_change_estimete(mat, tw, ref_shift,
-                                          shifts,
-                                          sides='right',
-                                          return_sim_mat=True,
-                                          remove_nans=remove_nans)
-        rcorr = rvdict['corr']
-        rshift = rvdict['value']
-        rsim_mat = rvdict['sim_mat']
-
-        shift = np.zeros_like(lshift)
-        corr = np.zeros_like(lshift)
-        sim_mat = np.zeros_like(lsim_mat)
-
-        corr = (lcorr + rcorr) / 2.
-        shift = (lshift + rshift) / 2.
-        sim_mat = (lsim_mat + rsim_mat) / 2.
-        """
         dtdict = velocity_change_estimate(
             mat, tw, ref_shift, shifts, sides='both', return_sim_mat=True,
             remove_nans=remove_nans)
@@ -1100,6 +1076,62 @@ def time_shift_estimate(
         dt.update({'sim_mat': np.squeeze(sim_mat)})
 
     return dt
+
+
+def time_shift_apply(
+    corr_data: np.ndarray, shift: np.ndarray,
+        single_sided: bool = False) -> np.ndarray:
+    """
+    Correct for clock drifts that are given in shifts.
+
+    :param corr_data: Matrix with one correlation trace per row
+    :type corr_data: np.ndarray
+    :param shift: 1 or 2D array holding shifts in number of samples compared to
+        a reference that is assumed to be accurate. Hence, the input CorrStream
+        will be shifted by -shift.
+        If 1D: each correlation trace will be shifted by a scalar value.
+        If 2D: Shape has to be equal to corr_data. The clock drift varies
+        in the CorrTrace (i..e, shift is not constant anymore).
+    :type shift: np.ndarray
+    :param single_sided: corr_data contains only causal side, defaults to False
+    :type single_sided: bool, optional
+    :return: The shifted correlation matrix
+    :rtype: np.ndarray
+    """
+    # Mat must be a 2d vector in every case so
+    mat = np.atleast_2d(corr_data)
+    # shift input
+    # stretch is just a 1d array
+    if len(shift.shape) == 1:
+        t_shift = np.zeros([shift.shape[0], 1])
+        t_shift[:, 0] = shift
+        shift = t_shift
+    # shift has the wrong length
+    elif shift.shape[0] != mat.shape[0]:
+        raise ValueError('shift.shape[0] must be equal corr_data.shape[0]')
+
+    # if there is a significant clock drift during a correlation
+    if shift.shape[1] > 1 and shift.shape[1] != mat.shape[1]:
+        raise ValueError('shift.shape[1] must be equal corr_data.shape[1]')
+
+    # time axis
+    if single_sided:
+        time_idx = np.arange(mat.shape[1])
+    else:
+        time_idx = np.arange(mat.shape[1]) - (mat.shape[1] - 1.) / 2.
+
+    # allocate space for the result
+    shifted_mat = np.zeros_like(mat)
+
+    # stretch every line
+    for ii, (ctr, delta) in enumerate(zip(mat, shift)):
+        # s = UnivariateSpline(time_idx, ctr, s=2, ext='zeros')
+        # shifted_mat[ii, :] = s(time_idx - delta)
+        s = interp1d(
+            time_idx, ctr, kind='linear', bounds_error=False, fill_value=0)
+        shifted_mat[ii, :] = s(time_idx - delta)
+
+    return shifted_mat
 
 
 def time_stretch_apply(
@@ -1136,7 +1168,7 @@ def time_stretch_apply(
         stretch = t_stretch
     # stretch has the wrong length
     elif stretch.shape[0] != mat.shape[0]:
-        raise ValueError('shift.shape[0] must be equal corr_data.shape[0]')
+        raise ValueError('stretch.shape[0] must be equal corr_data.shape[0]')
 
     # shift has multiple columns (multiple measurements for the same time)
     if stretch.shape[1] > 1:
