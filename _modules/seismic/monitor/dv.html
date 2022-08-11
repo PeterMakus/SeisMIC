@@ -205,7 +205,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 15th June 2021 04:12:18 pm</span>
-<span class="sd">Last Modified: Wednesday, 8th June 2022 02:13:23 pm</span>
+<span class="sd">Last Modified: Thursday, 11th August 2022 02:04:22 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
@@ -398,7 +398,7 @@
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">glob</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">dvl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">read_dv</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
-            <span class="k">except</span><span class="p">(</span><span class="n">BadZipFile</span><span class="p">):</span>
+            <span class="k">except</span> <span class="n">BadZipFile</span><span class="p">:</span>
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;File </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s1"> corrupt, skipping..&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">dvl</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
