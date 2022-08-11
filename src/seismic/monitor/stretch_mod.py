@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Friday, 5th August 2022 12:52:52 pm
+Last Modified: Thursday, 11th August 2022 02:03:24 pm
 '''
 from typing import List, Tuple
 
@@ -89,7 +89,7 @@ def compute_wfc(
     # Mat must be a 2d vector in every case so
     mat = np.atleast_2d(mat)
 
-    assert(len(refcorr) == mat.shape[1])
+    assert len(refcorr) == mat.shape[1]
 
     if remove_nans:
         mat = np.nan_to_num(mat)
@@ -255,7 +255,7 @@ def velocity_change_estimate(
     # Mat must be a 2d vector in every case so
     mat = np.atleast_2d(mat)
 
-    assert(strrefmat.shape[1] == mat.shape[1])
+    assert strrefmat.shape[1] == mat.shape[1]
 
     if remove_nans:
         mat = np.nan_to_num(mat)

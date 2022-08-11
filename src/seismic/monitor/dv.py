@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Wednesday, 8th June 2022 02:13:23 pm
+Last Modified: Thursday, 11th August 2022 02:04:22 pm
 '''
 
 from datetime import datetime
@@ -201,7 +201,7 @@ def read_dv(path: str) -> DV:
         for p in glob(path):
             try:
                 dvl.append(read_dv(p))
-            except(BadZipFile):
+            except BadZipFile:
                 warnings.warn(f'File {p} corrupt, skipping..')
         if not len(dvl):
             raise FileNotFoundError(

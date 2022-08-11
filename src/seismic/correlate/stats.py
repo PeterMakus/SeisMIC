@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 5th July 2021 02:44:13 pm
-Last Modified: Wednesday, 16th March 2022 04:02:34 pm
+Last Modified: Thursday, 11th August 2022 02:05:24 pm
 '''
 from obspy.core.util import AttribDict
 from obspy import UTCDateTime
@@ -241,7 +241,7 @@ class CorrStats(AttribDict):
         if key == 'component':
             ch = super(CorrStats, self).__getitem__('channel', default)
             a, b = ch.split('-')
-            return(a[-1]+'-'+b[-1])
+            return a[-1]+'-'+b[-1]
         else:
             return super(CorrStats, self).__getitem__(key, default)
 
