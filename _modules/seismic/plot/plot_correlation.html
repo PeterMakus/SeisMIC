@@ -205,7 +205,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 19th July 2021 11:37:54 am</span>
-<span class="sd">Last Modified: Tuesday, 26th April 2022 04:41:23 pm</span>
+<span class="sd">Last Modified: Wednesday, 6th July 2022 09:13:11 am</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
@@ -297,7 +297,7 @@
     <span class="n">ylimits</span><span class="p">:</span> <span class="nb">list</span> <span class="ow">or</span> <span class="nb">tuple</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">scalingfactor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
     <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">linewidth</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
     <span class="n">outputfile</span><span class="p">:</span> <span class="nb">str</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;heatmap&#39;</span><span class="p">):</span>
+        <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;heatmap&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;inferno&#39;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Creates a section or heat plot of all correlations in this stream.</span>
 
@@ -325,7 +325,10 @@
 <span class="sd">    :type title: str, optional</span>
 <span class="sd">    :param type: can be set to &#39;heat&#39; for a heatmap or &#39;section&#39; for</span>
 <span class="sd">        a wiggle type plot. Default to `heat`</span>
-<span class="sd">    :type type: str</span>
+<span class="sd">    :type type: str, optional</span>
+<span class="sd">    :param cmap: Decides about colormap if type == &#39;heatmap&#39;.</span>
+<span class="sd">        Defaults to &#39;inferno&#39;.</span>
+<span class="sd">    :type cmap: str, optional</span>
 <span class="sd">    :return: returns the axes object.</span>
 <span class="sd">    :rtype: `matplotlib.pyplot.Axes`</span>
 
@@ -351,7 +354,7 @@
         <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;section&#39;</span><span class="p">:</span>
             <span class="n">times</span> <span class="o">=</span> <span class="n">sect_plot_corr_start</span><span class="p">(</span><span class="n">cst</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">scalingfactor</span><span class="p">,</span> <span class="n">linewidth</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;heatmap&#39;</span><span class="p">:</span>
-            <span class="n">times</span> <span class="o">=</span> <span class="n">heat_plot_corr_start</span><span class="p">(</span><span class="n">cst</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span>
+            <span class="n">times</span> <span class="o">=</span> <span class="n">heat_plot_corr_start</span><span class="p">(</span><span class="n">cst</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
                 <span class="s1">&#39;Unknown or not implemented plot type </span><span class="si">%s</span><span class="s1">.&#39;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">)</span>
@@ -376,7 +379,7 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="n">timelimits</span><span class="p">)</span>
 
-    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Lag Time [s]&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\tau$ [s]&quot;</span><span class="p">)</span>
 
     <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
 
@@ -407,7 +410,7 @@
     <span class="k">return</span> <span class="n">times</span></div>
 
 
-<div class="viewcode-block" id="heat_plot_corr_start"><a class="viewcode-back" href="../../../modules/API.html#seismic.plot.plot_correlation.heat_plot_corr_start">[docs]</a><span class="k">def</span> <span class="nf">heat_plot_corr_start</span><span class="p">(</span><span class="n">cst</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">):</span>
+<div class="viewcode-block" id="heat_plot_corr_start"><a class="viewcode-back" href="../../../modules/API.html#seismic.plot.plot_correlation.heat_plot_corr_start">[docs]</a><span class="k">def</span> <span class="nf">heat_plot_corr_start</span><span class="p">(</span><span class="n">cst</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span> <span class="n">cmap</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">cst</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span> <span class="n">cst</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="p">))</span>
     <span class="c1"># y grid</span>
     <span class="n">y</span> <span class="o">=</span> <span class="p">[]</span>
@@ -415,8 +418,10 @@
         <span class="n">data</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">ctr</span><span class="o">.</span><span class="n">data</span>
         <span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ctr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;corr_start&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">datetime</span><span class="p">)</span>
         <span class="n">times</span> <span class="o">=</span> <span class="n">ctr</span><span class="o">.</span><span class="n">times</span><span class="p">()</span>
-    <span class="n">ds</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">data</span><span class="p">,</span> <span class="n">shading</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">data</span><span class="p">,</span> <span class="n">shading</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span>
+        <span class="n">ds</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;correlation coefficient&#39;</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">.6</span><span class="p">,</span>
+        <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">mpl</span><span class="o">.</span><span class="n">dates</span><span class="o">.</span><span class="n">AutoDateLocator</span><span class="p">())</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">mpl</span><span class="o">.</span><span class="n">dates</span><span class="o">.</span><span class="n">DateFormatter</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%d</span><span class="s1"> %h&#39;</span><span class="p">))</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">invert_yaxis</span><span class="p">()</span>
@@ -471,7 +476,7 @@
   
   <div class="footer-item">
     <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.0.2.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.1.1.<br>
 </p>
   </div>
   

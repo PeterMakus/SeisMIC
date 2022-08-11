@@ -205,7 +205,7 @@
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 15th June 2021 04:12:18 pm</span>
-<span class="sd">Last Modified: Monday, 11th April 2022 11:05:55 am</span>
+<span class="sd">Last Modified: Wednesday, 8th June 2022 02:13:23 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
@@ -283,6 +283,10 @@
         <span class="n">out</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value_type</span><span class="si">}</span><span class="s1"> velocity change estimate of &#39;</span>\
             <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">code</span><span class="si">}</span><span class="s1">.</span><span class="se">\n</span><span class="s1">starttdate: </span><span class="si">{</span><span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">)</span><span class="o">.</span><span class="n">ctime</span><span class="p">()</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span>\
             <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;enddate: </span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span><span class="p">)</span><span class="o">.</span><span class="n">ctime</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;time_shift&#39;</span><span class="p">]):</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Time shift estimate of </span><span class="si">{</span><span class="n">code</span><span class="si">}</span><span class="s1">.</span><span class="se">\n</span><span class="s1">starttdate: &#39;</span>\
+                <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">)</span><span class="o">.</span><span class="n">ctime</span><span class="p">()</span><span class="si">}</span><span class="se">\n</span><span class="s1">enddate: &#39;</span>\
+                <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span><span class="p">)</span><span class="o">.</span><span class="n">ctime</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span>
         <span class="k">return</span> <span class="n">out</span>
 
 <div class="viewcode-block" id="DV.save"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.dv.DV.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
@@ -454,7 +458,7 @@
   
   <div class="footer-item">
     <p class="sphinx-version">
-Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.0.2.<br>
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.1.1.<br>
 </p>
   </div>
   
