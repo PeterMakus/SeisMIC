@@ -57,7 +57,7 @@ def set_mpl_params():
     }
     mpl.rcParams.update(params)
     # Show dates in English format
-    locale.setlocale(locale.LC_ALL, "en_GB.utf8")
+    #locale.setlocale(locale.LC_ALL, "en_GB.utf8")
 
 
 def remove_all(

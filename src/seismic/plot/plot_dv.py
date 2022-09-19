@@ -144,7 +144,11 @@ def plot_dv(
         tit = "Time shift"
         dv_tick_delta = 5
         dv_y_label = "time shift (sample)"
-
+    elif (value_type == 'shift') and (method == 'absolute_shift'):
+        tit = "Time shift"
+        dv_tick_delta = (np.max(dv['second_axis'])-
+            np.min(dv['second_axis']))/5
+        dv_y_label = "time shift [s]"
     else:
         raise ValueError(f"Unknown dv type, {value_type}!")
 

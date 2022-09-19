@@ -22,7 +22,7 @@ from obspy import Stream, Trace, Inventory, UTCDateTime
 from obspy.core import Stats
 
 from seismic.utils import miic_utils as m3ut
-from seismic.plot.plot_correlation import plot_cst, plot_ctr
+from seismic.plot.plot_correlation import plot_cst, plot_ctr, plot_corr_bulk
 import seismic.monitor.post_corr_process as pcp
 from seismic.monitor.stretch_mod import time_stretch_apply, wfc_multi_reftr
 from seismic.monitor.dv import DV
@@ -48,6 +48,22 @@ class CorrBulk(object):
             self.stats['ntrcs'], self.stats['npts'] = A.shape
         self.stats['processing_bulk'] = []
         self.ref_trc = None
+
+    def plot(
+        self, timelimits: list or tuple or None = None,
+        ylimits: list or tuple or None = None,
+        clim: list or tuple or None = None,
+        plot_colorbar: bool = False, outputfile: str or None = None,
+        title: str or None = None, ax: plt.Axes = None):
+        """
+        Plot the correlation traces contained.
+        """
+        ax = plot_corr_bulk(self, timelimits=timelimits,
+            ylimits=ylimits, clim=clim, plot_colorbar=False,
+            outputfile=outputfile, title=title, ax=ax)
+        return ax
+    
+
 
     def normalize(
         self, starttime: float = None, endtime: float = None,
@@ -156,6 +172,23 @@ class CorrBulk(object):
         self.data = time_stretch_apply(self.data, -1.*dv.value, single_sided)
         self.stats.processing_bulk += ['Applied time stretch']
         return self
+
+    def correct_shift(self, dt: DV):
+        """
+        Correct a shfit of the traces.
+
+        If time shifts in the (correlation) traces occur due to clock drifts
+        or time offsets in active measurements these can be measured with 
+        :func:`~seismic.correlate.stream.CorrelationBulk.measure_shift()`. If
+        the resulting time shift is passed to this function the shift is
+        corrected for, such that if the measurement is done again no shift will
+        be detected.
+        """
+        self.data, _ = pcp.apply_shift(data=self.data, stats=self.stats,
+            shifts=-1.*dt.value)
+        self.stats.processing_bulk += ['Applied time stretch']
+        return self
+
 
     def create_corr_stream(self):
         """
@@ -350,6 +383,21 @@ class CorrBulk(object):
         if not return_sim_mat:
             dv_dict['sim_mat'] = np.array([])
         return DV(**dv_dict)
+
+    def measure_shift(
+        self, ref_trc: np.ndarray = None, tw: list = None, 
+        shift_range: float = 10, shift_steps: int = 101, sides: str = 'both',
+        return_sim_mat: bool = False) -> DV:
+        """ New implementation of find_clock_shift
+        """
+        tw_list = deepcopy(tw)
+        if tw_list is not None:
+            tw_list = [tw_list]
+        dt = pcp.measure_shift(self.data, self.stats, ref_trc=ref_trc,
+            tw=tw_list, shift_range=shift_range, shift_steps=shift_steps,
+            sides=sides, return_sim_mat=return_sim_mat)[0]
+        return dt
+
 
     def mirror(self):
         """

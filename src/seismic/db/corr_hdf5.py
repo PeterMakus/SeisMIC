@@ -368,6 +368,7 @@ def all_traces_recursive(
     :return: Stream with appended traces
     :rtype: CorrStream
     """
+    num = 0
     for v in group.values():
         if isinstance(v, h5py._hl.group.Group):
             all_traces_recursive(v, stream, pattern)
@@ -384,6 +385,10 @@ def all_traces_recursive(
             #     warnings.warn(
             #         'Header could not be converted. Attributes are: %s' % (
             #             str(v.attrs)))
+        num += 1
+        if num > 100:
+            pass
+            #break
     return stream
 
 

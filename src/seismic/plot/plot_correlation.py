@@ -15,6 +15,8 @@ import warnings
 
 import matplotlib as mpl
 from matplotlib import pyplot as plt
+from matplotlib.dates import date2num
+
 import numpy as np
 from obspy.core.utcdatetime import UTCDateTime
 from obspy import Trace, Stream
@@ -187,6 +189,53 @@ def plot_cst(
     if outputfile is not None:
         plt.savefig(outputfile, dpi=300, transparent=True)
     return ax
+
+
+
+def plot_corr_bulk(corr_bulk, timelimits: list or tuple or None = None,
+    ylimits: list or tuple or None = None, clim: list or tuple or None = None,
+    plot_colorbar: bool = False, outputfile: str or None = None, title: str or None = None, 
+    ax: plt.Axes = None):
+    """ Plot CorrBulk
+    """
+    #set_mpl_params()
+
+    # Create figure if no axes is specified
+    if ax is None:
+        plt.figure(figsize=(8, 6))
+        ax = plt.axes()  # zorder=9999999
+
+    extent = [corr_bulk.stats.start_lag, 
+              corr_bulk.stats.end_lag,
+              date2num(corr_bulk.stats.corr_start[0].datetime),
+              date2num(corr_bulk.stats.corr_start[-1].datetime)]
+    im = ax.imshow(corr_bulk.data,extent=extent,aspect='auto')
+    ax.yaxis_date()
+    ax.figure.autofmt_xdate(rotation=45)
+    ax.set_xlabel('lapse time [s]')
+    
+    # Set limits
+    if ylimits:
+        ax.set_ylim(date2num(ylimits[0]),date2num(ylimits[1]))
+    if timelimits:
+        ax.set_xlim(timelimits)
+    if title:
+        ax.set_title(title)
+    else:
+        comb_mseedid = '%s.%s.%s.%s' % (
+        corr_bulk.stats['network'], corr_bulk.stats['station'], corr_bulk.stats['location'],
+        corr_bulk.stats['channel'])
+        ax.set_title(comb_mseedid)
+    if clim:
+        im.set_clim(clim)
+    if plot_colorbar:
+        plt.colorbar(im, orientation='vertical')
+    if outputfile:
+        plt.savefig(outfile)
+    else:
+        plt.show()
+    return ax
+
 
 
 def sect_plot_corr_start(
