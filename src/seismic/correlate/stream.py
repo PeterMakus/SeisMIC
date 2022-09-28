@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Friday, 5th August 2022 01:02:51 pm
+Last Modified: Wednesday, 28th September 2022 11:17:13 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -1465,7 +1465,7 @@ def stack_st(st: CorrStream, weight: str, norm: bool = True) -> CorrTrace:
 
 
 def convert_statlist_to_bulk_stats(
-        statlist: List[CorrStats], varying_loc: bool = False) -> CorrStats:
+        statlist: List[CorrStats], varying_loc: bool = True) -> CorrStats:
     """
     Converts a list of :class:`~seismic.correlate.stream.CorrTrace` stats
     objects to a single stats object that can be used for the creation of a
