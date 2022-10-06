@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Friday, 5th August 2022 01:04:06 pm
+Last Modified: Thursday, 6th October 2022 12:16:01 pm
 '''
 
 import unittest
@@ -1011,7 +1011,8 @@ class TestConvertStatlistToBulkStats(unittest.TestCase):
         self.stats['evel'] = 0
         # Note that starttime and endtime are just copies of corr_start and
         # corr_end
-        self.mutables = ['corr_start', 'corr_end', 'starttime', 'endtime']
+        self.mutables = [
+            'corr_start', 'corr_end', 'starttime', 'endtime', 'location']
         self.immutables = [
             'npts', 'sampling_rate', 'network', 'station', 'channel',
             'start_lag', 'stla', 'stlo', 'stel', 'evla', 'evlo',
@@ -1022,6 +1023,7 @@ class TestConvertStatlistToBulkStats(unittest.TestCase):
         stats1 = self.stats.copy()
         stats1['corr_start'] += 3600
         stats1['corr_end'] += 3600
+        stats1['location'] = 'bla'
         stcomb = stream.convert_statlist_to_bulk_stats([self.stats, stats1])
         for key in stcomb:
             if key in self.mutables:
@@ -1043,10 +1045,9 @@ class TestConvertStatlistToBulkStats(unittest.TestCase):
 
     def test_loc_mutable(self):
         stats1 = self.stats.copy()
-        stats1['location'] = 'bla'
         stcomb = stream.convert_statlist_to_bulk_stats(
-            [self.stats, stats1], True)
-        self.assertIsInstance(stcomb['location'], list)
+            [self.stats, stats1], False)
+        self.assertIsInstance(stcomb['location'], str)
 
 
 if __name__ == "__main__":
