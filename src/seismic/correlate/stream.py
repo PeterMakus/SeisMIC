@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Wednesday, 28th September 2022 11:17:13 am
+Last Modified: Friday, 30th September 2022 11:51:10 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -1008,7 +1008,7 @@ class CorrStream(Stream):
         ylimits: Tuple[float, float] = None, scalingfactor: float = None,
         ax: plt.Axes = None, linewidth: float = 0.25,
         outputfile: str = None, title: str = None, type: str = 'heatmap',
-            cmap: str = 'inferno'):
+            cmap: str = 'inferno', vmin: float = None, vmax: float = None):
         """
         Creates a section plot of all correlations in this stream.
 
@@ -1048,7 +1048,8 @@ class CorrStream(Stream):
         ax = plot_cst(
             self, sort_by=sort_by, timelimits=timelimits, ylimits=ylimits,
             scalingfactor=scalingfactor, ax=ax, linewidth=linewidth,
-            outputfile=outputfile, title=title, type=type, cmap=cmap)
+            outputfile=outputfile, title=title, type=type, cmap=cmap,
+            vmin=vmin, vmax=vmax)
         return ax
 
     def _to_matrix(

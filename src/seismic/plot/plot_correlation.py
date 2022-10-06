@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Wednesday, 6th July 2022 09:13:11 am
+Last Modified: Thursday, 6th October 2022 12:03:49 pm
 '''
 import os
 import warnings
@@ -100,7 +100,8 @@ def plot_cst(
     ylimits: list or tuple or None = None, scalingfactor: float = 2.0,
     ax: plt.Axes = None, linewidth: float = 0.25,
     outputfile: str or None = None, title: str or None = None,
-        type: str = 'heatmap', cmap: str = 'inferno'):
+    type: str = 'heatmap', cmap: str = 'seismic', vmin: float = None,
+        vmax: float = None):
     """
     Creates a section or heat plot of all correlations in this stream.
 
@@ -157,7 +158,8 @@ def plot_cst(
         if type == 'section':
             times = sect_plot_corr_start(cst, ax, scalingfactor, linewidth)
         elif type == 'heatmap':
-            times = heat_plot_corr_start(cst, ax, cmap=cmap)
+            times = heat_plot_corr_start(
+                cst, ax, cmap=cmap, vmin=vmin, vmax=vmax)
         else:
             raise NotImplementedError(
                 'Unknown or not implemented plot type %s.' % type)
@@ -208,12 +210,13 @@ def sect_plot_corr_start(
 
     ax.yaxis.set_major_locator(mpl.dates.AutoDateLocator())
 
-    ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h'))
+    ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h %y'))
     ax.invert_yaxis()
     return times
 
 
-def heat_plot_corr_start(cst: Stream, ax: plt.Axes, cmap: str):
+def heat_plot_corr_start(
+        cst: Stream, ax: plt.Axes, cmap: str, vmin: float, vmax: float):
     data = np.empty((cst.count(), cst[0].stats.npts))
     # y grid
     y = []
@@ -221,12 +224,14 @@ def heat_plot_corr_start(cst: Stream, ax: plt.Axes, cmap: str):
         data[ii, :] = ctr.data
         y.append(ctr.stats['corr_start'].datetime)
         times = ctr.times()
-    ds = plt.pcolormesh(times, np.array(y), data, shading='auto', cmap=cmap)
+    ds = plt.pcolormesh(
+        times, np.array(y), data, shading='auto', cmap=cmap, vmin=vmin,
+        vmax=vmax)
     plt.colorbar(
         ds, label='correlation coefficient', shrink=.6,
         orientation='horizontal')
     ax.yaxis.set_major_locator(mpl.dates.AutoDateLocator())
-    ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h'))
+    ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h %y'))
     ax.invert_yaxis()
     return times
 
