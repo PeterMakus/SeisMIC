@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Friday, 30th September 2022 11:51:10 am
+Last Modified: Tuesday, 11th October 2022 01:33:32 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -197,26 +197,39 @@ class CorrBulk(object):
         self.stats.processing_bulk += ['Applied time stretch']
         return self
 
-    def create_corr_stream(self):
+    def create_corr_stream(self, ind: List[int] = None):
         """
         Creates a :class:`~seismic.correlate.stream.CorrStream` object from
         the current :class:`~seismic.correlate.stream.CorrBulk` object. This
         can be useful if you want to save your postprocessed data in a hdf5
         file again.
 
+        :param ind: Indices to extract. If None, all will be used.
+            Defaults to None.
+        :type ind: Iterable[ind], optional
         :return: Correlation Stream holding the same data
         :rtype: :class:`~seismic.correlate.stream.CorrStream`
         """
         cst = CorrStream()
         mutables = ['corr_start', 'corr_end', 'location']
-        for ii, li in enumerate(self.data):
-            stats = deepcopy(self.stats)
-            for k in mutables:
-                if not isinstance(stats[k], list):
-                    continue
-                stats[k] = self.stats[k][ii]
-            ctr = CorrTrace(li, _header=stats)
-            cst.append(ctr)
+        if ind is None:
+            for ii, li in enumerate(self.data):
+                stats = deepcopy(self.stats)
+                for k in mutables:
+                    if not isinstance(stats[k], list):
+                        continue
+                    stats[k] = self.stats[k][ii]
+                ctr = CorrTrace(li, _header=stats)
+                cst.append(ctr)
+        else:
+            for ii in ind:
+                stats = deepcopy(self.stats)
+                for k in mutables:
+                    if not isinstance(stats[k], list):
+                        continue
+                    stats[k] = self.stats[k][ii]
+                ctr = CorrTrace(self.data[ii], _header=stats)
+                cst.append(ctr)
         return cst
 
     def envelope(self):
