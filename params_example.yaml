@@ -138,7 +138,7 @@ dv:
 
     ### Definition of lapse time window
     tw_start : 20     # lapse time of first sample [s]
-    tw_len : 60       # length of window [s]
+    tw_len : 60       # length of window [s] Can be None if the whole (rest) of the coda should be used
     sides : 'both'   # options are left (for acausal), right (causal), both, or single (for active source experiments where the first sample is the trigger time)
     
     ### Range to try stretching
