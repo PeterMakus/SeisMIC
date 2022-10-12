@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Monday, 11th April 2022 11:03:30 am
+Last Modified: Wednesday, 28th September 2022 11:39:51 am
 '''
 
 from datetime import datetime
@@ -188,8 +188,8 @@ def plot_dv(
     plt.gca().get_xaxis().set_visible(False)
 
     stats = dv['stats']
-    comb_mseedid = '%s.%s.%s.%s' % (
-        stats['network'], stats['station'], stats['location'],
+    comb_mseedid = '%s.%s.%s' % (
+        stats['network'], stats['station'],  # stats['location'],
         stats['channel'])
     if title:
         tit = title

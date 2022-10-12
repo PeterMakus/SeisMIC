@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Friday, 5th August 2022 01:02:51 pm
+Last Modified: Tuesday, 11th October 2022 01:33:32 pm
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -197,26 +197,39 @@ class CorrBulk(object):
         self.stats.processing_bulk += ['Applied time stretch']
         return self
 
-    def create_corr_stream(self):
+    def create_corr_stream(self, ind: List[int] = None):
         """
         Creates a :class:`~seismic.correlate.stream.CorrStream` object from
         the current :class:`~seismic.correlate.stream.CorrBulk` object. This
         can be useful if you want to save your postprocessed data in a hdf5
         file again.
 
+        :param ind: Indices to extract. If None, all will be used.
+            Defaults to None.
+        :type ind: Iterable[ind], optional
         :return: Correlation Stream holding the same data
         :rtype: :class:`~seismic.correlate.stream.CorrStream`
         """
         cst = CorrStream()
         mutables = ['corr_start', 'corr_end', 'location']
-        for ii, li in enumerate(self.data):
-            stats = deepcopy(self.stats)
-            for k in mutables:
-                if not isinstance(stats[k], list):
-                    continue
-                stats[k] = self.stats[k][ii]
-            ctr = CorrTrace(li, _header=stats)
-            cst.append(ctr)
+        if ind is None:
+            for ii, li in enumerate(self.data):
+                stats = deepcopy(self.stats)
+                for k in mutables:
+                    if not isinstance(stats[k], list):
+                        continue
+                    stats[k] = self.stats[k][ii]
+                ctr = CorrTrace(li, _header=stats)
+                cst.append(ctr)
+        else:
+            for ii in ind:
+                stats = deepcopy(self.stats)
+                for k in mutables:
+                    if not isinstance(stats[k], list):
+                        continue
+                    stats[k] = self.stats[k][ii]
+                ctr = CorrTrace(self.data[ii], _header=stats)
+                cst.append(ctr)
         return cst
 
     def envelope(self):
@@ -1008,7 +1021,7 @@ class CorrStream(Stream):
         ylimits: Tuple[float, float] = None, scalingfactor: float = None,
         ax: plt.Axes = None, linewidth: float = 0.25,
         outputfile: str = None, title: str = None, type: str = 'heatmap',
-            cmap: str = 'inferno'):
+            cmap: str = 'inferno', vmin: float = None, vmax: float = None):
         """
         Creates a section plot of all correlations in this stream.
 
@@ -1048,7 +1061,8 @@ class CorrStream(Stream):
         ax = plot_cst(
             self, sort_by=sort_by, timelimits=timelimits, ylimits=ylimits,
             scalingfactor=scalingfactor, ax=ax, linewidth=linewidth,
-            outputfile=outputfile, title=title, type=type, cmap=cmap)
+            outputfile=outputfile, title=title, type=type, cmap=cmap,
+            vmin=vmin, vmax=vmax)
         return ax
 
     def _to_matrix(
@@ -1465,7 +1479,7 @@ def stack_st(st: CorrStream, weight: str, norm: bool = True) -> CorrTrace:
 
 
 def convert_statlist_to_bulk_stats(
-        statlist: List[CorrStats], varying_loc: bool = False) -> CorrStats:
+        statlist: List[CorrStats], varying_loc: bool = True) -> CorrStats:
     """
     Converts a list of :class:`~seismic.correlate.stream.CorrTrace` stats
     objects to a single stats object that can be used for the creation of a
