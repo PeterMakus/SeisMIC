@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 12th October 2022 10:04:13 am
+Last Modified: Wednesday, 12th October 2022 10:31:25 am
 '''
 from copy import deepcopy
 import logging
@@ -191,6 +191,7 @@ class Monitor(object):
         if self.options['dv']['tw_len'] is None:
             trim0 = cb.stats.start_lag
             trim1 = cb.stats.end_lag
+            cbt = cb
         else:
             trim0 = -(
                 self.options['dv']['tw_start']+self.options['dv']['tw_len'])
