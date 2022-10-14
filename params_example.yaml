@@ -7,7 +7,7 @@ log_subdir : 'log'
 # 'DEBUG', 'INFO', 'WARNING', 'ERROR', or 'CRITICAL'
 log_level: 'WARNING'
 # folder for figures
-fig_subdir : 'figures'  # not in use yet
+fig_subdir : 'figures'
 
 
 #### parameters that are network specific
