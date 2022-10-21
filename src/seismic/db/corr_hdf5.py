@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Tuesday, 29th March 2022 11:00:42 am
+Last Modified: Friday, 21st October 2022 04:14:29 pm
 '''
 import ast
 import fnmatch
@@ -202,6 +202,7 @@ omitted." % path, category=UserWarning)
             return CorrStream(CorrTrace(data, _header=header))
         # Now, we need to differ between the fnmatch pattern and the actually
         # accessed path
+        path = path.replace('?', '*')
         pattern = path.replace('/*', '*')
         path = path.split('*')[0]
         return all_traces_recursive(self[path], CorrStream(), pattern)
