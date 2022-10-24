@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Monday, 24th October 2022 09:50:22 am
+Last Modified: Monday, 24th October 2022 10:39:16 am
 '''
 
 import unittest
@@ -950,12 +950,36 @@ class TestCorrStream(unittest.TestCase):
             select_return = mock.MagicMock(name='select_mock')
             select_return.select_corr_time.return_value = st
             sct_mock.return_value = select_return
+            cb = st.create_corr_bulk(
+                times=(qustart, st[0].stats.corr_end),
+                channel=st[0].stats.channel)
+            sct_mock.assert_any_call(
+                None, None, None, st[0].stats.channel)
+        select_return.select_corr_time.assert_called_once_with(
+            qustart, st[0].stats.corr_end
+        )
+        for ii, tr in enumerate(self.st):
+            np.testing.assert_array_equal(tr.data, cb.data[ii])
+        # Check in-place
+        for tr in st:
+            self.assertFalse(hasattr(tr, 'data'))
+
+    @mock.patch('seismic.correlate.stream.convert_statlist_to_bulk_stats')
+    def test_create_corrbulk_vary_channel(self, cstbs_mock: mock.MagicMock):
+        st = self.st.copy()
+        qustart = st[0].stats.corr_start + 1
+        cstbs_mock.return_value = st[0].stats
+        with mock.patch.object(st, 'select') as sct_mock:
+            select_return = mock.MagicMock(name='select_mock')
+            select_return.select_corr_time.return_value = st
+            sct_mock.return_value = select_return
             cb = st.create_corr_bulk(times=(qustart, st[0].stats.corr_end))
             sct_mock.assert_any_call(
                 None, None, None, None)
         select_return.select_corr_time.assert_called_once_with(
             qustart, st[0].stats.corr_end
         )
+        cstbs_mock.assert_called_with(mock.ANY, varying_channel=True)
         for ii, tr in enumerate(self.st):
             np.testing.assert_array_equal(tr.data, cb.data[ii])
         # Check in-place

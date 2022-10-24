@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Monday, 24th October 2022 09:53:38 am
+Last Modified: Monday, 24th October 2022 10:39:58 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -1012,7 +1012,11 @@ class CorrStream(Stream):
         # Apply mask for skipped data
         A = np.delete(A, mask, 0)
 
-        stats = convert_statlist_to_bulk_stats(statlist)
+        if channel is None or '*' in channel or '?' in channel:
+            stats = convert_statlist_to_bulk_stats(
+                statlist, varying_channel=True)
+        else:
+            stats = convert_statlist_to_bulk_stats(statlist)
         return CorrBulk(A, stats)
 
     def plot(
