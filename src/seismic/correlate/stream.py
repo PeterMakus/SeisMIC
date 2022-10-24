@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Monday, 24th October 2022 09:44:17 am
+Last Modified: Monday, 24th October 2022 09:53:38 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -211,7 +211,7 @@ class CorrBulk(object):
         :rtype: :class:`~seismic.correlate.stream.CorrStream`
         """
         cst = CorrStream()
-        mutables = ['corr_start', 'corr_end', 'location']
+        mutables = ['corr_start', 'corr_end', 'location', 'channel']
         if ind is None:
             for ii, li in enumerate(self.data):
                 stats = deepcopy(self.stats)
