@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Tuesday, 11th October 2022 01:33:32 pm
+Last Modified: Monday, 24th October 2022 09:44:17 am
 '''
 from typing import Iterator, List, Tuple
 from copy import deepcopy
@@ -964,8 +964,7 @@ class CorrStream(Stream):
 
     def create_corr_bulk(
         self, network: str = None, station: str = None, channel: str = None,
-        location: str = None,
-        times: Tuple[UTCDateTime, UTCDateTime] = None,
+        location: str = None, times: Tuple[UTCDateTime, UTCDateTime] = None,
             inplace=True) -> CorrBulk:
         """
         Creates a CorrelationBulk object, which offers additional options for
@@ -975,7 +974,8 @@ class CorrStream(Stream):
         :type network: str, optional
         :param station: Take data from this station, defaults to None
         :type station: str, optional
-        :param channel: Take data from this channel, defaults to None
+        :param channel: Take data from this channel. If None all channels will
+            be retained, defaults to None
         :type channel: str, optional
         :param location: Take data from only this location. Else various
             locations can be processed together, defaults to None
@@ -1479,7 +1479,8 @@ def stack_st(st: CorrStream, weight: str, norm: bool = True) -> CorrTrace:
 
 
 def convert_statlist_to_bulk_stats(
-        statlist: List[CorrStats], varying_loc: bool = True) -> CorrStats:
+        statlist: List[CorrStats], varying_loc: bool = True,
+        varying_channel: bool = False) -> CorrStats:
     """
     Converts a list of :class:`~seismic.correlate.stream.CorrTrace` stats
     objects to a single stats object that can be used for the creation of a
@@ -1487,8 +1488,11 @@ def convert_statlist_to_bulk_stats(
 
     :param statlist: list of Stats
     :type statlist: List[Stats]
-    :param varying_loc: Set true if the location codes vary
-    :type varying_loc: False
+    :param varying_loc: Set true if the location codes vary. Defaults to True.
+    :type varying_loc: bool
+    :param varying_loc: Set true if the channel codes vary (e.g., EHZ to BHZ),
+        defaults to False.
+    :type varying_loc: bool
     :raises ValueError: raised if data does not fit together
     :return: single Stats object
     :rtype: Stats
@@ -1500,13 +1504,17 @@ def convert_statlist_to_bulk_stats(
     # Should / have to be identical for each trace
     # Not 100% sure if start and end_lag should be on this list
     immutables = [
-        'npts', 'sampling_rate', 'network', 'station', 'channel', 'start_lag',
+        'npts', 'sampling_rate', 'network', 'station', 'start_lag',
         'end_lag', 'stla', 'stlo', 'stel', 'evla', 'evlo', 'evel',
         'dist', 'az', 'baz']
     if varying_loc:
         mutables += ['location']
     else:
         immutables += ['location']
+    if varying_channel:
+        mutables += ['channel']
+    else:
+        immutables += ['channel']
     for key in mutables:
         stats[key] = []
     for trstat in statlist:

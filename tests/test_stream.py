@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Thursday, 6th October 2022 12:16:01 pm
+Last Modified: Monday, 24th October 2022 09:50:22 am
 '''
 
 import unittest
@@ -513,7 +513,7 @@ class TestCorrStats(unittest.TestCase):
     def test_native_types(self):
         # network, station, and channel are strings and do allow nothing but
         # strings (convertibles types will be converted to str)
-        keys = ['network', 'station', 'channel']
+        keys = ['network', 'station']
         for k in keys:
             with warnings.catch_warnings(record=True) as w:
                 self.cst[k] = [1, 2, 3]
@@ -1048,6 +1048,12 @@ class TestConvertStatlistToBulkStats(unittest.TestCase):
         stcomb = stream.convert_statlist_to_bulk_stats(
             [self.stats, stats1], False)
         self.assertIsInstance(stcomb['location'], str)
+
+    def test_channel_mutable(self):
+        stats1 = self.stats.copy()
+        stcomb = stream.convert_statlist_to_bulk_stats(
+            [self.stats, stats1], varying_channel=True)
+        self.assertIsInstance(stcomb['location'], list)
 
 
 if __name__ == "__main__":

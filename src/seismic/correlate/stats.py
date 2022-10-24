@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 5th July 2021 02:44:13 pm
-Last Modified: Thursday, 11th August 2022 02:05:24 pm
+Last Modified: Monday, 24th October 2022 09:49:28 am
 '''
 from obspy.core.util import AttribDict
 from obspy import UTCDateTime
@@ -171,7 +171,6 @@ class CorrStats(AttribDict):
     _types = {
         'network': (str),
         'station': (str),
-        'channel': (str),
     }
 
     def __init__(self, header={}):
@@ -194,10 +193,6 @@ class CorrStats(AttribDict):
                 value = float(value)
             elif key == 'start_lag':
                 value = float(value)
-            # elif key == 'corr_start':
-            #     value = UTCDateTime(value)
-            # elif key == 'corr_end':
-            #     value = UTCDateTime(value)
             elif key == 'npts':
                 if not isinstance(value, int):
                     value = int(value)
