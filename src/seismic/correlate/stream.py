@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Thursday, 3rd November 2022 10:30:49 am
+Last Modified: Thursday, 3rd November 2022 11:44:35 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -170,7 +170,7 @@ class CorrBulk(object):
 
     def correct_shift(self, dt: DV):
         """
-        Correct a shfit of the traces.
+        Correct a shift of the traces.
 
         If time shifts in the (correlation) traces occur due to clock drifts
         or time offsets in active measurements these can be measured with
@@ -179,7 +179,7 @@ class CorrBulk(object):
         corrected for, such that if the measurement is done again no shift will
         be detected.
         """
-        self.data, _ = pcp.apply_shift(
+        self.data = pcp.apply_shift(
             data=self.data, stats=self.stats,
             shifts=-1.*dt.value)
         self.stats.processing_bulk += ['Corrected for time shift']
@@ -423,9 +423,8 @@ class CorrBulk(object):
         :return: A DV object holding a shift value.
         :rtype: DV
         """
-        tw_list = deepcopy(tw)
-        if tw_list is not None:
-            tw_list = [tw_list]
+        if tw is not None:
+            tw_list = [tw]
         dt = pcp.measure_shift(
             self.data, self.stats, ref_trc=ref_trc,
             tw=tw_list, shift_range=shift_range, shift_steps=shift_steps,

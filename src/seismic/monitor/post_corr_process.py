@@ -9,14 +9,14 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Thursday, 3rd November 2022 10:46:08 am
+Last Modified: Thursday, 3rd November 2022 02:46:13 pm
 '''
 
 from typing import List, Tuple
 import numpy as np
 from copy import deepcopy
 from scipy.signal import butter, lfilter, hilbert, resample
-from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import UnivariateSpline, interp1d
 from obspy.core import UTCDateTime
 
 # Obspy imports
@@ -1274,15 +1274,15 @@ def apply_shift(
     :type shifts: :class:`~numpy.ndarray`
     :param shifts: shifts in seconds for each trace in 'data'
     """
-    data = deepcopy(data)
     times = np.linspace(stats.start_lag, stats.end_lag, stats.npts)
-
     # stretch every line
     for (ii, line) in enumerate(data):
-        s = UnivariateSpline(times, line, s=0)
-        data[ii, :] = s(times+shifts[ii])
+        # s = UnivariateSpline(times, line, s=0)
+        f = interp1d(
+            times, line, fill_value='extrapolate')
+        data[ii, :] = f(times+shifts[ii])
 
-    return data, stats
+    return data
 
 
 def apply_stretch(
@@ -1299,12 +1299,11 @@ def apply_stretch(
     :type stretches: :class:`~numpy.ndarray`
     :param stretches: stretches in relative units for each trace in 'data'
     """
-    data = deepcopy(data)
     times = np.linspace(stats.start_lag, stats.end_lag, stats.npts)
 
     # stretch every line
     for (ii, line) in enumerate(data):
-        s = UnivariateSpline(times, line, s=0)
+        # Extrapolating stretches can lead to weird boundary values
+        s = UnivariateSpline(times, line, s=0, ext='const')
         data[ii, :] = s(times * np.exp(-stretches[ii]))
-
     return data, stats

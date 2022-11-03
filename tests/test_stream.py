@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Wednesday, 8th June 2022 03:58:41 pm
+Last Modified: Thursday, 3rd November 2022 11:51:34 am
 '''
 
 import unittest
@@ -113,6 +113,21 @@ class TestCorrBulk(unittest.TestCase):
         self.assertIn(
             'Applied time stretch', cb.stats.processing_bulk)
 
+    @mock.patch('seismic.monitor.post_corr_process.apply_shift')
+    def test_correct_shift(self, shift_mock: mock.MagicMock):
+        cb = self.cb.copy()
+        shift_mock.return_value = np.zeros((25, 25))
+        dvmock = mock.MagicMock()
+        dvmock.value = 1
+        cb.correct_shift(dvmock)
+        shift_mock.assert_called_once_with(
+            data=mock.ANY, stats=cb.stats, shifts=-1.*dvmock.value)
+        np.testing.assert_array_equal(
+            shift_mock.call_args[1]['data'], self.cb.data)
+        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
+        self.assertIn(
+            'Corrected for time shift', cb.stats.processing_bulk)
+
     def test_create_corrstream(self):
         # Lets's just create a CorrStream from stretch and then convert back
         # and forth
@@ -208,6 +223,19 @@ class TestCorrBulk(unittest.TestCase):
         np.testing.assert_array_equal(np.zeros((5, 25)), rtrcs)
         calls = [mock.call(mock.ANY, self.cb.stats, 'bla', 25)]*5
         extract_mock.assert_has_calls(calls)
+
+    @mock.patch('seismic.monitor.post_corr_process.measure_shift')
+    def test_measure_shift(self, mshift_mock: mock.MagicMock):
+        tw = [0, 1]
+        mshift_mock.return_value = ['bla', 'blub']
+        x = self.cb.measure_shift(tw=tw)
+        mshift_mock.assert_called_once_with(
+            mock.ANY, self.cb.stats, ref_trc=None, tw=[tw],
+            shift_range=10, shift_steps=101, sides='both', return_sim_mat=False
+        )
+        np.testing.assert_array_equal(
+            mshift_mock.call_args[0][0], self.cb.data)
+        self.assertEqual(x, 'bla')
 
     @mock.patch('seismic.correlate.stream.pcp.corr_mat_mirror')
     def test_mirror(self, mirror_mock):

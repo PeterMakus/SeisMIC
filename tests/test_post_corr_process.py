@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 25th June 2021 09:33:09 am
-Last Modified: Wednesday, 8th June 2022 03:43:02 pm
+Last Modified: Thursday, 3rd November 2022 12:43:04 pm
 '''
 
 import unittest
@@ -561,6 +561,54 @@ class TestCorrMatShift(unittest.TestCase):
         dv = pcp.corr_mat_shift(
             data, self.stats, self.reftr, shift_steps=21)
         np.testing.assert_array_equal([0, 1], dv['value'])
+
+
+class TestApplyShift(unittest.TestCase):
+    def setUp(self):
+        self.stats = CorrStats()
+        self.stats.start_lag = 0
+        self.stats.npts = 101
+        self.stats.delta = 1
+        self.data = np.vstack((np.arange(101), np.arange(101) + 100))
+
+    def test_constant_shift(self):
+        shifts = [1, -1]
+        outdata = pcp.apply_shift(self.data, self.stats, shifts)
+        exp = np.vstack((np.arange(101)+1, np.arange(101) + 99))
+        np.testing.assert_array_almost_equal(
+            outdata, exp
+        )
+
+    def test_linear_shift(self):
+        shifts = [np.arange(101), -np.arange(101)]
+        outdata = pcp.apply_shift(self.data, self.stats, shifts)
+        exp = np.vstack((np.arange(101)*2, np.ones((101,))*100))
+        np.testing.assert_array_almost_equal(
+            outdata, exp
+        )
+
+
+class TestApplyStretch(unittest.TestCase):
+    def setUp(self):
+        self.stats = CorrStats()
+        self.stats.start_lag = 0
+        self.stats.npts = 101
+        self.stats.delta = 1
+        self.data = np.vstack((np.arange(101), np.arange(101) + 100))
+
+    def test_constant_stetch(self):
+        stretches = [.5, .5]
+        outdata = pcp.apply_stretch(self.data, self.stats, stretches)
+        exp = np.vstack((np.arange(101)+1, np.arange(101) + 99))
+        print(outdata)
+
+    # def test_linear_shift(self):
+    #     shifts = [np.arange(101), -np.arange(101)]
+    #     outdata = pcp.apply_shift(self.data, self.stats, shifts)
+    #     exp = np.vstack((np.arange(101)*2, np.ones((101,))*100))
+    #     np.testing.assert_array_almost_equal(
+    #         outdata, exp
+    #     )
 
 
 if __name__ == "__main__":
