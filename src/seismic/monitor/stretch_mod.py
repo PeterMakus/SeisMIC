@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Wednesday, 8th June 2022 02:48:22 pm
+Last Modified: Thursday, 3rd November 2022 10:42:38 am
 '''
 from typing import List, Tuple
 
@@ -90,7 +90,7 @@ def compute_wfc(
     # Mat must be a 2d vector in every case so
     mat = np.atleast_2d(mat)
 
-    assert(len(refcorr) == mat.shape[1])
+    assert len(refcorr) == mat.shape[1]
 
     if remove_nans:
         mat = np.nan_to_num(mat)
@@ -256,7 +256,7 @@ def velocity_change_estimate(
     # Mat must be a 2d vector in every case so
     mat = np.atleast_2d(mat)
 
-    assert(strrefmat.shape[1] == mat.shape[1])
+    assert strrefmat.shape[1] == mat.shape[1]
 
     if remove_nans:
         mat = np.nan_to_num(mat)
@@ -1141,44 +1141,42 @@ def time_stretch_apply(
     return stretched_mat
 
 
-
 def create_shifted_ref_mat(
-    ref_trc: np.ndarray, stats: CorrStats, shifts: np.ndarray) ->  np.array:
-    """ Create a matrix of shifted versions of a reference trace.
+    ref_trc: np.ndarray, stats: CorrStats,
+        shifts: np.ndarray) -> np.array:
     """
-    assert len(ref_trc.shape)==1 or ref_trc.shape[0]==1,\
-            f"'ref_trc' must be a 1-dimensional array, "\
-            f"has shape {ref_trc.shape}."
+    Create a matrix of shifted versions of a reference trace.
+    """
+    assert len(ref_trc.shape) == 1 or ref_trc.shape[0] == 1,\
+        f"'ref_trc' must be a 1-dimensional array,  has shape {ref_trc.shape}."
     # squeeze the trace to 1D array
     ref_trc = np.squeeze(ref_trc)
     # allocate space for the shifted traces
-    ref_mat = np.zeros((len(shifts),len(ref_trc)))
+    ref_mat = np.zeros((len(shifts), len(ref_trc)))
     # create the time vector
-    times = np.linspace(stats.start_lag,stats.end_lag,stats.npts)
+    times = np.linspace(stats.start_lag, stats.end_lag, stats.npts)
     # create the spline
     s = UnivariateSpline(times, ref_trc, s=0)
     for ii, shift in enumerate(shifts):
-        ref_mat[ii,:] = s(times + shift)
+        ref_mat[ii, :] = s(times + shift)
 
     return ref_mat
 
 
-def compare_with_modified_reference(data: np.ndarray,
-    ref_mat: np.ndarray, indices: np.ndarray) -> np.ndarray:
-    """ Compare a correlation matrix with a modified references.
+def compare_with_modified_reference(
+    data: np.ndarray, ref_mat: np.ndarray,
+        indices: np.ndarray) -> np.ndarray:
     """
-    assert data.shape[1] == ref_mat.shape[1], \
-        f"Traces and reference traces must have the same length, "\
-        f"not {data.shape[1]} and {data.shape[1]}"
-
+    Compare a correlation matrix with a modified references.
+    """
     # create mask for time window
     mat_mask = np.zeros_like(data)
-    mat_mask[:,indices] = 1
+    mat_mask[:, indices] = 1
     ref_mask = np.zeros_like(ref_mat)
-    ref_mask[:,indices] = 1
-    #mask arraya
-    first = data[:,indices]
-    second = ref_mat[:,indices]
+    ref_mask[:, indices] = 1
+    # mask array
+    first = data[:, indices]
+    second = ref_mat[:, indices]
     # correlation via dot product
     dprod = np.dot(first, second.T)
     # Normalization

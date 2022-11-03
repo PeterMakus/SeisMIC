@@ -9,9 +9,9 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Wednesday, 8th June 2022 03:57:21 pm
+Last Modified: Thursday, 3rd November 2022 10:30:49 am
 '''
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
 import warnings
 from matplotlib import pyplot as plt
@@ -49,21 +49,16 @@ class CorrBulk(object):
         self.stats['processing_bulk'] = []
         self.ref_trc = None
 
-    def plot(
-        self, timelimits: list or tuple or None = None,
-        ylimits: list or tuple or None = None,
-        clim: list or tuple or None = None,
-        plot_colorbar: bool = False, outputfile: str or None = None,
-        title: str or None = None, ax: plt.Axes = None):
+    def plot(self, **kwargs):
         """
         Plot the correlation traces contained.
-        """
-        ax = plot_corr_bulk(self, timelimits=timelimits,
-            ylimits=ylimits, clim=clim, plot_colorbar=False,
-            outputfile=outputfile, title=title, ax=ax)
-        return ax
-    
 
+        .. seealso::
+            See :func:`~seismic.plot.plot_correlation.plot_corr_bulk` for
+            accepted parameters.
+        """
+        ax = plot_corr_bulk(self, **kwargs)
+        return ax
 
     def normalize(
         self, starttime: float = None, endtime: float = None,
@@ -178,17 +173,17 @@ class CorrBulk(object):
         Correct a shfit of the traces.
 
         If time shifts in the (correlation) traces occur due to clock drifts
-        or time offsets in active measurements these can be measured with 
-        :func:`~seismic.correlate.stream.CorrelationBulk.measure_shift()`. If
+        or time offsets in active measurements these can be measured with
+        :func:`~seismic.correlate.stream.CorrelationBulk.measure_shift`. If
         the resulting time shift is passed to this function the shift is
         corrected for, such that if the measurement is done again no shift will
         be detected.
         """
-        self.data, _ = pcp.apply_shift(data=self.data, stats=self.stats,
+        self.data, _ = pcp.apply_shift(
+            data=self.data, stats=self.stats,
             shifts=-1.*dt.value)
-        self.stats.processing_bulk += ['Applied time stretch']
+        self.stats.processing_bulk += ['Corrected for time shift']
         return self
-
 
     def create_corr_stream(self):
         """
@@ -385,19 +380,57 @@ class CorrBulk(object):
         return DV(**dv_dict)
 
     def measure_shift(
-        self, ref_trc: np.ndarray = None, tw: list = None, 
+        self, ref_trc: Optional[np.ndarray] = None,
+        tw: Optional[List[float]] = None,
         shift_range: float = 10, shift_steps: int = 101, sides: str = 'both',
-        return_sim_mat: bool = False) -> DV:
-        """ New implementation of find_clock_shift
+            return_sim_mat: bool = False) -> DV:
+        """
+        Time shift estimate through shifting and comparison.
+
+        This function estimates shifting of the time axis of traces as it can
+        occur if the clocks of digitizers drift.
+
+        Time shifts are estimated comparing each trace (e.g. correlation
+        function stored in the ``corr_data`` matrix (one for each row) with
+        shifted versions  of reference trace stored in ``ref_trc``. The range
+        of shifting to be tested is given in ``shift_range`` in seconds.
+        It is used in a symmetric way from -``shift_range``
+        to +``shift_range``. Shifting ist
+        tested ``shift_steps`` times. ``shift_steps`` should be an odd number
+        to test zero shifting. The best match (shifting amount and
+        corresponding correlation value) is calculated in specified time
+        windows. Multiple time
+        windows may be specified in ``tw``.
+
+        :param ref_trc: Refernce trace for the shifting, defaults to None
+        :type ref_trc: Optional[np.ndarray], optional
+        :param tw: Time window(s) to check the shifting in, defaults to None.
+        :type tw: Optional[List[float]], optional
+        :param shift_range: Maximum shift range in seconds, defaults to 10
+        :type shift_range: float, optional
+        :param shift_steps: Number of shift steps, defaults to 101
+        :type shift_steps: int, optional
+        :type sides: str
+        :param sides: Side of the traces to be used for the shifting estimate
+            ('both' | 'single'). ``single`` is used for
+            one-sided signals from active sources or if the time window shall
+            not be symmetric. For ``both`` the time window will be mirrowd
+            about
+            zero lag time, e.g. [start,end] will result in time windows
+            [-end:-start] and [start:end] being used simultaneousy
+        :param return_sim_mat: Return simmilarity matrix?, defaults to False
+        :type return_sim_mat: bool, optional
+        :return: A DV object holding a shift value.
+        :rtype: DV
         """
         tw_list = deepcopy(tw)
         if tw_list is not None:
             tw_list = [tw_list]
-        dt = pcp.measure_shift(self.data, self.stats, ref_trc=ref_trc,
+        dt = pcp.measure_shift(
+            self.data, self.stats, ref_trc=ref_trc,
             tw=tw_list, shift_range=shift_range, shift_steps=shift_steps,
             sides=sides, return_sim_mat=return_sim_mat)[0]
         return dt
-
 
     def mirror(self):
         """

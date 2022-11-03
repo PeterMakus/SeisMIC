@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Wednesday, 8th June 2022 03:53:38 pm
+Last Modified: Thursday, 3rd November 2022 10:46:08 am
 '''
 
 from typing import List, Tuple
@@ -27,7 +27,6 @@ from seismic.monitor.stretch_mod import multi_ref_vchange_and_align, \
     create_shifted_ref_mat
 from seismic.correlate.stats import CorrStats
 from seismic.monitor.dv import DV
-
 
 
 def corr_mat_clip(A: np.ndarray, thres: float, axis: int) -> np.ndarray:
@@ -1089,12 +1088,11 @@ def corr_mat_shift(
     return dt
 
 
-
 def measure_shift(
-    data: np.ndarray, stats: CorrStats, ref_trc: np.ndarray = None,
-    tw: List[List] = None, shift_range: float = 10,
+    data: np.ndarray, stats: CorrStats, ref_trc: np.ndarray | None = None,
+    tw: List[List] | None = None, shift_range: float = 10,
     shift_steps: int = 101, sides: str = 'both',
-    return_sim_mat: bool = False) -> List[DV]:
+        return_sim_mat: bool = False) -> List[DV]:
     """ Time shift estimate through shifting and comparison.
 
     This function estimates shifting of the time axis of traces as it can
@@ -1108,7 +1106,7 @@ def measure_shift(
     tested ``shift_steps`` times. ``shift_steps`` should be an odd number to
     test zero shifting. The best match (shifting amount and corresponding
     correlation value) is calculated in specified time windows. Multiple time
-    windows may be specified in  ``tw``. 
+    windows may be specified in  ``tw``.
 
 
     :type data: :class:`~numpy.ndarray`
@@ -1165,30 +1163,25 @@ def measure_shift(
             values have been obtained.
     """
 
-    assert sides in ['both','single'],\
-        f"'sides' must be either 'both' or 'single', not {sides}"
+    if sides not in ['both', 'single']:
+        raise ValueError(
+            f"'sides' must be either 'both' or 'single', not {sides}")
     if tw is not None:
-        assert isinstance(tw,list),\
-            f"'tw' must be a list, not {type(tw)}."
         for twi in tw:
-            assert len(twi)==2,\
-                f"individual time windows must be specified as two-item list,"\
-                f"not {twi} of length {len(twi)}."
-            for twii in twi:
-                assert isinstance(twii, float),\
-                    f"'tw' should contain lists of floats, found {twii}"\
-                    f"of type {type(twii)}."
-    if sides=='both':
-        assert np.all(np.array(tw)>=0),\
-            f"For 'sides=='both' all values in tw must be non-negative"
-    if ref_trc is not None:
-        assert len(ref_trc.shape)==1 or ref_trc.shape[0]==1,\
-            f"'ref_trc' must be a 1-dimensional array, "\
-            f"has shape {ref_trc.shape}."
-        assert len(ref_trc) == data.shape[1],\
-            f"Length of 'ref_trc' must match 'data.shape[1]', "\
-            f"they are {len(ref_trc)} and {data.shape[1]}."
+            if not len(twi) == 2:
+                raise ValueError(
+                    f"individual time windows must be specified as two-item"
+                    f"list, not {twi} of length {len(twi)}.")
 
+    if sides == 'both':
+        if np.any(np.array(tw) < 0):
+            raise ValueError(
+                "For 'sides=='both' all values in tw must be >= 0")
+    if ref_trc is not None:
+        if len(ref_trc) != data.shape[1]:
+            raise ValueError(
+                "Length of 'ref_trc' must match 'data.shape[1]', "
+                f"they are {len(ref_trc)} and {data.shape[1]}.")
 
     data = deepcopy(data)
     stats = deepcopy(stats)
@@ -1202,7 +1195,7 @@ def measure_shift(
         stats['corr_start'] = np.concatenate((stats['corr_start'], reft), 0)
     # If no time window is given use the whole range
     if tw is None:
-        tw = [[stats.start_lag,stats.end_lag]]
+        tw = [[stats.start_lag, stats.end_lag]]
 
     # trim to required lapse time range
     twmax = np.max(np.array(tw)[:]) + shift_range
@@ -1210,10 +1203,10 @@ def measure_shift(
         twmin = -twmax
     else:
         twmin = np.min(np.array(tw)[:]) - shift_range
-    assert twmax<=stats.end_lag, f"Time window ends later than the trace. " \
+    assert twmax <= stats.end_lag, "Time window ends later than the trace. " \
         f"Latest time window + shift_range ends at {twmax}s " \
         f"while trace end at {stats.end_lag}s."
-    assert twmin>=stats.start_lag, f"Time window starts earlier than the " \
+    assert twmin >= stats.start_lag, f"Time window starts earlier than the " \
         f"trace. Earliest time window - shift_range starts at {twmin}s " \
         f"while trace starts at {stats.start_lag}s."
     data, stats = corr_mat_trim(data, stats, twmin, twmax)
@@ -1228,7 +1221,7 @@ def measure_shift(
         stats['corr_start'] = stats['corr_start'][:-1]
 
     # create matrix with shifted references
-    shifts = np.linspace(-shift_range,shift_range,shift_steps)
+    shifts = np.linspace(-shift_range, shift_range, shift_steps)
     ref_mat = create_shifted_ref_mat(ref_trc, stats, shifts)
 
     # create space for results
@@ -1236,10 +1229,11 @@ def measure_shift(
     # do computation for each time window
     for twi in tw:
         # create indices of time windows
-        indices = np.arange(np.ceil(twi[0]*stats.sampling_rate),
+        indices = np.arange(
+            np.ceil(twi[0]*stats.sampling_rate),
             np.floor(twi[1]*stats.sampling_rate))
-        if sides=='both':
-            indices = np.concatenate((np.flipud(-indices),indices))
+        if sides == 'both':
+            indices = np.concatenate((np.flipud(-indices), indices))
         indices -= np.round(stats.start_lag * stats.sampling_rate)
         indices = indices.astype(int)
         # compare data and shifted reference
@@ -1250,12 +1244,13 @@ def measure_shift(
         # to one of the two stretch_range limits
         value[np.isnan(corr)] = np.nan
         # assemble results
-        dt = {'stats':stats,
-              'corr': np.squeeze(corr),
-              'value': np.squeeze(value),
-              'second_axis': shifts,
-              'value_type': np.array(['shift']),
-              'method': np.array(['absolute_shift'])}
+        dt = {
+            'stats': stats,
+            'corr': np.squeeze(corr),
+            'value': np.squeeze(value),
+            'second_axis': shifts,
+            'value_type': np.array(['shift']),
+            'method': np.array(['absolute_shift'])}
         if return_sim_mat:
             dt.update({'sim_mat': np.squeeze(sim_mat)})
         else:
@@ -1280,7 +1275,7 @@ def apply_shift(
     :param shifts: shifts in seconds for each trace in 'data'
     """
     data = deepcopy(data)
-    times = np.linspace(stats.start_lag,stats.end_lag,stats.npts)
+    times = np.linspace(stats.start_lag, stats.end_lag, stats.npts)
 
     # stretch every line
     for (ii, line) in enumerate(data):
@@ -1305,15 +1300,11 @@ def apply_stretch(
     :param stretches: stretches in relative units for each trace in 'data'
     """
     data = deepcopy(data)
-    times = np.linspace(stats.start_lag,stats.end_lag,stats.npts)
+    times = np.linspace(stats.start_lag, stats.end_lag, stats.npts)
 
     # stretch every line
     for (ii, line) in enumerate(data):
         s = UnivariateSpline(times, line, s=0)
-        data[ii, :] = s(times * np.exp(-stretch[ii]))
+        data[ii, :] = s(times * np.exp(-stretches[ii]))
 
     return data, stats
-
-
-
-

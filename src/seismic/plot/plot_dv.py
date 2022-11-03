@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Monday, 11th April 2022 11:03:30 am
+Last Modified: Thursday, 3rd November 2022 10:51:46 am
 '''
 
 from datetime import datetime
@@ -146,8 +146,9 @@ def plot_dv(
         dv_y_label = "time shift (sample)"
     elif (value_type == 'shift') and (method == 'absolute_shift'):
         tit = "Time shift"
-        dv_tick_delta = (np.max(dv['second_axis'])-
-            np.min(dv['second_axis']))/5
+        dv_tick_delta = (
+            np.max(dv['second_axis'])
+            - np.min(dv['second_axis']))/5
         dv_y_label = "time shift [s]"
     else:
         raise ValueError(f"Unknown dv type, {value_type}!")
