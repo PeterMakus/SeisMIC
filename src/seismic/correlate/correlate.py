@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 11th February 2022 03:02:23 pm
+Last Modified: Monday, 7th November 2022 12:56:08 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -353,7 +353,7 @@ class Correlator(object):
         Write correlation stream to files.
 
         :param cst: CorrStream containing the correlations
-        :type cst: :class:`~mii3.correlate.stream.CorrStream`
+        :type cst: :class:`~seismic.correlate.stream.CorrStream`
         """
         if not cst.count():
             self.logger.debug('No new data written.')
@@ -372,7 +372,7 @@ class Correlator(object):
                 station = tr.stats.station
                 network = tr.stats.network
                 st.append(tr)
-        cstlist.append(st)
+        cstlist.append(st.copy())
         del cst
         # Decide which process writes to which station
         pmap = (np.arange(len(cstlist))*self.psize)/len(cstlist)
