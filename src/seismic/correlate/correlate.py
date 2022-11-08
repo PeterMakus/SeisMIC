@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 8th November 2022 11:32:04 am
+Last Modified: Tuesday, 8th November 2022 03:33:40 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -438,9 +438,16 @@ class Correlator(object):
                 st.extend(stext)
 
             # Stream based preprocessing
-            st = preprocess_stream(
-                st, self.store_client, resp, startt, endt, tl, **self.options)
-
+            try:
+                st = preprocess_stream(
+                    st, self.store_client, resp, startt, endt, tl,
+                    **self.options)
+            except ValueError as e:
+                self.logger.error(
+                    'Stream preprocessing failed for '
+                    f'{st[0].stats.network}.{st[0].stats.station} and time '
+                    f'{t}.\nThe Original Error Message was {e}.')
+                continue
             # Slice the stream in correlation length
             # -> Loop over correlation increments
             for ii, win in enumerate(generate_corr_inc(st, **self.options)):
