@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 25th June 2021 09:33:09 am
-Last Modified: Tuesday, 8th November 2022 03:26:47 pm
+Last Modified: Tuesday, 8th November 2022 03:58:09 pm
 '''
 
 import unittest
@@ -706,8 +706,8 @@ class TestApplyStretch(unittest.TestCase):
         self.stats.npts = 101
         self.stats.delta = 1
         self.data = np.vstack((
-                np.arange(101, dtype=np.float32),
-                np.arange(101, dtype=np.float32) + 100))
+            np.arange(101, dtype=np.float32),
+            np.arange(101, dtype=np.float32) + 100))
 
     def test_constant_stetch(self):
         stretches = [-.05, .05]
