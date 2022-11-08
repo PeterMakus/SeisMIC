@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Thursday, 3rd November 2022 02:46:13 pm
+Last Modified: Tuesday, 8th November 2022 02:53:23 pm
 '''
 
 from typing import List, Tuple
@@ -1173,10 +1173,10 @@ def measure_shift(
                     f"individual time windows must be specified as two-item"
                     f"list, not {twi} of length {len(twi)}.")
 
-    if sides == 'both':
-        if np.any(np.array(tw) < 0):
-            raise ValueError(
-                "For 'sides=='both' all values in tw must be >= 0")
+        if sides == 'both':
+            if np.any(np.array(tw) < 0):
+                raise ValueError(
+                    "For 'sides=='both' all values in tw must be >= 0")
     if ref_trc is not None:
         if len(ref_trc) != data.shape[1]:
             raise ValueError(
@@ -1193,9 +1193,9 @@ def measure_shift(
             data, np.atleast_2d(ref_trc)), 0)
         reft = np.tile([UTCDateTime(1900, 1, 1)], (1))
         stats['corr_start'] = np.concatenate((stats['corr_start'], reft), 0)
-    # If no time window is given use the whole range
+    # If no time window is given use the whole range - shift_range
     if tw is None:
-        tw = [[stats.start_lag, stats.end_lag]]
+        tw = [[stats.start_lag + shift_range, stats.end_lag - shift_range]]
 
     # trim to required lapse time range
     twmax = np.max(np.array(tw)[:]) + shift_range
@@ -1304,6 +1304,6 @@ def apply_stretch(
     # stretch every line
     for (ii, line) in enumerate(data):
         # Extrapolating stretches can lead to weird boundary values
-        s = UnivariateSpline(times, line, s=0, ext='const')
+        s = UnivariateSpline(times, line, s=0, ext=0)
         data[ii, :] = s(times * np.exp(-stretches[ii]))
     return data, stats
