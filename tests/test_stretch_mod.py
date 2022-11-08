@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 24th June 2021 02:23:40 pm
-Last Modified: Wednesday, 8th June 2022 03:35:36 pm
+Last Modified: Tuesday, 8th November 2022 03:56:47 pm
 '''
 
 import unittest
@@ -16,6 +16,7 @@ import unittest
 import numpy as np
 
 from seismic.monitor import stretch_mod as sm
+from seismic.correlate.stats import CorrStats
 
 
 class TestTimeWindowsCreation(unittest.TestCase):
@@ -104,6 +105,45 @@ class TestTimeShiftEstimate(unittest.TestCase):
             corr[ii] = np.roll(self.ref, -ii)
         dv = sm.time_shift_estimate(corr, self.ref, shift_steps=21)
         np.testing.assert_array_equal(dv['value'], shift)
+
+
+class TestCreateShiftedRefMat(unittest.TestCase):
+    def setUp(self):
+        self.ref_trc = np.arange(101.)
+        self.stats = CorrStats({
+            'start_lag': -50,
+            'delta': 1,
+            'npts': 101})
+        self.shifts = np.linspace(-5, 5, 101)
+
+    def test_invalid_shape(self):
+        with self.assertRaises(AssertionError):
+            sm.create_shifted_ref_mat(np.ones((5, 5)), None, None)
+
+    def test_result(self):
+        exp = np.array([self.ref_trc + s for s in self.shifts])
+        out = sm.create_shifted_ref_mat(self.ref_trc, self.stats, self.shifts)
+        np.testing.assert_array_almost_equal(out, exp)
+
+
+class TestCompareWithModifiedReference(unittest.TestCase):
+    def setUp(self):
+        self.ref_trc = np.arange(101.)
+        self.stats = CorrStats({
+            'start_lag': -50,
+            'delta': 1,
+            'npts': 101})
+        self.shifts = np.linspace(-5, 5, 101)
+        self.ref_mat = np.array([self.ref_trc + s for s in self.shifts])
+        self.data = np.roll(self.ref_mat, shift=1, axis=0)
+
+    def test_result(self):
+        indices = np.arange(101)
+        sim_mat = sm.compare_with_modified_reference(
+            self.data, self.ref_mat, indices)
+        # positions were corr should be 1
+        ii = np.hstack((-1, np.arange(0, 100)))
+        np.testing.assert_array_almost_equal(sim_mat[np.arange(101), ii], 1)
 
 
 if __name__ == "__main__":
