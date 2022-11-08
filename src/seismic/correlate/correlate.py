@@ -358,33 +358,23 @@ class Correlator(object):
         if not cst.count():
             self.logger.debug('No new data written.')
             return
-        cst.sort()
-        cstlist = []
-        station = cst[0].stats.station
-        network = cst[0].stats.network
-        st = CorrStream()
-        for tr in cst:
-            if tr.stats.station == station and tr.stats.network == network:
-                st.append(tr)
-            else:
-                cstlist.append(st.copy())
-                st.clear()
-                station = tr.stats.station
-                network = tr.stats.network
-                st.append(tr)
-        cstlist.append(st.copy())
-        del cst
+        # Make sure that each core writes to a different file
+        codelist = list(set(
+            [f'{tr.stats.network}.{tr.stats.station}' for tr in cst]))
+        # Better if the same cores keep writing to the same files
+        codelist.sort()
         # Decide which process writes to which station
-        pmap = (np.arange(len(cstlist))*self.psize)/len(cstlist)
+        pmap = (np.arange(len(codelist))*self.psize)/len(codelist)
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
-        ind = np.arange(len(cstlist))[ind]
-        for ii in ind:
-            outf = os.path.join(self.corr_dir, '%s.%s.h5' % (
-                cstlist[ii][0].stats.network,
-                cstlist[ii][0].stats.station))
-            with CorrelationDataBase(outf, corr_options=self.options) as cdb:
-                cdb.add_correlation(cstlist[ii], tag)
+
+        for code in np.array(codelist)[ind]:
+            net, stat = code.split('.')
+            outf = os.path.join(self.corr_dir, f'{net}.{stat}.h5')
+            with CorrelationDataBase(
+                    outf, corr_options=self.options) as cdb:
+                cdb.add_correlation(
+                    cst.select(network=net, station=stat), tag)
 
     def _generate_data(self) -> Iterator[Tuple[Stream, bool]]:
         """
@@ -423,8 +413,6 @@ class Correlator(object):
             endt = startt + self.options['read_len'] + tl
             st = Stream()
             resp = Inventory()
-            startt = UTCDateTime(t) - tl
-            endt = startt + self.options['read_len'] + tl
 
             # Decide which process reads data from which station
             # Better than just letting one core read as this avoids having to
@@ -477,9 +465,8 @@ class Correlator(object):
 
                 if not len(self.options['combinations']):
                     # no new combinations for this time period
-                    self.logger.info('no new data for times %s-%s' % (
-                        str(winstart),
-                        str(winend)))
+                    self.logger.info(
+                        f'No new data for times {winstart}-{winend}')
                     continue
                 self.logger.debug('Working on correlation times %s-%s' % (
                     str(win[0].stats.starttime), str(win[0].stats.endtime)))
