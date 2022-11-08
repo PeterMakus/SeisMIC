@@ -402,15 +402,15 @@ class Correlator(object):
 
         # Taper ends for the deconvolution
         if self.options['remove_response']:
-            tl = 300
+            tl = 50
         else:
             tl = 0
 
         # Loop over read increments
         for t in tqdm(loop_window):
             write_flag = True  # Write length is same as read length
-            startt = UTCDateTime(t) - tl
-            endt = startt + self.options['read_len'] + tl
+            startt = UTCDateTime(t)  # - tl
+            endt = startt + self.options['read_len']  # + tl
             st = Stream()
             resp = Inventory()
 
@@ -1177,8 +1177,7 @@ def preprocess_stream(
             # missing station response
             ninv = store_client.rclient.get_stations(
                 network=st[0].stats.network, station=st[0].stats.station,
-                channel='*', starttime=st[0].stats.starttime,
-                endtime=st[-1].stats.endtime, level='response')
+                channel='*', level='response')
             st.attach_response(ninv)
             st.remove_response(taper=False)
             store_client._write_inventory(ninv)
