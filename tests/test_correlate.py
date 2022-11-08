@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Friday, 11th February 2022 03:02:06 pm
+Last Modified: Tuesday, 8th November 2022 11:29:54 am
 '''
 from copy import deepcopy
 import unittest
@@ -779,7 +779,7 @@ class TestPreProcessStream(unittest.TestCase):
         kwargs = deepcopy(self.kwargs)
         kwargs['remove_response'] = True
         st = correlate.preprocess_stream(self.st.copy(), **kwargs)
-        self.assertIn('remove_response', st[0].stats.processing[-2])
+        self.assertIn('remove_response', st[0].stats.processing[-3])
         # Check whether response was attached
         self.assertTrue(st[0].stats.response)
 
@@ -802,7 +802,7 @@ class TestPreProcessStream(unittest.TestCase):
         sc_mock.rclient.get_stations.return_value = self.kwargs['inv']
         kwargs['store_client'] = sc_mock
         st = correlate.preprocess_stream(self.st.copy(), **kwargs)
-        self.assertIn('remove_response', st[0].stats.processing[-2])
+        self.assertIn('remove_response', st[0].stats.processing[-3])
         # Check whether response was attached
         self.assertTrue(st[0].stats.response)
         sc_mock.rclient.get_stations.assert_called_once()

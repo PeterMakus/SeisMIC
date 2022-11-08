@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 7th November 2022 12:56:08 pm
+Last Modified: Tuesday, 8th November 2022 11:32:04 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -402,15 +402,15 @@ class Correlator(object):
 
         # Taper ends for the deconvolution
         if self.options['remove_response']:
-            tl = 50
+            tl = 100
         else:
             tl = 0
 
         # Loop over read increments
         for t in tqdm(loop_window):
             write_flag = True  # Write length is same as read length
-            startt = UTCDateTime(t)  # - tl
-            endt = startt + self.options['read_len']  # + tl
+            startt = UTCDateTime(t)
+            endt = startt + self.options['read_len']
             st = Stream()
             resp = Inventory()
 
@@ -1150,7 +1150,8 @@ def preprocess_stream(
     """
     if not st.count():
         return st
-
+    # To deal with any nans/masks
+    st = st.split()
     st.sort(keys=['starttime'])
     # Check sampling frequency
     if sampling_rate > st[0].stats.sampling_rate:
@@ -1163,10 +1164,13 @@ def preprocess_stream(
     # AA-Filter is done in this function as well
     st = mu.resample_or_decimate(st, sampling_rate)
 
+    # Clip to these again to remove the taper
+    old_starts = [deepcopy(tr.stats.starttime) for tr in st]
+    old_ends = [deepcopy(tr.stats.endtime) for tr in st]
     if remove_response:
         # taper before instrument response removal
         if taper_len:
-            st = ppst.cos_taper_st(st, taper_len, False)
+            st = ppst.cos_taper_st(st, taper_len, False, True)
         try:
             if inv:
                 ninv = inv
@@ -1188,6 +1192,9 @@ def preprocess_stream(
         for procStep in preProcessing:
             func = func_from_str(procStep['function'])
             st = func(st, **procStep['args'])
+    # Remove the artificial taper from earlier
+    for tr, ostart, oend in zip(st, old_starts, old_ends):
+        tr.trim(starttime=ostart, endtime=oend)
     st.merge()
     st.trim(startt, endt, pad=True)
 

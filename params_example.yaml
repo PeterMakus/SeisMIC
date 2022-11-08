@@ -41,7 +41,7 @@ co:
     # native sampling_rate)
     sampling_rate : 25
     # Remove the instrument response, will take substantially more time
-    remove_response : False
+    remove_response : True
 
     # Method to combine different traces
     combination_method : 'betweenStations'
@@ -59,8 +59,8 @@ co:
                     {'function':'seismic.correlate.preprocessing_stream.detrend_st',
                     'args':{'type':'linear'}},
                     {'function':'seismic.correlate.preprocessing_stream.cos_taper_st',
-                      'args':{'taper_len': 10, # seconds
-                              'taper_at_masked': True}},
+                      'args':{'taper_len': 100, # seconds
+                              'lossless': True}}, # lossless tapering stitches additional data to trace, tapers, and removes the tapered ends after preprocessing
                     {'function':'seismic.correlate.preprocessing_stream.stream_filter',
                       'args':{'ftype':'bandpass',
                               'filter_option':{'freqmin':0.01, #0.01
