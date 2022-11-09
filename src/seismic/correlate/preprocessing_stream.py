@@ -10,17 +10,19 @@ Module that contains functions for preprocessing on obspy streams
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:47:00 pm
-Last Modified: Monday, 14th February 2022 11:52:04 am
+Last Modified: Tuesday, 8th November 2022 11:19:47 am
 '''
 from typing import List
 from warnings import warn
+from copy import deepcopy
 
 import numpy as np
 from obspy import Stream, Trace, UTCDateTime
 
 
 def cos_taper_st(
-        st: Stream, taper_len: float, taper_at_masked: bool) -> Stream:
+    st: Stream, taper_len: float, lossless: bool,
+        taper_at_masked: bool = False) -> Stream:
     """
     Applies a cosine taper to the input Stream.
 
@@ -31,6 +33,10 @@ def cos_taper_st(
     :param taper_at_masked: applies a split to each trace and merges again
         afterwards
     :type taper_at_masked: bool
+    :param lossless: Lossless tapering pads the trace's ends with a copy of
+        the trace's data before tapering. Note that you will want to trim
+        the trace later to remove this artificial ends.
+    type lossless: bool
     :return: Tapered Stream
     :rtype: :class:`~obspy.core.stream.Stream`
 
@@ -42,13 +48,15 @@ def cos_taper_st(
         st = Stream([st])
     for ii, _ in enumerate(st):
         try:
-            st[ii] = cos_taper(st[ii], taper_len, taper_at_masked)
+            st[ii] = cos_taper(st[ii], taper_len, taper_at_masked, lossless)
         except ValueError as e:
             warn('%s, corresponding trace not tapered.' % e)
     return st
 
 
-def cos_taper(tr: Trace, taper_len: float, taper_at_masked: bool) -> Trace:
+def cos_taper(
+    tr: Trace, taper_len: float, taper_at_masked: bool,
+        lossless: bool) -> Trace:
     """
     Applies a cosine taper to the input trace.
 
@@ -57,8 +65,13 @@ def cos_taper(tr: Trace, taper_len: float, taper_at_masked: bool) -> Trace:
     :param taper_len: Length of the taper per side in seconds
     :type taper_len: float
     :param taper_at_masked: applies a split to each trace and merges again
-        afterwards
+        afterwards. Lossless tapering is not supporting if the trace contains
+        masked values in the middle of the trace
     :type taper_at_masked: bool
+    :param lossless: Lossless tapering pads the trace's ends with a copy of
+        the trace's data before tapering. Note that you will want to trim
+        the trace later to remove this artificial ends.
+    type lossless: bool
     :return: Tapered Trace
     :rtype: Trace
 
@@ -69,19 +82,31 @@ def cos_taper(tr: Trace, taper_len: float, taper_at_masked: bool) -> Trace:
     if taper_len <= 0:
         raise ValueError('Taper length must be larger than 0 s')
     if taper_at_masked:
+        if lossless:
+            warn(
+                'Tapering lossless at masked values is not supported')
         st = tr.split()
-        st = cos_taper_st(st, taper_len, False)
+        st = cos_taper_st(st, taper_len, False, False)
         st = st.merge()
         if st.count():
             tr.data = st[0].data
             return tr
         else:
             raise ValueError('Taper length must be larger than 0 s')
-    taper = np.ones_like(tr.data)
     tl_n = round(taper_len*tr.stats.sampling_rate)
     if tl_n * 2 > tr.stats.npts:
         raise ValueError(
             'Taper Length * 2 has to be smaller or equal to trace\'s length.')
+    if lossless:
+        # pad trace
+        tr.trim(
+            starttime=tr.stats.starttime-taper_len,
+            endtime=tr.stats.endtime+taper_len,
+            pad=True, fill_value=0)
+        # Change Fill value to data from the trace
+        tr.data[:tl_n] = deepcopy(tr.data[tl_n:2*tl_n])
+        tr.data[-tl_n:] = deepcopy(tr.data[-2*tl_n:-tl_n])
+    taper = np.ones_like(tr.data)
     tap = np.sin(np.linspace(0, np.pi, tl_n*2))
     taper[:tl_n] = tap[:tl_n]
     taper[-tl_n:] = tap[-tl_n:]

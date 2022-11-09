@@ -171,7 +171,6 @@ class CorrStats(AttribDict):
     _types = {
         'network': (str),
         'station': (str),
-        'channel': (str),
     }
 
     def __init__(self, header={}):
@@ -194,10 +193,6 @@ class CorrStats(AttribDict):
                 value = float(value)
             elif key == 'start_lag':
                 value = float(value)
-            # elif key == 'corr_start':
-            #     value = UTCDateTime(value)
-            # elif key == 'corr_end':
-            #     value = UTCDateTime(value)
             elif key == 'npts':
                 if not isinstance(value, int):
                     value = int(value)
@@ -241,7 +236,7 @@ class CorrStats(AttribDict):
         if key == 'component':
             ch = super(CorrStats, self).__getitem__('channel', default)
             a, b = ch.split('-')
-            return (a[-1]+'-'+b[-1])
+            return a[-1]+'-'+b[-1]
         else:
             return super(CorrStats, self).__getitem__(key, default)
 

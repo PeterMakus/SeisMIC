@@ -7,7 +7,7 @@ log_subdir : 'log'
 # 'DEBUG', 'INFO', 'WARNING', 'ERROR', or 'CRITICAL'
 log_level: 'WARNING'
 # folder for figures
-fig_subdir : 'figures'  # not in use yet
+fig_subdir : 'figures'
 
 
 #### parameters that are network specific
@@ -41,7 +41,7 @@ co:
     # native sampling_rate)
     sampling_rate : 25
     # Remove the instrument response, will take substantially more time
-    remove_response : False
+    remove_response : True
 
     # Method to combine different traces
     combination_method : 'betweenStations'
@@ -59,8 +59,8 @@ co:
                     {'function':'seismic.correlate.preprocessing_stream.detrend_st',
                     'args':{'type':'linear'}},
                     {'function':'seismic.correlate.preprocessing_stream.cos_taper_st',
-                      'args':{'taper_len': 10, # seconds
-                              'taper_at_masked': True}},
+                      'args':{'taper_len': 100, # seconds
+                              'lossless': True}}, # lossless tapering stitches additional data to trace, tapers, and removes the tapered ends after preprocessing
                     {'function':'seismic.correlate.preprocessing_stream.stream_filter',
                       'args':{'ftype':'bandpass',
                               'filter_option':{'freqmin':0.01, #0.01
@@ -138,7 +138,7 @@ dv:
 
     ### Definition of lapse time window
     tw_start : 20     # lapse time of first sample [s]
-    tw_len : 60       # length of window [s]
+    tw_len : 60       # length of window [s] Can be None if the whole (rest) of the coda should be used
     sides : 'both'   # options are left (for acausal), right (causal), both, or single (for active source experiments where the first sample is the trigger time)
     
     ### Range to try stretching

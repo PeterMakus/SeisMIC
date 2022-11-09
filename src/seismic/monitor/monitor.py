@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 11th April 2022 11:04:23 am
+Last Modified: Tuesday, 1st November 2022 11:42:37 am
 '''
 from copy import deepcopy
 import logging
@@ -170,7 +170,8 @@ class Monitor(object):
         with CorrelationDataBase(corr_file, mode='r') as cdb:
             # get the corrstream containing all the corrdata for this combi
             cst = cdb.get_data(network, station, channel, tag)
-        cb = cst.create_corr_bulk(inplace=True)
+        cb = cst.create_corr_bulk(
+            network=network, station=station, channel=channel, inplace=True)
 
         # for possible rest bits
         del cst
@@ -188,10 +189,16 @@ class Monitor(object):
                 cb = f(**func['args'])
 
         # Now, we make a copy of the cm to be trimmed
-        trim0 = -(
-            self.options['dv']['tw_start']+self.options['dv']['tw_len'])
-        trim1 = (self.options['dv']['tw_start']+self.options['dv']['tw_len'])
-        cbt = cb.copy().trim(trim0, trim1)
+        if self.options['dv']['tw_len'] is None:
+            trim0 = cb.stats.start_lag
+            trim1 = cb.stats.end_lag
+            cbt = cb
+        else:
+            trim0 = -(
+                self.options['dv']['tw_start']+self.options['dv']['tw_len'])
+            trim1 = (
+                self.options['dv']['tw_start']+self.options['dv']['tw_len'])
+            cbt = cb.copy().trim(trim0, trim1)
 
         if cbt.data.shape[1] <= 20:
             raise ValueError('CorrBulk extremely short.')
@@ -523,9 +530,16 @@ class Monitor(object):
                 cb = f(**func['args'])
 
         # Now, we make a copy of the cm to be trimmed
-        cbt = cb.copy().trim(
-            -(self.options['wfc']['tw_start']+self.options['wfc']['tw_len']),
-            (self.options['wfc']['tw_start']+self.options['wfc']['tw_len']))
+        if self.options['wfc']['tw_len'] is not None:
+            cbt = cb.copy().trim(
+                -(self.options['wfc']['tw_start']
+                    + self.options['wfc']['tw_len']),
+                (self.options['wfc']['tw_start']
+                    + self.options['wfc']['tw_len']))
+        else:
+            cbt = cb
+            self.options['dv']['tw_len'] = cb.stats.end_lag \
+                - self.options['wfc']['tw_start']
 
         self.logger.debug(
             'Preprocessing finished.\nExtracting reference trace...')

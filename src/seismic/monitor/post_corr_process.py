@@ -1052,7 +1052,7 @@ def corr_mat_shift(
         stats['corr_start'] = np.concatenate((stats['corr_start'], reft), 0)
 
     # trim the marices
-    if sides == "single":
+    if sides == "single" or sides == 'right':
         # extract the time>0 part of the matrix
         data, stats = corr_mat_trim(data, stats, 0, dte)
     else:
@@ -1072,7 +1072,7 @@ def corr_mat_shift(
     # set sides
     if sides == 'both':
         ss = False
-    elif sides == 'right':
+    elif sides == 'right' or sides == 'single':
         ss = True
     else:
         raise ValueError(

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 7th November 2022 12:55:18 pm
+Last Modified: Tuesday, 8th November 2022 03:33:40 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -358,33 +358,24 @@ class Correlator(object):
         if not cst.count():
             self.logger.debug('No new data written.')
             return
-        cst.sort()
-        cstlist = []
-        station = cst[0].stats.station
-        network = cst[0].stats.network
-        st = CorrStream()
-        for tr in cst:
-            if tr.stats.station == station and tr.stats.network == network:
-                st.append(tr)
-            else:
-                cstlist.append(st.copy())
-                st.clear()
-                station = tr.stats.station
-                network = tr.stats.network
-                st.append(tr)
-        cstlist.append(st.copy())
-        del cst
+ 
+        # Make sure that each core writes to a different file
+        codelist = list(set(
+            [f'{tr.stats.network}.{tr.stats.station}' for tr in cst]))
+        # Better if the same cores keep writing to the same files
+        codelist.sort()
         # Decide which process writes to which station
-        pmap = (np.arange(len(cstlist))*self.psize)/len(cstlist)
+        pmap = (np.arange(len(codelist))*self.psize)/len(codelist)
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
-        ind = np.arange(len(cstlist))[ind]
-        for ii in ind:
-            outf = os.path.join(self.corr_dir, '%s.%s.h5' % (
-                cstlist[ii][0].stats.network,
-                cstlist[ii][0].stats.station))
-            with CorrelationDataBase(outf, corr_options=self.options) as cdb:
-                cdb.add_correlation(cstlist[ii], tag)
+
+        for code in np.array(codelist)[ind]:
+            net, stat = code.split('.')
+            outf = os.path.join(self.corr_dir, f'{net}.{stat}.h5')
+            with CorrelationDataBase(
+                    outf, corr_options=self.options) as cdb:
+                cdb.add_correlation(
+                    cst.select(network=net, station=stat), tag)
 
     def _generate_data(self) -> Iterator[Tuple[Stream, bool]]:
         """
@@ -412,19 +403,17 @@ class Correlator(object):
 
         # Taper ends for the deconvolution
         if self.options['remove_response']:
-            tl = 300
+            tl = 100
         else:
             tl = 0
 
         # Loop over read increments
         for t in tqdm(loop_window):
             write_flag = True  # Write length is same as read length
-            startt = UTCDateTime(t) - tl
-            endt = startt + self.options['read_len'] + tl
+            startt = UTCDateTime(t)
+            endt = startt + self.options['read_len']
             st = Stream()
             resp = Inventory()
-            startt = UTCDateTime(t) - tl
-            endt = startt + self.options['read_len'] + tl
 
             # Decide which process reads data from which station
             # Better than just letting one core read as this avoids having to
@@ -450,9 +439,16 @@ class Correlator(object):
                 st.extend(stext)
 
             # Stream based preprocessing
-            st = preprocess_stream(
-                st, self.store_client, resp, startt, endt, tl, **self.options)
-
+            try:
+                st = preprocess_stream(
+                    st, self.store_client, resp, startt, endt, tl,
+                    **self.options)
+            except ValueError as e:
+                self.logger.error(
+                    'Stream preprocessing failed for '
+                    f'{st[0].stats.network}.{st[0].stats.station} and time '
+                    f'{t}.\nThe Original Error Message was {e}.')
+                continue
             # Slice the stream in correlation length
             # -> Loop over correlation increments
             for ii, win in enumerate(generate_corr_inc(st, **self.options)):
@@ -477,9 +473,8 @@ class Correlator(object):
 
                 if not len(self.options['combinations']):
                     # no new combinations for this time period
-                    self.logger.info('no new data for times %s-%s' % (
-                        str(winstart),
-                        str(winend)))
+                    self.logger.info(
+                        f'No new data for times {winstart}-{winend}')
                     continue
                 self.logger.debug('Working on correlation times %s-%s' % (
                     str(win[0].stats.starttime), str(win[0].stats.endtime)))
@@ -1163,7 +1158,8 @@ def preprocess_stream(
     """
     if not st.count():
         return st
-
+    # To deal with any nans/masks
+    st = st.split()
     st.sort(keys=['starttime'])
     # Check sampling frequency
     if sampling_rate > st[0].stats.sampling_rate:
@@ -1176,10 +1172,13 @@ def preprocess_stream(
     # AA-Filter is done in this function as well
     st = mu.resample_or_decimate(st, sampling_rate)
 
+    # Clip to these again to remove the taper
+    old_starts = [deepcopy(tr.stats.starttime) for tr in st]
+    old_ends = [deepcopy(tr.stats.endtime) for tr in st]
     if remove_response:
         # taper before instrument response removal
         if taper_len:
-            st = ppst.cos_taper_st(st, taper_len, False)
+            st = ppst.cos_taper_st(st, taper_len, False, True)
         try:
             if inv:
                 ninv = inv
@@ -1190,8 +1189,7 @@ def preprocess_stream(
             # missing station response
             ninv = store_client.rclient.get_stations(
                 network=st[0].stats.network, station=st[0].stats.station,
-                channel='*', starttime=st[0].stats.starttime,
-                endtime=st[-1].stats.endtime, level='response')
+                channel='*', level='response')
             st.attach_response(ninv)
             st.remove_response(taper=False)
             store_client._write_inventory(ninv)
@@ -1202,6 +1200,9 @@ def preprocess_stream(
         for procStep in preProcessing:
             func = func_from_str(procStep['function'])
             st = func(st, **procStep['args'])
+    # Remove the artificial taper from earlier
+    for tr, ostart, oend in zip(st, old_starts, old_ends):
+        tr.trim(starttime=ostart, endtime=oend)
     st.merge()
     st.trim(startt, endt, pad=True)
 

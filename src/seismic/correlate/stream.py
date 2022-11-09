@@ -24,7 +24,8 @@ from obspy.core import Stats
 from seismic.utils import miic_utils as m3ut
 from seismic.plot.plot_correlation import plot_cst, plot_ctr, plot_corr_bulk
 import seismic.monitor.post_corr_process as pcp
-from seismic.monitor.stretch_mod import time_stretch_apply, wfc_multi_reftr
+from seismic.monitor.stretch_mod import time_shift_apply, time_stretch_apply,\
+    wfc_multi_reftr
 from seismic.monitor.dv import DV
 from seismic.monitor.wfc import WFC
 from seismic.correlate.stats import CorrStats
@@ -145,6 +146,43 @@ class CorrBulk(object):
         self.stats.processing_bulk += ['Corrected for Amplitude Decay']
         return self
 
+    def correct_shift(
+        self, dv: DV = None, shift: np.ndarray = None,
+            single_sided: bool = False):
+        """
+        Correct shift / clock drift of a correlation matrix.
+        Input argument can either be a matrix holding the shifts in n_samples
+        or a DV object with value_type==shift
+
+        :param dv: A dv object with value_type == shift, defaults to None
+        :type dv: DV, optional
+        :param shift: A 1 or 2D array holding the shift per CorrTrace (1D) or
+            per CorrTrace and sample (2D), defaults to None
+        :type shift: np.ndarray, optional
+        :param single_sided: self.data only contains causal side,
+            defaults to False
+        :type single_sided: bool, optional
+        :raises ValueError: mismatched inputs
+        :return: shifted CorrBulk
+
+        ..note:: This action is performed **in-place**. If you would like to
+            keep the original data use
+            :func:`~seismic.correlate.stream.CorrelationBulk.copy()`.
+        """
+        if (shift is None and dv is None) or (
+                shift is not None and dv is not None):
+            raise ValueError(
+                'Provide either shift values or a DV object containing time '
+                + 'shift estimates')
+        if dv is not None:
+            if dv.value_type != 'shift':
+                raise ValueError('dv values have to be of type "shift".')
+            shift = -dv.value
+        self.data = time_shift_apply(
+            self.data, shift, single_sided=single_sided)
+        self.stats.processing_bulk += ['Applied time shift']
+        return self
+
     def correct_stretch(self, dv: DV, single_sided: bool = False):
         """
         Correct stretching of correlation matrix
@@ -164,6 +202,8 @@ class CorrBulk(object):
             keep the original data use
             :func:`~seismic.correlate.stream.CorrelationBulk.copy()`.
         """
+        if dv.value_type != 'stretch':
+            raise ValueError('DV object does not hold any stretch values.')
         self.data = time_stretch_apply(self.data, -1.*dv.value, single_sided)
         self.stats.processing_bulk += ['Applied time stretch']
         return self
@@ -185,26 +225,39 @@ class CorrBulk(object):
         self.stats.processing_bulk += ['Corrected for time shift']
         return self
 
-    def create_corr_stream(self):
+    def create_corr_stream(self, ind: List[int] = None):
         """
         Creates a :class:`~seismic.correlate.stream.CorrStream` object from
         the current :class:`~seismic.correlate.stream.CorrBulk` object. This
         can be useful if you want to save your postprocessed data in a hdf5
         file again.
 
+        :param ind: Indices to extract. If None, all will be used.
+            Defaults to None.
+        :type ind: Iterable[ind], optional
         :return: Correlation Stream holding the same data
         :rtype: :class:`~seismic.correlate.stream.CorrStream`
         """
         cst = CorrStream()
-        mutables = ['corr_start', 'corr_end', 'location']
-        for ii, li in enumerate(self.data):
-            stats = deepcopy(self.stats)
-            for k in mutables:
-                if not isinstance(stats[k], list):
-                    continue
-                stats[k] = self.stats[k][ii]
-            ctr = CorrTrace(li, _header=stats)
-            cst.append(ctr)
+        mutables = ['corr_start', 'corr_end', 'location', 'channel']
+        if ind is None:
+            for ii, li in enumerate(self.data):
+                stats = deepcopy(self.stats)
+                for k in mutables:
+                    if not isinstance(stats[k], list):
+                        continue
+                    stats[k] = self.stats[k][ii]
+                ctr = CorrTrace(li, _header=stats)
+                cst.append(ctr)
+        else:
+            for ii in ind:
+                stats = deepcopy(self.stats)
+                for k in mutables:
+                    if not isinstance(stats[k], list):
+                        continue
+                    stats[k] = self.stats[k][ii]
+                ctr = CorrTrace(self.data[ii], _header=stats)
+                cst.append(ctr)
         return cst
 
     def envelope(self):
@@ -991,8 +1044,7 @@ class CorrStream(Stream):
 
     def create_corr_bulk(
         self, network: str = None, station: str = None, channel: str = None,
-        location: str = None,
-        times: Tuple[UTCDateTime, UTCDateTime] = None,
+        location: str = None, times: Tuple[UTCDateTime, UTCDateTime] = None,
             inplace=True) -> CorrBulk:
         """
         Creates a CorrelationBulk object, which offers additional options for
@@ -1002,7 +1054,8 @@ class CorrStream(Stream):
         :type network: str, optional
         :param station: Take data from this station, defaults to None
         :type station: str, optional
-        :param channel: Take data from this channel, defaults to None
+        :param channel: Take data from this channel. If None all channels will
+            be retained, defaults to None
         :type channel: str, optional
         :param location: Take data from only this location. Else various
             locations can be processed together, defaults to None
@@ -1039,7 +1092,11 @@ class CorrStream(Stream):
         # Apply mask for skipped data
         A = np.delete(A, mask, 0)
 
-        stats = convert_statlist_to_bulk_stats(statlist)
+        if channel is None or '*' in channel or '?' in channel:
+            stats = convert_statlist_to_bulk_stats(
+                statlist, varying_channel=True)
+        else:
+            stats = convert_statlist_to_bulk_stats(statlist)
         return CorrBulk(A, stats)
 
     def plot(
@@ -1047,7 +1104,8 @@ class CorrStream(Stream):
         timelimits: Tuple[float, float] = None,
         ylimits: Tuple[float, float] = None, scalingfactor: float = None,
         ax: plt.Axes = None, linewidth: float = 0.25,
-            outputfile: str = None, title: str = None, type: str = 'heatmap'):
+        outputfile: str = None, title: str = None, type: str = 'heatmap',
+            cmap: str = 'inferno', vmin: float = None, vmax: float = None):
         """
         Creates a section plot of all correlations in this stream.
 
@@ -1074,6 +1132,9 @@ class CorrStream(Stream):
         :param type: Type of plot. Either `'heatmap'` for a heat plot or
             `'section'` for a wiggle type plot. Defaults to heatmap.
         :type title: str, optional
+        :param cmap: Decides about colormap if type == 'heatmap'.
+        Defaults to 'inferno'.
+        :type cmap: str, optional
 
         .. note:: If you would like to plot a subset of this stream, use
             :func:`~seismic.correlate.stream.CorrStream.select`.
@@ -1084,7 +1145,8 @@ class CorrStream(Stream):
         ax = plot_cst(
             self, sort_by=sort_by, timelimits=timelimits, ylimits=ylimits,
             scalingfactor=scalingfactor, ax=ax, linewidth=linewidth,
-            outputfile=outputfile, title=title, type=type)
+            outputfile=outputfile, title=title, type=type, cmap=cmap,
+            vmin=vmin, vmax=vmax)
         return ax
 
     def _to_matrix(
@@ -1501,7 +1563,8 @@ def stack_st(st: CorrStream, weight: str, norm: bool = True) -> CorrTrace:
 
 
 def convert_statlist_to_bulk_stats(
-        statlist: List[CorrStats], varying_loc: bool = False) -> CorrStats:
+        statlist: List[CorrStats], varying_loc: bool = True,
+        varying_channel: bool = False) -> CorrStats:
     """
     Converts a list of :class:`~seismic.correlate.stream.CorrTrace` stats
     objects to a single stats object that can be used for the creation of a
@@ -1509,8 +1572,11 @@ def convert_statlist_to_bulk_stats(
 
     :param statlist: list of Stats
     :type statlist: List[Stats]
-    :param varying_loc: Set true if the location codes vary
-    :type varying_loc: False
+    :param varying_loc: Set true if the location codes vary. Defaults to True.
+    :type varying_loc: bool
+    :param varying_loc: Set true if the channel codes vary (e.g., EHZ to BHZ),
+        defaults to False.
+    :type varying_loc: bool
     :raises ValueError: raised if data does not fit together
     :return: single Stats object
     :rtype: Stats
@@ -1522,13 +1588,17 @@ def convert_statlist_to_bulk_stats(
     # Should / have to be identical for each trace
     # Not 100% sure if start and end_lag should be on this list
     immutables = [
-        'npts', 'sampling_rate', 'network', 'station', 'channel', 'start_lag',
+        'npts', 'sampling_rate', 'network', 'station', 'start_lag',
         'end_lag', 'stla', 'stlo', 'stel', 'evla', 'evlo', 'evel',
         'dist', 'az', 'baz']
     if varying_loc:
         mutables += ['location']
     else:
         immutables += ['location']
+    if varying_channel:
+        mutables += ['channel']
+    else:
+        immutables += ['channel']
     for key in mutables:
         stats[key] = []
     for trstat in statlist:

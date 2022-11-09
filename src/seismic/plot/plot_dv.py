@@ -193,8 +193,8 @@ def plot_dv(
     plt.gca().get_xaxis().set_visible(False)
 
     stats = dv['stats']
-    comb_mseedid = '%s.%s.%s.%s' % (
-        stats['network'], stats['station'], stats['location'],
+    comb_mseedid = '%s.%s.%s' % (
+        stats['network'], stats['station'],  # stats['location'],
         stats['channel'])
     if title:
         tit = title

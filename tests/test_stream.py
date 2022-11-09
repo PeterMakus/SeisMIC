@@ -99,12 +99,57 @@ class TestCorrBulk(unittest.TestCase):
         self.assertIn(
             'Corrected for Amplitude Decay', cb.stats.processing_bulk)
 
+    @mock.patch('seismic.correlate.stream.time_shift_apply')
+    def test_correct_shift(self, shift_mock):
+        cb = self.cb.copy()
+        shift_mock.return_value = np.zeros((25, 25))
+        dvmock = mock.MagicMock()
+        dvmock.value = 1
+        dvmock.value_type = 'shift'
+        cb.correct_shift(dv=dvmock)
+        shift_mock.assert_called_once_with(
+            mock.ANY, -dvmock.value, single_sided=False)
+        np.testing.assert_array_equal(
+            shift_mock.call_args[0][0], self.cb.data)
+        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
+        self.assertIn(
+            'Applied time shift', cb.stats.processing_bulk)
+
+    @mock.patch('seismic.correlate.stream.time_shift_apply')
+    def test_correct_shift2(self, shift_mock):
+        cb = self.cb.copy()
+        shift_mock.return_value = np.zeros((25, 25))
+        value = 1
+        cb.correct_shift(shift=value)
+        shift_mock.assert_called_once_with(mock.ANY, value, single_sided=False)
+        np.testing.assert_array_equal(
+            shift_mock.call_args[0][0], self.cb.data)
+        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
+        self.assertIn(
+            'Applied time shift', cb.stats.processing_bulk)
+
+    def test_correct_shift_wrong_type(self):
+        dvmock = mock.MagicMock()
+        dvmock.value = 1
+        dvmock.value_type = 'bla'
+        with self.assertRaises(ValueError):
+            self.cb.correct_shift(dv=dvmock)
+
+    def test_correct_shift_no_args(self):
+        with self.assertRaises(ValueError):
+            self.cb.correct_shift()
+
+    def test_correct_shift_two_args(self):
+        with self.assertRaises(ValueError):
+            self.cb.correct_shift(dv='bla', shift='blub')
+
     @mock.patch('seismic.correlate.stream.time_stretch_apply')
     def test_correct_stretch(self, stretch_mock):
         cb = self.cb.copy()
         stretch_mock.return_value = np.zeros((25, 25))
         dvmock = mock.MagicMock()
         dvmock.value = 1
+        dvmock.value_type = 'stretch'
         cb.correct_stretch(dvmock)
         stretch_mock.assert_called_once_with(mock.ANY, -1.*dvmock.value, False)
         np.testing.assert_array_equal(
@@ -127,6 +172,13 @@ class TestCorrBulk(unittest.TestCase):
         np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
         self.assertIn(
             'Corrected for time shift', cb.stats.processing_bulk)
+
+    def test_correct_stretch_wrong_type(self):
+        dvmock = mock.MagicMock()
+        dvmock.value = 1
+        dvmock.value_type = 'bla'
+        with self.assertRaises(ValueError):
+            self.cb.correct_stretch(dvmock)
 
     def test_create_corrstream(self):
         # Lets's just create a CorrStream from stretch and then convert back
@@ -489,7 +541,7 @@ class TestCorrStats(unittest.TestCase):
     def test_native_types(self):
         # network, station, and channel are strings and do allow nothing but
         # strings (convertibles types will be converted to str)
-        keys = ['network', 'station', 'channel']
+        keys = ['network', 'station']
         for k in keys:
             with warnings.catch_warnings(record=True) as w:
                 self.cst[k] = [1, 2, 3]
@@ -926,12 +978,36 @@ class TestCorrStream(unittest.TestCase):
             select_return = mock.MagicMock(name='select_mock')
             select_return.select_corr_time.return_value = st
             sct_mock.return_value = select_return
+            cb = st.create_corr_bulk(
+                times=(qustart, st[0].stats.corr_end),
+                channel=st[0].stats.channel)
+            sct_mock.assert_any_call(
+                None, None, None, st[0].stats.channel)
+        select_return.select_corr_time.assert_called_once_with(
+            qustart, st[0].stats.corr_end
+        )
+        for ii, tr in enumerate(self.st):
+            np.testing.assert_array_equal(tr.data, cb.data[ii])
+        # Check in-place
+        for tr in st:
+            self.assertFalse(hasattr(tr, 'data'))
+
+    @mock.patch('seismic.correlate.stream.convert_statlist_to_bulk_stats')
+    def test_create_corrbulk_vary_channel(self, cstbs_mock: mock.MagicMock):
+        st = self.st.copy()
+        qustart = st[0].stats.corr_start + 1
+        cstbs_mock.return_value = st[0].stats
+        with mock.patch.object(st, 'select') as sct_mock:
+            select_return = mock.MagicMock(name='select_mock')
+            select_return.select_corr_time.return_value = st
+            sct_mock.return_value = select_return
             cb = st.create_corr_bulk(times=(qustart, st[0].stats.corr_end))
             sct_mock.assert_any_call(
                 None, None, None, None)
         select_return.select_corr_time.assert_called_once_with(
             qustart, st[0].stats.corr_end
         )
+        cstbs_mock.assert_called_with(mock.ANY, varying_channel=True)
         for ii, tr in enumerate(self.st):
             np.testing.assert_array_equal(tr.data, cb.data[ii])
         # Check in-place
@@ -987,7 +1063,8 @@ class TestConvertStatlistToBulkStats(unittest.TestCase):
         self.stats['evel'] = 0
         # Note that starttime and endtime are just copies of corr_start and
         # corr_end
-        self.mutables = ['corr_start', 'corr_end', 'starttime', 'endtime']
+        self.mutables = [
+            'corr_start', 'corr_end', 'starttime', 'endtime', 'location']
         self.immutables = [
             'npts', 'sampling_rate', 'network', 'station', 'channel',
             'start_lag', 'stla', 'stlo', 'stel', 'evla', 'evlo',
@@ -998,6 +1075,7 @@ class TestConvertStatlistToBulkStats(unittest.TestCase):
         stats1 = self.stats.copy()
         stats1['corr_start'] += 3600
         stats1['corr_end'] += 3600
+        stats1['location'] = 'bla'
         stcomb = stream.convert_statlist_to_bulk_stats([self.stats, stats1])
         for key in stcomb:
             if key in self.mutables:
@@ -1019,9 +1097,14 @@ class TestConvertStatlistToBulkStats(unittest.TestCase):
 
     def test_loc_mutable(self):
         stats1 = self.stats.copy()
-        stats1['location'] = 'bla'
         stcomb = stream.convert_statlist_to_bulk_stats(
-            [self.stats, stats1], True)
+            [self.stats, stats1], False)
+        self.assertIsInstance(stcomb['location'], str)
+
+    def test_channel_mutable(self):
+        stats1 = self.stats.copy()
+        stcomb = stream.convert_statlist_to_bulk_stats(
+            [self.stats, stats1], varying_channel=True)
         self.assertIsInstance(stcomb['location'], list)
 
 

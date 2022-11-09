@@ -12,7 +12,6 @@
 #
 import os
 import sys
-# sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../../src'))
 
 
@@ -23,7 +22,7 @@ copyright = '2022, The SeisMIC development team.'
 author = 'The SeisMIC development Team'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.27'
+release = '0.1.34'
 
 
 # -- General configuration ---------------------------------------------------

@@ -202,6 +202,7 @@ omitted." % path, category=UserWarning)
             return CorrStream(CorrTrace(data, _header=header))
         # Now, we need to differ between the fnmatch pattern and the actually
         # accessed path
+        path = path.replace('?', '*')
         pattern = path.replace('/*', '*')
         path = path.split('*')[0]
         return all_traces_recursive(self[path], CorrStream(), pattern)
