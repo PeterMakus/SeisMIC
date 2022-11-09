@@ -9,10 +9,10 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Tuesday, 8th November 2022 02:53:23 pm
+Last Modified: Wednesday, 9th November 2022 10:45:06 am
 '''
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import numpy as np
 from copy import deepcopy
 from scipy.signal import butter, lfilter, hilbert, resample
@@ -1089,8 +1089,8 @@ def corr_mat_shift(
 
 
 def measure_shift(
-    data: np.ndarray, stats: CorrStats, ref_trc: np.ndarray | None = None,
-    tw: List[List] | None = None, shift_range: float = 10,
+    data: np.ndarray, stats: CorrStats, ref_trc: Optional[np.ndarray] = None,
+    tw: Optional[List[List]] = None, shift_range: float = 10,
     shift_steps: int = 101, sides: str = 'both',
         return_sim_mat: bool = False) -> List[DV]:
     """ Time shift estimate through shifting and comparison.
