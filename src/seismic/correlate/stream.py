@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Wednesday, 9th November 2022 10:37:30 am
+Last Modified: Wednesday, 9th November 2022 03:51:39 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -24,7 +24,7 @@ from obspy.core import Stats
 from seismic.utils import miic_utils as m3ut
 from seismic.plot.plot_correlation import plot_cst, plot_ctr, plot_corr_bulk
 import seismic.monitor.post_corr_process as pcp
-from seismic.monitor.stretch_mod import time_stretch_apply, wfc_multi_reftr
+from seismic.monitor.stretch_mod import wfc_multi_reftr
 from seismic.monitor.dv import DV
 from seismic.monitor.wfc import WFC
 from seismic.correlate.stats import CorrStats
@@ -145,7 +145,7 @@ class CorrBulk(object):
         self.stats.processing_bulk += ['Corrected for Amplitude Decay']
         return self
 
-    def correct_stretch(self, dv: DV, single_sided: bool = False):
+    def correct_stretch(self, dv: DV):
         """
         Correct stretching of correlation matrix
 
@@ -156,9 +156,6 @@ class CorrBulk(object):
 
         :param dv: Velocity Change object
         :type dv: DV
-        :param single_sided: set True for active source experiments where
-            the first sample is the trigger time. Defaults to False
-        type single_sided: bool, optional
 
         ..note:: This action is performed **in-place**. If you would like to
             keep the original data use
@@ -166,7 +163,8 @@ class CorrBulk(object):
         """
         if dv.value_type != 'stretch':
             raise ValueError('DV object does not hold any stretch values.')
-        self.data = time_stretch_apply(self.data, -1.*dv.value, single_sided)
+        self.data = pcp.apply_stretch(
+            self.data, self.stats, -1.*dv.value)
         self.stats.processing_bulk += ['Applied time stretch']
         return self
 

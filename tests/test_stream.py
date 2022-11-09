@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Wednesday, 9th November 2022 10:32:48 am
+Last Modified: Wednesday, 9th November 2022 03:58:32 pm
 '''
 
 import unittest
@@ -99,7 +99,7 @@ class TestCorrBulk(unittest.TestCase):
         self.assertIn(
             'Corrected for Amplitude Decay', cb.stats.processing_bulk)
 
-    @mock.patch('seismic.correlate.stream.time_stretch_apply')
+    @mock.patch('seismic.correlate.stream.pcp.apply_stretch')
     def test_correct_stretch(self, stretch_mock):
         cb = self.cb.copy()
         stretch_mock.return_value = np.zeros((25, 25))
@@ -107,7 +107,8 @@ class TestCorrBulk(unittest.TestCase):
         dvmock.value = 1
         dvmock.value_type = 'stretch'
         cb.correct_stretch(dvmock)
-        stretch_mock.assert_called_once_with(mock.ANY, -1.*dvmock.value, False)
+        stretch_mock.assert_called_once_with(
+            mock.ANY, cb.stats, -1.*dvmock.value)
         np.testing.assert_array_equal(
             stretch_mock.call_args[0][0], self.cb.data)
         np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
