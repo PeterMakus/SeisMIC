@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Monday, 24th October 2022 10:39:16 am
+Last Modified: Wednesday, 9th November 2022 10:32:48 am
 '''
 
 import unittest
@@ -99,50 +99,6 @@ class TestCorrBulk(unittest.TestCase):
         self.assertIn(
             'Corrected for Amplitude Decay', cb.stats.processing_bulk)
 
-    @mock.patch('seismic.correlate.stream.time_shift_apply')
-    def test_correct_shift(self, shift_mock):
-        cb = self.cb.copy()
-        shift_mock.return_value = np.zeros((25, 25))
-        dvmock = mock.MagicMock()
-        dvmock.value = 1
-        dvmock.value_type = 'shift'
-        cb.correct_shift(dv=dvmock)
-        shift_mock.assert_called_once_with(
-            mock.ANY, -dvmock.value, single_sided=False)
-        np.testing.assert_array_equal(
-            shift_mock.call_args[0][0], self.cb.data)
-        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
-        self.assertIn(
-            'Applied time shift', cb.stats.processing_bulk)
-
-    @mock.patch('seismic.correlate.stream.time_shift_apply')
-    def test_correct_shift2(self, shift_mock):
-        cb = self.cb.copy()
-        shift_mock.return_value = np.zeros((25, 25))
-        value = 1
-        cb.correct_shift(shift=value)
-        shift_mock.assert_called_once_with(mock.ANY, value, single_sided=False)
-        np.testing.assert_array_equal(
-            shift_mock.call_args[0][0], self.cb.data)
-        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
-        self.assertIn(
-            'Applied time shift', cb.stats.processing_bulk)
-
-    def test_correct_shift_wrong_type(self):
-        dvmock = mock.MagicMock()
-        dvmock.value = 1
-        dvmock.value_type = 'bla'
-        with self.assertRaises(ValueError):
-            self.cb.correct_shift(dv=dvmock)
-
-    def test_correct_shift_no_args(self):
-        with self.assertRaises(ValueError):
-            self.cb.correct_shift()
-
-    def test_correct_shift_two_args(self):
-        with self.assertRaises(ValueError):
-            self.cb.correct_shift(dv='bla', shift='blub')
-
     @mock.patch('seismic.correlate.stream.time_stretch_apply')
     def test_correct_stretch(self, stretch_mock):
         cb = self.cb.copy()
@@ -157,6 +113,21 @@ class TestCorrBulk(unittest.TestCase):
         np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
         self.assertIn(
             'Applied time stretch', cb.stats.processing_bulk)
+
+    @mock.patch('seismic.monitor.post_corr_process.apply_shift')
+    def test_correct_shift(self, shift_mock: mock.MagicMock):
+        cb = self.cb.copy()
+        shift_mock.return_value = np.zeros((25, 25))
+        dvmock = mock.MagicMock()
+        dvmock.value = 1
+        cb.correct_shift(dvmock)
+        shift_mock.assert_called_once_with(
+            data=mock.ANY, stats=cb.stats, shifts=-1.*dvmock.value)
+        np.testing.assert_array_equal(
+            shift_mock.call_args[1]['data'], self.cb.data)
+        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
+        self.assertIn(
+            'Corrected for time shift', cb.stats.processing_bulk)
 
     def test_correct_stretch_wrong_type(self):
         dvmock = mock.MagicMock()
@@ -260,6 +231,19 @@ class TestCorrBulk(unittest.TestCase):
         np.testing.assert_array_equal(np.zeros((5, 25)), rtrcs)
         calls = [mock.call(mock.ANY, self.cb.stats, 'bla', 25)]*5
         extract_mock.assert_has_calls(calls)
+
+    @mock.patch('seismic.monitor.post_corr_process.measure_shift')
+    def test_measure_shift(self, mshift_mock: mock.MagicMock):
+        tw = [0, 1]
+        mshift_mock.return_value = ['bla', 'blub']
+        x = self.cb.measure_shift(tw=tw)
+        mshift_mock.assert_called_once_with(
+            mock.ANY, self.cb.stats, ref_trc=None, tw=[tw],
+            shift_range=10, shift_steps=101, sides='both', return_sim_mat=False
+        )
+        np.testing.assert_array_equal(
+            mshift_mock.call_args[0][0], self.cb.data)
+        self.assertEqual(x, 'bla')
 
     @mock.patch('seismic.correlate.stream.pcp.corr_mat_mirror')
     def test_mirror(self, mirror_mock):

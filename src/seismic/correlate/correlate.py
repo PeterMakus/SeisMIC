@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 8th November 2022 03:33:40 pm
+Last Modified: Wednesday, 9th November 2022 10:37:43 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -358,6 +358,7 @@ class Correlator(object):
         if not cst.count():
             self.logger.debug('No new data written.')
             return
+
         # Make sure that each core writes to a different file
         codelist = list(set(
             [f'{tr.stats.network}.{tr.stats.station}' for tr in cst]))

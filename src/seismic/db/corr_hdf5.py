@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Friday, 21st October 2022 04:14:29 pm
+Last Modified: Thursday, 3rd November 2022 10:50:09 am
 '''
 import ast
 import fnmatch
@@ -375,16 +375,8 @@ def all_traces_recursive(
         elif not fnmatch.fnmatch(v.name, pattern) and v.name not in pattern:
             continue
         else:
-            # try:
             stream.append(
                 CorrTrace(np.array(v), _header=read_hdf5_header(v)))
-            # This even necessary?
-            # except ValueError:
-            #     print(v)
-            #     print(v.attrs)
-            #     warnings.warn(
-            #         'Header could not be converted. Attributes are: %s' % (
-            #             str(v.attrs)))
     return stream
 
 

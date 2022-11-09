@@ -7,13 +7,14 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Thursday, 11th August 2022 02:03:24 pm
+Last Modified: Wednesday, 9th November 2022 10:36:33 am
 '''
 from typing import List, Tuple
 
 import numpy as np
 from obspy.signal.invsim import cosine_taper
 from scipy.interpolate import UnivariateSpline, interp1d
+from seismic.correlate.stats import CorrStats
 
 
 def time_windows_creation(
@@ -1125,8 +1126,6 @@ def time_shift_apply(
 
     # stretch every line
     for ii, (ctr, delta) in enumerate(zip(mat, shift)):
-        # s = UnivariateSpline(time_idx, ctr, s=2, ext='zeros')
-        # shifted_mat[ii, :] = s(time_idx - delta)
         s = interp1d(
             time_idx, ctr, kind='linear', bounds_error=False, fill_value=0)
         shifted_mat[ii, :] = s(time_idx - delta)
@@ -1194,3 +1193,53 @@ def time_stretch_apply(
         stretched_mat[ii, :] = s(time_idx * np.exp(-stretch[ii]))
 
     return stretched_mat
+
+
+def create_shifted_ref_mat(
+    ref_trc: np.ndarray, stats: CorrStats,
+        shifts: np.ndarray) -> np.array:
+    """
+    Create a matrix of shifted versions of a reference trace.
+    """
+    assert len(ref_trc.shape) == 1 or ref_trc.shape[0] == 1,\
+        f"'ref_trc' must be a 1-dimensional array,  has shape {ref_trc.shape}."
+    # squeeze the trace to 1D array
+    ref_trc = np.squeeze(ref_trc)
+    # allocate space for the shifted traces
+    ref_mat = np.zeros((len(shifts), len(ref_trc)))
+    # create the time vector
+    times = np.linspace(stats.start_lag, stats.end_lag, stats.npts)
+    # create the spline
+    s = UnivariateSpline(times, ref_trc, s=0)
+    for ii, shift in enumerate(shifts):
+        ref_mat[ii, :] = s(times + shift)
+
+    return ref_mat
+
+
+def compare_with_modified_reference(
+    data: np.ndarray, ref_mat: np.ndarray,
+        indices: np.ndarray) -> np.ndarray:
+    """
+    Compare a correlation matrix with a modified references.
+    """
+    # create mask for time window
+    mat_mask = np.zeros_like(data)
+    mat_mask[:, indices] = 1
+    ref_mask = np.zeros_like(ref_mat)
+    ref_mask[:, indices] = 1
+    # mask array
+    first = data[:, indices]
+    second = ref_mat[:, indices]
+    # correlation via dot product
+    dprod = np.dot(first, second.T)
+    # Normalization
+    f_sq = np.sum(first ** 2, axis=1)
+    s_sq = np.sum(second ** 2, axis=1)
+    f_sq = f_sq.reshape(1, len(f_sq))
+    s_sq = s_sq.reshape(1, len(s_sq))
+    den = np.sqrt(np.dot(f_sq.T, s_sq))
+    # apply normalization
+    sim_mat = dprod / den
+
+    return sim_mat

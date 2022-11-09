@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 24th June 2021 02:23:40 pm
-Last Modified: Friday, 5th August 2022 01:01:19 pm
+Last Modified: Wednesday, 9th November 2022 10:35:37 am
 '''
 
 import unittest
@@ -16,6 +16,7 @@ import unittest
 import numpy as np
 
 from seismic.monitor import stretch_mod as sm
+from seismic.correlate.stats import CorrStats
 
 
 class TestTimeWindowsCreation(unittest.TestCase):
@@ -65,7 +66,6 @@ class TestTimeStretchEstimate(unittest.TestCase):
         # number of points for new
         nn = ((1+stretch)*self.n)
         corr = np.empty((len(nn), self.n))
-        # inter = interp1d(self.xref, self.ref, kind='cubic')
         for ii, n in enumerate(nn):
             x = np.linspace(0, 40*np.pi, int(n), endpoint=True)
             jj = int(round(abs(len(x)-self.n)/2))
@@ -151,6 +151,45 @@ class TestTimeShiftEstimate(unittest.TestCase):
             corr[ii] = np.roll(self.ref, -ii)
         dv = sm.time_shift_estimate(corr, self.ref, shift_steps=21)
         np.testing.assert_array_equal(dv['value'], shift)
+
+
+class TestCreateShiftedRefMat(unittest.TestCase):
+    def setUp(self):
+        self.ref_trc = np.arange(101.)
+        self.stats = CorrStats({
+            'start_lag': -50,
+            'delta': 1,
+            'npts': 101})
+        self.shifts = np.linspace(-5, 5, 101)
+
+    def test_invalid_shape(self):
+        with self.assertRaises(AssertionError):
+            sm.create_shifted_ref_mat(np.ones((5, 5)), None, None)
+
+    def test_result(self):
+        exp = np.array([self.ref_trc + s for s in self.shifts])
+        out = sm.create_shifted_ref_mat(self.ref_trc, self.stats, self.shifts)
+        np.testing.assert_array_almost_equal(out, exp)
+
+
+class TestCompareWithModifiedReference(unittest.TestCase):
+    def setUp(self):
+        self.ref_trc = np.arange(101.)
+        self.stats = CorrStats({
+            'start_lag': -50,
+            'delta': 1,
+            'npts': 101})
+        self.shifts = np.linspace(-5, 5, 101)
+        self.ref_mat = np.array([self.ref_trc + s for s in self.shifts])
+        self.data = np.roll(self.ref_mat, shift=1, axis=0)
+
+    def test_result(self):
+        indices = np.arange(101)
+        sim_mat = sm.compare_with_modified_reference(
+            self.data, self.ref_mat, indices)
+        # positions were corr should be 1
+        ii = np.hstack((-1, np.arange(0, 100)))
+        np.testing.assert_array_almost_equal(sim_mat[np.arange(101), ii], 1)
 
 
 if __name__ == "__main__":

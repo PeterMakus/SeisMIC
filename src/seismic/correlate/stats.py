@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 5th July 2021 02:44:13 pm
-Last Modified: Monday, 24th October 2022 09:49:28 am
+Last Modified: Thursday, 3rd November 2022 10:54:02 am
 '''
 from obspy.core.util import AttribDict
 from obspy import UTCDateTime
