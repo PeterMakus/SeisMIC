@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 24th June 2021 02:23:40 pm
-Last Modified: Tuesday, 8th November 2022 03:56:47 pm
+Last Modified: Wednesday, 9th November 2022 10:35:37 am
 '''
 
 import unittest
@@ -66,7 +66,6 @@ class TestTimeStretchEstimate(unittest.TestCase):
         # number of points for new
         nn = ((1+stretch)*self.n)
         corr = np.empty((len(nn), self.n))
-        # inter = interp1d(self.xref, self.ref, kind='cubic')
         for ii, n in enumerate(nn):
             x = np.linspace(0, 40*np.pi, int(n), endpoint=True)
             jj = int(round(abs(len(x)-self.n)/2))

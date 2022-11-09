@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Thursday, 3rd November 2022 11:44:35 am
+Last Modified: Wednesday, 9th November 2022 10:37:30 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -24,8 +24,7 @@ from obspy.core import Stats
 from seismic.utils import miic_utils as m3ut
 from seismic.plot.plot_correlation import plot_cst, plot_ctr, plot_corr_bulk
 import seismic.monitor.post_corr_process as pcp
-from seismic.monitor.stretch_mod import time_shift_apply, time_stretch_apply,\
-    wfc_multi_reftr
+from seismic.monitor.stretch_mod import time_stretch_apply, wfc_multi_reftr
 from seismic.monitor.dv import DV
 from seismic.monitor.wfc import WFC
 from seismic.correlate.stats import CorrStats
@@ -144,43 +143,6 @@ class CorrBulk(object):
         """
         self.data = pcp.corr_mat_correct_decay(self.data, self.stats)
         self.stats.processing_bulk += ['Corrected for Amplitude Decay']
-        return self
-
-    def correct_shift(
-        self, dv: DV = None, shift: np.ndarray = None,
-            single_sided: bool = False):
-        """
-        Correct shift / clock drift of a correlation matrix.
-        Input argument can either be a matrix holding the shifts in n_samples
-        or a DV object with value_type==shift
-
-        :param dv: A dv object with value_type == shift, defaults to None
-        :type dv: DV, optional
-        :param shift: A 1 or 2D array holding the shift per CorrTrace (1D) or
-            per CorrTrace and sample (2D), defaults to None
-        :type shift: np.ndarray, optional
-        :param single_sided: self.data only contains causal side,
-            defaults to False
-        :type single_sided: bool, optional
-        :raises ValueError: mismatched inputs
-        :return: shifted CorrBulk
-
-        ..note:: This action is performed **in-place**. If you would like to
-            keep the original data use
-            :func:`~seismic.correlate.stream.CorrelationBulk.copy()`.
-        """
-        if (shift is None and dv is None) or (
-                shift is not None and dv is not None):
-            raise ValueError(
-                'Provide either shift values or a DV object containing time '
-                + 'shift estimates')
-        if dv is not None:
-            if dv.value_type != 'shift':
-                raise ValueError('dv values have to be of type "shift".')
-            shift = -dv.value
-        self.data = time_shift_apply(
-            self.data, shift, single_sided=single_sided)
-        self.stats.processing_bulk += ['Applied time shift']
         return self
 
     def correct_stretch(self, dv: DV, single_sided: bool = False):

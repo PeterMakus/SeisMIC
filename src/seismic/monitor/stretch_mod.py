@@ -7,15 +7,14 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Thursday, 3rd November 2022 10:42:38 am
+Last Modified: Wednesday, 9th November 2022 10:36:33 am
 '''
 from typing import List, Tuple
 
 import numpy as np
 from obspy.signal.invsim import cosine_taper
-from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import UnivariateSpline, interp1d
 from seismic.correlate.stats import CorrStats
-
 
 
 def time_windows_creation(
@@ -1127,8 +1126,6 @@ def time_shift_apply(
 
     # stretch every line
     for ii, (ctr, delta) in enumerate(zip(mat, shift)):
-        # s = UnivariateSpline(time_idx, ctr, s=2, ext='zeros')
-        # shifted_mat[ii, :] = s(time_idx - delta)
         s = interp1d(
             time_idx, ctr, kind='linear', bounds_error=False, fill_value=0)
         shifted_mat[ii, :] = s(time_idx - delta)

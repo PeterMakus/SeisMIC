@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Thursday, 3rd November 2022 11:51:34 am
+Last Modified: Wednesday, 9th November 2022 10:32:48 am
 '''
 
 import unittest
@@ -98,50 +98,6 @@ class TestCorrBulk(unittest.TestCase):
         np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
         self.assertIn(
             'Corrected for Amplitude Decay', cb.stats.processing_bulk)
-
-    @mock.patch('seismic.correlate.stream.time_shift_apply')
-    def test_correct_shift(self, shift_mock):
-        cb = self.cb.copy()
-        shift_mock.return_value = np.zeros((25, 25))
-        dvmock = mock.MagicMock()
-        dvmock.value = 1
-        dvmock.value_type = 'shift'
-        cb.correct_shift(dv=dvmock)
-        shift_mock.assert_called_once_with(
-            mock.ANY, -dvmock.value, single_sided=False)
-        np.testing.assert_array_equal(
-            shift_mock.call_args[0][0], self.cb.data)
-        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
-        self.assertIn(
-            'Applied time shift', cb.stats.processing_bulk)
-
-    @mock.patch('seismic.correlate.stream.time_shift_apply')
-    def test_correct_shift2(self, shift_mock):
-        cb = self.cb.copy()
-        shift_mock.return_value = np.zeros((25, 25))
-        value = 1
-        cb.correct_shift(shift=value)
-        shift_mock.assert_called_once_with(mock.ANY, value, single_sided=False)
-        np.testing.assert_array_equal(
-            shift_mock.call_args[0][0], self.cb.data)
-        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
-        self.assertIn(
-            'Applied time shift', cb.stats.processing_bulk)
-
-    def test_correct_shift_wrong_type(self):
-        dvmock = mock.MagicMock()
-        dvmock.value = 1
-        dvmock.value_type = 'bla'
-        with self.assertRaises(ValueError):
-            self.cb.correct_shift(dv=dvmock)
-
-    def test_correct_shift_no_args(self):
-        with self.assertRaises(ValueError):
-            self.cb.correct_shift()
-
-    def test_correct_shift_two_args(self):
-        with self.assertRaises(ValueError):
-            self.cb.correct_shift(dv='bla', shift='blub')
 
     @mock.patch('seismic.correlate.stream.time_stretch_apply')
     def test_correct_stretch(self, stretch_mock):
