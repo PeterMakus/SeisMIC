@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 1st November 2022 11:42:37 am
+Last Modified: Wednesday, 9th November 2022 05:12:27 pm
 '''
 from copy import deepcopy
 import logging
@@ -219,7 +219,7 @@ class Monitor(object):
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],
             tw=tw, sides=self.options['dv']['sides'])
-        ccb = cb.correct_stretch(dv, self.options['dv']['sides'] == 'single')
+        ccb = cb.correct_stretch(dv)
 
         ccb.trim(trim0, trim1)
 
