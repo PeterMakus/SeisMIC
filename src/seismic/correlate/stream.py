@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Wednesday, 9th November 2022 03:51:39 pm
+Last Modified: Thursday, 10th November 2022 10:30:51 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -163,7 +163,7 @@ class CorrBulk(object):
         """
         if dv.value_type != 'stretch':
             raise ValueError('DV object does not hold any stretch values.')
-        self.data = pcp.apply_stretch(
+        self.data, self.stats = pcp.apply_stretch(
             self.data, self.stats, -1.*dv.value)
         self.stats.processing_bulk += ['Applied time stretch']
         return self
