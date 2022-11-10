@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Wednesday, 9th November 2022 03:58:32 pm
+Last Modified: Thursday, 10th November 2022 10:51:36 am
 '''
 
 import unittest
@@ -102,7 +102,7 @@ class TestCorrBulk(unittest.TestCase):
     @mock.patch('seismic.correlate.stream.pcp.apply_stretch')
     def test_correct_stretch(self, stretch_mock):
         cb = self.cb.copy()
-        stretch_mock.return_value = np.zeros((25, 25))
+        stretch_mock.return_value = (np.zeros((25, 25)), cb.stats)
         dvmock = mock.MagicMock()
         dvmock.value = 1
         dvmock.value_type = 'stretch'
