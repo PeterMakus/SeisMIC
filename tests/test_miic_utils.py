@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Wednesday, 13th April 2022 02:53:06 pm
+Last Modified: Monday, 14th November 2022 06:30:29 pm
 '''
 from copy import deepcopy
 import unittest
@@ -321,6 +321,42 @@ class TestFunctionFromString(unittest.TestCase):
     def test_result(self):
         funct = func_from_str('math.sqrt')
         self.assertEqual(funct, mathematics.sqrt)
+
+
+class TestCorrectPolarity(unittest.TestCase):
+    def setUp(self):
+        self.st = read()
+        self.inv = mock.MagicMock()
+
+    def test_flip(self):
+        self.inv.get_orientation.return_value = {
+            'dip': 90,
+            'aximuth': 0
+        }
+        st_correct = self.st.copy()
+        mu.correct_polarity(st_correct, self.inv)
+        self.inv.get_orientation.assert_called_with(
+            st_correct.select(component="Z")[0].id,
+            datetime=st_correct.select(component="Z")[0].stats.starttime)
+        np.testing.assert_array_equal(
+            st_correct.select(component="Z")[0].data,
+            -1 * self.st.select(component="Z")[0].data
+        )
+
+    def test_no_flip(self):
+        self.inv.get_orientation.return_value = {
+            'dip': -90,
+            'aximuth': 0
+        }
+        st_correct = self.st.copy()
+        mu.correct_polarity(st_correct, self.inv)
+        self.inv.get_orientation.assert_called_with(
+            st_correct.select(component="Z")[0].id,
+            datetime=st_correct.select(component="Z")[0].stats.starttime)
+        np.testing.assert_array_equal(
+            st_correct.select(component="Z")[0].data,
+            self.st.select(component="Z")[0].data
+        )
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Monday, 14th November 2022 06:14:38 pm
+Last Modified: Monday, 14th November 2022 06:15:29 pm
 '''
 from typing import List, Tuple
 import logging
@@ -410,6 +410,9 @@ def correct_polarity(st: Stream, inv: Inventory):
     """
     Sometimes the polarity of a seismometer's vertical component is reversed.
     This simple functions flips the polarity if this should be the case.
+
+    .. note::
+        This function acts on the data in-place.
 
     :param st: input stream. If there is no Z-component, nothing will happen.
     :type st: Stream
