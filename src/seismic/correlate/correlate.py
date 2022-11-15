@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 9th November 2022 10:37:43 am
+Last Modified: Monday, 14th November 2022 06:15:09 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -1193,6 +1193,10 @@ def preprocess_stream(
             st.attach_response(ninv)
             st.remove_response(taper=False)
             store_client._write_inventory(ninv)
+
+    # Sometimes Z has reversed polarity
+    if inv:
+        mu.correct_polarity(st, inv)
 
     mu.discard_short_traces(st, subdivision['corr_len']/20)
 
