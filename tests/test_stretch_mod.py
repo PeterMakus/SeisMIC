@@ -8,15 +8,17 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 24th June 2021 02:23:40 pm
-Last Modified: Wednesday, 9th November 2022 10:35:37 am
+Last Modified: Tuesday, 15th November 2022 11:51:07 am
 '''
 
 import unittest
+from copy import deepcopy
 
 import numpy as np
 
 from seismic.monitor import stretch_mod as sm
 from seismic.correlate.stats import CorrStats
+from seismic.monitor.post_corr_process import apply_stretch
 
 
 class TestTimeWindowsCreation(unittest.TestCase):
@@ -43,6 +45,10 @@ class TestTimeStretchEstimate(unittest.TestCase):
     def setUp(self):
         self.n = 1000
         self.ref = np.cos(np.linspace(0, 40*np.pi, self.n, endpoint=True))
+        self.stats = CorrStats()
+        self.stats.start_lag = -50
+        self.stats.npts = 101
+        self.stats.delta = 1
 
     def test_result(self):
         stretch = np.arange(1, 11, 1)/100  # in per cent
@@ -61,20 +67,41 @@ class TestTimeStretchEstimate(unittest.TestCase):
         dv = sm.time_stretch_estimate(corr, self.ref, stretch_steps=101)
         self.assertTrue(np.all(dv['value'] == [0, 0, 0, 0]))
 
-    def test_neg_stretch(self):
-        stretch = np.arange(1, 11, 1)/100  # in per cent
-        # number of points for new
-        nn = ((1+stretch)*self.n)
-        corr = np.empty((len(nn), self.n))
-        for ii, n in enumerate(nn):
-            x = np.linspace(0, 40*np.pi, int(n), endpoint=True)
-            jj = int(round(abs(len(x)-self.n)/2))
-            corr[ii, :] = np.cos(x)[jj:-jj][:self.n]
-        # make the most stretch trace the ref trace
-        ref = corr[-1, :]
-        dv = sm.time_stretch_estimate(corr[:-1, :], ref, stretch_steps=101)
-        self.assertTrue(
-            np.allclose(dv['value'], -np.flip(stretch[:-1]), atol=0.004))
+    def test_stretch_and_correct_tw(self):
+        stretches = [.05, -.05]
+        tw = [np.arange(31)]
+        ref = np.hstack((
+            np.zeros(15), np.ones(71), np.zeros(15)))
+        data = np.vstack((ref, ref))
+        data_stretch = apply_stretch(deepcopy(data), self.stats, stretches)[0]
+        dv = sm.time_stretch_estimate(
+            data_stretch, ref,
+            stretch_steps=1001, tw=tw)
+        np.testing.assert_array_almost_equal(dv['value'], np.array(stretches))
+
+    def test_stretch_and_correct_single(self):
+        stretches = [.05, -.05]
+        ref = np.hstack((
+            np.zeros(15), np.ones(71), np.zeros(15)))
+        data = np.vstack((ref, ref))
+        stats = deepcopy(self.stats)
+        stats.start_lag = 0
+        data_stretch = apply_stretch(deepcopy(data), stats, stretches)[0]
+        dv = sm.time_stretch_estimate(
+            data_stretch, ref,
+            stretch_steps=1001, sides='single')
+        np.testing.assert_array_almost_equal(dv['value'], np.array(stretches))
+
+    def test_stretch_and_correct_sin(self):
+        stretches = [.05, -.05]
+        ref = np.hstack((
+            np.zeros(15), np.sin(np.arange(71)), np.zeros(15)))
+        data = np.vstack((ref, ref))
+        data_stretch = apply_stretch(deepcopy(data), self.stats, stretches)[0]
+        dv = sm.time_stretch_estimate(
+            data_stretch, ref,
+            stretch_steps=1001)
+        np.testing.assert_array_almost_equal(dv['value'], np.array(stretches))
 
 
 class TestTimeShiftApply(unittest.TestCase):
@@ -109,7 +136,7 @@ class TestTimeShiftApply(unittest.TestCase):
             np.testing.assert_equal(
                 np.floor(corr_shift[0][shift:]), corr[:-shift])
         else:
-            np.assert_equal(corr_shift[0][shift:], 0)
+            np.testing.assert_equal(corr_shift[0][shift:], 0)
             np.testing.assert_equal(
                 np.floor(corr_shift[0][:shift]), corr[-shift-1:-1])
 

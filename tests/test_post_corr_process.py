@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 25th June 2021 09:33:09 am
-Last Modified: Tuesday, 8th November 2022 03:58:09 pm
+Last Modified: Tuesday, 15th November 2022 11:54:31 am
 '''
 
 import unittest
@@ -712,12 +712,25 @@ class TestApplyStretch(unittest.TestCase):
     def test_constant_stetch(self):
         stretches = [-.05, .05]
         outdata = pcp.apply_stretch(deepcopy(self.data), self.stats, stretches)
+        # stretch is logarithmic, so I shouldn't expect the result
+        # to be to precise (exp assumes a linear dv)
         exp = np.vstack((
             np.linspace(0, 105, 101), np.linspace(100, 195, 101)))
-        # The taylor series approximation does not deliver the most
-        # accurate results. It might make sense to abandon the approximation?
-        # For larger stretches this becomes even more inaccurate
-        np.testing.assert_array_almost_equal(exp, outdata[0], decimal=1)
+
+        # Boundaries will be set to 0 rather than extrapolated
+        np.testing.assert_array_almost_equal(
+            exp[0][:96], outdata[0][0][:96], decimal=1)
+        np.testing.assert_array_almost_equal(
+            exp[1], outdata[0][1], decimal=1)
+
+    def test_correct_stetch(self):
+        stretches = np.array([-.05, .05])
+        stretchdata = pcp.apply_stretch(
+            deepcopy(self.data), self.stats, stretches)[0]
+        correctdata = pcp.apply_stretch(
+            deepcopy(stretchdata), self.stats, -stretches)[0]
+        np.testing.assert_array_almost_equal(
+            self.data[:, :93], correctdata[:, :93], decimal=3)
 
 
 if __name__ == "__main__":

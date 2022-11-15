@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Wednesday, 9th November 2022 10:45:06 am
+Last Modified: Tuesday, 15th November 2022 11:48:59 am
 '''
 
 from typing import List, Tuple, Optional
@@ -853,7 +853,7 @@ def corr_mat_stretch(
     stretched versions  of reference trace stored in ``ref_trc``. If
     ``ref_trc`` is ``None`` the mean of all traces is used.
     The maximum amount of stretching may be passed in ``stretch_range``. The
-    time axis is multiplied by exp(stretch).
+    time axis is multiplied by 1/(1 + stretch).
     The best match (stretching amount and corresponding correlation value) is
     calculated on different time windows. If ``tw = None`` the stretching is
     estimated on the whole trace.
@@ -1304,6 +1304,10 @@ def apply_stretch(
     # stretch every line
     for (ii, line) in enumerate(data):
         # Extrapolating stretches can lead to weird boundary values
-        s = UnivariateSpline(times, line, s=0, ext=0)
+        # So we set the boundary to 0 instead of extrapolating (ext=1)
+        s = UnivariateSpline(times, line, s=0, ext=1)
+        # dv defined as difference
+        # data[ii, :] = s(times * (1 + stretches[ii]))
+        # dv defined as logarithmic change
         data[ii, :] = s(times * np.exp(-stretches[ii]))
     return data, stats
