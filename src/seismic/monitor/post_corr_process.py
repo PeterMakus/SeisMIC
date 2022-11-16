@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Tuesday, 15th November 2022 05:23:50 pm
+Last Modified: Tuesday, 15th November 2022 05:47:38 pm
 '''
 
 from typing import List, Tuple, Optional
@@ -873,34 +873,36 @@ def corr_mat_stretch(
     # In case a reference is provided but the matrix needs to be trimmed the
     # references also need to be trimmed. To do so we append the references to
     # the matrix, trimm it and remove the references again
-    if ref_trc is not None:
-        rts = ref_trc.shape
-        if len(rts) == 1:
-            nr = 1
-        else:
-            nr = rts[0]
-        data = np.concatenate((
-            data, np.atleast_2d(ref_trc)), 0)
-        reft = np.tile([UTCDateTime(1900, 1, 1)], (nr))
-        stats['corr_start'] = np.concatenate((stats['corr_start'], reft), 0)
+    # if ref_trc is not None:
+    #     rts = ref_trc.shape
+    #     if len(rts) == 1:
+    #         nr = 1
+    #     else:
+    #         nr = rts[0]
+    #     data = np.concatenate((
+    #         data, np.atleast_2d(ref_trc)), 0)
+    #     reft = np.tile([UTCDateTime(1900, 1, 1)], (nr))
+    #     stats['corr_start'] = np.concatenate((stats['corr_start'], reft), 0)
 
     # trim the matrices
     if sides == "single":
         # extract the time>0 part of the matrix
         data, stats = corr_mat_trim(data, stats, 0, dte)
+        ref_tr_trim = (0, dte)
     else:
         # extract the central symmetric part (if dt<0 the trim will fail)
         dt = min(dta, dte)
         data, stats = corr_mat_trim(data, stats, -dt, dt)
+        ref_tr_trim = (-dt, dt)
 
     # create or extract references
     if ref_trc is None:
         ref_trc = corr_mat_extract_trace(data, stats)
-    else:
-        # extract and remove references from corr matrix again
-        ref_trc = data[-nr:, :]
-        data = data[:-nr, :]
-        stats['corr_start'] = stats['corr_start'][:-nr]
+    # else:
+    #     # extract and remove references from corr matrix again
+    #     ref_trc = data[-nr:, :]
+    #     data = data[:-nr, :]
+    #     stats['corr_start'] = stats['corr_start'][:-nr]
 
     dv = multi_ref_vchange_and_align(
         data, ref_trc, tw=tw, stretch_range=stretch_range,

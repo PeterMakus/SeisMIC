@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Tuesday, 15th November 2022 05:30:10 pm
+Last Modified: Tuesday, 15th November 2022 05:49:20 pm
 '''
 from typing import List, Tuple, Optional
 from copy import deepcopy
@@ -575,7 +575,8 @@ def multi_ref_vchange(
         key = "reftr_0"
         value = time_stretch_estimate(
             corr_data, ref_trc=ref_trs, tw=tw, stretch_range=stretch_range,
-            stretch_steps=stretch_steps, sides=sides, remove_nans=remove_nans)
+            stretch_steps=stretch_steps, sides=sides, remove_nans=remove_nans,
+            ref_tr_trim=ref_tr_trim, ref_tr_stats=ref_tr_stats)
         multi_ref_panel.update({key: value})
     else:  # For multiple-traces loops
         for i in range(reftr_count):
@@ -584,7 +585,8 @@ def multi_ref_vchange(
             value = time_stretch_estimate(
                 corr_data, ref_trc=ref_trc, tw=tw, stretch_range=stretch_range,
                 stretch_steps=stretch_steps, sides=sides,
-                remove_nans=remove_nans)
+                remove_nans=remove_nans,
+                ref_tr_trim=ref_tr_trim, ref_tr_stats=ref_tr_stats)
             multi_ref_panel.update({key: value})
     return multi_ref_panel
 
