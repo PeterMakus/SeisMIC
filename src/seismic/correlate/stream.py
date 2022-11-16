@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Tuesday, 15th November 2022 05:23:05 pm
+Last Modified: Wednesday, 16th November 2022 11:38:29 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -307,6 +307,7 @@ class CorrBulk(object):
         trace. The following possibilities are available
 
         * ``mean`` averages all traces in the matrix
+        * ``median`` extract the median of all traces in the matrix
         * ``norm_mean`` averages the traces normalized after normalizing for
             maxima
         * ``similarity_percentile`` averages the ``percentile`` % of traces

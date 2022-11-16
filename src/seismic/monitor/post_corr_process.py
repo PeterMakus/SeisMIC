@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Tuesday, 15th November 2022 05:47:38 pm
+Last Modified: Wednesday, 16th November 2022 11:37:39 am
 '''
 
 from typing import List, Tuple, Optional
@@ -724,6 +724,7 @@ def corr_mat_extract_trace(
     possibilities are available
 
     * ``mean`` averages all traces in the matrix
+    * ``median`` extracts the median trace
     * ``norm_mean`` averages the traces normalized after normalizing for maxima
     * ``similarity_percentile`` averages the ``percentile`` % of traces that
         best correlate with the mean of all traces. This will exclude abnormal
@@ -747,6 +748,10 @@ def corr_mat_extract_trace(
         mm = np.ma.masked_array(
             ndata, np.isnan(ndata))
         out = np.mean(mm, 0).filled(np.nan)
+    elif method == 'median':
+        mm = np.ma.masked_array(
+            ndata, np.isnan(ndata))
+        out = np.median(mm, 0).filled(np.nan)
     elif method == 'norm_mean':
         # normalize the matrix
         ndata = corr_mat_normalize(ndata, stats, normtype='absmax')
