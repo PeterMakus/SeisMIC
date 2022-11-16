@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Tuesday, 15th November 2022 05:16:26 pm
+Last Modified: Tuesday, 15th November 2022 05:30:10 pm
 '''
 from typing import List, Tuple, Optional
 from copy import deepcopy
@@ -257,12 +257,6 @@ def velocity_change_estimate(
 
     # Mat must be a 2d vector in every case so
     mat = np.atleast_2d(mat)
-
-    if strrefmat.shape[1] > mat.shape[1]:
-        # Allow for larger reference traces, so extrapolation artefacts
-        # are not as much of a problem
-        # Now cut to same length
-        strrefmat
 
     if strrefmat.shape[1] != mat.shape[1]:
         raise ValueError(
