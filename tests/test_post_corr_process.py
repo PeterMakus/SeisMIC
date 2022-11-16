@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 25th June 2021 09:33:09 am
-Last Modified: Tuesday, 15th November 2022 11:54:31 am
+Last Modified: Tuesday, 15th November 2022 05:53:29 pm
 '''
 
 import unittest
@@ -507,7 +507,8 @@ class TestCorrMatStretch(unittest.TestCase):
     def test_stretch_0(self):
         data = np.tile(self.reftr, (2, 1))
         dv = pcp.corr_mat_stretch(
-            data, self.stats, self.reftr, stretch_steps=101)
+            data, self.stats, self.reftr, stretch_steps=101,
+            ref_tr_stats=self.stats)
         self.assertListEqual([0, 0], list(dv['value']))
 
     def test_stretch(self):
@@ -516,7 +517,8 @@ class TestCorrMatStretch(unittest.TestCase):
         data = np.vstack((self.reftr, s))
 
         dv = pcp.corr_mat_stretch(
-            data, self.stats, self.reftr, stretch_steps=101)
+            data, self.stats, self.reftr, stretch_steps=101,
+            ref_tr_stats=self.stats)
         self.assertTrue(np.allclose(
             [0, -0.04], list(dv['value'])))
 
@@ -527,7 +529,7 @@ class TestCorrMatStretch(unittest.TestCase):
 
         dv = pcp.corr_mat_stretch(
             data, self.stats, self.reftr, stretch_steps=101, sides='single',
-            tw=[np.arange(51)])
+            tw=[np.arange(51)], ref_tr_stats=self.stats)
         # Flips the result as it assumes 0 lag to be on index 0
         self.assertTrue(np.allclose(
             [0, 0.04], list(dv['value'])))
