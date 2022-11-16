@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Thursday, 10th November 2022 10:30:51 am
+Last Modified: Tuesday, 15th November 2022 05:23:05 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -28,6 +28,7 @@ from seismic.monitor.stretch_mod import wfc_multi_reftr
 from seismic.monitor.dv import DV
 from seismic.monitor.wfc import WFC
 from seismic.correlate.stats import CorrStats
+from seismic.monitor.trim import corr_mat_trim
 
 
 class CorrBulk(object):
@@ -547,7 +548,9 @@ class CorrBulk(object):
     def stretch(
         self, ref_trc: np.ndarray = None, tw: List[np.ndarray] = None,
         stretch_range: float = 0.1, stretch_steps: int = 101,
-            sides: str = 'both', return_sim_mat: bool = False) -> DV:
+        sides: str = 'both', return_sim_mat: bool = False,
+        ref_tr_trim: Optional[Tuple[float, float]] = None,
+            ref_tr_stats=None) -> DV:
         """
         Compute the velocity change with the stretching method
         (see Sens-Schönfelder and Wegler, 2006).
@@ -574,7 +577,7 @@ class CorrBulk(object):
             ref_trc = self.ref_trc
         dv_dict = pcp.corr_mat_stretch(
             self.data, self.stats, ref_trc, tw, stretch_range, stretch_steps,
-            sides, return_sim_mat)
+            sides, return_sim_mat, ref_tr_trim, ref_tr_stats)
         if not return_sim_mat:
             dv_dict['sim_mat'] = np.array([])
         return DV(**dv_dict)
@@ -685,7 +688,7 @@ class CorrBulk(object):
             the original data use
             :func:`~seismic.correlate.stream.CorrelationBulk.copy()`
         """
-        self.data, self.stats = pcp.corr_mat_trim(
+        self.data, self.stats = corr_mat_trim(
             self.data, self.stats, starttime, endtime)
         proc = ['trim: %s, %s' % (str(starttime), str(endtime))]
         self.stats.processing_bulk += proc

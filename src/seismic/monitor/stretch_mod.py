@@ -7,14 +7,16 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Tuesday, 15th November 2022 11:50:39 am
+Last Modified: Tuesday, 15th November 2022 05:16:26 pm
 '''
-from typing import List, Tuple
+from typing import List, Tuple, Optional
+from copy import deepcopy
 
 import numpy as np
 from obspy.signal.invsim import cosine_taper
 from scipy.interpolate import UnivariateSpline, interp1d
 from seismic.correlate.stats import CorrStats
+from seismic.monitor.trim import corr_mat_trim
 
 
 def time_windows_creation(
@@ -256,6 +258,12 @@ def velocity_change_estimate(
     # Mat must be a 2d vector in every case so
     mat = np.atleast_2d(mat)
 
+    if strrefmat.shape[1] > mat.shape[1]:
+        # Allow for larger reference traces, so extrapolation artefacts
+        # are not as much of a problem
+        # Now cut to same length
+        strrefmat
+
     if strrefmat.shape[1] != mat.shape[1]:
         raise ValueError(
             'STRREFMAT and MAT must have the same number of'
@@ -342,7 +350,9 @@ def velocity_change_estimate(
 def time_stretch_estimate(
     corr_data: np.ndarray, ref_trc: np.ndarray = None, tw: np.ndarray = None,
     stretch_range: float = 0.1, stretch_steps: int = 100, sides: str = 'both',
-        remove_nans: bool = True) -> dict:
+    remove_nans: bool = True,
+    ref_tr_trim: Optional[Tuple[float, float]] = None,
+        ref_tr_stats=None) -> dict:
     """ Time stretch estimate through stretch and comparison.
 
     This function estimates stretching of the time axis of traces as it can
@@ -465,6 +475,11 @@ def time_stretch_estimate(
     for (k, this_fac) in enumerate(time_facs):
         ref_stretch[k, :] = ref_tr_spline(time_idx * this_fac)
 
+    if ref_tr_trim is not None:
+        corr_mat_trim(
+            ref_stretch, deepcopy(ref_tr_stats), ref_tr_trim[0],
+            ref_tr_trim[1])
+
     # search best fit of the crosscorrs to one of the stretched ref_traces
     dv = velocity_change_estimate(
         mat, tw, ref_stretch, stretches, sides=sides, return_sim_mat=True,
@@ -482,7 +497,9 @@ def time_stretch_estimate(
 def multi_ref_vchange(
     corr_data: np.ndarray, ref_trs: np.ndarray, tw: np.ndarray = None,
     stretch_range: float = 0.1, stretch_steps: int = 100, sides: str = 'both',
-        remove_nans: bool = True) -> dict:
+    remove_nans: bool = True,
+    ref_tr_trim: Optional[Tuple[float, float]] = None,
+        ref_tr_stats=None) -> dict:
     """ Velocity change estimate with single or multiple reference traces.
 
     This function estimates the velocity change corresponding to each row of
@@ -847,7 +864,9 @@ def multi_ref_vchange_and_align(
     corr_data: np.ndarray, ref_trs: np.ndarray, tw: np.ndarray = None,
     stretch_range: float = 0.1, stretch_steps: int = 100,
     sides: str = 'both', return_sim_mat: bool = False,
-        remove_nans: bool = True) -> dict:
+    remove_nans: bool = True,
+    ref_tr_trim: Optional[Tuple[float, float]] = None,
+        ref_tr_stats=None) -> dict:
     """ Multi-reference dv estimate and alignment
 
     :type corr_data: :class:`~numpy.ndarray`
@@ -921,7 +940,8 @@ def multi_ref_vchange_and_align(
 
     multi_ref_panel = multi_ref_vchange(
         corr_data, ref_trs, tw=tw, stretch_range=stretch_range,
-        stretch_steps=stretch_steps, sides=sides, remove_nans=remove_nans)
+        stretch_steps=stretch_steps, sides=sides, remove_nans=remove_nans,
+        ref_tr_trim=ref_tr_trim, ref_tr_stats=ref_tr_stats)
 
     n_ref = len(list(multi_ref_panel.keys()))
 

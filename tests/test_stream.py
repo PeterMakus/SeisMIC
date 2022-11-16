@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Thursday, 10th November 2022 10:51:36 am
+Last Modified: Tuesday, 15th November 2022 05:21:55 pm
 '''
 
 import unittest
@@ -331,7 +331,7 @@ class TestCorrBulk(unittest.TestCase):
         self.cb.stretch(np.zeros((25,)), [1, 2, 3], 0.5, 105, 'bla', True)
         stretch_mock.assert_called_once_with(
             mock.ANY, self.cb.stats, mock.ANY, [1, 2, 3], 0.5, 105, 'bla',
-            True)
+            True, None, None)
         np.testing.assert_array_equal(
             stretch_mock.call_args[0][2], np.zeros((25,)))
         dv_mock.assert_called_once_with(test=0)
@@ -344,7 +344,7 @@ class TestCorrBulk(unittest.TestCase):
         self.cb.stretch()
         stretch_mock.assert_called_once_with(
             mock.ANY, self.cb.stats, 'ha_funny!', None, 0.1, 101, 'both',
-            False)
+            False, None, None)
         np.testing.assert_array_equal(
             stretch_mock.call_args[0][0], self.cb.data)
         dv_mock.assert_called_once_with(test=0, sim_mat=mock.ANY)
@@ -397,7 +397,7 @@ class TestCorrBulk(unittest.TestCase):
             'tapered-centre: width=25s, slope_frac=1',
             cb.stats.processing_bulk)
 
-    @mock.patch('seismic.correlate.stream.pcp.corr_mat_trim')
+    @mock.patch('seismic.correlate.stream.corr_mat_trim')
     def test_trim(self, trim_mock):
         cb = self.cb.copy()
         stats = deepcopy(cb.stats)

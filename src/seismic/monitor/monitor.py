@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 9th November 2022 05:12:27 pm
+Last Modified: Tuesday, 15th November 2022 05:23:20 pm
 '''
 from copy import deepcopy
 import logging
@@ -28,7 +28,6 @@ from seismic.db.corr_hdf5 import CorrelationDataBase
 from seismic.monitor.dv import DV, read_dv
 from seismic.monitor.wfc import WFC
 from seismic.utils.miic_utils import log_lvl
-import seismic.monitor.post_corr_process as pcp
 
 
 class Monitor(object):
@@ -188,7 +187,8 @@ class Monitor(object):
                 f = cb.__getattribute__(func['function'])
                 cb = f(**func['args'])
 
-        # Now, we make a copy of the cm to be trimmed
+        # Retain a copy of the stats
+        stats_copy = deepcopy(cb.stats)
         if self.options['dv']['tw_len'] is None:
             trim0 = cb.stats.start_lag
             trim1 = cb.stats.end_lag
@@ -203,12 +203,13 @@ class Monitor(object):
         if cbt.data.shape[1] <= 20:
             raise ValueError('CorrBulk extremely short.')
 
+        # 15.11.22
+        # Do trimming after stretching of the reference trace to avoid
+        # edges having an influence on dv/v estimate
         if ref_trcs is None:
-            tr = cbt.extract_multi_trace(**self.options['dv']['dt_ref'])
+            tr = cb.extract_multi_trace(**self.options['dv']['dt_ref'])
         else:
             tr = ref_trcs
-            if max(tr.shape) != cbt.data.shape[1]:
-                tr, _ = pcp.corr_mat_trim(tr, deepcopy(cb.stats), trim0, trim1)
 
         # Compute time window
         tw = [np.arange(
@@ -218,22 +219,24 @@ class Monitor(object):
             ref_trc=tr, return_sim_mat=True,
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],
-            tw=tw, sides=self.options['dv']['sides'])
+            tw=tw, sides=self.options['dv']['sides'],
+            ref_tr_trim=(trim0, trim1), ref_tr_stats=stats_copy)
         ccb = cb.correct_stretch(dv)
-
-        ccb.trim(trim0, trim1)
 
         # extract the final reference trace (mean excluding very different
         # traces)
         if ref_trcs is None:
             tr = ccb.extract_multi_trace(**self.options['dv']['dt_ref'])
 
+        ccb.trim(trim0, trim1)
+
         # obtain an improved time shift measurement
         dv = cbt.stretch(
             ref_trc=tr, return_sim_mat=True,
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],
-            tw=tw, sides=self.options['dv']['sides'])
+            tw=tw, sides=self.options['dv']['sides'],
+            ref_tr_trim=(trim0, trim1), ref_tr_stats=stats_copy)
 
         # Postprocessing on the dv object
         if 'postprocessing' in self.options['dv']:

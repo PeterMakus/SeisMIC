@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Tuesday, 15th November 2022 11:48:59 am
+Last Modified: Tuesday, 15th November 2022 05:23:50 pm
 '''
 
 from typing import List, Tuple, Optional
@@ -27,6 +27,7 @@ from seismic.monitor.stretch_mod import multi_ref_vchange_and_align, \
     create_shifted_ref_mat
 from seismic.correlate.stats import CorrStats
 from seismic.monitor.dv import DV
+from seismic.monitor.trim import corr_mat_trim
 
 
 def corr_mat_clip(A: np.ndarray, thres: float, axis: int) -> np.ndarray:
@@ -219,56 +220,6 @@ def corr_mat_filter(
     data = lfilter(b, a, data[:, ::-1], axis=1)[:, ::-1]
 
     return data
-
-
-def corr_mat_trim(
-    data: np.ndarray, stats: CorrStats, starttime: float,
-        endtime: float) -> Tuple[np.ndarray, CorrStats]:
-    """ Trim the correlation matrix to a given period.
-
-    Trim the correlation matrix `corr_mat` to the period from `starttime` to
-    `endtime` given in seconds from the zero position, so both can be
-    positive and negative. If `starttime` and `endtime` are datetime.datetime
-    objects they are taken as absolute start and endtime.
-
-    :type data: np.ndarray
-    :param corr_mat: correlation matrix to be trimmed
-    :type starttime: float
-    :param starttime: start time in seconds with respect to the zero position.
-        Hence, this parameter describes a lag!
-    :type endtime: float
-    :param order: end time in seconds with respect to the zero position
-
-    :rtype tuple: Tuple[np.ndarray, CorrStats]
-    :return: trimmed correlation matrix and new stats object
-    """
-
-    # fetch indices of start and end
-    start = int(
-        np.floor((starttime-stats['start_lag'])*stats['sampling_rate']))
-    end = int(np.floor((endtime-stats['start_lag'])*stats['sampling_rate']))
-
-    # check range
-    if start < 0:
-        print('Error: starttime before beginning of trace. Data not changed')
-        return data, stats
-    if end >= stats['npts']:
-        print('Error: endtime after end of trace. Data not changed')
-        return data, stats
-
-    # select requested part from matrix
-    # +1 is to include the last sample
-    if len(data.shape) == 1:
-        data = data[start:end+1]
-        stats['npts'] = len(data)
-    else:
-        data = data[:, start:end + 1]
-        stats['npts'] = data.shape[1]
-
-    # set starttime, endtime and npts of the new stats
-    stats['start_lag'] = starttime
-
-    return data, stats
 
 
 def corr_mat_resample(
@@ -842,7 +793,9 @@ def corr_mat_stretch(
     cdata: np.ndarray, stats: CorrStats, ref_trc: np.ndarray = None,
     tw: List[np.ndarray] = None, stretch_range: float = 0.1,
     stretch_steps: int = 100, sides: str = 'both',
-        return_sim_mat: bool = False) -> dict:
+    return_sim_mat: bool = False,
+    ref_tr_trim: Optional[Tuple[float, float]] = None,
+        ref_tr_stats: Optional[CorrStats] = None) -> dict:
     """ Time stretch estimate through stretch and comparison.
 
     This function estimates stretching of the time axis of traces as it can
@@ -952,7 +905,8 @@ def corr_mat_stretch(
     dv = multi_ref_vchange_and_align(
         data, ref_trc, tw=tw, stretch_range=stretch_range,
         stretch_steps=stretch_steps, sides=sides,
-        return_sim_mat=return_sim_mat)
+        return_sim_mat=return_sim_mat, ref_tr_trim=ref_tr_trim,
+        ref_tr_stats=ref_tr_stats)
 
     # add the keys the can directly be transferred from the correlation matrix
     dv['stats'] = stats
