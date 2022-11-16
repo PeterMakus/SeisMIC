@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Tuesday, 15th November 2022 05:49:20 pm
+Last Modified: Wednesday, 16th November 2022 10:57:12 am
 '''
 from typing import List, Tuple, Optional
 from copy import deepcopy
@@ -470,7 +470,7 @@ def time_stretch_estimate(
         ref_stretch[k, :] = ref_tr_spline(time_idx * this_fac)
 
     if ref_tr_trim is not None:
-        corr_mat_trim(
+        ref_stretch, _ = corr_mat_trim(
             ref_stretch, deepcopy(ref_tr_stats), ref_tr_trim[0],
             ref_tr_trim[1])
 
