@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 16th November 2022 04:08:51 pm
+Last Modified: Wednesday, 16th November 2022 04:19:02 pm
 '''
 from copy import deepcopy
 import logging
@@ -180,7 +180,7 @@ class Monitor(object):
                 # Note that dist is in km and elevation information in m
                 d = np.sqrt(
                     cst[0].stats.dist**2
-                    + ((cst[0].stats.statel-cst[0].stats.evel)/1000)**2)
+                    + ((cst[0].stats.stel-cst[0].stats.evel)/1000)**2)
                 tt = d/self.options['dv']['rayleigh_wave_velocity']
                 self.options['dv']['tw_start'] += tt
         cb = cst.create_corr_bulk(
