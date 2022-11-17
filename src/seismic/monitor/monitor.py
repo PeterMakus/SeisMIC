@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 15th November 2022 05:23:20 pm
+Last Modified: Wednesday, 16th November 2022 04:08:51 pm
 '''
 from copy import deepcopy
 import logging
@@ -169,6 +169,20 @@ class Monitor(object):
         with CorrelationDataBase(corr_file, mode='r') as cdb:
             # get the corrstream containing all the corrdata for this combi
             cst = cdb.get_data(network, station, channel, tag)
+
+        if self.options['dv']['compute_tt']:
+            if not hasattr(cst[0].stats, 'dist'):
+                warnings.warn(
+                    f'{network}.{station} does not include distance. '
+                    'SeisMIC will assume an interstation distance of 0.')
+            else:
+                # Assume flat earth to include topography
+                # Note that dist is in km and elevation information in m
+                d = np.sqrt(
+                    cst[0].stats.dist**2
+                    + ((cst[0].stats.statel-cst[0].stats.evel)/1000)**2)
+                tt = d/self.options['dv']['rayleigh_wave_velocity']
+                self.options['dv']['tw_start'] += tt
         cb = cst.create_corr_bulk(
             network=network, station=station, channel=channel, inplace=True)
 
