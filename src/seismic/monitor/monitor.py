@@ -184,7 +184,7 @@ class Monitor(object):
                 tt = round(
                     d/self.options['dv']['rayleigh_wave_velocity'], 0)
                 self.options['dv']['tw_start'] += tt
-                self.logger.information(
+                self.logger.info(
                     f'Computed travel time for {network}.{station} is '
                     f'{tt} s. The assumed direct-line distance was {d} km.')
         cb = cst.create_corr_bulk(
