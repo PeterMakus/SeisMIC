@@ -181,8 +181,12 @@ class Monitor(object):
                 d = np.sqrt(
                     cst[0].stats.dist**2
                     + ((cst[0].stats.stel-cst[0].stats.evel)/1000)**2)
-                tt = d/self.options['dv']['rayleigh_wave_velocity']
+                tt = round(
+                    d/self.options['dv']['rayleigh_wave_velocity'], 0)
                 self.options['dv']['tw_start'] += tt
+                self.logger.information(
+                    f'Computed travel time for {network}.{station} is '
+                    f'{tt} s. The assumed direct-line distance was {d} km.')
         cb = cst.create_corr_bulk(
             network=network, station=station, channel=channel, inplace=True)
 
