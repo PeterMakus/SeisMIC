@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Wednesday, 16th November 2022 03:57:40 pm
+Last Modified: Thursday, 17th November 2022 02:36:53 pm
 '''
 from typing import List, Tuple
 import logging
@@ -19,9 +19,6 @@ import numpy as np
 from obspy import Inventory, Stream, Trace, UTCDateTime
 from obspy.core import Stats, AttribDict
 
-# zero lag time
-# I don't think this is in use anymore
-lag0 = UTCDateTime(0)
 
 log_lvl = {
     'DEBUG': logging.DEBUG,
