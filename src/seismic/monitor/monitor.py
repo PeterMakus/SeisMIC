@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 22nd November 2022 03:44:03 pm
+Last Modified: Tuesday, 22nd November 2022 03:56:47 pm
 '''
 from copy import deepcopy
 import logging
@@ -189,11 +189,14 @@ class Monitor(object):
                     f'Computed travel time for {network}.{station} is '
                     f'{tt} s. The assumed direct-line distance was {d} km.')
         if lts < self.options['dv']['tw_start'] + self.options['dv']['tw_len']:
+            reqtw = self.options['dv']['tw_start'] + self.options[
+                'dv']['tw_len']
             raise ValueError(
                 'Requested lapse time window (time window start + time window'
-                ' length contains segments after the Correlation Function.'
+                f' length = {reqtw} contains segments after the Correlation'
+                'Function.'
                 ' When computing the correlations make sure to set an '
-                'appropriate value for lengthToSave'
+                f'appropriate value for lengthToSave. The value was {lts}.'
             )
         cb = cst.create_corr_bulk(
             network=network, station=station, channel=channel, inplace=True)
