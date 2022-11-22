@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 16th November 2022 04:19:02 pm
+Last Modified: Tuesday, 22nd November 2022 03:44:03 pm
 '''
 from copy import deepcopy
 import logging
@@ -169,6 +169,7 @@ class Monitor(object):
         with CorrelationDataBase(corr_file, mode='r') as cdb:
             # get the corrstream containing all the corrdata for this combi
             cst = cdb.get_data(network, station, channel, tag)
+            lts = cdb.get_corr_options()['corr_args']['lengthToSave']
 
         if self.options['dv']['compute_tt']:
             if not hasattr(cst[0].stats, 'dist'):
@@ -187,6 +188,13 @@ class Monitor(object):
                 self.logger.info(
                     f'Computed travel time for {network}.{station} is '
                     f'{tt} s. The assumed direct-line distance was {d} km.')
+        if lts < self.options['dv']['tw_start'] + self.options['dv']['tw_len']:
+            raise ValueError(
+                'Requested lapse time window (time window start + time window'
+                ' length contains segments after the Correlation Function.'
+                ' When computing the correlations make sure to set an '
+                'appropriate value for lengthToSave'
+            )
         cb = cst.create_corr_bulk(
             network=network, station=station, channel=channel, inplace=True)
 
