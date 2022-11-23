@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 23rd November 2022 11:37:25 am
+Last Modified: Wednesday, 23rd November 2022 11:44:34 am
 '''
 from copy import deepcopy
 import logging
@@ -171,6 +171,8 @@ class Monitor(object):
             cst = cdb.get_data(network, station, channel, tag)
             lts = cdb.get_corr_options()['corr_args']['lengthToSave']
 
+        tw_start = self.options['dv']['tw_start']
+
         if self.options['dv']['compute_tt']:
             if not hasattr(cst[0].stats, 'dist'):
                 warnings.warn(
@@ -184,12 +186,12 @@ class Monitor(object):
                     + ((cst[0].stats.stel-cst[0].stats.evel)/1000)**2)
                 tt = round(
                     d/self.options['dv']['rayleigh_wave_velocity'], 0)
-                self.options['dv']['tw_start'] += tt
+                tw_start += tt
                 self.logger.info(
                     f'Computed travel time for {network}.{station} is '
                     f'{tt} s. The assumed direct-line distance was {d} km.')
-        if lts < self.options['dv']['tw_start'] + self.options['dv']['tw_len']:
-            reqtw = self.options['dv']['tw_start'] + self.options[
+        if lts < tw_start + self.options['dv']['tw_len']:
+            reqtw = tw_start + self.options[
                 'dv']['tw_len']
             raise ValueError(
                 'Requested lapse time window (time window start + time window'
@@ -197,7 +199,7 @@ class Monitor(object):
                 'Function.'
                 ' When computing the correlations make sure to set an '
                 f'appropriate value for lengthToSave. The value was {lts}.'
-                f' The direct-line distance between the stations is {d}.'
+                f' The direct-line distance between the stations is {d} km.'
             )
         cb = cst.create_corr_bulk(
             network=network, station=station, channel=channel, inplace=True)
@@ -225,9 +227,9 @@ class Monitor(object):
             cbt = cb
         else:
             trim0 = -(
-                self.options['dv']['tw_start']+self.options['dv']['tw_len'])
+                tw_start+self.options['dv']['tw_len'])
             trim1 = (
-                self.options['dv']['tw_start']+self.options['dv']['tw_len'])
+                tw_start+self.options['dv']['tw_len'])
             cbt = cb.copy().trim(trim0, trim1)
 
         if cbt.data.shape[1] <= 20:
@@ -243,7 +245,7 @@ class Monitor(object):
 
         # Compute time window
         tw = [np.arange(
-            self.options['dv']['tw_start']*cbt.stats['sampling_rate'],
+            tw_start*cbt.stats['sampling_rate'],
             trim1*cbt.stats['sampling_rate'], 1)]
         dv = cbt.stretch(
             ref_trc=tr, return_sim_mat=True,
