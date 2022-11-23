@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 22nd November 2022 03:56:47 pm
+Last Modified: Wednesday, 23rd November 2022 11:37:25 am
 '''
 from copy import deepcopy
 import logging
@@ -197,6 +197,7 @@ class Monitor(object):
                 'Function.'
                 ' When computing the correlations make sure to set an '
                 f'appropriate value for lengthToSave. The value was {lts}.'
+                f' The direct-line distance between the stations is {d}.'
             )
         cb = cst.create_corr_bulk(
             network=network, station=station, channel=channel, inplace=True)
