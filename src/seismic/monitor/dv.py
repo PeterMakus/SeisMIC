@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Thursday, 3rd November 2022 10:53:33 am
+Last Modified: Tuesday, 6th December 2022 03:17:33 pm
 '''
 
 from datetime import datetime
@@ -33,7 +33,8 @@ class DV(object):
         self, corr: np.ndarray, value: np.ndarray, value_type: str,
         sim_mat: np.ndarray, second_axis: np.ndarray, method: str,
         stats: CorrStats, stretches: np.ndarray = None,
-            corrs: np.ndarray = None, n_stat: np.ndarray = None):
+        corrs: np.ndarray = None, n_stat: np.ndarray = None,
+            processing: dict = None):
         """
         Creates an object designed to hold and process velocity changes.
 
@@ -76,6 +77,7 @@ class DV(object):
         self.second_axis = second_axis
         self.method = method
         self.stats = stats
+        self.processing = processing
 
     def __str__(self):
         """
@@ -85,7 +87,8 @@ class DV(object):
             + self.stats.channel
         out = f'{self.method} {self.value_type} velocity change estimate of '\
             + f'{code}.\nstarttdate: {min(self.stats.corr_start).ctime()}\n'\
-            + f'enddate: {max(self.stats.corr_end).ctime()}'
+            + f'enddate: {max(self.stats.corr_end).ctime()}\n\n'\
+            + f'processed with the following parameters: {self.processing}'
         if self.method == np.array(['time_shift']):
             out = f'Time shift estimate of {code}.\nstarttdate: '\
                 + f'{min(self.stats.corr_start).ctime()}\nenddate: '\
@@ -107,13 +110,14 @@ class DV(object):
             np.savez_compressed(
                 path, corr=self.corr, value=self.value, sim_mat=self.sim_mat,
                 second_axis=self.second_axis, method_array=method_array,
-                vt_array=vt_array, **kwargs)
+                vt_array=vt_array, processing=self.processing, **kwargs)
         else:
             np.savez_compressed(
                 path, corr=self.corr, value=self.value, sim_mat=self.sim_mat,
                 second_axis=self.second_axis, method_array=method_array,
                 vt_array=vt_array, stretches=self.stretches,
-                corrs=self.corrs, n_stat=self.n_stat, **kwargs)
+                corrs=self.corrs, n_stat=self.n_stat,
+                processing=self.processing, **kwargs)
 
     def plot(
         self, save_dir: str = '.', figure_file_name: str = None,
@@ -225,7 +229,11 @@ def read_dv(path: str) -> DV:
         n_stat = loaded['n_stat']
     except KeyError:
         n_stat = None
+    try:
+        processing = loaded['processing']
+    except KeyError:
+        processing = None
     return DV(
         loaded['corr'], loaded['value'], vt, loaded['sim_mat'],
         loaded['second_axis'], method, stats=stats, stretches=stretches,
-        corrs=corrs, n_stat=n_stat)
+        corrs=corrs, n_stat=n_stat, processing=processing)

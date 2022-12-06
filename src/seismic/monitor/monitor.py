@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 23rd November 2022 11:44:34 am
+Last Modified: Tuesday, 6th December 2022 03:15:19 pm
 '''
 from copy import deepcopy
 import logging
@@ -252,7 +252,8 @@ class Monitor(object):
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],
             tw=tw, sides=self.options['dv']['sides'],
-            ref_tr_trim=(trim0, trim1), ref_tr_stats=stats_copy)
+            ref_tr_trim=(trim0, trim1), ref_tr_stats=stats_copy,
+            processing=self.options['dv'])
         ccb = cb.correct_stretch(dv)
 
         # extract the final reference trace (mean excluding very different
@@ -268,7 +269,8 @@ class Monitor(object):
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],
             tw=tw, sides=self.options['dv']['sides'],
-            ref_tr_trim=(trim0, trim1), ref_tr_stats=stats_copy)
+            ref_tr_trim=(trim0, trim1), ref_tr_stats=stats_copy,
+            processing=self.options['dv'])
 
         # Postprocessing on the dv object
         if 'postprocessing' in self.options['dv']:

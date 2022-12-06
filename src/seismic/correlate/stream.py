@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Wednesday, 16th November 2022 11:38:29 am
+Last Modified: Tuesday, 6th December 2022 03:14:32 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -551,7 +551,7 @@ class CorrBulk(object):
         stretch_range: float = 0.1, stretch_steps: int = 101,
         sides: str = 'both', return_sim_mat: bool = False,
         ref_tr_trim: Optional[Tuple[float, float]] = None,
-            ref_tr_stats=None) -> DV:
+            ref_tr_stats=None, processing: Optional[dict] = None) -> DV:
         """
         Compute the velocity change with the stretching method
         (see Sens-Schönfelder and Wegler, 2006).
@@ -571,6 +571,8 @@ class CorrBulk(object):
         :type sides: str, optional
         :param return_sim_mat: Return the similarity matrix, defaults to False
         :type return_sim_mat: bool, optional
+        :param processing: dictionary holding processing information.
+        :type processing: dict
         :return: The velocity change as :class:`~seismic.monitor.dv.DV` object.
         :rtype: DV
         """
@@ -581,7 +583,7 @@ class CorrBulk(object):
             sides, return_sim_mat, ref_tr_trim, ref_tr_stats)
         if not return_sim_mat:
             dv_dict['sim_mat'] = np.array([])
-        return DV(**dv_dict)
+        return DV(**dv_dict, processing=processing)
 
     def save(self, path: str):
         """
