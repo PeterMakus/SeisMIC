@@ -13,9 +13,10 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Monday, 16th January 2023 11:13:58 am
+Last Modified: Monday, 16th January 2023 04:10:07 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable
+import warnings
 
 import numpy as np
 import matplotlib as mpl
@@ -29,7 +30,7 @@ from seismic.monitor.dv import DV
 
 def probability(
     dist: np.ndarray | float, t: float, vel: float,
-        mf_path: float) -> np.ndarray | float:
+        mf_path: float, atol: float = 1e-3) -> np.ndarray | float:
     """
     Compute the probability for a wave with the given properties to pass
     through a point at distance `dist`. Following the diffusion law.
@@ -47,18 +48,30 @@ def probability(
     :return: The probability. In the same shape as ``dist``.
     :rtype: np.ndarray | float
     """
-    coherent = np.nan_to_num(
-        np.exp(-vel*t/mf_path)/(2*np.pi*dist), nan=0, posinf=1, neginf=0)
-    coherent *= np.isclose(dist, vel*t, atol=1e-4)
-    # If a is nan, set a to 0
-    a = np.nan_to_num(2*np.pi*mf_path*vel*t*np.sqrt(1 - dist**2/(vel*t)**2))
-    # If a is nan also b will be nan, set also 0
-    b = (np.nan_to_num(np.sqrt((vel*t)**2-dist**2)) - vel*t)/mf_path
-    c = np.heaviside(vel*t-dist, 1)
-    # Sensitivity is zero where nan and 1 if infinite (station coords coincide
-    # with grid coordinates)
-    coda = np.nan_to_num(np.exp(b)*c/a, posinf=1, neginf=1, nan=0)
-    return coherent + coda
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        # there will be loads of runtimeerrors because of inf and nan values
+        coherent = np.nan_to_num(
+            np.exp(-vel*t/mf_path)/(2*np.pi*dist), nan=0, posinf=1, neginf=0)
+        coherent *= np.isclose(dist, vel*t, atol=atol)
+        # If a is nan, set a to 0
+        a = np.nan_to_num(
+            2*np.pi*mf_path*vel*t*np.sqrt(1 - dist**2/(vel*t)**2))
+        # If a is nan also b will be nan, set also 0
+        b = (np.nan_to_num(np.sqrt((vel*t)**2-dist**2)) - vel*t)/mf_path
+        c = np.heaviside(vel*t-dist, 1)
+        # Sensitivity is zero where nan and 1 if infinite
+        # (station coords coincide with grid coordinates)
+        coda = np.nan_to_num(np.exp(b)*c/a, posinf=1, neginf=1, nan=0)
+    prob = coherent + coda
+    # probability cannot be larger than 1. Might happen due to numerical
+    # inaccuraccies or coherent + coda both being infinite (i.e., 1)
+    try:
+        prob[prob > 1] = 1
+    except TypeError:
+        if prob > 1:
+            prob = 1
+    return prob
 
 
 def compute_grid_dist(
@@ -125,12 +138,13 @@ def sensitivity_kernel(
     """
     T = np.arange(0, t + dt, dt)
     dist_s1_s2 = np.linalg.norm(s1-s2)
-    denom = probability(dist_s1_s2, t, vel, mf_path)
+    denom = probability(dist_s1_s2, t, vel, mf_path, atol=dt/2)
     dist_s1_x0 = compute_grid_dist(x, y, s1[0], s1[1])
     dist_s2_x0 = compute_grid_dist(x, y, s2[0], s2[1])
     nom = np.trapz(
-        [probability(dist_s1_x0, tt, vel, mf_path) * probability(
-            dist_s2_x0, t-tt, vel, mf_path) for tt in T], dx=dt, axis=0)
+        [probability(dist_s1_x0, tt, vel, mf_path, atol=dt/2) * probability(
+            dist_s2_x0, t-tt, vel, mf_path, atol=dt/2) for tt in T],
+        dx=dt, axis=0)
     K = nom/denom
     return K
 
@@ -197,8 +211,8 @@ def compute_cm(
 
 
 def geo2cart(
-    lat: np.ndarray | float, lon: np.ndarray | float, lat0: float
-        ) -> Tuple[np.ndarray | float, np.ndarray | float]:
+    lat: np.ndarray | float, lon: np.ndarray | float,
+        lat0: float) -> Tuple[np.ndarray | float, np.ndarray | float]:
     """
     Convert geographic coordinates to Northing and Easting for a local grid.
 
@@ -267,8 +281,8 @@ class DVGrid(object):
         dvs: Optional[Iterable[DV]] = None, utc: Optional[UTCDateTime] = None,
         tw: Optional[Tuple[float, float]] = None,
         stat0: Optional[Iterable[Tuple[float, float]]] = None,
-        stat1: Optional[Iterable[Tuple[float, float]]] = None
-            ) -> np.ndarray:
+        stat1: Optional[Iterable[Tuple[float, float]]] = None) \
+            -> np.ndarray:
         """
         Solves the forward problem associated to the grid computation.
         I.e., computes the velocity changes theoretically measured at each
@@ -433,8 +447,8 @@ class DVGrid(object):
         self, dvs: Iterable[DV], utc: UTCDateTime, scaling_factor: float,
         corr_len: float, dt: float, std_model: float, vel: float,
         mf_path: float, tw: Optional[Tuple[float, float]] = None,
-        freq0: Optional[float] = None, freq1: Optional[float] = None
-            ) -> np.ndarray:
+        freq0: Optional[float] = None, freq1: Optional[float] = None) \
+            -> np.ndarray:
         """
         Compute the model resolution of the dv/v model.
 
@@ -514,8 +528,8 @@ class DVGrid(object):
         return self.resolution
 
     def _compute_resolution(
-        self, skernels: np.ndarray, a: np.ndarray, b: np.ndarray
-            ) -> np.ndarray:
+        self, skernels: np.ndarray, a: np.ndarray,
+            b: np.ndarray) -> np.ndarray:
         """
         The actual computation of the model resolution.
         """
@@ -524,10 +538,9 @@ class DVGrid(object):
         return self.resolution
 
     def _extract_info_dvs(
-        self, dvs: Iterable[DV], utc: UTCDateTime
-            ) -> Tuple[
-                np.ndarray, np.ndarray, np.ndarray, np.ndarray,
-                Tuple[float, float], float, float]:
+        self, dvs: Iterable[DV], utc: UTCDateTime) -> Tuple[
+            np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+            Tuple[float, float], float, float]:
         """
         Extract the reqired infos from a iterator over dv.
 
@@ -638,8 +651,8 @@ class DVGrid(object):
         return self.dist
 
     def _find_coord(
-        self, lat: float | np.ndarray, lon: float | np.ndarray
-            ) -> int | np.ndarray:
+        self, lat: float | np.ndarray,
+            lon: float | np.ndarray) -> int | np.ndarray:
         """
         Finds a coordinate given in lat, lon on the Cartesian grid and
         return its index
@@ -724,8 +737,8 @@ class DVGrid(object):
 
     def plot(
         self, plot_stations: bool = True, cmap: str = 'seismic',
-        ax: Optional[mpl.axis.Axis] = None, *args, **kwargs
-            ) -> mpl.axis.Axis:
+        ax: Optional[mpl.axis.Axis] = None, *args,
+            **kwargs) -> mpl.axis.Axis:
         """
         Simple heatplot of the dv/v grid in Cartesian coordinates.
 
