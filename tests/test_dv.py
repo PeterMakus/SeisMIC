@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 27th October 2021 12:58:15 pm
-Last Modified: Monday, 16th January 2023 11:14:37 am
+Last Modified: Monday, 16th January 2023 01:31:10 pm
 '''
 
 import unittest
@@ -43,7 +43,7 @@ class TestDV(unittest.TestCase):
             second_axis=self.dv.second_axis,
             method_array=np.array([self.dv.method]),
             vt_array=np.array([self.dv.value_type]),
-            dv_processing=None)
+            freq_min=None, freq_max=None, tw_start=None, tw_len=None)
 
     @patch('seismic.monitor.dv.mu.save_header_to_np_array')
     @patch('seismic.monitor.dv.np.savez_compressed')
@@ -51,7 +51,8 @@ class TestDV(unittest.TestCase):
         self.dv.corrs = np.random.random((5, 5))
         self.dv.stretches = np.random.random((5, 5))
         self.dv.n_stat = np.ones(5, dtype=int)
-        self.dv.dv_processing = {'first': 1, 'second': 2}
+        self.dv.dv_processing = dict(
+            freq_min=0, freq_max=1, tw_start=2, tw_len=3)
         self.dv.save('/save/to/here')
         save_header_mock.assert_called_once_with({})
         savez_mock.assert_called_once_with(
@@ -61,7 +62,7 @@ class TestDV(unittest.TestCase):
             method_array=np.array([self.dv.method]),
             vt_array=np.array([self.dv.value_type]), corrs=self.dv.corrs,
             stretches=self.dv.stretches, n_stat=self.dv.n_stat,
-            dv_processing=self.dv.dv_processing)
+            freq_min=0, freq_max=1, tw_start=2, tw_len=3)
 
     def test_smooth_sim_mat(self):
         dvc = deepcopy(self.dv)
@@ -102,18 +103,22 @@ class TestReadDV(unittest.TestCase):
         npload_mock.return_value = {
             'corr': 0, 'value': 1, 'vt_array': [['s']], 'sim_mat': 3,
             'second_axis': 4, 'method_array': [['d']],
-            'stretches': 3, 'corrs': 5, 'dv_processing': {'first': 1, '2': 2}}
+            'stretches': 3, 'corrs': 5, 'freq_min': 0, 'freq_max': 1,
+            'tw_start': 2, 'tw_len': 3}
         dvout = dv.read_dv('/my/dv_file')
         npload_mock.assert_called_once_with('/my/dv_file')
         load_header_mock.assert_called_once_with({
             'corr': 0, 'value': 1, 'vt_array': [['s']], 'sim_mat': 3,
             'second_axis': 4, 'method_array': [['d']],
-            'corrs': 5, 'stretches': 3, 'dv_processing': {'first': 1, '2': 2}})
+            'corrs': 5, 'stretches': 3, 'freq_min': 0, 'freq_max': 1,
+            'tw_start': 2, 'tw_len': 3})
         self.assertDictEqual(dvout.__dict__, {
             'corr': 0, 'value': 1, 'value_type': 's', 'sim_mat': 3,
             'second_axis': 4, 'method': 'd', 'stats': CorrStats(),
             'corrs': 5, 'stretches': 3, 'n_stat': None,
-            'dv_processing': {'first': 1, '2': 2}})
+            'dv_processing': {
+                'freq_min': 0, 'freq_max': 1,
+                'tw_start': 2, 'tw_len': 3}})
 
     @patch('seismic.monitor.dv.np.load')
     @patch('seismic.monitor.dv.mu.load_header_from_np_array')

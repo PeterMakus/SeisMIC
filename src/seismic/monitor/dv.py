@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Monday, 16th January 2023 11:13:58 am
+Last Modified: Monday, 16th January 2023 01:26:22 pm
 '''
 
 from datetime import datetime
@@ -106,18 +106,28 @@ class DV(object):
         method_array = np.array([self.method])
         vt_array = np.array([self.value_type])
         kwargs = mu.save_header_to_np_array(self.stats)
+        if self.dv_processing is None:
+            freq_max = freq_min = tw_start = tw_len = None
+        else:
+            freq_min = self.dv_processing['freq_min']
+            freq_max = self.dv_processing['freq_max']
+            tw_start = self.dv_processing['tw_start']
+            tw_len = self.dv_processing['tw_len']
         if self.corrs is None or self.stretches is None:
             np.savez_compressed(
                 path, corr=self.corr, value=self.value, sim_mat=self.sim_mat,
                 second_axis=self.second_axis, method_array=method_array,
-                vt_array=vt_array, dv_processing=self.dv_processing, **kwargs)
+                vt_array=vt_array, freq_min=freq_min, freq_max=freq_max,
+                tw_start=tw_start, tw_len=tw_len, **kwargs)
+
         else:
             np.savez_compressed(
                 path, corr=self.corr, value=self.value, sim_mat=self.sim_mat,
                 second_axis=self.second_axis, method_array=method_array,
                 vt_array=vt_array, stretches=self.stretches,
                 corrs=self.corrs, n_stat=self.n_stat,
-                dv_processing=self.dv_processing, **kwargs)
+                freq_min=freq_min, freq_max=freq_max,
+                tw_start=tw_start, tw_len=tw_len, **kwargs)
 
     def plot(
         self, save_dir: str = '.', figure_file_name: str = None,
@@ -230,7 +240,9 @@ def read_dv(path: str) -> DV:
     except KeyError:
         n_stat = None
     try:
-        dv_processing = loaded['dv_processing']
+        dv_processing = dict(
+            freq_min=loaded['freq_min'], freq_max=loaded['freq_max'],
+            tw_start=loaded['tw_start'], tw_len=loaded['tw_len'])
     except KeyError:
         dv_processing = None
     return DV(
