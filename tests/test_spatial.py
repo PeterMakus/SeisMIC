@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 11:07:27 am
-Last Modified: Monday, 16th January 2023 04:53:29 pm
+Last Modified: Monday, 16th January 2023 04:53:49 pm
 '''
 
 import unittest
@@ -84,7 +84,7 @@ class TestSensitivityKernel():
         vel = mf_path = 1
         cgd_mock.return_value = np.zeros((10, 10))
         pbb_mock.return_value = np.ones((10, 10))
-        K = spt.sensitivity_kernel(s1, s2, x, y, t, dt, vel, mf_path)
+        _ = spt.sensitivity_kernel(s1, s2, x, y, t, dt, vel, mf_path)
         cgd_calls = [
             mock.call(x, y, s1[0], s1[1]),
             mock.call(x, y, s2[0], s2[1])
