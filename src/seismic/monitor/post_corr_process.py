@@ -2,14 +2,14 @@
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
     Christoph Sens-Schönefelder
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Wednesday, 16th November 2022 11:37:39 am
+Last Modified: Monday, 16th January 2023 11:13:58 am
 '''
 
 from typing import List, Tuple, Optional

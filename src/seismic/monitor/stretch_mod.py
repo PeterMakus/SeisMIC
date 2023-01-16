@@ -1,13 +1,13 @@
 '''
 :copyright:
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Wednesday, 16th November 2022 10:57:12 am
+Last Modified: Monday, 16th January 2023 11:13:58 am
 '''
 from typing import List, Tuple, Optional
 from copy import deepcopy

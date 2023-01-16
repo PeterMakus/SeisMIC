@@ -1,13 +1,13 @@
 '''
 :copyright:
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Tuesday, 8th November 2022 11:29:54 am
+Last Modified: Monday, 16th January 2023 11:14:10 am
 '''
 from copy import deepcopy
 import unittest

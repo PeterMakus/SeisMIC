@@ -5,13 +5,13 @@ Module containing functions for preprocessing in the frequency domain
 :copyright:
    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:40:11 pm
-Last Modified: Thursday, 17th November 2022 11:39:55 am
+Last Modified: Monday, 16th January 2023 11:13:58 am
 '''
 from copy import deepcopy
 import logging

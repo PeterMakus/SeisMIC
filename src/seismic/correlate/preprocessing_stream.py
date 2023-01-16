@@ -4,13 +4,13 @@ Module that contains functions for preprocessing on obspy streams
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:47:00 pm
-Last Modified: Tuesday, 8th November 2022 11:19:47 am
+Last Modified: Monday, 16th January 2023 11:13:58 am
 '''
 from typing import List
 from warnings import warn
