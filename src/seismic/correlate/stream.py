@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Monday, 16th January 2023 11:13:58 am
+Last Modified: Tuesday, 17th January 2023 01:04:39 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -583,7 +583,7 @@ class CorrBulk(object):
             sides, return_sim_mat, ref_tr_trim, ref_tr_stats)
         if not return_sim_mat:
             dv_dict['sim_mat'] = np.array([])
-        return DV(**dv_dict, processing=processing)
+        return DV(**dv_dict, dv_processing=processing)
 
     def save(self, path: str):
         """

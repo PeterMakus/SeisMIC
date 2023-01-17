@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Monday, 16th January 2023 04:10:07 pm
+Last Modified: Tuesday, 17th January 2023 11:56:53 am
 '''
 from typing import Tuple, Optional, Iterator, Iterable
 import warnings
@@ -48,6 +48,8 @@ def probability(
     :return: The probability. In the same shape as ``dist``.
     :rtype: np.ndarray | float
     """
+    if np.any(dist < 0):
+        raise ValueError('Distances cannot be < 0.')
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         # there will be loads of runtimeerrors because of inf and nan values
@@ -136,6 +138,10 @@ def sensitivity_kernel(
         np.meshgrid(x, y)
     :rtype: np.ndarray
     """
+    if dt <= 0:
+        raise ValueError('dt has to be greater than 0.')
+    if np.any(np.diff(x) != x[1]-x[0]) or np.any(np.diff(y) != y[1]-y[0]):
+        raise ValueError('x and y have to be monotonously increasing arrays.')
     T = np.arange(0, t + dt, dt)
     dist_s1_s2 = np.linalg.norm(s1-s2)
     denom = probability(dist_s1_s2, t, vel, mf_path, atol=dt/2)
@@ -170,6 +176,14 @@ def data_variance(
     :return: Data Variance in the same shape as corr
     :rtype: np.ndarray | float
     """
+    if tw[0] < 0 or tw[1] < 0:
+        raise ValueError('Lapse time values have to be greater than 0s.')
+    if bandwidth <= 0:
+        raise ValueError('The bandwidth has to be > 0 Hz.')
+    if freq_c <= 0:
+        raise ValueError('The centre frequeny has to be > 0 Hz.')
+    if np.any(corr < 0):
+        raise ValueError('Coherence values cannot be < 0.')
     T = 1/bandwidth
     p1 = np.sqrt(1-corr)/(2*corr)
     nom = 6*np.sqrt(np.pi/2)*T
