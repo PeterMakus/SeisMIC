@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 17th January 2023 11:56:53 am
+Last Modified: Tuesday, 17th January 2023 05:48:02 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable
 import warnings
@@ -50,6 +50,8 @@ def probability(
     """
     if np.any(dist < 0):
         raise ValueError('Distances cannot be < 0.')
+    if t <= 0:
+        raise ValueError('t has to be larger than 0')
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         # there will be loads of runtimeerrors because of inf and nan values
@@ -194,7 +196,7 @@ def data_variance(
 
 def compute_cm(
     scaling_factor: float, corr_len: float, std_model: float,
-        dist: np.ndarray) -> np.ndarray:
+        dist: np.ndarray | float) -> np.ndarray | float:
     """
     Computes the model variance for the dv/v grid.
 
@@ -338,6 +340,9 @@ class DVGrid(object):
             in the stat0-stat1 vectors.
         :rtype: np.ndarray
         """
+        if dv_grid.shape != self.xgrid.shape:
+            raise ValueError(
+                'Modelled dvgrid must have same shape as self.')
         if stat0 is not None and stat1 is not None and tw is not None:
             slat0, slon0 = zip(*stat0)
             slat1, slon1 = zip(*stat1)
@@ -533,7 +538,7 @@ class DVGrid(object):
             )
         skernels = self._compute_sensitivity_kernels(
             slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2, dt, vel, mf_path)
-        cd = self._compute_cd(freq0, freq1, tw, corrs)
+        cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
 
         # The actual inversion for the resolution
         a = np.dot(cm, skernels.T)
@@ -571,7 +576,7 @@ class DVGrid(object):
         vals, corrs, slat0, slon0, slat1, slon1 = [], [], [], [], [], []
         for dv in dvs:
             if utc < dv.stats.corr_start[0] or utc > dv.stats.corr_end[-1]:
-                raise ValueError(
+                raise IndexError(
                     f'Time {utc} is outside of the dv time-series'
                 )
             ii = np.argmin(abs(np.array(dv.stats.corr_start)-utc))
@@ -587,6 +592,9 @@ class DVGrid(object):
             slat1.append(dv.stats.evla)
             slon1.append(dv.stats.evlo)
             processing = dv.dv_processing
+        if not len(vals):
+            raise IndexError(
+                f'None of the given dvs have available data at {utc}.')
         slat0 = np.array(slat0)
         slon0 = np.array(slon0)
         self._add_stations(slat0, slon0)
@@ -624,6 +632,7 @@ class DVGrid(object):
         else:
             self.statx = np.array(x)
             self.staty = np.array(y)
+        # make sure there are no duplicates
         coords = [(x, y) for x, y in zip(self.statx, self.staty)]
         coords = list(set(coords))
         self.statx, self.staty = zip(*coords)
@@ -686,8 +695,18 @@ class DVGrid(object):
         # Find northing and easting of coordinates
         x, y = geo2cart(lat, lon, self.lat0)
 
-        if isinstance(x, float):
-            np.argmin(abs(self.xf-x)+abs(self.yf-y))
+        if isinstance(x, float) or isinstance(x, int):
+            if np.all(abs(self.xf-x) > self.res) \
+                    or np.all(abs(self.yf-y > self.res)):
+                raise ValueError(
+                    'The point is outside the coordinate grid'
+                )
+            return np.argmin(abs(self.xf-x)+abs(self.yf-y))
+        if np.all(np.array([abs(self.xf-xx) for xx in x]) > self.res)\
+                or np.all(np.array([abs(self.yf-yy) for yy in y]) > self.res):
+            raise ValueError(
+                'The point is outside the coordinate grid'
+            )
         ii = np.array(
             [np.argmin(
                 abs(self.xf-xx)+abs(self.yf-yy)) for xx, yy in zip(x, y)])

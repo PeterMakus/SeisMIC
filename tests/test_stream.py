@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Monday, 16th January 2023 11:14:10 am
+Last Modified: Tuesday, 17th January 2023 02:24:24 pm
 '''
 
 import unittest
@@ -334,7 +334,7 @@ class TestCorrBulk(unittest.TestCase):
             True, None, None)
         np.testing.assert_array_equal(
             stretch_mock.call_args[0][2], np.zeros((25,)))
-        dv_mock.assert_called_once_with(test=0, processing=None)
+        dv_mock.assert_called_once_with(test=0, dv_processing=None)
 
     @mock.patch('seismic.correlate.stream.DV')
     @mock.patch('seismic.correlate.stream.pcp.corr_mat_stretch')
@@ -348,7 +348,7 @@ class TestCorrBulk(unittest.TestCase):
         np.testing.assert_array_equal(
             stretch_mock.call_args[0][0], self.cb.data)
         dv_mock.assert_called_once_with(
-            test=0, sim_mat=mock.ANY, processing=None)
+            test=0, sim_mat=mock.ANY, dv_processing=None)
 
     @mock.patch('seismic.correlate.stream.m3ut.save_header_to_np_array')
     @mock.patch('seismic.correlate.stream.np.savez_compressed')
