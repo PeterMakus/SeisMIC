@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Monday, 16th January 2023 11:13:58 am
+Last Modified: Wednesday, 18th January 2023 01:35:49 pm
 '''
 from typing import List, Tuple
 import logging
@@ -238,7 +238,7 @@ t_keys = ['starttime', 'endtime', 'corr_start', 'corr_end']
 # No stats, keys that are not in stats but attributes of the respective objects
 no_stats = [
     'corr', 'value', 'sim_mat', 'second_axis', 'method_array', 'vt_array',
-    'data']
+    'data', 'tw_len', 'tw_start', 'freq_min', 'freq_max']
 
 
 def save_header_to_np_array(stats: Stats) -> dict:
