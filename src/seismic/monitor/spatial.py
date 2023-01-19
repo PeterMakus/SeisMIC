@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Thursday, 19th January 2023 01:46:31 pm
+Last Modified: Thursday, 19th January 2023 03:51:31 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable
 import warnings
@@ -767,7 +767,7 @@ class DVGrid(object):
         return self.skernels
 
     def plot(
-        self, plot_stations: bool = True, cmap: str = 'seismic',
+        self, plot_stations: bool = True, cmap: str = 'seismic_r',
         ax: Optional[mpl.axis.Axis] = None, *args,
             **kwargs) -> mpl.axis.Axis:
         """
