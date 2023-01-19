@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Monday, 16th January 2023 01:26:22 pm
+Last Modified: Thursday, 19th January 2023 01:25:05 pm
 '''
 
 from datetime import datetime
@@ -241,8 +241,10 @@ def read_dv(path: str) -> DV:
         n_stat = None
     try:
         dv_processing = dict(
-            freq_min=loaded['freq_min'], freq_max=loaded['freq_max'],
-            tw_start=loaded['tw_start'], tw_len=loaded['tw_len'])
+            freq_min=float(loaded['freq_min']),
+            freq_max=float(loaded['freq_max']),
+            tw_start=float(loaded['tw_start']),
+            tw_len=float(loaded['tw_len']))
     except KeyError:
         dv_processing = None
     return DV(
