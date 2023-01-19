@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 17th January 2023 05:48:02 pm
+Last Modified: Thursday, 19th January 2023 11:31:01 am
 '''
 from typing import Tuple, Optional, Iterator, Iterable
 import warnings
@@ -184,8 +184,6 @@ def data_variance(
         raise ValueError('The bandwidth has to be > 0 Hz.')
     if freq_c <= 0:
         raise ValueError('The centre frequeny has to be > 0 Hz.')
-    if np.any(corr < 0):
-        raise ValueError('Coherence values cannot be < 0.')
     T = 1/bandwidth
     p1 = np.sqrt(1-corr)/(2*corr)
     nom = 6*np.sqrt(np.pi/2)*T

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 11:07:27 am
-Last Modified: Tuesday, 17th January 2023 06:00:24 pm
+Last Modified: Thursday, 19th January 2023 11:32:18 am
 '''
 
 import unittest
@@ -188,14 +188,6 @@ class TestDataVariance(unittest.TestCase):
         bw = 2
         tw = (5, 10)
         freq_c = -3
-        with self.assertRaises(ValueError):
-            spt.data_variance(corr, bw, tw, freq_c)
-
-    def test_raises_error_for_neg_corr(self):
-        corr = -1
-        bw = 2
-        tw = (5, 10)
-        freq_c = 3
         with self.assertRaises(ValueError):
             spt.data_variance(corr, bw, tw, freq_c)
 
