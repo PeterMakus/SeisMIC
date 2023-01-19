@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Thursday, 19th January 2023 11:31:01 am
+Last Modified: Thursday, 19th January 2023 01:46:31 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable
 import warnings
@@ -50,8 +50,8 @@ def probability(
     """
     if np.any(dist < 0):
         raise ValueError('Distances cannot be < 0.')
-    if t <= 0:
-        raise ValueError('t has to be larger than 0')
+    if t < 0:
+        raise ValueError('t has to be <= 0')
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         # there will be loads of runtimeerrors because of inf and nan values
