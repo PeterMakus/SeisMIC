@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 30th January 2023 02:44:30 pm
+Last Modified: Monday, 30th January 2023 03:01:55 pm
 '''
 from copy import deepcopy
 import logging
@@ -725,22 +725,22 @@ def correct_dv_shift(
             > np.array(dv1.stats.starttime)[dv1.avail][-1]):
         # dv0 comes after dv1:
         ii = np.where(
-            np.array(dv0.stats.starttime)[dv0.avail][0] == np.array(
-                dv0.stats.starttime))[0][0]
+            np.array(dv0.stats.starttime) == np.array(
+                dv0.stats.starttime)[dv0.avail][0])[0][0]
         stop = ii + n_overlap
         jj = np.where(
-            np.array(dv1.stats.starttime)[dv1.avail][-1] == np.array(
-                dv1.stats.starttime))[0][0]
+            np.array(dv1.stats.starttime) == np.array(
+                dv1.stats.starttime)[dv1.avail][-1])[0][0]
         start = jj - n_overlap
     else:
         # dv1 comes after dv0:
         ii = np.where(
-            np.array(dv1.stats.starttime)[dv1.avail][0] == np.array(
-                dv1.stats.starttime))[0][0]
+            np.array(dv1.stats.starttime) == np.array(
+                dv1.stats.starttime)[dv1.avail][0])[0][0]
         stop = ii + n_overlap
         jj = np.where(
-            np.array(dv0.stats.starttime)[dv0.avail][-1] == np.array(
-                dv0.stats.starttime))[0][0]
+            np.array(dv0.stats.starttime) == np.array(
+                dv0.stats.starttime)[dv0.avail][-1])[0][0]
         start = jj - n_overlap
     if stop-start > 3*n_overlap:
         raise ValueError(
