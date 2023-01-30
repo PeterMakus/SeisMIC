@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 16th January 2023 11:13:58 am
+Last Modified: Monday, 30th January 2023 10:03:46 am
 '''
 from copy import deepcopy
 import logging
@@ -823,6 +823,7 @@ def average_components(dvs: List[DV], save_scatter: bool = True) -> DV:
     else:
         stretches = None
         corrs = None
+        n_stat = None
     stats = deepcopy(dv_use[0].stats)
     if not all(np.array([dv.stats.channel for dv in dv_use]) == stats.channel):
         stats['channel'] = 'av'
