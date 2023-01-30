@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 30th January 2023 04:57:44 pm
+Last Modified: Monday, 30th January 2023 05:05:28 pm
 '''
 from copy import deepcopy
 import logging
@@ -905,7 +905,10 @@ def average_components(
                 t.timestamp for t in dv.stats.corr_start])[
                     dv.avail]) for dv in dv_use]
         avl_sub = np.array(avl)[np.array(avl) != np.max(avl)]
-        ii_ref = np.where(np.array(avl) == np.max(avl_sub))[0][0]
+        if len(avl_sub):
+            ii_ref = np.where(np.array(avl) == np.max(avl_sub))[0][0]
+        else:
+            ii_ref = 0
         dv_correct = dv_use
         dv_ref = dv_correct.pop(ii_ref)
         dv_corrected = []
