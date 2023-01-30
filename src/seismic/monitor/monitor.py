@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 30th January 2023 11:41:30 am
+Last Modified: Monday, 30th January 2023 02:14:49 pm
 '''
 from copy import deepcopy
 import logging
@@ -701,7 +701,8 @@ def correct_dv_shift(
     :type dv0: DV
     :param dv1: DV object to compare to
     :type dv1: DV
-    :param method: either mean or median, defaults to 'mean'
+    :param method: either mean or median, defaults to 'mean'. If mean is chosen
+        the points will be weighted by the correlation coefficient.
     :type method: str, optional
     :param n_overlap: Number of points to compare to beyond the
         already overlapping point. Makes sense if, e.g., one station replaces
@@ -751,9 +752,13 @@ def correct_dv_shift(
         stop = len(dv0.value)
     if start < 0:
         start = 0
+    dv0c = dv0.corr[start:stop]
+    dv0v = dv0.value[start:stop]
+    dv1c = dv1.corr[start:stop]
+    dv1v = dv1.value[start:stop]
     if method == 'mean':
-        shift = np.nanmean(
-            dv0.value[start:stop])-np.nanmean(dv1.value[start:stop])
+        shift = np.nanmean(dv0v*dv0c)/np.nanmean(dv0c)\
+            - np.nanmean(dv1v*dv1c)/np.nanmean(dv1c)
     elif method == 'median':
         shift = np.nanmedian(
             dv0.value[start:stop])-np.nanmedian(dv1.value[start:stop])
