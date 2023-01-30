@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 30th January 2023 03:01:55 pm
+Last Modified: Monday, 30th January 2023 04:22:29 pm
 '''
 from copy import deepcopy
 import logging
@@ -720,6 +720,7 @@ def correct_dv_shift(
         # Unless one of them become less than 0 or more than length
         start = np.where(both_avail)[0].min() - n_overlap
         stop = np.where(both_avail)[0].max() + n_overlap
+        ii = jj = 0
     elif (
         np.array(dv0.stats.starttime)[dv0.avail][0]
             > np.array(dv1.stats.starttime)[dv1.avail][-1]):
@@ -742,7 +743,7 @@ def correct_dv_shift(
             np.array(dv0.stats.starttime) == np.array(
                 dv0.stats.starttime)[dv0.avail][-1])[0][0]
         start = jj - n_overlap
-    if stop-start > 3*n_overlap:
+    if ii-jj > n_overlap:
         raise ValueError(
             'The gap in active times of the two DVs is larger than '
             'n_overlap, i.e., '
@@ -764,7 +765,7 @@ def correct_dv_shift(
             dv0.value[start:stop])-np.nanmedian(dv1.value[start:stop])
     else:
         raise ValueError('Method has to be either mean or median')
-    roll = int(round(shift/(dv0.second_axis[1]-dv0.second_axis[0])))
+    roll = int(round(-shift/(dv0.second_axis[1]-dv0.second_axis[0])))
     dv0.sim_mat = np.roll(dv0.sim_mat, (roll, 0))
     dv0.value = dv0.second_axis[
         np.nanargmax(np.nan_to_num(dv0.sim_mat), axis=1)]
@@ -898,15 +899,19 @@ def average_components(
     # Correct shift
     if correct_shift:
         dv_correct = dv_use[1:]
+        dv_corrected = []
         for dv in dv_correct:
             try:
-                correct_dv_shift(
+                dvc, _ = correct_dv_shift(
                     dv, dv_use[0], method=correct_shift_method,
                     n_overlap=correct_shift_overlap)
+                dv_corrected.append(dvc)
             except ValueError as e:
                 warnings.warn(
                     f'{e} for {dv.stats.id} and reference dv '
                     f'{dv_use[0].stats.id}.')
+        dv_corrected.append(dv_use[0])
+        dv_use = dv_corrected
     sim_mats = [dv.sim_mat for dv in dv_use]
     av_sim_mat = np.nanmean(sim_mats, axis=0)
     # Now we would have to recompute the dv value and corr value
@@ -918,9 +923,9 @@ def average_components(
         stretches = np.array([dv.value for dv in dv_use])
         corrs = np.array([dv.corr for dv in dv_use])
         # # Number of stations per corr_start
-        n_stat = np.ones_like(stretches, dtype=int)
-        n_stat[np.where(np.isnan(stretches))] = 0
-        n_stat = np.sum(n_stat, axis=0)  # now this has the same shape as std
+        n_stat = np.array(
+            [dv.avail*np.ones_like(dv.corr, dtype=int) for dv in dv_use])
+        n_stat = np.sum(n_stat, axis=0)
     else:
         stretches = None
         corrs = None
