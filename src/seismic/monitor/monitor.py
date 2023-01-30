@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 30th January 2023 02:14:49 pm
+Last Modified: Monday, 30th January 2023 02:18:54 pm
 '''
 from copy import deepcopy
 import logging
@@ -746,7 +746,7 @@ def correct_dv_shift(
         raise ValueError(
             'The gap in active times of the two DVs is larger than '
             'n_overlap, i.e., '
-            f'{n_overlap*dv0.stats.starttime[1]-dv0.stats.starttime[0]/3600} '
+            f'{n_overlap*(dv0.stats.starttime[1]-dv0.stats.starttime[0])/3600}'
             'hours. The result would not make sense.')
     if stop > len(dv0.value):
         stop = len(dv0.value)
