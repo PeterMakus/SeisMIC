@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Thursday, 19th January 2023 01:25:05 pm
+Last Modified: Monday, 30th January 2023 10:25:52 am
 '''
 
 from datetime import datetime
@@ -78,6 +78,8 @@ class DV(object):
         self.method = method
         self.stats = stats
         self.dv_processing = dv_processing
+        # Available indices
+        self.avail = ~np.isnan(self.corr)
 
     def __str__(self):
         """

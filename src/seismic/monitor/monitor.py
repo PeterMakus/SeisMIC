@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 30th January 2023 10:03:46 am
+Last Modified: Monday, 30th January 2023 11:41:30 am
 '''
 from copy import deepcopy
 import logging
@@ -690,6 +690,82 @@ def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
     return netlist, statlist, infiles
 
 
+def correct_dv_shift(
+    dv0: DV, dv1: DV, method: str = 'mean',
+        n_overlap: int = 0) -> Tuple[DV, DV]:
+    """
+    Shift dv0 with respect to dv1, so that the same times will have the same
+    value.
+
+    :param dv0: DV object to be shifted
+    :type dv0: DV
+    :param dv1: DV object to compare to
+    :type dv1: DV
+    :param method: either mean or median, defaults to 'mean'
+    :type method: str, optional
+    :param n_overlap: Number of points to compare to beyond the
+        already overlapping point. Makes sense if, e.g., one station replaces
+        the other, defaults to 0.
+    :type n_overlap: int, optional
+    :raises ValueError: If the two dvs only have non-nan value more than
+        n_overlap apart.
+    :return: The two dv object. Only the first one is modified. Modification
+        also happens in-place.
+    :rtype: Tuple[DV, DV]
+    """
+    # Times when both measured
+    both_avail = np.all(np.vstack((dv0.avail, dv1.avail)), axis=0)
+    if np.any(both_avail):
+        # Unless one of them become less than 0 or more than length
+        start = np.where(both_avail)[0].min() - n_overlap
+        stop = np.where(both_avail)[0].max() + n_overlap
+    elif (
+        np.array(dv0.stats.starttime)[dv0.avail][0]
+            > np.array(dv1.stats.starttime)[dv1.avail][-1]):
+        # dv0 comes after dv1:
+        ii = np.where(
+            np.array(dv0.stats.starttime)[dv0.avail][0] == np.array(
+                dv0.stats.starttime))[0]
+        stop = ii + n_overlap
+        jj = np.where(
+            np.array(dv1.stats.starttime)[dv1.avail][-1] == np.array(
+                dv1.stats.starttime))[0]
+        start = jj - n_overlap
+    else:
+        # dv1 comes after dv0:
+        ii = np.where(
+            np.array(dv1.stats.starttime)[dv1.avail][0] == np.array(
+                dv1.stats.starttime))[0]
+        stop = ii + n_overlap
+        jj = np.where(
+            np.array(dv0.stats.starttime)[dv0.avail][-1] == np.array(
+                dv0.stats.starttime))[0]
+        start = jj - n_overlap
+    if stop-start > 3*n_overlap:
+        raise ValueError(
+            'The gap in active times of the two DVs is larger than '
+            'n_overlap, i.e., '
+            f'{n_overlap*dv0.stats.starttime[1]-dv0.stats.starttime[0]/3600} '
+            'hours. The result would not make sense.')
+    if stop > len(dv0.value):
+        stop = len(dv0.value)
+    if start < 0:
+        start = 0
+    if method == 'mean':
+        shift = np.nanmean(
+            dv0.value[start:stop])-np.nanmean(dv1.value[start:stop])
+    elif method == 'median':
+        shift = np.nanmedian(
+            dv0.value[start:stop])-np.nanmedian(dv1.value[start:stop])
+    else:
+        raise ValueError('Method has to be either mean or median')
+    roll = int(round(shift/(dv0.second_axis[1]-dv0.second_axis[0])))
+    dv0.sim_mat = np.roll(dv0.sim_mat, (roll, 0))
+    dv0.value = dv0.second_axis[
+        np.nanargmax(np.nan_to_num(dv0.sim_mat), axis=1)]
+    return dv0, dv1
+
+
 def average_components_mem_save(
         dvs: Generator[DV, None, None], save_scatter: bool = True) -> DV:
     """
@@ -769,7 +845,10 @@ def average_components_mem_save(
     return dvout
 
 
-def average_components(dvs: List[DV], save_scatter: bool = True) -> DV:
+def average_components(
+    dvs: List[DV], save_scatter: bool = True, correct_shift: bool = False,
+    correct_shift_method: str = 'mean',
+        correct_shift_overlap: int = 0) -> DV:
     """
     Averages the Similariy matrix of the DV objects. Based on those,
     it computes a new dv value and a new correlation value.
@@ -781,6 +860,11 @@ def average_components(dvs: List[DV], save_scatter: bool = True) -> DV:
     :param save_scatter: Saves the scattering of old values and correlation
         coefficients to later provide a statistical measure. Defaults to True.
     :type save_scatter: bool, optional
+    :param correct_shift: Shift the dvs with respect to each other. This is
+        relevant if not all stations are active all the time and the references
+        are not describing the same state. This only works if stations were
+        active almost simultaneously at least for a bit
+        (i.e., corr-start[n+n_overlap]-corr-start[n])
     :raises TypeError: for DVs that were computed with different methods
     :return: A single dv with an averaged similarity matrix.
     :rtype: DV
@@ -806,6 +890,13 @@ def average_components(dvs: List[DV], save_scatter: bool = True) -> DV:
             )
             continue
         dv_use.append(dv)
+    # Correct shift
+    if correct_shift:
+        dv_correct = dv_use[1:]
+        for dv in dv_correct:
+            correct_dv_shift(
+                dv, dv_use[0], method=correct_shift_method,
+                n_overlap=correct_shift_overlap)
     sim_mats = [dv.sim_mat for dv in dv_use]
     av_sim_mat = np.nanmean(sim_mats, axis=0)
     # Now we would have to recompute the dv value and corr value
