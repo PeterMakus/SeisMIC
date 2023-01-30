@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 30th January 2023 04:22:29 pm
+Last Modified: Monday, 30th January 2023 04:57:44 pm
 '''
 from copy import deepcopy
 import logging
@@ -898,19 +898,28 @@ def average_components(
         dv_use.append(dv)
     # Correct shift
     if correct_shift:
-        dv_correct = dv_use[1:]
+        # If three different time-series are provided, find the one that
+        # spans the middle time
+        avl = [
+            np.mean(np.array([
+                t.timestamp for t in dv.stats.corr_start])[
+                    dv.avail]) for dv in dv_use]
+        avl_sub = np.array(avl)[np.array(avl) != np.max(avl)]
+        ii_ref = np.where(np.array(avl) == np.max(avl_sub))[0][0]
+        dv_correct = dv_use
+        dv_ref = dv_correct.pop(ii_ref)
         dv_corrected = []
         for dv in dv_correct:
             try:
                 dvc, _ = correct_dv_shift(
-                    dv, dv_use[0], method=correct_shift_method,
+                    dv, dv_ref, method=correct_shift_method,
                     n_overlap=correct_shift_overlap)
                 dv_corrected.append(dvc)
             except ValueError as e:
                 warnings.warn(
                     f'{e} for {dv.stats.id} and reference dv '
                     f'{dv_use[0].stats.id}.')
-        dv_corrected.append(dv_use[0])
+        dv_corrected.append(dv_ref)
         dv_use = dv_corrected
     sim_mats = [dv.sim_mat for dv in dv_use]
     av_sim_mat = np.nanmean(sim_mats, axis=0)
