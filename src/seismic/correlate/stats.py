@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 5th July 2021 02:44:13 pm
-Last Modified: Monday, 16th January 2023 11:13:58 am
+Last Modified: Monday, 30th January 2023 02:26:32 pm
 '''
 from obspy.core.util import AttribDict
 from obspy import UTCDateTime
@@ -237,6 +237,11 @@ class CorrStats(AttribDict):
             ch = super(CorrStats, self).__getitem__('channel', default)
             a, b = ch.split('-')
             return a[-1]+'-'+b[-1]
+        elif key == 'id':
+            net = super(CorrStats, self).__getitem__('network', default)
+            sta = super(CorrStats, self).__getitem__('station', default)
+            ch = super(CorrStats, self).__getitem__('channel', default)
+            return f'{net}.{sta}.{ch}'
         else:
             return super(CorrStats, self).__getitem__(key, default)
 

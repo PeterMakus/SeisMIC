@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 30th January 2023 02:18:54 pm
+Last Modified: Monday, 30th January 2023 02:28:31 pm
 '''
 from copy import deepcopy
 import logging
@@ -899,9 +899,14 @@ def average_components(
     if correct_shift:
         dv_correct = dv_use[1:]
         for dv in dv_correct:
-            correct_dv_shift(
-                dv, dv_use[0], method=correct_shift_method,
-                n_overlap=correct_shift_overlap)
+            try:
+                correct_dv_shift(
+                    dv, dv_use[0], method=correct_shift_method,
+                    n_overlap=correct_shift_overlap)
+            except ValueError as e:
+                warnings.warn(
+                    f'{e} for {dv.stats.id} and reference dv '
+                    f'{dv_use[0].stats.id}.')
     sim_mats = [dv.sim_mat for dv in dv_use]
     av_sim_mat = np.nanmean(sim_mats, axis=0)
     # Now we would have to recompute the dv value and corr value
