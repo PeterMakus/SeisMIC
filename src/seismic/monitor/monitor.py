@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 31st January 2023 01:41:43 pm
+Last Modified: Tuesday, 31st January 2023 03:06:46 pm
 '''
 from copy import deepcopy
 import logging
@@ -752,8 +752,8 @@ def correct_dv_shift(
             'n_overlap, i.e., '
             f'{n_overlap*(dv0.stats.starttime[1]-dv0.stats.starttime[0])/3600}'
             'hours. The result would not make sense.')
-    if stop > len(dv0.value):
-        stop = len(dv0.value)
+    if stop >= len(dv0.value):
+        stop = len(dv0.value) - 1
     if start < 0:
         start = 0
     dv0c = dv0.corr[start:stop]
@@ -883,6 +883,7 @@ def average_components_mem_save(
     iimax = np.nanargmax(np.nan_to_num(av_sim_mat), axis=1)
     corr = np.nanmax(av_sim_mat, axis=1)
     dt = strvec[iimax]
+    dt[np.isnan(corr)] = np.nan
     if save_scatter:
         # use sum of square for std
         corrs = np.array(corrs)
@@ -959,6 +960,7 @@ def average_components(
     corr = np.nanmax(av_sim_mat, axis=1)
     strvec = dv_use[0].second_axis
     dt = strvec[iimax]
+    dt[np.isnan(corr)] = np.nan
     if save_scatter:
         stretches = np.array([dv.value for dv in dv_use])
         corrs = np.array([dv.corr for dv in dv_use])

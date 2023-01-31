@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Tuesday, 31st January 2023 01:58:19 pm
+Last Modified: Tuesday, 31st January 2023 03:26:07 pm
 '''
 
 from datetime import datetime
@@ -117,8 +117,7 @@ class DV(object):
             'second_axis': self.second_axis,
             'stretches': self.stretches,
             'corrs': self.corrs,
-            'n_stat': self.n_stat
-            })
+            'n_stat': self.n_stat})
         # Np load will otherwise be annoying
         to_save = {k: v for k, v in kwargs.items() if v is not None}
         np.savez_compressed(
