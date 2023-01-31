@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 27th October 2021 12:58:15 pm
-Last Modified: Tuesday, 31st January 2023 11:22:22 am
+Last Modified: Tuesday, 31st January 2023 02:10:12 pm
 '''
 
 import unittest
@@ -30,11 +30,13 @@ class TestDV(unittest.TestCase):
         corr = np.max(sim_mat, axis=1)
         second_axis = np.random.random(50,)
         value = second_axis[np.argmax(sim_mat, axis=1)]
-        self.dv = dv.DV(corr, value, 'bla', sim_mat, second_axis, 'blub', {})
+        self.dv = dv.DV(
+            corr, value, 'bla', sim_mat, second_axis, 'blub', {})
 
     @patch('seismic.monitor.dv.mu.save_header_to_np_array')
     @patch('seismic.monitor.dv.np.savez_compressed')
     def test_save(self, savez_mock, save_header_mock):
+        save_header_mock.return_value = {}
         self.dv.save('/save/to/here')
         save_header_mock.assert_called_once_with({})
         savez_mock.assert_called_once_with(
@@ -42,12 +44,12 @@ class TestDV(unittest.TestCase):
             corr=self.dv.corr, value=self.dv.value, sim_mat=self.dv.sim_mat,
             second_axis=self.dv.second_axis,
             method_array=np.array([self.dv.method]),
-            vt_array=np.array([self.dv.value_type]),
-            freq_min=None, freq_max=None, tw_start=None, tw_len=None)
+            vt_array=np.array([self.dv.value_type]))
 
     @patch('seismic.monitor.dv.mu.save_header_to_np_array')
     @patch('seismic.monitor.dv.np.savez_compressed')
     def test_save2(self, savez_mock, save_header_mock):
+        save_header_mock.return_value = {}
         self.dv.corrs = np.random.random((5, 5))
         self.dv.stretches = np.random.random((5, 5))
         self.dv.n_stat = np.ones(5, dtype=int)

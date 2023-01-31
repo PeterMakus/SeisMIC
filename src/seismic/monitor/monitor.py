@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 31st January 2023 11:50:18 am
+Last Modified: Tuesday, 31st January 2023 01:41:43 pm
 '''
 from copy import deepcopy
 import logging
@@ -820,7 +820,7 @@ def correct_time_shift_several(dvs: List[DV], method: str, n_overlap: int):
             except ValueError as e:
                 warnings.warn(
                     f'{e} for {dv.stats.id} and reference dv '
-                    f'{dv_r}.')
+                    f'{dv_r.stats.id}.')
 
 
 def average_components_mem_save(
@@ -855,6 +855,7 @@ def average_components_mem_save(
             strvec = dv.second_axis
             value_type = dv.value_type
             method = dv.method
+            dv_processing = dv.dv_processing
         if dv.method != method:
             raise TypeError('DV has to be computed with the same method.')
         if 'av' in dv.stats.channel+dv.stats.network+dv.stats.station:
@@ -898,7 +899,7 @@ def average_components_mem_save(
     dvout = DV(
         corr, dt, value_type, av_sim_mat, strvec,
         method, stats, stretches=stretches, corrs=corrs,
-        n_stat=n_stat)
+        n_stat=n_stat, dv_processing=dv_processing)
     return dvout
 
 
@@ -978,7 +979,7 @@ def average_components(
     dvout = DV(
         corr, dt, dv_use[0].value_type, av_sim_mat, strvec,
         dv_use[0].method, stats, stretches=stretches, corrs=corrs,
-        n_stat=n_stat)
+        n_stat=n_stat, dv_processing=dv_use[0].dv_processing)
     return dvout
 
 

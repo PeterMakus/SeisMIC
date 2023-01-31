@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 6th July 2021 09:18:14 am
-Last Modified: Tuesday, 31st January 2023 11:28:28 am
+Last Modified: Tuesday, 31st January 2023 02:12:11 pm
 '''
 
 import os
@@ -16,6 +16,7 @@ import unittest
 from unittest import mock
 from unittest.mock import patch
 import warnings
+from copy import deepcopy
 
 import numpy as np
 from obspy import UTCDateTime
@@ -260,6 +261,20 @@ class TestAverageDVbyCoords(unittest.TestCase):
         np.testing.assert_array_equal([s.stla, s.evla], 2*[lat])
         self.assertIsNone(av_dv.stretches)
         self.assertIsNone(av_dv.corrs)
+
+
+class TestCorrectTimeShiftSeveral(unittest.TestCase):
+    def setUp(self):
+        self.dv = DV(
+            np.zeros(5), np.zeros(5), 'bla', np.zeros((5, 5)), np.zeros(5),
+            'dd', CorrStats())
+
+    @mock.patch('seismic.monitor.monitor.correct_dv_shift')
+    def test_one_start(self, cts_mock: mock.MagicMock):
+        dv = deepcopy(self.dv)
+        dv.stats.corr_start = [UTCDateTime(ii) for ii in range(5)]
+        monitor.correct_time_shift_several([dv], 'mean', 0)
+        cts_mock.assert_not_called()
 
 
 class TestAverageComponents(unittest.TestCase):
