@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Tuesday, 17th January 2023 02:24:24 pm
+Last Modified: Tuesday, 31st January 2023 11:24:05 am
 '''
 
 import unittest
@@ -552,11 +552,19 @@ class TestCorrStats(unittest.TestCase):
             self.cst.end_lag, self.cst.start_lag+self.cst.delta*float(
                 self.cst.npts-1))
 
-    def get_component(self):
+    def test_get_component(self):
         cst = deepcopy(self.cst)
         # Set channel
         cst['channel'] = 'HHE-HHZ'
         self.assertEqual(cst['component'], 'E-Z')
+
+    def test_get_id(self):
+        cst = deepcopy(self.cst)
+        # Set channel
+        cst['channel'] = 'HHE-HHZ'
+        cst['station'] = 'AB-BC'
+        cst['network'] = '12-34'
+        self.assertEqual(cst['id'], '12-34.AB-BC.HHE-HHZ')
 
 
 class TestCombineStats(unittest.TestCase):

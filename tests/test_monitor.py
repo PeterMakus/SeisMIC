@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 6th July 2021 09:18:14 am
-Last Modified: Monday, 16th January 2023 11:14:10 am
+Last Modified: Tuesday, 31st January 2023 11:28:28 am
 '''
 
 import os
@@ -290,13 +290,18 @@ class TestAverageComponents(unittest.TestCase):
         with self.assertWarns(UserWarning):
             monitor.average_components([dv0, dv1])
 
-    def test_contains_nans(self):
+    @mock.patch('seismic.monitor.monitor.correct_time_shift_several')
+    def test_contains_nans(self, ctss_mock: mock.MagicMock):
         sim0 = np.random.random((5, 5))
         sim1 = np.nan*np.ones((5, 5))
         corr0 = np.zeros((5))
         dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
         dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], CorrStats())
-        dv_av = monitor.average_components([dv0, dv1])
+        dv_av = monitor.average_components(
+            [dv0, dv1], correct_shift=True, correct_shift_method='bla',
+            correct_shift_overlap=5)
+        ctss_mock.assert_called_once_with(
+            [dv0, dv1], method='bla', n_overlap=5)
         self.assertTrue(np.all(dv0.sim_mat == dv_av.sim_mat))
 
     def test_result(self):

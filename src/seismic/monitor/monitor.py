@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 31st January 2023 10:53:17 am
+Last Modified: Tuesday, 31st January 2023 11:50:18 am
 '''
 from copy import deepcopy
 import logging
@@ -697,6 +697,9 @@ def correct_dv_shift(
     Shift dv0 with respect to dv1, so that the same times will have the same
     value.
 
+    .. note::
+        in-place operation.
+
     :param dv0: DV object to be shifted
     :type dv0: DV
     :param dv1: DV object to compare to
@@ -770,6 +773,54 @@ def correct_dv_shift(
     dv0.value = dv0.second_axis[
         np.nanargmax(np.nan_to_num(dv0.sim_mat), axis=1)]
     return dv0, dv1
+
+
+def correct_time_shift_several(dvs: List[DV], method: str, n_overlap: int):
+    """
+    Suppose you have a number of dv/v time series from the same location,
+    but station codes changed several times. To stitch these together,
+    this code will iteratively shift each progressive time-series to the
+    shift of the end of its precessor.
+
+    .. note::
+        The shifting correction happens in-place.
+
+    :param dvs: List of dvs to be shifted
+    :type dvs: List[DV]
+    :param method: method to be used to measure the shift. Can be 'mean' or
+        'median'. If 'mean' is chosen, the points will be weighted by their
+        respective correlation coefficient.
+    :type method: str
+    :param n_overlap: amount of points beyond the overlap to use to compute
+        the shift.
+    :type n_overlap: int
+    """
+    # If three different time-series are provided, find the one that
+    # spans the middle time
+    avl = np.array([
+        np.mean(np.array([
+            t.timestamp for t in dv.stats.corr_start])[
+                dv.avail]) for dv in dvs])
+    avl_u = np.sort(np.unique(avl))
+    # Loop over each unique start and shift and correct them iteratively
+    for k, avstart in enumerate(avl_u):
+        if k+1 == len(avl_u):
+            # everything is shifted
+            break
+        ii_ref = np.concatenate(np.where(avl == avstart))[0]
+        ii_corr = np.concatenate(np.where(avl == avl_u[k+1]))
+        dv_r = dvs[ii_ref]
+        dv_corr = [dvs[ii] for ii in ii_corr]
+        for dv in dv_corr:
+            try:
+                # The correction should happen in-place
+                correct_dv_shift(
+                    dv, dv_r, method=method,
+                    n_overlap=n_overlap)
+            except ValueError as e:
+                warnings.warn(
+                    f'{e} for {dv.stats.id} and reference dv '
+                    f'{dv_r}.')
 
 
 def average_components_mem_save(
@@ -898,45 +949,10 @@ def average_components(
         dv_use.append(dv)
     # Correct shift
     if correct_shift:
-        # dv_corrected = []
-        # If three different time-series are provided, find the one that
-        # spans the middle time
-        avl = np.array([
-            np.mean(np.array([
-                t.timestamp for t in dv.stats.corr_start])[
-                    dv.avail]) for dv in dv_use])
-        avl_u = np.sort(np.unique(avl))
-        # Loop over each unique start and shift and correct them iteratively
-        for k, avstart in enumerate(avl_u):
-            if k+1 == len(avl_u):
-                # everything is shifted
-                break
-            ii_ref = np.concatenate(np.where(avl == avstart))[0]
-            # if k == 0:
-            #     (dv_corrected.extend(ii) for ii in ii_ref)
-            ii_corr = np.concatenate(np.where(avl == avl_u[k+1]))
-            dv_r = dv_use[ii_ref]
-            dv_corr = [dv_use[ii] for ii in ii_corr]
-            for dv in dv_corr:
-                try:
-                    # The correction should happen in-place
-                    correct_dv_shift(
-                        dv, dv_r, method=correct_shift_method,
-                        n_overlap=correct_shift_overlap)
-                except ValueError as e:
-                    warnings.warn(
-                        f'{e} for {dv.stats.id} and reference dv '
-                        f'{dv_use[0].stats.id}.')
-
-        # ii_ref = np.argmin(abs(avl-np.mean([avl.max(), avl.min()])))
-        # dv_correct = dv_use
-        # dv_ref = dv_correct.pop(ii_ref)
-        # dv_corrected = []
-        
-        # dv_corrected.append(dv_ref)
-        # dv_use = dv_corrected
-    sim_mats = [dv.sim_mat for dv in dv_use]
-    av_sim_mat = np.nanmean(sim_mats, axis=0)
+        correct_time_shift_several(
+            dv_use, method=correct_shift_method,
+            n_overlap=correct_shift_overlap)
+    av_sim_mat = np.nanmean([dv.sim_mat for dv in dv_use], axis=0)
     # Now we would have to recompute the dv value and corr value
     iimax = np.nanargmax(np.nan_to_num(av_sim_mat), axis=1)
     corr = np.nanmax(av_sim_mat, axis=1)
@@ -945,14 +961,13 @@ def average_components(
     if save_scatter:
         stretches = np.array([dv.value for dv in dv_use])
         corrs = np.array([dv.corr for dv in dv_use])
-        # # Number of stations per corr_start
-        n_stat = np.array(
-            [dv.avail*np.ones_like(dv.corr, dtype=int) for dv in dv_use])
-        n_stat = np.sum(n_stat, axis=0)
     else:
         stretches = None
         corrs = None
-        n_stat = None
+    # Number of stations per corr_start
+    n_stat = np.array(
+        [dv.avail*np.ones_like(dv.corr, dtype=int) for dv in dv_use])
+    n_stat = np.sum(n_stat, axis=0)
     stats = deepcopy(dv_use[0].stats)
     if not all(np.array([dv.stats.channel for dv in dv_use]) == stats.channel):
         stats['channel'] = 'av'
