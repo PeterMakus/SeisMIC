@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 31st January 2023 10:19:41 am
+Last Modified: Tuesday, 31st January 2023 10:53:17 am
 '''
 from copy import deepcopy
 import logging
@@ -898,29 +898,43 @@ def average_components(
         dv_use.append(dv)
     # Correct shift
     if correct_shift:
+        # dv_corrected = []
         # If three different time-series are provided, find the one that
         # spans the middle time
         avl = np.array([
             np.mean(np.array([
                 t.timestamp for t in dv.stats.corr_start])[
                     dv.avail]) for dv in dv_use])
+        avl_u = np.sort(np.unique(avl))
+        # Loop over each unique start and shift and correct them iteratively
+        for k, avstart in enumerate(avl_u):
+            if k+1 == len(avl_u):
+                # everything is shifted
+                break
+            ii_ref = np.concatenate(np.where(avl == avstart))[0]
+            # if k == 0:
+            #     (dv_corrected.extend(ii) for ii in ii_ref)
+            ii_corr = np.concatenate(np.where(avl == avl_u[k+1]))
+            dv_r = dv_use[ii_ref]
+            dv_corr = [dv_use[ii] for ii in ii_corr]
+            for dv in dv_corr:
+                try:
+                    # The correction should happen in-place
+                    correct_dv_shift(
+                        dv, dv_r, method=correct_shift_method,
+                        n_overlap=correct_shift_overlap)
+                except ValueError as e:
+                    warnings.warn(
+                        f'{e} for {dv.stats.id} and reference dv '
+                        f'{dv_use[0].stats.id}.')
 
-        ii_ref = np.argmin(abs(avl-np.mean([avl.max(), avl.min()])))
-        dv_correct = dv_use
-        dv_ref = dv_correct.pop(ii_ref)
-        dv_corrected = []
-        for dv in dv_correct:
-            try:
-                dvc, _ = correct_dv_shift(
-                    dv, dv_ref, method=correct_shift_method,
-                    n_overlap=correct_shift_overlap)
-                dv_corrected.append(dvc)
-            except ValueError as e:
-                warnings.warn(
-                    f'{e} for {dv.stats.id} and reference dv '
-                    f'{dv_use[0].stats.id}.')
-        dv_corrected.append(dv_ref)
-        dv_use = dv_corrected
+        # ii_ref = np.argmin(abs(avl-np.mean([avl.max(), avl.min()])))
+        # dv_correct = dv_use
+        # dv_ref = dv_correct.pop(ii_ref)
+        # dv_corrected = []
+        
+        # dv_corrected.append(dv_ref)
+        # dv_use = dv_corrected
     sim_mats = [dv.sim_mat for dv in dv_use]
     av_sim_mat = np.nanmean(sim_mats, axis=0)
     # Now we would have to recompute the dv value and corr value
