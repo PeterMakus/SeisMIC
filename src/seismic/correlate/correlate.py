@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 16th January 2023 11:13:58 am
+Last Modified: Monday, 6th February 2023 11:05:00 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -1175,24 +1175,27 @@ def preprocess_stream(
     # Clip to these again to remove the taper
     old_starts = [deepcopy(tr.stats.starttime) for tr in st]
     old_ends = [deepcopy(tr.stats.endtime) for tr in st]
-    if remove_response:
-        # taper before instrument response removal
-        if taper_len:
-            st = ppst.cos_taper_st(st, taper_len, False, True)
-        try:
-            if inv:
-                ninv = inv
-                st.attach_response(ninv)
-            st.remove_response(taper=False)  # Changed for testing purposes
-        except ValueError:
-            print('Station response not found ... loading from remote.')
-            # missing station response
-            ninv = store_client.rclient.get_stations(
-                network=st[0].stats.network, station=st[0].stats.station,
-                channel='*', level='response')
-            st.attach_response(ninv)
-            st.remove_response(taper=False)
-            store_client._write_inventory(ninv)
+    for tr in st:
+        if tr.stats.station == 'EDM':
+            continue
+        if remove_response:
+            # taper before instrument response removal
+            if taper_len:
+                tr = ppst.cos_taper(tr, taper_len, False, True)
+            try:
+                if inv:
+                    ninv = inv
+                    tr.attach_response(ninv)
+                tr.remove_response(taper=False)  # Changed for testing purposes
+            except ValueError:
+                print('Station response not found ... loading from remote.')
+                # missing station response
+                ninv = store_client.rclient.get_stations(
+                    network=tr.stats.network, station=tr.stats.station,
+                    channel='*', level='response')
+                tr.attach_response(ninv)
+                tr.remove_response(taper=False)
+                store_client._write_inventory(ninv)
 
     # Sometimes Z has reversed polarity
     if inv:
