@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Tuesday, 31st January 2023 03:26:07 pm
+Last Modified: Monday, 6th February 2023 04:36:34 pm
 '''
 
 from datetime import datetime
@@ -107,7 +107,17 @@ class DV(object):
         """
         kwargs = mu.save_header_to_np_array(self.stats)
         if self.dv_processing is not None:
-            kwargs.update(self.dv_processing)
+            try:
+                sides = self.dv_processing['sides']
+            except KeyError:
+                sides = 'unknown'
+            kwargs.update({
+                'freq_min': self.dv_processing['freq_min'],
+                'freq_max': self.dv_processing['freq_max'],
+                'tw_len': self.dv_processing['tw_len'],
+                'tw_start': self.dv_processing['tw_start'],
+                'sides': sides
+            })
         kwargs.update({
             'method_array': np.array([self.method]),
             'vt_array': np.array([self.value_type]),
@@ -117,7 +127,8 @@ class DV(object):
             'second_axis': self.second_axis,
             'stretches': self.stretches,
             'corrs': self.corrs,
-            'n_stat': self.n_stat})
+            'n_stat': self.n_stat
+        })
         # Np load will otherwise be annoying
         to_save = {k: v for k, v in kwargs.items() if v is not None}
         np.savez_compressed(
