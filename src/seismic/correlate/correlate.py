@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 6th February 2023 11:05:00 am
+Last Modified: Monday, 6th February 2023 11:41:33 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -1079,6 +1079,9 @@ def compute_network_station_combinations(
             for jj in range(ii+1, len(netlist)):
                 n2 = netlist[jj]
                 s2 = statlist[jj]
+                if s == s2:
+                    # Technically still auto correlations here
+                    continue
                 if n != n2 or s != s2:
                     if combis is not None and not any(all(
                         i0 in i1 for i0 in [
