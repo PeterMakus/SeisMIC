@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Monday, 6th February 2023 11:30:45 am
+Last Modified: Monday, 6th February 2023 04:15:42 pm
 '''
 import ast
 import fnmatch
@@ -86,7 +86,7 @@ class DBHandler(h5py.File):
                         ' different processing parameters. Differences are:'
                         '\nFirst: New parameters; Second: Old parameters'
                         f'\n{diff}'
-                        )
+                    )
             except KeyError:
                 self.add_corr_options(co)
 
