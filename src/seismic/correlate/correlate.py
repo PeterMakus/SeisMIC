@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 6th February 2023 11:41:33 am
+Last Modified: Monday, 6th February 2023 11:49:27 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -1184,7 +1184,10 @@ def preprocess_stream(
         if remove_response:
             # taper before instrument response removal
             if taper_len:
-                tr = ppst.cos_taper(tr, taper_len, False, True)
+                try:
+                    tr = ppst.cos_taper(tr, taper_len, True, False)
+                except ValueError:
+                    warnings.warn('trace not tapered')
             try:
                 if inv:
                     ninv = inv
