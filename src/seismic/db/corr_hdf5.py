@@ -81,10 +81,11 @@ class DBHandler(h5py.File):
                             f'One option is not defined in new dict. {e}'
                         )
                     raise PermissionError(
-                        'The output file already exists and contains data with'
-                        + ' different processing parameters. Differences are:'
-                        + '\nFirst: New parameters; Second: Old parameters'
-                        + f'\n{diff}')
+                        f'The output file {path} already exists and contains'
+                        ' data with'
+                        ' different processing parameters. Differences are:'
+                        '\nFirst: New parameters; Second: Old parameters'
+                         f'\n{diff}')
             except KeyError:
                 self.add_corr_options(co)
 
