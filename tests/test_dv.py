@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 27th October 2021 12:58:15 pm
-Last Modified: Tuesday, 31st January 2023 02:10:12 pm
+Last Modified: Monday, 6th February 2023 04:37:05 pm
 '''
 
 import unittest
@@ -54,6 +54,26 @@ class TestDV(unittest.TestCase):
         self.dv.stretches = np.random.random((5, 5))
         self.dv.n_stat = np.ones(5, dtype=int)
         self.dv.dv_processing = dict(
+            freq_min=0, freq_max=1, tw_start=2, tw_len=3, sides='bla')
+        self.dv.save('/save/to/here')
+        save_header_mock.assert_called_once_with({})
+        savez_mock.assert_called_once_with(
+            '/save/to/here',
+            corr=self.dv.corr, value=self.dv.value, sim_mat=self.dv.sim_mat,
+            second_axis=self.dv.second_axis,
+            method_array=np.array([self.dv.method]),
+            vt_array=np.array([self.dv.value_type]), corrs=self.dv.corrs,
+            stretches=self.dv.stretches, n_stat=self.dv.n_stat,
+            freq_min=0, freq_max=1, tw_start=2, tw_len=3, sides='bla')
+
+    @patch('seismic.monitor.dv.mu.save_header_to_np_array')
+    @patch('seismic.monitor.dv.np.savez_compressed')
+    def test_save3(self, savez_mock, save_header_mock):
+        save_header_mock.return_value = {}
+        self.dv.corrs = np.random.random((5, 5))
+        self.dv.stretches = np.random.random((5, 5))
+        self.dv.n_stat = np.ones(5, dtype=int)
+        self.dv.dv_processing = dict(
             freq_min=0, freq_max=1, tw_start=2, tw_len=3)
         self.dv.save('/save/to/here')
         save_header_mock.assert_called_once_with({})
@@ -64,7 +84,7 @@ class TestDV(unittest.TestCase):
             method_array=np.array([self.dv.method]),
             vt_array=np.array([self.dv.value_type]), corrs=self.dv.corrs,
             stretches=self.dv.stretches, n_stat=self.dv.n_stat,
-            freq_min=0, freq_max=1, tw_start=2, tw_len=3)
+            freq_min=0, freq_max=1, tw_start=2, tw_len=3, sides='unknown')
 
     def test_smooth_sim_mat(self):
         dvc = deepcopy(self.dv)

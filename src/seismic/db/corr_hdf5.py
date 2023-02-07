@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Monday, 16th January 2023 11:13:58 am
+Last Modified: Monday, 6th February 2023 04:15:42 pm
 '''
 import ast
 import fnmatch
@@ -85,7 +85,8 @@ class DBHandler(h5py.File):
                         ' data with'
                         ' different processing parameters. Differences are:'
                         '\nFirst: New parameters; Second: Old parameters'
-                         f'\n{diff}')
+                        f'\n{diff}'
+                    )
             except KeyError:
                 self.add_corr_options(co)
 
@@ -444,7 +445,8 @@ def co_to_hdf5(co: dict) -> dict:
     coc = deepcopy(co)
     remk = [
         'subdir', 'read_start', 'read_end', 'read_len', 'read_inc',
-        'combination_method', 'combinations', 'starttime']
+        'combination_method', 'combinations', 'starttime',
+        'xcombinations']
     for key in remk:
         try:
             coc.pop(key, None)

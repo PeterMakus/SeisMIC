@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 6th February 2023 11:49:27 am
+Last Modified: Monday, 6th February 2023 04:15:03 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -1067,6 +1067,9 @@ def compute_network_station_combinations(
         `allSimpleCombinations`, or `allCombinations`,
         defaults to 'betweenStations'.
     :type method: str, optional
+    :param combis: List of desired station combinations.
+        Given as [net0-net1.stat0-stat1]. Optional.
+    :type combis: List[str]
     :raises ValueError: for unkown combination methods.
     :return: A tuple containing the list of the correlation network code
         and the list of the correlation station code.
@@ -1083,15 +1086,13 @@ def compute_network_station_combinations(
                     # Technically still auto correlations here
                     continue
                 if n != n2 or s != s2:
-                    if combis is not None and not any(all(
-                        i0 in i1 for i0 in [
-                            n, n2, s, s2]) for i1 in combis):
-                        continue
-                        # Expression above might look a bit complicated, but
-                        # essentially just checks whether any of the desired
-                        # combis matches with this combis. If it does not we
-                        # continue and skip this combi
                     nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
+                    # Check requested combinations
+                    if (
+                        combis is not None
+                        and f'{nc[0]}-{nc[1]}.{sc[0]}-{sc[1]}' not in combis
+                    ):
+                        continue
                     netcombs.append('%s-%s' % (nc[0], nc[1]))
                     statcombs.append('%s-%s' % (sc[0], sc[1]))
 
