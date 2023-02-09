@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Thursday, 19th January 2023 03:51:31 pm
+Last Modified: Thursday, 9th February 2023 01:34:09 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable
 import warnings
@@ -378,6 +378,11 @@ class DVGrid(object):
             grid is actually just one-dimensional. The return value is
             reshaped onto the shape of self.xgrid.
 
+        .. note::
+            The returned value and the value in self.vel_change is strictly
+            speaking not a velocity change, but an epsilon value. That
+            corresponds to -dv/v
+
         .. warning::
             Low values for ``dt`` can produce artefacts. Very high values
             lead to a drastically increased computational cost.
@@ -428,7 +433,8 @@ class DVGrid(object):
             time-series.
         :return: The dv-grid (with corresponding coordinates in
             self.xgrid and self.ygrid or self.xaxis and self.yaxis,
-            respectively)
+            respectively). Note this is actually an epsilon grid (meaning
+            it represents the stretch value i.e., -dv/v)
         :rtype: np.ndarray
         """
         vals, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
