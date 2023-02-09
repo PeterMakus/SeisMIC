@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 6th February 2023 04:15:03 pm
+Last Modified: Thursday, 9th February 2023 01:57:52 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -1082,9 +1082,6 @@ def compute_network_station_combinations(
             for jj in range(ii+1, len(netlist)):
                 n2 = netlist[jj]
                 s2 = statlist[jj]
-                if s == s2:
-                    # Technically still auto correlations here
-                    continue
                 if n != n2 or s != s2:
                     nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
                     # Check requested combinations
@@ -1182,27 +1179,24 @@ def preprocess_stream(
     for tr in st:
         if tr.stats.station == 'EDM':
             continue
-        if remove_response:
-            # taper before instrument response removal
-            if taper_len:
-                try:
-                    tr = ppst.cos_taper(tr, taper_len, True, False)
-                except ValueError:
-                    warnings.warn('trace not tapered')
-            try:
-                if inv:
-                    ninv = inv
-                    tr.attach_response(ninv)
-                tr.remove_response(taper=False)  # Changed for testing purposes
-            except ValueError:
-                print('Station response not found ... loading from remote.')
-                # missing station response
-                ninv = store_client.rclient.get_stations(
-                    network=tr.stats.network, station=tr.stats.station,
-                    channel='*', level='response')
-                tr.attach_response(ninv)
-                tr.remove_response(taper=False)
-                store_client._write_inventory(ninv)
+    if remove_response:
+        # taper before instrument response removal
+        if taper_len:
+            st = ppst.cos_taper_st(st, taper_len, False, True)
+        try:
+            if inv:
+                ninv = inv
+                st.attach_response(ninv)
+            st.remove_response(taper=False)  # Changed for testing purposes
+        except ValueError:
+            print('Station response not found ... loading from remote.')
+            # missing station response
+            ninv = store_client.rclient.get_stations(
+                network=st[0].stats.network, station=st[0].stats.station,
+                channel='*', level='response')
+            st.attach_response(ninv)
+            st.remove_response(taper=False)
+            store_client._write_inventory(ninv)
 
     # Sometimes Z has reversed polarity
     if inv:
