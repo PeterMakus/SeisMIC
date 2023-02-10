@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Thursday, 21st October 2021 03:11:50 pm
+Last Modified: Friday, 10th February 2023 04:03:54 pm
 '''
 
 import fnmatch
@@ -708,7 +708,7 @@ def get_day_in_folder(
         raise FileNotFoundError(
             'Station %s.%s not in database' % (network, station))
     # make sure that 200 comes after 3, but before 300
-    julday.sort(key=lambda l: (len(l), l))
+    julday.sort(key=lambda li: (len(li), li))
     if type == 'start':
         return UTCDateTime(year=int(year), julday=julday[0])
     if type == 'end':
