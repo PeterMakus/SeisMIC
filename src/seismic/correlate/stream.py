@@ -1,4 +1,6 @@
 '''
+Manage objects holding correlations.
+
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
@@ -8,9 +10,9 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-
-Last Modified: Tuesday, 11th October 2022 01:33:32 pm
+Last Modified: Friday, 10th February 2023 04:25:11 pm
 '''
+
 from typing import Iterator, List, Tuple
 from copy import deepcopy
 import warnings
@@ -39,6 +41,22 @@ class CorrBulk(object):
     def __init__(
         self, A: np.ndarray, stats: CorrStats = None,
             statlist: List[CorrStats] = None):
+        """
+        An object for faster computations on several correlations. The input
+        correlation contain data from only one Station-Channel pair.
+
+        :param A: the Correlation Matrix. Each line corresponds to one
+            correlation start. The column distance is lag time
+        :type A: np.ndarray
+        :param stats: CorrStats file holding the header for this object,
+            only relevant if you are reloading this file. Otherwise,
+            use statlist as input to create this header.
+            defaults to None
+        :type stats: CorrStats, optional
+        :param statlist: Header of each CorrTrace used to create this object,
+            defaults to None
+        :type statlist: List[CorrStats], optional
+        """
         self.data = A
         if stats:
             self.stats = stats
@@ -70,7 +88,6 @@ class CorrBulk(object):
         :type normtype: string
         :param normtype: one of the following 'energy', 'max', 'absmax',
             'abssum' to decide about the way to calculate the normalization.
-
         :rtype: CorrBulk
         :return: Same object as in self, but normalised.
 
@@ -335,7 +352,6 @@ class CorrBulk(object):
         :param method: method to extract the trace
         :type percentile: float
         :param percentile: only used for method=='similarity_percentile'
-
         :rtype: np.ndarray
         :return: extracted trace
 
@@ -491,7 +507,6 @@ class CorrBulk(object):
         :type axis: int
         :param axis: Axis along with apply the filter. O: smooth along
             correlation lag time axis 1: smooth along time axis
-
         :rtype: :class:`~numpy.ndarray`
         :return: Filtered matrix
 
@@ -638,7 +653,6 @@ class CorrBulk(object):
             position
         :type endtime: float
         :param order: end time in seconds with respect to the zero position
-
         :return: self
 
         ..note:: This action is performed **in-place**. If you want to keep
@@ -895,8 +909,8 @@ class CorrStream(Stream):
                 tr.stats.corr_end-tr.stats.corr_start for tr in self):
             raise ValueError(
                 'The length of the requested time window has to be larger or'
-                + 'equal than the actual correlation length of one window.'
-                + 'i.e., correlations can not be sliced, only selected.')
+                'equal than the actual correlation length of one window.'
+                'i.e., correlations can not be sliced, only selected.')
 
         if step <= 0:
             raise ValueError('Step has to be larger than 0.')
