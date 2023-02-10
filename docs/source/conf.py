@@ -73,7 +73,7 @@ html_static_path = ['_static']
 
 
 html_title = "SeisMIC"
-# html_logo = "chapters/figures/logo.png"
+html_logo = ""
 # html_favicon = "chapters/figures/favicon.ico"
 
 html_context = {
