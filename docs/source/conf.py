@@ -19,7 +19,8 @@ sys.path.insert(0, os.path.abspath('../../src'))
 
 project = 'SeisMIC'
 copyright = '2022, The SeisMIC development team.'
-author = 'The SeisMIC development Team'
+author = \
+    'Peter Makus, Christoph Sens-Schönfelder, and the SeisMIC development Team'
 
 # The full version, including alpha/beta/rc tags
 release = '0.1.30'
