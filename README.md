@@ -18,25 +18,43 @@ SeisMIC (**Seismological Monitoring using Interferometric Concepts**) is a pytho
 
 ## Installation of this package
 
+### Installation from PyPi (pip install)
+**SeisMIC** is  now deployed on PyPi and can simply be installed using:
+
+```bash
+# We recommend installing mpi4py from the conda-forge channel instead of PyPi
+conda install -c conda-forge mpi4py
+
+pip install seismic
+```
+### Installation from Source Code
+To obtain the lates features, you can install SeisMIC from its source code, available on GitHub.
+
+**Developers should download the ``dev`` branch**
+
 Download this package via GitHub and install it via bash terminal (the few steps shown below) or using the graphical user interface
 
 ```bash
 # Download via wget or web-browser
-wget https://github.com/PeterMakus/SeisMIC/tree/main
+wget https://github.com/PeterMakus/SeisMIC/archive/refs/heads/main.zip
+
+# For developers download the dev branch
+wget https://github.com/PeterMakus/SeisMIC/archive/refs/heads/dev.zip
 
 # unzip the package
-unzip main.zip
+unzip main.zip  # or dev.zip
 
 # Change directory to the same directory that this repo is in (i.e., same directory as setup.py)
 cd SeisMIC-main  # That's the standard name the folder should have
 
 # Create the conda environment and install dependencies
+conda install -c conda-forge mpi4py
 conda env create -f environment.yml
 
 # Activate the conda environment
 conda activate seismic
 
-# Install your package
+# Install the package in editable mode
 pip install -e .
 ```
 
