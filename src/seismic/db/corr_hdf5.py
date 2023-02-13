@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Monday, 6th February 2023 04:15:42 pm
+Last Modified: Monday, 13th February 2023 10:35:58 am
 '''
 import ast
 import fnmatch
@@ -144,7 +144,7 @@ omitted." % path, category=UserWarning)
     def get_corr_options(self) -> dict:
         try:
             sco = str(self['co'].attrs['co'])
-            co = ast.literal_eval(sco)
+            co = co_to_hdf5(ast.literal_eval(sco))
         except KeyError:
             raise KeyError('No correlation options in file')
         return co
