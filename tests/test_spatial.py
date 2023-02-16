@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 11:07:27 am
-Last Modified: Thursday, 16th February 2023 02:17:55 pm
+Last Modified: Thursday, 16th February 2023 02:30:14 pm
 '''
 
 import unittest
@@ -684,7 +684,9 @@ class TestDVGrid(unittest.TestCase):
         g2c_mock.side_effect = ([[0], [1]], [[2], [3]])
         out = self.dvg._compute_sensitivity_kernels(
             slat0, slon0, slat1, slon1, t, dt, vel, mf_path)
-        calls = [mock.call(slat0, slon0, self.dvg.lat0), mock.call(slat1, slon1, self.dvg.lat0)]
+        calls = [
+            mock.call(slat0, slon0, self.dvg.lat0),
+            mock.call(slat1, slon1, self.dvg.lat0)]
         g2c_mock.assert_has_calls(calls)
         np.testing.assert_array_almost_equal(out, np.array([np.zeros((4))]))
 
