@@ -9,7 +9,7 @@
 
 Created: Tuesday, 1st June 2021 10:42:03 am
 
-Last Modified: Monday, 16th January 2023 11:14:10 am
+Last Modified: Monday, 13th February 2023 10:53:29 am
 
 '''
 from copy import deepcopy
@@ -463,9 +463,9 @@ class TestCoToHDF5(unittest.TestCase):
             ]})
 
     def test_keyError_handling(self):
-        d = {}
+        d = {'corr_args': {'a': 1}, 'subdivision': {'bla': 'g'}}
         coc = corr_hdf5.co_to_hdf5(d)
-        self.assertDictEqual({}, coc)
+        self.assertDictEqual(d, coc)
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Monday, 13th February 2023 10:35:58 am
+Last Modified: Monday, 13th February 2023 10:33:35 am
 '''
 import ast
 import fnmatch
@@ -144,6 +144,9 @@ omitted." % path, category=UserWarning)
     def get_corr_options(self) -> dict:
         try:
             sco = str(self['co'].attrs['co'])
+            # Run once more through co_to_hdf5 to account for
+            # correlations that have been computed with older versions
+
             co = co_to_hdf5(ast.literal_eval(sco))
         except KeyError:
             raise KeyError('No correlation options in file')
@@ -448,26 +451,13 @@ def co_to_hdf5(co: dict) -> dict:
         'combination_method', 'combinations', 'starttime',
         'xcombinations']
     for key in remk:
-        try:
-            coc.pop(key, None)
-        except KeyError:
-            pass
-    try:
+        coc.pop(key, None)
         coc['corr_args'].pop('combinations', None)
-    except KeyError:
-        pass
-    try:
         coc['subdivision'].pop('recombine_subdivision', None)
-    except KeyError:
-        pass
-    try:
         coc['subdivision'].pop('delete_subdivision', None)
-    except KeyError:
-        pass
     try:
-        for step in coc['preProcessing']:
-            if 'stream_mask_at_utc' in step['function']:
-                coc['preProcessing'].remove(step)
+        [coc['preProcessing'].remove(step) for step in coc['preProcessing']
+            if 'stream_mask_at_utc' in step['function']]
     except KeyError:
         pass
     return coc

@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Thursday, 19th January 2023 03:51:31 pm
+Last Modified: Thursday, 16th February 2023 02:06:16 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable
 import warnings
@@ -378,6 +378,11 @@ class DVGrid(object):
             grid is actually just one-dimensional. The return value is
             reshaped onto the shape of self.xgrid.
 
+        .. note::
+            The returned value and the value in self.vel_change is strictly
+            speaking not a velocity change, but an epsilon value. That
+            corresponds to -dv/v
+
         .. warning::
             Low values for ``dt`` can produce artefacts. Very high values
             lead to a drastically increased computational cost.
@@ -428,7 +433,8 @@ class DVGrid(object):
             time-series.
         :return: The dv-grid (with corresponding coordinates in
             self.xgrid and self.ygrid or self.xaxis and self.yaxis,
-            respectively)
+            respectively). Note this is actually an epsilon grid (meaning
+            it represents the stretch value i.e., -dv/v)
         :rtype: np.ndarray
         """
         vals, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
@@ -754,12 +760,13 @@ class DVGrid(object):
             on grid j
         :rtype: np.ndarray
         """
-        ii0 = self._find_coord(slat0, slon0)
-        ii1 = self._find_coord(slat1, slon1)
+        x0, y0 = geo2cart(slat0, slon0, self.lat0)
+        x1, y1 = geo2cart(slat1, slon1, self.lat0)
         skernels = []
-        for i0, i1 in zip(ii0, ii1):
-            s1 = np.array([self.xf[i0], self.yf[i0]])
-            s2 = np.array([self.xf[i1], self.yf[i1]])
+        for xx0, yy0, xx1, yy1 in zip(x0, y0, x1, y1):
+            # Station coordinates in cartesian
+            s1 = np.array([xx0, yy0])
+            s2 = np.array([xx1, yy1])
             sk = sensitivity_kernel(
                 s1, s2, self.xaxis, self.yaxis, t, dt, vel, mf_path)
             skernels.append(sk.flatten())

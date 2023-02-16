@@ -10,7 +10,7 @@ Module that contains functions for preprocessing on obspy streams
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:47:00 pm
-Last Modified: Monday, 6th February 2023 11:02:33 am
+Last Modified: Thursday, 9th February 2023 01:55:45 pm
 '''
 from typing import List
 from warnings import warn
@@ -46,9 +46,7 @@ def cos_taper_st(
     """
     if isinstance(st, Trace):
         st = Stream([st])
-    for ii, tr in enumerate(st):
-        if tr.stats.station == 'EDM':
-            continue
+    for ii, _ in enumerate(st):
         try:
             st[ii] = cos_taper(st[ii], taper_len, taper_at_masked, lossless)
         except ValueError as e:
