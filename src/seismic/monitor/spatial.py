@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Thursday, 9th February 2023 01:34:09 pm
+Last Modified: Thursday, 16th February 2023 02:06:16 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable
 import warnings
@@ -760,12 +760,13 @@ class DVGrid(object):
             on grid j
         :rtype: np.ndarray
         """
-        ii0 = self._find_coord(slat0, slon0)
-        ii1 = self._find_coord(slat1, slon1)
+        x0, y0 = geo2cart(slat0, slon0, self.lat0)
+        x1, y1 = geo2cart(slat1, slon1, self.lat0)
         skernels = []
-        for i0, i1 in zip(ii0, ii1):
-            s1 = np.array([self.xf[i0], self.yf[i0]])
-            s2 = np.array([self.xf[i1], self.yf[i1]])
+        for xx0, yy0, xx1, yy1 in zip(x0, y0, x1, y1):
+            # Station coordinates in cartesian
+            s1 = np.array([xx0, yy0])
+            s2 = np.array([xx1, yy1])
             sk = sensitivity_kernel(
                 s1, s2, self.xaxis, self.yaxis, t, dt, vel, mf_path)
             skernels.append(sk.flatten())

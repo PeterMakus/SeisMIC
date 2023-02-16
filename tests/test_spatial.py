@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 11:07:27 am
-Last Modified: Thursday, 19th January 2023 11:32:18 am
+Last Modified: Thursday, 16th February 2023 02:17:55 pm
 '''
 
 import unittest
@@ -214,6 +214,18 @@ class TestGeo2Cart(unittest.TestCase):
     def test_result_lonneg(self):
         lat = np.arange(10)
         lon = np.arange(-10, -5, 1)
+        lat0 = -5
+        out = spt.geo2cart(lat, lon, lat0)
+        self.assertEqual(out[0].shape, lon.shape)
+        self.assertEqual(out[1].shape, lat.shape)
+        self.assertTrue(np.all(out[0] < 0))
+        self.assertTrue(np.all(out[1] >= 0))
+
+    def test_result_len1(self):
+        # Just making sure that it still remains a np array
+        # otherwise this would introduce bugs
+        lat = np.arange(1)
+        lon = np.arange(-10, -9, 1)
         lat0 = -5
         out = spt.geo2cart(lat, lon, lat0)
         self.assertEqual(out[0].shape, lon.shape)
@@ -657,8 +669,10 @@ class TestDVGrid(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.dvg._find_coord(0, 0)
 
+    @mock.patch('seismic.monitor.spatial.geo2cart')
     @mock.patch('seismic.monitor.spatial.sensitivity_kernel')
-    def test_compute_sensitivity_kernels(self, sk_mock: mock.MagicMock):
+    def test_compute_sensitivity_kernels(
+            self, sk_mock: mock.MagicMock, g2c_mock: mock.MagicMock):
         sk_mock.return_value = np.zeros((2, 2))
         slat0 = 'slat0'
         slon0 = 'slon0'
@@ -667,13 +681,12 @@ class TestDVGrid(unittest.TestCase):
         t = 5
         dt = 0.1
         vel = mf_path = 1
-        with mock.patch.object(self.dvg, '_find_coord') as fc_mock:
-            fc_mock.side_effect = ([0, 1], [2, 3])
-            out = self.dvg._compute_sensitivity_kernels(
-                slat0, slon0, slat1, slon1, t, dt, vel, mf_path)
-            calls = [mock.call(slat0, slon0), mock.call(slat1, slon1)]
-            fc_mock.assert_has_calls(calls)
-        np.testing.assert_array_almost_equal(out, np.zeros((2, 4)))
+        g2c_mock.side_effect = ([[0], [1]], [[2], [3]])
+        out = self.dvg._compute_sensitivity_kernels(
+            slat0, slon0, slat1, slon1, t, dt, vel, mf_path)
+        calls = [mock.call(slat0, slon0, self.dvg.lat0), mock.call(slat1, slon1, self.dvg.lat0)]
+        g2c_mock.assert_has_calls(calls)
+        np.testing.assert_array_almost_equal(out, np.array([np.zeros((4))]))
 
 
 if __name__ == "__main__":
