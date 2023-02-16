@@ -146,6 +146,7 @@ omitted." % path, category=UserWarning)
             sco = str(self['co'].attrs['co'])
             # Run once more through co_to_hdf5 to account for
             # correlations that have been computed with older versions
+
             co = co_to_hdf5(ast.literal_eval(sco))
         except KeyError:
             raise KeyError('No correlation options in file')
