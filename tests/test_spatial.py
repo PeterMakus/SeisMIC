@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 11:07:27 am
-Last Modified: Thursday, 16th February 2023 02:30:14 pm
+Last Modified: Wednesday, 22nd February 2023 03:47:10 pm
 '''
 
 import unittest
@@ -459,10 +459,10 @@ class TestDVGrid(unittest.TestCase):
 
     def test_compute_res_int(self):
         skernels = np.ones((100, 100))
-        b = np.arange(2)
-        a = np.ones((100, 2))
+        b = np.eye(100)
+        a = np.ones((100, 100))
         out = self.dvg._compute_resolution(skernels, a, b)
-        np.testing.assert_almost_equal(out, np.ones((10, 10))*100)
+        np.testing.assert_almost_equal(out, 1e4*np.ones((10, 10)))
 
     def test_extract_dv(self):
         dv = mock.MagicMock()
