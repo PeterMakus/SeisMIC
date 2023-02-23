@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Tuesday, 17th January 2023 01:04:39 pm
+Last Modified: Thursday, 23rd February 2023 11:12:25 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -837,7 +837,7 @@ class CorrStream(Stream):
 
     def stack(
         self, weight: str = 'by_length', starttime: UTCDateTime = None,
-        endtime: UTCDateTime = None, stack_len: int or str = 0,
+        endtime: UTCDateTime = None, stack_len: int | str = 0,
             regard_location=True):
         """
         Average the data of all traces in the given time windows.
