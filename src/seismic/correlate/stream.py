@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Thursday, 23rd February 2023 11:12:25 am
+Last Modified: Thursday, 23rd February 2023 11:49:08 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -1106,7 +1106,7 @@ class CorrStream(Stream):
             :func:`~seismic.correlate.stream.CorrStream.select`.
         """
         if self.count() == 1:
-            self[0].plot()
+            self[0].plot(tlim=timelimits)
             return
         ax = plot_cst(
             self, sort_by=sort_by, timelimits=timelimits, ylimits=ylimits,
@@ -1240,7 +1240,7 @@ class CorrTrace(Trace):
 
     def plot(
         self, tlim: Tuple[float, float] = None, ax: plt.Axes = None,
-            outputdir: str = None, clean: bool = False):
+            outputdir: str = None, clean: bool = False) -> plt.Axes:
         """
         Plots thios CorrelationTrace.
 
@@ -1254,7 +1254,7 @@ class CorrTrace(Trace):
             defaults to False.
         :type clean: bool, optional
         """
-        plot_ctr(self, tlim, ax, outputdir, clean)
+        return plot_ctr(self, tlim, ax, outputdir, clean)
 
     def times(self) -> np.ndarray:
         """
