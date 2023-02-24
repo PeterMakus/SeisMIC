@@ -22,7 +22,7 @@ copyright = '2023, The SeisMIC development team.'
 author = 'The SeisMIC development Team'
 
 # The full version, including alpha/beta/rc tags
-release = '0.3.7'
+release = '0.3.8'
 
 
 # -- General configuration ---------------------------------------------------

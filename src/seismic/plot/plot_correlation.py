@@ -8,10 +8,9 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Thursday, 3rd November 2022 10:18:28 am
+Last Modified: Friday, 24th February 2023 11:39:44 am
 '''
 import os
-import warnings
 from typing import Tuple, Optional
 import datetime
 
@@ -167,12 +166,12 @@ def plot_cst(
             raise NotImplementedError(
                 'Unknown or not implemented plot type %s.' % type)
     elif sort_by == 'dist':
-        if type != 'section':
-            warnings.warn(
-                'Distance plot only supports section type.'
-            )
-        scalingfactor *= 4
-        times = sect_plot_dist(cst, ax, scalingfactor, linewidth)
+        if type == 'section':
+            scalingfactor *= 4
+            times = sect_plot_dist(cst, ax, scalingfactor, linewidth)
+        elif type == 'heatmap':
+            times = heat_plot_corr_dist(
+                cst, ax, cmap=cmap, vmin=vmin, vmax=vmax)
     else:
         raise NotImplementedError('Unknown sorting method %s.' % sort_by)
 
@@ -321,4 +320,26 @@ def sect_plot_dist(
     # step = round((cst[-1].stats.dist - cst[0].stats.dist)/10000)
     # plt.yticks(np.arange(0, ctr.stats.dist/1000+step, step, dtype=int))
     plt.yticks(np.linspace(0, ctr.stats.dist, 10, dtype=int))
+    return times
+
+
+def heat_plot_corr_dist(
+        cst: Stream, ax: plt.Axes, cmap: str, vmin: float, vmax: float):
+    data = np.empty((cst.count(), cst[0].stats.npts))
+    # y grid
+    y = np.zeros((len(cst),))
+    # x coords
+    times = cst[0].times()
+    for ii, ctr in enumerate(cst):
+        data[ii, :] = ctr.data
+        y[ii] = ctr.stats.dist
+    ds = plt.pcolormesh(
+        times, y, data, shading='auto', cmap=cmap, vmin=vmin,
+        vmax=vmax)
+    plt.colorbar(
+        ds, label='correlation coefficient', shrink=.6,
+        orientation='horizontal')
+    ax.yaxis.set_major_locator(mpl.dates.AutoDateLocator())
+    ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h %y'))
+    ax.invert_yaxis()
     return times
