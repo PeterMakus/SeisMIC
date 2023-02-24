@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Friday, 24th February 2023 11:39:44 am
+Last Modified: Friday, 24th February 2023 02:43:25 pm
 '''
 import os
 from typing import Tuple, Optional
@@ -315,7 +315,7 @@ def sect_plot_dist(
         ytmp = ydata * scalingfactor + ctr.stats.dist
 
         ax.plot(times, ytmp, 'k', lw=linewidth, zorder=-ii + 0.1)
-        plt.ylabel(r"Distance [km]")
+    plt.ylabel(r"Distance [km]")
     # Set label locations.
     # step = round((cst[-1].stats.dist - cst[0].stats.dist)/10000)
     # plt.yticks(np.arange(0, ctr.stats.dist/1000+step, step, dtype=int))
@@ -339,7 +339,6 @@ def heat_plot_corr_dist(
     plt.colorbar(
         ds, label='correlation coefficient', shrink=.6,
         orientation='horizontal')
-    ax.yaxis.set_major_locator(mpl.dates.AutoDateLocator())
-    ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h %y'))
-    ax.invert_yaxis()
+    plt.yticks(np.linspace(0, ctr.stats.dist, 10, dtype=int))
+    ax.set_ylabel(r"Distance [km]")
     return times
