@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Thursday, 23rd February 2023 11:49:08 am
+Last Modified: Friday, 24th February 2023 02:38:14 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -932,9 +932,9 @@ class CorrStream(Stream):
             latest available endtime.
         :type endtime: UTCDateTime
         """
-        if not starttime:
+        if starttime is None:
             starttime = min(tr.stats.corr_start for tr in self)
-        if not endtime:
+        if endtime is None:
             endtime = max(tr.stats.corr_end for tr in self)
 
         if window_length < max(
@@ -1106,8 +1106,7 @@ class CorrStream(Stream):
             :func:`~seismic.correlate.stream.CorrStream.select`.
         """
         if self.count() == 1:
-            self[0].plot(tlim=timelimits)
-            return
+            return self[0].plot(tlim=timelimits)
         ax = plot_cst(
             self, sort_by=sort_by, timelimits=timelimits, ylimits=ylimits,
             scalingfactor=scalingfactor, ax=ax, linewidth=linewidth,
