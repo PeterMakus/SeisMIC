@@ -13,6 +13,7 @@ SeisMIC (**Seismological Monitoring using Interferometric Concepts**) is a pytho
 + Computation of velocity change (dv/v) time series
 + Postprocessing of dv/v time series
 + Plotting of dv/v time-series
++ INverting dv/v onto a spatial grid (currently only in the ´´dev´´ branch)
 
 **SeisMIC** handles correlations and data in an [ObsPy](https://github.com/obspy/obspy)-like manner.
 
