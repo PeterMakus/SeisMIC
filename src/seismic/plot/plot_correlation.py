@@ -8,10 +8,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Friday, 24th February 2023 02:43:25 pm
+Last Modified: Tuesday, 28th February 2023 10:28:17 am
 '''
 import os
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 import datetime
 
 import matplotlib as mpl
@@ -103,7 +103,7 @@ def plot_cst(
     ax: plt.Axes = None, linewidth: float = 0.25,
     outputfile: str or None = None, title: str or None = None,
     type: str = 'heatmap', cmap: str = 'seismic', vmin: float = None,
-        vmax: float = None):
+        vmax: float = None, **kwargs):
     """
     Creates a section or heat plot of all correlations in this stream.
 
@@ -168,10 +168,11 @@ def plot_cst(
     elif sort_by == 'dist':
         if type == 'section':
             scalingfactor *= 4
-            times = sect_plot_dist(cst, ax, scalingfactor, linewidth)
+            times = sect_plot_dist(
+                cst, ax, scalingfactor, linewidth, **kwargs)
         elif type == 'heatmap':
             times = heat_plot_corr_dist(
-                cst, ax, cmap=cmap, vmin=vmin, vmax=vmax)
+                cst, ax, cmap=cmap, vmin=vmin, vmax=vmax, **kwargs)
     else:
         raise NotImplementedError('Unknown sorting method %s.' % sort_by)
 
@@ -307,7 +308,8 @@ def heat_plot_corr_start(
 
 def sect_plot_dist(
     cst: Stream, ax: plt.Axes, scalingfactor: float,
-        linewidth: float) -> np.ndarray:
+    linewidth: float, plot_reference_v: bool = False,
+        ref_v: List[float] = [1, 2, 3]) -> np.ndarray:
     for ii, ctr in enumerate(cst):
         ydata = ctr.data
         times = ctr.times()
@@ -315,6 +317,10 @@ def sect_plot_dist(
         ytmp = ydata * scalingfactor + ctr.stats.dist
 
         ax.plot(times, ytmp, 'k', lw=linewidth, zorder=-ii + 0.1)
+    if plot_reference_v:
+        xref = np.array(ax.get_xlim())
+        [plt.plot(
+            xref, xref*rv, label=f'{rv}'+r'$\frac{km}{s}$') for rv in ref_v]
     plt.ylabel(r"Distance [km]")
     # Set label locations.
     # step = round((cst[-1].stats.dist - cst[0].stats.dist)/10000)
@@ -324,7 +330,8 @@ def sect_plot_dist(
 
 
 def heat_plot_corr_dist(
-        cst: Stream, ax: plt.Axes, cmap: str, vmin: float, vmax: float):
+    cst: Stream, ax: plt.Axes, cmap: str, vmin: float, vmax: float,
+        plot_reference_v: bool = False, ref_v: List[float] = [1, 2, 3]):
     data = np.empty((cst.count(), cst[0].stats.npts))
     # y grid
     y = np.zeros((len(cst),))
@@ -336,6 +343,10 @@ def heat_plot_corr_dist(
     ds = plt.pcolormesh(
         times, y, data, shading='auto', cmap=cmap, vmin=vmin,
         vmax=vmax)
+    if plot_reference_v:
+        xref = np.array(ax.get_xlim())
+        [plt.plot(
+            xref, xref*rv, label=f'{rv}'+r'$\frac{km}{s}$') for rv in ref_v]
     plt.colorbar(
         ds, label='correlation coefficient', shrink=.6,
         orientation='horizontal')

@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Friday, 24th February 2023 02:38:14 pm
+Last Modified: Tuesday, 28th February 2023 10:01:49 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -1071,9 +1071,12 @@ class CorrStream(Stream):
         ylimits: Tuple[float, float] = None, scalingfactor: float = None,
         ax: plt.Axes = None, linewidth: float = 0.25,
         outputfile: str = None, title: str = None, type: str = 'heatmap',
-            cmap: str = 'inferno', vmin: float = None, vmax: float = None):
+            cmap: str = 'inferno', vmin: float = None, vmax: float = None,
+            **kwargs):
         """
         Creates a section plot of all correlations in this stream.
+        kwargs will be passed to
+        :func:`~seismic.plot.plot_correlation.plot_cst`
 
         :param sort_by: Which parameter to plot against. Can be either
             ``corr_start`` or ``distance``, defaults to 'corr_start'.
@@ -1111,7 +1114,7 @@ class CorrStream(Stream):
             self, sort_by=sort_by, timelimits=timelimits, ylimits=ylimits,
             scalingfactor=scalingfactor, ax=ax, linewidth=linewidth,
             outputfile=outputfile, title=title, type=type, cmap=cmap,
-            vmin=vmin, vmax=vmax)
+            vmin=vmin, vmax=vmax, **kwargs)
         return ax
 
     def _to_matrix(
