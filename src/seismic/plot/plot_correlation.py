@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Tuesday, 28th February 2023 10:51:50 am
+Last Modified: Tuesday, 28th February 2023 08:45:53 pm
 '''
 import os
 from typing import Tuple, Optional, List
@@ -348,7 +348,7 @@ def heat_plot_corr_dist(
     if plot_reference_v:
         yref = np.array([ax.get_ylim()[1], 0, ax.get_ylim()[1]])
         [plt.plot(
-            [-yref[0]/rv, 0, yref[0]/rv], yref, linewidth=.5, zorder=0,
+            [-yref[0]/rv, 0, yref[0]/rv], yref, linewidth=.5, zorder=99,
             label=f'{rv}'+r'$\frac{km}{s}$') for rv in ref_v]
         plt.legend()
     plt.colorbar(
