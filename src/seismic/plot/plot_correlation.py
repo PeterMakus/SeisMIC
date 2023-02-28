@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Tuesday, 28th February 2023 10:28:17 am
+Last Modified: Tuesday, 28th February 2023 10:43:55 am
 '''
 import os
 from typing import Tuple, Optional, List
@@ -318,9 +318,10 @@ def sect_plot_dist(
 
         ax.plot(times, ytmp, 'k', lw=linewidth, zorder=-ii + 0.1)
     if plot_reference_v:
-        xref = np.array(ax.get_xlim())
+        yref = np.array(ax.get_ylim())
         [plt.plot(
-            xref, xref*rv, label=f'{rv}'+r'$\frac{km}{s}$') for rv in ref_v]
+            yref/rv, yref, label=f'{rv}'+r'$\frac{km}{s}$') for rv in ref_v]
+        plt.legend()
     plt.ylabel(r"Distance [km]")
     # Set label locations.
     # step = round((cst[-1].stats.dist - cst[0].stats.dist)/10000)
@@ -344,9 +345,10 @@ def heat_plot_corr_dist(
         times, y, data, shading='auto', cmap=cmap, vmin=vmin,
         vmax=vmax)
     if plot_reference_v:
-        xref = np.array(ax.get_xlim())
+        yref = np.array(ax.get_ylim())
         [plt.plot(
-            xref, xref*rv, label=f'{rv}'+r'$\frac{km}{s}$') for rv in ref_v]
+            yref/rv, yref, label=f'{rv}'+r'$\frac{km}{s}$') for rv in ref_v]
+        plt.legend()
     plt.colorbar(
         ds, label='correlation coefficient', shrink=.6,
         orientation='horizontal')
