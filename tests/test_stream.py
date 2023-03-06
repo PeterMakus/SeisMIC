@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Tuesday, 31st January 2023 11:24:05 am
+Last Modified: Monday, 6th March 2023 11:25:15 am
 '''
 
 import unittest
@@ -833,6 +833,21 @@ class TestCorrStream(unittest.TestCase):
         with self.assertRaises(ValueError):
             for _ in self.st.slide(1, 1):
                 continue
+
+    def test_pop_at_utcs(self):
+        utcs = np.array([self.st[1].stats.corr_start + 1])
+        old_len = len(self.st)
+        st_filt = self.st.pop_at_utcs(utcs)
+        self.assertEqual(old_len, self.st.count())
+        self.assertNotIn(self.st[1], st_filt)
+        self.assertNotEqual(self.st.count(), st_filt.count())
+
+    def test_pop_at_utcs_not_in(self):
+        utcs = np.array([UTCDateTime(-1e5)])
+        old_len = len(self.st)
+        st_filt = self.st.pop_at_utcs(utcs)
+        self.assertEqual(old_len, self.st.count())
+        self.assertEqual(self.st, st_filt)
 
     def test_slide_max_len(self):
         for st in self.st.slide(self.corr_len, self.corr_len, True):

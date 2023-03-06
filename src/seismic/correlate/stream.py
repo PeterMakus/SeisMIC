@@ -9,7 +9,7 @@
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 
-Last Modified: Tuesday, 28th February 2023 10:01:49 am
+Last Modified: Monday, 6th March 2023 11:30:07 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -18,6 +18,7 @@ from matplotlib import pyplot as plt
 
 
 import numpy as np
+import numpy.typing as npt
 from obspy import Stream, Trace, Inventory, UTCDateTime
 from obspy.core import Stats
 
@@ -271,6 +272,7 @@ class CorrBulk(object):
         trace. The following possibilities are available
 
         * ``mean`` averages all traces in the matrix
+        * ``median`` takes the median of all traces in the matrix
         * ``norm_mean`` averages the traces normalized after normalizing for
             maxima
         * ``similarity_percentile`` averages the ``percentile`` % of traces
@@ -798,8 +800,9 @@ class CorrStream(Stream):
         if traces:
             for tr in traces:
                 if not isinstance(tr, CorrTrace):
-                    raise TypeError('Traces have to be of type \
-                        :class:`~seismic.correlate.correlate.CorrTrace`.')
+                    raise TypeError(
+                        'Traces have to be of type'
+                        ':class:`~seismic.correlate.correlate.CorrTrace`.')
                 self.traces.append(tr)
 
     def __str__(self, extended=False) -> str:
@@ -834,179 +837,6 @@ class CorrStream(Stream):
                 + self.traces[-1].__str__() + '\n\n[Use "print(' + \
                 'Stream.__str__(extended=True))" to print all correlaitons]'
         return out
-
-    def stack(
-        self, weight: str = 'by_length', starttime: UTCDateTime = None,
-        endtime: UTCDateTime = None, stack_len: int | str = 0,
-            regard_location=True):
-        """
-        Average the data of all traces in the given time windows.
-        Will only stack data from the same network/channel/station combination.
-        Location codes will only optionally be regarded.
-
-        :param starttime: starttime of the stacking time windows. If None, the
-            earliest available is chosen, defaults to None.
-        :type starttime: UTCDateTime, optional
-        :param endtime: endtime of the stacking time windows. If None, the
-            latest available is chosen, defaults to None
-        :type endtime: UTCDateTime, optional
-        :param stack_len: Length of one stack. Is either a value in seconds,
-            the special option "daily" (creates 24h stacks that always start at
-            midnight), or 0 for a single stack over the whole time period,
-            defaults to 0.
-        :type stack_len: intorstr, optional
-        :param regard_location: Don't stack correlations with varying location
-            code combinations, defaults to True.
-        :type regard_location: bool, optional
-        :return: A stream holding the stacks.
-        :rtype: :class`~seismic.correlate.stream.CorrStream`
-        """
-
-        # Seperate if there are different stations channel and or locations
-        # involved
-        if stack_len == 0:
-            return stack_st_by_group(self, regard_location, weight)
-
-        # else
-        self.sort(keys=['corr_start'])
-        if not starttime:
-            starttime = self[0].stats.corr_start
-        if not endtime:
-            endtime = self[-1].stats.corr_end
-        outst = CorrStream()
-        if stack_len == 'daily':
-            starttime = UTCDateTime(
-                year=starttime.year, julday=starttime.julday)
-            stack_len = 3600*24
-        for st in self.slide(
-                stack_len, stack_len, include_partially_selected=True,
-                starttime=starttime, endtime=endtime):
-            outst.extend(stack_st_by_group(st, regard_location, weight))
-        return outst
-
-    def slide(
-        self, window_length: float, step: float,
-        include_partially_selected: bool = True,
-            starttime: UTCDateTime = None, endtime: UTCDateTime = None):
-        """
-        Generator yielding correlations that are inside of each requested time
-        window and inside of this stream.
-
-        Please keep in mind that it only returns a new view of the original
-        data. Any modifications are applied to the original data as well. If
-        you don't want this you have to create a copy of the yielded
-        windows. Also be aware that if you modify the original data and you
-        have overlapping windows, all following windows are affected as well.
-
-        Not all yielded windows must have the same number of traces. The
-        algorithm will determine the maximal temporal extents by analysing
-        all Traces and then creates windows based on these times.
-
-
-        :param window_length: The length of the requested time window in
-            seconds. Note that the window length has to correspond at least to
-            the length of the longest correlation window (i.e., the length of
-            the correlated waveforms). This is because the correlations cannot
-            be sliced.
-        :type window_length: float
-        :param step: The step between the start times of two successive
-            windows in seconds. Has to be greater than 0
-        :type step: float
-        :param include_partially_selected: If set to ``True``, also the half
-            selected time window **before** the requested time will be attached
-            Given the following stream containing 6 correlations, "|" are the
-            correlation starts and ends, "A" is the requested starttime and "B"
-            the corresponding endtime::
-
-                |         |A        |         |       B |         |
-                1         2         3         4         5         6
-
-            ``include_partially_selected=True`` will select samples 2-4,
-            ``include_partially_selected=False`` will select samples 3-4 only.
-            Defaults to True.
-        :type include_partially_selected: bool, optional
-        :param starttime: Start the sequence at this time instead of the
-            earliest available starttime.
-        :type starttime: UTCDateTime
-        :param endtime: Start the sequence at this time instead of the
-            latest available endtime.
-        :type endtime: UTCDateTime
-        """
-        if starttime is None:
-            starttime = min(tr.stats.corr_start for tr in self)
-        if endtime is None:
-            endtime = max(tr.stats.corr_end for tr in self)
-
-        if window_length < max(
-                tr.stats.corr_end-tr.stats.corr_start for tr in self):
-            raise ValueError(
-                'The length of the requested time window has to be larger or'
-                + 'equal than the actual correlation length of one window.'
-                + 'i.e., correlations can not be sliced, only selected.')
-
-        if step <= 0:
-            raise ValueError('Step has to be larger than 0.')
-
-        windows = np.arange(
-            starttime.timestamp, endtime.timestamp, step)
-
-        if len(windows) < 1:
-            return
-
-        for start in windows:
-            start = UTCDateTime(start)
-            stop = start + window_length
-            temp = self.select_corr_time(
-                start, stop,
-                include_partially_selected=include_partially_selected)
-            # It might happen that there is a time frame where there are no
-            # windows, e.g. two traces separated by a large gap.
-            if not temp:
-                continue
-            yield temp
-
-    def select_corr_time(
-        self, starttime: UTCDateTime, endtime: UTCDateTime,
-            include_partially_selected: bool = True):
-        """
-        Selects correlations that are inside of the requested time window.
-
-        :param starttime: Requested start
-        :type starttime: UTCDateTime
-        :param endtime: Requested end
-        :type endtime: UTCDateTime
-        :param include_partially_selected: If set to ``True``, also the half
-            selected time window **before** the requested time will be attached
-            Given the following stream containing 6 correlations, "|" are the
-            correlation starts and ends, "A" is the requested starttime and "B"
-            the corresponding endtime::
-
-                |         |A        |         |       B |         |
-                1         2         3         4         5         6
-
-            ``include_partially_selected=True`` will select samples 2-4,
-            ``include_partially_selected=False`` will select samples 3-4 only.
-            Defaults to True
-        :type include_partially_selected: bool, optional
-        :return: Correlation Stream holding all selected traces
-        :rtype: CorrStream
-        """
-        self.sort(keys=['corr_start'])
-        outst = CorrStream()
-        # the 2 seconds difference are to avoid accidental smoothing
-        if include_partially_selected:
-            for tr in self:
-                if (tr.stats.corr_end > starttime
-                    and tr.stats.corr_end < endtime) \
-                        or tr.stats.corr_end == endtime:
-                    outst.append(tr)
-            return outst
-        # else
-        for tr in self:
-            if tr.stats.corr_start >= starttime \
-                    and tr.stats.corr_end <= endtime:
-                outst.append(tr)
-        return outst
 
     def create_corr_bulk(
         self, network: str = None, station: str = None, channel: str = None,
@@ -1116,6 +946,198 @@ class CorrStream(Stream):
             outputfile=outputfile, title=title, type=type, cmap=cmap,
             vmin=vmin, vmax=vmax, **kwargs)
         return ax
+
+    def pop_at_utcs(self, utcs: npt.NDArray[UTCDateTime]):
+        """
+        Remove Correlations that contain any time given in ``utcs``.
+
+        :param utcs: Array Containing UTC times that should be filtered.
+            If UTC is between any of corr_start and corr_end, the corresponding
+            CorrTrace will be removed from the stream.
+        :type utcs: npt.ArrayLike[UTCDateTime]
+        :return: filtered CorrStream
+        :rtype: CorrStream
+        """
+        cst_filt = CorrStream()
+        for ctr in self:
+            if not np.any(np.all(
+                [utcs > ctr.stats.corr_start, utcs < ctr.stats.corr_end],
+                    axis=0)):
+                cst_filt.append(ctr)
+        return cst_filt
+
+    def select_corr_time(
+        self, starttime: UTCDateTime, endtime: UTCDateTime,
+            include_partially_selected: bool = True):
+        """
+        Selects correlations that are inside of the requested time window.
+
+        :param starttime: Requested start
+        :type starttime: UTCDateTime
+        :param endtime: Requested end
+        :type endtime: UTCDateTime
+        :param include_partially_selected: If set to ``True``, also the half
+            selected time window **before** the requested time will be attached
+            Given the following stream containing 6 correlations, "|" are the
+            correlation starts and ends, "A" is the requested starttime and "B"
+            the corresponding endtime::
+
+                |         |A        |         |       B |         |
+                1         2         3         4         5         6
+
+            ``include_partially_selected=True`` will select samples 2-4,
+            ``include_partially_selected=False`` will select samples 3-4 only.
+            Defaults to True
+        :type include_partially_selected: bool, optional
+        :return: Correlation Stream holding all selected traces
+        :rtype: CorrStream
+        """
+        self.sort(keys=['corr_start'])
+        outst = CorrStream()
+        # the 2 seconds difference are to avoid accidental smoothing
+        if include_partially_selected:
+            for tr in self:
+                if (tr.stats.corr_end > starttime
+                    and tr.stats.corr_end < endtime) \
+                        or tr.stats.corr_end == endtime:
+                    outst.append(tr)
+            return outst
+        # else
+        for tr in self:
+            if tr.stats.corr_start >= starttime \
+                    and tr.stats.corr_end <= endtime:
+                outst.append(tr)
+        return outst
+
+    def slide(
+        self, window_length: float, step: float,
+        include_partially_selected: bool = True,
+            starttime: UTCDateTime = None, endtime: UTCDateTime = None):
+        """
+        Generator yielding correlations that are inside of each requested time
+        window and inside of this stream.
+
+        Please keep in mind that it only returns a new view of the original
+        data. Any modifications are applied to the original data as well. If
+        you don't want this you have to create a copy of the yielded
+        windows. Also be aware that if you modify the original data and you
+        have overlapping windows, all following windows are affected as well.
+
+        Not all yielded windows must have the same number of traces. The
+        algorithm will determine the maximal temporal extents by analysing
+        all Traces and then creates windows based on these times.
+
+
+        :param window_length: The length of the requested time window in
+            seconds. Note that the window length has to correspond at least to
+            the length of the longest correlation window (i.e., the length of
+            the correlated waveforms). This is because the correlations cannot
+            be sliced.
+        :type window_length: float
+        :param step: The step between the start times of two successive
+            windows in seconds. Has to be greater than 0
+        :type step: float
+        :param include_partially_selected: If set to ``True``, also the half
+            selected time window **before** the requested time will be attached
+            Given the following stream containing 6 correlations, "|" are the
+            correlation starts and ends, "A" is the requested starttime and "B"
+            the corresponding endtime::
+
+                |         |A        |         |       B |         |
+                1         2         3         4         5         6
+
+            ``include_partially_selected=True`` will select samples 2-4,
+            ``include_partially_selected=False`` will select samples 3-4 only.
+            Defaults to True.
+        :type include_partially_selected: bool, optional
+        :param starttime: Start the sequence at this time instead of the
+            earliest available starttime.
+        :type starttime: UTCDateTime
+        :param endtime: Start the sequence at this time instead of the
+            latest available endtime.
+        :type endtime: UTCDateTime
+        """
+        if starttime is None:
+            starttime = min(tr.stats.corr_start for tr in self)
+        if endtime is None:
+            endtime = max(tr.stats.corr_end for tr in self)
+
+        if window_length < max(
+                tr.stats.corr_end-tr.stats.corr_start for tr in self):
+            raise ValueError(
+                'The length of the requested time window has to be larger or'
+                'equal than the actual correlation length of one window.'
+                'i.e., correlations can not be sliced, only selected.')
+
+        if step <= 0:
+            raise ValueError('Step has to be larger than 0.')
+
+        windows = np.arange(
+            starttime.timestamp, endtime.timestamp, step)
+
+        if len(windows) < 1:
+            return
+
+        for start in windows:
+            start = UTCDateTime(start)
+            stop = start + window_length
+            temp = self.select_corr_time(
+                start, stop,
+                include_partially_selected=include_partially_selected)
+            # It might happen that there is a time frame where there are no
+            # windows, e.g. two traces separated by a large gap.
+            if not temp:
+                continue
+            yield temp
+
+    def stack(
+        self, weight: str = 'by_length', starttime: UTCDateTime = None,
+        endtime: UTCDateTime = None, stack_len: int | str = 0,
+            regard_location=True):
+        """
+        Average the data of all traces in the given time windows.
+        Will only stack data from the same network/channel/station combination.
+        Location codes will only optionally be regarded.
+
+        :param starttime: starttime of the stacking time windows. If None, the
+            earliest available is chosen, defaults to None.
+        :type starttime: UTCDateTime, optional
+        :param endtime: endtime of the stacking time windows. If None, the
+            latest available is chosen, defaults to None
+        :type endtime: UTCDateTime, optional
+        :param stack_len: Length of one stack. Is either a value in seconds,
+            the special option "daily" (creates 24h stacks that always start at
+            midnight), or 0 for a single stack over the whole time period,
+            defaults to 0.
+        :type stack_len: intorstr, optional
+        :param regard_location: Don't stack correlations with varying location
+            code combinations, defaults to True.
+        :type regard_location: bool, optional
+        :return: A stream holding the stacks.
+        :rtype: :class`~seismic.correlate.stream.CorrStream`
+        """
+
+        # Seperate if there are different stations channel and or locations
+        # involved
+        if stack_len == 0:
+            return stack_st_by_group(self, regard_location, weight)
+
+        # else
+        self.sort(keys=['corr_start'])
+        if not starttime:
+            starttime = self[0].stats.corr_start
+        if not endtime:
+            endtime = self[-1].stats.corr_end
+        outst = CorrStream()
+        if stack_len == 'daily':
+            starttime = UTCDateTime(
+                year=starttime.year, julday=starttime.julday)
+            stack_len = 3600*24
+        for st in self.slide(
+                stack_len, stack_len, include_partially_selected=True,
+                starttime=starttime, endtime=endtime):
+            outst.extend(stack_st_by_group(st, regard_location, weight))
+        return outst
 
     def _to_matrix(
         self, network: str = None, station: str = None, channel: str = None,

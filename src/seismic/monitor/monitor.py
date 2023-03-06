@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 31st January 2023 03:06:46 pm
+Last Modified: Monday, 6th March 2023 11:08:37 am
 '''
 from copy import deepcopy
 import logging
@@ -201,6 +201,13 @@ class Monitor(object):
                 f'appropriate value for lengthToSave. The value was {lts}.'
                 f' The direct-line distance between the stations is {d} km.'
             )
+
+        if 'preprocessing' in self.options['dv']:
+            for func in self.options['dv']['preprocessing']:
+                # This one goes on the CorrStream
+                if func['function'] == 'pop_at_utcs':
+                    f = cst.__getattribute__(func['function'])
+                    cst = f(**func['args'])
         cb = cst.create_corr_bulk(
             network=network, station=station, channel=channel, inplace=True)
 
