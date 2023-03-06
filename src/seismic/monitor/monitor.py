@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 6th March 2023 11:08:37 am
+Last Modified: Monday, 6th March 2023 01:17:16 pm
 '''
 from copy import deepcopy
 import logging
@@ -223,6 +223,8 @@ class Monitor(object):
         # Preprocessing on the correlation bulk
         if 'preprocessing' in self.options['dv']:
             for func in self.options['dv']['preprocessing']:
+                if func['function'] == 'pop_at_utcs':
+                    continue
                 f = cb.__getattribute__(func['function'])
                 cb = f(**func['args'])
 
