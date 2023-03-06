@@ -164,7 +164,7 @@ dv:
 
     # postprocessing of dv objects before saving and plotting
     postprocessing: [
-                      {'function': 'smooth_sim_mat', 'args': {'win_len': 7, exclude_corr_below}}
+                      {'function': 'smooth_sim_mat', 'args': {'win_len': 7, exclude_corr_below: 0}}
     ]
 
 #### parameters to compute the waveform coherence
