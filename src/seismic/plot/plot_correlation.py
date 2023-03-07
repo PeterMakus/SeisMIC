@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Tuesday, 28th February 2023 08:45:53 pm
+Last Modified: Tuesday, 7th March 2023 11:58:04 am
 '''
 import os
 from typing import Tuple, Optional, List
@@ -310,10 +310,12 @@ def sect_plot_dist(
     cst: Stream, ax: plt.Axes, scalingfactor: float,
     linewidth: float, plot_reference_v: bool = False,
         ref_v: List[float] = [1, 2, 3]) -> np.ndarray:
+    # Sort by azimuth. W on left side of plot
     for ii, ctr in enumerate(cst):
         ydata = ctr.data
         times = ctr.times()
-
+        if ctr.stats.az >= 180:
+            times = -1*times
         ytmp = ydata * scalingfactor + ctr.stats.dist
 
         ax.plot(times, ytmp, 'k', lw=linewidth, zorder=-ii + 0.1)
@@ -340,7 +342,10 @@ def heat_plot_corr_dist(
     # x coords
     times = cst[0].times()
     for ii, ctr in enumerate(cst):
-        data[ii, :] = ctr.data
+        if ctr.stats.az >= 180:
+            data[ii, :] = np.flip(ctr.data)
+        else:
+            data[ii, :] = ctr.data
         y[ii] = ctr.stats.dist
     ds = plt.pcolormesh(
         times, y, data, shading='auto', cmap=cmap, vmin=vmin,
