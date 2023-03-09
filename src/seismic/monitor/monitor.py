@@ -8,9 +8,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 6th March 2023 01:17:16 pm
+Last Modified: Thursday, 9th March 2023 03:59:12 pm
 '''
 from copy import deepcopy
+import json
 import logging
 import os
 from typing import Generator, List, Tuple
@@ -31,7 +32,7 @@ from seismic.utils.miic_utils import log_lvl
 
 
 class Monitor(object):
-    def __init__(self, options: dict or str):
+    def __init__(self, options: dict | str):
         """
         Object that handles the computation of seismic velocity changes.
         This will access correlations that have been computed previously with
@@ -95,6 +96,23 @@ class Monitor(object):
         consoleHandler = logging.StreamHandler()
         consoleHandler.setFormatter(fmt)
         self.logger.addHandler(consoleHandler)
+
+        # Write the options dictionary to the log file
+        if self.rank == 0:
+            opt_dump = deepcopy(options)
+            # json cannot write the UTCDateTime objects that might be in here
+            for step in opt_dump['co']['preProcessing']:
+                if 'stream_mask_at_utc' in step['function']:
+                    startsstr = [
+                        t.format_fissures() for t in step['args']['starts']]
+                    step['args']['starts'] = startsstr
+                    if 'ends' in step['args']:
+                        endsstr = [
+                            t.format_fissures() for t in step['args']['ends']]
+                        step['args']['ends'] = endsstr
+            with open(os.path.join(
+                    logdir, 'params%s.txt' % tstr), 'w') as file:
+                file.write(json.dumps(opt_dump, indent=1))
 
         # Find available stations and network
         self.netlist, self.statlist, self.infiles = \
