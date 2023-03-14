@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Friday, 12th November 2021 05:52:22 pm
+Last Modified: Thursday, 6th October 2022 12:16:01 pm
 '''
 
 import unittest
@@ -32,9 +32,11 @@ class TestCorrBulk(unittest.TestCase):
             'baz', 'az']
         for k in keys:
             st[0].stats[k] = 0
-        stats = stream.CorrStats(st[0].stats)
+        statso = stream.CorrStats(st[0].stats)
         for ii, tr in enumerate(st):
-            stats.corr_start += 5
+            stats = deepcopy(statso)
+            stats.corr_start += 24*3600*ii
+            stats.corr_end = stats.corr_start + stats.npts*stats.delta
             A[ii] = tr.data
             statl.append(stats)
         self.cb = stream.CorrBulk(A, statlist=statl)
@@ -64,6 +66,18 @@ class TestCorrBulk(unittest.TestCase):
             'normalize; normtype: blatest, starttime: 0, endtime: 0',
             cb.stats.processing_bulk)
 
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_clip')
+    def test_clip(self, clip_mock):
+        cb = self.cb.copy()
+        clip_mock.return_value = np.zeros((5,))
+        cb.clip(0, None)
+        clip_mock.assert_called_once_with(
+            mock.ANY, 0, None)
+        np.testing.assert_array_equal(cb.data, np.zeros((5,)))
+        self.assertIn(
+            'Clipped; threshold: 0*std, axis=None',
+            cb.stats.processing_bulk)
+
     def test_copy(self):
         cb = self.cb.copy()
         cb.data += 25
@@ -72,6 +86,404 @@ class TestCorrBulk(unittest.TestCase):
             cb.data-self.cb.data, 25*np.ones_like(cb.data))
         with self.assertRaises(KeyError):
             print(self.cb.stats['eg'])
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_correct_decay')
+    def test_correct_decay(self, decay_mock):
+        # Actually just need to feed in stuff. Algorithm is tested elsewhere
+        cb = self.cb.copy()
+        decay_mock.return_value = np.zeros((25, 25))
+        cb.correct_decay()
+        decay_mock.assert_called_once_with(mock.ANY, cb.stats)
+        np.testing.assert_array_equal(decay_mock.call_args[0][0], self.cb.data)
+        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
+        self.assertIn(
+            'Corrected for Amplitude Decay', cb.stats.processing_bulk)
+
+    @mock.patch('seismic.correlate.stream.time_shift_apply')
+    def test_correct_shift(self, shift_mock):
+        cb = self.cb.copy()
+        shift_mock.return_value = np.zeros((25, 25))
+        dvmock = mock.MagicMock()
+        dvmock.value = 1
+        dvmock.value_type = 'shift'
+        cb.correct_shift(dv=dvmock)
+        shift_mock.assert_called_once_with(
+            mock.ANY, -dvmock.value, single_sided=False)
+        np.testing.assert_array_equal(
+            shift_mock.call_args[0][0], self.cb.data)
+        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
+        self.assertIn(
+            'Applied time shift', cb.stats.processing_bulk)
+
+    @mock.patch('seismic.correlate.stream.time_shift_apply')
+    def test_correct_shift2(self, shift_mock):
+        cb = self.cb.copy()
+        shift_mock.return_value = np.zeros((25, 25))
+        value = 1
+        cb.correct_shift(shift=value)
+        shift_mock.assert_called_once_with(mock.ANY, value, single_sided=False)
+        np.testing.assert_array_equal(
+            shift_mock.call_args[0][0], self.cb.data)
+        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
+        self.assertIn(
+            'Applied time shift', cb.stats.processing_bulk)
+
+    def test_correct_shift_wrong_type(self):
+        dvmock = mock.MagicMock()
+        dvmock.value = 1
+        dvmock.value_type = 'bla'
+        with self.assertRaises(ValueError):
+            self.cb.correct_shift(dv=dvmock)
+
+    def test_correct_shift_no_args(self):
+        with self.assertRaises(ValueError):
+            self.cb.correct_shift()
+
+    def test_correct_shift_two_args(self):
+        with self.assertRaises(ValueError):
+            self.cb.correct_shift(dv='bla', shift='blub')
+
+    @mock.patch('seismic.correlate.stream.time_stretch_apply')
+    def test_correct_stretch(self, stretch_mock):
+        cb = self.cb.copy()
+        stretch_mock.return_value = np.zeros((25, 25))
+        dvmock = mock.MagicMock()
+        dvmock.value = 1
+        dvmock.value_type = 'stretch'
+        cb.correct_stretch(dvmock)
+        stretch_mock.assert_called_once_with(mock.ANY, -1.*dvmock.value, False)
+        np.testing.assert_array_equal(
+            stretch_mock.call_args[0][0], self.cb.data)
+        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
+        self.assertIn(
+            'Applied time stretch', cb.stats.processing_bulk)
+
+    def test_correct_stretch_wrong_type(self):
+        dvmock = mock.MagicMock()
+        dvmock.value = 1
+        dvmock.value_type = 'bla'
+        with self.assertRaises(ValueError):
+            self.cb.correct_stretch(dvmock)
+
+    def test_create_corrstream(self):
+        # Lets's just create a CorrStream from stretch and then convert back
+        # and forth
+        st = read()
+        for tr in st:
+            # Else this will need too much time
+            tr.stats.sampling_rate = 1
+        cst = stream.CorrStream()
+        for tr in st:
+            delta = tr.stats.endtime - tr.stats.starttime
+            tr.data = np.ones_like(tr.data)
+            tr.stats['corr_start'] = tr.stats.starttime
+            tr.stats['corr_end'] = tr.stats.endtime
+            tr.stats['stla'] = 0
+            tr.stats['stlo'] = 0
+            tr.stats['stel'] = 0
+            tr.stats['evla'] = 0
+            tr.stats['evlo'] = 0
+            tr.stats['evel'] = 0
+            tr.stats['dist'] = 0
+            tr.stats['baz'] = 0
+            tr.stats['az'] = 0
+            tr.stats['channel'] = 'HHE'
+            tr = stream.CorrTrace(tr.data, _header=tr.stats)
+            for ii in range(10):
+                ntr = tr.copy()
+                ntr.data = np.empty(tr.data.shape)
+                ntr.stats['corr_start'] += delta*(ii+1)
+                ntr.stats['corr_end'] += delta*(ii+1)
+                cst.append(ntr)
+        cb = cst.create_corr_bulk(inplace=False)
+        cst2 = cb.create_corr_stream()
+        for tr0, tr in zip(cst, cst2):
+            np.testing.assert_array_equal(tr0.data, tr.data)
+            for k in tr0.stats.keys():
+                self.assertEqual(tr0.stats[k], tr.stats[k])
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_envelope')
+    def test_envelope(self, envelope_mock):
+        envelope_mock.return_value = np.zeros((25, 25))
+        cb = self.cb.copy()
+        cb.envelope()
+        np.testing.assert_array_equal(
+            envelope_mock.call_args[0][0], self.cb.data)
+        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
+        self.assertIn('Computed Envelope', cb.stats.processing_bulk)
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_filter')
+    def test_filter(self, filter_mock):
+        filter_mock.return_value = np.zeros((25, 25))
+        cb = self.cb.copy()
+        cb.filter((1, 2), 17)
+        filter_mock.assert_called_once_with(mock.ANY, cb.stats, (1, 2), 17)
+        np.testing.assert_array_equal(
+            filter_mock.call_args[0][0], self.cb.data)
+        self.assertIn(
+            'filter; freqs: (1, 2), order: 17', cb.stats.processing_bulk)
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_extract_trace')
+    def test_extract_trace(self, extract_mock):
+        extract_mock.return_value = np.zeros((25,))
+        cb = self.cb.copy()
+        out = cb.extract_trace('bla', 25)
+        extract_mock.assert_called_once_with(mock.ANY, cb.stats, 'bla', 25)
+        np.testing.assert_array_equal(
+            extract_mock.call_args[0][0], self.cb.data)
+        np.testing.assert_array_equal(out, np.zeros((25,)))
+        np.testing.assert_array_equal(cb.ref_trc, np.zeros((25,)))
+
+    def test_extract_multi_trace_single(self):
+        with mock.patch.object(self.cb, 'extract_trace') as extract_mock:
+            extract_mock.return_value = 'test'
+            t = self.cb.extract_multi_trace(0, 'bla', 25)
+            extract_mock.assert_called_once_with('bla', 25)
+        self.assertEqual(t, 'test')
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_extract_trace')
+    def test_extract_multi_trace_win_inc_int(self, extract_mock):
+        extract_mock.return_value = np.zeros((25,))
+        wi = 1  # day
+        rtrcs = self.cb.extract_multi_trace(wi, 'bla', 25)
+        self.assertEqual(len(rtrcs), 3)
+        np.testing.assert_array_equal(np.zeros((3, 25)), rtrcs)
+        calls = [mock.call(mock.ANY, self.cb.stats, 'bla', 25)]*3
+        extract_mock.assert_has_calls(calls)
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_extract_trace')
+    def test_extract_multi_trace_win_inc_vect(self, extract_mock):
+        extract_mock.return_value = np.zeros((25,))
+        wi = [0.5, 0.5, 1, 0.5, 0.5]  # day
+        rtrcs = self.cb.extract_multi_trace(wi, 'bla', 25)
+        self.assertEqual(len(rtrcs), 5)
+        np.testing.assert_array_equal(np.zeros((5, 25)), rtrcs)
+        calls = [mock.call(mock.ANY, self.cb.stats, 'bla', 25)]*5
+        extract_mock.assert_has_calls(calls)
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_mirror')
+    def test_mirror(self, mirror_mock):
+        cb = self.cb.copy()
+        mirror_mock.return_value = (np.zeros((25, 25)), cb.stats)
+        cb.mirror()
+        mirror_mock.assert_called_once_with(mock.ANY, cb.stats)
+        np.testing.assert_array_equal(
+            mirror_mock.call_args[0][0], self.cb.data)
+        np.testing.assert_array_equal(cb.data, np.zeros((25, 25)))
+        self.assertIn('Mirrored.', cb.stats.processing_bulk)
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_resample')
+    def test_resample(self, resample_mock):
+        cb = self.cb.copy()
+        resample_mock.return_value = (np.zeros((25, 25)), cb.stats)
+        cb.resample([1, 2, 3], [4, 5, 6])
+        resample_mock.assert_called_once_with(
+            mock.ANY, cb.stats, [1, 2, 3], [4, 5, 6])
+        np.testing.assert_array_equal(
+            resample_mock.call_args[0][0], self.cb.data)
+        np.testing.assert_array_equal(cb.data, np.zeros((25, 25)))
+        self.assertIn(
+            'Resampled. Starttimes: [1, 2, 3], Endtimes: [4, 5, 6]',
+            cb.stats.processing_bulk)
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_resample_or_decimate')
+    def test_resample_time_axis(self, rd_mock):
+        cb = self.cb.copy()
+        rd_mock.return_value = (np.zeros((25, 25)), cb.stats)
+        cb.resample_time_axis(25)
+        rd_mock.assert_called_once_with(
+            mock.ANY, cb.stats, 25)
+        np.testing.assert_array_equal(
+            rd_mock.call_args[0][0], self.cb.data)
+        np.testing.assert_array_equal(cb.data, np.zeros((25, 25)))
+        self.assertIn(
+            'Resampled time axis. New sampling rate: 25Hz',
+            cb.stats.processing_bulk)
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_smooth')
+    def test_smooth(self, smooth_mock):
+        cb = self.cb.copy()
+        smooth_mock.return_value = np.zeros((25, 25))
+        cb.smooth(1, 'blub', 125)
+        smooth_mock.assert_called_once_with(mock.ANY, 1, 'blub', 125)
+        np.testing.assert_array_equal(
+            smooth_mock.call_args[0][0], self.cb.data)
+        np.testing.assert_array_equal(cb.data, np.zeros((25, 25)))
+        self.assertIn(
+            'Smoothed. wsize: 1, wtype: blub, axis: 125',
+            cb.stats.processing_bulk)
+
+    @mock.patch('seismic.correlate.stream.DV')
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_shift')
+    def test_shift(self, shift_mock, dv_mock):
+        shift_mock.return_value = {'test': 0}
+        self.cb.find_clock_shift(
+            np.zeros((25,)), [1, 2, 3], 0.5, 105, 'bla', True)
+        shift_mock.assert_called_once_with(
+            mock.ANY, self.cb.stats, mock.ANY, [1, 2, 3], 0.5, 105, 'bla',
+            True)
+        np.testing.assert_array_equal(
+            shift_mock.call_args[0][2], np.zeros((25,)))
+        dv_mock.assert_called_once_with(test=0)
+
+    @mock.patch('seismic.correlate.stream.DV')
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_shift')
+    def test_shift2(self, shift_mock, dv_mock):
+        shift_mock.return_value = {'test': 0}
+        self.cb.ref_trc = 'ha_funny!'
+        self.cb.find_clock_shift()
+        shift_mock.assert_called_once_with(
+            mock.ANY, self.cb.stats, 'ha_funny!', None, 10, 101, 'both',
+            False)
+        np.testing.assert_array_equal(
+            shift_mock.call_args[0][0], self.cb.data)
+        dv_mock.assert_called_once_with(test=0, sim_mat=mock.ANY)
+
+    @mock.patch('seismic.correlate.stream.DV')
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_stretch')
+    def test_stretch(self, stretch_mock, dv_mock):
+        stretch_mock.return_value = {'test': 0}
+        self.cb.stretch(np.zeros((25,)), [1, 2, 3], 0.5, 105, 'bla', True)
+        stretch_mock.assert_called_once_with(
+            mock.ANY, self.cb.stats, mock.ANY, [1, 2, 3], 0.5, 105, 'bla',
+            True)
+        np.testing.assert_array_equal(
+            stretch_mock.call_args[0][2], np.zeros((25,)))
+        dv_mock.assert_called_once_with(test=0)
+
+    @mock.patch('seismic.correlate.stream.DV')
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_stretch')
+    def test_stretch2(self, stretch_mock, dv_mock):
+        stretch_mock.return_value = {'test': 0}
+        self.cb.ref_trc = 'ha_funny!'
+        self.cb.stretch()
+        stretch_mock.assert_called_once_with(
+            mock.ANY, self.cb.stats, 'ha_funny!', None, 0.1, 101, 'both',
+            False)
+        np.testing.assert_array_equal(
+            stretch_mock.call_args[0][0], self.cb.data)
+        dv_mock.assert_called_once_with(test=0, sim_mat=mock.ANY)
+
+    @mock.patch('seismic.correlate.stream.m3ut.save_header_to_np_array')
+    @mock.patch('seismic.correlate.stream.np.savez_compressed')
+    def test_save(self, np_save_mock, save_header_mock):
+        save_header_mock.return_value = {'test': 0}
+        self.cb.save('mypath')
+        save_header_mock.assert_called_once_with(self.cb.stats)
+        np_save_mock.assert_called_once_with('mypath', data=mock.ANY, test=0)
+
+    def test_slice(self):
+        with mock.patch.object(self.cb, '_find_slice_index') as fsi_mock:
+            fsi_mock.return_value = np.array([False, True, False])
+            cbsl = self.cb.slice('start', 'stop', True)
+            fsi_mock.assert_called_once_with('start', 'stop', True)
+        np.testing.assert_array_equal(
+            self.cb.data[[False, True, False], :], cbsl.data)
+        for vsl, (k, v) in zip(cbsl.stats.values(), self.cb.stats.items()):
+            if isinstance(v, list) and k != 'processing_bulk':
+                self.assertListEqual([v[1]], vsl)
+            elif isinstance(v, np.ndarray):
+                np.testing.assert_array_equal(vsl, v[1])
+            else:
+                self.assertEqual(v, vsl)
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_taper')
+    def test_taper(self, taper_mock):
+        cb = self.cb.copy()
+        taper_mock.return_value = np.zeros((3, 25))
+        cb.taper(25)
+        taper_mock.assert_called_once_with(mock.ANY, cb.stats, 25)
+        np.testing.assert_array_equal(cb.data, np.zeros((3, 25)))
+        np.testing.assert_array_equal(
+            taper_mock.call_args[0][0], self.cb.data)
+        self.assertIn('tapered: width=25s', cb.stats.processing_bulk)
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_taper_center')
+    def test_taper_center(self, taper_mock):
+        cb = self.cb.copy()
+        taper_mock.return_value = np.zeros((3, 25))
+        cb.taper_center(25, 1)
+        taper_mock.assert_called_once_with(
+            mock.ANY, cb.stats, 25, slope_frac=1)
+        np.testing.assert_array_equal(cb.data, np.zeros((3, 25)))
+        np.testing.assert_array_equal(
+            taper_mock.call_args[0][0], self.cb.data)
+        self.assertIn(
+            'tapered-centre: width=25s, slope_frac=1',
+            cb.stats.processing_bulk)
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_trim')
+    def test_trim(self, trim_mock):
+        cb = self.cb.copy()
+        stats = deepcopy(cb.stats)
+        stats.sampling_rate = 0.5
+        trim_mock.return_value = (np.zeros((3, 25)), stats)
+        cb.trim('start', 'stop')
+        trim_mock.assert_called_once_with(
+            mock.ANY, self.cb.stats, 'start', 'stop')
+        np.testing.assert_array_equal(cb.data, np.zeros((3, 25)))
+        np.testing.assert_array_equal(trim_mock.call_args[0][0], self.cb.data)
+        self.assertEqual(cb.stats, stats)
+
+    @mock.patch('seismic.correlate.stream.WFC')
+    @mock.patch('seismic.correlate.stream.wfc_multi_reftr')
+    def test_wfc(self, wfc_func_mock, wfc_mock):
+        wfc_func_mock.return_value = {'test': 0}
+        self.cb.wfc('myreftr', 'lala', 'both', 0, 15, 1, 2, False)
+        wfc_func_mock.assert_called_once_with(
+            mock.ANY, 'myreftr', 'lala', 'both', False)
+        statsexp = deepcopy(self.cb.stats)
+        statsexp['tw_start'] = 0
+        statsexp['tw_len'] = 15
+        statsexp['freq_min'] = 1
+        statsexp['freq_max'] = 2
+        wfc_mock.assert_called_once_with({'test': 0}, statsexp)
+
+    def test_find_index_partial(self):
+        start = self.cb.stats.corr_start[0] + 1
+        end = self.cb.stats.corr_end[-1] - 1
+        out = self.cb._find_slice_index(start, end, True)
+        self.assertEqual(len(np.nonzero(out)[0]), len(self.cb.data))
+
+    def test_find_index_not_partial(self):
+        start = self.cb.stats.corr_start[0] + 1
+        end = self.cb.stats.corr_end[-1] - 1
+        out = self.cb._find_slice_index(start, end, False)
+        self.assertEqual(len(np.nonzero(out)[0]), len(self.cb.data)-2)
+
+    def test_find_index_before_and_after(self):
+        start = self.cb.stats.corr_start[0] - 1
+        end = self.cb.stats.corr_end[-1] + 1
+        out = self.cb._find_slice_index(start, end, True)
+        self.assertEqual(len(np.nonzero(out)[0]), len(self.cb.data))
+
+    def test_find_index_end_before_start(self):
+        end = self.cb.stats.corr_start[0]
+        start = self.cb.stats.corr_end[-1]
+        with self.assertRaises(ValueError):
+            self.cb._find_slice_index(start, end, True)
+
+    def test_find_index_empty(self):
+        start = self.cb.stats.corr_start[0] - 15
+        end = self.cb.stats.corr_start[0] - 1
+        with warnings.catch_warnings(record=True) as w:
+            out = self.cb._find_slice_index(start, end, True)
+            self.assertEqual(len(w), 1)
+        self.assertEqual(len(np.nonzero(out)[0]), 0)
+
+
+class TestReadCorrBulk(unittest.TestCase):
+    @mock.patch('seismic.correlate.stream.np.load')
+    @mock.patch('seismic.correlate.stream.m3ut.load_header_from_np_array')
+    @mock.patch('seismic.correlate.stream.CorrBulk')
+    def test_read(self, cb_mock, load_header_mock, np_load_mock):
+        np_load_mock.return_value = {'something': 0, 'data': 'ishere'}
+        load_header_mock.return_value = {'stats': 'arehere'}
+        stream.read_corr_bulk('/path/to/file')
+        np.load.assert_called_once_with('/path/to/file')
+        load_header_mock.assert_called_once_with(
+            {'something': 0, 'data': 'ishere'})
+        cb_mock.assert_called_once_with('ishere', stats={'stats': 'arehere'})
 
 
 class TestCorrStats(unittest.TestCase):
@@ -112,6 +524,11 @@ class TestCorrStats(unittest.TestCase):
         self.cst['location'] = [1, 2, 3]
         self.assertIsInstance(self.cst['location'], list)
 
+    def test_set_comp(self):
+        self.cst['channel'] = 'HHE-HHZ'
+        self.cst['component'] = 'R-R'
+        self.assertEqual(self.cst.channel, 'HHR-HHR')
+
     def test_read_only(self):
         readonly = ['endtime', 'end_lag', 'starttime']
         for k in readonly:
@@ -148,6 +565,12 @@ class TestCorrStats(unittest.TestCase):
         self.assertEqual(
             self.cst.end_lag, self.cst.start_lag+self.cst.delta*float(
                 self.cst.npts-1))
+
+    def get_component(self):
+        cst = deepcopy(self.cst)
+        # Set channel
+        cst['channel'] = 'HHE-HHZ'
+        self.assertEqual(cst['component'], 'E-Z')
 
 
 class TestCombineStats(unittest.TestCase):
@@ -381,7 +804,7 @@ class TestCorrTrace(unittest.TestCase):
         exp = np.arange(
             ctr.stats.start_lag, ctr.stats.end_lag + ctr.stats.delta,
             ctr.stats.delta)
-        np.testing.assert_array_equal(exp, ctr.times())
+        np.testing.assert_array_almost_equal(exp, ctr.times())
 
 
 class TestCorrStream(unittest.TestCase):
@@ -588,7 +1011,8 @@ class TestConvertStatlistToBulkStats(unittest.TestCase):
         self.stats['evel'] = 0
         # Note that starttime and endtime are just copies of corr_start and
         # corr_end
-        self.mutables = ['corr_start', 'corr_end', 'starttime', 'endtime']
+        self.mutables = [
+            'corr_start', 'corr_end', 'starttime', 'endtime', 'location']
         self.immutables = [
             'npts', 'sampling_rate', 'network', 'station', 'channel',
             'start_lag', 'stla', 'stlo', 'stel', 'evla', 'evlo',
@@ -599,6 +1023,7 @@ class TestConvertStatlistToBulkStats(unittest.TestCase):
         stats1 = self.stats.copy()
         stats1['corr_start'] += 3600
         stats1['corr_end'] += 3600
+        stats1['location'] = 'bla'
         stcomb = stream.convert_statlist_to_bulk_stats([self.stats, stats1])
         for key in stcomb:
             if key in self.mutables:
@@ -620,10 +1045,9 @@ class TestConvertStatlistToBulkStats(unittest.TestCase):
 
     def test_loc_mutable(self):
         stats1 = self.stats.copy()
-        stats1['location'] = 'bla'
         stcomb = stream.convert_statlist_to_bulk_stats(
-            [self.stats, stats1], True)
-        self.assertIsInstance(stcomb['location'], list)
+            [self.stats, stats1], False)
+        self.assertIsInstance(stcomb['location'], str)
 
 
 if __name__ == "__main__":

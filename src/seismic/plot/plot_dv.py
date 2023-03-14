@@ -8,20 +8,27 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Thursday, 21st October 2021 02:37:44 pm
+Last Modified: Wednesday, 28th September 2022 11:39:51 am
 '''
+
+from datetime import datetime
+from typing import Tuple, List
+import os
 
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 import numpy as np
-import os
+from obspy import UTCDateTime
 
 from seismic.plot.plot_utils import set_mpl_params
 
 
 def plot_dv(
     dv, save_dir='.', figure_file_name=None, mark_time=None,
-        normalize_simmat=False, sim_mat_Clim=[], figsize=(9, 11), dpi=72):
+    normalize_simmat=False, sim_mat_Clim=[], figsize=(9, 11), dpi=72,
+    ylim: Tuple[float, float] = None, xlim: Tuple[datetime, datetime] = None,
+    title: str = None, plot_scatter: bool = False,
+        return_ax: bool = False) -> Tuple[plt.figure, List[plt.axis]]:
     """ Plot the "extended" dv dictionary
 
     This function is thought to plot the result of the velocity change estimate
@@ -65,6 +72,12 @@ def plot_dv(
     :type sim_mat_Clim: 2 element array_like
     :param sim_mat_Clim: if non-empty it set the color scale limits of the
         similarity matrix image
+    :param ylim: Limits for the stretch axis. Defaults to None
+    :type ylim: Tuple[float, float], optional
+    :param return_ax: Return plt.figure and list of axes. Defaults to False.
+        This overwrites any choice to save the figure.
+    :type return_ax: bool, optional
+    :returns: If `return_ax` is set to True it returns fig and axes.
     """
     set_mpl_params()
 
@@ -88,22 +101,22 @@ def plot_dv(
 
     # Extract the data from the dictionary
 
-    value_type = dv['value_type'][0]
-    method = dv['method'][0]
+    value_type = dv['value_type']
+    method = dv['method']
 
     corr = dv['corr']
     dt = dv['value']
     sim_mat = dv['sim_mat']
     stretch_vect = dv['second_axis']
 
-    rtime = [utcdt.datetime for utcdt in dv['stats']['corr_start']]
+    rtime = np.array(
+        [utcdt.datetime for utcdt in dv['stats']['corr_start']],
+        dtype=np.datetime64)
 
     # normalize simmat if requested
     if normalize_simmat:
         sim_mat = sim_mat/np.tile(
             np.max(sim_mat, axis=1), (sim_mat.shape[1], 1)).T
-
-    n_stretching = stretch_vect.shape[0]
 
     stretching_amount = np.max(stretch_vect)
 
@@ -113,13 +126,17 @@ def plot_dv(
     if (value_type == 'stretch') and (method == 'single_ref'):
 
         tit = "Single reference dv/v"
-        dv_tick_delta = round(stretch_vect.max()/5, 2)  # 0.01
+        # Find order of magnitude of max strech
+        oom = -int(np.floor(np.log10(stretch_vect.max()/5)))
+        dv_tick_delta = round(stretch_vect.max()/5, oom)
         dv_y_label = "dv/v"
         # plotting velocity requires to flip the stretching axis
     elif (value_type == 'stretch') and (method == 'multi_ref'):
 
+        # Find order of magnitude of max strech
+        oom = -int(np.floor(np.log10(stretch_vect.max()/5)))
         tit = "Multi reference dv/v"
-        dv_tick_delta = round(stretch_vect.max()/5, 2)  # 0.01
+        dv_tick_delta = round(stretch_vect.max()/5, oom)
         dv_y_label = "dv/v"
         # plotting velocity requires to flip the stretching axis
     elif (value_type == 'shift') and (method == 'time_shift'):
@@ -129,52 +146,55 @@ def plot_dv(
         dv_y_label = "time shift (sample)"
 
     else:
-        raise ValueError("Unknown dv type!")
+        raise ValueError(f"Unknown dv type, {value_type}!")
 
     f = plt.figure(figsize=figsize, dpi=dpi)
 
-    gs = mpl.gridspec.GridSpec(3, 1, height_ratios=[3, 1, 1])
+    if dv['n_stat'] is not None and plot_scatter:
+        gs = mpl.gridspec.GridSpec(4, 1, height_ratios=[12, 4, 4, 1])
+    else:
+        gs = mpl.gridspec.GridSpec(3, 1, height_ratios=[3, 1, 1])
 
     ax1 = f.add_subplot(gs[0])
     imh = plt.imshow(
-        sim_mat.T.astype(float), interpolation='none', aspect='auto')
+        np.flipud(sim_mat.T).astype(float), interpolation='none',
+        aspect='auto')
+
+    # plotting value is way easier now
+    plt.plot(-dv['value'], 'b.')
+
+    # Set extent so we can treat the axes properly (mainly y)
+    imh.set_extent((0, sim_mat.shape[0], stretch_vect[-1], stretch_vect[0]))
 
     ###
-    scale = stretch_vect[1] - stretch_vect[0]
-    offset = stretch_vect[0]
-    mod_ind = (np.round((dv['value']-offset) / scale).astype(int))
-    mod_ind[np.isnan(dv['value'])] = 0
-    ax1.plot(mod_ind, 'b.')
-    if 'model_value' in dv.keys():
-        mod_ind = (np.round((dv['model_value']-offset) / scale).astype(int))
-        mod_ind[np.isnan(dv['model_value'])] = 0
-        ax1.plot(mod_ind, 'g.')
-    ax1.set_xlim(0, sim_mat.shape[0])
-    ax1.set_ylim(0, sim_mat.shape[1])
+    if xlim:
+        xlim = (np.datetime64(xlim[0]), np.datetime64(xlim[1]))
+        xl0 = np.argmin(abs(rtime-xlim[0]))
+        xl1 = np.argmin(abs(rtime-xlim[1]))
+        ax1.set_xlim(xl0, xl1+1)
+        plt.xlim(xl0, xl1+1)
+    else:
+        ax1.set_xlim(0, sim_mat.shape[0])
+        plt.xlim(0, sim_mat.shape[0])
+
     if value_type == 'stretch':
         ax1.invert_yaxis()
-    ###
+    if ylim:
+        plt.ylim(ylim)
+    # ###
     if sim_mat_Clim:
         imh.set_clim(sim_mat_Clim[0], sim_mat_Clim[1])
 
     plt.gca().get_xaxis().set_visible(False)
-    ax1.set_yticks(np.floor(np.linspace(0, n_stretching - 1, 7)).astype('int'))
-
-    if value_type == 'stretch':
-        ax1.set_yticklabels([
-            "%4.3f" % x for x in stretch_vect[np.floor(
-                np.linspace(n_stretching - 1, 0, 7)).astype('int')]])
-    else:
-        ax1.set_yticklabels([
-            "%4.3f" % x for x in stretch_vect[np.floor(
-                np.linspace(0, n_stretching - 1, 7)).astype('int')]])
 
     stats = dv['stats']
-    comb_mseedid = '%s.%s.%s.%s' % (
-        stats['network'], stats['station'], stats['location'],
+    comb_mseedid = '%s.%s.%s' % (
+        stats['network'], stats['station'],  # stats['location'],
         stats['channel'])
-
-    tit = "%s estimate (%s)" % (tit, comb_mseedid)
+    if title:
+        tit = title
+    else:
+        tit = "%s estimate (%s)" % (tit, comb_mseedid)
 
     ax1.set_title(tit)
     ax1.yaxis.set_ticks_position('right')
@@ -185,11 +205,36 @@ def plot_dv(
     ax1.set_ylabel(dv_y_label)
 
     ax2 = f.add_subplot(gs[1])
-    plt.plot(rtime, -dt, '.')
+    if plot_scatter:
+        # reshape so we can plot a histogram
+        histt = np.array([t.timestamp for t in dv['stats']['corr_start']])
+        histt = np.tile(histt, dv['stretches'].shape[0])
+        histcorrs = np.reshape(dv['corrs'], -1)
+        histstretches = np.reshape(-dv['stretches'], -1)
+        n_bins = np.flip(np.array(dv['sim_mat'].shape))//10
+        # remove nans
+        nanmask = ~np.isnan(histcorrs)
+        histt = histt[nanmask]
+        histcorrs = histcorrs[nanmask]
+        histstretches = histstretches[nanmask]
+        # create histograms
+        H_c, xedges_c, yedges_c = np.histogram2d(histt, histcorrs, bins=n_bins)
+        H_v, xedges_v, yedges_v = np.histogram2d(
+            histt, histstretches, bins=n_bins)
+        xedges_c = [UTCDateTime(xe).datetime for xe in xedges_c]
+        xedges_v = [UTCDateTime(xe).datetime for xe in xedges_v]
+        plt.pcolor(xedges_v, yedges_v, H_v.T, cmap='binary')
+    plt.plot(rtime, -dt, '.', markersize=3)
     if 'model_value' in dv.keys():
         plt.plot(rtime, -dv['model_value'], 'g.')
-    plt.xlim([rtime[0], rtime[-1]])
-    plt.ylim((-stretching_amount, stretching_amount))
+    if xlim:
+        plt.xlim(xlim[0], xlim[1])
+    else:
+        plt.xlim([rtime[0], rtime[-1]])
+    if ylim:
+        plt.ylim(ylim)
+    else:
+        plt.ylim((-stretching_amount, stretching_amount))
     if mark_time and not (
             np.all(rtime < mark_time) and np.all(rtime > mark_time)):
         plt.axvline(mark_time, lw=1, color='r')
@@ -204,27 +249,52 @@ def plot_dv(
     ax2.set_xticklabels([])
 
     ax3 = f.add_subplot(gs[2])
-    plt.plot(rtime, corr, '.')
+    if plot_scatter:
+        plt.pcolor(xedges_c, yedges_c, H_c.T, cmap='binary')
+    plt.plot(rtime, corr, '.', markersize=3)
     if 'model_corr' in dv.keys():
         plt.plot(rtime, dv['model_corr'], 'g.')
-    plt.xlim([rtime[0], rtime[-1]])
+    if xlim:
+        plt.xlim(xlim[0], xlim[1])
+    else:
+        plt.xlim([rtime[0], rtime[-1]])
     ax3.yaxis.set_ticks_position('right')
     ax3.set_ylabel("Correlation")
     plt.ylim((0, 1))
     if mark_time and not (
             np.all(rtime < mark_time) and np.all(rtime > mark_time)):
         plt.axvline(mark_time, lw=1, color='r')
-    plt.setp(ax3.get_xticklabels(), rotation=45, ha='right')
-    ax3.yaxis.set_major_locator(plt.MultipleLocator(0.2))
     ax3.yaxis.grid(True, 'major', linewidth=1)
     ax3.xaxis.grid(True, 'major', linewidth=1)
+    ax3.yaxis.set_major_locator(plt.MultipleLocator(0.2))
+    # Plot number of stations
+    if dv['n_stat'] is not None and plot_scatter:
+        ax4 = f.add_subplot(gs[3])
+        plt.fill_between(
+            rtime, 0, dv['n_stat'], interpolate=False)
+        plt.setp(ax4.get_xticklabels(), rotation=45, ha='right')
+        ax3.set_xticklabels([])
+        ax4.yaxis.set_label_position('right')
+        ax4.set_ylabel("N")
+        plt.ylim(0, int(dv['n_stat'].max()*1.1))
+        if xlim:
+            plt.xlim(xlim[0], xlim[1])
+        else:
+            plt.xlim([rtime[0], rtime[-1]])
+    else:
+        ax4 = None
+        plt.setp(ax3.get_xticklabels(), rotation=45, ha='right')
 
     plt.subplots_adjust(hspace=0, wspace=0)
-
+    if return_ax:
+        return f, [ax1, ax2, ax3, ax4]
     if figure_file_name is None:
         plt.show()
     else:
         print('saving to %s' % figure_file_name)
-        f.savefig(os.path.join(save_dir, figure_file_name + '_change.png'),
+        if figure_file_name.split('.')[-1].lower() not in [
+                'png', 'svg', 'pdf', 'jpg']:
+            figure_file_name += '.png'
+        f.savefig(os.path.join(save_dir, figure_file_name),
                   dpi=dpi)
         plt.close()

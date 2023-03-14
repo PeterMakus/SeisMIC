@@ -1,4 +1,6 @@
 '''
+Manage objects holding correlations.
+
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
@@ -8,8 +10,9 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Friday, 12th November 2021 05:53:17 pm
+Last Modified: Friday, 10th February 2023 04:25:11 pm
 '''
+
 from typing import Iterator, List, Tuple
 from copy import deepcopy
 import warnings
@@ -23,7 +26,8 @@ from obspy.core import Stats
 from seismic.utils import miic_utils as m3ut
 from seismic.plot.plot_correlation import plot_cst, plot_ctr
 import seismic.monitor.post_corr_process as pcp
-from seismic.monitor.stretch_mod import time_stretch_apply, wfc_multi_reftr
+from seismic.monitor.stretch_mod import time_shift_apply, time_stretch_apply,\
+    wfc_multi_reftr
 from seismic.monitor.dv import DV
 from seismic.monitor.wfc import WFC
 from seismic.correlate.stats import CorrStats
@@ -37,6 +41,22 @@ class CorrBulk(object):
     def __init__(
         self, A: np.ndarray, stats: CorrStats = None,
             statlist: List[CorrStats] = None):
+        """
+        An object for faster computations on several correlations. The input
+        correlation contain data from only one Station-Channel pair.
+
+        :param A: the Correlation Matrix. Each line corresponds to one
+            correlation start. The column distance is lag time
+        :type A: np.ndarray
+        :param stats: CorrStats file holding the header for this object,
+            only relevant if you are reloading this file. Otherwise,
+            use statlist as input to create this header.
+            defaults to None
+        :type stats: CorrStats, optional
+        :param statlist: Header of each CorrTrace used to create this object,
+            defaults to None
+        :type statlist: List[CorrStats], optional
+        """
         self.data = A
         if stats:
             self.stats = stats
@@ -68,7 +88,6 @@ class CorrBulk(object):
         :type normtype: string
         :param normtype: one of the following 'energy', 'max', 'absmax',
             'abssum' to decide about the way to calculate the normalization.
-
         :rtype: CorrBulk
         :return: Same object as in self, but normalised.
 
@@ -81,6 +100,28 @@ class CorrBulk(object):
         proc_str = f'normalize; normtype: {normtype}'
         if starttime is not None and endtime is not None:
             proc_str += f', starttime: {starttime}, endtime: {endtime}'
+        self.stats.processing_bulk += [proc_str]
+        return self
+
+    def clip(self, thres: float, axis=1):
+        """
+        Clip the correlation data's upper and lower bounds to a multiple of its
+        standard deviation. `thres` determines the factor and `axis` the axis
+        the std should be computed over
+
+        :param thres: factor of the standard deviation to clip by
+        :type thres: float
+        :param axis: Axis to compute the std over and, subsequently clip over.
+            Can be None, if you wish to compute floating point rather than a
+            vector. Then, the array will be clipped evenly.
+        :type axis: int
+
+        ..note:: This action is performed **in-place**. If you would like to
+                keep the original data use
+                :func:`~seismic.correlate.stream.CorrelationBulk.copy()`.
+        """
+        self.data = pcp.corr_mat_clip(self.data, thres, axis)
+        proc_str = f'Clipped; threshold: {thres}*std, axis={axis}'
         self.stats.processing_bulk += [proc_str]
         return self
 
@@ -111,7 +152,44 @@ class CorrBulk(object):
         self.stats.processing_bulk += ['Corrected for Amplitude Decay']
         return self
 
-    def correct_stretch(self, dv: DV):
+    def correct_shift(
+        self, dv: DV = None, shift: np.ndarray = None,
+            single_sided: bool = False):
+        """
+        Correct shift / clock drift of a correlation matrix.
+        Input argument can either be a matrix holding the shifts in n_samples
+        or a DV object with value_type==shift
+
+        :param dv: A dv object with value_type == shift, defaults to None
+        :type dv: DV, optional
+        :param shift: A 1 or 2D array holding the shift per CorrTrace (1D) or
+            per CorrTrace and sample (2D), defaults to None
+        :type shift: np.ndarray, optional
+        :param single_sided: self.data only contains causal side,
+            defaults to False
+        :type single_sided: bool, optional
+        :raises ValueError: mismatched inputs
+        :return: shifted CorrBulk
+
+        ..note:: This action is performed **in-place**. If you would like to
+            keep the original data use
+            :func:`~seismic.correlate.stream.CorrelationBulk.copy()`.
+        """
+        if (shift is None and dv is None) or (
+                shift is not None and dv is not None):
+            raise ValueError(
+                'Provide either shift values or a DV object containing time '
+                + 'shift estimates')
+        if dv is not None:
+            if dv.value_type != 'shift':
+                raise ValueError('dv values have to be of type "shift".')
+            shift = -dv.value
+        self.data = time_shift_apply(
+            self.data, shift, single_sided=single_sided)
+        self.stats.processing_bulk += ['Applied time shift']
+        return self
+
+    def correct_stretch(self, dv: DV, single_sided: bool = False):
         """
         Correct stretching of correlation matrix
 
@@ -122,42 +200,60 @@ class CorrBulk(object):
 
         :param dv: Velocity Change object
         :type dv: DV
+        :param single_sided: set True for active source experiments where
+            the first sample is the trigger time. Defaults to False
+        type single_sided: bool, optional
 
         ..note:: This action is performed **in-place**. If you would like to
             keep the original data use
             :func:`~seismic.correlate.stream.CorrelationBulk.copy()`.
         """
-        self.data = time_stretch_apply(self.data, -1.*dv.value)
+        if dv.value_type != 'stretch':
+            raise ValueError('DV object does not hold any stretch values.')
+        self.data = time_stretch_apply(self.data, -1.*dv.value, single_sided)
         self.stats.processing_bulk += ['Applied time stretch']
         return self
 
-    def create_corr_stream(self):
+    def create_corr_stream(self, ind: List[int] = None):
         """
         Creates a :class:`~seismic.correlate.stream.CorrStream` object from
         the current :class:`~seismic.correlate.stream.CorrBulk` object. This
         can be useful if you want to save your postprocessed data in a hdf5
         file again.
 
+        :param ind: Indices to extract. If None, all will be used.
+            Defaults to None.
+        :type ind: Iterable[ind], optional
         :return: Correlation Stream holding the same data
         :rtype: :class:`~seismic.correlate.stream.CorrStream`
         """
         cst = CorrStream()
         mutables = ['corr_start', 'corr_end', 'location']
-        for ii, li in enumerate(self.data):
-            stats = deepcopy(self.stats)
-            for k in mutables:
-                if not isinstance(stats[k], list):
-                    continue
-                stats[k] = self.stats[k][ii]
-            ctr = CorrTrace(li, _header=stats)
-            cst.append(ctr)
+        if ind is None:
+            for ii, li in enumerate(self.data):
+                stats = deepcopy(self.stats)
+                for k in mutables:
+                    if not isinstance(stats[k], list):
+                        continue
+                    stats[k] = self.stats[k][ii]
+                ctr = CorrTrace(li, _header=stats)
+                cst.append(ctr)
+        else:
+            for ii in ind:
+                stats = deepcopy(self.stats)
+                for k in mutables:
+                    if not isinstance(stats[k], list):
+                        continue
+                    stats[k] = self.stats[k][ii]
+                ctr = CorrTrace(self.data[ii], _header=stats)
+                cst.append(ctr)
         return cst
 
     def envelope(self):
         """
         Calculate the envelope of a correlation matrix.
 
-        The corrlation data of the correlation matrix are replaced by their
+        The correlation data of the correlation matrix are replaced by their
         Hilbert envelopes.
 
 
@@ -188,7 +284,7 @@ class CorrBulk(object):
             :func:`~seismic.correlate.stream.CorrelationBulk.copy()`.
         """
         self.data = pcp.corr_mat_filter(self.data, self.stats, freqs, order)
-        proc = ['filter; freqs: %s, order: %s' % (str(freqs), str(order))]
+        proc = [f'filter; freqs: {freqs}, order: {order}']
         self.stats.processing_bulk += proc
         return self
 
@@ -234,7 +330,7 @@ class CorrBulk(object):
         the reference will be extracted with half increment overlap in each
         direction.
 
-        Extract a correlation trace from the that best represents the
+        Extract a correlation trace from the one that best represents the
         correlation matrix. ``Method`` decides about method to extract the
         trace. The following possibilities are available
 
@@ -256,7 +352,6 @@ class CorrBulk(object):
         :param method: method to extract the trace
         :type percentile: float
         :param percentile: only used for method=='similarity_percentile'
-
         :rtype: np.ndarray
         :return: extracted trace
 
@@ -288,6 +383,42 @@ class CorrBulk(object):
         ref_trcs = np.array(ref_trcs)
         self.ref_trc = ref_trcs
         return ref_trcs
+
+    def find_clock_shift(
+        self, ref_trc: np.ndarray = None, tw: List[np.ndarray] = None,
+        shift_range: int = 10, shift_steps: int = 101,
+            sides: str = 'both', return_sim_mat: bool = False) -> DV:
+        """
+        Compute the shift of correlations as they can occur due to a clock
+        drift.
+
+        :param ref_trc: Reference trace to use for the computation,
+            defaults to None. Will extract a single trace if = None.
+        :type ref_trc: np.ndarray, optional
+        :param tw: Lapse Time window to use for the computation,
+            defaults to None
+        :type tw: List[np.ndarray], optional
+        :param shift_range: Maximum shift value to test
+            (in n samples not seconds!). Defaults to 10.
+        :type shift_range: int, optional
+        :param shift_steps: Number of shift steps, defaults to 101
+        :type shift_steps: int, optional
+        :param sides: Which sides to use. Can be 'right',
+            or 'both'. Defaults to 'both'
+        :type sides: str, optional
+        :param return_sim_mat: Return the similarity matrix, defaults to False
+        :type return_sim_mat: bool, optional
+        :return: The shift as :class:`~seismic.monitor.dv.DV` object.
+        :rtype: DV
+        """
+        if ref_trc is None:
+            ref_trc = self.ref_trc
+        dv_dict = pcp.corr_mat_shift(
+            self.data, self.stats, ref_trc, tw, shift_range, shift_steps,
+            sides, return_sim_mat)
+        if not return_sim_mat:
+            dv_dict['sim_mat'] = np.array([])
+        return DV(**dv_dict)
 
     def mirror(self):
         """
@@ -332,8 +463,7 @@ class CorrBulk(object):
         self.data, self.stats = pcp.corr_mat_resample(
             self.data, self.stats, starttimes, endtimes)
         self.stats.processing_bulk += [
-            'Resampled. Starttimes: %s, Endtimes %s' % (
-                str(starttimes), str(endtimes))]
+            f'Resampled. Starttimes: {starttimes}, Endtimes: {endtimes}']
         return self
 
     def resample_time_axis(self, freq: float):
@@ -353,7 +483,7 @@ class CorrBulk(object):
         self.data, self.stats = pcp.corr_mat_resample_or_decimate(
             self.data, self.stats, freq)
         self.stats.processing_bulk += [
-            'Resampled time axis. New sampling rate: %s' % freq]
+            f'Resampled time axis. New sampling rate: {freq}Hz']
         return self
 
     def smooth(
@@ -377,7 +507,6 @@ class CorrBulk(object):
         :type axis: int
         :param axis: Axis along with apply the filter. O: smooth along
             correlation lag time axis 1: smooth along time axis
-
         :rtype: :class:`~numpy.ndarray`
         :return: Filtered matrix
 
@@ -387,19 +516,42 @@ class CorrBulk(object):
         """
         self.data = pcp.corr_mat_smooth(self.data, wsize, wtype, axis)
         self.stats.processing_bulk += [
-            'smooth. wsize: %ss, wtype: %s, axis: %s'
-            % (str(wsize), wtype, str(axis))]
+            f'Smoothed. wsize: {wsize}, wtype: {wtype}, axis: {axis}']
         return self
 
     def stretch(
         self, ref_trc: np.ndarray = None, tw: List[np.ndarray] = None,
-        stretch_range: float = 0.1, stretch_steps: int = 100,
+        stretch_range: float = 0.1, stretch_steps: int = 101,
             sides: str = 'both', return_sim_mat: bool = False) -> DV:
+        """
+        Compute the velocity change with the stretching method
+        (see Sens-Schönfelder and Wegler, 2006).
+
+        :param ref_trc: Reference trace(s) to use for the computatio,
+            defaults to None. Will extract a single trace if = None.
+        :type ref_trc: np.ndarray, optional
+        :param tw: Lapse Time window to use for the computation,
+            defaults to None
+        :type tw: List[np.ndarray], optional
+        :param stretch_range: Maximum stretch value to test, defaults to 0.1
+        :type stretch_range: float, optional
+        :param stretch_steps: Number of stretch steps, defaults to 101
+        :type stretch_steps: int, optional
+        :param sides: Which sides to use. Can be 'left', 'right' (or 'single'),
+            or 'both'. Defaults to 'both'
+        :type sides: str, optional
+        :param return_sim_mat: Return the similarity matrix, defaults to False
+        :type return_sim_mat: bool, optional
+        :return: The velocity change as :class:`~seismic.monitor.dv.DV` object.
+        :rtype: DV
+        """
         if ref_trc is None:
             ref_trc = self.ref_trc
         dv_dict = pcp.corr_mat_stretch(
             self.data, self.stats, ref_trc, tw, stretch_range, stretch_steps,
             sides, return_sim_mat)
+        if not return_sim_mat:
+            dv_dict['sim_mat'] = np.array([])
         return DV(**dv_dict)
 
     def save(self, path: str):
@@ -435,8 +587,8 @@ class CorrBulk(object):
         stats = deepcopy(self.stats)
         for key, value in stats.items():
             try:
-                if isinstance(value, list):
-                    stats[key] = filter(lambda ii: ii, value)
+                if isinstance(value, list) and key != 'processing_bulk':
+                    stats[key] = [v for jj, v in zip(ii, value) if jj]
                 elif isinstance(value, np.ndarray):
                     stats[key] = value[ii]
             except AttributeError:
@@ -456,8 +608,9 @@ class CorrBulk(object):
             :func:`~seismic.correlate.stream.CorrelationBulk.copy()`
         """
         self.data = pcp.corr_mat_taper(self.data, self.stats, width)
-        proc = ['tapered: width=%ss' % width]
+        proc = [f'tapered: width={width}s']
         self.stats.processing_bulk += proc
+        return self
 
     def taper_center(self, width: float, slope_frac: float = 0.05):
         """
@@ -475,8 +628,8 @@ class CorrBulk(object):
         :param slope_frac: fraction of `width` used for soothing of edges,
             defaults to 0.05
         :type slope_frac: float, optional
-        :return: The tapered matrix
-        :rtype: np.ndarray
+        :return: self
+        :rtype: CorrBulk
 
         ..note:: This action is performed **in-place**. If you want to keep
             the original data use
@@ -484,9 +637,9 @@ class CorrBulk(object):
         """
         self.data = pcp.corr_mat_taper_center(
             self.data, self.stats, width, slope_frac=slope_frac)
-        proc = [
-            'tapered-centre: width=%ss, slope_frac=%s' % (width, slope_frac)]
+        proc = [f'tapered-centre: width={width}s, slope_frac={slope_frac}']
         self.stats.processing_bulk += proc
+        return self
 
     def trim(self, starttime: float, endtime: float):
         """
@@ -500,7 +653,6 @@ class CorrBulk(object):
             position
         :type endtime: float
         :param order: end time in seconds with respect to the zero position
-
         :return: self
 
         ..note:: This action is performed **in-place**. If you want to keep
@@ -571,6 +723,8 @@ class CorrBulk(object):
         :return: An Array containing the boolean indices
         :rtype: np.ndarray[bool]
         """
+        if endtime <= starttime:
+            raise ValueError('End has to be after start!')
         if include_partial:
             ii = np.logical_and(
                 np.array(self.stats.corr_end) >= starttime,
@@ -579,7 +733,11 @@ class CorrBulk(object):
             ii = np.logical_and(
                 np.array(self.stats.corr_start) >= starttime,
                 np.array(self.stats.corr_end) <= endtime)
-        return np.squeeze(ii)
+        ii = np.squeeze(ii)
+        if not len(np.nonzero(ii)[0]):
+            warnings.warn(
+                'No slices found in the requested time. Returning empty arr.')
+        return ii
 
 
 def read_corr_bulk(path: str) -> CorrBulk:
@@ -751,8 +909,8 @@ class CorrStream(Stream):
                 tr.stats.corr_end-tr.stats.corr_start for tr in self):
             raise ValueError(
                 'The length of the requested time window has to be larger or'
-                + 'equal than the actual correlation length of one window.'
-                + 'i.e., correlations can not be sliced, only selected.')
+                'equal than the actual correlation length of one window.'
+                'i.e., correlations can not be sliced, only selected.')
 
         if step <= 0:
             raise ValueError('Step has to be larger than 0.')
@@ -876,7 +1034,8 @@ class CorrStream(Stream):
         timelimits: Tuple[float, float] = None,
         ylimits: Tuple[float, float] = None, scalingfactor: float = None,
         ax: plt.Axes = None, linewidth: float = 0.25,
-            outputfile: str = None, title: str = None, type: str = 'heatmap'):
+        outputfile: str = None, title: str = None, type: str = 'heatmap',
+            cmap: str = 'inferno', vmin: float = None, vmax: float = None):
         """
         Creates a section plot of all correlations in this stream.
 
@@ -903,14 +1062,22 @@ class CorrStream(Stream):
         :param type: Type of plot. Either `'heatmap'` for a heat plot or
             `'section'` for a wiggle type plot. Defaults to heatmap.
         :type title: str, optional
+        :param cmap: Decides about colormap if type == 'heatmap'.
+        Defaults to 'inferno'.
+        :type cmap: str, optional
 
         .. note:: If you would like to plot a subset of this stream, use
             :func:`~seismic.correlate.stream.CorrStream.select`.
         """
-        plot_cst(
+        if self.count() == 1:
+            self[0].plot()
+            return
+        ax = plot_cst(
             self, sort_by=sort_by, timelimits=timelimits, ylimits=ylimits,
             scalingfactor=scalingfactor, ax=ax, linewidth=linewidth,
-            outputfile=outputfile, title=title, type=type)
+            outputfile=outputfile, title=title, type=type, cmap=cmap,
+            vmin=vmin, vmax=vmax)
+        return ax
 
     def _to_matrix(
         self, network: str = None, station: str = None, channel: str = None,
@@ -1061,9 +1228,10 @@ class CorrTrace(Trace):
         :return: Array with lag times
         :rtype: np.ndarray
         """
-        return np.arange(
-            self.stats.start_lag, self.stats.end_lag + self.stats.delta,
-            self.stats.delta)
+        # this way there won't be problems with numerical errors for small
+        # delta
+        return np.arange(self.stats.npts)*self.stats.delta\
+            + self.stats.start_lag
 
 
 def alphabetical_correlation(
@@ -1310,22 +1478,22 @@ def stack_st(st: CorrStream, weight: str, norm: bool = True) -> CorrTrace:
         dur.append(tr.stats.corr_end-tr.stats.corr_start)
     A = np.array(stack)
     if weight == 'mean' or weight == 'average':
-        data = np.average(A, axis=0)
+        data = np.nanmean(A, axis=0)
         if norm:
-            norm = np.max(np.abs(data))
+            norm = np.nanmax(np.abs(data))
             data /= norm  # np.tile(np.atleast_2d(norm).T, (1, A.shape[1]))
         return CorrTrace(data, _header=stats)
     elif weight == 'by_length':
         # Weight by the length of each trace
-        data = np.sum((A.T*np.array(dur)).T, axis=0)/np.sum(dur)
+        data = np.nansum((A.T*np.array(dur)).T, axis=0)/np.nansum(dur)
         if norm:
-            norm = np.max(np.abs(data))
+            norm = np.nanmax(np.abs(data))
             data /= norm  # np.tile(np.atleast_2d(norm).T, (1, A.shape[1]))
         return CorrTrace(data=data, _header=stats)
 
 
 def convert_statlist_to_bulk_stats(
-        statlist: List[CorrStats], varying_loc: bool = False) -> CorrStats:
+        statlist: List[CorrStats], varying_loc: bool = True) -> CorrStats:
     """
     Converts a list of :class:`~seismic.correlate.stream.CorrTrace` stats
     objects to a single stats object that can be used for the creation of a
@@ -1359,13 +1527,14 @@ def convert_statlist_to_bulk_stats(
         for key in mutables:
             stats[key] += [trstat[key]]
         for key in immutables:
-            ph = (
-                key, str(stats[key]), str(trstat[key]), stats['network'],
-                stats['station'])
-            if stats[key] != trstat[key]:
-                raise ValueError(
-                    'The stream contains data with different properties. \
-The differing property is %s. With the values: %s and %s. For station \
-%s.%s' % ph)
+            try:
+                if stats[key] != trstat[key]:
+                    raise ValueError(
+                        'The stream contains data with different properties. '
+                        + f'The differing property is {key}. '
+                        + f'With the values: {stats[key]} and {trstat[key]}. '
+                        + f'For station {stats["network"]}.{stats["station"]}')
+            except KeyError:
+                warnings.warn(f'No information about {key} in header.')
     stats['ntrcs'] = len(statlist)
     return stats

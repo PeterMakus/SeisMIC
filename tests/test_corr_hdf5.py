@@ -9,7 +9,7 @@
 
 Created: Tuesday, 1st June 2021 10:42:03 am
 
-Last Modified: Thursday, 21st October 2021 02:57:05 pm
+Last Modified: Tuesday, 15th February 2022 11:10:59 am
 
 '''
 from copy import deepcopy
@@ -28,7 +28,8 @@ from seismic.correlate.stream import CorrStream, CorrTrace
 
 
 with open('params_example.yaml') as file:
-    co = yaml.load(file, Loader=yaml.FullLoader)['co']
+    co = corr_hdf5.co_to_hdf5(
+        yaml.load(file, Loader=yaml.FullLoader)['co'])
     co['corr_args']['combinations'] = []
 
 
@@ -55,12 +56,26 @@ class TestConvertHeaderToHDF5(unittest.TestCase):
 
 
 class TestReadHDF5Header(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tr = read()[0]
+
     def test_result(self):
+        dataset = MagicMock()
+        dataset.attrs = {}
+        self.tr.decimate(4)  # to put something into processing
+        stats = self.tr.stats
+        corr_hdf5.convert_header_to_hdf5(dataset, stats)
+        self.assertEqual(corr_hdf5.read_hdf5_header(dataset), stats)
+
+    def test_result_julday360(self):
+        # There was a bug with that
         dataset = MagicMock()
         dataset.attrs = {}
         tr = read()[0]
         tr.decimate(4)  # to put something into processing
         stats = tr.stats
+        self.tr.stats.starttime = UTCDateTime(
+            year=2015, julday=360, hour=15, minute=3)
         corr_hdf5.convert_header_to_hdf5(dataset, stats)
         self.assertEqual(corr_hdf5.read_hdf5_header(dataset), stats)
 
@@ -353,6 +368,17 @@ class TestDBHandler(unittest.TestCase):
         with self.assertRaises(PermissionError):
             corr_hdf5.DBHandler('a', 'a', 'gzip9', co)
 
+    @patch('seismic.db.corr_hdf5.DBHandler.get_corr_options')
+    @patch('seismic.db.corr_hdf5.h5py.File.__init__')
+    def test_wrong_co2(self, super_mock, gco_mock):
+        self.file_mock = MagicMock()
+        super_mock.return_value = self.file_mock
+        oco = deepcopy(co)
+        oco['nlub'] = 100000
+        gco_mock.return_value = oco
+        with self.assertRaises(PermissionError):
+            corr_hdf5.DBHandler('a', 'a', 'gzip9', co)
+
     @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_corr_options(self, gi_mock):
         d = {'co': AttribDict(attrs={'co': str(corr_hdf5.co_to_hdf5(co))})}
@@ -413,12 +439,33 @@ class TestCorrelationDataBase(unittest.TestCase):
 class TestCoToHDF5(unittest.TestCase):
     def test_pop_keys(self):
         d = {
-            'subdir': 0, 'starttime': 15, 'corr_args': {}, 'subdivision': {}}
+            'subdir': 0, 'starttime': 15, 'corr_args': {'combinations': 3},
+            'subdivision': {
+                'recombine_subdivision': False,
+                'delete_subdivision': True},
+            'preProcessing': [
+                {'function': 'function1', 'args': 'bla'},
+                {'function': 'myimport.stream_mask_at_utc'}
+            ]}
         coc = corr_hdf5.co_to_hdf5(d)
-        self.assertEqual(coc, {'corr_args': {}, 'subdivision': {}})
+        self.assertDictEqual(coc, {
+            'corr_args': {}, 'subdivision': {},
+            'preProcessing': [{'function': 'function1', 'args': 'bla'}]})
         # Make sure that input is not altered
-        self.assertEqual(d, {
-            'subdir': 0, 'starttime': 15, 'corr_args': {}, 'subdivision': {}})
+        self.assertDictEqual(d, {
+            'subdir': 0, 'starttime': 15, 'corr_args': {'combinations': 3},
+            'subdivision': {
+                'recombine_subdivision': False,
+                'delete_subdivision': True},
+            'preProcessing': [
+                {'function': 'function1', 'args': 'bla'},
+                {'function': 'myimport.stream_mask_at_utc'}
+            ]})
+
+    def test_keyError_handling(self):
+        d = {}
+        coc = corr_hdf5.co_to_hdf5(d)
+        self.assertDictEqual({}, coc)
 
 
 if __name__ == "__main__":

@@ -8,12 +8,13 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 12th November 2021 03:11:59 pm
+Last Modified: Wednesday, 12th October 2022 10:31:25 am
 '''
 from copy import deepcopy
 import logging
 import os
-from typing import List, Tuple
+from typing import Generator, List, Tuple
+import warnings
 import yaml
 import fnmatch
 from glob import glob
@@ -27,6 +28,7 @@ from seismic.db.corr_hdf5 import CorrelationDataBase
 from seismic.monitor.dv import DV, read_dv
 from seismic.monitor.wfc import WFC
 from seismic.utils.miic_utils import log_lvl
+import seismic.monitor.post_corr_process as pcp
 
 
 class Monitor(object):
@@ -74,6 +76,8 @@ class Monitor(object):
         else:
             tstr = None
         tstr = self.comm.bcast(tstr, root=0)
+        # replace colon in tstr
+        tstr = tstr.replace(':', '-')
         self.logger = logging.getLogger(
             "seismic.monitor.Monitor%s" % str(self.rank).zfill(3))
         self.logger.setLevel(loglvl)
@@ -81,8 +85,8 @@ class Monitor(object):
         # also catch the warnings
         logging.captureWarnings(True)
         warnlog = logging.getLogger('py.warnings')
-        fh = logging.FileHandler(os.path.join(logdir, 'monitor%srank%s' % (
-            tstr, str(self.rank).zfill(3))))
+        fh = logging.FileHandler(os.path.join(
+            logdir, f'monitor{tstr}rank{str(self.rank).zfill(3)}'))
         fh.setLevel(loglvl)
         self.logger.addHandler(fh)
         warnlog.addHandler(fh)
@@ -135,7 +139,7 @@ class Monitor(object):
 
     def compute_velocity_change(
         self, corr_file: str, tag: str, network: str, station: str,
-            channel: str):
+            channel: str, ref_trcs: np.ndarray = None):
         """
         Computes the velocity change for a cross (or auto) correlation
         time-series. This process is executed "per station combination".
@@ -156,6 +160,10 @@ class Monitor(object):
         :type station: str
         :param channel: Channel combination code
         :type channel: str
+        :param ref_trcs: Feed in on or several custom reference traces.
+            If None the program will determine a reference trace from
+            the chosen method in the config. Defaults to None
+        :type ref_trcs: np.ndarray, optional
         """
         self.logger.info('Computing velocity change for file: %s and channel:\
 %s' % (corr_file, channel))
@@ -180,40 +188,51 @@ class Monitor(object):
                 cb = f(**func['args'])
 
         # Now, we make a copy of the cm to be trimmed
-        cbt = cb.copy().trim(
-            -(self.options['dv']['tw_start']+self.options['dv']['tw_len']),
-            (self.options['dv']['tw_start']+self.options['dv']['tw_len']))
+        if self.options['dv']['tw_len'] is None:
+            trim0 = cb.stats.start_lag
+            trim1 = cb.stats.end_lag
+            cbt = cb
+        else:
+            trim0 = -(
+                self.options['dv']['tw_start']+self.options['dv']['tw_len'])
+            trim1 = (
+                self.options['dv']['tw_start']+self.options['dv']['tw_len'])
+            cbt = cb.copy().trim(trim0, trim1)
 
         if cbt.data.shape[1] <= 20:
             raise ValueError('CorrBulk extremely short.')
 
-        tr = cbt.extract_multi_trace(**self.options['dv']['dt_ref'])
+        if ref_trcs is None:
+            tr = cbt.extract_multi_trace(**self.options['dv']['dt_ref'])
+        else:
+            tr = ref_trcs
+            if max(tr.shape) != cbt.data.shape[1]:
+                tr, _ = pcp.corr_mat_trim(tr, deepcopy(cb.stats), trim0, trim1)
 
         # Compute time window
         tw = [np.arange(
             self.options['dv']['tw_start']*cbt.stats['sampling_rate'],
-            (self.options['dv']['tw_start']+self.options[
-                'dv']['tw_len'])*cbt.stats['sampling_rate'], 1)]
+            trim1*cbt.stats['sampling_rate'], 1)]
         dv = cbt.stretch(
             ref_trc=tr, return_sim_mat=True,
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],
-            tw=tw)
-        ccb = cb.correct_stretch(dv)
+            tw=tw, sides=self.options['dv']['sides'])
+        ccb = cb.correct_stretch(dv, self.options['dv']['sides'] == 'single')
 
-        ccb.trim(
-            -(self.options['dv']['tw_start']+self.options['dv']['tw_len']),
-            (self.options['dv']['tw_start']+self.options['dv']['tw_len']))
+        ccb.trim(trim0, trim1)
 
         # extract the final reference trace (mean excluding very different
         # traces)
-        tr = ccb.extract_multi_trace(**self.options['dv']['dt_ref'])
+        if ref_trcs is None:
+            tr = ccb.extract_multi_trace(**self.options['dv']['dt_ref'])
+
         # obtain an improved time shift measurement
         dv = cbt.stretch(
             ref_trc=tr, return_sim_mat=True,
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],
-            tw=tw)
+            tw=tw, sides=self.options['dv']['sides'])
 
         # Postprocessing on the dv object
         if 'postprocessing' in self.options['dv']:
@@ -266,8 +285,13 @@ class Monitor(object):
             try:
                 self.compute_velocity_change(
                     corr_file, tag, net, stat, cha)
+            except KeyError:
+                self.logger.exception(
+                    f'No correlation data found for {net}.{stat}.{cha} with '
+                    + f'tag {tag} in file {corr_file}.'
+                )
             except Exception as e:
-                self.logger.exception(e)
+                self.logger.exception(f'{e} for file {corr_file}.')
 
     def compute_components_average(self, method: str = 'AutoComponents'):
         """
@@ -289,13 +313,13 @@ class Monitor(object):
         """
         av_methods = (
             'autocomponents', 'crosscomponents', 'stationwide',
-            'crossstations')
+            'crossstations', 'betweenstations', 'betweencomponents')
         if method.lower() not in av_methods:
             raise ValueError('Averaging method not in %s.' % str(av_methods))
         infiles = glob(os.path.join(self.outdir, '*.npz'))
         if method.lower() == 'autocomponents':
             ch = 'av-auto'
-        elif method.lower() == 'crosscomponents':
+        elif method.lower() in ('betweencomponents', 'crosscomponents'):
             ch = 'av-xc'
         else:
             ch = 'av'
@@ -331,7 +355,8 @@ class Monitor(object):
                             or stations[0] != stations[1]:
                         infiles.remove(f)
                         continue
-                elif method.lower() == 'crosscomponents':
+                elif method.lower() in (
+                        'betweencomponents', 'crosscomponents'):
                     # Remove those from equal channels
                     components = f.split('.')[-2].split('-')
                     if components[0] == components[1] \
@@ -342,7 +367,7 @@ class Monitor(object):
                     if stations[0] != stations[1]:
                         infiles.remove(f)
                         continue
-                elif method.lower() == 'crossstations':
+                elif method.lower() in ('betweenstations', 'crossstations'):
                     if stations[0] == stations[1]:
                         infiles.remove(f)
                         continue
@@ -504,9 +529,16 @@ class Monitor(object):
                 cb = f(**func['args'])
 
         # Now, we make a copy of the cm to be trimmed
-        cbt = cb.copy().trim(
-            -(self.options['wfc']['tw_start']+self.options['wfc']['tw_len']),
-            (self.options['wfc']['tw_start']+self.options['wfc']['tw_len']))
+        if self.options['wfc']['tw_len'] is not None:
+            cbt = cb.copy().trim(
+                -(self.options['wfc']['tw_start']
+                    + self.options['wfc']['tw_len']),
+                (self.options['wfc']['tw_start']
+                    + self.options['wfc']['tw_len']))
+        else:
+            cbt = cb
+            self.options['dv']['tw_len'] = cb.stats.end_lag \
+                - self.options['wfc']['tw_start']
 
         self.logger.debug(
             'Preprocessing finished.\nExtracting reference trace...')
@@ -620,43 +652,204 @@ def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
     return netlist, statlist, infiles
 
 
-def average_components(dvs: List[DV]) -> DV:
+def average_components_mem_save(
+        dvs: Generator[DV, None, None], save_scatter: bool = True) -> DV:
     """
-    Averages the Similariy matrix of the three DV objects. Based on those,
+    Averages the Similariy matrix of the DV objects. Based on those,
+    it computes a new dv value and a new correlation value. Less memory intense
+    but slower than :func:`average_components`. Should be used if you run
+    out of memory using the former. Uses the sum of squares rule for the
+    standard deviation.
+
+    :param dvs: Iterator over dvs from the different components to compute an
+        average from. Note that it is possible to use almost anything as
+        input as long as the similarity matrices of the dvs have the same shape
+    :type dvs: Iterator[class:`~seismic.monitor.dv.DV`]
+    :param save_scatter: Saves the scattering of old values and correlation
+        coefficients to later provide a statistical measure. Defaults to True.
+    :type save_scatter: bool, optional
+    :raises TypeError: for DVs that were computed with different methods
+    :return: A single dv with an averaged similarity matrix.
+    :rtype: DV
+    """
+    statsl = []
+    corrs = []
+    stretches = []
+    for ii, dv in enumerate(dvs):
+        if ii == 0:
+            sim_mat_sum = np.zeros_like(dv.sim_mat)
+            n_stat = np.zeros_like(dv.corr)
+
+            stats = deepcopy(dv.stats)
+            strvec = dv.second_axis
+            value_type = dv.value_type
+            method = dv.method
+        if dv.method != method:
+            raise TypeError('DV has to be computed with the same method.')
+        if 'av' in dv.stats.channel+dv.stats.network+dv.stats.station:
+            warnings.warn('Averaging of averaged dvs not allowed. Skipping dv')
+            continue
+        if dv.sim_mat.shape != sim_mat_sum.shape or any(
+                dv.second_axis != strvec):
+            warnings.warn(
+                'The shapes of the similarity matrices of the input DVs '
+                + 'vary. Make sure to compute the dvs with the same parameters'
+                + ' (i.e., start & end dates, date-inc, stretch increment, '
+                + 'and stretch steps.\n\nThis dv will be skipped'
+            )
+            continue
+        sim_mat_sum += np.nan_to_num(dv.sim_mat)
+        n_stat[~np.isnan(dv.value)] += 1
+        if save_scatter:
+            corrs.append(dv.corr)
+            stretches.append(dv.value)
+        statsl.append(dv.stats)
+    # Now inf where it was nan before
+    av_sim_mat = (sim_mat_sum.T/n_stat).T
+    av_sim_mat[np.isinf(av_sim_mat)] = np.nan
+    # Now we would have to recompute the dv value and corr value
+    iimax = np.nanargmax(np.nan_to_num(av_sim_mat), axis=1)
+    corr = np.nanmax(av_sim_mat, axis=1)
+    dt = strvec[iimax]
+    if save_scatter:
+        # use sum of square for std
+        corrs = np.array(corrs)
+        stretches = np.array(stretches)
+    else:
+        corrs = None
+        stretches = None
+    if not all(np.array([st.channel for st in statsl]) == stats.channel):
+        stats['channel'] = 'av'
+    if not all(np.array([st.station for st in statsl]) == stats.station):
+        stats['station'] = 'av'
+    if not all(np.array([st.network for st in statsl]) == stats.network):
+        stats['network'] = 'av'
+    dvout = DV(
+        corr, dt, value_type, av_sim_mat, strvec,
+        method, stats, stretches=stretches, corrs=corrs,
+        n_stat=n_stat)
+    return dvout
+
+
+def average_components(dvs: List[DV], save_scatter: bool = True) -> DV:
+    """
+    Averages the Similariy matrix of the DV objects. Based on those,
     it computes a new dv value and a new correlation value.
 
     :param dvs: List of dvs from the different components to compute an
-            average from. Note that it is possible to use almost anything as
-            input (also from different stations). However, at the time,
-            the function requires the input to be of the same shape
-
+        average from. Note that it is possible to use almost anything as
+        input as long as the similarity matrices of the dvs have the same shape
     :type dvs: List[class:`~seismic.monitor.dv.DV`]
+    :param save_scatter: Saves the scattering of old values and correlation
+        coefficients to later provide a statistical measure. Defaults to True.
+    :type save_scatter: bool, optional
     :raises TypeError: for DVs that were computed with different methods
-    :return: A single dv with an averaged similarity matrix
+    :return: A single dv with an averaged similarity matrix.
     :rtype: DV
+
+    .. seealso::
+        If you should get an `OutOfMemoryError` consider using
+        :func:`average_components_mem_save`.
     """
-    shapes = []
+    dv_use = []
     for dv in dvs:
         if dv.method != dvs[0].method:
             raise TypeError('DV has to be computed with the same method.')
-        # adapt shape to maiximum
-        shapes.append(dv.sim_mat.shape)
-    #     if dv.sim_mat.shape[:-1] != shapes[0][:-1]:
-    #         raise ValueError(
-    #             'Only the time axis is allowed to have a different shape.' +
-    #             'Make sure you use the same number of stretching steps')
-    # shape = max(shapes)
-    sim_mats = [dv.sim_mat for dv in dvs]
+        if 'av' in dv.stats.channel+dv.stats.network+dv.stats.station:
+            warnings.warn('Averaging of averaged dvs not allowed. Skipping dv')
+            continue
+        if dv.sim_mat.shape != dvs[0].sim_mat.shape or any(
+                dv.second_axis != dvs[0].second_axis):
+            warnings.warn(
+                'The shapes of the similarity matrices of the input DVs '
+                + 'vary. Make sure to compute the dvs with the same parameters'
+                + ' (i.e., start & end dates, date-inc, stretch increment, '
+                + 'and stretch steps.\n\nThis dv will be skipped'
+            )
+            continue
+        dv_use.append(dv)
+    sim_mats = [dv.sim_mat for dv in dv_use]
     av_sim_mat = np.nanmean(sim_mats, axis=0)
     # Now we would have to recompute the dv value and corr value
+    iimax = np.nanargmax(np.nan_to_num(av_sim_mat), axis=1)
     corr = np.nanmax(av_sim_mat, axis=1)
-    strvec = dvs[0].second_axis
-    dt = strvec[np.nanargmax(np.nan_to_num(av_sim_mat), axis=1)]
-    stats = deepcopy(dvs[0].stats)
-    stats['channel'] = 'av'
+    strvec = dv_use[0].second_axis
+    dt = strvec[iimax]
+    if save_scatter:
+        stretches = np.array([dv.value for dv in dv_use])
+        corrs = np.array([dv.corr for dv in dv_use])
+        # # Number of stations per corr_start
+        n_stat = np.ones_like(stretches, dtype=int)
+        n_stat[np.where(np.isnan(stretches))] = 0
+        n_stat = np.sum(n_stat, axis=0)  # now this has the same shape as std
+    else:
+        stretches = None
+        corrs = None
+    stats = deepcopy(dv_use[0].stats)
+    if not all(np.array([dv.stats.channel for dv in dv_use]) == stats.channel):
+        stats['channel'] = 'av'
+    if not all(np.array([dv.stats.station for dv in dv_use]) == stats.station):
+        stats['station'] = 'av'
+    if not all(np.array([dv.stats.network for dv in dv_use]) == stats.network):
+        stats['network'] = 'av'
     dvout = DV(
-        corr, dt, dvs[0].value_type, av_sim_mat, strvec, dvs[0].method, stats)
+        corr, dt, dv_use[0].value_type, av_sim_mat, strvec,
+        dv_use[0].method, stats, stretches=stretches, corrs=corrs,
+        n_stat=n_stat)
     return dvout
+
+
+def average_dvs_by_coords(
+    dvs: List[DV], lat: Tuple[float, float], lon: Tuple[float, float],
+        el: Tuple[float, float] = (-1e6, 1e6), return_std: bool = False) -> DV:
+    """
+    Averages the Similariy matrix of the DV objects if they are inside of the
+    queried coordionates. Based on those,
+    it computes a new dv value and a new correlation value.
+
+    :param dvs: List of dvs from the different components to compute an
+        average from. Note that it is possible to use almost anything as
+        input as long as the similarity matrices of the dvs have the same shape
+    :type dvs: List[class:`~seismic.monitor.dv.DV`]
+    :param lat: Minimum and maximum latitude of the stations(s). Note that
+        for cross-correlations both stations must be inside of the window.
+    :type lat: Tuple[float, float]
+    :param lon: Minimum and maximum longitude of the stations(s). Note that
+        for cross-correlations both stations must be inside of the window.
+    :type lon: Tuple[float, float]
+    :param el: Minimum and maximum elevation of the stations(s) in m. Note that
+        for cross-correlations both stations must be inside of the window.
+        Defaults to (-1e6, 1e6) - i.e., no filter.
+    :type el: Tuple[float, float], optional
+    :param return_std: Save the standard deviation of the similarity
+        matrices into the dv object. Defaults to False.
+    :type return_std: bool, optional
+    :raises TypeError: for DVs that were computed with different methods
+    :return: A single dv with an averaged similarity matrix.
+    :rtype: DV
+    """
+    dv_filt = []
+    for dv in dvs:
+        s = dv.stats
+        if s.channel == 'av':
+            warnings.warn('Averaging of averaged dvs not allowed. Skipping dv')
+            continue
+        if all((
+            lat[0] <= s.stla <= lat[1], lat[0] <= s.evla <= lat[1],
+            lon[0] <= s.stlo <= lon[1], lon[0] <= s.evlo <= lon[1],
+                el[0] <= s.stel <= el[1], el[0] <= s.evel <= el[1])):
+            dv_filt.append(dv)
+    if not len(dv_filt):
+        raise ValueError(
+            'No DVs within geographical constraints found.')
+    av_dv = average_components(dv_filt, return_std)
+    s = av_dv.stats
+    # adapt header
+    s['network'] = s['station'] = 'geoav'
+    s['stel'] = s['evel'] = el
+    s['stlo'] = s['evlo'] = lon
+    s['stla'] = s['evla'] = lat
+    return av_dv
 
 
 def average_components_wfc(wfcs: List[WFC]) -> WFC:

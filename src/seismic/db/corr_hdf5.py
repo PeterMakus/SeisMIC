@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Thursday, 21st October 2021 03:15:18 pm
+Last Modified: Tuesday, 29th March 2022 11:00:42 am
 '''
 import ast
 import fnmatch
@@ -73,9 +73,18 @@ class DBHandler(h5py.File):
             try:
                 co_old = self.get_corr_options()
                 if co_old != co_to_hdf5(co):
-                    raise PermissionError('The output file already exists and \
-contains data with different processing parameters. Those parameters are:\n\
-    %s.' % str(co_old))
+                    try:
+                        diff = {k: (v, co_old[k]) for k, v in co_to_hdf5(
+                            co).items() if v != co_old[k]}
+                    except KeyError as e:
+                        raise PermissionError(
+                            f'One option is not defined in new dict. {e}'
+                        )
+                    raise PermissionError(
+                        'The output file already exists and contains data with'
+                        + ' different processing parameters. Differences are:'
+                        + '\nFirst: New parameters; Second: Old parameters'
+                        + f'\n{diff}')
             except KeyError:
                 self.add_corr_options(co)
 
@@ -187,7 +196,7 @@ omitted." % path, category=UserWarning)
             tag=tag, network=network, station=station, channel=channel,
             corr_st=corr_start, corr_et=corr_end)
         # Extremely ugly way of changing the path
-        if '*' not in path:
+        if '*' not in path and '?' not in path:
             data = np.array(self[path])
             header = read_hdf5_header(self[path])
             return CorrStream(CorrTrace(data, _header=header))
@@ -319,9 +328,10 @@ class CorrelationDataBase(object):
 
         if corr_options is None and mode != 'r':
             mode = 'r'
-            warnings.warn('Opening Correlation Databases without providing a \
-correlation options dictionary is only allowed in read only mode.\n\
-Setting mode read only `r`....')
+            warnings.warn(
+                'Opening Correlation Databases without providing a correlation'
+                + ' options dictionary is only allowed in read only mode.\n'
+                + 'Setting mode read only `r`....')
         # Create / read file
         if not path.split('.')[-1] == 'h5':
             path += '.h5'
@@ -364,13 +374,16 @@ def all_traces_recursive(
         elif not fnmatch.fnmatch(v.name, pattern) and v.name not in pattern:
             continue
         else:
-            try:
-                stream.append(
-                    CorrTrace(np.array(v), _header=read_hdf5_header(v)))
-            except ValueError:
-                warnings.warn(
-                    'Header could not be converted. Attributes are: %s' % (
-                        str(v.attrs)))
+            # try:
+            stream.append(
+                CorrTrace(np.array(v), _header=read_hdf5_header(v)))
+            # This even necessary?
+            # except ValueError:
+            #     print(v)
+            #     print(v.attrs)
+            #     warnings.warn(
+            #         'Header could not be converted. Attributes are: %s' % (
+            #             str(v.attrs)))
     return stream
 
 
@@ -413,7 +426,19 @@ def read_hdf5_header(dataset: h5py.Dataset) -> Stats:
     header = {}
     for key in attrs:
         if key in time_keys:
-            header[key] = UTCDateTime(attrs[key])
+            try:
+                header[key] = UTCDateTime(attrs[key])
+            except ValueError as e:
+                # temporary fix of obspy's UTCDateTime issue. SHould be removed
+                # as soon as they release version 1.23
+                # Actually, I can leave it. Obspy 1.23 fixes this issue, but
+                # for users with older obspy it's good to be kepy
+                if attrs[key][4:8] == '360T':
+                    new = list(attrs[key])
+                    new[6] = '1'
+                    header[key] = UTCDateTime(''.join(new)) - 86400
+                else:
+                    raise e
         elif key == 'processing':
             header[key] = list(attrs[key])
         else:
@@ -427,8 +452,26 @@ def co_to_hdf5(co: dict) -> dict:
         'subdir', 'read_start', 'read_end', 'read_len', 'read_inc',
         'combination_method', 'combinations', 'starttime']
     for key in remk:
-        coc.pop(key, None)
-    coc['corr_args'].pop('combinations', None)
-    coc['subdivision'].pop('recombine_subdivision', None)
-    coc['subdivision'].pop('delete_subdivision', None)
+        try:
+            coc.pop(key, None)
+        except KeyError:
+            pass
+    try:
+        coc['corr_args'].pop('combinations', None)
+    except KeyError:
+        pass
+    try:
+        coc['subdivision'].pop('recombine_subdivision', None)
+    except KeyError:
+        pass
+    try:
+        coc['subdivision'].pop('delete_subdivision', None)
+    except KeyError:
+        pass
+    try:
+        for step in coc['preProcessing']:
+            if 'stream_mask_at_utc' in step['function']:
+                coc['preProcessing'].remove(step)
+    except KeyError:
+        pass
     return coc

@@ -8,9 +8,9 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 8th July 2021 10:37:21 am
-Last Modified: Thursday, 21st October 2021 02:45:38 pm
+Last Modified: Friday, 10th February 2023 04:09:21 pm
 '''
-from collections import Iterable
+from collections.abc import Iterable
 
 from obspy.core.utcdatetime import UTCDateTime
 from obspy.core.trace import Stats

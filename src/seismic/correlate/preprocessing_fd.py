@@ -11,7 +11,7 @@ Module containing functions for preprocessing in the frequency domain
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:40:11 pm
-Last Modified: Thursday, 21st October 2021 02:38:43 pm
+Last Modified: Wednesday, 9th February 2022 02:49:00 pm
 '''
 from copy import deepcopy
 
@@ -108,7 +108,7 @@ def spectralWhitening(B: np.ndarray, args: dict, params) -> np.ndarray:
                     np.atleast_2d(np.mean(absB[:, ii:ii+3], axis=1)).T, [1, 3])
     with np.errstate(invalid='raise'):
         try:
-            B /= absB
+            B = np.true_divide(B, absB)
         except FloatingPointError as e:
             errargs = np.argwhere(absB == 0)
             # Report error where there is zero divides for a non-zero freq

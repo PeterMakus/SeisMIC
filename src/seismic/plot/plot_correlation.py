@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Monday, 8th November 2021 02:49:23 pm
+Last Modified: Thursday, 6th October 2022 12:03:49 pm
 '''
 import os
 import warnings
@@ -69,8 +69,8 @@ def plot_ctr(
         ax.set_ylabel("Correlation")
         # Start time in station stack does not make sense
         text = '%s - %s\n%s' % (
-            corr.stats.corr_start._strftime_replacement('%Y/%m/%d %H:%M'),
-            corr.stats.corr_end._strftime_replacement('%Y/%m/%d %H:%M'),
+            corr.stats.corr_start.strftime('%Y/%m/%d %H:%M'),
+            corr.stats.corr_end.strftime('%Y/%m/%d %H:%M'),
             corr.get_id())
         # corr.stats.corr_start.isoformat(sep=" ") + "\n" + corr.get_id()
         ax.text(0.995, 1.0-0.005*ratio, text, transform=ax.transAxes,
@@ -88,7 +88,7 @@ def plot_ctr(
     if outputdir is not None:
         filename = os.path.join(
             outputdir, corr.get_id() + "_"
-            + corr.stats.starttime._strftime_replacement('%Y%m%dT%H%M%S')
+            + corr.stats.starttime.strftime('%Y%m%dT%H%M%S')
             + ".pdf")
         plt.savefig(filename, format="pdf")
     return ax
@@ -100,7 +100,8 @@ def plot_cst(
     ylimits: list or tuple or None = None, scalingfactor: float = 2.0,
     ax: plt.Axes = None, linewidth: float = 0.25,
     outputfile: str or None = None, title: str or None = None,
-        type: str = 'heatmap'):
+    type: str = 'heatmap', cmap: str = 'seismic', vmin: float = None,
+        vmax: float = None):
     """
     Creates a section or heat plot of all correlations in this stream.
 
@@ -128,7 +129,10 @@ def plot_cst(
     :type title: str, optional
     :param type: can be set to 'heat' for a heatmap or 'section' for
         a wiggle type plot. Default to `heat`
-    :type type: str
+    :type type: str, optional
+    :param cmap: Decides about colormap if type == 'heatmap'.
+        Defaults to 'inferno'.
+    :type cmap: str, optional
     :return: returns the axes object.
     :rtype: `matplotlib.pyplot.Axes`
 
@@ -154,7 +158,8 @@ def plot_cst(
         if type == 'section':
             times = sect_plot_corr_start(cst, ax, scalingfactor, linewidth)
         elif type == 'heatmap':
-            times = heat_plot_corr_start(cst, ax)
+            times = heat_plot_corr_start(
+                cst, ax, cmap=cmap, vmin=vmin, vmax=vmax)
         else:
             raise NotImplementedError(
                 'Unknown or not implemented plot type %s.' % type)
@@ -178,16 +183,13 @@ def plot_cst(
         plt.xlim(times[0], times[-1])
     else:
         plt.xlim(timelimits)
-    ax.invert_yaxis()
 
-    plt.xlabel(r"Lag Time [s]")
+    plt.xlabel(r"$\tau$ [s]")
 
     plt.title(title)
 
     # Set output directory
-    if outputfile is None:
-        plt.show()
-    else:
+    if outputfile is not None:
         plt.savefig(outputfile, dpi=300, transparent=True)
     return ax
 
@@ -208,11 +210,13 @@ def sect_plot_corr_start(
 
     ax.yaxis.set_major_locator(mpl.dates.AutoDateLocator())
 
-    ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h'))
+    ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h %y'))
+    ax.invert_yaxis()
     return times
 
 
-def heat_plot_corr_start(cst: Stream, ax: plt.Axes):
+def heat_plot_corr_start(
+        cst: Stream, ax: plt.Axes, cmap: str, vmin: float, vmax: float):
     data = np.empty((cst.count(), cst[0].stats.npts))
     # y grid
     y = []
@@ -220,9 +224,15 @@ def heat_plot_corr_start(cst: Stream, ax: plt.Axes):
         data[ii, :] = ctr.data
         y.append(ctr.stats['corr_start'].datetime)
         times = ctr.times()
-    plt.pcolormesh(times, np.array(y), data)
+    ds = plt.pcolormesh(
+        times, np.array(y), data, shading='auto', cmap=cmap, vmin=vmin,
+        vmax=vmax)
+    plt.colorbar(
+        ds, label='correlation coefficient', shrink=.6,
+        orientation='horizontal')
     ax.yaxis.set_major_locator(mpl.dates.AutoDateLocator())
-    ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h'))
+    ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h %y'))
+    ax.invert_yaxis()
     return times
 
 
@@ -233,11 +243,12 @@ def sect_plot_dist(
         ydata = ctr.data
         times = ctr.times()
 
-        ytmp = ydata * scalingfactor + ctr.stats.dist/1000
+        ytmp = ydata * scalingfactor + ctr.stats.dist
 
         ax.plot(times, ytmp, 'k', lw=linewidth, zorder=-ii + 0.1)
         plt.ylabel(r"Distance [km]")
     # Set label locations.
-    step = round((cst[-1].stats.dist - cst[0].stats.dist)/10000)
-    plt.yticks(np.arange(0, ctr.stats.dist/1000+step, step, dtype=int))
+    # step = round((cst[-1].stats.dist - cst[0].stats.dist)/10000)
+    # plt.yticks(np.arange(0, ctr.stats.dist/1000+step, step, dtype=int))
+    plt.yticks(np.linspace(0, ctr.stats.dist, 10, dtype=int))
     return times

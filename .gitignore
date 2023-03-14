@@ -9,4 +9,7 @@ examples/data
 testnb.ipynb
 *.ipynb_checkpoints
 docs/_build
+docs/source/_build
 .coverage
+build
+dist

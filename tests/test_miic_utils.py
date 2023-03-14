@@ -8,10 +8,12 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Thursday, 21st October 2021 02:53:20 pm
+Last Modified: Wednesday, 13th April 2022 02:53:06 pm
 '''
+from copy import deepcopy
 import unittest
 import math as mathematics
+from unittest import mock
 
 import numpy as np
 from obspy.core.trace import Stats
@@ -20,6 +22,7 @@ from obspy import Inventory, read, UTCDateTime, Trace
 from obspy.core import AttribDict
 from obspy.core.inventory.network import Network
 from obspy.core.inventory.station import Station
+from scipy.ndimage import convolve1d
 
 from seismic.utils.fetch_func_from_str import func_from_str
 import seismic.utils.miic_utils as mu
@@ -62,6 +65,24 @@ class TestBazCalc(unittest.TestCase):
         self.assertEqual(dist, self.dist)
 
 
+class TestFilterStat_Dist(unittest.TestCase):
+    @mock.patch('seismic.utils.miic_utils.inv_calc_az_baz_dist')
+    def test_result_True(self, calc_dist_mock: mock.MagicMock):
+        dist = np.random.randint(100, 1e6)  # in m
+        calc_dist_mock.return_value = (
+            np.random.randint(0, 360), np.random.randint(0, 360), dist)
+        queried_dist = dist + np.random.randint(10, 1000)
+        self.assertTrue(mu.filter_stat_dist('bla', 'blub', queried_dist))
+
+    @mock.patch('seismic.utils.miic_utils.inv_calc_az_baz_dist')
+    def test_result_False(self, calc_dist_mock: mock.MagicMock):
+        dist = np.random.randint(100, 1e6)  # in m
+        calc_dist_mock.return_value = (
+            np.random.randint(0, 360), np.random.randint(0, 360), dist)
+        queried_dist = dist - np.random.randint(10, 1000)
+        self.assertFalse(mu.filter_stat_dist('bla', 'blub', queried_dist))
+
+
 class TestResampleOrDecimate(unittest.TestCase):
     def test_decimate(self):
         st = read()
@@ -79,11 +100,34 @@ class TestResampleOrDecimate(unittest.TestCase):
         self.assertIn('resample', st_filt[0].stats.processing[-1])
         self.assertIn('no_filter=True', st_filt[0].stats.processing[-1])
 
+    def test_filter_w_high_factor(self):
+        # Here we filter 10% lower than Nyquist
+        st = read()
+        freq_new = 1
+        st_filt = mu.resample_or_decimate(st, freq_new)
+        self.assertEqual(st_filt[0].stats.sampling_rate, freq_new)
+        self.assertIn('decimate', st_filt[0].stats.processing[-1])
+        self.assertIn('filter', st_filt[0].stats.processing[-2])
+        self.assertIn(
+            "filter(options={'freq': 0.45, 'maxorder': 12}:"
+            + ":type='lowpass_cheby_2')", st_filt[0].stats.processing[-2])
+
     def test_new_freq_higher_than_native(self):
         st = read()
         freq_new = st[0].stats.sampling_rate+5
         with self.assertRaises(ValueError):
             _ = mu.resample_or_decimate(st, freq_new, filter=False)
+
+    def test_st_differing_sr(self):
+        st = read()
+        st[0].decimate(2)
+        st[1].decimate(4)
+        freq_new = st[0].stats.sampling_rate
+        with self.assertWarns(UserWarning):
+            st_out = mu.resample_or_decimate(st, freq_new, filter=False)
+        self.assertEqual(st_out[2].stats.sampling_rate, freq_new)
+        self.assertEqual(st_out[0].stats.sampling_rate, freq_new)
+        self.assertEqual(st_out[1].stats.sampling_rate, freq_new/2)
 
 
 class TestTrimTraceDelta(unittest.TestCase):
@@ -223,6 +267,38 @@ class TestDiscardShortTraces(unittest.TestCase):
         mu.discard_short_traces(stin, 10)
         self.assertEqual(st.count(), stin.count())
         self.assertEqual(st, stin)
+
+
+class TestNanMovingAv(unittest.TestCase):
+    def setUp(self) -> None:
+        self.data = np.random.random((500,))
+        self.exp = convolve1d(self.data, np.ones(101))/101
+
+    def test_result(self):
+        out = mu.nan_moving_av(self.data, 50)
+        # There will be a slight difference at the ends of the array
+        # as scipy will be less precise here (the weighting is not correct)
+        # The first 50 elements
+        np.testing.assert_allclose(self.exp[:50], out[:50], rtol=1e-1)
+        np.testing.assert_allclose(self.exp[-50:], out[-50:], rtol=1e-1)
+        np.testing.assert_allclose(self.exp[50:-50], out[50:-50])
+
+    def test_result_nan(self):
+        # test the same with nans
+        data = deepcopy(self.data)
+        data[125] = np.nan
+        out = mu.nan_moving_av(data, 50)
+        # Changing one element should be covered by 2% tolerance
+        np.testing.assert_allclose(self.exp[50:-50], out[50:-50], rtol=2e-2)
+
+    def test_axis2(self):
+        data = np.random.random((25, 25, 25))
+        for ax in [0, 1, 2]:
+            exp = convolve1d(data, np.ones(11), axis=ax)/11
+            out = mu.nan_moving_av(data, 5, axis=ax)
+            np.testing.assert_allclose(
+                exp.swapaxes(0, ax)[5:-5], out.swapaxes(0, ax)[5:-5])
+            # Let's ignore the edge effects for now
 
 
 class TestStreamRequireDtype(unittest.TestCase):

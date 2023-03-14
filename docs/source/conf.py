@@ -12,18 +12,18 @@
 #
 import os
 import sys
-# sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../../src'))
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'SeisMIC'
-copyright = '2021, The SeisMIC development team.'
-author = 'The SeisMIC development Team'
+copyright = '2022, The SeisMIC development team.'
+author = \
+    'Peter Makus, Christoph Sens-Schönfelder, and the SeisMIC development Team'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1'
+release = '0.1.30'
 
 
 # -- General configuration ---------------------------------------------------
@@ -74,7 +74,7 @@ html_static_path = ['_static']
 
 
 html_title = "SeisMIC"
-# html_logo = "chapters/figures/logo.png"
+html_logo = ""
 # html_favicon = "chapters/figures/favicon.ico"
 
 html_context = {

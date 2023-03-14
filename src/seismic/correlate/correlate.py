@@ -8,13 +8,15 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 10th November 2021 05:16:38 pm
+Last Modified: Friday, 11th February 2022 03:02:23 pm
 '''
+from copy import deepcopy
 from typing import Iterator, List, Tuple
 from warnings import warn
 import os
 import logging
 import json
+import warnings
 import yaml
 
 from mpi4py import MPI
@@ -96,15 +98,29 @@ class Correlator(object):
 
         # Write the options dictionary to the log file
         if self.rank == 0:
+            opt_dump = deepcopy(options)
+            # json cannot write the UTCDateTime objects that might be in here
+            for step in opt_dump['co']['preProcessing']:
+                if 'stream_mask_at_utc' in step['function']:
+                    startsstr = [
+                        t.format_fissures() for t in step['args']['starts']]
+                    step['args']['starts'] = startsstr
+                    if 'ends' in step['args']:
+                        endsstr = [
+                            t.format_fissures() for t in step['args']['ends']]
+                        step['args']['ends'] = endsstr
             with open(os.path.join(
                     logdir, 'params%s.txt' % tstr), 'w') as file:
-                file.write(json.dumps(options, indent=1))
+                file.write(json.dumps(opt_dump, indent=1))
 
         self.options = options['co']
 
         # requested combis?
         if 'xcombinations' in self.options:
             self.rcombis = self.options['xcombinations']
+            if self.rcombis == 'None':
+                # cumbersome, but someone used it wrong so let's hardcode
+                self.rcombis = None
         else:
             self.rcombis = None
 
@@ -240,7 +256,18 @@ class Correlator(object):
         cst = CorrStream()
         # Fetch station coordinates
         if self.rank == 0:
-            inv = self.store_client.read_inventory()
+            try:
+                inv = self.store_client.read_inventory()
+            except Exception as e:
+                if self.options['remove_response']:
+                    raise FileNotFoundError(
+                        'No response information could be found.'
+                        + 'If you set remove_response to True, you will need'
+                        + 'a station inventory.')
+                logging.warning(e)
+                warnings.warn(
+                    'No Station Inventory found. Proceeding without.')
+                inv = None
         else:
             inv = None
         inv = self.comm.bcast(inv, root=0)
@@ -259,6 +286,7 @@ class Correlator(object):
                     cst.clear()
                 elif cst.count():
                     self._write(cst, tag='subdivision')
+                    cst.clear()
 
         # write the remaining data
         if self.options['subdivision']['recombine_subdivision'] and \
@@ -346,13 +374,11 @@ class Correlator(object):
                 st.append(tr)
         cstlist.append(st)
         del cst
-
         # Decide which process writes to which station
         pmap = (np.arange(len(cstlist))*self.psize)/len(cstlist)
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
         ind = np.arange(len(cstlist))[ind]
-
         for ii in ind:
             outf = os.path.join(self.corr_dir, '%s.%s.h5' % (
                 cstlist[ii][0].stats.network,
@@ -413,7 +439,7 @@ class Correlator(object):
             for net, stat in np.array(self.station)[ind]:
                 # Load data
                 resp.extend(
-                    self.store_client.select_inventory_or_load_remote(
+                    self.store_client.inventory.select(
                         net, stat))
                 stext = self.store_client._load_local(
                     net, stat, '*', '*', startt, endt, True, False)
@@ -621,13 +647,21 @@ def st_to_np_array(st: Stream, npts: int) -> Tuple[np.ndarray, Stream]:
 def _compare_existing_data(ex_corr: dict, tr0: Stream, tr1: Stream) -> bool:
     try:
         if tr0.stats.starttime.format_fissures() in ex_corr[
-            '%s.%s' % (tr0.stats.network, tr0.stats.station)][
-            '%s.%s' % (tr1.stats.network, tr1.stats.station)][
+            f'{tr0.stats.network}.{tr0.stats.station}'][
+                f'{tr1.stats.network}.{tr1.stats.station}'][
             '%s-%s' % (
                 tr0.stats.channel, tr1.stats.channel)]:
             return True
     except KeyError:
-        pass
+        try:
+            if tr1.stats.starttime.format_fissures() in ex_corr[
+                f'{tr1.stats.network}.{tr1.stats.station}'][
+                    f'{tr0.stats.network}.{tr0.stats.station}'][
+                '%s-%s' % (
+                    tr1.stats.channel, tr0.stats.channel)]:
+                return True
+        except KeyError:
+            pass
     return False
 
 

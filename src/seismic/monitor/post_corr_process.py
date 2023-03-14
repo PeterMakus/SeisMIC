@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Wednesday, 17th November 2021 09:37:40 am
+Last Modified: Tuesday, 21st June 2022 05:06:49 pm
 '''
 
 from typing import List, Tuple
@@ -26,7 +26,29 @@ from seismic.monitor.stretch_mod import multi_ref_vchange_and_align, \
 from seismic.correlate.stats import CorrStats
 
 
-# This needs some tidying
+def corr_mat_clip(A: np.ndarray, thres: float, axis: int) -> np.ndarray:
+    """
+    Clip the Input Matrix upper and lower bounds to a multiple of its
+    standard deviation. `thres` determines the factor and `axis` the axis
+    the std should be computed over
+
+    :param A: Input Array to be clipped
+    :type A: np.ndarray
+    :param thres: factor of the standard deviation to clip by
+    :type thres: float
+    :param axis: Axis to compute the std over and, subsequently clip over.
+        Can be None, if you wish to compute floating point rather than a
+        vector. Then, the array will be clipped evenly.
+    :type axis: int
+    :return: The clipped array
+    :rtype: np.ndarray
+    """
+    clipv = thres * np.std(A, axis=axis)
+    if axis == 1:
+        A = np.clip(A.T, -clipv, clipv).T
+    else:
+        A = np.clip(A, -clipv, clipv)
+    return A
 
 
 def _smooth(
@@ -233,12 +255,16 @@ def corr_mat_trim(
 
     # select requested part from matrix
     # +1 is to include the last sample
-    data = data[:, start: end + 1]
+    if len(data.shape) == 1:
+        data = data[start:end+1]
+        stats['npts'] = len(data)
+    else:
+        data = data[:, start:end + 1]
+        stats['npts'] = data.shape[1]
 
     # set starttime, endtime and npts of the new stats
     stats['start_lag'] = starttime
 
-    stats['npts'] = data.shape[1]
     return data, stats
 
 
@@ -277,7 +303,7 @@ def corr_mat_resample(
             start_times.")
 
     # old sampling times
-    otime = [ii.timestamp for ii in stats['corr_start']]
+    otime = np.array([ii.timestamp for ii in stats['corr_start']])
     if isinstance(start_times[0], UTCDateTime):
         start_times = [ii.timestamp for ii in start_times]
 
@@ -290,7 +316,7 @@ def corr_mat_resample(
     else:
         if len(start_times) == 1:
             # there is only one start_time given and no end_time => average all
-            etime = stats['corr_end'][-1]
+            etime = np.array([stats['corr_end'][-1].timestamp])
         else:
             stime = np.array(stime)  # Cannot be a list for this operation
             etime = stime + (stime[1] - stime[0])
@@ -934,7 +960,7 @@ def corr_mat_stretch(
 def corr_mat_shift(
     data: np.ndarray, stats: CorrStats, ref_trc: np.ndarray = None,
     tw: List[np.ndarray] = None, shift_range: float = 10,
-    shift_steps: int = 100, sides: str = 'both',
+    shift_steps: int = 101, sides: str = 'both',
         return_sim_mat: bool = False) -> dict:
     """ Time shift estimate through shifting and comparison.
 
@@ -1001,7 +1027,7 @@ def corr_mat_shift(
 
     data = deepcopy(data)
 
-    dta = stats.start_lag
+    dta = -stats.start_lag
     dte = stats.end_lag
 
     # format (trimm) the matrix for zero-time to be either at the beginning
@@ -1012,40 +1038,48 @@ def corr_mat_shift(
     # reference also needs to be trimmed. To do so we append the reference to
     # the matrix, trimm it and remove the reference again
     if ref_trc is not None:
+        rts = ref_trc.shape
+        if len(rts) == 1:
+            nr = 1
+        else:
+            nr = rts[0]
         data = np.concatenate((
             data, np.atleast_2d(ref_trc)), 0)
+        reft = np.tile([UTCDateTime(1900, 1, 1)], (nr))
+        stats['corr_start'] = np.concatenate((stats['corr_start'], reft), 0)
 
     # trim the marices
-    if sides == "single":
+    if sides == "single" or sides == 'right':
         # extract the time>0 part of the matrix
-        corr_mat = corr_mat_trim(data, stats, 0, dte)
+        data, stats = corr_mat_trim(data, stats, 0, dte)
     else:
         # extract the central symmetric part (if dt<0 the trim will fail)
         dt = min(dta, dte)
-        corr_mat = corr_mat_trim(data, stats, -dt, dt)
+        data, stats = corr_mat_trim(data, stats, -dt, dt)
 
     # create or extract references
     if ref_trc is None:
         ref_trc = corr_mat_extract_trace(data, stats)
     else:
         # extract and remove references from corr matrix again
-        ref_trc = data[-1, :]
+        ref_trc = np.squeeze(data[-nr:, :])
+        data = data[:-nr, :]
+        stats['corr_start'] = stats['corr_start'][:-nr]
 
     # set sides
     if sides == 'both':
         ss = False
-    elif sides == 'right':
+    elif sides == 'right' or sides == 'single':
         ss = True
     else:
         raise ValueError(
             "Error: side is not recognized. Use either both or right.")
 
     dt = time_shift_estimate(
-        corr_mat['corr_data'], ref_trc=ref_trc, tw=tw, shift_range=shift_range,
+        data, ref_trc=ref_trc, tw=tw, shift_range=shift_range,
         shift_steps=shift_steps, single_sided=ss,
         return_sim_mat=return_sim_mat)
 
     # add the keys the can directly be transferred from the correlation matrix
-    dt['corr_start'] = stats['corr_start']
     dt['stats'] = stats
     return dt

@@ -10,14 +10,14 @@ Module that contains functions for preprocessing in the time domain
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:24:01 pm
-Last Modified: Thursday, 21st October 2021 02:38:52 pm
+Last Modified: Wednesday, 16th March 2022 03:48:53 pm
 '''
 from copy import deepcopy
 
 import numpy as np
 from scipy.fftpack import next_fast_len
 from scipy import signal
-from scipy.signal.signaltools import detrend as sp_detrend
+from scipy.signal import detrend as sp_detrend
 import obspy.signal as osignal
 
 from seismic.utils.fetch_func_from_str import func_from_str
@@ -64,7 +64,7 @@ def detrend(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     except ZeroDivisionError:
         # When the array is nothing but nans
         return A
-    return sp_detrend(A, axis=0, overwrite_data=True, **args)
+    return A
 
 
 def mute(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
@@ -289,12 +289,12 @@ def TDnormalization(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     if args['windowLength'] <= 0:
         raise ValueError('Window Length has to be greater than 0.')
     # filter if args['filter']
-    B = deepcopy(A)
     if args['filter']:
-        func = getattr(osignal, args['filter']['type'])
-        fargs = deepcopy(args['filter'])
-        fargs.pop('type')
-        B = func(A.T, df=params['sampling_rate'], **fargs).T
+        B = TDfilter(A, args['filter'], params)
+        # func = getattr(osignal, args['filter']['type'])
+        # fargs = deepcopy(args['filter'])
+        # fargs.pop('type')
+        # B = func(A.T, df=params['sampling_rate'], **fargs).T
     else:
         B = deepcopy(A)
     # simple calculation of envelope

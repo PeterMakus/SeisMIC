@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Wednesday, 10th November 2021 10:31:11 am
+Last Modified: Wednesday, 13th April 2022 02:46:18 pm
 '''
 from typing import List, Tuple
 import logging
@@ -142,6 +142,17 @@ def resample_or_decimate(
     """
     if isinstance(data, Stream):
         sr = data[0].stats.sampling_rate
+        srl = [tr.stats.sampling_rate for tr in data]
+        if len(set(srl)) != 1:
+            # differing sampling rates in stream
+            for tr in data:
+                try:
+                    tr = resample_or_decimate(tr, sampling_rate_new, filter)
+                except ValueError:
+                    warnings.warn(
+                        f'Trace {tr} not downsampled. Sampling rate is lower'
+                        + ' than requested sampling rate.')
+            return data
     elif isinstance(data, Trace):
         sr = data.stats.sampling_rate
     else:
@@ -156,10 +167,15 @@ def resample_or_decimate(
 
     # Chosen this filter design as it's exactly the same as
     # obspy.Stream.decimate uses
-    if filter:
-        freq = sr * 0.5 / float(sr/srn)
+    # Decimation factor
+    factor = float(sr)/float(srn)
+    if filter and factor <= 16:
+        freq = sr * 0.5 / factor
         data.filter('lowpass_cheby_2', freq=freq, maxorder=12)
-
+    elif filter:
+        # Use a different filter
+        freq = sr * 0.45 / factor
+        data.filter('lowpass_cheby_2', freq=freq, maxorder=12)
     if sr/srn == sr//srn:
         return data.decimate(int(sr//srn), no_filter=True)
     else:
@@ -269,7 +285,7 @@ def load_header_from_np_array(array_dict: dict) -> dict:
                 d[k] = array_dict[k][0]
             except IndexError:
                 warnings.warn(
-                    'Key {k} could not be loaded into the header.')
+                    f'Key {k} could not be loaded into the header.')
     return d
 
 
@@ -339,7 +355,36 @@ def discard_short_traces(st: Stream, length: float):
     for tr in st:
         if tr.stats.npts/tr.stats.sampling_rate <= length:
             st.remove(tr)
+            logging.debug(f'Discarding short Trace {tr}.')
     return
+
+
+def nan_moving_av(
+        data: np.ndarray, win_half_len: int, axis: int = -1) -> np.ndarray:
+    """
+    Returns a filtered version of data, disregarding the nans.
+    Moving mean window length is win_half_len*2+1.
+
+    :param data: Array to be filtered
+    :type data: np.ndarray
+    :param win_half_len: Half length of the boxcar filter (len = halflen*2+1)
+    :type win_half_len: int
+    :param axis: Axis to filter along, defaults to -1
+    :type axis: int, optional
+    :return: The filtered array
+    :rtype: np.ndarray
+    """
+    # Swap axes, so we can work on queried axis
+    dataswap = data.swapaxes(0, axis)
+    data_smooth = np.empty_like(dataswap)
+    for ii in range(dataswap.shape[0]):
+        start = ii - win_half_len
+        if start < 0:
+            start = 0
+        # weighted average
+        data_smooth[ii] = np.nanmean(
+            dataswap[start:ii+win_half_len+1], axis=0)
+    return data_smooth.swapaxes(0, axis)
 
 
 def stream_require_dtype(st: Stream, dtype: type) -> Stream:
