@@ -60,6 +60,7 @@ co:
     # preprocessing of the original length time series
     # these function work on an obspy.Stream object given as first argument
     # and return an obspy.Stream object.
+    # available preimplemented functions are in seismic.correlate.preprocessing_stream
     preProcessing : [
                     {'function':'seismic.correlate.preprocessing_stream.detrend_st',
                     'args':{'type':'linear'}},
@@ -90,7 +91,7 @@ co:
         delete_subdivision : False
 
     # parameters for correlation preprocessing
-    # Standard functions reside in seismic.correlate.preprocessing_td
+    # Standard functions reside in seismic.correlate.preprocessing_td and preprocessing_fd, respectively
     corr_args : {'TDpreProcessing':[
                                     {'function':'seismic.correlate.preprocessing_td.detrend',
                                     'args':{'type':'linear'}},
