@@ -1,3 +1,6 @@
+.. image:: ../figures/seismic_logo_small.svg
+
+
 Introduction: Noise Interferometry with Green's Function Retrieval
 ==================================================================
 Most of today's ambient seismic noise tomography studies are based on the assumption that the Green's function between two stations can be approximated by the Cross-correlation of the noise between the stations.

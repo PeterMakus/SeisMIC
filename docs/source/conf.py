@@ -73,8 +73,8 @@ html_theme = 'pydata_sphinx_theme'  # 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 
-html_title = "SeisMIC"
-html_logo = ""
+html_title = ""
+html_logo = "source/figures/seismic_logo_small.png"
 # html_favicon = "chapters/figures/favicon.ico"
 
 html_context = {
