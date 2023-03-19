@@ -74,7 +74,7 @@ html_static_path = ['_static']
 
 
 html_title = ""
-html_logo = "source/figures/seismic_logo_small.png"
+html_logo = "source/figures/seismic_logo_small.svg"
 # html_favicon = "chapters/figures/favicon.ico"
 
 html_context = {
