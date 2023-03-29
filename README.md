@@ -70,4 +70,10 @@ SeisMIC comes with a few tutorials (Jupyter notebooks). You can find those in th
 If you should use SeisMIC to create published scientific content please cite [Makus, Peter; Sens-Schönfelder, Christoph (2022): Seismological Monitoring using Interferometric Concepts (SeisMIC). V. 0.1.27. GFZ Data Services. doi: 10.5880/GFZ.2.4.2022.002](https://doi.org/10.5880/GFZ.2.4.2022.002).
 
 ## Reporting Bugs / Contact the developers
-This version is an early release. If you encounter any issues or unexpected behaviour, please [open an issue](https://github.com/PeterMakus/SeisMIC/issues/new) here on GitHub or [contact the developers](mailto:makus@gfz-potsdam.de).
+This version is an early release. If you encounter any issues or unexpected behaviour, please [open an issue](https://github.com/PeterMakus/SeisMIC/issues/new/choose) here on GitHub.
+
+## Questions?
+If you have any questions that do not require any changes in the source code, please use the [discussions feature](https://github.com/PeterMakus/SeisMIC/discussions)
+
+## Contributing
+Thank you for contributing to PyGLImER! Have a look at our [guidelines for contributors](https://github.com/PeterMakus/SeisMIC/blob/main/CONTRIBUTING.md)

@@ -32,7 +32,7 @@ Additionally take care to not add big files. Even for tests we generally only ac
 If you want to ask a question about a SeisMIC aspect, please first of all..
 
  * search the [docs](https://petermakus.github.io/SeisMIC/)
- * if you cannot find an answer, open an [issue](https://github.com/PeterMakus/SeisMIC/issues/new)
+ * if you cannot find an answer, open an [issue](https://github.com/PeterMakus/SeisMIC/issues/new/choose)
 
 If you want to post a problem/bug, to help us understand and resolve your issue
 please check that you have provided the information below:
