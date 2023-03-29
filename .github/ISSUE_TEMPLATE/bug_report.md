@@ -1,36 +1,76 @@
----
+# https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests
 name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
-assignees: ''
+description: Report a bug in ObsPy
+labels: ["bug-unconfirmed"]
+body:
+  - type: markdown
+    attributes:
+      value: For generic and usage questions, please use our [user forum](https://discourse.obspy.org/) instead. You will reach more people there and we hope to be able to get some burden off of our small core developer team. You can conveniently sign in with your GitHub account (other login options are available too). Please also make sure to search the forum for existing discussions that might match your question.
+  - type: checkboxes
+    id: did-check-existing-issues
+    attributes:
+      label: Avoid duplicates
+      description: Please make sure that the bug wasn't already reported or even fixed by [searching in our existing issues](https://github.com/PeterMakus/SeisMIC/issues?q=)
+      options:
+        - label: I searched existing issues
+          required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Bug Summary
+      description: Describe the bug in your own words. If it used to work before, what version did it work on?
+      placeholder: 
+      value:
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Code to Reproduce
+      description: If possible, please provide a [minimum self-contained example](http://sscce.org/) Python snippet. The shorter and more down to the point, the easier it is for us to identify the problem and the faster it will get fixed =)
+      placeholder: |
+          Paste your Python code here
 
----
+          x.append(3)
+      render: python
+  - type: textarea
+    id: traceback
+    attributes:
+      label: Error Traceback
+      description: If applicable, please provide an error traceback
+      placeholder: |
+          Paste your error traceback here
 
-## Avoid Duplicates
-[] Yes, I have searched the discussions, documentation, and other issues and am sure that this is not a duplicate.
-
-## Describe the bug
-A clear and concise description of what the bug is.
-
-*Paste the output / error here.*
-
-## To Reproduce
-Add a simple code example that reproduces the bug here
-
-
-## Expected behaviour 
-A clear and concise description of what you expected to happen.
-
-## please complete the following information
- - OS: [e.g. Ubuntu, MacOS, Windows]
- - SeisMIC Version [e.g. 0.1.22]
- - how did you install SeisMIC (from source code, PyPi (pip install), ..., are you using a virtual environment)
- - other installed packages (e.g., via `conda list`)
-
-
-## Additional context
-[] this is a regression (Used to work in an earlier version of SeisMIC)
-     + if yes, please note when it used to work.
-
-Add any other context about the problem here.
+          Traceback (most recent call last):
+            File "<stdin>", line 1, in <module>
+          AttributeError: 'tuple' object has no attribute 'append'
+      render: Python traceback
+  - type: input
+    id: SeisMIC-version
+    attributes:
+      label: SiesMIC Version?
+      description: |
+        - On console: `python -c "import seismic; print(seismic.__version__)"`
+        - In Python prompt: `import seismic; print(seismic.__version__)`
+        - For a developer installation, just mention branch name (e.g. "current main")
+    validations:
+      required: true
+  - type: input
+    id: operating-system
+    attributes:
+      label: Operating System?
+      description: Windows, OS/X, Arch, Debian, Ubuntu, etc.
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version?
+      description: "On console: `python --version`"
+  - type: dropdown
+    id: install
+    attributes:
+      label: Installation Method?
+      description: How did you install seismic? For other methods, please state installation method in bug summary above
+      options:
+        - conda
+        - pip
+        - developer installation / from source / git checkout
