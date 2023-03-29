@@ -1,11 +1,12 @@
 # https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests
 name: Bug report
-description: Report a bug in ObsPy
+description: Report a bug in SeisMIC
 labels: ["bug-unconfirmed"]
 body:
   - type: markdown
     attributes:
       value: For generic and usage questions, please use [GitHub discussions](https://github.com/PeterMakus/SeisMIC/discussions/new/choose) instead.
+  - type: checkboxes
     id: did-check-existing-issues
     attributes:
       label: Avoid duplicates
