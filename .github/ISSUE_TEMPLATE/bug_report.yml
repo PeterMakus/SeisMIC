@@ -48,7 +48,7 @@ body:
   - type: input
     id: SeisMIC-version
     attributes:
-      label: SiesMIC Version?
+      label: SeisMIC Version?
       description: |
         - On console: `python -c "import seismic; print(seismic.__version__)"`
         - In Python prompt: `import seismic; print(seismic.__version__)`

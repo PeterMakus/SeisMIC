@@ -1,7 +1,7 @@
 # Contributing to SeisMIC
 
 First of all, a massive thanks for contributing to SeisMIC! This is what keeps community codes alive!
-This document gives an overview of how to contribute to SeisMIC or its community. The document is largely oriented from its sibling in the obspy reposityor.
+This document gives an overview of how to contribute to SeisMIC or its community. The document is largely oriented from its sibling in the obspy repository.
 
 * To report a suspected bug or propose a feature addition, please open a new issue (please read and address what is pointed out in the issue template
 * To directly propose changes, a bug fix or to add a new feature, please open a pull request (see beløw)
@@ -29,7 +29,7 @@ Additionally take care to not add big files. Even for tests we generally only ac
 
 ## Submitting an Issue
 
-If you want to ask a question about a SeisMIC ObsPy aspect, please first of all..
+If you want to ask a question about a SeisMIC aspect, please first of all..
 
  * search the [docs](https://petermakus.github.io/SeisMIC/)
  * if you cannot find an answer, open an [issue](https://github.com/PeterMakus/SeisMIC/issues/new)
