@@ -5,16 +5,16 @@ Module containing functions for preprocessing in the frequency domain
 :copyright:
    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:40:11 pm
-Last Modified: Wednesday, 9th February 2022 02:49:00 pm
+Last Modified: Monday, 16th January 2023 11:13:58 am
 '''
 from copy import deepcopy
-
+import logging
 
 import numpy as np
 import obspy.signal as osignal
@@ -113,9 +113,7 @@ def spectralWhitening(B: np.ndarray, args: dict, params) -> np.ndarray:
             errargs = np.argwhere(absB == 0)
             # Report error where there is zero divides for a non-zero freq
             if not np.all(errargs[:, 0] == 0):
-                print(e)
-                print(errargs)
-
+                logging.debug(f'{e} {errargs}')
     # Set zero frequency component to zero
     B[0, :] = 0.j
 

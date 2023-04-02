@@ -1,13 +1,13 @@
 '''
 :copyright:
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Thursday, 6th October 2022 12:16:01 pm
+Last Modified: Monday, 6th March 2023 11:25:15 am
 '''
 
 import unittest
@@ -99,64 +99,36 @@ class TestCorrBulk(unittest.TestCase):
         self.assertIn(
             'Corrected for Amplitude Decay', cb.stats.processing_bulk)
 
-    @mock.patch('seismic.correlate.stream.time_shift_apply')
-    def test_correct_shift(self, shift_mock):
-        cb = self.cb.copy()
-        shift_mock.return_value = np.zeros((25, 25))
-        dvmock = mock.MagicMock()
-        dvmock.value = 1
-        dvmock.value_type = 'shift'
-        cb.correct_shift(dv=dvmock)
-        shift_mock.assert_called_once_with(
-            mock.ANY, -dvmock.value, single_sided=False)
-        np.testing.assert_array_equal(
-            shift_mock.call_args[0][0], self.cb.data)
-        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
-        self.assertIn(
-            'Applied time shift', cb.stats.processing_bulk)
-
-    @mock.patch('seismic.correlate.stream.time_shift_apply')
-    def test_correct_shift2(self, shift_mock):
-        cb = self.cb.copy()
-        shift_mock.return_value = np.zeros((25, 25))
-        value = 1
-        cb.correct_shift(shift=value)
-        shift_mock.assert_called_once_with(mock.ANY, value, single_sided=False)
-        np.testing.assert_array_equal(
-            shift_mock.call_args[0][0], self.cb.data)
-        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
-        self.assertIn(
-            'Applied time shift', cb.stats.processing_bulk)
-
-    def test_correct_shift_wrong_type(self):
-        dvmock = mock.MagicMock()
-        dvmock.value = 1
-        dvmock.value_type = 'bla'
-        with self.assertRaises(ValueError):
-            self.cb.correct_shift(dv=dvmock)
-
-    def test_correct_shift_no_args(self):
-        with self.assertRaises(ValueError):
-            self.cb.correct_shift()
-
-    def test_correct_shift_two_args(self):
-        with self.assertRaises(ValueError):
-            self.cb.correct_shift(dv='bla', shift='blub')
-
-    @mock.patch('seismic.correlate.stream.time_stretch_apply')
+    @mock.patch('seismic.correlate.stream.pcp.apply_stretch')
     def test_correct_stretch(self, stretch_mock):
         cb = self.cb.copy()
-        stretch_mock.return_value = np.zeros((25, 25))
+        stretch_mock.return_value = (np.zeros((25, 25)), cb.stats)
         dvmock = mock.MagicMock()
         dvmock.value = 1
         dvmock.value_type = 'stretch'
         cb.correct_stretch(dvmock)
-        stretch_mock.assert_called_once_with(mock.ANY, -1.*dvmock.value, False)
+        stretch_mock.assert_called_once_with(
+            mock.ANY, cb.stats, -1.*dvmock.value)
         np.testing.assert_array_equal(
             stretch_mock.call_args[0][0], self.cb.data)
         np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
         self.assertIn(
             'Applied time stretch', cb.stats.processing_bulk)
+
+    @mock.patch('seismic.monitor.post_corr_process.apply_shift')
+    def test_correct_shift(self, shift_mock: mock.MagicMock):
+        cb = self.cb.copy()
+        shift_mock.return_value = np.zeros((25, 25))
+        dvmock = mock.MagicMock()
+        dvmock.value = 1
+        cb.correct_shift(dvmock)
+        shift_mock.assert_called_once_with(
+            data=mock.ANY, stats=cb.stats, shifts=-1.*dvmock.value)
+        np.testing.assert_array_equal(
+            shift_mock.call_args[1]['data'], self.cb.data)
+        np.testing.assert_array_equal(np.zeros((25, 25)), cb.data)
+        self.assertIn(
+            'Corrected for time shift', cb.stats.processing_bulk)
 
     def test_correct_stretch_wrong_type(self):
         dvmock = mock.MagicMock()
@@ -261,6 +233,19 @@ class TestCorrBulk(unittest.TestCase):
         calls = [mock.call(mock.ANY, self.cb.stats, 'bla', 25)]*5
         extract_mock.assert_has_calls(calls)
 
+    @mock.patch('seismic.monitor.post_corr_process.measure_shift')
+    def test_measure_shift(self, mshift_mock: mock.MagicMock):
+        tw = [0, 1]
+        mshift_mock.return_value = ['bla', 'blub']
+        x = self.cb.measure_shift(tw=tw)
+        mshift_mock.assert_called_once_with(
+            mock.ANY, self.cb.stats, ref_trc=None, tw=[tw],
+            shift_range=10, shift_steps=101, sides='both', return_sim_mat=False
+        )
+        np.testing.assert_array_equal(
+            mshift_mock.call_args[0][0], self.cb.data)
+        self.assertEqual(x, 'bla')
+
     @mock.patch('seismic.correlate.stream.pcp.corr_mat_mirror')
     def test_mirror(self, mirror_mock):
         cb = self.cb.copy()
@@ -346,10 +331,10 @@ class TestCorrBulk(unittest.TestCase):
         self.cb.stretch(np.zeros((25,)), [1, 2, 3], 0.5, 105, 'bla', True)
         stretch_mock.assert_called_once_with(
             mock.ANY, self.cb.stats, mock.ANY, [1, 2, 3], 0.5, 105, 'bla',
-            True)
+            True, None, None)
         np.testing.assert_array_equal(
             stretch_mock.call_args[0][2], np.zeros((25,)))
-        dv_mock.assert_called_once_with(test=0)
+        dv_mock.assert_called_once_with(test=0, dv_processing=None)
 
     @mock.patch('seismic.correlate.stream.DV')
     @mock.patch('seismic.correlate.stream.pcp.corr_mat_stretch')
@@ -359,10 +344,11 @@ class TestCorrBulk(unittest.TestCase):
         self.cb.stretch()
         stretch_mock.assert_called_once_with(
             mock.ANY, self.cb.stats, 'ha_funny!', None, 0.1, 101, 'both',
-            False)
+            False, None, None)
         np.testing.assert_array_equal(
             stretch_mock.call_args[0][0], self.cb.data)
-        dv_mock.assert_called_once_with(test=0, sim_mat=mock.ANY)
+        dv_mock.assert_called_once_with(
+            test=0, sim_mat=mock.ANY, dv_processing=None)
 
     @mock.patch('seismic.correlate.stream.m3ut.save_header_to_np_array')
     @mock.patch('seismic.correlate.stream.np.savez_compressed')
@@ -412,7 +398,7 @@ class TestCorrBulk(unittest.TestCase):
             'tapered-centre: width=25s, slope_frac=1',
             cb.stats.processing_bulk)
 
-    @mock.patch('seismic.correlate.stream.pcp.corr_mat_trim')
+    @mock.patch('seismic.correlate.stream.corr_mat_trim')
     def test_trim(self, trim_mock):
         cb = self.cb.copy()
         stats = deepcopy(cb.stats)
@@ -513,7 +499,7 @@ class TestCorrStats(unittest.TestCase):
     def test_native_types(self):
         # network, station, and channel are strings and do allow nothing but
         # strings (convertibles types will be converted to str)
-        keys = ['network', 'station', 'channel']
+        keys = ['network', 'station']
         for k in keys:
             with warnings.catch_warnings(record=True) as w:
                 self.cst[k] = [1, 2, 3]
@@ -566,11 +552,19 @@ class TestCorrStats(unittest.TestCase):
             self.cst.end_lag, self.cst.start_lag+self.cst.delta*float(
                 self.cst.npts-1))
 
-    def get_component(self):
+    def test_get_component(self):
         cst = deepcopy(self.cst)
         # Set channel
         cst['channel'] = 'HHE-HHZ'
         self.assertEqual(cst['component'], 'E-Z')
+
+    def test_get_id(self):
+        cst = deepcopy(self.cst)
+        # Set channel
+        cst['channel'] = 'HHE-HHZ'
+        cst['station'] = 'AB-BC'
+        cst['network'] = '12-34'
+        self.assertEqual(cst['id'], '12-34.AB-BC.HHE-HHZ')
 
 
 class TestCombineStats(unittest.TestCase):
@@ -840,6 +834,21 @@ class TestCorrStream(unittest.TestCase):
             for _ in self.st.slide(1, 1):
                 continue
 
+    def test_pop_at_utcs(self):
+        utcs = np.array([self.st[1].stats.corr_start + 1])
+        old_len = len(self.st)
+        st_filt = self.st.pop_at_utcs(utcs)
+        self.assertEqual(old_len, self.st.count())
+        self.assertNotIn(self.st[1], st_filt)
+        self.assertNotEqual(self.st.count(), st_filt.count())
+
+    def test_pop_at_utcs_not_in(self):
+        utcs = np.array([UTCDateTime(-1e5)])
+        old_len = len(self.st)
+        st_filt = self.st.pop_at_utcs(utcs)
+        self.assertEqual(old_len, self.st.count())
+        self.assertEqual(self.st, st_filt)
+
     def test_slide_max_len(self):
         for st in self.st.slide(self.corr_len, self.corr_len, True):
             # Just check that no extra correlations are yielded
@@ -950,12 +959,36 @@ class TestCorrStream(unittest.TestCase):
             select_return = mock.MagicMock(name='select_mock')
             select_return.select_corr_time.return_value = st
             sct_mock.return_value = select_return
+            cb = st.create_corr_bulk(
+                times=(qustart, st[0].stats.corr_end),
+                channel=st[0].stats.channel)
+            sct_mock.assert_any_call(
+                None, None, None, st[0].stats.channel)
+        select_return.select_corr_time.assert_called_once_with(
+            qustart, st[0].stats.corr_end
+        )
+        for ii, tr in enumerate(self.st):
+            np.testing.assert_array_equal(tr.data, cb.data[ii])
+        # Check in-place
+        for tr in st:
+            self.assertFalse(hasattr(tr, 'data'))
+
+    @mock.patch('seismic.correlate.stream.convert_statlist_to_bulk_stats')
+    def test_create_corrbulk_vary_channel(self, cstbs_mock: mock.MagicMock):
+        st = self.st.copy()
+        qustart = st[0].stats.corr_start + 1
+        cstbs_mock.return_value = st[0].stats
+        with mock.patch.object(st, 'select') as sct_mock:
+            select_return = mock.MagicMock(name='select_mock')
+            select_return.select_corr_time.return_value = st
+            sct_mock.return_value = select_return
             cb = st.create_corr_bulk(times=(qustart, st[0].stats.corr_end))
             sct_mock.assert_any_call(
                 None, None, None, None)
         select_return.select_corr_time.assert_called_once_with(
             qustart, st[0].stats.corr_end
         )
+        cstbs_mock.assert_called_with(mock.ANY, varying_channel=True)
         for ii, tr in enumerate(self.st):
             np.testing.assert_array_equal(tr.data, cb.data[ii])
         # Check in-place
@@ -1048,6 +1081,12 @@ class TestConvertStatlistToBulkStats(unittest.TestCase):
         stcomb = stream.convert_statlist_to_bulk_stats(
             [self.stats, stats1], False)
         self.assertIsInstance(stcomb['location'], str)
+
+    def test_channel_mutable(self):
+        stats1 = self.stats.copy()
+        stcomb = stream.convert_statlist_to_bulk_stats(
+            [self.stats, stats1], varying_channel=True)
+        self.assertIsInstance(stcomb['location'], list)
 
 
 if __name__ == "__main__":

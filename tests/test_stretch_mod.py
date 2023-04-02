@@ -2,20 +2,23 @@
 :copyright:
 
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 24th June 2021 02:23:40 pm
-Last Modified: Friday, 5th August 2022 01:01:19 pm
+Last Modified: Monday, 16th January 2023 11:14:10 am
 '''
 
 import unittest
+from copy import deepcopy
 
 import numpy as np
 
 from seismic.monitor import stretch_mod as sm
+from seismic.correlate.stats import CorrStats
+from seismic.monitor.post_corr_process import apply_stretch
 
 
 class TestTimeWindowsCreation(unittest.TestCase):
@@ -42,6 +45,10 @@ class TestTimeStretchEstimate(unittest.TestCase):
     def setUp(self):
         self.n = 1000
         self.ref = np.cos(np.linspace(0, 40*np.pi, self.n, endpoint=True))
+        self.stats = CorrStats()
+        self.stats.start_lag = -50
+        self.stats.npts = 101
+        self.stats.delta = 1
 
     def test_result(self):
         stretch = np.arange(1, 11, 1)/100  # in per cent
@@ -60,21 +67,41 @@ class TestTimeStretchEstimate(unittest.TestCase):
         dv = sm.time_stretch_estimate(corr, self.ref, stretch_steps=101)
         self.assertTrue(np.all(dv['value'] == [0, 0, 0, 0]))
 
-    def test_neg_stretch(self):
-        stretch = np.arange(1, 11, 1)/100  # in per cent
-        # number of points for new
-        nn = ((1+stretch)*self.n)
-        corr = np.empty((len(nn), self.n))
-        # inter = interp1d(self.xref, self.ref, kind='cubic')
-        for ii, n in enumerate(nn):
-            x = np.linspace(0, 40*np.pi, int(n), endpoint=True)
-            jj = int(round(abs(len(x)-self.n)/2))
-            corr[ii, :] = np.cos(x)[jj:-jj][:self.n]
-        # make the most stretch trace the ref trace
-        ref = corr[-1, :]
-        dv = sm.time_stretch_estimate(corr[:-1, :], ref, stretch_steps=101)
-        self.assertTrue(
-            np.allclose(dv['value'], -np.flip(stretch[:-1]), atol=0.004))
+    def test_stretch_and_correct_tw(self):
+        stretches = [.05, -.05]
+        tw = [np.arange(31)]
+        ref = np.hstack((
+            np.zeros(15), np.ones(71), np.zeros(15)))
+        data = np.vstack((ref, ref))
+        data_stretch = apply_stretch(deepcopy(data), self.stats, stretches)[0]
+        dv = sm.time_stretch_estimate(
+            data_stretch, ref,
+            stretch_steps=1001, tw=tw)
+        np.testing.assert_array_almost_equal(dv['value'], np.array(stretches))
+
+    def test_stretch_and_correct_single(self):
+        stretches = [.05, -.05]
+        ref = np.hstack((
+            np.zeros(15), np.ones(71), np.zeros(15)))
+        data = np.vstack((ref, ref))
+        stats = deepcopy(self.stats)
+        stats.start_lag = 0
+        data_stretch = apply_stretch(deepcopy(data), stats, stretches)[0]
+        dv = sm.time_stretch_estimate(
+            data_stretch, ref,
+            stretch_steps=1001, sides='single')
+        np.testing.assert_array_almost_equal(dv['value'], np.array(stretches))
+
+    def test_stretch_and_correct_sin(self):
+        stretches = [.05, -.05]
+        ref = np.hstack((
+            np.zeros(15), np.sin(np.arange(71)), np.zeros(15)))
+        data = np.vstack((ref, ref))
+        data_stretch = apply_stretch(deepcopy(data), self.stats, stretches)[0]
+        dv = sm.time_stretch_estimate(
+            data_stretch, ref,
+            stretch_steps=1001)
+        np.testing.assert_array_almost_equal(dv['value'], np.array(stretches))
 
 
 class TestTimeShiftApply(unittest.TestCase):
@@ -109,7 +136,7 @@ class TestTimeShiftApply(unittest.TestCase):
             np.testing.assert_equal(
                 np.floor(corr_shift[0][shift:]), corr[:-shift])
         else:
-            np.assert_equal(corr_shift[0][shift:], 0)
+            np.testing.assert_equal(corr_shift[0][shift:], 0)
             np.testing.assert_equal(
                 np.floor(corr_shift[0][:shift]), corr[-shift-1:-1])
 
@@ -151,6 +178,45 @@ class TestTimeShiftEstimate(unittest.TestCase):
             corr[ii] = np.roll(self.ref, -ii)
         dv = sm.time_shift_estimate(corr, self.ref, shift_steps=21)
         np.testing.assert_array_equal(dv['value'], shift)
+
+
+class TestCreateShiftedRefMat(unittest.TestCase):
+    def setUp(self):
+        self.ref_trc = np.arange(101.)
+        self.stats = CorrStats({
+            'start_lag': -50,
+            'delta': 1,
+            'npts': 101})
+        self.shifts = np.linspace(-5, 5, 101)
+
+    def test_invalid_shape(self):
+        with self.assertRaises(AssertionError):
+            sm.create_shifted_ref_mat(np.ones((5, 5)), None, None)
+
+    def test_result(self):
+        exp = np.array([self.ref_trc + s for s in self.shifts])
+        out = sm.create_shifted_ref_mat(self.ref_trc, self.stats, self.shifts)
+        np.testing.assert_array_almost_equal(out, exp)
+
+
+class TestCompareWithModifiedReference(unittest.TestCase):
+    def setUp(self):
+        self.ref_trc = np.arange(101.)
+        self.stats = CorrStats({
+            'start_lag': -50,
+            'delta': 1,
+            'npts': 101})
+        self.shifts = np.linspace(-5, 5, 101)
+        self.ref_mat = np.array([self.ref_trc + s for s in self.shifts])
+        self.data = np.roll(self.ref_mat, shift=1, axis=0)
+
+    def test_result(self):
+        indices = np.arange(101)
+        sim_mat = sm.compare_with_modified_reference(
+            self.data, self.ref_mat, indices)
+        # positions were corr should be 1
+        ii = np.hstack((-1, np.arange(0, 100)))
+        np.testing.assert_array_almost_equal(sim_mat[np.arange(101), ii], 1)
 
 
 if __name__ == "__main__":

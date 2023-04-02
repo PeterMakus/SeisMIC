@@ -2,22 +2,25 @@
 :copyright:
    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 25th June 2021 09:33:09 am
-Last Modified: Wednesday, 8th June 2022 03:43:02 pm
+Last Modified: Monday, 16th January 2023 11:14:10 am
 '''
 
 import unittest
+from unittest import mock
+from copy import deepcopy
 
 import numpy as np
 from obspy import UTCDateTime
 
 from seismic.monitor import post_corr_process as pcp
 from seismic.correlate.stats import CorrStats
+from seismic.monitor.dv import DV
 
 
 class TestClip(unittest.TestCase):
@@ -504,7 +507,8 @@ class TestCorrMatStretch(unittest.TestCase):
     def test_stretch_0(self):
         data = np.tile(self.reftr, (2, 1))
         dv = pcp.corr_mat_stretch(
-            data, self.stats, self.reftr, stretch_steps=101)
+            data, self.stats, self.reftr, stretch_steps=101,
+            ref_tr_stats=self.stats)
         self.assertListEqual([0, 0], list(dv['value']))
 
     def test_stretch(self):
@@ -513,7 +517,8 @@ class TestCorrMatStretch(unittest.TestCase):
         data = np.vstack((self.reftr, s))
 
         dv = pcp.corr_mat_stretch(
-            data, self.stats, self.reftr, stretch_steps=101)
+            data, self.stats, self.reftr, stretch_steps=101,
+            ref_tr_stats=self.stats)
         self.assertTrue(np.allclose(
             [0, -0.04], list(dv['value'])))
 
@@ -524,7 +529,7 @@ class TestCorrMatStretch(unittest.TestCase):
 
         dv = pcp.corr_mat_stretch(
             data, self.stats, self.reftr, stretch_steps=101, sides='single',
-            tw=[np.arange(51)])
+            tw=[np.arange(51)], ref_tr_stats=self.stats)
         # Flips the result as it assumes 0 lag to be on index 0
         self.assertTrue(np.allclose(
             [0, 0.04], list(dv['value'])))
@@ -561,6 +566,173 @@ class TestCorrMatShift(unittest.TestCase):
         dv = pcp.corr_mat_shift(
             data, self.stats, self.reftr, shift_steps=21)
         np.testing.assert_array_equal([0, 1], dv['value'])
+
+
+class TestMeasureShift(unittest.TestCase):
+    def setUp(self):
+        self.stats = CorrStats()
+        self.stats.start_lag = -50
+        self.stats.npts = 101
+        self.stats.delta = 1
+        self.stats.corr_start = [UTCDateTime(0), UTCDateTime(100)]
+        self.data = np.vstack((np.arange(101), np.arange(101) + 100))
+
+    def test_invalid_sides(self):
+        with self.assertRaises(ValueError):
+            pcp.measure_shift(None, None, sides='blabla')
+
+    def test_invalid_tw(self):
+        with self.assertRaises(ValueError):
+            pcp.measure_shift(None, None, tw=[[1, 2, 3]])
+
+    def test_invalid_tw2(self):
+        with self.assertRaises(ValueError):
+            pcp.measure_shift(
+                None, None, tw=[[-1, 2], [2, 3]], sides='both')
+
+    def test_invalid_shapes(self):
+        with self.assertRaises(ValueError):
+            pcp.measure_shift(
+                self.data, None, ref_trc=np.zeros(6))
+
+    @mock.patch('seismic.monitor.post_corr_process.corr_mat_trim')
+    @mock.patch('seismic.monitor.post_corr_process.corr_mat_extract_trace')
+    @mock.patch('seismic.monitor.post_corr_process.create_shifted_ref_mat')
+    @mock.patch(
+        'seismic.monitor.post_corr_process.compare_with_modified_reference')
+    def test_result0(
+        self, cwmr_mock: mock.MagicMock, csrm_mock: mock.MagicMock,
+            cmet_mock: mock.MagicMock, cmt_mock: mock.MagicMock):
+        cmt_mock.return_value = (self.data, self.stats)
+        cmet_mock.return_value = np.ones_like(self.data[1, :]) * 10
+        csrm_mock.return_value = np.ones_like(self.data) * 20
+        cwmr_mock.return_value = np.ones_like(self.data) * -50
+        dtl = pcp.measure_shift(self.data, self.stats)
+        cmt_mock.assert_called_once_with(mock.ANY, self.stats, -50, 50)
+        np.testing.assert_array_equal(
+            cmt_mock.call_args[0][0], self.data)
+        cmet_mock.assert_called_once_with(mock.ANY, self.stats)
+        np.testing.assert_array_equal(
+            cmet_mock.call_args[0][0], self.data)
+        csrm_mock.assert_called_once_with(
+            mock.ANY, self.stats, mock.ANY)
+        np.testing.assert_array_equal(
+            csrm_mock.call_args[0][0], np.ones_like(self.data[1, :]) * 10)
+        np.testing.assert_array_equal(
+            csrm_mock.call_args[0][2], np.linspace(-10, 10, 101))
+        np.testing.assert_array_equal(
+            cwmr_mock.call_args[0][0], self.data)
+        np.testing.assert_array_equal(
+            cwmr_mock.call_args[0][1], np.ones_like(self.data) * 20)
+        dt = dtl[0]
+        self.assertEqual(len(dtl), 1)
+        self.assertIsInstance(dt, DV)
+        self.assertIsNone(dt.sim_mat)
+        np.testing.assert_array_equal(-50, dt.corr)
+        np.testing.assert_array_equal(-10, dt.value)
+        np.testing.assert_array_equal(['shift'], dt.value_type[0])
+        np.testing.assert_array_equal(['absolute_shift'], dt.method[0])
+        np.testing.assert_array_equal(
+            np.linspace(-10, 10, 101), dt.second_axis)
+
+    @mock.patch('seismic.monitor.post_corr_process.corr_mat_trim')
+    @mock.patch('seismic.monitor.post_corr_process.create_shifted_ref_mat')
+    @mock.patch(
+        'seismic.monitor.post_corr_process.compare_with_modified_reference')
+    def test_result1(
+        self, cwmr_mock: mock.MagicMock, csrm_mock: mock.MagicMock,
+            cmt_mock: mock.MagicMock):
+        ref_trc = self.data[0, :] + 5
+
+        cmt_mock.return_value = (np.vstack((self.data, ref_trc)), self.stats)
+        csrm_mock.return_value = np.ones_like(self.data) * 20
+        cwmr_mock.return_value = np.ones_like(self.data) * -50
+        dtl = pcp.measure_shift(
+            self.data, self.stats, ref_trc=ref_trc,
+            return_sim_mat=True, sides='single')
+        cmt_mock.assert_called_once_with(mock.ANY, mock.ANY, -50, 50)
+        np.testing.assert_array_equal(
+            cmt_mock.call_args[0][0], np.vstack((self.data, ref_trc)))
+        csrm_mock.assert_called_once_with(
+            mock.ANY, self.stats, mock.ANY)
+        np.testing.assert_array_equal(
+            csrm_mock.call_args[0][0], ref_trc)
+        np.testing.assert_array_equal(
+            csrm_mock.call_args[0][2], np.linspace(-10, 10, 101))
+        np.testing.assert_array_equal(
+            cwmr_mock.call_args[0][0], self.data)
+        np.testing.assert_array_equal(
+            cwmr_mock.call_args[0][1], np.ones_like(self.data) * 20)
+        dt = dtl[0]
+        self.assertEqual(len(dtl), 1)
+        self.assertIsInstance(dt, DV)
+        np.testing.assert_array_equal(
+            np.ones_like(self.data) * -50, dt.sim_mat)
+        np.testing.assert_array_equal(-50, dt.corr)
+        np.testing.assert_array_equal(-10, dt.value)
+        np.testing.assert_array_equal(['shift'], dt.value_type[0])
+        np.testing.assert_array_equal(['absolute_shift'], dt.method[0])
+        np.testing.assert_array_equal(
+            np.linspace(-10, 10, 101), dt.second_axis)
+
+
+class TestApplyShift(unittest.TestCase):
+    def setUp(self):
+        self.stats = CorrStats()
+        self.stats.start_lag = 0
+        self.stats.npts = 101
+        self.stats.delta = 1
+        self.data = np.vstack((np.arange(101), np.arange(101) + 100))
+
+    def test_constant_shift(self):
+        shifts = [1, -1]
+        outdata = pcp.apply_shift(self.data, self.stats, shifts)
+        exp = np.vstack((np.arange(101)+1, np.arange(101) + 99))
+        np.testing.assert_array_almost_equal(
+            outdata, exp
+        )
+
+    def test_linear_shift(self):
+        shifts = [np.arange(101), -np.arange(101)]
+        outdata = pcp.apply_shift(self.data, self.stats, shifts)
+        exp = np.vstack((np.arange(101)*2, np.ones((101,))*100))
+        np.testing.assert_array_almost_equal(
+            outdata, exp
+        )
+
+
+class TestApplyStretch(unittest.TestCase):
+    def setUp(self):
+        self.stats = CorrStats()
+        self.stats.start_lag = 0
+        self.stats.npts = 101
+        self.stats.delta = 1
+        self.data = np.vstack((
+            np.arange(101, dtype=np.float32),
+            np.arange(101, dtype=np.float32) + 100))
+
+    def test_constant_stetch(self):
+        stretches = [-.05, .05]
+        outdata = pcp.apply_stretch(deepcopy(self.data), self.stats, stretches)
+        # stretch is logarithmic, so I shouldn't expect the result
+        # to be to precise (exp assumes a linear dv)
+        exp = np.vstack((
+            np.linspace(0, 105, 101), np.linspace(100, 195, 101)))
+
+        # Boundaries will be set to 0 rather than extrapolated
+        np.testing.assert_array_almost_equal(
+            exp[0][:96], outdata[0][0][:96], decimal=1)
+        np.testing.assert_array_almost_equal(
+            exp[1], outdata[0][1], decimal=1)
+
+    def test_correct_stetch(self):
+        stretches = np.array([-.05, .05])
+        stretchdata = pcp.apply_stretch(
+            deepcopy(self.data), self.stats, stretches)[0]
+        correctdata = pcp.apply_stretch(
+            deepcopy(stretchdata), self.stats, -stretches)[0]
+        np.testing.assert_array_almost_equal(
+            self.data[:, :93], correctdata[:, :93], decimal=3)
 
 
 if __name__ == "__main__":

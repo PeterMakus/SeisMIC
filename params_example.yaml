@@ -41,7 +41,7 @@ co:
     # native sampling_rate)
     sampling_rate : 25
     # Remove the instrument response, will take substantially more time
-    remove_response : False
+    remove_response : True
 
     # Method to combine different traces
     combination_method : 'betweenStations'
@@ -60,8 +60,8 @@ co:
                     {'function':'seismic.correlate.preprocessing_stream.detrend_st',
                     'args':{'type':'linear'}},
                     {'function':'seismic.correlate.preprocessing_stream.cos_taper_st',
-                      'args':{'taper_len': 10, # seconds
-                              'taper_at_masked': True}},
+                      'args':{'taper_len': 100, # seconds
+                              'lossless': True}}, # lossless tapering stitches additional data to trace, tapers, and removes the tapered ends after preprocessing
                     {'function':'seismic.correlate.preprocessing_stream.stream_filter',
                       'args':{'ftype':'bandpass',
                               'filter_option':{'freqmin':0.01, #0.01
@@ -141,7 +141,10 @@ dv:
     tw_start : 20     # lapse time of first sample [s]
     tw_len : 60       # length of window [s] Can be None if the whole (rest) of the coda should be used
     sides : 'both'   # options are left (for acausal), right (causal), both, or single (for active source experiments where the first sample is the trigger time)
+    compute_tt : True  # Computes the travel time and adds it to tw_start (tt is 0 if not xstations). If true a rayleigh wave velocity has to be provided
+    rayleigh_wave_velocity : 1  # rayleigh wave velocity in km/s, will be ignored if compute_tt=False
     
+
     ### Range to try stretching
     stretch_range : 0.03
     stretch_steps : 1001
@@ -154,14 +157,15 @@ dv:
     # See seismic.correlate.stream.CorrBulk.extract_multi_trace for details on arguments
     dt_ref : {'win_inc' : 0, 'method': 'mean', 'percentile': 50}
 
-    # preprocessing on the correlation bulk before stretch estimation
+    # preprocessing on the correlation bulk or corr_stream before stretch estimation
     preprocessing: [
+                    #{'function': 'pop_at_utcs', 'args': {'utcs': np.array([UTCDateTime()])},
                     {'function': 'smooth', 'args': {'wsize': 48, 'wtype': 'hanning', 'axis': 1}}
     ]
 
     # postprocessing of dv objects before saving and plotting
     postprocessing: [
-                      {'function': 'smooth_sim_mat', 'args': {'win_len': 7}}
+                      {'function': 'smooth_sim_mat', 'args': {'win_len': 7, exclude_corr_below: 0}}
     ]
 
 #### parameters to compute the waveform coherence

@@ -2,28 +2,32 @@
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
     Christoph Sens-Schönefelder
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Tuesday, 21st June 2022 05:06:49 pm
+Last Modified: Monday, 16th January 2023 11:13:58 am
 '''
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import numpy as np
 from copy import deepcopy
 from scipy.signal import butter, lfilter, hilbert, resample
+from scipy.interpolate import UnivariateSpline, interp1d
 from obspy.core import UTCDateTime
 
 # Obspy imports
 from obspy.signal.invsim import cosine_taper
 
 from seismic.monitor.stretch_mod import multi_ref_vchange_and_align, \
-    time_shift_estimate
+    time_shift_estimate, compare_with_modified_reference, \
+    create_shifted_ref_mat
 from seismic.correlate.stats import CorrStats
+from seismic.monitor.dv import DV
+from seismic.monitor.trim import corr_mat_trim
 
 
 def corr_mat_clip(A: np.ndarray, thres: float, axis: int) -> np.ndarray:
@@ -216,56 +220,6 @@ def corr_mat_filter(
     data = lfilter(b, a, data[:, ::-1], axis=1)[:, ::-1]
 
     return data
-
-
-def corr_mat_trim(
-    data: np.ndarray, stats: CorrStats, starttime: float,
-        endtime: float) -> Tuple[np.ndarray, CorrStats]:
-    """ Trim the correlation matrix to a given period.
-
-    Trim the correlation matrix `corr_mat` to the period from `starttime` to
-    `endtime` given in seconds from the zero position, so both can be
-    positive and negative. If `starttime` and `endtime` are datetime.datetime
-    objects they are taken as absolute start and endtime.
-
-    :type data: np.ndarray
-    :param corr_mat: correlation matrix to be trimmed
-    :type starttime: float
-    :param starttime: start time in seconds with respect to the zero position.
-        Hence, this parameter describes a lag!
-    :type endtime: float
-    :param order: end time in seconds with respect to the zero position
-
-    :rtype tuple: Tuple[np.ndarray, CorrStats]
-    :return: trimmed correlation matrix and new stats object
-    """
-
-    # fetch indices of start and end
-    start = int(
-        np.floor((starttime-stats['start_lag'])*stats['sampling_rate']))
-    end = int(np.floor((endtime-stats['start_lag'])*stats['sampling_rate']))
-
-    # check range
-    if start < 0:
-        print('Error: starttime before beginning of trace. Data not changed')
-        return data, stats
-    if end >= stats['npts']:
-        print('Error: endtime after end of trace. Data not changed')
-        return data, stats
-
-    # select requested part from matrix
-    # +1 is to include the last sample
-    if len(data.shape) == 1:
-        data = data[start:end+1]
-        stats['npts'] = len(data)
-    else:
-        data = data[:, start:end + 1]
-        stats['npts'] = data.shape[1]
-
-    # set starttime, endtime and npts of the new stats
-    stats['start_lag'] = starttime
-
-    return data, stats
 
 
 def corr_mat_resample(
@@ -770,6 +724,7 @@ def corr_mat_extract_trace(
     possibilities are available
 
     * ``mean`` averages all traces in the matrix
+    * ``median`` extracts the median trace
     * ``norm_mean`` averages the traces normalized after normalizing for maxima
     * ``similarity_percentile`` averages the ``percentile`` % of traces that
         best correlate with the mean of all traces. This will exclude abnormal
@@ -793,6 +748,10 @@ def corr_mat_extract_trace(
         mm = np.ma.masked_array(
             ndata, np.isnan(ndata))
         out = np.mean(mm, 0).filled(np.nan)
+    elif method == 'median':
+        mm = np.ma.masked_array(
+            ndata, np.isnan(ndata))
+        out = np.median(mm, 0).filled(np.nan)
     elif method == 'norm_mean':
         # normalize the matrix
         ndata = corr_mat_normalize(ndata, stats, normtype='absmax')
@@ -839,7 +798,9 @@ def corr_mat_stretch(
     cdata: np.ndarray, stats: CorrStats, ref_trc: np.ndarray = None,
     tw: List[np.ndarray] = None, stretch_range: float = 0.1,
     stretch_steps: int = 100, sides: str = 'both',
-        return_sim_mat: bool = False) -> dict:
+    return_sim_mat: bool = False,
+    ref_tr_trim: Optional[Tuple[float, float]] = None,
+        ref_tr_stats: Optional[CorrStats] = None) -> dict:
     """ Time stretch estimate through stretch and comparison.
 
     This function estimates stretching of the time axis of traces as it can
@@ -850,7 +811,7 @@ def corr_mat_stretch(
     stretched versions  of reference trace stored in ``ref_trc``. If
     ``ref_trc`` is ``None`` the mean of all traces is used.
     The maximum amount of stretching may be passed in ``stretch_range``. The
-    time axis is multiplied by exp(stretch).
+    time axis is multiplied by 1/(1 + stretch).
     The best match (stretching amount and corresponding correlation value) is
     calculated on different time windows. If ``tw = None`` the stretching is
     estimated on the whole trace.
@@ -917,39 +878,42 @@ def corr_mat_stretch(
     # In case a reference is provided but the matrix needs to be trimmed the
     # references also need to be trimmed. To do so we append the references to
     # the matrix, trimm it and remove the references again
-    if ref_trc is not None:
-        rts = ref_trc.shape
-        if len(rts) == 1:
-            nr = 1
-        else:
-            nr = rts[0]
-        data = np.concatenate((
-            data, np.atleast_2d(ref_trc)), 0)
-        reft = np.tile([UTCDateTime(1900, 1, 1)], (nr))
-        stats['corr_start'] = np.concatenate((stats['corr_start'], reft), 0)
+    # if ref_trc is not None:
+    #     rts = ref_trc.shape
+    #     if len(rts) == 1:
+    #         nr = 1
+    #     else:
+    #         nr = rts[0]
+    #     data = np.concatenate((
+    #         data, np.atleast_2d(ref_trc)), 0)
+    #     reft = np.tile([UTCDateTime(1900, 1, 1)], (nr))
+    #     stats['corr_start'] = np.concatenate((stats['corr_start'], reft), 0)
 
     # trim the matrices
     if sides == "single":
         # extract the time>0 part of the matrix
         data, stats = corr_mat_trim(data, stats, 0, dte)
+        ref_tr_trim = (0, dte)
     else:
         # extract the central symmetric part (if dt<0 the trim will fail)
         dt = min(dta, dte)
         data, stats = corr_mat_trim(data, stats, -dt, dt)
+        ref_tr_trim = (-dt, dt)
 
     # create or extract references
     if ref_trc is None:
         ref_trc = corr_mat_extract_trace(data, stats)
-    else:
-        # extract and remove references from corr matrix again
-        ref_trc = data[-nr:, :]
-        data = data[:-nr, :]
-        stats['corr_start'] = stats['corr_start'][:-nr]
+    # else:
+    #     # extract and remove references from corr matrix again
+    #     ref_trc = data[-nr:, :]
+    #     data = data[:-nr, :]
+    #     stats['corr_start'] = stats['corr_start'][:-nr]
 
     dv = multi_ref_vchange_and_align(
         data, ref_trc, tw=tw, stretch_range=stretch_range,
         stretch_steps=stretch_steps, sides=sides,
-        return_sim_mat=return_sim_mat)
+        return_sim_mat=return_sim_mat, ref_tr_trim=ref_tr_trim,
+        ref_tr_stats=ref_tr_stats)
 
     # add the keys the can directly be transferred from the correlation matrix
     dv['stats'] = stats
@@ -1083,3 +1047,228 @@ def corr_mat_shift(
     # add the keys the can directly be transferred from the correlation matrix
     dt['stats'] = stats
     return dt
+
+
+def measure_shift(
+    data: np.ndarray, stats: CorrStats, ref_trc: Optional[np.ndarray] = None,
+    tw: Optional[List[List]] = None, shift_range: float = 10,
+    shift_steps: int = 101, sides: str = 'both',
+        return_sim_mat: bool = False) -> List[DV]:
+    """ Time shift estimate through shifting and comparison.
+
+    This function estimates shifting of the time axis of traces as it can
+    occur if the clocks of digitizers drift.
+
+    Time shifts are estimated comparing each trace (e.g. correlation function
+    stored in the ``corr_data`` matrix (one for each row) with shifted
+    versions  of reference trace stored in ``ref_trc``. The range of shifting
+    to be tested is given in ``shift_range`` in seconds. It is used in a
+    symmetric way from -``shift_range`` to +``shift_range``. Shifting ist
+    tested ``shift_steps`` times. ``shift_steps`` should be an odd number to
+    test zero shifting. The best match (shifting amount and corresponding
+    correlation value) is calculated in specified time windows. Multiple time
+    windows may be specified in  ``tw``.
+
+
+    :type data: :class:`~numpy.ndarray`
+    :param data: correlation matrix or collection of traces. lag time runs
+        along rows and number of traces is ``data.shape[0]``.
+    :type ref_trc: :class:`~numpy.ndarray`
+    :param ref_trc: 1D array containing the reference trace to be shifted
+        and compared to the individual traces in ``data``. If ``ref_trc``is
+        None, the average of all traces in ``data`` is used.
+    :type tw: list of lists with two floats
+    :param tw: list of lists that contain the start and end times of the time
+        windows in which the similarity is to be estimated. Time are given in
+        seconds of lag time with respect to zero lag time. Using multiple
+        lists of start end end time the best shift can be estimated in
+        multiple time windows. If ``tw = None`` one time window is used
+        containing the full time range of lag times in the traces.
+    :type shift_range: scalar
+    :param shift_range: Maximum amount of shifting in second.
+        Shifting is tested from ``-stretch_range`` to
+        ``stretch_range``.
+    :type shift_steps: scalar`
+    :param shift_steps: Number of shifted version to be tested. The
+        increment will be ``(2 * shift_range) / shift_steps``
+    :type sides: str
+    :param sides: Side of the traces to be used for the shifting estimate
+        ('both' | 'single'). ``single`` is used for
+        one-sided signals from active sources or if the time window shall
+        not be symmetric. For ``both`` the time window will be mirrowd about
+        zero lag time, e.g. [start,end] will result in time windows
+        [-end:-start] and [start:end] being used simultaneousy
+
+
+    :rtype: List[Dictionary]
+    :return: **dv**: List of ``len(tw)`` Dictionaries with the following keys
+
+        *corr*: 2d ndarray containing the correlation value for the best
+            match for each row of ``mat`` and for each time window.
+            Its dimension is: :func:(len(tw),mat.shape[1])
+        *value*: 2d ndarray containing the stretch amount corresponding to
+            the best match for each row of ``mat`` and for each time window.
+            Stretch is a relative value corresponding to the negative relative
+            velocity change -dv/v.
+            Its dimension is: :func:(len(tw),mat.shape[1])
+        *sim_mat*: 3d ndarray containing the similarity matricies that
+            indicate the correlation coefficient with the reference for the
+            different time windows, different times and different amount of
+            stretching.
+            Its dimension is: :py:func:`(len(tw),mat.shape[1],len(strvec))`
+        *second_axis*: It contains the stretch vector used for the velocity
+            change estimate.
+        *vale_type*: It is equal to 'shift' and specify the content of
+            the returned 'value'.
+        *method*: It is equal to 'single_ref' and specify in which "way" the
+            values have been obtained.
+    """
+
+    if sides not in ['both', 'single']:
+        raise ValueError(
+            f"'sides' must be either 'both' or 'single', not {sides}")
+    if tw is not None:
+        for twi in tw:
+            if not len(twi) == 2:
+                raise ValueError(
+                    f"individual time windows must be specified as two-item"
+                    f"list, not {twi} of length {len(twi)}.")
+
+        if sides == 'both':
+            if np.any(np.array(tw) < 0):
+                raise ValueError(
+                    "For 'sides=='both' all values in tw must be >= 0")
+    if ref_trc is not None:
+        if len(ref_trc) != data.shape[1]:
+            raise ValueError(
+                "Length of 'ref_trc' must match 'data.shape[1]', "
+                f"they are {len(ref_trc)} and {data.shape[1]}.")
+
+    data = deepcopy(data)
+    stats = deepcopy(stats)
+
+    # If reference trace is given attach it to the data for common
+    # preprocessing
+    if ref_trc is not None:
+        data = np.concatenate((
+            data, np.atleast_2d(ref_trc)), 0)
+        reft = np.tile([UTCDateTime(1900, 1, 1)], (1))
+        stats['corr_start'] = np.concatenate((stats['corr_start'], reft), 0)
+    # If no time window is given use the whole range - shift_range
+    if tw is None:
+        tw = [[stats.start_lag + shift_range, stats.end_lag - shift_range]]
+
+    # trim to required lapse time range
+    twmax = np.max(np.array(tw)[:]) + shift_range
+    if sides == 'both':
+        twmin = -twmax
+    else:
+        twmin = np.min(np.array(tw)[:]) - shift_range
+    assert twmax <= stats.end_lag, "Time window ends later than the trace. " \
+        f"Latest time window + shift_range ends at {twmax}s " \
+        f"while trace end at {stats.end_lag}s."
+    assert twmin >= stats.start_lag, f"Time window starts earlier than the " \
+        f"trace. Earliest time window - shift_range starts at {twmin}s " \
+        f"while trace starts at {stats.start_lag}s."
+    data, stats = corr_mat_trim(data, stats, twmin, twmax)
+
+    # create or extract references
+    if ref_trc is None:
+        ref_trc = corr_mat_extract_trace(data, stats)
+    else:
+        # extract and remove references from corr matrix again
+        ref_trc = np.squeeze(data[-1:, :])
+        data = data[:-1, :]
+        stats['corr_start'] = stats['corr_start'][:-1]
+
+    # create matrix with shifted references
+    shifts = np.linspace(-shift_range, shift_range, shift_steps)
+    ref_mat = create_shifted_ref_mat(ref_trc, stats, shifts)
+
+    # create space for results
+    dt_list = []
+    # do computation for each time window
+    for twi in tw:
+        # create indices of time windows
+        indices = np.arange(
+            np.ceil(twi[0]*stats.sampling_rate),
+            np.floor(twi[1]*stats.sampling_rate))
+        if sides == 'both':
+            indices = np.concatenate((np.flipud(-indices), indices))
+        indices -= np.round(stats.start_lag * stats.sampling_rate)
+        indices = indices.astype(int)
+        # compare data and shifted reference
+        sim_mat = compare_with_modified_reference(data, ref_mat, indices)
+        corr = sim_mat.max(axis=1)
+        value = shifts[sim_mat.argmax(axis=1)]
+        # Set dt to NaN where the correlation is NaN instead of having it equal
+        # to one of the two stretch_range limits
+        value[np.isnan(corr)] = np.nan
+        # assemble results
+        dt = {
+            'stats': stats,
+            'corr': np.squeeze(corr),
+            'value': np.squeeze(value),
+            'second_axis': shifts,
+            'value_type': np.array(['shift']),
+            'method': np.array(['absolute_shift'])}
+        if return_sim_mat:
+            dt.update({'sim_mat': np.squeeze(sim_mat)})
+        else:
+            dt.update({'sim_mat': None})
+
+        dt_list.append(DV(**dt))
+
+    return dt_list
+
+
+def apply_shift(
+    data: np.ndarray, stats: CorrStats, shifts: np.ndarray) -> Tuple[
+        np.ndarray, CorrStats]:
+    """ Apply a shift to a correlation matrix.
+
+    This function applies a shift given in seconds to each trace in the matrix.
+
+    :type data: :class:`~numpy.ndarray`
+    :param data: correlation matrix or collection of traces. lag time runs
+        along rows and number of traces is ``data.shape[0]``.
+    :type shifts: :class:`~numpy.ndarray`
+    :param shifts: shifts in seconds for each trace in 'data'
+    """
+    times = np.linspace(stats.start_lag, stats.end_lag, stats.npts)
+    # stretch every line
+    for (ii, line) in enumerate(data):
+        # s = UnivariateSpline(times, line, s=0)
+        f = interp1d(
+            times, line, fill_value='extrapolate')
+        data[ii, :] = f(times+shifts[ii])
+
+    return data
+
+
+def apply_stretch(
+    data: np.ndarray, stats: CorrStats, stretches: np.ndarray) -> Tuple[
+        np.ndarray, CorrStats]:
+    """ Apply a stretches to a correlation matrix.
+
+    This function applies a stretch given in relative units to each trace
+    in the matrix.
+
+    :type data: :class:`~numpy.ndarray`
+    :param data: correlation matrix or collection of traces. lag time runs
+        along rows and number of traces is ``data.shape[0]``.
+    :type stretches: :class:`~numpy.ndarray`
+    :param stretches: stretches in relative units for each trace in 'data'
+    """
+    times = np.linspace(stats.start_lag, stats.end_lag, stats.npts)
+
+    # stretch every line
+    for (ii, line) in enumerate(data):
+        # Extrapolating stretches can lead to weird boundary values
+        # So we set the boundary to 0 instead of extrapolating (ext=1)
+        s = UnivariateSpline(times, line, s=0, ext=1)
+        # dv defined as difference
+        # data[ii, :] = s(times * (1 + stretches[ii]))
+        # dv defined as logarithmic change
+        data[ii, :] = s(times * np.exp(-stretches[ii]))
+    return data, stats

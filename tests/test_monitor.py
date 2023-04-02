@@ -2,13 +2,13 @@
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 6th July 2021 09:18:14 am
-Last Modified: Monday, 11th April 2022 11:03:12 am
+Last Modified: Tuesday, 31st January 2023 03:24:45 pm
 '''
 
 import os
@@ -16,6 +16,7 @@ import unittest
 from unittest import mock
 from unittest.mock import patch
 import warnings
+from copy import deepcopy
 
 import numpy as np
 from obspy import UTCDateTime
@@ -262,6 +263,84 @@ class TestAverageDVbyCoords(unittest.TestCase):
         self.assertIsNone(av_dv.corrs)
 
 
+class TestCorrectDVShift(unittest.TestCase):
+    def setUp(self):
+        self.dv = DV(
+            np.arange(5)/5, np.linspace(0, 4, 5), 'bla',
+            np.random.random((5, 5)),
+            np.arange(5), 'dd', CorrStats())
+        self.dv.value = self.dv.second_axis[
+            np.nanargmax(np.nan_to_num(self.dv.sim_mat), axis=1)]
+        self.dv.stats.corr_start = [UTCDateTime(ii) for ii in range(5)]
+
+    def test_no_shift(self):
+        dv = deepcopy(self.dv)
+        monitor.correct_dv_shift(dv, self.dv)
+        np.testing.assert_array_equal(self.dv.sim_mat, dv.sim_mat)
+        np.testing.assert_array_equal(self.dv.value, dv.value)
+
+    def test_no_shift_median_beyond(self):
+        dv = deepcopy(self.dv)
+        monitor.correct_dv_shift(dv, self.dv, method='median', n_overlap=5)
+        np.testing.assert_array_equal(self.dv.sim_mat, dv.sim_mat)
+        np.testing.assert_array_equal(self.dv.value, dv.value)
+
+    def test_shift_by_1(self):
+        dv = deepcopy(self.dv)
+        # add dc offest
+        dv.value += 1
+        monitor.correct_dv_shift(dv, self.dv)
+        np.testing.assert_array_equal(
+            np.roll(self.dv.sim_mat, (-1, 0)), dv.sim_mat)
+
+
+class TestCorrectTimeShiftSeveral(unittest.TestCase):
+    def setUp(self):
+        self.dv = DV(
+            np.zeros(5), np.zeros(5), 'bla', np.zeros((5, 5)), np.zeros(5),
+            'dd', CorrStats())
+
+    @mock.patch('seismic.monitor.monitor.correct_dv_shift')
+    def test_one_start(self, cts_mock: mock.MagicMock):
+        dv = deepcopy(self.dv)
+        dv.stats.corr_start = [UTCDateTime(ii) for ii in range(5)]
+        monitor.correct_time_shift_several([dv], 'mean', 0)
+        cts_mock.assert_not_called()
+
+    @mock.patch('seismic.monitor.monitor.correct_dv_shift')
+    def test_one_start2(self, cts_mock: mock.MagicMock):
+        dv = deepcopy(self.dv)
+        dv.stats.corr_start = [UTCDateTime(ii) for ii in range(5)]
+        dv2 = dv
+        monitor.correct_time_shift_several([dv, dv2], 'mean', 0)
+        cts_mock.assert_not_called()
+
+    @mock.patch('seismic.monitor.monitor.correct_dv_shift')
+    def test_sort_and_shift(self, cts_mock: mock.MagicMock):
+        dv0 = deepcopy(self.dv)
+        dv1 = deepcopy(self.dv)
+        dv2 = deepcopy(self.dv)
+        for k, dv in enumerate([dv0, dv1, dv2]):
+            dv.stats.corr_start = [UTCDateTime(ii+k) for ii in range(5)]
+        monitor.correct_time_shift_several([dv1, dv0, dv2], 'mean', 0)
+        calls = [
+            mock.call(dv1, dv0, method='mean', n_overlap=0),
+            mock.call(dv2, dv1, method='mean', n_overlap=0)]
+        cts_mock.assert_has_calls(calls)
+
+    @mock.patch('seismic.monitor.monitor.correct_dv_shift')
+    def test_except(self, cts_mock: mock.MagicMock):
+        dv0 = deepcopy(self.dv)
+        dv1 = deepcopy(self.dv)
+        for k, dv in enumerate([dv0, dv1]):
+            dv.stats.corr_start = [UTCDateTime(ii+k) for ii in range(5)]
+        cts_mock.side_effect = [ValueError]
+        with warnings.catch_warnings(record=True) as w:
+            monitor.correct_time_shift_several([dv1, dv0], 'mean', 0)
+        self.assertEqual(len(w), 1)
+        cts_mock.assert_called_once_with(dv1, dv0, method='mean', n_overlap=0)
+
+
 class TestAverageComponents(unittest.TestCase):
     def test_differing_shape(self):
         sim0 = np.zeros((5, 5))
@@ -290,13 +369,18 @@ class TestAverageComponents(unittest.TestCase):
         with self.assertWarns(UserWarning):
             monitor.average_components([dv0, dv1])
 
-    def test_contains_nans(self):
+    @mock.patch('seismic.monitor.monitor.correct_time_shift_several')
+    def test_contains_nans(self, ctss_mock: mock.MagicMock):
         sim0 = np.random.random((5, 5))
         sim1 = np.nan*np.ones((5, 5))
         corr0 = np.zeros((5))
         dv0 = DV(corr0, corr0, ['stretch'], sim0, corr0, ['bla'], CorrStats())
         dv1 = DV(corr0, corr0, ['stretch'], sim1, corr0, ['bla'], CorrStats())
-        dv_av = monitor.average_components([dv0, dv1])
+        dv_av = monitor.average_components(
+            [dv0, dv1], correct_shift=True, correct_shift_method='bla',
+            correct_shift_overlap=5)
+        ctss_mock.assert_called_once_with(
+            [dv0, dv1], method='bla', n_overlap=5)
         self.assertTrue(np.all(dv0.sim_mat == dv_av.sim_mat))
 
     def test_result(self):

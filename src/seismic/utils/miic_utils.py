@@ -2,13 +2,13 @@
 :copyright:
    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Wednesday, 13th April 2022 02:46:18 pm
+Last Modified: Monday, 6th February 2023 04:32:16 pm
 '''
 from typing import List, Tuple
 import logging
@@ -19,9 +19,6 @@ import numpy as np
 from obspy import Inventory, Stream, Trace, UTCDateTime
 from obspy.core import Stats, AttribDict
 
-# zero lag time
-# I don't think this is in use anymore
-lag0 = UTCDateTime(0)
 
 log_lvl = {
     'DEBUG': logging.DEBUG,
@@ -241,7 +238,10 @@ t_keys = ['starttime', 'endtime', 'corr_start', 'corr_end']
 # No stats, keys that are not in stats but attributes of the respective objects
 no_stats = [
     'corr', 'value', 'sim_mat', 'second_axis', 'method_array', 'vt_array',
-    'data']
+    'data', 'tw_len', 'tw_start', 'freq_min', 'freq_max', 'subdir',
+    'plot_vel_change', 'start_date', 'end_date', 'win_len', 'date_inc',
+    'sides', 'compute_tt', 'rayleigh_wave_velocity', 'stretch_range',
+    'stretch_steps', 'dt_ref', 'preprocessing', 'postprocessing']
 
 
 def save_header_to_np_array(stats: Stats) -> dict:
@@ -404,3 +404,24 @@ def stream_require_dtype(st: Stream, dtype: type) -> Stream:
     """
     for tr in st:
         tr.data = np.require(tr.data, dtype)
+
+
+def correct_polarity(st: Stream, inv: Inventory):
+    """
+    Sometimes the polarity of a seismometer's vertical component is reversed.
+    This simple functions flips the polarity if this should be the case.
+
+    .. note::
+        This function acts on the data in-place.
+
+    :param st: input stream. If there is no Z-component, nothing will happen.
+    :type st: Stream
+    :param inv: Inventory holding the orientation information.
+    :type inv: Inventory
+    """
+    st_z = st.select(component='Z')
+    for tr in st_z:
+        dip = inv.get_orientation(
+            tr.id, datetime=tr.stats.starttime)['dip']
+        if dip > 0:
+            tr.data *= -1

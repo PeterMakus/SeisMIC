@@ -1,14 +1,14 @@
 '''
 :copyright:
-   The PyGLImER development team (makus@gfz-potsdam.de).
+   The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 27th October 2021 12:58:15 pm
-Last Modified: Monday, 11th April 2022 11:04:43 am
+Last Modified: Monday, 6th March 2023 11:40:07 am
 '''
 
 import unittest
@@ -26,15 +26,17 @@ from seismic.correlate.stats import CorrStats
 
 class TestDV(unittest.TestCase):
     def setUp(self):
-        sim_mat = np.reshape(np.arange(500), (10, 50))
+        sim_mat = np.reshape(np.arange(500), (10, 50))/500
         corr = np.max(sim_mat, axis=1)
         second_axis = np.random.random(50,)
         value = second_axis[np.argmax(sim_mat, axis=1)]
-        self.dv = dv.DV(corr, value, 'bla', sim_mat, second_axis, 'blub', {})
+        self.dv = dv.DV(
+            corr, value, 'bla', sim_mat, second_axis, 'blub', {})
 
     @patch('seismic.monitor.dv.mu.save_header_to_np_array')
     @patch('seismic.monitor.dv.np.savez_compressed')
     def test_save(self, savez_mock, save_header_mock):
+        save_header_mock.return_value = {}
         self.dv.save('/save/to/here')
         save_header_mock.assert_called_once_with({})
         savez_mock.assert_called_once_with(
@@ -47,9 +49,12 @@ class TestDV(unittest.TestCase):
     @patch('seismic.monitor.dv.mu.save_header_to_np_array')
     @patch('seismic.monitor.dv.np.savez_compressed')
     def test_save2(self, savez_mock, save_header_mock):
+        save_header_mock.return_value = {}
         self.dv.corrs = np.random.random((5, 5))
         self.dv.stretches = np.random.random((5, 5))
         self.dv.n_stat = np.ones(5, dtype=int)
+        self.dv.dv_processing = dict(
+            freq_min=0, freq_max=1, tw_start=2, tw_len=3, sides='bla')
         self.dv.save('/save/to/here')
         save_header_mock.assert_called_once_with({})
         savez_mock.assert_called_once_with(
@@ -58,7 +63,28 @@ class TestDV(unittest.TestCase):
             second_axis=self.dv.second_axis,
             method_array=np.array([self.dv.method]),
             vt_array=np.array([self.dv.value_type]), corrs=self.dv.corrs,
-            stretches=self.dv.stretches, n_stat=self.dv.n_stat)
+            stretches=self.dv.stretches, n_stat=self.dv.n_stat,
+            freq_min=0, freq_max=1, tw_start=2, tw_len=3, sides='bla')
+
+    @patch('seismic.monitor.dv.mu.save_header_to_np_array')
+    @patch('seismic.monitor.dv.np.savez_compressed')
+    def test_save3(self, savez_mock, save_header_mock):
+        save_header_mock.return_value = {}
+        self.dv.corrs = np.random.random((5, 5))
+        self.dv.stretches = np.random.random((5, 5))
+        self.dv.n_stat = np.ones(5, dtype=int)
+        self.dv.dv_processing = dict(
+            freq_min=0, freq_max=1, tw_start=2, tw_len=3)
+        self.dv.save('/save/to/here')
+        save_header_mock.assert_called_once_with({})
+        savez_mock.assert_called_once_with(
+            '/save/to/here',
+            corr=self.dv.corr, value=self.dv.value, sim_mat=self.dv.sim_mat,
+            second_axis=self.dv.second_axis,
+            method_array=np.array([self.dv.method]),
+            vt_array=np.array([self.dv.value_type]), corrs=self.dv.corrs,
+            stretches=self.dv.stretches, n_stat=self.dv.n_stat,
+            freq_min=0, freq_max=1, tw_start=2, tw_len=3, sides='unknown')
 
     def test_smooth_sim_mat(self):
         dvc = deepcopy(self.dv)
@@ -71,6 +97,13 @@ class TestDV(unittest.TestCase):
         np.testing.assert_allclose(dvc.sim_mat, self.dv.sim_mat)
         np.testing.assert_allclose(dvc.value, self.dv.value)
         np.testing.assert_allclose(dvc.corr, self.dv.corr)
+
+    def test_smooth_thres(self):
+        dvc = deepcopy(self.dv)
+        dvc.smooth_sim_mat(1, .5)
+        ii = self.dv.sim_mat < .5
+        np.testing.assert_array_equal(dvc.sim_mat[ii], np.nan)
+        np.testing.assert_allclose(dvc.sim_mat[~ii], self.dv.sim_mat[~ii])
 
 
 class TestReadDV(unittest.TestCase):
@@ -89,26 +122,32 @@ class TestReadDV(unittest.TestCase):
         self.assertDictEqual(dvout.__dict__, {
             'corr': 0, 'value': 1, 'value_type': 's', 'sim_mat': 3,
             'second_axis': 4, 'method': 'd', 'stats': CorrStats(),
-            'corrs': None, 'stretches': None, 'n_stat': None})
+            'corrs': None, 'stretches': None, 'n_stat': None,
+            'dv_processing': None, 'avail': True})
 
     @patch('seismic.monitor.dv.np.load')
     @patch('seismic.monitor.dv.mu.load_header_from_np_array')
     def test2(self, load_header_mock, npload_mock):
         load_header_mock.return_value = {}
         npload_mock.return_value = {
-            'corr': 0, 'value': 1, 'vt_array': [['s']], 'sim_mat': 3,
+            'corr': np.nan, 'value': 1, 'vt_array': [['s']], 'sim_mat': 3,
             'second_axis': 4, 'method_array': [['d']],
-            'stretches': 3, 'corrs': 5}
+            'stretches': 3, 'corrs': 5, 'freq_min': 0, 'freq_max': 1,
+            'tw_start': 2, 'tw_len': 3}
         dvout = dv.read_dv('/my/dv_file')
         npload_mock.assert_called_once_with('/my/dv_file')
         load_header_mock.assert_called_once_with({
-            'corr': 0, 'value': 1, 'vt_array': [['s']], 'sim_mat': 3,
+            'corr': np.nan, 'value': 1, 'vt_array': [['s']], 'sim_mat': 3,
             'second_axis': 4, 'method_array': [['d']],
-            'corrs': 5, 'stretches': 3})
+            'corrs': 5, 'stretches': 3, 'freq_min': 0, 'freq_max': 1,
+            'tw_start': 2, 'tw_len': 3})
         self.assertDictEqual(dvout.__dict__, {
-            'corr': 0, 'value': 1, 'value_type': 's', 'sim_mat': 3,
+            'corr': np.nan, 'value': 1, 'value_type': 's', 'sim_mat': 3,
             'second_axis': 4, 'method': 'd', 'stats': CorrStats(),
-            'corrs': 5, 'stretches': 3, 'n_stat': None})
+            'corrs': 5, 'stretches': 3, 'n_stat': None, 'avail': False,
+            'dv_processing': {
+                'freq_min': 0, 'freq_max': 1,
+                'tw_start': 2, 'tw_len': 3}})
 
     @patch('seismic.monitor.dv.np.load')
     @patch('seismic.monitor.dv.mu.load_header_from_np_array')
@@ -127,7 +166,8 @@ class TestReadDV(unittest.TestCase):
         self.assertDictEqual(dvout.__dict__, {
             'corr': 0, 'value': 1, 'value_type': 's', 'sim_mat': 3,
             'second_axis': 4, 'method': 'd', 'stats': CorrStats(),
-            'corrs': 5, 'stretches': 3, 'n_stat': 1})
+            'corrs': 5, 'stretches': 3, 'n_stat': 1, 'dv_processing': None,
+            'avail': True})
 
     @patch('seismic.monitor.dv.glob')
     @patch('seismic.monitor.dv.np.load')
@@ -156,11 +196,13 @@ class TestReadDV(unittest.TestCase):
         self.assertDictEqual(dvout[0].__dict__, {
             'corr': 0, 'value': 1, 'value_type': 'b', 'sim_mat': 3,
             'second_axis': 4, 'method': 'xs', 'stats': CorrStats(),
-            'corrs': None, 'stretches': None, 'n_stat': None})
+            'corrs': None, 'stretches': None, 'n_stat': None,
+            'dv_processing': None, 'avail': True})
         self.assertDictEqual(dvout[1].__dict__, {
             'corr': 1, 'value': 2, 'value_type': '3', 'sim_mat': 4,
             'second_axis': 5, 'method': 'd', 'stats': CorrStats(),
-            'corrs': None, 'stretches': None, 'n_stat': None})
+            'corrs': None, 'stretches': None, 'n_stat': None,
+            'dv_processing': None, 'avail': True})
         self.assertEqual(len(dvout), 2)
 
     @patch('seismic.monitor.dv.glob')
@@ -193,7 +235,8 @@ class TestReadDV(unittest.TestCase):
         self.assertDictEqual(dvout[0].__dict__, {
             'corr': 0, 'value': 1, 'value_type': 'b', 'sim_mat': 3,
             'second_axis': 4, 'method': 'xs', 'stats': CorrStats(),
-            'corrs': None, 'stretches': None, 'n_stat': None})
+            'corrs': None, 'stretches': None, 'n_stat': None,
+            'dv_processing': None, 'avail': True})
         self.assertEqual(len(dvout), 1)
 
 

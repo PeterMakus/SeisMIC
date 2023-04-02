@@ -45,6 +45,8 @@ def test_flake8():
     report = style_guide.check_files(files)
     assert report.get_statistics('E') == [], 'Flake8 found violations'
     assert report.total_errors == 0
+    if report.total_errors == 0:
+        print('Flake 8 found no violations.')
 
 
 if __name__ == "__main__":

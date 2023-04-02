@@ -4,13 +4,13 @@ Manages the file format and class for correlations.
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Tuesday, 29th March 2022 11:00:42 am
+Last Modified: Monday, 13th February 2023 10:33:35 am
 '''
 import ast
 import fnmatch
@@ -81,10 +81,12 @@ class DBHandler(h5py.File):
                             f'One option is not defined in new dict. {e}'
                         )
                     raise PermissionError(
-                        'The output file already exists and contains data with'
-                        + ' different processing parameters. Differences are:'
-                        + '\nFirst: New parameters; Second: Old parameters'
-                        + f'\n{diff}')
+                        f'The output file {path} already exists and contains'
+                        ' data with'
+                        ' different processing parameters. Differences are:'
+                        '\nFirst: New parameters; Second: Old parameters'
+                        f'\n{diff}'
+                    )
             except KeyError:
                 self.add_corr_options(co)
 
@@ -142,7 +144,10 @@ omitted." % path, category=UserWarning)
     def get_corr_options(self) -> dict:
         try:
             sco = str(self['co'].attrs['co'])
-            co = ast.literal_eval(sco)
+            # Run once more through co_to_hdf5 to account for
+            # correlations that have been computed with older versions
+
+            co = co_to_hdf5(ast.literal_eval(sco))
         except KeyError:
             raise KeyError('No correlation options in file')
         return co
@@ -202,6 +207,7 @@ omitted." % path, category=UserWarning)
             return CorrStream(CorrTrace(data, _header=header))
         # Now, we need to differ between the fnmatch pattern and the actually
         # accessed path
+        path = path.replace('?', '*')
         pattern = path.replace('/*', '*')
         path = path.split('*')[0]
         return all_traces_recursive(self[path], CorrStream(), pattern)
@@ -374,16 +380,8 @@ def all_traces_recursive(
         elif not fnmatch.fnmatch(v.name, pattern) and v.name not in pattern:
             continue
         else:
-            # try:
             stream.append(
                 CorrTrace(np.array(v), _header=read_hdf5_header(v)))
-            # This even necessary?
-            # except ValueError:
-            #     print(v)
-            #     print(v.attrs)
-            #     warnings.warn(
-            #         'Header could not be converted. Attributes are: %s' % (
-            #             str(v.attrs)))
     return stream
 
 
@@ -450,28 +448,16 @@ def co_to_hdf5(co: dict) -> dict:
     coc = deepcopy(co)
     remk = [
         'subdir', 'read_start', 'read_end', 'read_len', 'read_inc',
-        'combination_method', 'combinations', 'starttime']
+        'combination_method', 'combinations', 'starttime',
+        'xcombinations']
     for key in remk:
-        try:
-            coc.pop(key, None)
-        except KeyError:
-            pass
-    try:
+        coc.pop(key, None)
         coc['corr_args'].pop('combinations', None)
-    except KeyError:
-        pass
-    try:
         coc['subdivision'].pop('recombine_subdivision', None)
-    except KeyError:
-        pass
-    try:
         coc['subdivision'].pop('delete_subdivision', None)
-    except KeyError:
-        pass
     try:
-        for step in coc['preProcessing']:
-            if 'stream_mask_at_utc' in step['function']:
-                coc['preProcessing'].remove(step)
+        [coc['preProcessing'].remove(step) for step in coc['preProcessing']
+            if 'stream_mask_at_utc' in step['function']]
     except KeyError:
         pass
     return coc

@@ -2,15 +2,16 @@
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 12th October 2022 10:31:25 am
+Last Modified: Thursday, 9th March 2023 03:59:12 pm
 '''
 from copy import deepcopy
+import json
 import logging
 import os
 from typing import Generator, List, Tuple
@@ -28,11 +29,10 @@ from seismic.db.corr_hdf5 import CorrelationDataBase
 from seismic.monitor.dv import DV, read_dv
 from seismic.monitor.wfc import WFC
 from seismic.utils.miic_utils import log_lvl
-import seismic.monitor.post_corr_process as pcp
 
 
 class Monitor(object):
-    def __init__(self, options: dict or str):
+    def __init__(self, options: dict | str):
         """
         Object that handles the computation of seismic velocity changes.
         This will access correlations that have been computed previously with
@@ -96,6 +96,23 @@ class Monitor(object):
         consoleHandler = logging.StreamHandler()
         consoleHandler.setFormatter(fmt)
         self.logger.addHandler(consoleHandler)
+
+        # Write the options dictionary to the log file
+        if self.rank == 0:
+            opt_dump = deepcopy(options)
+            # json cannot write the UTCDateTime objects that might be in here
+            for step in opt_dump['co']['preProcessing']:
+                if 'stream_mask_at_utc' in step['function']:
+                    startsstr = [
+                        t.format_fissures() for t in step['args']['starts']]
+                    step['args']['starts'] = startsstr
+                    if 'ends' in step['args']:
+                        endsstr = [
+                            t.format_fissures() for t in step['args']['ends']]
+                        step['args']['ends'] = endsstr
+            with open(os.path.join(
+                    logdir, 'params%s.txt' % tstr), 'w') as file:
+                file.write(json.dumps(opt_dump, indent=1))
 
         # Find available stations and network
         self.netlist, self.statlist, self.infiles = \
@@ -170,7 +187,47 @@ class Monitor(object):
         with CorrelationDataBase(corr_file, mode='r') as cdb:
             # get the corrstream containing all the corrdata for this combi
             cst = cdb.get_data(network, station, channel, tag)
-        cb = cst.create_corr_bulk(inplace=True)
+            lts = cdb.get_corr_options()['corr_args']['lengthToSave']
+
+        tw_start = self.options['dv']['tw_start']
+
+        if self.options['dv']['compute_tt']:
+            if not hasattr(cst[0].stats, 'dist'):
+                warnings.warn(
+                    f'{network}.{station} does not include distance. '
+                    'SeisMIC will assume an interstation distance of 0.')
+            else:
+                # Assume flat earth to include topography
+                # Note that dist is in km and elevation information in m
+                d = np.sqrt(
+                    cst[0].stats.dist**2
+                    + ((cst[0].stats.stel-cst[0].stats.evel)/1000)**2)
+                tt = round(
+                    d/self.options['dv']['rayleigh_wave_velocity'], 0)
+                tw_start += tt
+                self.logger.info(
+                    f'Computed travel time for {network}.{station} is '
+                    f'{tt} s. The assumed direct-line distance was {d} km.')
+        if lts < tw_start + self.options['dv']['tw_len']:
+            reqtw = tw_start + self.options[
+                'dv']['tw_len']
+            raise ValueError(
+                'Requested lapse time window (time window start + time window'
+                f' length = {reqtw} contains segments after the Correlation'
+                'Function.'
+                ' When computing the correlations make sure to set an '
+                f'appropriate value for lengthToSave. The value was {lts}.'
+                f' The direct-line distance between the stations is {d} km.'
+            )
+
+        if 'preprocessing' in self.options['dv']:
+            for func in self.options['dv']['preprocessing']:
+                # This one goes on the CorrStream
+                if func['function'] == 'pop_at_utcs':
+                    f = cst.__getattribute__(func['function'])
+                    cst = f(**func['args'])
+        cb = cst.create_corr_bulk(
+            network=network, station=station, channel=channel, inplace=True)
 
         # for possible rest bits
         del cst
@@ -184,55 +241,63 @@ class Monitor(object):
         # Preprocessing on the correlation bulk
         if 'preprocessing' in self.options['dv']:
             for func in self.options['dv']['preprocessing']:
+                if func['function'] == 'pop_at_utcs':
+                    continue
                 f = cb.__getattribute__(func['function'])
                 cb = f(**func['args'])
 
-        # Now, we make a copy of the cm to be trimmed
+        # Retain a copy of the stats
+        stats_copy = deepcopy(cb.stats)
         if self.options['dv']['tw_len'] is None:
             trim0 = cb.stats.start_lag
             trim1 = cb.stats.end_lag
             cbt = cb
         else:
             trim0 = -(
-                self.options['dv']['tw_start']+self.options['dv']['tw_len'])
+                tw_start+self.options['dv']['tw_len'])
             trim1 = (
-                self.options['dv']['tw_start']+self.options['dv']['tw_len'])
+                tw_start+self.options['dv']['tw_len'])
             cbt = cb.copy().trim(trim0, trim1)
 
         if cbt.data.shape[1] <= 20:
             raise ValueError('CorrBulk extremely short.')
 
+        # 15.11.22
+        # Do trimming after stretching of the reference trace to avoid
+        # edges having an influence on dv/v estimate
         if ref_trcs is None:
-            tr = cbt.extract_multi_trace(**self.options['dv']['dt_ref'])
+            tr = cb.extract_multi_trace(**self.options['dv']['dt_ref'])
         else:
             tr = ref_trcs
-            if max(tr.shape) != cbt.data.shape[1]:
-                tr, _ = pcp.corr_mat_trim(tr, deepcopy(cb.stats), trim0, trim1)
 
         # Compute time window
         tw = [np.arange(
-            self.options['dv']['tw_start']*cbt.stats['sampling_rate'],
+            tw_start*cbt.stats['sampling_rate'],
             trim1*cbt.stats['sampling_rate'], 1)]
         dv = cbt.stretch(
             ref_trc=tr, return_sim_mat=True,
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],
-            tw=tw, sides=self.options['dv']['sides'])
-        ccb = cb.correct_stretch(dv, self.options['dv']['sides'] == 'single')
-
-        ccb.trim(trim0, trim1)
+            tw=tw, sides=self.options['dv']['sides'],
+            ref_tr_trim=(trim0, trim1), ref_tr_stats=stats_copy,
+            processing=self.options['dv'])
+        ccb = cb.correct_stretch(dv)
 
         # extract the final reference trace (mean excluding very different
         # traces)
         if ref_trcs is None:
             tr = ccb.extract_multi_trace(**self.options['dv']['dt_ref'])
 
+        ccb.trim(trim0, trim1)
+
         # obtain an improved time shift measurement
         dv = cbt.stretch(
             ref_trc=tr, return_sim_mat=True,
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],
-            tw=tw, sides=self.options['dv']['sides'])
+            tw=tw, sides=self.options['dv']['sides'],
+            ref_tr_trim=(trim0, trim1), ref_tr_stats=stats_copy,
+            processing=self.options['dv'])
 
         # Postprocessing on the dv object
         if 'postprocessing' in self.options['dv']:
@@ -652,6 +717,139 @@ def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
     return netlist, statlist, infiles
 
 
+def correct_dv_shift(
+    dv0: DV, dv1: DV, method: str = 'mean',
+        n_overlap: int = 0) -> Tuple[DV, DV]:
+    """
+    Shift dv0 with respect to dv1, so that the same times will have the same
+    value.
+
+    .. note::
+        in-place operation.
+
+    :param dv0: DV object to be shifted
+    :type dv0: DV
+    :param dv1: DV object to compare to
+    :type dv1: DV
+    :param method: either mean or median, defaults to 'mean'. If mean is chosen
+        the points will be weighted by the correlation coefficient.
+    :type method: str, optional
+    :param n_overlap: Number of points to compare to beyond the
+        already overlapping point. Makes sense if, e.g., one station replaces
+        the other, defaults to 0.
+    :type n_overlap: int, optional
+    :raises ValueError: If the two dvs only have non-nan value more than
+        n_overlap apart.
+    :return: The two dv object. Only the first one is modified. Modification
+        also happens in-place.
+    :rtype: Tuple[DV, DV]
+    """
+    # Times when both measured
+    both_avail = np.all(np.vstack((dv0.avail, dv1.avail)), axis=0)
+    if np.any(both_avail):
+        # Unless one of them become less than 0 or more than length
+        start = np.where(both_avail)[0].min() - n_overlap
+        stop = np.where(both_avail)[0].max() + n_overlap
+        ii = jj = 0
+    elif (
+        np.array(dv0.stats.starttime)[dv0.avail][0]
+            > np.array(dv1.stats.starttime)[dv1.avail][-1]):
+        # dv0 comes after dv1:
+        ii = np.where(
+            np.array(dv0.stats.starttime) == np.array(
+                dv0.stats.starttime)[dv0.avail][0])[0][0]
+        stop = ii + n_overlap
+        jj = np.where(
+            np.array(dv1.stats.starttime) == np.array(
+                dv1.stats.starttime)[dv1.avail][-1])[0][0]
+        start = jj - n_overlap
+    else:
+        # dv1 comes after dv0:
+        ii = np.where(
+            np.array(dv1.stats.starttime) == np.array(
+                dv1.stats.starttime)[dv1.avail][0])[0][0]
+        stop = ii + n_overlap
+        jj = np.where(
+            np.array(dv0.stats.starttime) == np.array(
+                dv0.stats.starttime)[dv0.avail][-1])[0][0]
+        start = jj - n_overlap
+    if ii-jj > n_overlap:
+        raise ValueError(
+            'The gap in active times of the two DVs is larger than '
+            'n_overlap, i.e., '
+            f'{n_overlap*(dv0.stats.starttime[1]-dv0.stats.starttime[0])/3600}'
+            'hours. The result would not make sense.')
+    if stop >= len(dv0.value):
+        stop = len(dv0.value) - 1
+    if start < 0:
+        start = 0
+    dv0c = dv0.corr[start:stop]
+    dv0v = dv0.value[start:stop]
+    dv1c = dv1.corr[start:stop]
+    dv1v = dv1.value[start:stop]
+    if method == 'mean':
+        shift = np.nanmean(dv0v*dv0c)/np.nanmean(dv0c)\
+            - np.nanmean(dv1v*dv1c)/np.nanmean(dv1c)
+    elif method == 'median':
+        shift = np.nanmedian(
+            dv0.value[start:stop])-np.nanmedian(dv1.value[start:stop])
+    else:
+        raise ValueError('Method has to be either mean or median')
+    roll = int(round(-shift/(dv0.second_axis[1]-dv0.second_axis[0])))
+    dv0.sim_mat = np.roll(dv0.sim_mat, (roll, 0))
+    dv0.value = dv0.second_axis[
+        np.nanargmax(np.nan_to_num(dv0.sim_mat), axis=1)]
+    return dv0, dv1
+
+
+def correct_time_shift_several(dvs: List[DV], method: str, n_overlap: int):
+    """
+    Suppose you have a number of dv/v time series from the same location,
+    but station codes changed several times. To stitch these together,
+    this code will iteratively shift each progressive time-series to the
+    shift of the end of its precessor.
+
+    .. note::
+        The shifting correction happens in-place.
+
+    :param dvs: List of dvs to be shifted
+    :type dvs: List[DV]
+    :param method: method to be used to measure the shift. Can be 'mean' or
+        'median'. If 'mean' is chosen, the points will be weighted by their
+        respective correlation coefficient.
+    :type method: str
+    :param n_overlap: amount of points beyond the overlap to use to compute
+        the shift.
+    :type n_overlap: int
+    """
+    # If three different time-series are provided, find the one that
+    # spans the middle time
+    avl = np.array([
+        np.mean(np.array([
+            t.timestamp for t in dv.stats.corr_start])[
+                dv.avail]) for dv in dvs])
+    avl_u = np.sort(np.unique(avl))
+    # Loop over each unique start and shift and correct them iteratively
+    for k, avstart in enumerate(avl_u):
+        if k+1 == len(avl_u):
+            # everything is shifted
+            break
+        ii_ref = np.concatenate(np.where(avl == avstart))[0]
+        ii_corr = np.concatenate(np.where(avl == avl_u[k+1]))
+        dv_r = dvs[ii_ref]
+        dv_corr = [dvs[ii] for ii in ii_corr]
+        for dv in dv_corr:
+            try:
+                # The correction should happen in-place
+                correct_dv_shift(
+                    dv, dv_r, method=method,
+                    n_overlap=n_overlap)
+            except ValueError as e:
+                warnings.warn(
+                    f'{e} for {dv.stats.id} and reference dv '
+                    f'{dv_r.stats.id}.')
+
+
 def average_components_mem_save(
         dvs: Generator[DV, None, None], save_scatter: bool = True) -> DV:
     """
@@ -684,6 +882,7 @@ def average_components_mem_save(
             strvec = dv.second_axis
             value_type = dv.value_type
             method = dv.method
+            dv_processing = dv.dv_processing
         if dv.method != method:
             raise TypeError('DV has to be computed with the same method.')
         if 'av' in dv.stats.channel+dv.stats.network+dv.stats.station:
@@ -711,6 +910,7 @@ def average_components_mem_save(
     iimax = np.nanargmax(np.nan_to_num(av_sim_mat), axis=1)
     corr = np.nanmax(av_sim_mat, axis=1)
     dt = strvec[iimax]
+    dt[np.isnan(corr)] = np.nan
     if save_scatter:
         # use sum of square for std
         corrs = np.array(corrs)
@@ -727,11 +927,14 @@ def average_components_mem_save(
     dvout = DV(
         corr, dt, value_type, av_sim_mat, strvec,
         method, stats, stretches=stretches, corrs=corrs,
-        n_stat=n_stat)
+        n_stat=n_stat, dv_processing=dv_processing)
     return dvout
 
 
-def average_components(dvs: List[DV], save_scatter: bool = True) -> DV:
+def average_components(
+    dvs: List[DV], save_scatter: bool = True, correct_shift: bool = False,
+    correct_shift_method: str = 'mean',
+        correct_shift_overlap: int = 0) -> DV:
     """
     Averages the Similariy matrix of the DV objects. Based on those,
     it computes a new dv value and a new correlation value.
@@ -743,6 +946,11 @@ def average_components(dvs: List[DV], save_scatter: bool = True) -> DV:
     :param save_scatter: Saves the scattering of old values and correlation
         coefficients to later provide a statistical measure. Defaults to True.
     :type save_scatter: bool, optional
+    :param correct_shift: Shift the dvs with respect to each other. This is
+        relevant if not all stations are active all the time and the references
+        are not describing the same state. This only works if stations were
+        active almost simultaneously at least for a bit
+        (i.e., corr-start[n+n_overlap]-corr-start[n])
     :raises TypeError: for DVs that were computed with different methods
     :return: A single dv with an averaged similarity matrix.
     :rtype: DV
@@ -768,23 +976,28 @@ def average_components(dvs: List[DV], save_scatter: bool = True) -> DV:
             )
             continue
         dv_use.append(dv)
-    sim_mats = [dv.sim_mat for dv in dv_use]
-    av_sim_mat = np.nanmean(sim_mats, axis=0)
+    # Correct shift
+    if correct_shift:
+        correct_time_shift_several(
+            dv_use, method=correct_shift_method,
+            n_overlap=correct_shift_overlap)
+    av_sim_mat = np.nanmean([dv.sim_mat for dv in dv_use], axis=0)
     # Now we would have to recompute the dv value and corr value
     iimax = np.nanargmax(np.nan_to_num(av_sim_mat), axis=1)
     corr = np.nanmax(av_sim_mat, axis=1)
     strvec = dv_use[0].second_axis
     dt = strvec[iimax]
+    dt[np.isnan(corr)] = np.nan
     if save_scatter:
         stretches = np.array([dv.value for dv in dv_use])
         corrs = np.array([dv.corr for dv in dv_use])
-        # # Number of stations per corr_start
-        n_stat = np.ones_like(stretches, dtype=int)
-        n_stat[np.where(np.isnan(stretches))] = 0
-        n_stat = np.sum(n_stat, axis=0)  # now this has the same shape as std
     else:
         stretches = None
         corrs = None
+    # Number of stations per corr_start
+    n_stat = np.array(
+        [dv.avail*np.ones_like(dv.corr, dtype=int) for dv in dv_use])
+    n_stat = np.sum(n_stat, axis=0)
     stats = deepcopy(dv_use[0].stats)
     if not all(np.array([dv.stats.channel for dv in dv_use]) == stats.channel):
         stats['channel'] = 'av'
@@ -795,7 +1008,7 @@ def average_components(dvs: List[DV], save_scatter: bool = True) -> DV:
     dvout = DV(
         corr, dt, dv_use[0].value_type, av_sim_mat, strvec,
         dv_use[0].method, stats, stretches=stretches, corrs=corrs,
-        n_stat=n_stat)
+        n_stat=n_stat, dv_processing=dv_use[0].dv_processing)
     return dvout
 
 

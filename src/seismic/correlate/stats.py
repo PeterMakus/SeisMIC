@@ -2,13 +2,13 @@
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 5th July 2021 02:44:13 pm
-Last Modified: Thursday, 11th August 2022 02:05:24 pm
+Last Modified: Monday, 30th January 2023 02:26:32 pm
 '''
 from obspy.core.util import AttribDict
 from obspy import UTCDateTime
@@ -171,7 +171,6 @@ class CorrStats(AttribDict):
     _types = {
         'network': (str),
         'station': (str),
-        'channel': (str),
     }
 
     def __init__(self, header={}):
@@ -194,10 +193,6 @@ class CorrStats(AttribDict):
                 value = float(value)
             elif key == 'start_lag':
                 value = float(value)
-            # elif key == 'corr_start':
-            #     value = UTCDateTime(value)
-            # elif key == 'corr_end':
-            #     value = UTCDateTime(value)
             elif key == 'npts':
                 if not isinstance(value, int):
                     value = int(value)
@@ -242,6 +237,11 @@ class CorrStats(AttribDict):
             ch = super(CorrStats, self).__getitem__('channel', default)
             a, b = ch.split('-')
             return a[-1]+'-'+b[-1]
+        elif key == 'id':
+            net = super(CorrStats, self).__getitem__('network', default)
+            sta = super(CorrStats, self).__getitem__('station', default)
+            ch = super(CorrStats, self).__getitem__('channel', default)
+            return f'{net}.{sta}.{ch}'
         else:
             return super(CorrStats, self).__getitem__(key, default)
 

@@ -2,14 +2,14 @@
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 1st June 2021 10:42:03 am
 
-Last Modified: Tuesday, 15th February 2022 11:10:59 am
+Last Modified: Monday, 13th February 2023 10:53:29 am
 
 '''
 from copy import deepcopy
@@ -463,9 +463,9 @@ class TestCoToHDF5(unittest.TestCase):
             ]})
 
     def test_keyError_handling(self):
-        d = {}
+        d = {'corr_args': {'a': 1}, 'subdivision': {'bla': 'g'}}
         coc = corr_hdf5.co_to_hdf5(d)
-        self.assertDictEqual({}, coc)
+        self.assertDictEqual(d, coc)
 
 
 if __name__ == "__main__":

@@ -8,13 +8,15 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Thursday, 6th October 2022 12:03:49 pm
+Last Modified: Tuesday, 7th March 2023 11:58:04 am
 '''
 import os
-import warnings
+from typing import Tuple, Optional, List
+import datetime
 
 import matplotlib as mpl
 from matplotlib import pyplot as plt
+from matplotlib.dates import date2num
 import numpy as np
 from obspy.core.utcdatetime import UTCDateTime
 from obspy import Trace, Stream
@@ -101,7 +103,7 @@ def plot_cst(
     ax: plt.Axes = None, linewidth: float = 0.25,
     outputfile: str or None = None, title: str or None = None,
     type: str = 'heatmap', cmap: str = 'seismic', vmin: float = None,
-        vmax: float = None):
+        vmax: float = None, **kwargs):
     """
     Creates a section or heat plot of all correlations in this stream.
 
@@ -164,12 +166,13 @@ def plot_cst(
             raise NotImplementedError(
                 'Unknown or not implemented plot type %s.' % type)
     elif sort_by == 'dist':
-        if type != 'section':
-            warnings.warn(
-                'Distance plot only supports section type.'
-            )
-        scalingfactor *= 4
-        times = sect_plot_dist(cst, ax, scalingfactor, linewidth)
+        if type == 'section':
+            scalingfactor *= 4
+            times = sect_plot_dist(
+                cst, ax, scalingfactor, linewidth, **kwargs)
+        elif type == 'heatmap':
+            times = heat_plot_corr_dist(
+                cst, ax, cmap=cmap, vmin=vmin, vmax=vmax, **kwargs)
     else:
         raise NotImplementedError('Unknown sorting method %s.' % sort_by)
 
@@ -191,6 +194,73 @@ def plot_cst(
     # Set output directory
     if outputfile is not None:
         plt.savefig(outputfile, dpi=300, transparent=True)
+    return ax
+
+
+def plot_corr_bulk(
+    corr_bulk,
+    timelimits: Optional[Tuple[datetime.datetime, datetime.datetime]] = None,
+    ylimits: Optional[Tuple[datetime.datetime, datetime.datetime]] = None,
+    clim: Optional[Tuple[float, float]] = None,
+    plot_colorbar: bool = False, outputfile: Optional[str] = None,
+    title: Optional[str] = None,
+        ax: Optional[plt.Axes] = None) -> plt.Axes:
+    """
+    Plots a :class:`~seismic.correlate.stream.CorrBulk` object.
+
+    :param corr_bulk: The CorrBulk to plot.
+    :type corr_bulk: :class:`~seismic.correlate.stream.CorrBulk`
+    :param timelimits: Limits time axis, defaults to None
+    :type timelimits: Optional[Tuple[datetime.datetime, datetime.datetime]],
+        optional
+    :param ylimits: Limits of y-axis, defaults to None
+    :type ylimits: Optional[Tuple[datetime.datetime, datetime.datetime]],
+        optional
+    :param clim: Limits of Colobar, defaults to None
+    :type clim: Optional[Tuple[float, float]], optional
+    :param plot_colorbar: add colorbar to plot, defaults to False
+    :type plot_colorbar: bool, optional
+    :param outputfile: save file to, defaults to None
+    :type outputfile: Optional[str], optional
+    :param title: Title, defaults to None
+    :type title: Optional[str], optional
+    :param ax: Axis to plot into, defaults to None
+    :type ax: Optional[plt.Axes], optional
+    :return: The current axis
+    :rtype: plt.Axes
+    """
+    set_mpl_params()
+
+    # Create figure if no axes is specified
+    if ax is None:
+        plt.figure(figsize=(8, 6))
+        ax = plt.axes()  # zorder=9999999
+
+    extent = [
+        corr_bulk.stats.start_lag,
+        corr_bulk.stats.end_lag,
+        date2num(corr_bulk.stats.corr_start[0].datetime),
+        date2num(corr_bulk.stats.corr_start[-1].datetime)]
+    im = ax.imshow(corr_bulk.data, extent=extent, aspect='auto')
+    ax.yaxis_date()
+    ax.figure.autofmt_xdate(rotation=45)
+    ax.set_xlabel(r'$\{tau}$ [s]')
+
+    # Set limits
+    if ylimits:
+        ax.set_ylim(date2num(ylimits[0]), date2num(ylimits[1]))
+    if timelimits:
+        ax.set_xlim(timelimits)
+    if title:
+        ax.set_title(title)
+    if clim:
+        im.set_clim(clim)
+    if plot_colorbar:
+        plt.colorbar(im, orientation='vertical')
+    if outputfile:
+        plt.savefig(outputfile)
+    else:
+        plt.show()
     return ax
 
 
@@ -238,17 +308,57 @@ def heat_plot_corr_start(
 
 def sect_plot_dist(
     cst: Stream, ax: plt.Axes, scalingfactor: float,
-        linewidth: float) -> np.ndarray:
+    linewidth: float, plot_reference_v: bool = False,
+        ref_v: List[float] = [1, 2, 3]) -> np.ndarray:
+    # Sort by azimuth. W on left side of plot
     for ii, ctr in enumerate(cst):
         ydata = ctr.data
         times = ctr.times()
-
+        if ctr.stats.az >= 180:
+            times = -1*times
         ytmp = ydata * scalingfactor + ctr.stats.dist
 
         ax.plot(times, ytmp, 'k', lw=linewidth, zorder=-ii + 0.1)
-        plt.ylabel(r"Distance [km]")
+    if plot_reference_v:
+        yref = np.array([ax.get_ylim()[1], 0, ax.get_ylim()[1]])
+        [plt.plot(
+            [-yref[0]/rv, 0, yref[0]/rv], yref, linewidth=.5, zorder=0,
+            label=f'{rv}'+r'$\frac{km}{s}$') for rv in ref_v]
+        plt.legend()
+    plt.ylabel(r"Distance [km]")
     # Set label locations.
     # step = round((cst[-1].stats.dist - cst[0].stats.dist)/10000)
     # plt.yticks(np.arange(0, ctr.stats.dist/1000+step, step, dtype=int))
     plt.yticks(np.linspace(0, ctr.stats.dist, 10, dtype=int))
+    return times
+
+
+def heat_plot_corr_dist(
+    cst: Stream, ax: plt.Axes, cmap: str, vmin: float, vmax: float,
+        plot_reference_v: bool = False, ref_v: List[float] = [1, 2, 3]):
+    data = np.empty((cst.count(), cst[0].stats.npts))
+    # y grid
+    y = np.zeros((len(cst),))
+    # x coords
+    times = cst[0].times()
+    for ii, ctr in enumerate(cst):
+        if ctr.stats.az >= 180:
+            data[ii, :] = np.flip(ctr.data)
+        else:
+            data[ii, :] = ctr.data
+        y[ii] = ctr.stats.dist
+    ds = plt.pcolormesh(
+        times, y, data, shading='auto', cmap=cmap, vmin=vmin,
+        vmax=vmax)
+    if plot_reference_v:
+        yref = np.array([ax.get_ylim()[1], 0, ax.get_ylim()[1]])
+        [plt.plot(
+            [-yref[0]/rv, 0, yref[0]/rv], yref, linewidth=.5, zorder=99,
+            label=f'{rv}'+r'$\frac{km}{s}$') for rv in ref_v]
+        plt.legend()
+    plt.colorbar(
+        ds, label='correlation coefficient', shrink=.6,
+        orientation='horizontal')
+    plt.yticks(np.linspace(0, ctr.stats.dist, 10, dtype=int))
+    ax.set_ylabel(r"Distance [km]")
     return times

@@ -8,7 +8,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 04:07:16 pm
-Last Modified: Thursday, 10th February 2022 09:48:59 am
+Last Modified: Tuesday, 8th November 2022 11:19:58 am
 '''
 
 import unittest
@@ -33,10 +33,11 @@ class TestCosTaperSt(unittest.TestCase):
             Trace(2*np.ones((10,)))]
         cos_taper_mock.side_effect = trcs
         exp = Stream(trcs)
-        out = ppst.cos_taper_st(self.st.copy(), 5, True)
+        out = ppst.cos_taper_st(self.st.copy(), 5, True, True)
         calls = [
-            mock.call(self.st[0], 5, True), mock.call(self.st[1], 5, True),
-            mock.call(self.st[2], 5, True)]
+            mock.call(self.st[0], 5, True, True),
+            mock.call(self.st[1], 5, True, True),
+            mock.call(self.st[2], 5, True, True)]
         cos_taper_mock.assert_has_calls(calls)
         for tr, tro in zip(exp, out):
             np.testing.assert_array_equal(tr.data, tro.data)
@@ -46,10 +47,10 @@ class TestCosTaperSt(unittest.TestCase):
         intr = Trace(np.zeros((10,)))
         cos_taper_mock.side_effect = ValueError
         with warnings.catch_warnings(record=True) as w:
-            out = ppst.cos_taper_st(intr, 5, True)
+            out = ppst.cos_taper_st(intr, 5, True, False)
             self.assertEqual(len(w), 1)
         calls = [
-            mock.call(intr, 5, True)]
+            mock.call(intr, 5, False, True)]
         cos_taper_mock.assert_has_calls(calls)
         self.assertEqual(out, Stream([intr]))
 
@@ -61,15 +62,14 @@ class TestCosTaper(unittest.TestCase):
         self.testtr = Trace(np.ones(1000), header=st)
         tl = np.random.randint(1, high=20)
         self.tls = tl * self.sr  # taper len in samples
-        self.tr_res = ppst.cos_taper(self.testtr.copy(), tl, False)
+        self.tr_res = ppst.cos_taper(self.testtr.copy(), tl, False, False)
 
     def test_in_place(self):
-        self.sr = 10  # sampling rate
         st = AttribDict({'sampling_rate': self.sr})
         testtro = Trace(np.ones(1000), header=st)
         testtr = testtro.copy()
         self.assertEqual(testtr, testtro)
-        ppst.cos_taper(testtr, 5, False)
+        ppst.cos_taper(testtr, 5, False, False)
         self.assertNotEqual(testtr, testtro)
 
     def test_ends(self):
@@ -93,14 +93,14 @@ class TestCosTaper(unittest.TestCase):
     def test_empty_trace(self):
         testtr = Trace(np.array([]), header=self.testtr.stats)
         with self.assertRaises(ValueError):
-            ppst.cos_taper(testtr, 10, False)
+            ppst.cos_taper(testtr, 10, False, False)
 
     def test_invalid_taper_len(self):
         with self.assertRaises(ValueError):
             ppst.cos_taper(
-                self.testtr.copy(), np.random.randint(-100, 0), False)
+                self.testtr.copy(), np.random.randint(-100, 0), False, False)
         with self.assertRaises(ValueError):
-            ppst.cos_taper(self.testtr.copy(), 501*self.sr, False)
+            ppst.cos_taper(self.testtr.copy(), 501*self.sr, False, False)
 
     def test_masked_value(self):
         tr0 = read()[0]
@@ -109,7 +109,7 @@ class TestCosTaper(unittest.TestCase):
         st = Stream([tr0, tr1])
         tr = st.merge()[0]
         tl = np.random.randint(1, high=5)
-        ttr = ppst.cos_taper(tr, tl, True)
+        ttr = ppst.cos_taper(tr, tl, True, False)
         # Check that ends reduce to 0
         self.assertAlmostEqual(ttr.data[0], 0)
         self.assertAlmostEqual(ttr.data[-1], 0)
@@ -118,6 +118,21 @@ class TestCosTaper(unittest.TestCase):
         # Also the mask should be retained
         self.assertEqual(
             len(ttr.data[ttr.data.mask]), ttr.count()-tr0.count()-tr1.count())
+
+    def test_warning_lossless_masked(self):
+        intr = Trace(np.zeros((10,)))
+        with warnings.catch_warnings(record=True) as w:
+            ppst.cos_taper_st(intr, 5, True, True)
+            self.assertEqual(len(w), 1)
+
+    def test_lossless_taper(self):
+        testtr = self.testtr.copy()
+        self.assertEqual(self.testtr, testtr)
+        ppst.cos_taper(testtr, 5, False, True)
+        self.assertNotEqual(testtr, self.testtr)
+        np.testing.assert_array_equal(
+            self.testtr.data, testtr.data[round(self.sr*5):round(-self.sr*5)])
+        self.assertEqual(testtr.stats.npts, self.testtr.stats.npts+10*self.sr)
 
 
 class TestDetrendSt(unittest.TestCase):

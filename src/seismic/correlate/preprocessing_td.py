@@ -4,13 +4,13 @@ Module that contains functions for preprocessing in the time domain
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:24:01 pm
-Last Modified: Wednesday, 16th March 2022 03:48:53 pm
+Last Modified: Monday, 16th January 2023 11:13:58 am
 '''
 from copy import deepcopy
 

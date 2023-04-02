@@ -2,18 +2,18 @@
 :copyright:
    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Thursday, 11th August 2022 02:04:22 pm
+Last Modified: Thursday, 9th March 2023 04:04:40 pm
 '''
 
 from datetime import datetime
 from glob import glob
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import warnings
 from zipfile import BadZipFile
 
@@ -33,7 +33,8 @@ class DV(object):
         self, corr: np.ndarray, value: np.ndarray, value_type: str,
         sim_mat: np.ndarray, second_axis: np.ndarray, method: str,
         stats: CorrStats, stretches: np.ndarray = None,
-            corrs: np.ndarray = None, n_stat: np.ndarray = None):
+        corrs: np.ndarray = None, n_stat: np.ndarray = None,
+            dv_processing: dict = None):
         """
         Creates an object designed to hold and process velocity changes.
 
@@ -76,6 +77,9 @@ class DV(object):
         self.second_axis = second_axis
         self.method = method
         self.stats = stats
+        self.dv_processing = dv_processing
+        # Available indices
+        self.avail = ~np.isnan(self.corr)
 
     def __str__(self):
         """
@@ -85,7 +89,8 @@ class DV(object):
             + self.stats.channel
         out = f'{self.method} {self.value_type} velocity change estimate of '\
             + f'{code}.\nstarttdate: {min(self.stats.corr_start).ctime()}\n'\
-            + f'enddate: {max(self.stats.corr_end).ctime()}'
+            + f'enddate: {max(self.stats.corr_end).ctime()}\n\n'\
+            + f'processed with the following parameters: {self.dv_processing}'
         if self.method == np.array(['time_shift']):
             out = f'Time shift estimate of {code}.\nstarttdate: '\
                 + f'{min(self.stats.corr_start).ctime()}\nenddate: '\
@@ -100,20 +105,34 @@ class DV(object):
         :param path: output path
         :type path: str
         """
-        method_array = np.array([self.method])
-        vt_array = np.array([self.value_type])
         kwargs = mu.save_header_to_np_array(self.stats)
-        if self.corrs is None or self.stretches is None:
-            np.savez_compressed(
-                path, corr=self.corr, value=self.value, sim_mat=self.sim_mat,
-                second_axis=self.second_axis, method_array=method_array,
-                vt_array=vt_array, **kwargs)
-        else:
-            np.savez_compressed(
-                path, corr=self.corr, value=self.value, sim_mat=self.sim_mat,
-                second_axis=self.second_axis, method_array=method_array,
-                vt_array=vt_array, stretches=self.stretches,
-                corrs=self.corrs, n_stat=self.n_stat, **kwargs)
+        if self.dv_processing is not None:
+            try:
+                sides = self.dv_processing['sides']
+            except KeyError:
+                sides = 'unknown'
+            kwargs.update({
+                'freq_min': self.dv_processing['freq_min'],
+                'freq_max': self.dv_processing['freq_max'],
+                'tw_len': self.dv_processing['tw_len'],
+                'tw_start': self.dv_processing['tw_start'],
+                'sides': sides
+            })
+        kwargs.update({
+            'method_array': np.array([self.method]),
+            'vt_array': np.array([self.value_type]),
+            'corr': self.corr,
+            'value': self.value,
+            'sim_mat': self.sim_mat,
+            'second_axis': self.second_axis,
+            'stretches': self.stretches,
+            'corrs': self.corrs,
+            'n_stat': self.n_stat
+        })
+        # Np load will otherwise be annoying
+        to_save = {k: v for k, v in kwargs.items() if v is not None}
+        np.savez_compressed(
+            path, **to_save)
 
     def plot(
         self, save_dir: str = '.', figure_file_name: str = None,
@@ -167,17 +186,25 @@ class DV(object):
             normalize_simmat, sim_mat_Clim, figsize, dpi, xlim=xlim, ylim=ylim,
             title=title, plot_scatter=plot_scatter, return_ax=return_ax)
 
-    def smooth_sim_mat(self, win_len: int):
+    def smooth_sim_mat(
+            self, win_len: int, exclude_corr_below: Optional[float] = None):
         """
         Smoothes the similarity matrix along the correlation time axis.
 
         :param win_len: Length of the window in number of samples.
         :type win_len: int
+        :param exclude_corr_below: Exclude data points with a correlation
+            coefficient below the chosen threshold. Defaults to None (i.e.,
+            include all)
+        :type exclude_corr_below: float
 
         :note::
 
-            This action is perfomed in-place.
+            This action is perfomed in-place and irreversible as the original
+            data are not accesible any more.
         """
+        if exclude_corr_below is not None:
+            self.sim_mat[self.sim_mat < exclude_corr_below] = np.nan
         self.sim_mat = mu.nan_moving_av(self.sim_mat, int(win_len/2), axis=0)
 
         # Compute the dependencies again
@@ -225,7 +252,15 @@ def read_dv(path: str) -> DV:
         n_stat = loaded['n_stat']
     except KeyError:
         n_stat = None
+    try:
+        dv_processing = dict(
+            freq_min=float(loaded['freq_min']),
+            freq_max=float(loaded['freq_max']),
+            tw_start=float(loaded['tw_start']),
+            tw_len=float(loaded['tw_len']))
+    except KeyError:
+        dv_processing = None
     return DV(
         loaded['corr'], loaded['value'], vt, loaded['sim_mat'],
         loaded['second_axis'], method, stats=stats, stretches=stretches,
-        corrs=corrs, n_stat=n_stat)
+        corrs=corrs, n_stat=n_stat, dv_processing=dv_processing)

@@ -1,19 +1,22 @@
 '''
 :copyright:
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Thursday, 11th August 2022 02:03:24 pm
+Last Modified: Monday, 16th January 2023 11:13:58 am
 '''
-from typing import List, Tuple
+from typing import List, Tuple, Optional
+from copy import deepcopy
 
 import numpy as np
 from obspy.signal.invsim import cosine_taper
 from scipy.interpolate import UnivariateSpline, interp1d
+from seismic.correlate.stats import CorrStats
+from seismic.monitor.trim import corr_mat_trim
 
 
 def time_windows_creation(
@@ -255,7 +258,11 @@ def velocity_change_estimate(
     # Mat must be a 2d vector in every case so
     mat = np.atleast_2d(mat)
 
-    assert strrefmat.shape[1] == mat.shape[1]
+    if strrefmat.shape[1] != mat.shape[1]:
+        raise ValueError(
+            'STRREFMAT and MAT must have the same number of'
+            f"samples corrmat has shape {mat.shape} "
+            f'and stretched reference matrix has {strrefmat.shape}')
 
     if remove_nans:
         mat = np.nan_to_num(mat)
@@ -337,7 +344,9 @@ def velocity_change_estimate(
 def time_stretch_estimate(
     corr_data: np.ndarray, ref_trc: np.ndarray = None, tw: np.ndarray = None,
     stretch_range: float = 0.1, stretch_steps: int = 100, sides: str = 'both',
-        remove_nans: bool = True) -> dict:
+    remove_nans: bool = True,
+    ref_tr_trim: Optional[Tuple[float, float]] = None,
+        ref_tr_stats=None) -> dict:
     """ Time stretch estimate through stretch and comparison.
 
     This function estimates stretching of the time axis of traces as it can
@@ -347,7 +356,7 @@ def time_stretch_estimate(
     in the ``corr_data`` matrix (one for each row) with ``stretch_steps``
     stretched versions  of reference trace stored in ``ref_trc``.
     The maximum amount of stretching may be passed in ``stretch_range``. The
-    time axis is multiplied by exp(stretch).
+    time axis is multiplied by 1/(1 + stretch).
     The best match (stretching amount and corresponding correlation value) is
     calculated on different time windows. If ``tw = None`` the stretching is
     estimated on the whole trace.
@@ -433,8 +442,11 @@ def time_stretch_estimate(
     # ref_trc *= taper
 
     # different values of shifting to be tested
-    stretchs = np.linspace(-stretch_range, stretch_range, stretch_steps)
-    time_facs = np.exp(-stretchs)
+    stretches = np.linspace(-stretch_range, stretch_range, stretch_steps)
+    # dv defined as difference
+    # time_facs = 1/(1 + stretchs)
+    # dv defined as logarithmic stretch
+    time_facs = np.exp(-stretches)
 
     # time axis
     if sides != 'single':
@@ -443,23 +455,28 @@ def time_stretch_estimate(
         time_idx = np.arange(len(ref_trc))
 
     # create the array to hold the shifted traces
-    ref_stretch = np.zeros((len(stretchs), len(ref_trc)))
+    ref_stretch = np.zeros((len(stretches), len(ref_trc)))
 
     # create a spline object for the reference trace
     # :NOTE: This change can give very different results and should
     # **definitely** be discussed!
-    # ref_tr_spline = UnivariateSpline(time_idx, ref_trc, s=0)
     # 01.07.21 No extrapolation
-    ref_tr_spline = UnivariateSpline(time_idx, ref_trc, s=0, ext='const')
+    # 15.11.22 set extrapolation to 0 / ext=1
+    ref_tr_spline = UnivariateSpline(time_idx, ref_trc, s=0, ext='zeros')
 
     # evaluate the spline object at different points and put in the prepared
     # array
     for (k, this_fac) in enumerate(time_facs):
         ref_stretch[k, :] = ref_tr_spline(time_idx * this_fac)
 
+    if ref_tr_trim is not None:
+        ref_stretch, _ = corr_mat_trim(
+            ref_stretch, deepcopy(ref_tr_stats), ref_tr_trim[0],
+            ref_tr_trim[1])
+
     # search best fit of the crosscorrs to one of the stretched ref_traces
     dv = velocity_change_estimate(
-        mat, tw, ref_stretch, stretchs, sides=sides, return_sim_mat=True,
+        mat, tw, ref_stretch, stretches, sides=sides, return_sim_mat=True,
         remove_nans=remove_nans)
 
     # TODO: It is not really clear why it it necessary to transpose here so
@@ -474,7 +491,9 @@ def time_stretch_estimate(
 def multi_ref_vchange(
     corr_data: np.ndarray, ref_trs: np.ndarray, tw: np.ndarray = None,
     stretch_range: float = 0.1, stretch_steps: int = 100, sides: str = 'both',
-        remove_nans: bool = True) -> dict:
+    remove_nans: bool = True,
+    ref_tr_trim: Optional[Tuple[float, float]] = None,
+        ref_tr_stats=None) -> dict:
     """ Velocity change estimate with single or multiple reference traces.
 
     This function estimates the velocity change corresponding to each row of
@@ -556,7 +575,8 @@ def multi_ref_vchange(
         key = "reftr_0"
         value = time_stretch_estimate(
             corr_data, ref_trc=ref_trs, tw=tw, stretch_range=stretch_range,
-            stretch_steps=stretch_steps, sides=sides, remove_nans=remove_nans)
+            stretch_steps=stretch_steps, sides=sides, remove_nans=remove_nans,
+            ref_tr_trim=ref_tr_trim, ref_tr_stats=ref_tr_stats)
         multi_ref_panel.update({key: value})
     else:  # For multiple-traces loops
         for i in range(reftr_count):
@@ -565,7 +585,8 @@ def multi_ref_vchange(
             value = time_stretch_estimate(
                 corr_data, ref_trc=ref_trc, tw=tw, stretch_range=stretch_range,
                 stretch_steps=stretch_steps, sides=sides,
-                remove_nans=remove_nans)
+                remove_nans=remove_nans,
+                ref_tr_trim=ref_tr_trim, ref_tr_stats=ref_tr_stats)
             multi_ref_panel.update({key: value})
     return multi_ref_panel
 
@@ -839,7 +860,9 @@ def multi_ref_vchange_and_align(
     corr_data: np.ndarray, ref_trs: np.ndarray, tw: np.ndarray = None,
     stretch_range: float = 0.1, stretch_steps: int = 100,
     sides: str = 'both', return_sim_mat: bool = False,
-        remove_nans: bool = True) -> dict:
+    remove_nans: bool = True,
+    ref_tr_trim: Optional[Tuple[float, float]] = None,
+        ref_tr_stats=None) -> dict:
     """ Multi-reference dv estimate and alignment
 
     :type corr_data: :class:`~numpy.ndarray`
@@ -913,7 +936,8 @@ def multi_ref_vchange_and_align(
 
     multi_ref_panel = multi_ref_vchange(
         corr_data, ref_trs, tw=tw, stretch_range=stretch_range,
-        stretch_steps=stretch_steps, sides=sides, remove_nans=remove_nans)
+        stretch_steps=stretch_steps, sides=sides, remove_nans=remove_nans,
+        ref_tr_trim=ref_tr_trim, ref_tr_stats=ref_tr_stats)
 
     n_ref = len(list(multi_ref_panel.keys()))
 
@@ -1125,8 +1149,6 @@ def time_shift_apply(
 
     # stretch every line
     for ii, (ctr, delta) in enumerate(zip(mat, shift)):
-        # s = UnivariateSpline(time_idx, ctr, s=2, ext='zeros')
-        # shifted_mat[ii, :] = s(time_idx - delta)
         s = interp1d(
             time_idx, ctr, kind='linear', bounds_error=False, fill_value=0)
         shifted_mat[ii, :] = s(time_idx - delta)
@@ -1191,6 +1213,57 @@ def time_stretch_apply(
     # stretch every line
     for (ii, line) in enumerate(mat):
         s = UnivariateSpline(time_idx, line, s=0)
-        stretched_mat[ii, :] = s(time_idx * np.exp(-stretch[ii]))
+        stretched_mat[ii, :] = s(time_idx * (1 + stretch[ii]))
+        stretched_mat[ii, :] = s(time_idx * np.exp(stretch[ii]))
 
     return stretched_mat
+
+
+def create_shifted_ref_mat(
+    ref_trc: np.ndarray, stats: CorrStats,
+        shifts: np.ndarray) -> np.array:
+    """
+    Create a matrix of shifted versions of a reference trace.
+    """
+    assert len(ref_trc.shape) == 1 or ref_trc.shape[0] == 1,\
+        f"'ref_trc' must be a 1-dimensional array,  has shape {ref_trc.shape}."
+    # squeeze the trace to 1D array
+    ref_trc = np.squeeze(ref_trc)
+    # allocate space for the shifted traces
+    ref_mat = np.zeros((len(shifts), len(ref_trc)))
+    # create the time vector
+    times = np.linspace(stats.start_lag, stats.end_lag, stats.npts)
+    # create the spline
+    s = UnivariateSpline(times, ref_trc, s=0)
+    for ii, shift in enumerate(shifts):
+        ref_mat[ii, :] = s(times + shift)
+
+    return ref_mat
+
+
+def compare_with_modified_reference(
+    data: np.ndarray, ref_mat: np.ndarray,
+        indices: np.ndarray) -> np.ndarray:
+    """
+    Compare a correlation matrix with a modified references.
+    """
+    # create mask for time window
+    mat_mask = np.zeros_like(data)
+    mat_mask[:, indices] = 1
+    ref_mask = np.zeros_like(ref_mat)
+    ref_mask[:, indices] = 1
+    # mask array
+    first = data[:, indices]
+    second = ref_mat[:, indices]
+    # correlation via dot product
+    dprod = np.dot(first, second.T)
+    # Normalization
+    f_sq = np.sum(first ** 2, axis=1)
+    s_sq = np.sum(second ** 2, axis=1)
+    f_sq = f_sq.reshape(1, len(f_sq))
+    s_sq = s_sq.reshape(1, len(s_sq))
+    den = np.sqrt(np.dot(f_sq.T, s_sq))
+    # apply normalization
+    sim_mat = dprod / den
+
+    return sim_mat

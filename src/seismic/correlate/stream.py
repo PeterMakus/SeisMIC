@@ -4,33 +4,33 @@ Manage objects holding correlations.
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-   GNU Lesser General Public License, Version 3
-   (https://www.gnu.org/copyleft/lesser.html)
+    EUROPEAN UNION PUBLIC LICENCE v. 1.2
+   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Friday, 10th February 2023 04:25:11 pm
+Last Modified: Monday, 6th March 2023 11:30:07 am
 '''
-
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
 import warnings
 from matplotlib import pyplot as plt
 
 
 import numpy as np
+import numpy.typing as npt
 from obspy import Stream, Trace, Inventory, UTCDateTime
 from obspy.core import Stats
 
 from seismic.utils import miic_utils as m3ut
-from seismic.plot.plot_correlation import plot_cst, plot_ctr
+from seismic.plot.plot_correlation import plot_cst, plot_ctr, plot_corr_bulk
 import seismic.monitor.post_corr_process as pcp
-from seismic.monitor.stretch_mod import time_shift_apply, time_stretch_apply,\
-    wfc_multi_reftr
+from seismic.monitor.stretch_mod import wfc_multi_reftr
 from seismic.monitor.dv import DV
 from seismic.monitor.wfc import WFC
 from seismic.correlate.stats import CorrStats
+from seismic.monitor.trim import corr_mat_trim
 
 
 class CorrBulk(object):
@@ -67,6 +67,17 @@ class CorrBulk(object):
             self.stats['ntrcs'], self.stats['npts'] = A.shape
         self.stats['processing_bulk'] = []
         self.ref_trc = None
+
+    def plot(self, **kwargs):
+        """
+        Plot the correlation traces contained.
+
+        .. seealso::
+            See :func:`~seismic.plot.plot_correlation.plot_corr_bulk` for
+            accepted parameters.
+        """
+        ax = plot_corr_bulk(self, **kwargs)
+        return ax
 
     def normalize(
         self, starttime: float = None, endtime: float = None,
@@ -152,44 +163,7 @@ class CorrBulk(object):
         self.stats.processing_bulk += ['Corrected for Amplitude Decay']
         return self
 
-    def correct_shift(
-        self, dv: DV = None, shift: np.ndarray = None,
-            single_sided: bool = False):
-        """
-        Correct shift / clock drift of a correlation matrix.
-        Input argument can either be a matrix holding the shifts in n_samples
-        or a DV object with value_type==shift
-
-        :param dv: A dv object with value_type == shift, defaults to None
-        :type dv: DV, optional
-        :param shift: A 1 or 2D array holding the shift per CorrTrace (1D) or
-            per CorrTrace and sample (2D), defaults to None
-        :type shift: np.ndarray, optional
-        :param single_sided: self.data only contains causal side,
-            defaults to False
-        :type single_sided: bool, optional
-        :raises ValueError: mismatched inputs
-        :return: shifted CorrBulk
-
-        ..note:: This action is performed **in-place**. If you would like to
-            keep the original data use
-            :func:`~seismic.correlate.stream.CorrelationBulk.copy()`.
-        """
-        if (shift is None and dv is None) or (
-                shift is not None and dv is not None):
-            raise ValueError(
-                'Provide either shift values or a DV object containing time '
-                + 'shift estimates')
-        if dv is not None:
-            if dv.value_type != 'shift':
-                raise ValueError('dv values have to be of type "shift".')
-            shift = -dv.value
-        self.data = time_shift_apply(
-            self.data, shift, single_sided=single_sided)
-        self.stats.processing_bulk += ['Applied time shift']
-        return self
-
-    def correct_stretch(self, dv: DV, single_sided: bool = False):
+    def correct_stretch(self, dv: DV):
         """
         Correct stretching of correlation matrix
 
@@ -200,9 +174,6 @@ class CorrBulk(object):
 
         :param dv: Velocity Change object
         :type dv: DV
-        :param single_sided: set True for active source experiments where
-            the first sample is the trigger time. Defaults to False
-        type single_sided: bool, optional
 
         ..note:: This action is performed **in-place**. If you would like to
             keep the original data use
@@ -210,8 +181,26 @@ class CorrBulk(object):
         """
         if dv.value_type != 'stretch':
             raise ValueError('DV object does not hold any stretch values.')
-        self.data = time_stretch_apply(self.data, -1.*dv.value, single_sided)
+        self.data, self.stats = pcp.apply_stretch(
+            self.data, self.stats, -1.*dv.value)
         self.stats.processing_bulk += ['Applied time stretch']
+        return self
+
+    def correct_shift(self, dt: DV):
+        """
+        Correct a shift of the traces.
+
+        If time shifts in the (correlation) traces occur due to clock drifts
+        or time offsets in active measurements these can be measured with
+        :func:`~seismic.correlate.stream.CorrelationBulk.measure_shift`. If
+        the resulting time shift is passed to this function the shift is
+        corrected for, such that if the measurement is done again no shift will
+        be detected.
+        """
+        self.data = pcp.apply_shift(
+            data=self.data, stats=self.stats,
+            shifts=-1.*dt.value)
+        self.stats.processing_bulk += ['Corrected for time shift']
         return self
 
     def create_corr_stream(self, ind: List[int] = None):
@@ -228,7 +217,7 @@ class CorrBulk(object):
         :rtype: :class:`~seismic.correlate.stream.CorrStream`
         """
         cst = CorrStream()
-        mutables = ['corr_start', 'corr_end', 'location']
+        mutables = ['corr_start', 'corr_end', 'location', 'channel']
         if ind is None:
             for ii, li in enumerate(self.data):
                 stats = deepcopy(self.stats)
@@ -299,6 +288,7 @@ class CorrBulk(object):
         trace. The following possibilities are available
 
         * ``mean`` averages all traces in the matrix
+        * ``median`` takes the median of all traces in the matrix
         * ``norm_mean`` averages the traces normalized after normalizing for
             maxima
         * ``similarity_percentile`` averages the ``percentile`` % of traces
@@ -335,6 +325,7 @@ class CorrBulk(object):
         trace. The following possibilities are available
 
         * ``mean`` averages all traces in the matrix
+        * ``median`` extract the median of all traces in the matrix
         * ``norm_mean`` averages the traces normalized after normalizing for
             maxima
         * ``similarity_percentile`` averages the ``percentile`` % of traces
@@ -419,6 +410,58 @@ class CorrBulk(object):
         if not return_sim_mat:
             dv_dict['sim_mat'] = np.array([])
         return DV(**dv_dict)
+
+    def measure_shift(
+        self, ref_trc: Optional[np.ndarray] = None,
+        tw: Optional[List[float]] = None,
+        shift_range: float = 10, shift_steps: int = 101, sides: str = 'both',
+            return_sim_mat: bool = False) -> DV:
+        """
+        Time shift estimate through shifting and comparison.
+
+        This function estimates shifting of the time axis of traces as it can
+        occur if the clocks of digitizers drift.
+
+        Time shifts are estimated comparing each trace (e.g. correlation
+        function stored in the ``corr_data`` matrix (one for each row) with
+        shifted versions  of reference trace stored in ``ref_trc``. The range
+        of shifting to be tested is given in ``shift_range`` in seconds.
+        It is used in a symmetric way from -``shift_range``
+        to +``shift_range``. Shifting ist
+        tested ``shift_steps`` times. ``shift_steps`` should be an odd number
+        to test zero shifting. The best match (shifting amount and
+        corresponding correlation value) is calculated in specified time
+        windows. Multiple time
+        windows may be specified in ``tw``.
+
+        :param ref_trc: Refernce trace for the shifting, defaults to None
+        :type ref_trc: Optional[np.ndarray], optional
+        :param tw: Time window(s) to check the shifting in, defaults to None.
+        :type tw: Optional[List[float]], optional
+        :param shift_range: Maximum shift range in seconds, defaults to 10
+        :type shift_range: float, optional
+        :param shift_steps: Number of shift steps, defaults to 101
+        :type shift_steps: int, optional
+        :type sides: str
+        :param sides: Side of the traces to be used for the shifting estimate
+            ('both' | 'single'). ``single`` is used for
+            one-sided signals from active sources or if the time window shall
+            not be symmetric. For ``both`` the time window will be mirrowd
+            about
+            zero lag time, e.g. [start,end] will result in time windows
+            [-end:-start] and [start:end] being used simultaneousy
+        :param return_sim_mat: Return simmilarity matrix?, defaults to False
+        :type return_sim_mat: bool, optional
+        :return: A DV object holding a shift value.
+        :rtype: DV
+        """
+        if tw is not None:
+            tw_list = [tw]
+        dt = pcp.measure_shift(
+            self.data, self.stats, ref_trc=ref_trc,
+            tw=tw_list, shift_range=shift_range, shift_steps=shift_steps,
+            sides=sides, return_sim_mat=return_sim_mat)[0]
+        return dt
 
     def mirror(self):
         """
@@ -522,7 +565,9 @@ class CorrBulk(object):
     def stretch(
         self, ref_trc: np.ndarray = None, tw: List[np.ndarray] = None,
         stretch_range: float = 0.1, stretch_steps: int = 101,
-            sides: str = 'both', return_sim_mat: bool = False) -> DV:
+        sides: str = 'both', return_sim_mat: bool = False,
+        ref_tr_trim: Optional[Tuple[float, float]] = None,
+            ref_tr_stats=None, processing: Optional[dict] = None) -> DV:
         """
         Compute the velocity change with the stretching method
         (see Sens-Schönfelder and Wegler, 2006).
@@ -542,6 +587,8 @@ class CorrBulk(object):
         :type sides: str, optional
         :param return_sim_mat: Return the similarity matrix, defaults to False
         :type return_sim_mat: bool, optional
+        :param processing: dictionary holding processing information.
+        :type processing: dict
         :return: The velocity change as :class:`~seismic.monitor.dv.DV` object.
         :rtype: DV
         """
@@ -549,10 +596,10 @@ class CorrBulk(object):
             ref_trc = self.ref_trc
         dv_dict = pcp.corr_mat_stretch(
             self.data, self.stats, ref_trc, tw, stretch_range, stretch_steps,
-            sides, return_sim_mat)
+            sides, return_sim_mat, ref_tr_trim, ref_tr_stats)
         if not return_sim_mat:
             dv_dict['sim_mat'] = np.array([])
-        return DV(**dv_dict)
+        return DV(**dv_dict, dv_processing=processing)
 
     def save(self, path: str):
         """
@@ -659,7 +706,7 @@ class CorrBulk(object):
             the original data use
             :func:`~seismic.correlate.stream.CorrelationBulk.copy()`
         """
-        self.data, self.stats = pcp.corr_mat_trim(
+        self.data, self.stats = corr_mat_trim(
             self.data, self.stats, starttime, endtime)
         proc = ['trim: %s, %s' % (str(starttime), str(endtime))]
         self.stats.processing_bulk += proc
@@ -766,8 +813,9 @@ class CorrStream(Stream):
         if traces:
             for tr in traces:
                 if not isinstance(tr, CorrTrace):
-                    raise TypeError('Traces have to be of type \
-                        :class:`~seismic.correlate.correlate.CorrTrace`.')
+                    raise TypeError(
+                        'Traces have to be of type'
+                        ':class:`~seismic.correlate.correlate.CorrTrace`.')
                 self.traces.append(tr)
 
     def __str__(self, extended=False) -> str:
@@ -803,53 +851,175 @@ class CorrStream(Stream):
                 'Stream.__str__(extended=True))" to print all correlaitons]'
         return out
 
-    def stack(
-        self, weight: str = 'by_length', starttime: UTCDateTime = None,
-        endtime: UTCDateTime = None, stack_len: int or str = 0,
-            regard_location=True):
+    def create_corr_bulk(
+        self, network: str = None, station: str = None, channel: str = None,
+        location: str = None, times: Tuple[UTCDateTime, UTCDateTime] = None,
+            inplace=True) -> CorrBulk:
         """
-        Average the data of all traces in the given time windows.
-        Will only stack data from the same network/channel/station combination.
-        Location codes will only optionally be regarded.
+        Creates a CorrelationBulk object, which offers additional options for
+        faster postprocessing.
 
-        :param starttime: starttime of the stacking time windows. If None, the
-            earliest available is chosen, defaults to None.
-        :type starttime: UTCDateTime, optional
-        :param endtime: endtime of the stacking time windows. If None, the
-            latest available is chosen, defaults to None
-        :type endtime: UTCDateTime, optional
-        :param stack_len: Length of one stack. Is either a value in seconds,
-            the special option "daily" (creates 24h stacks that always start at
-            midnight), or 0 for a single stack over the whole time period,
-            defaults to 0.
-        :type stack_len: intorstr, optional
-        :param regard_location: Don't stack correlations with varying location
-            code combinations, defaults to True.
-        :type regard_location: bool, optional
-        :return: A stream holding the stacks.
-        :rtype: :class`~seismic.correlate.stream.CorrStream`
+        :param network: Select only this network, defaults to None
+        :type network: str, optional
+        :param station: Take data from this station, defaults to None
+        :type station: str, optional
+        :param channel: Take data from this channel. If None all channels will
+            be retained, defaults to None
+        :type channel: str, optional
+        :param location: Take data from only this location. Else various
+            locations can be processed together, defaults to None
+        :type location: str, optional
+        :param times: Only take data from this time window, defaults to None
+        :type times: Tuple[UTCDateTime, UTCDateTime], optional
+        :param inplace: The original data will be deleted to save memory,
+            defaults to True.
+        :type inplace: bool, optional
+        :return: The CorrelationBulk object
+        :rtype: CorrBulk
+
+        .. note:: This function will check whether the metadata of the input
+            stream is identical, so that correlations from different stations,
+            components, or differently processed data cannot be mixed.
         """
+        st = self.select(network, station, location, channel)
+        if times:
+            st = st.select_corr_time(times[0], times[1])
+        A = np.empty((st.count(), st[0].stats.npts))
+        statlist = []
+        # Double check sampling rate
+        sr = st[0].stats.sampling_rate
+        mask = []
+        for ii, tr in enumerate(st):
+            if tr.stats.sampling_rate != sr:
+                warnings.warn('Sampling rate differs. Trace is skipped.')
+                mask.append(ii)
+                continue
+            A[ii] = tr.data
+            if inplace:
+                del tr.data
+            statlist.append(tr.stats)
+        # Apply mask for skipped data
+        A = np.delete(A, mask, 0)
 
-        # Seperate if there are different stations channel and or locations
-        # involved
-        if stack_len == 0:
-            return stack_st_by_group(self, regard_location, weight)
+        if channel is None or '*' in channel or '?' in channel:
+            stats = convert_statlist_to_bulk_stats(
+                statlist, varying_channel=True)
+        else:
+            stats = convert_statlist_to_bulk_stats(statlist)
+        return CorrBulk(A, stats)
 
-        # else
+    def plot(
+        self, sort_by: str = 'corr_start',
+        timelimits: Tuple[float, float] = None,
+        ylimits: Tuple[float, float] = None, scalingfactor: float = None,
+        ax: plt.Axes = None, linewidth: float = 0.25,
+        outputfile: str = None, title: str = None, type: str = 'heatmap',
+            cmap: str = 'inferno', vmin: float = None, vmax: float = None,
+            **kwargs):
+        """
+        Creates a section plot of all correlations in this stream.
+        kwargs will be passed to
+        :func:`~seismic.plot.plot_correlation.plot_cst`
+
+        :param sort_by: Which parameter to plot against. Can be either
+            ``corr_start`` or ``distance``, defaults to 'corr_start'.
+        :type sort_by: str, optional
+        :param timelimits: xlimits (lag time) in seconds, defaults to None
+        :type timelimits: Tuple[float, float], optional
+        :param ylimits: limits for Y-axis (either a :class:`datetime.datetime`
+            or float in km (if plotted against distance)), defaults to None.
+        :type ylimits: Tuple[float, float], optional
+        :param scalingfactor: Which factor to scale the Correlations with. Play
+            around with this if you want to make amplitudes bigger or smaller,
+            defaults to None (automatically chosen).
+        :type scalingfactor: float, optional
+        :param ax: Plot in existing axes? Defaults to None
+        :type ax: plt.Axes, optional
+        :param linewidth: Width of the lines to plot, defaults to 0.25
+        :type linewidth: float, optional
+        :param outputfile: Save the plot? defaults to None
+        :type outputfile: str, optional
+        :param title: Title of the plot, defaults to None
+        :type title: str, optional
+        :param type: Type of plot. Either `'heatmap'` for a heat plot or
+            `'section'` for a wiggle type plot. Defaults to heatmap.
+        :type title: str, optional
+        :param cmap: Decides about colormap if type == 'heatmap'.
+        Defaults to 'inferno'.
+        :type cmap: str, optional
+
+        .. note:: If you would like to plot a subset of this stream, use
+            :func:`~seismic.correlate.stream.CorrStream.select`.
+        """
+        if self.count() == 1:
+            return self[0].plot(tlim=timelimits)
+        ax = plot_cst(
+            self, sort_by=sort_by, timelimits=timelimits, ylimits=ylimits,
+            scalingfactor=scalingfactor, ax=ax, linewidth=linewidth,
+            outputfile=outputfile, title=title, type=type, cmap=cmap,
+            vmin=vmin, vmax=vmax, **kwargs)
+        return ax
+
+    def pop_at_utcs(self, utcs: npt.NDArray[UTCDateTime]):
+        """
+        Remove Correlations that contain any time given in ``utcs``.
+
+        :param utcs: Array Containing UTC times that should be filtered.
+            If UTC is between any of corr_start and corr_end, the corresponding
+            CorrTrace will be removed from the stream.
+        :type utcs: npt.ArrayLike[UTCDateTime]
+        :return: filtered CorrStream
+        :rtype: CorrStream
+        """
+        cst_filt = CorrStream()
+        for ctr in self:
+            if not np.any(np.all(
+                [utcs > ctr.stats.corr_start, utcs < ctr.stats.corr_end],
+                    axis=0)):
+                cst_filt.append(ctr)
+        return cst_filt
+
+    def select_corr_time(
+        self, starttime: UTCDateTime, endtime: UTCDateTime,
+            include_partially_selected: bool = True):
+        """
+        Selects correlations that are inside of the requested time window.
+
+        :param starttime: Requested start
+        :type starttime: UTCDateTime
+        :param endtime: Requested end
+        :type endtime: UTCDateTime
+        :param include_partially_selected: If set to ``True``, also the half
+            selected time window **before** the requested time will be attached
+            Given the following stream containing 6 correlations, "|" are the
+            correlation starts and ends, "A" is the requested starttime and "B"
+            the corresponding endtime::
+
+                |         |A        |         |       B |         |
+                1         2         3         4         5         6
+
+            ``include_partially_selected=True`` will select samples 2-4,
+            ``include_partially_selected=False`` will select samples 3-4 only.
+            Defaults to True
+        :type include_partially_selected: bool, optional
+        :return: Correlation Stream holding all selected traces
+        :rtype: CorrStream
+        """
         self.sort(keys=['corr_start'])
-        if not starttime:
-            starttime = self[0].stats.corr_start
-        if not endtime:
-            endtime = self[-1].stats.corr_end
         outst = CorrStream()
-        if stack_len == 'daily':
-            starttime = UTCDateTime(
-                year=starttime.year, julday=starttime.julday)
-            stack_len = 3600*24
-        for st in self.slide(
-                stack_len, stack_len, include_partially_selected=True,
-                starttime=starttime, endtime=endtime):
-            outst.extend(stack_st_by_group(st, regard_location, weight))
+        # the 2 seconds difference are to avoid accidental smoothing
+        if include_partially_selected:
+            for tr in self:
+                if (tr.stats.corr_end > starttime
+                    and tr.stats.corr_end < endtime) \
+                        or tr.stats.corr_end == endtime:
+                    outst.append(tr)
+            return outst
+        # else
+        for tr in self:
+            if tr.stats.corr_start >= starttime \
+                    and tr.stats.corr_end <= endtime:
+                outst.append(tr)
         return outst
 
     def slide(
@@ -900,9 +1070,9 @@ class CorrStream(Stream):
             latest available endtime.
         :type endtime: UTCDateTime
         """
-        if not starttime:
+        if starttime is None:
             starttime = min(tr.stats.corr_start for tr in self)
-        if not endtime:
+        if endtime is None:
             endtime = max(tr.stats.corr_end for tr in self)
 
         if window_length < max(
@@ -933,151 +1103,54 @@ class CorrStream(Stream):
                 continue
             yield temp
 
-    def select_corr_time(
-        self, starttime: UTCDateTime, endtime: UTCDateTime,
-            include_partially_selected: bool = True):
+    def stack(
+        self, weight: str = 'by_length', starttime: UTCDateTime = None,
+        endtime: UTCDateTime = None, stack_len: int | str = 0,
+            regard_location=True):
         """
-        Selects correlations that are inside of the requested time window.
+        Average the data of all traces in the given time windows.
+        Will only stack data from the same network/channel/station combination.
+        Location codes will only optionally be regarded.
 
-        :param starttime: Requested start
-        :type starttime: UTCDateTime
-        :param endtime: Requested end
-        :type endtime: UTCDateTime
-        :param include_partially_selected: If set to ``True``, also the half
-            selected time window **before** the requested time will be attached
-            Given the following stream containing 6 correlations, "|" are the
-            correlation starts and ends, "A" is the requested starttime and "B"
-            the corresponding endtime::
-
-                |         |A        |         |       B |         |
-                1         2         3         4         5         6
-
-            ``include_partially_selected=True`` will select samples 2-4,
-            ``include_partially_selected=False`` will select samples 3-4 only.
-            Defaults to True
-        :type include_partially_selected: bool, optional
-        :return: Correlation Stream holding all selected traces
-        :rtype: CorrStream
+        :param starttime: starttime of the stacking time windows. If None, the
+            earliest available is chosen, defaults to None.
+        :type starttime: UTCDateTime, optional
+        :param endtime: endtime of the stacking time windows. If None, the
+            latest available is chosen, defaults to None
+        :type endtime: UTCDateTime, optional
+        :param stack_len: Length of one stack. Is either a value in seconds,
+            the special option "daily" (creates 24h stacks that always start at
+            midnight), or 0 for a single stack over the whole time period,
+            defaults to 0.
+        :type stack_len: intorstr, optional
+        :param regard_location: Don't stack correlations with varying location
+            code combinations, defaults to True.
+        :type regard_location: bool, optional
+        :return: A stream holding the stacks.
+        :rtype: :class`~seismic.correlate.stream.CorrStream`
         """
-        self.sort(keys=['corr_start'])
-        outst = CorrStream()
-        # the 2 seconds difference are to avoid accidental smoothing
-        if include_partially_selected:
-            for tr in self:
-                if (tr.stats.corr_end > starttime
-                    and tr.stats.corr_end < endtime) \
-                        or tr.stats.corr_end == endtime:
-                    outst.append(tr)
-            return outst
+
+        # Seperate if there are different stations channel and or locations
+        # involved
+        if stack_len == 0:
+            return stack_st_by_group(self, regard_location, weight)
+
         # else
-        for tr in self:
-            if tr.stats.corr_start >= starttime \
-                    and tr.stats.corr_end <= endtime:
-                outst.append(tr)
+        self.sort(keys=['corr_start'])
+        if not starttime:
+            starttime = self[0].stats.corr_start
+        if not endtime:
+            endtime = self[-1].stats.corr_end
+        outst = CorrStream()
+        if stack_len == 'daily':
+            starttime = UTCDateTime(
+                year=starttime.year, julday=starttime.julday)
+            stack_len = 3600*24
+        for st in self.slide(
+                stack_len, stack_len, include_partially_selected=True,
+                starttime=starttime, endtime=endtime):
+            outst.extend(stack_st_by_group(st, regard_location, weight))
         return outst
-
-    def create_corr_bulk(
-        self, network: str = None, station: str = None, channel: str = None,
-        location: str = None,
-        times: Tuple[UTCDateTime, UTCDateTime] = None,
-            inplace=True) -> CorrBulk:
-        """
-        Creates a CorrelationBulk object, which offers additional options for
-        faster postprocessing.
-
-        :param network: Select only this network, defaults to None
-        :type network: str, optional
-        :param station: Take data from this station, defaults to None
-        :type station: str, optional
-        :param channel: Take data from this channel, defaults to None
-        :type channel: str, optional
-        :param location: Take data from only this location. Else various
-            locations can be processed together, defaults to None
-        :type location: str, optional
-        :param times: Only take data from this time window, defaults to None
-        :type times: Tuple[UTCDateTime, UTCDateTime], optional
-        :param inplace: The original data will be deleted to save memory,
-            defaults to True.
-        :type inplace: bool, optional
-        :return: The CorrelationBulk object
-        :rtype: CorrBulk
-
-        .. note:: This function will check whether the metadata of the input
-            stream is identical, so that correlations from different stations,
-            components, or differently processed data cannot be mixed.
-        """
-        st = self.select(network, station, location, channel)
-        if times:
-            st = st.select_corr_time(times[0], times[1])
-        A = np.empty((st.count(), st[0].stats.npts))
-        statlist = []
-        # Double check sampling rate
-        sr = st[0].stats.sampling_rate
-        mask = []
-        for ii, tr in enumerate(st):
-            if tr.stats.sampling_rate != sr:
-                warnings.warn('Sampling rate differs. Trace is skipped.')
-                mask.append(ii)
-                continue
-            A[ii] = tr.data
-            if inplace:
-                del tr.data
-            statlist.append(tr.stats)
-        # Apply mask for skipped data
-        A = np.delete(A, mask, 0)
-
-        stats = convert_statlist_to_bulk_stats(statlist)
-        return CorrBulk(A, stats)
-
-    def plot(
-        self, sort_by: str = 'corr_start',
-        timelimits: Tuple[float, float] = None,
-        ylimits: Tuple[float, float] = None, scalingfactor: float = None,
-        ax: plt.Axes = None, linewidth: float = 0.25,
-        outputfile: str = None, title: str = None, type: str = 'heatmap',
-            cmap: str = 'inferno', vmin: float = None, vmax: float = None):
-        """
-        Creates a section plot of all correlations in this stream.
-
-        :param sort_by: Which parameter to plot against. Can be either
-            ``corr_start`` or ``distance``, defaults to 'corr_start'.
-        :type sort_by: str, optional
-        :param timelimits: xlimits (lag time) in seconds, defaults to None
-        :type timelimits: Tuple[float, float], optional
-        :param ylimits: limits for Y-axis (either a :class:`datetime.datetime`
-            or float in km (if plotted against distance)), defaults to None.
-        :type ylimits: Tuple[float, float], optional
-        :param scalingfactor: Which factor to scale the Correlations with. Play
-            around with this if you want to make amplitudes bigger or smaller,
-            defaults to None (automatically chosen).
-        :type scalingfactor: float, optional
-        :param ax: Plot in existing axes? Defaults to None
-        :type ax: plt.Axes, optional
-        :param linewidth: Width of the lines to plot, defaults to 0.25
-        :type linewidth: float, optional
-        :param outputfile: Save the plot? defaults to None
-        :type outputfile: str, optional
-        :param title: Title of the plot, defaults to None
-        :type title: str, optional
-        :param type: Type of plot. Either `'heatmap'` for a heat plot or
-            `'section'` for a wiggle type plot. Defaults to heatmap.
-        :type title: str, optional
-        :param cmap: Decides about colormap if type == 'heatmap'.
-        Defaults to 'inferno'.
-        :type cmap: str, optional
-
-        .. note:: If you would like to plot a subset of this stream, use
-            :func:`~seismic.correlate.stream.CorrStream.select`.
-        """
-        if self.count() == 1:
-            self[0].plot()
-            return
-        ax = plot_cst(
-            self, sort_by=sort_by, timelimits=timelimits, ylimits=ylimits,
-            scalingfactor=scalingfactor, ax=ax, linewidth=linewidth,
-            outputfile=outputfile, title=title, type=type, cmap=cmap,
-            vmin=vmin, vmax=vmax)
-        return ax
 
     def _to_matrix(
         self, network: str = None, station: str = None, channel: str = None,
@@ -1204,7 +1277,7 @@ class CorrTrace(Trace):
 
     def plot(
         self, tlim: Tuple[float, float] = None, ax: plt.Axes = None,
-            outputdir: str = None, clean: bool = False):
+            outputdir: str = None, clean: bool = False) -> plt.Axes:
         """
         Plots thios CorrelationTrace.
 
@@ -1218,7 +1291,7 @@ class CorrTrace(Trace):
             defaults to False.
         :type clean: bool, optional
         """
-        plot_ctr(self, tlim, ax, outputdir, clean)
+        return plot_ctr(self, tlim, ax, outputdir, clean)
 
     def times(self) -> np.ndarray:
         """
@@ -1493,7 +1566,8 @@ def stack_st(st: CorrStream, weight: str, norm: bool = True) -> CorrTrace:
 
 
 def convert_statlist_to_bulk_stats(
-        statlist: List[CorrStats], varying_loc: bool = True) -> CorrStats:
+        statlist: List[CorrStats], varying_loc: bool = True,
+        varying_channel: bool = False) -> CorrStats:
     """
     Converts a list of :class:`~seismic.correlate.stream.CorrTrace` stats
     objects to a single stats object that can be used for the creation of a
@@ -1501,8 +1575,11 @@ def convert_statlist_to_bulk_stats(
 
     :param statlist: list of Stats
     :type statlist: List[Stats]
-    :param varying_loc: Set true if the location codes vary
-    :type varying_loc: False
+    :param varying_loc: Set true if the location codes vary. Defaults to True.
+    :type varying_loc: bool
+    :param varying_loc: Set true if the channel codes vary (e.g., EHZ to BHZ),
+        defaults to False.
+    :type varying_loc: bool
     :raises ValueError: raised if data does not fit together
     :return: single Stats object
     :rtype: Stats
@@ -1514,13 +1591,17 @@ def convert_statlist_to_bulk_stats(
     # Should / have to be identical for each trace
     # Not 100% sure if start and end_lag should be on this list
     immutables = [
-        'npts', 'sampling_rate', 'network', 'station', 'channel', 'start_lag',
+        'npts', 'sampling_rate', 'network', 'station', 'start_lag',
         'end_lag', 'stla', 'stlo', 'stel', 'evla', 'evlo', 'evel',
         'dist', 'az', 'baz']
     if varying_loc:
         mutables += ['location']
     else:
         immutables += ['location']
+    if varying_channel:
+        mutables += ['channel']
+    else:
+        immutables += ['channel']
     for key in mutables:
         stats[key] = []
     for trstat in statlist:
