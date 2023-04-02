@@ -18,12 +18,12 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
-<link href="../../../_static/styles/bootstrap.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
 
   
-  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
   <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
@@ -32,8 +32,8 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=12da95d707ffb74b382d" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=12da95d707ffb74b382d" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
@@ -427,13 +427,13 @@ document.write(`
 <span class="sd">:copyright:</span>
 <span class="sd">   The SeisMIC development team (makus@gfz-potsdam.de).</span>
 <span class="sd">:license:</span>
-<span class="sd">   GNU Lesser General Public License, Version 3</span>
-<span class="sd">   (https://www.gnu.org/copyleft/lesser.html)</span>
+<span class="sd">    EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
+<span class="sd">   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)</span>
 <span class="sd">:author:</span>
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 29th March 2021 12:54:05 pm</span>
-<span class="sd">Last Modified: Wednesday, 13th April 2022 02:46:18 pm</span>
+<span class="sd">Last Modified: Monday, 6th February 2023 04:32:16 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -444,9 +444,6 @@ document.write(`
 <span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">Inventory</span><span class="p">,</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">UTCDateTime</span>
 <span class="kn">from</span> <span class="nn">obspy.core</span> <span class="kn">import</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">AttribDict</span>
 
-<span class="c1"># zero lag time</span>
-<span class="c1"># I don&#39;t think this is in use anymore</span>
-<span class="n">lag0</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
 <span class="n">log_lvl</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s1">&#39;DEBUG&#39;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
@@ -666,7 +663,10 @@ document.write(`
 <span class="c1"># No stats, keys that are not in stats but attributes of the respective objects</span>
 <span class="n">no_stats</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s1">&#39;corr&#39;</span><span class="p">,</span> <span class="s1">&#39;value&#39;</span><span class="p">,</span> <span class="s1">&#39;sim_mat&#39;</span><span class="p">,</span> <span class="s1">&#39;second_axis&#39;</span><span class="p">,</span> <span class="s1">&#39;method_array&#39;</span><span class="p">,</span> <span class="s1">&#39;vt_array&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;data&#39;</span><span class="p">]</span>
+    <span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="s1">&#39;tw_len&#39;</span><span class="p">,</span> <span class="s1">&#39;tw_start&#39;</span><span class="p">,</span> <span class="s1">&#39;freq_min&#39;</span><span class="p">,</span> <span class="s1">&#39;freq_max&#39;</span><span class="p">,</span> <span class="s1">&#39;subdir&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;plot_vel_change&#39;</span><span class="p">,</span> <span class="s1">&#39;start_date&#39;</span><span class="p">,</span> <span class="s1">&#39;end_date&#39;</span><span class="p">,</span> <span class="s1">&#39;win_len&#39;</span><span class="p">,</span> <span class="s1">&#39;date_inc&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sides&#39;</span><span class="p">,</span> <span class="s1">&#39;compute_tt&#39;</span><span class="p">,</span> <span class="s1">&#39;rayleigh_wave_velocity&#39;</span><span class="p">,</span> <span class="s1">&#39;stretch_range&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;stretch_steps&#39;</span><span class="p">,</span> <span class="s1">&#39;dt_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;preprocessing&#39;</span><span class="p">,</span> <span class="s1">&#39;postprocessing&#39;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="save_header_to_np_array"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.save_header_to_np_array">[docs]</a><span class="k">def</span> <span class="nf">save_header_to_np_array</span><span class="p">(</span><span class="n">stats</span><span class="p">:</span> <span class="n">Stats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
@@ -829,6 +829,27 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
         <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="correct_polarity"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.correct_polarity">[docs]</a><span class="k">def</span> <span class="nf">correct_polarity</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">inv</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sometimes the polarity of a seismometer&#39;s vertical component is reversed.</span>
+<span class="sd">    This simple functions flips the polarity if this should be the case.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        This function acts on the data in-place.</span>
+
+<span class="sd">    :param st: input stream. If there is no Z-component, nothing will happen.</span>
+<span class="sd">    :type st: Stream</span>
+<span class="sd">    :param inv: Inventory holding the orientation information.</span>
+<span class="sd">    :type inv: Inventory</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">st_z</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">component</span><span class="o">=</span><span class="s1">&#39;Z&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st_z</span><span class="p">:</span>
+        <span class="n">dip</span> <span class="o">=</span> <span class="n">inv</span><span class="o">.</span><span class="n">get_orientation</span><span class="p">(</span>
+            <span class="n">tr</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">datetime</span><span class="o">=</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">)[</span><span class="s1">&#39;dip&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">dip</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span></div>
 </pre></div>
 
                 </article>
@@ -836,9 +857,15 @@ document.write(`
               
               
                 <footer class="bd-footer-article">
-                  <!-- Previous / next buttons -->
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
+</div></div>
+  
 </div>
+
                 </footer>
               
             </div>
@@ -848,7 +875,7 @@ document.write(`
             
           </div>
           <footer class="bd-footer-content">
-            <div class="bd-footer-content__inner"></div>
+            
           </footer>
         
       </main>
@@ -856,8 +883,8 @@ document.write(`
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../../_static/scripts/bootstrap.js?digest=12da95d707ffb74b382d"></script>
-<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=12da95d707ffb74b382d"></script>
+  <script src="../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -867,7 +894,7 @@ document.write(`
         <div class="footer-item">
   <p class="copyright">
     
-      © Copyright 2022, The SeisMIC development team..
+      © Copyright 2023, The SeisMIC development team..
       <br/>
     
   </p>
@@ -875,7 +902,7 @@ document.write(`
       
         <div class="footer-item">
   <p class="sphinx-version">
-    Created using <a href="https://sphinx-doc.org/">Sphinx</a> 5.3.0.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.3.0.
     <br/>
   </p>
 </div>
@@ -886,7 +913,7 @@ document.write(`
     <div class="footer-items__end">
       
         <div class="footer-item"><p class="theme-version">
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.1.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
 </p></div>
       
     </div>

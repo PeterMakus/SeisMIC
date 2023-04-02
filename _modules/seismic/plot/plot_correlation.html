@@ -18,12 +18,12 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
-<link href="../../../_static/styles/bootstrap.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
 
   
-  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
   <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
@@ -32,8 +32,8 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=12da95d707ffb74b382d" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=12da95d707ffb74b382d" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
@@ -433,13 +433,15 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 19th July 2021 11:37:54 am</span>
-<span class="sd">Last Modified: Thursday, 6th October 2022 12:03:49 pm</span>
+<span class="sd">Last Modified: Tuesday, 7th March 2023 11:58:04 am</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
 
 <span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="nn">mpl</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib.dates</span> <span class="kn">import</span> <span class="n">date2num</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">obspy.core.utcdatetime</span> <span class="kn">import</span> <span class="n">UTCDateTime</span>
 <span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">Stream</span>
@@ -526,7 +528,7 @@ document.write(`
     <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">linewidth</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
     <span class="n">outputfile</span><span class="p">:</span> <span class="nb">str</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;heatmap&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;seismic&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">vmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="n">vmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Creates a section or heat plot of all correlations in this stream.</span>
 
@@ -589,12 +591,13 @@ document.write(`
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
                 <span class="s1">&#39;Unknown or not implemented plot type </span><span class="si">%s</span><span class="s1">.&#39;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">sort_by</span> <span class="o">==</span> <span class="s1">&#39;dist&#39;</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">type</span> <span class="o">!=</span> <span class="s1">&#39;section&#39;</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="s1">&#39;Distance plot only supports section type.&#39;</span>
-            <span class="p">)</span>
-        <span class="n">scalingfactor</span> <span class="o">*=</span> <span class="mi">4</span>
-        <span class="n">times</span> <span class="o">=</span> <span class="n">sect_plot_dist</span><span class="p">(</span><span class="n">cst</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">scalingfactor</span><span class="p">,</span> <span class="n">linewidth</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;section&#39;</span><span class="p">:</span>
+            <span class="n">scalingfactor</span> <span class="o">*=</span> <span class="mi">4</span>
+            <span class="n">times</span> <span class="o">=</span> <span class="n">sect_plot_dist</span><span class="p">(</span>
+                <span class="n">cst</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">scalingfactor</span><span class="p">,</span> <span class="n">linewidth</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;heatmap&#39;</span><span class="p">:</span>
+            <span class="n">times</span> <span class="o">=</span> <span class="n">heat_plot_corr_dist</span><span class="p">(</span>
+                <span class="n">cst</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Unknown sorting method </span><span class="si">%s</span><span class="s1">.&#39;</span> <span class="o">%</span> <span class="n">sort_by</span><span class="p">)</span>
 
@@ -616,6 +619,73 @@ document.write(`
     <span class="c1"># Set output directory</span>
     <span class="k">if</span> <span class="n">outputfile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">outputfile</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">transparent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ax</span></div>
+
+
+<div class="viewcode-block" id="plot_corr_bulk"><a class="viewcode-back" href="../../../modules/API.html#seismic.plot.plot_correlation.plot_corr_bulk">[docs]</a><span class="k">def</span> <span class="nf">plot_corr_bulk</span><span class="p">(</span>
+    <span class="n">corr_bulk</span><span class="p">,</span>
+    <span class="n">timelimits</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">ylimits</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">clim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">plot_colorbar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">outputfile</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">title</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plots a :class:`~seismic.correlate.stream.CorrBulk` object.</span>
+
+<span class="sd">    :param corr_bulk: The CorrBulk to plot.</span>
+<span class="sd">    :type corr_bulk: :class:`~seismic.correlate.stream.CorrBulk`</span>
+<span class="sd">    :param timelimits: Limits time axis, defaults to None</span>
+<span class="sd">    :type timelimits: Optional[Tuple[datetime.datetime, datetime.datetime]],</span>
+<span class="sd">        optional</span>
+<span class="sd">    :param ylimits: Limits of y-axis, defaults to None</span>
+<span class="sd">    :type ylimits: Optional[Tuple[datetime.datetime, datetime.datetime]],</span>
+<span class="sd">        optional</span>
+<span class="sd">    :param clim: Limits of Colobar, defaults to None</span>
+<span class="sd">    :type clim: Optional[Tuple[float, float]], optional</span>
+<span class="sd">    :param plot_colorbar: add colorbar to plot, defaults to False</span>
+<span class="sd">    :type plot_colorbar: bool, optional</span>
+<span class="sd">    :param outputfile: save file to, defaults to None</span>
+<span class="sd">    :type outputfile: Optional[str], optional</span>
+<span class="sd">    :param title: Title, defaults to None</span>
+<span class="sd">    :type title: Optional[str], optional</span>
+<span class="sd">    :param ax: Axis to plot into, defaults to None</span>
+<span class="sd">    :type ax: Optional[plt.Axes], optional</span>
+<span class="sd">    :return: The current axis</span>
+<span class="sd">    :rtype: plt.Axes</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">set_mpl_params</span><span class="p">()</span>
+
+    <span class="c1"># Create figure if no axes is specified</span>
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">axes</span><span class="p">()</span>  <span class="c1"># zorder=9999999</span>
+
+    <span class="n">extent</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">corr_bulk</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">start_lag</span><span class="p">,</span>
+        <span class="n">corr_bulk</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">end_lag</span><span class="p">,</span>
+        <span class="n">date2num</span><span class="p">(</span><span class="n">corr_bulk</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">datetime</span><span class="p">),</span>
+        <span class="n">date2num</span><span class="p">(</span><span class="n">corr_bulk</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">datetime</span><span class="p">)]</span>
+    <span class="n">im</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">corr_bulk</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="n">extent</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">yaxis_date</span><span class="p">()</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">autofmt_xdate</span><span class="p">(</span><span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$\</span><span class="si">{tau}</span><span class="s1">$ [s]&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Set limits</span>
+    <span class="k">if</span> <span class="n">ylimits</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">date2num</span><span class="p">(</span><span class="n">ylimits</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">date2num</span><span class="p">(</span><span class="n">ylimits</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">if</span> <span class="n">timelimits</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">timelimits</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">clim</span><span class="p">:</span>
+        <span class="n">im</span><span class="o">.</span><span class="n">set_clim</span><span class="p">(</span><span class="n">clim</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">plot_colorbar</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;vertical&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">outputfile</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">outputfile</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">ax</span></div>
 
 
@@ -663,19 +733,59 @@ document.write(`
 
 <div class="viewcode-block" id="sect_plot_dist"><a class="viewcode-back" href="../../../modules/API.html#seismic.plot.plot_correlation.sect_plot_dist">[docs]</a><span class="k">def</span> <span class="nf">sect_plot_dist</span><span class="p">(</span>
     <span class="n">cst</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span> <span class="n">scalingfactor</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">linewidth</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="n">linewidth</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">plot_reference_v</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">ref_v</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="c1"># Sort by azimuth. W on left side of plot</span>
     <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">ctr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cst</span><span class="p">):</span>
         <span class="n">ydata</span> <span class="o">=</span> <span class="n">ctr</span><span class="o">.</span><span class="n">data</span>
         <span class="n">times</span> <span class="o">=</span> <span class="n">ctr</span><span class="o">.</span><span class="n">times</span><span class="p">()</span>
-
+        <span class="k">if</span> <span class="n">ctr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">az</span> <span class="o">&gt;=</span> <span class="mi">180</span><span class="p">:</span>
+            <span class="n">times</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="n">times</span>
         <span class="n">ytmp</span> <span class="o">=</span> <span class="n">ydata</span> <span class="o">*</span> <span class="n">scalingfactor</span> <span class="o">+</span> <span class="n">ctr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">dist</span>
 
         <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">ytmp</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="n">linewidth</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=-</span><span class="n">ii</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">)</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Distance [km]&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">plot_reference_v</span><span class="p">:</span>
+        <span class="n">yref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ax</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()[</span><span class="mi">1</span><span class="p">]])</span>
+        <span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="p">[</span><span class="o">-</span><span class="n">yref</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">rv</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">yref</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">rv</span><span class="p">],</span> <span class="n">yref</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">.5</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">rv</span><span class="si">}</span><span class="s1">&#39;</span><span class="o">+</span><span class="sa">r</span><span class="s1">&#39;$\frac</span><span class="si">{km}{s}</span><span class="s1">$&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">rv</span> <span class="ow">in</span> <span class="n">ref_v</span><span class="p">]</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Distance [km]&quot;</span><span class="p">)</span>
     <span class="c1"># Set label locations.</span>
     <span class="c1"># step = round((cst[-1].stats.dist - cst[0].stats.dist)/10000)</span>
     <span class="c1"># plt.yticks(np.arange(0, ctr.stats.dist/1000+step, step, dtype=int))</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ctr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">dist</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">times</span></div>
+
+
+<div class="viewcode-block" id="heat_plot_corr_dist"><a class="viewcode-back" href="../../../modules/API.html#seismic.plot.plot_correlation.heat_plot_corr_dist">[docs]</a><span class="k">def</span> <span class="nf">heat_plot_corr_dist</span><span class="p">(</span>
+    <span class="n">cst</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span> <span class="n">cmap</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">vmin</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">vmax</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">plot_reference_v</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">ref_v</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">cst</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span> <span class="n">cst</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="p">))</span>
+    <span class="c1"># y grid</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">cst</span><span class="p">),))</span>
+    <span class="c1"># x coords</span>
+    <span class="n">times</span> <span class="o">=</span> <span class="n">cst</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">times</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">ctr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cst</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ctr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">az</span> <span class="o">&gt;=</span> <span class="mi">180</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">ctr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">ctr</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">y</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">ctr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">dist</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span>
+        <span class="n">times</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">shading</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span>
+        <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">plot_reference_v</span><span class="p">:</span>
+        <span class="n">yref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ax</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()[</span><span class="mi">1</span><span class="p">]])</span>
+        <span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="p">[</span><span class="o">-</span><span class="n">yref</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">rv</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">yref</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">rv</span><span class="p">],</span> <span class="n">yref</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">.5</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">99</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">rv</span><span class="si">}</span><span class="s1">&#39;</span><span class="o">+</span><span class="sa">r</span><span class="s1">&#39;$\frac</span><span class="si">{km}{s}</span><span class="s1">$&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">rv</span> <span class="ow">in</span> <span class="n">ref_v</span><span class="p">]</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span>
+        <span class="n">ds</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;correlation coefficient&#39;</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">.6</span><span class="p">,</span>
+        <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ctr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">dist</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Distance [km]&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">times</span></div>
 </pre></div>
 
@@ -684,9 +794,15 @@ document.write(`
               
               
                 <footer class="bd-footer-article">
-                  <!-- Previous / next buttons -->
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
+</div></div>
+  
 </div>
+
                 </footer>
               
             </div>
@@ -696,7 +812,7 @@ document.write(`
             
           </div>
           <footer class="bd-footer-content">
-            <div class="bd-footer-content__inner"></div>
+            
           </footer>
         
       </main>
@@ -704,8 +820,8 @@ document.write(`
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../../_static/scripts/bootstrap.js?digest=12da95d707ffb74b382d"></script>
-<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=12da95d707ffb74b382d"></script>
+  <script src="../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -715,7 +831,7 @@ document.write(`
         <div class="footer-item">
   <p class="copyright">
     
-      © Copyright 2022, The SeisMIC development team..
+      © Copyright 2023, The SeisMIC development team..
       <br/>
     
   </p>
@@ -723,7 +839,7 @@ document.write(`
       
         <div class="footer-item">
   <p class="sphinx-version">
-    Created using <a href="https://sphinx-doc.org/">Sphinx</a> 5.3.0.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.3.0.
     <br/>
   </p>
 </div>
@@ -734,7 +850,7 @@ document.write(`
     <div class="footer-items__end">
       
         <div class="footer-item"><p class="theme-version">
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.1.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
 </p></div>
       
     </div>

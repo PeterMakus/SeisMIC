@@ -18,12 +18,12 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
-<link href="../../../_static/styles/bootstrap.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
 
   
-  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
   <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
@@ -32,8 +32,8 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=12da95d707ffb74b382d" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=12da95d707ffb74b382d" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
@@ -429,23 +429,25 @@ document.write(`
 <span class="sd">:copyright:</span>
 <span class="sd">    The SeisMIC development team (makus@gfz-potsdam.de).</span>
 <span class="sd">:license:</span>
-<span class="sd">   GNU Lesser General Public License, Version 3</span>
-<span class="sd">   (https://www.gnu.org/copyleft/lesser.html)</span>
+<span class="sd">    EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
+<span class="sd">   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)</span>
 <span class="sd">:author:</span>
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 20th July 2021 03:47:00 pm</span>
-<span class="sd">Last Modified: Monday, 14th February 2022 11:52:04 am</span>
+<span class="sd">Last Modified: Thursday, 9th February 2023 01:55:45 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
 <span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">UTCDateTime</span>
 
 
 <div class="viewcode-block" id="cos_taper_st"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.preprocessing_stream.cos_taper_st">[docs]</a><span class="k">def</span> <span class="nf">cos_taper_st</span><span class="p">(</span>
-        <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">taper_at_masked</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
+    <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">lossless</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">taper_at_masked</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Applies a cosine taper to the input Stream.</span>
 
@@ -456,6 +458,10 @@ document.write(`
 <span class="sd">    :param taper_at_masked: applies a split to each trace and merges again</span>
 <span class="sd">        afterwards</span>
 <span class="sd">    :type taper_at_masked: bool</span>
+<span class="sd">    :param lossless: Lossless tapering pads the trace&#39;s ends with a copy of</span>
+<span class="sd">        the trace&#39;s data before tapering. Note that you will want to trim</span>
+<span class="sd">        the trace later to remove this artificial ends.</span>
+<span class="sd">    type lossless: bool</span>
 <span class="sd">    :return: Tapered Stream</span>
 <span class="sd">    :rtype: :class:`~obspy.core.stream.Stream`</span>
 
@@ -467,13 +473,15 @@ document.write(`
         <span class="n">st</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">([</span><span class="n">st</span><span class="p">])</span>
     <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">st</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">cos_taper</span><span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">taper_len</span><span class="p">,</span> <span class="n">taper_at_masked</span><span class="p">)</span>
+            <span class="n">st</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">cos_taper</span><span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">taper_len</span><span class="p">,</span> <span class="n">taper_at_masked</span><span class="p">,</span> <span class="n">lossless</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">warn</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">, corresponding trace not tapered.&#39;</span> <span class="o">%</span> <span class="n">e</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">st</span></div>
 
 
-<div class="viewcode-block" id="cos_taper"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.preprocessing_stream.cos_taper">[docs]</a><span class="k">def</span> <span class="nf">cos_taper</span><span class="p">(</span><span class="n">tr</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">taper_at_masked</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Trace</span><span class="p">:</span>
+<div class="viewcode-block" id="cos_taper"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.preprocessing_stream.cos_taper">[docs]</a><span class="k">def</span> <span class="nf">cos_taper</span><span class="p">(</span>
+    <span class="n">tr</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">taper_at_masked</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">lossless</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Trace</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Applies a cosine taper to the input trace.</span>
 
@@ -482,8 +490,13 @@ document.write(`
 <span class="sd">    :param taper_len: Length of the taper per side in seconds</span>
 <span class="sd">    :type taper_len: float</span>
 <span class="sd">    :param taper_at_masked: applies a split to each trace and merges again</span>
-<span class="sd">        afterwards</span>
+<span class="sd">        afterwards. Lossless tapering is not supporting if the trace contains</span>
+<span class="sd">        masked values in the middle of the trace</span>
 <span class="sd">    :type taper_at_masked: bool</span>
+<span class="sd">    :param lossless: Lossless tapering pads the trace&#39;s ends with a copy of</span>
+<span class="sd">        the trace&#39;s data before tapering. Note that you will want to trim</span>
+<span class="sd">        the trace later to remove this artificial ends.</span>
+<span class="sd">    type lossless: bool</span>
 <span class="sd">    :return: Tapered Trace</span>
 <span class="sd">    :rtype: Trace</span>
 
@@ -494,19 +507,31 @@ document.write(`
     <span class="k">if</span> <span class="n">taper_len</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Taper length must be larger than 0 s&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">taper_at_masked</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">lossless</span><span class="p">:</span>
+            <span class="n">warn</span><span class="p">(</span>
+                <span class="s1">&#39;Tapering lossless at masked values is not supported&#39;</span><span class="p">)</span>
         <span class="n">st</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-        <span class="n">st</span> <span class="o">=</span> <span class="n">cos_taper_st</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="n">cos_taper_st</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
         <span class="n">st</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">merge</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">st</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
             <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
             <span class="k">return</span> <span class="n">tr</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Taper length must be larger than 0 s&#39;</span><span class="p">)</span>
-    <span class="n">taper</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
     <span class="n">tl_n</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">taper_len</span><span class="o">*</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">tl_n</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">&gt;</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="s1">&#39;Taper Length * 2 has to be smaller or equal to trace</span><span class="se">\&#39;</span><span class="s1">s length.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">lossless</span><span class="p">:</span>
+        <span class="c1"># pad trace</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span>
+            <span class="n">starttime</span><span class="o">=</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="o">-</span><span class="n">taper_len</span><span class="p">,</span>
+            <span class="n">endtime</span><span class="o">=</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">endtime</span><span class="o">+</span><span class="n">taper_len</span><span class="p">,</span>
+            <span class="n">pad</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># Change Fill value to data from the trace</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">[:</span><span class="n">tl_n</span><span class="p">]</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">tl_n</span><span class="p">:</span><span class="mi">2</span><span class="o">*</span><span class="n">tl_n</span><span class="p">])</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="o">-</span><span class="n">tl_n</span><span class="p">:]</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">tl_n</span><span class="p">:</span><span class="o">-</span><span class="n">tl_n</span><span class="p">])</span>
+    <span class="n">taper</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
     <span class="n">tap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">tl_n</span><span class="o">*</span><span class="mi">2</span><span class="p">))</span>
     <span class="n">taper</span><span class="p">[:</span><span class="n">tl_n</span><span class="p">]</span> <span class="o">=</span> <span class="n">tap</span><span class="p">[:</span><span class="n">tl_n</span><span class="p">]</span>
     <span class="n">taper</span><span class="p">[</span><span class="o">-</span><span class="n">tl_n</span><span class="p">:]</span> <span class="o">=</span> <span class="n">tap</span><span class="p">[</span><span class="o">-</span><span class="n">tl_n</span><span class="p">:]</span>
@@ -716,9 +741,15 @@ document.write(`
               
               
                 <footer class="bd-footer-article">
-                  <!-- Previous / next buttons -->
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
+</div></div>
+  
 </div>
+
                 </footer>
               
             </div>
@@ -728,7 +759,7 @@ document.write(`
             
           </div>
           <footer class="bd-footer-content">
-            <div class="bd-footer-content__inner"></div>
+            
           </footer>
         
       </main>
@@ -736,8 +767,8 @@ document.write(`
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../../_static/scripts/bootstrap.js?digest=12da95d707ffb74b382d"></script>
-<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=12da95d707ffb74b382d"></script>
+  <script src="../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -747,7 +778,7 @@ document.write(`
         <div class="footer-item">
   <p class="copyright">
     
-      © Copyright 2022, The SeisMIC development team..
+      © Copyright 2023, The SeisMIC development team..
       <br/>
     
   </p>
@@ -755,7 +786,7 @@ document.write(`
       
         <div class="footer-item">
   <p class="sphinx-version">
-    Created using <a href="https://sphinx-doc.org/">Sphinx</a> 5.3.0.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.3.0.
     <br/>
   </p>
 </div>
@@ -766,7 +797,7 @@ document.write(`
     <div class="footer-items__end">
       
         <div class="footer-item"><p class="theme-version">
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.1.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
 </p></div>
       
     </div>

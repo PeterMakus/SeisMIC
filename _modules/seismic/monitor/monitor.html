@@ -18,12 +18,12 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../../_static/styles/theme.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
-<link href="../../../_static/styles/bootstrap.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+  <link href="../../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
 
   
-  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
   <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
@@ -32,8 +32,8 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=12da95d707ffb74b382d" />
-<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=12da95d707ffb74b382d" />
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
@@ -427,15 +427,16 @@ document.write(`
 <span class="sd">:copyright:</span>
 <span class="sd">    The SeisMIC development team (makus@gfz-potsdam.de).</span>
 <span class="sd">:license:</span>
-<span class="sd">   GNU Lesser General Public License, Version 3</span>
-<span class="sd">   (https://www.gnu.org/copyleft/lesser.html)</span>
+<span class="sd">    EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
+<span class="sd">   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)</span>
 <span class="sd">:author:</span>
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Thursday, 3rd June 2021 04:15:57 pm</span>
-<span class="sd">Last Modified: Wednesday, 12th October 2022 10:31:25 am</span>
+<span class="sd">Last Modified: Thursday, 9th March 2023 03:59:12 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
@@ -453,11 +454,10 @@ document.write(`
 <span class="kn">from</span> <span class="nn">seismic.monitor.dv</span> <span class="kn">import</span> <span class="n">DV</span><span class="p">,</span> <span class="n">read_dv</span>
 <span class="kn">from</span> <span class="nn">seismic.monitor.wfc</span> <span class="kn">import</span> <span class="n">WFC</span>
 <span class="kn">from</span> <span class="nn">seismic.utils.miic_utils</span> <span class="kn">import</span> <span class="n">log_lvl</span>
-<span class="kn">import</span> <span class="nn">seismic.monitor.post_corr_process</span> <span class="k">as</span> <span class="nn">pcp</span>
 
 
 <div class="viewcode-block" id="Monitor"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.Monitor">[docs]</a><span class="k">class</span> <span class="nc">Monitor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="nb">dict</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Object that handles the computation of seismic velocity changes.</span>
 <span class="sd">        This will access correlations that have been computed previously with</span>
@@ -521,6 +521,23 @@ document.write(`
         <span class="n">consoleHandler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">()</span>
         <span class="n">consoleHandler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">consoleHandler</span><span class="p">)</span>
+
+        <span class="c1"># Write the options dictionary to the log file</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">opt_dump</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+            <span class="c1"># json cannot write the UTCDateTime objects that might be in here</span>
+            <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">opt_dump</span><span class="p">[</span><span class="s1">&#39;co&#39;</span><span class="p">][</span><span class="s1">&#39;preProcessing&#39;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="s1">&#39;stream_mask_at_utc&#39;</span> <span class="ow">in</span> <span class="n">step</span><span class="p">[</span><span class="s1">&#39;function&#39;</span><span class="p">]:</span>
+                    <span class="n">startsstr</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="n">t</span><span class="o">.</span><span class="n">format_fissures</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">step</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">][</span><span class="s1">&#39;starts&#39;</span><span class="p">]]</span>
+                    <span class="n">step</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">][</span><span class="s1">&#39;starts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">startsstr</span>
+                    <span class="k">if</span> <span class="s1">&#39;ends&#39;</span> <span class="ow">in</span> <span class="n">step</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">]:</span>
+                        <span class="n">endsstr</span> <span class="o">=</span> <span class="p">[</span>
+                            <span class="n">t</span><span class="o">.</span><span class="n">format_fissures</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">step</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">][</span><span class="s1">&#39;ends&#39;</span><span class="p">]]</span>
+                        <span class="n">step</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">][</span><span class="s1">&#39;ends&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endsstr</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="n">logdir</span><span class="p">,</span> <span class="s1">&#39;params</span><span class="si">%s</span><span class="s1">.txt&#39;</span> <span class="o">%</span> <span class="n">tstr</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">opt_dump</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
 
         <span class="c1"># Find available stations and network</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">netlist</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">statlist</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">infiles</span> <span class="o">=</span> \
@@ -595,7 +612,47 @@ document.write(`
         <span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="n">corr_file</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
             <span class="c1"># get the corrstream containing all the corrdata for this combi</span>
             <span class="n">cst</span> <span class="o">=</span> <span class="n">cdb</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
-        <span class="n">cb</span> <span class="o">=</span> <span class="n">cst</span><span class="o">.</span><span class="n">create_corr_bulk</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">lts</span> <span class="o">=</span> <span class="n">cdb</span><span class="o">.</span><span class="n">get_corr_options</span><span class="p">()[</span><span class="s1">&#39;corr_args&#39;</span><span class="p">][</span><span class="s1">&#39;lengthToSave&#39;</span><span class="p">]</span>
+
+        <span class="n">tw_start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;compute_tt&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">cst</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="s1">&#39;dist&#39;</span><span class="p">):</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s1"> does not include distance. &#39;</span>
+                    <span class="s1">&#39;SeisMIC will assume an interstation distance of 0.&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Assume flat earth to include topography</span>
+                <span class="c1"># Note that dist is in km and elevation information in m</span>
+                <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                    <span class="n">cst</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">dist</span><span class="o">**</span><span class="mi">2</span>
+                    <span class="o">+</span> <span class="p">((</span><span class="n">cst</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">stel</span><span class="o">-</span><span class="n">cst</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">evel</span><span class="p">)</span><span class="o">/</span><span class="mi">1000</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+                <span class="n">tt</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span>
+                    <span class="n">d</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;rayleigh_wave_velocity&#39;</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="n">tw_start</span> <span class="o">+=</span> <span class="n">tt</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;Computed travel time for </span><span class="si">{</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s1"> is &#39;</span>
+                    <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">tt</span><span class="si">}</span><span class="s1"> s. The assumed direct-line distance was </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s1"> km.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">lts</span> <span class="o">&lt;</span> <span class="n">tw_start</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]:</span>
+            <span class="n">reqtw</span> <span class="o">=</span> <span class="n">tw_start</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span>
+                <span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;Requested lapse time window (time window start + time window&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39; length = </span><span class="si">{</span><span class="n">reqtw</span><span class="si">}</span><span class="s1"> contains segments after the Correlation&#39;</span>
+                <span class="s1">&#39;Function.&#39;</span>
+                <span class="s1">&#39; When computing the correlations make sure to set an &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;appropriate value for lengthToSave. The value was </span><span class="si">{</span><span class="n">lts</span><span class="si">}</span><span class="s1">.&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39; The direct-line distance between the stations is </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s1"> km.&#39;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;preprocessing&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;preprocessing&#39;</span><span class="p">]:</span>
+                <span class="c1"># This one goes on the CorrStream</span>
+                <span class="k">if</span> <span class="n">func</span><span class="p">[</span><span class="s1">&#39;function&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;pop_at_utcs&#39;</span><span class="p">:</span>
+                    <span class="n">f</span> <span class="o">=</span> <span class="n">cst</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="n">func</span><span class="p">[</span><span class="s1">&#39;function&#39;</span><span class="p">])</span>
+                    <span class="n">cst</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="o">**</span><span class="n">func</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">])</span>
+        <span class="n">cb</span> <span class="o">=</span> <span class="n">cst</span><span class="o">.</span><span class="n">create_corr_bulk</span><span class="p">(</span>
+            <span class="n">network</span><span class="o">=</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">station</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="n">channel</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="c1"># for possible rest bits</span>
         <span class="k">del</span> <span class="n">cst</span>
@@ -609,55 +666,63 @@ document.write(`
         <span class="c1"># Preprocessing on the correlation bulk</span>
         <span class="k">if</span> <span class="s1">&#39;preprocessing&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">]:</span>
             <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;preprocessing&#39;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">func</span><span class="p">[</span><span class="s1">&#39;function&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;pop_at_utcs&#39;</span><span class="p">:</span>
+                    <span class="k">continue</span>
                 <span class="n">f</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="n">func</span><span class="p">[</span><span class="s1">&#39;function&#39;</span><span class="p">])</span>
                 <span class="n">cb</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="o">**</span><span class="n">func</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">])</span>
 
-        <span class="c1"># Now, we make a copy of the cm to be trimmed</span>
+        <span class="c1"># Retain a copy of the stats</span>
+        <span class="n">stats_copy</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">cb</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">trim0</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">start_lag</span>
             <span class="n">trim1</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">end_lag</span>
             <span class="n">cbt</span> <span class="o">=</span> <span class="n">cb</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">trim0</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">])</span>
+                <span class="n">tw_start</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">])</span>
             <span class="n">trim1</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">])</span>
+                <span class="n">tw_start</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">])</span>
             <span class="n">cbt</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">trim0</span><span class="p">,</span> <span class="n">trim1</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">cbt</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">20</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;CorrBulk extremely short.&#39;</span><span class="p">)</span>
 
+        <span class="c1"># 15.11.22</span>
+        <span class="c1"># Do trimming after stretching of the reference trace to avoid</span>
+        <span class="c1"># edges having an influence on dv/v estimate</span>
         <span class="k">if</span> <span class="n">ref_trcs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">tr</span> <span class="o">=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">extract_multi_trace</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;dt_ref&#39;</span><span class="p">])</span>
+            <span class="n">tr</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">extract_multi_trace</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;dt_ref&#39;</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">tr</span> <span class="o">=</span> <span class="n">ref_trcs</span>
-            <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
-                <span class="n">tr</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_trim</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">cb</span><span class="o">.</span><span class="n">stats</span><span class="p">),</span> <span class="n">trim0</span><span class="p">,</span> <span class="n">trim1</span><span class="p">)</span>
 
         <span class="c1"># Compute time window</span>
         <span class="n">tw</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">cbt</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">],</span>
+            <span class="n">tw_start</span><span class="o">*</span><span class="n">cbt</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">],</span>
             <span class="n">trim1</span><span class="o">*</span><span class="n">cbt</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)]</span>
         <span class="n">dv</span> <span class="o">=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span>
             <span class="n">ref_trc</span><span class="o">=</span><span class="n">tr</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">stretch_steps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;stretch_steps&#39;</span><span class="p">],</span>
             <span class="n">stretch_range</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;stretch_range&#39;</span><span class="p">],</span>
-            <span class="n">tw</span><span class="o">=</span><span class="n">tw</span><span class="p">,</span> <span class="n">sides</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;sides&#39;</span><span class="p">])</span>
-        <span class="n">ccb</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">correct_stretch</span><span class="p">(</span><span class="n">dv</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;sides&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;single&#39;</span><span class="p">)</span>
-
-        <span class="n">ccb</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">trim0</span><span class="p">,</span> <span class="n">trim1</span><span class="p">)</span>
+            <span class="n">tw</span><span class="o">=</span><span class="n">tw</span><span class="p">,</span> <span class="n">sides</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;sides&#39;</span><span class="p">],</span>
+            <span class="n">ref_tr_trim</span><span class="o">=</span><span class="p">(</span><span class="n">trim0</span><span class="p">,</span> <span class="n">trim1</span><span class="p">),</span> <span class="n">ref_tr_stats</span><span class="o">=</span><span class="n">stats_copy</span><span class="p">,</span>
+            <span class="n">processing</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">])</span>
+        <span class="n">ccb</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">correct_stretch</span><span class="p">(</span><span class="n">dv</span><span class="p">)</span>
 
         <span class="c1"># extract the final reference trace (mean excluding very different</span>
         <span class="c1"># traces)</span>
         <span class="k">if</span> <span class="n">ref_trcs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">tr</span> <span class="o">=</span> <span class="n">ccb</span><span class="o">.</span><span class="n">extract_multi_trace</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;dt_ref&#39;</span><span class="p">])</span>
 
+        <span class="n">ccb</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">trim0</span><span class="p">,</span> <span class="n">trim1</span><span class="p">)</span>
+
         <span class="c1"># obtain an improved time shift measurement</span>
         <span class="n">dv</span> <span class="o">=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span>
             <span class="n">ref_trc</span><span class="o">=</span><span class="n">tr</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">stretch_steps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;stretch_steps&#39;</span><span class="p">],</span>
             <span class="n">stretch_range</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;stretch_range&#39;</span><span class="p">],</span>
-            <span class="n">tw</span><span class="o">=</span><span class="n">tw</span><span class="p">,</span> <span class="n">sides</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;sides&#39;</span><span class="p">])</span>
+            <span class="n">tw</span><span class="o">=</span><span class="n">tw</span><span class="p">,</span> <span class="n">sides</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;sides&#39;</span><span class="p">],</span>
+            <span class="n">ref_tr_trim</span><span class="o">=</span><span class="p">(</span><span class="n">trim0</span><span class="p">,</span> <span class="n">trim1</span><span class="p">),</span> <span class="n">ref_tr_stats</span><span class="o">=</span><span class="n">stats_copy</span><span class="p">,</span>
+            <span class="n">processing</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">])</span>
 
         <span class="c1"># Postprocessing on the dv object</span>
         <span class="k">if</span> <span class="s1">&#39;postprocessing&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">]:</span>
@@ -1077,6 +1142,139 @@ document.write(`
     <span class="k">return</span> <span class="n">netlist</span><span class="p">,</span> <span class="n">statlist</span><span class="p">,</span> <span class="n">infiles</span></div>
 
 
+<div class="viewcode-block" id="correct_dv_shift"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.correct_dv_shift">[docs]</a><span class="k">def</span> <span class="nf">correct_dv_shift</span><span class="p">(</span>
+    <span class="n">dv0</span><span class="p">:</span> <span class="n">DV</span><span class="p">,</span> <span class="n">dv1</span><span class="p">:</span> <span class="n">DV</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span>
+        <span class="n">n_overlap</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">DV</span><span class="p">,</span> <span class="n">DV</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Shift dv0 with respect to dv1, so that the same times will have the same</span>
+<span class="sd">    value.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        in-place operation.</span>
+
+<span class="sd">    :param dv0: DV object to be shifted</span>
+<span class="sd">    :type dv0: DV</span>
+<span class="sd">    :param dv1: DV object to compare to</span>
+<span class="sd">    :type dv1: DV</span>
+<span class="sd">    :param method: either mean or median, defaults to &#39;mean&#39;. If mean is chosen</span>
+<span class="sd">        the points will be weighted by the correlation coefficient.</span>
+<span class="sd">    :type method: str, optional</span>
+<span class="sd">    :param n_overlap: Number of points to compare to beyond the</span>
+<span class="sd">        already overlapping point. Makes sense if, e.g., one station replaces</span>
+<span class="sd">        the other, defaults to 0.</span>
+<span class="sd">    :type n_overlap: int, optional</span>
+<span class="sd">    :raises ValueError: If the two dvs only have non-nan value more than</span>
+<span class="sd">        n_overlap apart.</span>
+<span class="sd">    :return: The two dv object. Only the first one is modified. Modification</span>
+<span class="sd">        also happens in-place.</span>
+<span class="sd">    :rtype: Tuple[DV, DV]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Times when both measured</span>
+    <span class="n">both_avail</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">dv0</span><span class="o">.</span><span class="n">avail</span><span class="p">,</span> <span class="n">dv1</span><span class="o">.</span><span class="n">avail</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">both_avail</span><span class="p">):</span>
+        <span class="c1"># Unless one of them become less than 0 or more than length</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">both_avail</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">-</span> <span class="n">n_overlap</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">both_avail</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="n">n_overlap</span>
+        <span class="n">ii</span> <span class="o">=</span> <span class="n">jj</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">elif</span> <span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dv0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">)[</span><span class="n">dv0</span><span class="o">.</span><span class="n">avail</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dv1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">)[</span><span class="n">dv1</span><span class="o">.</span><span class="n">avail</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="c1"># dv0 comes after dv1:</span>
+        <span class="n">ii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dv0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="n">dv0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">)[</span><span class="n">dv0</span><span class="o">.</span><span class="n">avail</span><span class="p">][</span><span class="mi">0</span><span class="p">])[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="n">ii</span> <span class="o">+</span> <span class="n">n_overlap</span>
+        <span class="n">jj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dv1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="n">dv1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">)[</span><span class="n">dv1</span><span class="o">.</span><span class="n">avail</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">jj</span> <span class="o">-</span> <span class="n">n_overlap</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># dv1 comes after dv0:</span>
+        <span class="n">ii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dv1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="n">dv1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">)[</span><span class="n">dv1</span><span class="o">.</span><span class="n">avail</span><span class="p">][</span><span class="mi">0</span><span class="p">])[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="n">ii</span> <span class="o">+</span> <span class="n">n_overlap</span>
+        <span class="n">jj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dv0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="n">dv0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">)[</span><span class="n">dv0</span><span class="o">.</span><span class="n">avail</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">jj</span> <span class="o">-</span> <span class="n">n_overlap</span>
+    <span class="k">if</span> <span class="n">ii</span><span class="o">-</span><span class="n">jj</span> <span class="o">&gt;</span> <span class="n">n_overlap</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;The gap in active times of the two DVs is larger than &#39;</span>
+            <span class="s1">&#39;n_overlap, i.e., &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">n_overlap</span><span class="o">*</span><span class="p">(</span><span class="n">dv0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">dv0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="mi">3600</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="s1">&#39;hours. The result would not make sense.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">stop</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dv0</span><span class="o">.</span><span class="n">value</span><span class="p">):</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dv0</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">start</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">dv0c</span> <span class="o">=</span> <span class="n">dv0</span><span class="o">.</span><span class="n">corr</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">]</span>
+    <span class="n">dv0v</span> <span class="o">=</span> <span class="n">dv0</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">]</span>
+    <span class="n">dv1c</span> <span class="o">=</span> <span class="n">dv1</span><span class="o">.</span><span class="n">corr</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">]</span>
+    <span class="n">dv1v</span> <span class="o">=</span> <span class="n">dv1</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;mean&#39;</span><span class="p">:</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">dv0v</span><span class="o">*</span><span class="n">dv0c</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">dv0c</span><span class="p">)</span>\
+            <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">dv1v</span><span class="o">*</span><span class="n">dv1c</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">dv1c</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;median&#39;</span><span class="p">:</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span>
+            <span class="n">dv0</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">])</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span><span class="n">dv1</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Method has to be either mean or median&#39;</span><span class="p">)</span>
+    <span class="n">roll</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="o">-</span><span class="n">shift</span><span class="o">/</span><span class="p">(</span><span class="n">dv0</span><span class="o">.</span><span class="n">second_axis</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">dv0</span><span class="o">.</span><span class="n">second_axis</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+    <span class="n">dv0</span><span class="o">.</span><span class="n">sim_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">dv0</span><span class="o">.</span><span class="n">sim_mat</span><span class="p">,</span> <span class="p">(</span><span class="n">roll</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">dv0</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">dv0</span><span class="o">.</span><span class="n">second_axis</span><span class="p">[</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">nanargmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">dv0</span><span class="o">.</span><span class="n">sim_mat</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">dv0</span><span class="p">,</span> <span class="n">dv1</span></div>
+
+
+<div class="viewcode-block" id="correct_time_shift_several"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.correct_time_shift_several">[docs]</a><span class="k">def</span> <span class="nf">correct_time_shift_several</span><span class="p">(</span><span class="n">dvs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DV</span><span class="p">],</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n_overlap</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Suppose you have a number of dv/v time series from the same location,</span>
+<span class="sd">    but station codes changed several times. To stitch these together,</span>
+<span class="sd">    this code will iteratively shift each progressive time-series to the</span>
+<span class="sd">    shift of the end of its precessor.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        The shifting correction happens in-place.</span>
+
+<span class="sd">    :param dvs: List of dvs to be shifted</span>
+<span class="sd">    :type dvs: List[DV]</span>
+<span class="sd">    :param method: method to be used to measure the shift. Can be &#39;mean&#39; or</span>
+<span class="sd">        &#39;median&#39;. If &#39;mean&#39; is chosen, the points will be weighted by their</span>
+<span class="sd">        respective correlation coefficient.</span>
+<span class="sd">    :type method: str</span>
+<span class="sd">    :param n_overlap: amount of points beyond the overlap to use to compute</span>
+<span class="sd">        the shift.</span>
+<span class="sd">    :type n_overlap: int</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># If three different time-series are provided, find the one that</span>
+    <span class="c1"># spans the middle time</span>
+    <span class="n">avl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">timestamp</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">])[</span>
+                <span class="n">dv</span><span class="o">.</span><span class="n">avail</span><span class="p">])</span> <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dvs</span><span class="p">])</span>
+    <span class="n">avl_u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">avl</span><span class="p">))</span>
+    <span class="c1"># Loop over each unique start and shift and correct them iteratively</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">avstart</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">avl_u</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">k</span><span class="o">+</span><span class="mi">1</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">avl_u</span><span class="p">):</span>
+            <span class="c1"># everything is shifted</span>
+            <span class="k">break</span>
+        <span class="n">ii_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">avl</span> <span class="o">==</span> <span class="n">avstart</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">ii_corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">avl</span> <span class="o">==</span> <span class="n">avl_u</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">dv_r</span> <span class="o">=</span> <span class="n">dvs</span><span class="p">[</span><span class="n">ii_ref</span><span class="p">]</span>
+        <span class="n">dv_corr</span> <span class="o">=</span> <span class="p">[</span><span class="n">dvs</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">ii_corr</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dv_corr</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># The correction should happen in-place</span>
+                <span class="n">correct_dv_shift</span><span class="p">(</span>
+                    <span class="n">dv</span><span class="p">,</span> <span class="n">dv_r</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+                    <span class="n">n_overlap</span><span class="o">=</span><span class="n">n_overlap</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1"> for </span><span class="si">{</span><span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s1"> and reference dv &#39;</span>
+                    <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">dv_r</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="average_components_mem_save"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.average_components_mem_save">[docs]</a><span class="k">def</span> <span class="nf">average_components_mem_save</span><span class="p">(</span>
         <span class="n">dvs</span><span class="p">:</span> <span class="n">Generator</span><span class="p">[</span><span class="n">DV</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">save_scatter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1109,6 +1307,7 @@ document.write(`
             <span class="n">strvec</span> <span class="o">=</span> <span class="n">dv</span><span class="o">.</span><span class="n">second_axis</span>
             <span class="n">value_type</span> <span class="o">=</span> <span class="n">dv</span><span class="o">.</span><span class="n">value_type</span>
             <span class="n">method</span> <span class="o">=</span> <span class="n">dv</span><span class="o">.</span><span class="n">method</span>
+            <span class="n">dv_processing</span> <span class="o">=</span> <span class="n">dv</span><span class="o">.</span><span class="n">dv_processing</span>
         <span class="k">if</span> <span class="n">dv</span><span class="o">.</span><span class="n">method</span> <span class="o">!=</span> <span class="n">method</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;DV has to be computed with the same method.&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="s1">&#39;av&#39;</span> <span class="ow">in</span> <span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span><span class="o">+</span><span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="o">+</span><span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="p">:</span>
@@ -1136,6 +1335,7 @@ document.write(`
     <span class="n">iimax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanargmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">av_sim_mat</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">av_sim_mat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">dt</span> <span class="o">=</span> <span class="n">strvec</span><span class="p">[</span><span class="n">iimax</span><span class="p">]</span>
+    <span class="n">dt</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">corr</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
     <span class="k">if</span> <span class="n">save_scatter</span><span class="p">:</span>
         <span class="c1"># use sum of square for std</span>
         <span class="n">corrs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">corrs</span><span class="p">)</span>
@@ -1152,11 +1352,14 @@ document.write(`
     <span class="n">dvout</span> <span class="o">=</span> <span class="n">DV</span><span class="p">(</span>
         <span class="n">corr</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">value_type</span><span class="p">,</span> <span class="n">av_sim_mat</span><span class="p">,</span> <span class="n">strvec</span><span class="p">,</span>
         <span class="n">method</span><span class="p">,</span> <span class="n">stats</span><span class="p">,</span> <span class="n">stretches</span><span class="o">=</span><span class="n">stretches</span><span class="p">,</span> <span class="n">corrs</span><span class="o">=</span><span class="n">corrs</span><span class="p">,</span>
-        <span class="n">n_stat</span><span class="o">=</span><span class="n">n_stat</span><span class="p">)</span>
+        <span class="n">n_stat</span><span class="o">=</span><span class="n">n_stat</span><span class="p">,</span> <span class="n">dv_processing</span><span class="o">=</span><span class="n">dv_processing</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">dvout</span></div>
 
 
-<div class="viewcode-block" id="average_components"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.average_components">[docs]</a><span class="k">def</span> <span class="nf">average_components</span><span class="p">(</span><span class="n">dvs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DV</span><span class="p">],</span> <span class="n">save_scatter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
+<div class="viewcode-block" id="average_components"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.average_components">[docs]</a><span class="k">def</span> <span class="nf">average_components</span><span class="p">(</span>
+    <span class="n">dvs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DV</span><span class="p">],</span> <span class="n">save_scatter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">correct_shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">correct_shift_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span>
+        <span class="n">correct_shift_overlap</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Averages the Similariy matrix of the DV objects. Based on those,</span>
 <span class="sd">    it computes a new dv value and a new correlation value.</span>
@@ -1168,6 +1371,11 @@ document.write(`
 <span class="sd">    :param save_scatter: Saves the scattering of old values and correlation</span>
 <span class="sd">        coefficients to later provide a statistical measure. Defaults to True.</span>
 <span class="sd">    :type save_scatter: bool, optional</span>
+<span class="sd">    :param correct_shift: Shift the dvs with respect to each other. This is</span>
+<span class="sd">        relevant if not all stations are active all the time and the references</span>
+<span class="sd">        are not describing the same state. This only works if stations were</span>
+<span class="sd">        active almost simultaneously at least for a bit</span>
+<span class="sd">        (i.e., corr-start[n+n_overlap]-corr-start[n])</span>
 <span class="sd">    :raises TypeError: for DVs that were computed with different methods</span>
 <span class="sd">    :return: A single dv with an averaged similarity matrix.</span>
 <span class="sd">    :rtype: DV</span>
@@ -1193,23 +1401,28 @@ document.write(`
             <span class="p">)</span>
             <span class="k">continue</span>
         <span class="n">dv_use</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dv</span><span class="p">)</span>
-    <span class="n">sim_mats</span> <span class="o">=</span> <span class="p">[</span><span class="n">dv</span><span class="o">.</span><span class="n">sim_mat</span> <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dv_use</span><span class="p">]</span>
-    <span class="n">av_sim_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">sim_mats</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># Correct shift</span>
+    <span class="k">if</span> <span class="n">correct_shift</span><span class="p">:</span>
+        <span class="n">correct_time_shift_several</span><span class="p">(</span>
+            <span class="n">dv_use</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">correct_shift_method</span><span class="p">,</span>
+            <span class="n">n_overlap</span><span class="o">=</span><span class="n">correct_shift_overlap</span><span class="p">)</span>
+    <span class="n">av_sim_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">([</span><span class="n">dv</span><span class="o">.</span><span class="n">sim_mat</span> <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dv_use</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="c1"># Now we would have to recompute the dv value and corr value</span>
     <span class="n">iimax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanargmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">av_sim_mat</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">av_sim_mat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">strvec</span> <span class="o">=</span> <span class="n">dv_use</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">second_axis</span>
     <span class="n">dt</span> <span class="o">=</span> <span class="n">strvec</span><span class="p">[</span><span class="n">iimax</span><span class="p">]</span>
+    <span class="n">dt</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">corr</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
     <span class="k">if</span> <span class="n">save_scatter</span><span class="p">:</span>
         <span class="n">stretches</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dv</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dv_use</span><span class="p">])</span>
         <span class="n">corrs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dv</span><span class="o">.</span><span class="n">corr</span> <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dv_use</span><span class="p">])</span>
-        <span class="c1"># # Number of stations per corr_start</span>
-        <span class="n">n_stat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">stretches</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">n_stat</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">stretches</span><span class="p">))]</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">n_stat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">n_stat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># now this has the same shape as std</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">stretches</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">corrs</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Number of stations per corr_start</span>
+    <span class="n">n_stat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">dv</span><span class="o">.</span><span class="n">avail</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">corr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span> <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dv_use</span><span class="p">])</span>
+    <span class="n">n_stat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">n_stat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">stats</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">dv_use</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span> <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dv_use</span><span class="p">])</span> <span class="o">==</span> <span class="n">stats</span><span class="o">.</span><span class="n">channel</span><span class="p">):</span>
         <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;av&#39;</span>
@@ -1220,7 +1433,7 @@ document.write(`
     <span class="n">dvout</span> <span class="o">=</span> <span class="n">DV</span><span class="p">(</span>
         <span class="n">corr</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">dv_use</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value_type</span><span class="p">,</span> <span class="n">av_sim_mat</span><span class="p">,</span> <span class="n">strvec</span><span class="p">,</span>
         <span class="n">dv_use</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="n">stats</span><span class="p">,</span> <span class="n">stretches</span><span class="o">=</span><span class="n">stretches</span><span class="p">,</span> <span class="n">corrs</span><span class="o">=</span><span class="n">corrs</span><span class="p">,</span>
-        <span class="n">n_stat</span><span class="o">=</span><span class="n">n_stat</span><span class="p">)</span>
+        <span class="n">n_stat</span><span class="o">=</span><span class="n">n_stat</span><span class="p">,</span> <span class="n">dv_processing</span><span class="o">=</span><span class="n">dv_use</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dv_processing</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">dvout</span></div>
 
 
@@ -1309,9 +1522,15 @@ document.write(`
               
               
                 <footer class="bd-footer-article">
-                  <!-- Previous / next buttons -->
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
+</div></div>
+  
 </div>
+
                 </footer>
               
             </div>
@@ -1321,7 +1540,7 @@ document.write(`
             
           </div>
           <footer class="bd-footer-content">
-            <div class="bd-footer-content__inner"></div>
+            
           </footer>
         
       </main>
@@ -1329,8 +1548,8 @@ document.write(`
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../../_static/scripts/bootstrap.js?digest=12da95d707ffb74b382d"></script>
-<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=12da95d707ffb74b382d"></script>
+  <script src="../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1340,7 +1559,7 @@ document.write(`
         <div class="footer-item">
   <p class="copyright">
     
-      © Copyright 2022, The SeisMIC development team..
+      © Copyright 2023, The SeisMIC development team..
       <br/>
     
   </p>
@@ -1348,7 +1567,7 @@ document.write(`
       
         <div class="footer-item">
   <p class="sphinx-version">
-    Created using <a href="https://sphinx-doc.org/">Sphinx</a> 5.3.0.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.3.0.
     <br/>
   </p>
 </div>
@@ -1359,7 +1578,7 @@ document.write(`
     <div class="footer-items__end">
       
         <div class="footer-item"><p class="theme-version">
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.1.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
 </p></div>
       
     </div>
