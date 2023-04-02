@@ -45,7 +45,9 @@ The code block below shows and example for downloading data from the **IU.HRV** 
     network = 'IU'
     station = 'HRV'
 
-
+    # Note that you coul initiate the client object with
+    # an Eida token if you should wish to download
+    # restricted data.
     c = Client()
     sc = Store_Client(c, root, read_only=False)
     sc.download_waveforms_mdl(
@@ -102,3 +104,42 @@ There are a couple of functions to help you:
         for which data is available (a network may or may not be defined).
     * :func:`~seismic.trace_data.waveform.Store_Client._get_times` returns the earliest and latest available
         starttimes for a certain station.
+
+
+Feed in Data in a Different Way
++++++++++++++++++++++++++++++++
+There may be scenarious, in which you will not need or won't be able to download waveform data
+from an FDSN server. In such cases, it is easy to use your own mseed data to "mimic" SeisMIC's file
+system structure.
+
+You will need daily mseed files for each component of the seismometer.
+If you need to convert/merge/split, you files we recommend using PyRocko or obspy.
+
+Now you will have to sort your mseed files in the following way:
+
+`path/to/project/mseed/{year}/{network}/{station}/{channel}.{sds_type}/{network}.{station}.{location}.{channel}.{sds_type}.{year}.{doy:03d}`
+
+Where ``sds_type`` almost always corresponds to *D* (i.e., data). ``doy:03d`` is the "day of year"/Julian day in three digits.
+
+For example
+`path/to/project/mseed/2010/IU/HRV/BHZ.D/IU.HRV.00.BHZ.D.2010.001`
+is the mseed file corresponding to a waveform recording from station *IU.HRV* channel *BHZ* on January 1st 2010.
+
+.. note::
+    The mseed files do not have file endings.
+
+.. note::
+    Files that do not correspond to this format won't be found by SeisMIC. Pay particular attention to
+    always saving the mseed files for days 1 to 99 with leading zeros!
+
+
+Station Inventories
+===================
+You might require response files either to provide station coordinates or to provide reponse information. SeisMIC reads *StationXML* files
+these are saved in `/path/to/project/inventory/{network}.{station}.xml`. There should be exactly one file per station!
+If you use SeisMIC's preimplemented methods to download data, station information will be downloaded automatically. Otherwise, add
+it manually.
+
+
+
+
