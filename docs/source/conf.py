@@ -19,7 +19,8 @@ sys.path.insert(0, os.path.abspath('../../src'))
 
 project = 'SeisMIC'
 copyright = '2023, The SeisMIC development team.'
-author = 'The SeisMIC development Team'
+author = \
+    'Peter Makus, Christoph Sens-Schönfelder, and the SeisMIC development Team'
 
 # The full version, including alpha/beta/rc tags
 release = '0.3.10'
@@ -72,8 +73,8 @@ html_theme = 'pydata_sphinx_theme'  # 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 
-html_title = "SeisMIC"
-# html_logo = "chapters/figures/logo.png"
+html_title = ""
+html_logo = "source/figures/seismic_logo_small.svg"
 # html_favicon = "chapters/figures/favicon.ico"
 
 html_context = {
