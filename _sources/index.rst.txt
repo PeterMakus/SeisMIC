@@ -8,8 +8,8 @@ SeisMIC library documentation
 =============================
 
 SeisMIC (**Seismological Monitoring using Interferometric Concepts**) is a software that emerged from the miic library.
-**SeisMIC** provides functionality to apply some concepts of seismic interferometry to different data of elastic waves.
-Its main use case is the monitoring of temporal changes in a mediums Green's Function (i.e., monitoring of temporal velocity changes).
+**SeisMIC** provides functionality to apply some concepts of seismic interferometry to recordings of elastic waves.
+Its main use case is the monitoring of temporal changes in a mediums (e.g., monitoring of temporal velocity changes).
 
 .. toctree::
    :maxdepth: 3

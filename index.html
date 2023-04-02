@@ -49,7 +49,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'index';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Introduction: Noise Interferometry with Green’s Function Retrieval" href="modules/intro.html" />
+    <link rel="next" title="Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval" href="modules/intro.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -133,7 +133,7 @@
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="modules/intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -282,7 +282,7 @@ document.write(`
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="modules/intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -402,12 +402,12 @@ document.write(`
   <section id="seismic-library-documentation">
 <h1>SeisMIC library documentation<a class="headerlink" href="#seismic-library-documentation" title="Permalink to this heading">#</a></h1>
 <p>SeisMIC (<strong>Seismological Monitoring using Interferometric Concepts</strong>) is a software that emerged from the miic library.
-<strong>SeisMIC</strong> provides functionality to apply some concepts of seismic interferometry to different data of elastic waves.
-Its main use case is the monitoring of temporal changes in a mediums Green’s Function (i.e., monitoring of temporal velocity changes).</p>
+<strong>SeisMIC</strong> provides functionality to apply some concepts of seismic interferometry to recordings of elastic waves.
+Its main use case is the monitoring of temporal changes in a mediums (e.g., monitoring of temporal velocity changes).</p>
 <div class="toctree-wrapper compound">
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="modules/intro.html">Introduction: Noise Interferometry with Green’s Function Retrieval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/intro.html">Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/get_started.html">Getting Started with SeisMIC</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="modules/get_started.html#download-and-installation">Download and Installation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="modules/get_started.html#dependencies">Dependencies</a></li>
@@ -427,7 +427,7 @@ Its main use case is the monitoring of temporal changes in a mediums Green’s F
 </li>
 <li class="toctree-l1"><a class="reference internal" href="modules/correlate.html">Compute and Handle Correlations</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="modules/correlate.html#compute-correlations">Compute Correlations</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="modules/correlate/get_started.html">Get Started (Compute your first Noise Correlations)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/correlate/get_started.html">Computing your first Noise Correlations</a></li>
 <li class="toctree-l3"><a class="reference internal" href="modules/correlate/correlator.html">The Correlator Object</a></li>
 </ul>
 </li>
@@ -454,6 +454,8 @@ Its main use case is the monitoring of temporal changes in a mediums Green’s F
 <li class="toctree-l2"><a class="reference internal" href="modules/monitor/dv.html">Reading and Handling of DV objects</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="modules/monitor/dv.html#read-a-dv-object-from-disk">Read a DV Object from Disk</a></li>
 <li class="toctree-l3"><a class="reference internal" href="modules/monitor/dv.html#plotting">Plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/monitor/dv.html#stacking-averaging-results-from-several-stretching-estimations">Stacking/Averaging Results from several stretching estimations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/monitor/dv.html#inverting-velocity-changes-onto-a-spatial-grid">Inverting Velocity Changes onto a spatial grid</a></li>
 </ul>
 </li>
 </ul>
@@ -479,6 +481,7 @@ Its main use case is the monitoring of temporal changes in a mediums Green’s F
 <li class="toctree-l2"><a class="reference internal" href="modules/API.html#seismic-monitor">seismic.monitor</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-monitor-monitor">seismic.monitor.monitor</a></li>
 <li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-monitor-dv">seismic.monitor.dv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-monitor-spatial">seismic.monitor.spatial</a></li>
 <li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-monitor-post-corr-process">seismic.monitor.post_corr_process</a></li>
 <li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-monitor-stretch-mod">seismic.monitor.stretch_mod</a></li>
 </ul>
@@ -560,7 +563,7 @@ graph TD
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Introduction: Noise Interferometry with Green’s Function Retrieval</p>
+        <p class="prev-next-title">Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

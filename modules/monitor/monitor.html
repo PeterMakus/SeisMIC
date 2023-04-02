@@ -134,7 +134,7 @@
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -283,7 +283,7 @@ document.write(`
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -460,9 +460,15 @@ graph LR
 stations (for Cross-Correlations) or in station vicinity (for inter-component or autocorrelations).
 This technique is grounded upon the assumption that a homogeneous change in velocity will result in a homogeneous stretching of the
 Green’s function.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>We are currently in the stage of implementing some other algorithms to estiamte dv/v.
+If you don’t want to wait, it should be easy for you to implement
+a different algorithm yourself.</p>
+</div>
 <section id="arguments-in-params-yaml">
 <h2>Arguments in <code class="docutils literal notranslate"><span class="pre">params.yaml</span></code><a class="headerlink" href="#arguments-in-params-yaml" title="Permalink to this heading">#</a></h2>
-<p>To set the arguments for our velocity change computation, we will once again use the yaml file as shown before. Right at the bottom
+<p>To set the arguments for our velocity change computation, we will once again use the yaml file as shown before. Closer to the bottom
 of this file, you will find a section with the key <code class="docutils literal notranslate"><span class="pre">dv</span></code>:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1">#### parameters for the estimation of time differences</span>
 <span class="linenos"> 2</span><span class="nt">dv</span><span class="p">:</span>
@@ -479,34 +485,39 @@ of this file, you will find a section with the key <code class="docutils literal
 <span class="linenos">13</span><span class="w">    </span><span class="nt">date_inc </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">86400</span><span class="w">                        </span><span class="c1"># increment of measurements</span>
 <span class="linenos">14</span>
 <span class="linenos">15</span><span class="w">    </span><span class="c1">### Frequencies</span>
-<span class="linenos">16</span><span class="w">    </span><span class="nt">freq_min </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
-<span class="linenos">17</span><span class="w">    </span><span class="nt">freq_max </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+<span class="linenos">16</span><span class="w">    </span><span class="nt">freq_min </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="linenos">17</span><span class="w">    </span><span class="nt">freq_max </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
 <span class="linenos">18</span>
 <span class="linenos">19</span><span class="w">    </span><span class="c1">### Definition of lapse time window</span>
 <span class="linenos">20</span><span class="w">    </span><span class="nt">tw_start </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span><span class="w">     </span><span class="c1"># lapse time of first sample [s]</span>
-<span class="linenos">21</span><span class="w">    </span><span class="nt">tw_len </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60</span><span class="w">       </span><span class="c1"># length of window [s]</span>
-<span class="linenos">22</span>
-<span class="linenos">23</span><span class="w">    </span><span class="c1">### Range to try stretching</span>
-<span class="linenos">24</span><span class="w">    </span><span class="nt">stretch_range </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.03</span>
-<span class="linenos">25</span><span class="w">    </span><span class="nt">stretch_steps </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1001</span>
+<span class="linenos">21</span><span class="w">    </span><span class="nt">tw_len </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60</span><span class="w">       </span><span class="c1"># length of window [s] Can be None if the whole (rest) of the coda should be used</span>
+<span class="linenos">22</span><span class="w">    </span><span class="nt">sides </span><span class="p">:</span><span class="w"> </span><span class="s">&#39;both&#39;</span><span class="w">   </span><span class="c1"># options are left (for acausal), right (causal), both, or single (for active source experiments where the first sample is the trigger time)</span>
+<span class="linenos">23</span><span class="w">    </span><span class="nt">compute_tt </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span><span class="w">  </span><span class="c1"># Computes the travel time and adds it to tw_start (tt is 0 if not xstations). If true a rayleigh wave velocity has to be provided</span>
+<span class="linenos">24</span><span class="w">    </span><span class="nt">rayleigh_wave_velocity </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w">  </span><span class="c1"># rayleigh wave velocity in km/s, will be ignored if compute_tt=False</span>
+<span class="linenos">25</span>
 <span class="linenos">26</span>
-<span class="linenos">27</span><span class="w">    </span><span class="c1">#### Reference trace extraction</span>
-<span class="linenos">28</span><span class="w">    </span><span class="c1">#  win_inc : Length in days of each reference time window to be used for trace extraction</span>
-<span class="linenos">29</span><span class="w">    </span><span class="c1"># If == 0, only one trace will be extracted</span>
-<span class="linenos">30</span><span class="w">    </span><span class="c1"># If &gt; 0, mutliple reference traces will be used for the dv calculation</span>
-<span class="linenos">31</span><span class="w">    </span><span class="c1"># Can also be a list if the length of the windows should vary</span>
-<span class="linenos">32</span><span class="w">    </span><span class="c1"># See seismic.correlate.stream.CorrBulk.extract_multi_trace for details on arguments</span>
-<span class="linenos">33</span><span class="w">    </span><span class="nt">dt_ref </span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="s">&#39;win_inc&#39;</span><span class="nt"> </span><span class="p">:</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;method&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&#39;mean&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;percentile&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="nv">50</span><span class="p p-Indicator">}</span>
-<span class="linenos">34</span>
-<span class="linenos">35</span><span class="w">    </span><span class="c1"># preprocessing on the correlation bulk before stretch estimation</span>
-<span class="linenos">36</span><span class="w">    </span><span class="nt">preprocessing</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span>
-<span class="linenos">37</span><span class="w">                    </span><span class="p p-Indicator">{</span><span class="s">&#39;function&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&#39;smooth&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;args&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="s">&#39;wsize&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="nv">48</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;wtype&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&#39;hanning&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;axis&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">}}</span>
-<span class="linenos">38</span><span class="w">    </span><span class="p p-Indicator">]</span>
-<span class="linenos">39</span>
-<span class="linenos">40</span><span class="w">    </span><span class="c1"># postprocessing of dv objects before saving and plotting</span>
-<span class="linenos">41</span><span class="w">    </span><span class="nt">postprocessing</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span>
-<span class="linenos">42</span><span class="w">                    </span><span class="p p-Indicator">{</span><span class="s">&#39;function&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&#39;smooth_sim_mat&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;args&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="s">&#39;win_len&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="nv">7</span><span class="p p-Indicator">}}</span>
+<span class="linenos">27</span><span class="w">    </span><span class="c1">### Range to try stretching</span>
+<span class="linenos">28</span><span class="w">    </span><span class="nt">stretch_range </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.03</span>
+<span class="linenos">29</span><span class="w">    </span><span class="nt">stretch_steps </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1001</span>
+<span class="linenos">30</span>
+<span class="linenos">31</span><span class="w">    </span><span class="c1">#### Reference trace extraction</span>
+<span class="linenos">32</span><span class="w">    </span><span class="c1">#  win_inc : Length in days of each reference time window to be used for trace extraction</span>
+<span class="linenos">33</span><span class="w">    </span><span class="c1"># If == 0, only one trace will be extracted</span>
+<span class="linenos">34</span><span class="w">    </span><span class="c1"># If &gt; 0, mutliple reference traces will be used for the dv calculation</span>
+<span class="linenos">35</span><span class="w">    </span><span class="c1"># Can also be a list if the length of the windows should vary</span>
+<span class="linenos">36</span><span class="w">    </span><span class="c1"># See seismic.correlate.stream.CorrBulk.extract_multi_trace for details on arguments</span>
+<span class="linenos">37</span><span class="w">    </span><span class="nt">dt_ref </span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="s">&#39;win_inc&#39;</span><span class="nt"> </span><span class="p">:</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;method&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&#39;mean&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;percentile&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="nv">50</span><span class="p p-Indicator">}</span>
+<span class="linenos">38</span>
+<span class="linenos">39</span><span class="w">    </span><span class="c1"># preprocessing on the correlation bulk or corr_stream before stretch estimation</span>
+<span class="linenos">40</span><span class="w">    </span><span class="nt">preprocessing</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span>
+<span class="linenos">41</span><span class="w">                    </span><span class="c1">#{&#39;function&#39;: &#39;pop_at_utcs&#39;, &#39;args&#39;: {&#39;utcs&#39;: np.array([UTCDateTime()])},</span>
+<span class="linenos">42</span><span class="w">                    </span><span class="p p-Indicator">{</span><span class="s">&#39;function&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&#39;smooth&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;args&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="s">&#39;wsize&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="nv">48</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;wtype&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&#39;hanning&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;axis&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">}}</span>
 <span class="linenos">43</span><span class="w">    </span><span class="p p-Indicator">]</span>
+<span class="linenos">44</span>
+<span class="linenos">45</span><span class="w">    </span><span class="c1"># postprocessing of dv objects before saving and plotting</span>
+<span class="linenos">46</span><span class="w">    </span><span class="nt">postprocessing</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span>
+<span class="linenos">47</span><span class="w">                    </span><span class="p p-Indicator">{</span><span class="s">&#39;function&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&#39;smooth_sim_mat&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;args&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="s">&#39;win_len&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="nv">7</span><span class="p p-Indicator">,</span><span class="nt"> exclude_corr_below</span><span class="p">:</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">}}</span>
+<span class="linenos">48</span><span class="w">    </span><span class="p p-Indicator">]</span>
 </pre></div>
 </div>
 <p>As you can see, there are only fairly few settings that can be changed, some of which are very obvious again:</p>
@@ -519,9 +530,12 @@ of this file, you will find a section with the key <code class="docutils literal
 <li><p><code class="docutils literal notranslate"><span class="pre">preprocessing</span></code>: List of functions that will be applied to the correlations prior to the interferometry. You can feed in your own custom functions. <code class="docutils literal notranslate"><span class="pre">smooth</span></code> does just simply apply a moving window along one axis. Physical window length is <code class="docutils literal notranslate"><span class="pre">win_inc``*48</span> <span class="pre">+</span> <span class="pre">2*(``win_len</span></code> - <code class="docutils literal notranslate"><span class="pre">win_inc</span></code>).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">postprocessing</span></code>: Functions that are applied to the <a class="reference internal" href="../API.html#seismic.monitor.dv.DV" title="seismic.monitor.dv.DV"><code class="xref py py-class docutils literal notranslate"><span class="pre">DV</span></code></a> object. Same logic as for <code class="docutils literal notranslate"><span class="pre">preprocessing</span></code></p></li>
 </ul>
-<p>The other four parameters will actually influence the actual stretching. <code class="docutils literal notranslate"><span class="pre">tw</span></code> is the time window which should be stretched and
-compared with the lapsed correlations. <code class="docutils literal notranslate"><span class="pre">stretch_range</span></code> is the maximum absolute stretch to be tested and <code class="docutils literal notranslate"><span class="pre">stretch_steps</span></code> the number
-of increments that will be tested between the minimum and maximum stretching.</p>
+<p>The other four parameters will influence the actual stretching:
++ <code class="docutils literal notranslate"><span class="pre">tw</span></code> is the time window in the coda which should be stretched and compared with the lapsed correlations.
++ <code class="docutils literal notranslate"><span class="pre">stretch_range</span></code> is the maximum absolute stretch to be tested
++  <code class="docutils literal notranslate"><span class="pre">stretch_steps</span></code> the number of increments that will be tested between the minimum and maximum stretching.
++  <code class="docutils literal notranslate"><span class="pre">sides</span></code> decides whether seismic will compare both sides of the correlation functions (positive and negative lag-times / causal and acausal) or just one (if set to <em>single</em>)
++  The <code class="docutils literal notranslate"><span class="pre">compute_tt</span></code> and <code class="docutils literal notranslate"><span class="pre">rayleigh_wave_velocity</span></code> are only relevant for cross-correlations. If set, SeisMIC will add the time of theoretical arrival to the <code class="docutils literal notranslate"><span class="pre">tw_start</span></code> parameter.</p>
 <section id="computing-the-reference-trace">
 <h3>Computing the Reference Trace<a class="headerlink" href="#computing-the-reference-trace" title="Permalink to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">dt_ref</span></code> is the parameter governing the computation of the reference trace. We can opt for a single reference trace for the whole period (<code class="docutils literal notranslate"><span class="pre">dt_ref['win_inc']=0</span></code>) or multiple reference traces.
@@ -553,7 +567,8 @@ You can start the script using mpi:</p>
 <p><a class="reference internal" href="../API.html#seismic.monitor.monitor.Monitor.compute_velocity_change_bulk" title="seismic.monitor.monitor.Monitor.compute_velocity_change_bulk"><code class="xref py py-meth docutils literal notranslate"><span class="pre">compute_velocity_change_bulk()</span></code></a> is the multi-core equivalent of
 <a class="reference internal" href="../API.html#seismic.monitor.monitor.Monitor.compute_velocity_change" title="seismic.monitor.monitor.Monitor.compute_velocity_change"><code class="xref py py-meth docutils literal notranslate"><span class="pre">compute_velocity_change()</span></code></a>. The latter takes a particular <cite>hdf5</cite> file
 as input, whereas the former will estimate the velocity changes of all <cite>hdf5</cite> files that are defined by
-<cite>co[‘subdir’]</cite> in the <cite>params.yaml</cite> file and fit the filters set in <cite>net</cite>.</p>
+<cite>co[‘subdir’]</cite> in the <cite>params.yaml</cite> file and fit the filters set in <cite>net</cite>. This also means that the process
+won’t speed up any more if <em>number_of_cores</em> exceeds the number of hdf5 correlation files that you have computed previously.</p>
 </div>
 </section>
 </section>

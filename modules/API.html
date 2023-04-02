@@ -133,7 +133,7 @@
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -282,7 +282,7 @@ document.write(`
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -3725,6 +3725,424 @@ data are not accesible any more.</p>
 </dd></dl>
 
 </section>
+<section id="seismic-monitor-spatial">
+<h3>seismic.monitor.spatial<a class="headerlink" href="#seismic-monitor-spatial" title="Permalink to this heading">#</a></h3>
+<p>Module to invert velocity change time series from a set of correlations to a spatial velocity field. Base on the algorithm proposed in
+[Obermann et al. (2013)](<a class="reference external" href="https://doi.org/10.1002/2013JB010399">https://doi.org/10.1002/2013JB010399</a>).</p>
+<span class="target" id="module-seismic.monitor.spatial"></span><p>Spatial imaging by means of a diffusion-based sensitivity kernel
+(see Obermann et al., 2013 and Pacheco and Snieder, 2005)</p>
+<p>Implementation here is just for the 2D case</p>
+<dl class="field-list">
+<dt class="field-odd">copyright<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
+</dd>
+<dt class="field-even">license<span class="colon">:</span></dt>
+<dd class="field-even"><blockquote>
+<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
+</div></blockquote>
+<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+</dd>
+<dt class="field-odd">author<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
+</dd>
+</dl>
+<p>Created: Monday, 16th January 2023 10:53:31 am
+Last Modified: Wednesday, 22nd February 2023 03:43:40 pm</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="seismic.monitor.spatial.probability">
+<span class="sig-prename descclassname"><span class="pre">seismic.monitor.spatial.</span></span><span class="sig-name descname"><span class="pre">probability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mf_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/seismic/monitor/spatial.html#probability"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.spatial.probability" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute the probability for a wave with the given properties to pass
+through a point at distance <cite>dist</cite>. Following the diffusion law.</p>
+<p>Implementation as in Obermann et al. (2013).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dist</strong> (<em>np.ndarray</em><em> | </em><em>float</em>) – distance to the source. Can be a matrix.</p></li>
+<li><p><strong>t</strong> (<em>float</em>) – time</p></li>
+<li><p><strong>vel</strong> (<em>float</em>) – velocity for homogeneous velocities</p></li>
+<li><p><strong>mf_path</strong> (<em>float</em>) – Mean free path of the wave.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The probability. In the same shape as <code class="docutils literal notranslate"><span class="pre">dist</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray | float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seismic.monitor.spatial.compute_grid_dist">
+<span class="sig-prename descclassname"><span class="pre">seismic.monitor.spatial.</span></span><span class="sig-name descname"><span class="pre">compute_grid_dist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/seismic/monitor/spatial.html#compute_grid_dist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.spatial.compute_grid_dist" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute the distance of each point on the grid x, y to x0, y0.
+(2D)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>np.ndarray</em>) – X coordinate axis</p></li>
+<li><p><strong>y</strong> (<em>np.ndarray</em>) – y coordiante axis</p></li>
+<li><p><strong>x0</strong> (<em>float</em>) – x-position of point</p></li>
+<li><p><strong>y0</strong> (<em>float</em>) – y-position of point</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>distance matrix in form of a 2D matrix.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seismic.monitor.spatial.sensitivity_kernel">
+<span class="sig-prename descclassname"><span class="pre">seismic.monitor.spatial.</span></span><span class="sig-name descname"><span class="pre">sensitivity_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mf_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/seismic/monitor/spatial.html#sensitivity_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.spatial.sensitivity_kernel" title="Permalink to this definition">#</a></dt>
+<dd><p>Computes a 2D diffusion lawsurface-wave sensitivity kernel for an
+ambient noise cross-correlation between two station <code class="docutils literal notranslate"><span class="pre">s1</span></code> and <code class="docutils literal notranslate"><span class="pre">s2</span></code>.</p>
+<p>Implementation as in Obermann et al. (2013). Limits for nan and inf
+will return 0, or 1 respectively.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A large <code class="docutils literal notranslate"><span class="pre">dt</span></code> can lead to artefacts in the kernel.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>s1</strong> (<em>np.ndarray</em>) – Position of Station 1, format is [x, y].</p></li>
+<li><p><strong>s2</strong> (<em>np.ndarray</em>) – Position of Station 2, format is [x, y].</p></li>
+<li><p><strong>x</strong> (<em>np.ndarray</em>) – Monotonously increasing array holding the x-coordinates of the
+grid the kernel should be computed on.</p></li>
+<li><p><strong>y</strong> (<em>np.ndarray</em>) – Monotonously increasing array holding the y-coordinates of the
+grid the kernel should be computed on.</p></li>
+<li><p><strong>t</strong> (<em>float</em>) – Time of coda that is probed. Usually set as the middle of the
+used time window</p></li>
+<li><p><strong>dt</strong> (<em>float</em>) – Sampling interval that the probability will be computed in.
+Note that dt should not be too large. Otherwise, numerical artefacts
+can occur.</p></li>
+<li><p><strong>vel</strong> (<em>float</em>) – Surface wave velocity. Note that units between coordinate grid
+and velocity have to be consistent (i.e., km/s and km or m and m/s)</p></li>
+<li><p><strong>mf_path</strong> (<em>float</em>) – Mean free path of the wave (see Obermann et al. 2013 for
+details)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The sensitivity_kernel of the grid. Can be plotted against.        np.meshgrid(x, y)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seismic.monitor.spatial.data_variance">
+<span class="sig-prename descclassname"><span class="pre">seismic.monitor.spatial.</span></span><span class="sig-name descname"><span class="pre">data_variance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">corr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bandwidth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_c</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/seismic/monitor/spatial.html#data_variance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.spatial.data_variance" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute the variance of the velocity change data based on the coherence
+value between stretched reference trace and correlation function.</p>
+<p>(see Obermann et. al. 2013)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>corr</strong> (<em>np.ndarray</em><em> | </em><em>float</em>) – coherence</p></li>
+<li><p><strong>bandwidth</strong> (<em>float</em>) – Bandwidth between low and highpass filter</p></li>
+<li><p><strong>tw</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – Time Window used for the dv/v computation. In the form
+Tuple[tw_start, tw_end]</p></li>
+<li><p><strong>freq_c</strong> (<em>float</em>) – Centre frequency.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Data Variance in the same shape as corr</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray | float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seismic.monitor.spatial.compute_cm">
+<span class="sig-prename descclassname"><span class="pre">seismic.monitor.spatial.</span></span><span class="sig-name descname"><span class="pre">compute_cm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scaling_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corr_len</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/seismic/monitor/spatial.html#compute_cm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.spatial.compute_cm" title="Permalink to this definition">#</a></dt>
+<dd><p>Computes the model variance for the dv/v grid.</p>
+<p>(see Obermann et. al. 2013)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scaling_factor</strong> (<em>float</em>) – Scaling factor, dependent on the cell length.
+(e.g., 1*cell_length)</p></li>
+<li><p><strong>corr_len</strong> (<em>float</em>) – Length over which the parameters are related (high
+value means stronger smoothing).</p></li>
+<li><p><strong>std_model</strong> (<em>float</em>) – A-priori standard deviation of the model. Corresponds
+to the best agreement between 1) the stability of the model for the
+velocity variations and 2) the minimised difference between the model
+predictions (output of the forward problem) and the data.
+Can be estimated via the L-curve criterion (see Hansen 1992)</p></li>
+<li><p><strong>dist</strong> (<em>np.ndarray</em>) – Matrix containing distance between the two cells i and j.
+Will always be 0 on the diagonal where i==j.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Returns the model variance in the same shape as dist. I.e.,
+NxN where N is the number of station combinations.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seismic.monitor.spatial.geo2cart">
+<span class="sig-prename descclassname"><span class="pre">seismic.monitor.spatial.</span></span><span class="sig-name descname"><span class="pre">geo2cart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/seismic/monitor/spatial.html#geo2cart"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.spatial.geo2cart" title="Permalink to this definition">#</a></dt>
+<dd><p>Convert geographic coordinates to Northing and Easting for a local grid.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference external" href="http://wiki.gis.com/wiki/index.php/Easting_and_northing">http://wiki.gis.com/wiki/index.php/Easting_and_northing</a></p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lat</strong> (<em>np.ndarray</em><em> | </em><em>float</em>) – Latitude(s)</p></li>
+<li><p><strong>lon</strong> (<em>np.ndarray</em><em> | </em><em>float</em>) – Longitude(s)</p></li>
+<li><p><strong>lat0</strong> (<em>float</em>) – Latitude of the lower left corner of the grid</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple holding (Easting, Northing) in km and in the same shape
+as <code class="docutils literal notranslate"><span class="pre">lat</span></code> and <code class="docutils literal notranslate"><span class="pre">lon</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[np.ndarray, np.ndarray]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="seismic.monitor.spatial.DVGrid">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seismic.monitor.spatial.</span></span><span class="sig-name descname"><span class="pre">DVGrid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/seismic/monitor/spatial.html#DVGrid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.spatial.DVGrid" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Object to handle spatially gridded DV objects.</p>
+<p>Initialises the grid to compute dv/v on. The grid will be in
+Cartesian coordinates with the lower left boarder (lon0, lat0)
+as reference point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lat0</strong> (<em>float</em>) – Minimum latitude on the grid.</p></li>
+<li><p><strong>lon0</strong> (<em>float</em>) – Minimum longitude on the grid</p></li>
+<li><p><strong>res</strong> (<em>float</em>) – Resolution in km</p></li>
+<li><p><strong>x</strong> (<em>float</em>) – Eastwards extent of the grid in km</p></li>
+<li><p><strong>y</strong> (<em>float</em>) – Northwards extent of the grid in km</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="seismic.monitor.spatial.DVGrid.forward_model">
+<span class="sig-name descname"><span class="pre">forward_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dv_grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mf_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dvs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#seismic.monitor.dv.DV" title="seismic.monitor.dv.DV"><span class="pre">DV</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">utc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">UTCDateTime</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stat0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stat1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/seismic/monitor/spatial.html#DVGrid.forward_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.spatial.DVGrid.forward_model" title="Permalink to this definition">#</a></dt>
+<dd><p>Solves the forward problem associated to the grid computation.
+I.e., computes the velocity changes theoretically measured at each
+station for a given dv/v grid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dv_grid</strong> (<em>np.ndarray</em>) – dv/v grid. Must have the same shape as self.xgrid</p></li>
+<li><p><strong>dt</strong> (<em>float</em>) – Sampling interval for the numerical integration of the
+sensitivity kernels. Coarse spacing causes artefacts. Fine
+spacing will result in higher computation times.</p></li>
+<li><p><strong>vel</strong> (<em>float</em>) – Wave velocity</p></li>
+<li><p><strong>mf_path</strong> (<em>float</em>) – Mean free path of a wave</p></li>
+<li><p><strong>dvs</strong> (<em>Optional</em><em>[</em><em>Iterable</em><em>[</em><a class="reference internal" href="#seismic.monitor.dv.DV" title="seismic.monitor.dv.DV"><em>DV</em></a><em>]</em><em>]</em><em>, </em><em>optional</em>) – Iterator over <a class="reference internal" href="#seismic.monitor.dv.DV" title="seismic.monitor.dv.DV"><code class="xref py py-class docutils literal notranslate"><span class="pre">DV</span></code></a> to
+extract the parameters from. If this is defined <code class="docutils literal notranslate"><span class="pre">utc</span></code> has to
+be defined as well. If it’s None all other parameters have to be
+defined, defaults to None</p></li>
+<li><p><strong>utc</strong> (<em>Optional</em><em>[</em><em>UTCDateTime</em><em>]</em><em>, </em><em>optional</em>) – The time to extract the properties from the dv
+files from, defaults to None</p></li>
+<li><p><strong>tw</strong> (<em>Optional</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>, </em><em>optional</em>) – Lapse time Window used for the dv/v estimation,
+defaults to None</p></li>
+<li><p><strong>stat0</strong> (<em>Optional</em><em>[</em><em>Iterable</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em><em>, </em><em>optional</em>) – Coordinates of the first station of the
+cross-correlation. Given as an array with the form:
+[(latitude0, longitude0), (latitude1, longitude1), …],
+defaults to None.</p></li>
+<li><p><strong>stat1</strong> (<em>Optional</em><em>[</em><em>Iterable</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em><em>, </em><em>optional</em>) – Coordinates of the second station of the
+cross-correlation. Given as an array with the form:
+[(latitude0, longitude0), (latitude1, longitude1), …],
+defaults to None., defaults to None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>TypeError</strong> – If too few variables are defined</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A vector with one dv/v value for each station combination
+in the stat0-stat1 vectors.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seismic.monitor.spatial.DVGrid.compute_dv_grid">
+<span class="sig-name descname"><span class="pre">compute_dv_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dvs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#seismic.monitor.dv.DV" title="seismic.monitor.dv.DV"><span class="pre">DV</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">utc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UTCDateTime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mf_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaling_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corr_len</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/seismic/monitor/spatial.html#DVGrid.compute_dv_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.spatial.DVGrid.compute_dv_grid" title="Permalink to this definition">#</a></dt>
+<dd><p>Perform a linear least-squares inversion of station specific velocity
+changes (dv/v) at time <code class="docutils literal notranslate"><span class="pre">t</span></code>.</p>
+<p>The algorithm will perform the following steps:
+1. Computes the sensitivity kernels for each station pair.
+2. Computes model and data variance.
+3. Inverts the velocity changes onto a flattened grid.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>All computations are performed on a flattened grid, so that the
+grid is actually just one-dimensional. The return value is
+reshaped onto the shape of self.xgrid.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The returned value and the value in self.vel_change is strictly
+speaking not a velocity change, but an epsilon value. That
+corresponds to -dv/v</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Low values for <code class="docutils literal notranslate"><span class="pre">dt</span></code> can produce artefacts. Very high values
+lead to a drastically increased computational cost.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dvs</strong> (<em>Iterator</em><em>[</em><a class="reference internal" href="#seismic.monitor.dv.DV" title="seismic.monitor.dv.DV"><em>DV</em></a><em>]</em>) – The :class:<code class="docutils literal notranslate"><span class="pre">~seismic.monitor.dv.DV</span></code> objects to use.
+Note that the input can be an iterator, so that not actually all
+dvs have to be loaded into RAM at the same time.</p></li>
+<li><p><strong>utc</strong> (<em>UTCDateTime</em>) – Time at which the velocity changes should be inverted.
+Has to be covered by the <code class="docutils literal notranslate"><span class="pre">DV</span></code> objects.</p></li>
+<li><p><strong>dt</strong> (<em>float</em>) – Temporal resolution to perform the numerical integration on.
+Note that low values can lead to artefacts in the sensitivity
+kernel. High values will increase the computational demand
+drastically.</p></li>
+<li><p><strong>vel</strong> (<em>float</em>) – Wave velocity in the region.</p></li>
+<li><p><strong>mf_path</strong> (<em>float</em>) – Mean free path (i.e., distance until which a wave
+entirely loses it’s directional information).</p></li>
+<li><p><strong>scaling_factor</strong> (<em>float</em>) – Scaling factor, dependent on the cell length.
+(e.g., 1*cell_length)</p></li>
+<li><p><strong>corr_len</strong> (<em>float</em>) – Length over which the parameters are related (high
+value means stronger smoothing).</p></li>
+<li><p><strong>std_model</strong> (<em>float</em>) – A-priori standard deviation of the model. Corresponds
+to the best agreement between 1) the stability of the model for the
+velocity variations and 2) the minimised difference between the
+model predictions (output of the forward problem) and the data.
+Can be estimated via the L-curve criterion (see Hansen 1992)</p></li>
+<li><p><strong>tw</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>, </em><em>optional</em>) – Time window used to evaluate the velocity changes.
+Given in the form Tuple[tw_start, tw_end]. Not required if
+the used dvs have a <code class="docutils literal notranslate"><span class="pre">dv_processing</span></code> attribute.</p></li>
+<li><p><strong>freq0</strong> (<em>float</em><em>, </em><em>optional</em>) – high-pass frequency of the used bandpass filter.
+Not required if the used dvs have a <code class="docutils literal notranslate"><span class="pre">dv_processing</span></code> attribute.</p></li>
+<li><p><strong>freq1</strong> (<em>float</em><em>, </em><em>optional</em>) – low-pass frequency of the used bandpass filter.
+Not required  the used dvs have a <code class="docutils literal notranslate"><span class="pre">dv_processing</span></code> attribute.</p></li>
+<li><p><strong>compute_resolution</strong> (<em>bool</em><em>, </em><em>defaults to False</em>) – Compute the resolution matrix?
+Will be saved in self.resolution</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – For times that are not covered by the dvs
+time-series.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The dv-grid (with corresponding coordinates in
+self.xgrid and self.ygrid or self.xaxis and self.yaxis,
+respectively). Note this is actually an epsilon grid (meaning
+it represents the stretch value i.e., -dv/v)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seismic.monitor.spatial.DVGrid.compute_resolution">
+<span class="sig-name descname"><span class="pre">compute_resolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dvs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#seismic.monitor.dv.DV" title="seismic.monitor.dv.DV"><span class="pre">DV</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">utc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UTCDateTime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaling_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corr_len</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mf_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/seismic/monitor/spatial.html#DVGrid.compute_resolution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.spatial.DVGrid.compute_resolution" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute the model resolution of the dv/v model.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p>Described in the supplement to Obermann (2013)</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Note that it’s significantly faster to perform a joint inversion
+or a gridded dv/v and resolution rather than performing them
+separately.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dvs</strong> (<em>Iterator</em><em>[</em><a class="reference internal" href="#seismic.monitor.dv.DV" title="seismic.monitor.dv.DV"><em>DV</em></a><em>]</em>) – The :class:<code class="docutils literal notranslate"><span class="pre">~seismic.monitor.dv.DV</span></code> objects to use.
+Note that the input can be an iterator, so that not actually all
+dvs have to be loaded into RAM at the same time.</p></li>
+<li><p><strong>utc</strong> (<em>UTCDateTime</em>) – Time at which the velocity changes should be inverted.
+Has to be covered by the <code class="docutils literal notranslate"><span class="pre">DV</span></code> objects.</p></li>
+<li><p><strong>dt</strong> (<em>float</em>) – Temporal resolution to perform the numerical integration on.
+Note that low values can lead to artefacts in the sensitivity
+kernel. High values will increase the computational demand
+drastically.</p></li>
+<li><p><strong>vel</strong> (<em>float</em>) – Wave velocity in the region.</p></li>
+<li><p><strong>mf_path</strong> (<em>float</em>) – Mean free path (i.e., distance until which a wave
+entirely loses it’s directional information).</p></li>
+<li><p><strong>scaling_factor</strong> (<em>float</em>) – Scaling factor, dependent on the cell length.
+(e.g., 1*cell_length)</p></li>
+<li><p><strong>corr_len</strong> (<em>float</em>) – Length over which the parameters are related (high
+value means stronger smoothing).</p></li>
+<li><p><strong>std_model</strong> (<em>float</em>) – A-priori standard deviation of the model. Corresponds
+to the best agreement between 1) the stability of the model for the
+velocity variations and 2) the minimised difference between the
+model predictions (output of the forward problem) and the data.
+Can be estimated via the L-curve criterion (see Hansen 1992)</p></li>
+<li><p><strong>tw</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>, </em><em>optional</em>) – Time window used to evaluate the velocity changes.
+Given in the form Tuple[tw_start, tw_end]. Not required if dv
+has attribute <code class="docutils literal notranslate"><span class="pre">dv_processing</span></code>.</p></li>
+<li><p><strong>freq0</strong> (<em>float</em><em>, </em><em>optional</em>) – high-pass frequency of the used bandpass filter.
+Not required if dv has attribute <code class="docutils literal notranslate"><span class="pre">dv_processing</span></code>.</p></li>
+<li><p><strong>freq1</strong> (<em>float</em><em>, </em><em>optional</em>) – low-pass frequency of the used bandpass filter.
+Not required if dv has attribute <code class="docutils literal notranslate"><span class="pre">dv_processing</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – For times that are not covered by the dvs
+time-series.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A gridded resolution matrix.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seismic.monitor.spatial.DVGrid.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_stations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'seismic_r'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Axis</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Axis</span></span></span><a class="reference internal" href="../_modules/seismic/monitor/spatial.html#DVGrid.plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.spatial.DVGrid.plot" title="Permalink to this definition">#</a></dt>
+<dd><p>Simple heatplot of the dv/v grid in Cartesian coordinates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plot_stations</strong> (<em>bool</em><em>, </em><em>optional</em>) – plot station coordinates, defaults to True</p></li>
+<li><p><strong>cmap</strong> (<em>str</em><em>, </em><em>optional</em>) – Colormap to use, defaults to ‘seismic’</p></li>
+<li><p><strong>ax</strong> (<em>Optional</em><em>[</em><em>mpl.axis.Axis</em><em>]</em><em>, </em><em>optional</em>) – Axis to plot into, defaults to None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Returns the axis handle</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>mpl.axis.Axis</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
 <section id="seismic-monitor-post-corr-process">
 <h3>seismic.monitor.post_corr_process<a class="headerlink" href="#seismic-monitor-post-corr-process" title="Permalink to this heading">#</a></h3>
 <p>Holds the postprocessing functions for CorrBulks.</p>
@@ -5915,6 +6333,22 @@ This simple functions flips the polarity if this should be the case.</p>
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.monitor.dv.read_dv"><code class="docutils literal notranslate"><span class="pre">read_dv()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic-monitor-spatial">seismic.monitor.spatial</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.monitor.spatial.probability"><code class="docutils literal notranslate"><span class="pre">probability()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.monitor.spatial.compute_grid_dist"><code class="docutils literal notranslate"><span class="pre">compute_grid_dist()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.monitor.spatial.sensitivity_kernel"><code class="docutils literal notranslate"><span class="pre">sensitivity_kernel()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.monitor.spatial.data_variance"><code class="docutils literal notranslate"><span class="pre">data_variance()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.monitor.spatial.compute_cm"><code class="docutils literal notranslate"><span class="pre">compute_cm()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.monitor.spatial.geo2cart"><code class="docutils literal notranslate"><span class="pre">geo2cart()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.monitor.spatial.DVGrid"><code class="docutils literal notranslate"><span class="pre">DVGrid</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.monitor.spatial.DVGrid.forward_model"><code class="docutils literal notranslate"><span class="pre">DVGrid.forward_model()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.monitor.spatial.DVGrid.compute_dv_grid"><code class="docutils literal notranslate"><span class="pre">DVGrid.compute_dv_grid()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.monitor.spatial.DVGrid.compute_resolution"><code class="docutils literal notranslate"><span class="pre">DVGrid.compute_resolution()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.monitor.spatial.DVGrid.plot"><code class="docutils literal notranslate"><span class="pre">DVGrid.plot()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic-monitor-post-corr-process">seismic.monitor.post_corr_process</a><ul class="nav section-nav flex-column">

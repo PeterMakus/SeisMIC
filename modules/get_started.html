@@ -50,7 +50,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Trace data" href="trace_data.html" />
-    <link rel="prev" title="Introduction: Noise Interferometry with Green’s Function Retrieval" href="intro.html" />
+    <link rel="prev" title="Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval" href="intro.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -134,7 +134,7 @@
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -283,7 +283,7 @@ document.write(`
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -447,7 +447,7 @@ If you follow the instructions below, it should not be necessary to install depe
 <li><p>geographiclib</p></li>
 <li><p>h5py</p></li>
 <li><p>matplotlib</p></li>
-<li><p>mpi4py</p></li>
+<li><p>mpi4py (see note below)</p></li>
 <li><p>numpy</p></li>
 <li><p>obspy</p></li>
 <li><p>pip</p></li>
@@ -461,6 +461,11 @@ If you follow the instructions below, it should not be necessary to install depe
 <li><p>sphinxcontrib-mermaid</p></li>
 <li><p>tqdm</p></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>We recommend using the precompiled version of mpi4py from conda-forge. This might differ on your system if you
+should experience problems with mpi4py, try a different precompiled version (for instance from PyPi).</p>
+</div>
 </section>
 </section>
 <section id="via-pypi">
@@ -503,6 +508,9 @@ conda<span class="w"> </span>activate<span class="w"> </span>seismic
 
 <span class="c1"># Install your package</span>
 pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+
+<span class="c1"># optional: run the tests to see if your installation was successful</span>
+pytest<span class="w"> </span>tests
 </pre></div>
 </div>
 <div class="admonition note">
@@ -515,7 +523,9 @@ or in the currently active environment by executing the last command.</p>
 <section id="tutorial">
 <h2>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this heading">#</a></h2>
 <p>Along with the source code <strong>SeisMIC</strong> is distributed with a Jupyter notebook that provides you with an easy example on how
-to use the code in <cite>examples/tutorial.ipynb</cite>. Else, we recommend going throught this documentation.</p>
+to use the code in <cite>examples/tutorial.ipynb</cite>.</p>
+<p>The tutorial is meant as a “kick-start” for you.</p>
+<p>Aside from the tutorial, we recommend you continue reading this documentation.</p>
 </section>
 </section>
 
@@ -536,7 +546,7 @@ to use the code in <cite>examples/tutorial.ipynb</cite>. Else, we recommend goin
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Introduction: Noise Interferometry with Green’s Function Retrieval</p>
+        <p class="prev-next-title">Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval</p>
       </div>
     </a>
     <a class="right-next"

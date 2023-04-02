@@ -134,7 +134,7 @@
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -283,7 +283,7 @@ document.write(`
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -476,12 +476,14 @@ The code block below shows and example for downloading data from the <strong>IU.
 <span class="linenos"> 9</span><span class="n">network</span> <span class="o">=</span> <span class="s1">&#39;IU&#39;</span>
 <span class="linenos">10</span><span class="n">station</span> <span class="o">=</span> <span class="s1">&#39;HRV&#39;</span>
 <span class="linenos">11</span>
-<span class="linenos">12</span>
-<span class="linenos">13</span><span class="n">c</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
-<span class="linenos">14</span><span class="n">sc</span> <span class="o">=</span> <span class="n">Store_Client</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="n">read_only</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="linenos">15</span><span class="n">sc</span><span class="o">.</span><span class="n">download_waveforms_mdl</span><span class="p">(</span>
-<span class="linenos">16</span>    <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span> <span class="n">clients</span><span class="o">=</span><span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="n">network</span><span class="o">=</span><span class="n">network</span><span class="p">,</span>
-<span class="linenos">17</span>    <span class="n">station</span><span class="o">=</span><span class="n">station</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">)</span>
+<span class="linenos">12</span><span class="c1"># Note that you coul initiate the client object with</span>
+<span class="linenos">13</span><span class="c1"># an Eida token if you should wish to download</span>
+<span class="linenos">14</span><span class="c1"># restricted data.</span>
+<span class="linenos">15</span><span class="n">c</span> <span class="o">=</span> <span class="n">Client</span><span class="p">()</span>
+<span class="linenos">16</span><span class="n">sc</span> <span class="o">=</span> <span class="n">Store_Client</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="n">read_only</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="linenos">17</span><span class="n">sc</span><span class="o">.</span><span class="n">download_waveforms_mdl</span><span class="p">(</span>
+<span class="linenos">18</span>    <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span> <span class="n">clients</span><span class="o">=</span><span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="n">network</span><span class="o">=</span><span class="n">network</span><span class="p">,</span>
+<span class="linenos">19</span>    <span class="n">station</span><span class="o">=</span><span class="n">station</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -560,6 +562,36 @@ There are a couple of functions to help you:</p>
 </div></blockquote>
 </section>
 </section>
+<section id="feed-in-data-in-a-different-way">
+<h2>Feed in Data in a Different Way<a class="headerlink" href="#feed-in-data-in-a-different-way" title="Permalink to this heading">#</a></h2>
+<p>There may be scenarious, in which you will not need or won’t be able to download waveform data
+from an FDSN server. In such cases, it is easy to use your own mseed data to “mimic” SeisMIC’s file
+system structure.</p>
+<p>You will need daily mseed files for each component of the seismometer.
+If you need to convert/merge/split, you files we recommend using PyRocko or obspy.</p>
+<p>Now you will have to sort your mseed files in the following way:</p>
+<p><cite>path/to/project/mseed/{year}/{network}/{station}/{channel}.{sds_type}/{network}.{station}.{location}.{channel}.{sds_type}.{year}.{doy:03d}</cite></p>
+<p>Where <code class="docutils literal notranslate"><span class="pre">sds_type</span></code> almost always corresponds to <em>D</em> (i.e., data). <code class="docutils literal notranslate"><span class="pre">doy:03d</span></code> is the “day of year”/Julian day in three digits.</p>
+<p>For example
+<cite>path/to/project/mseed/2010/IU/HRV/BHZ.D/IU.HRV.00.BHZ.D.2010.001</cite>
+is the mseed file corresponding to a waveform recording from station <em>IU.HRV</em> channel <em>BHZ</em> on January 1st 2010.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The mseed files do not have file endings.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Files that do not correspond to this format won’t be found by SeisMIC. Pay particular attention to
+always saving the mseed files for days 1 to 99 with leading zeros!</p>
+</div>
+<section id="station-inventories">
+<h3>Station Inventories<a class="headerlink" href="#station-inventories" title="Permalink to this heading">#</a></h3>
+<p>You might require response files either to provide station coordinates or to provide reponse information. SeisMIC reads <em>StationXML</em> files
+these are saved in <cite>/path/to/project/inventory/{network}.{station}.xml</cite>. There should be exactly one file per station!
+If you use SeisMIC’s preimplemented methods to download data, station information will be downloaded automatically. Otherwise, add
+it manually.</p>
+</section>
+</section>
 </section>
 
 
@@ -612,6 +644,10 @@ There are a couple of functions to help you:</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#download-data">Download Data</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#access-data">Access Data</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#getting-an-overview-of-your-database">Getting an overview of your database</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#feed-in-data-in-a-different-way">Feed in Data in a Different Way</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#station-inventories">Station Inventories</a></li>
 </ul>
 </li>
 </ul>

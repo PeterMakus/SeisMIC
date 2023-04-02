@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Introduction: Noise Interferometry with Green’s Function Retrieval</title>
+    <title>Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval</title>
   
   
   
@@ -134,7 +134,7 @@
     
                     <li class="nav-item current active">
                       <a class="nav-link nav-internal" href="#">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -283,7 +283,7 @@ document.write(`
     
                     <li class="nav-item current active">
                       <a class="nav-link nav-internal" href="#">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -409,7 +409,7 @@ document.write(`
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page">Introduction: Noise Interferometry with Green’s Function Retrieval</li>
+    <li class="breadcrumb-item active" aria-current="page">Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval</li>
   </ul>
 </nav>
 </div>
@@ -426,14 +426,22 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <img alt="../_images/seismic_logo_small.svg" src="../_images/seismic_logo_small.svg" /><section id="introduction-noise-interferometry-with-green-s-function-retrieval">
-<h1>Introduction: Noise Interferometry with Green’s Function Retrieval<a class="headerlink" href="#introduction-noise-interferometry-with-green-s-function-retrieval" title="Permalink to this heading">#</a></h1>
+  <img alt="../_images/seismic_logo_small.svg" src="../_images/seismic_logo_small.svg" /><section id="introduction-noise-interferometry-with-partial-green-s-function-retrieval">
+<h1>Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval<a class="headerlink" href="#introduction-noise-interferometry-with-partial-green-s-function-retrieval" title="Permalink to this heading">#</a></h1>
 <p>Most of today’s ambient seismic noise tomography studies are based on the assumption that the Green’s function between two stations can be approximated by the Cross-correlation of the noise between the stations.
 In theory, this assumption is only reasonable <strong>if the noise sources are homogeneously distributed in space and time</strong>. In practice however, this is almost never the case and various (pre)processing techniques are employed to
 account for directional and/or time-varying sources (e.g., Fichtner and Tsai, 2019).</p>
 <p>In <strong>SeisMIC</strong>, methods for preprocessing and correlating ambient seismic noise records are located in the <code class="docutils literal notranslate"><span class="pre">seismic.correlate</span></code> module. Aside from interstation cross-correlations, <strong>SeisMIC</strong> does also allow to
-compute intercomponent and autocorrelations, which are assumed to be an approximation of the Green’s functions in station vicinity. This can be justified with the presence of waves that,
-as a consequency of backscattering, are recorded several times by the seismometer.</p>
+compute intercomponent and autocorrelations, which are assumed to be an approximation of the Green’s functions in station vicinity or,
+at least, stable estimations of the impulse response of a selected part of the station vicinity. This can be justified with the presence of coda waves that,
+as a consequence of multiple scattering, are recorded several times by the seismometer.</p>
+<p>For a more thorough read, we recommend the following literature:</p>
+<p><a class="reference external" href="https://doi.org/10.1121/1.3125345">Hadziioannou et al., 2009</a>
+<a class="reference external" href="https://doi.org/10.1029/2011JB008200">Hadziioannou et al., 2011</a>
+<a class="reference external" href="https://doi.org/10.1111/j.1365-246X.2011.05015.x">Weaver et al., 2011</a>
+<a class="reference external" href="https://doi.org/10.1016/j.crte.2011.02.005">Sens-Schönfelder &amp; Wegler, 2011</a>
+<a class="reference external" href="http://www.eppcgs.org/en/article/doi/10.26464/epp2020048">Wang et al., 2020</a></p>
+<p><a class="reference external" href="https://doi.org/10.1017/9781108264808">Book: Seismic Ambient Noise</a></p>
 </section>
 
 

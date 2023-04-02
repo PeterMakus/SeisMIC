@@ -50,7 +50,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="CorrTrace, CorrStream, and CorrBulk classes" href="stream.html" />
-    <link rel="prev" title="Get Started (Compute your first Noise Correlations)" href="get_started.html" />
+    <link rel="prev" title="Computing your first Noise Correlations" href="get_started.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -134,7 +134,7 @@
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -283,7 +283,7 @@ document.write(`
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -382,7 +382,7 @@ document.write(`
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="get_started.html">Get Started (Compute your first Noise Correlations)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Computing your first Noise Correlations</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">The Correlator Object</a></li>
 </ul>
 <ul class="nav bd-sidenav">
@@ -496,6 +496,11 @@ The second input argument is the <a class="reference internal" href="../API.html
 </div>
 <p>where <code class="docutils literal notranslate"><span class="pre">$number_cores$</span></code> is the number of cores you want to initialise. The only method of <a class="reference internal" href="../API.html#seismic.correlate.correlate.Correlator" title="seismic.correlate.correlate.Correlator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Correlator</span></code></a>
 that you will want to use is <a class="reference internal" href="../API.html#seismic.correlate.correlate.Correlator.pxcorr" title="seismic.correlate.correlate.Correlator.pxcorr"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pxcorr()</span></code></a>, which does not require any (additional) input.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>On some MPI versions, the parameters are named differently. For example (<cite>-n</cite> could correspond to <cite>-c</cite>). When in doubt, refer to the help
+or man page of your <cite>mpirun</cite> <cite>mpiexec</cite> command.</p>
+</div>
 </section>
 
 
@@ -515,7 +520,7 @@ that you will want to use is <a class="reference internal" href="../API.html#sei
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Get Started (Compute your first Noise Correlations)</p>
+        <p class="prev-next-title">Computing your first Noise Correlations</p>
       </div>
     </a>
     <a class="right-next"

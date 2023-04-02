@@ -131,7 +131,7 @@
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="modules/intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -276,7 +276,7 @@ document.write(`
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="modules/intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -465,9 +465,17 @@ document.write(`
 </li>
       <li><a href="modules/API.html#seismic.monitor.stretch_mod.compare_with_modified_reference">compare_with_modified_reference() (in module seismic.monitor.stretch_mod)</a>
 </li>
+      <li><a href="modules/API.html#seismic.monitor.spatial.compute_cm">compute_cm() (in module seismic.monitor.spatial)</a>
+</li>
       <li><a href="modules/API.html#seismic.monitor.monitor.Monitor.compute_components_average">compute_components_average() (seismic.monitor.monitor.Monitor method)</a>
 </li>
+      <li><a href="modules/API.html#seismic.monitor.spatial.DVGrid.compute_dv_grid">compute_dv_grid() (seismic.monitor.spatial.DVGrid method)</a>
+</li>
+      <li><a href="modules/API.html#seismic.monitor.spatial.compute_grid_dist">compute_grid_dist() (in module seismic.monitor.spatial)</a>
+</li>
       <li><a href="modules/API.html#seismic.correlate.correlate.compute_network_station_combinations">compute_network_station_combinations() (in module seismic.correlate.correlate)</a>
+</li>
+      <li><a href="modules/API.html#seismic.monitor.spatial.DVGrid.compute_resolution">compute_resolution() (seismic.monitor.spatial.DVGrid method)</a>
 </li>
       <li><a href="modules/API.html#seismic.monitor.monitor.Monitor.compute_velocity_change">compute_velocity_change() (seismic.monitor.monitor.Monitor method)</a>
 </li>
@@ -501,12 +509,12 @@ document.write(`
 </li>
       <li><a href="modules/API.html#seismic.monitor.post_corr_process.corr_mat_extract_trace">corr_mat_extract_trace() (in module seismic.monitor.post_corr_process)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/API.html#seismic.monitor.post_corr_process.corr_mat_filter">corr_mat_filter() (in module seismic.monitor.post_corr_process)</a>
 </li>
       <li><a href="modules/API.html#seismic.monitor.post_corr_process.corr_mat_mirror">corr_mat_mirror() (in module seismic.monitor.post_corr_process)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/API.html#seismic.monitor.post_corr_process.corr_mat_normalize">corr_mat_normalize() (in module seismic.monitor.post_corr_process)</a>
 </li>
       <li><a href="modules/API.html#seismic.monitor.post_corr_process.corr_mat_resample">corr_mat_resample() (in module seismic.monitor.post_corr_process)</a>
@@ -567,6 +575,8 @@ document.write(`
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules/API.html#seismic.monitor.spatial.data_variance">data_variance() (in module seismic.monitor.spatial)</a>
+</li>
       <li><a href="modules/API.html#seismic.db.corr_hdf5.DBHandler">DBHandler (class in seismic.db.corr_hdf5)</a>
 </li>
       <li><a href="modules/API.html#seismic.correlate.stats.CorrStats.defaults">defaults (seismic.correlate.stats.CorrStats attribute)</a>
@@ -582,6 +592,8 @@ document.write(`
       <li><a href="modules/API.html#seismic.trace_data.waveform.Store_Client.download_waveforms_mdl">download_waveforms_mdl() (seismic.trace_data.waveform.Store_Client method)</a>
 </li>
       <li><a href="modules/API.html#seismic.monitor.dv.DV">DV (class in seismic.monitor.dv)</a>
+</li>
+      <li><a href="modules/API.html#seismic.monitor.spatial.DVGrid">DVGrid (class in seismic.monitor.spatial)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -619,15 +631,17 @@ document.write(`
 </li>
       <li><a href="modules/API.html#seismic.correlate.stream.CorrBulk.find_clock_shift">find_clock_shift() (seismic.correlate.stream.CorrBulk method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/API.html#seismic.correlate.correlate.Correlator.find_existing_times">find_existing_times() (seismic.correlate.correlate.Correlator method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/API.html#seismic.correlate.correlate.Correlator.find_interstat_dist">find_interstat_dist() (seismic.correlate.correlate.Correlator method)</a>
 </li>
       <li><a href="modules/API.html#seismic.utils.io.flatten">flatten() (in module seismic.utils.io)</a>
 </li>
       <li><a href="modules/API.html#seismic.utils.io.flatten_recarray">flatten_recarray() (in module seismic.utils.io)</a>
+</li>
+      <li><a href="modules/API.html#seismic.monitor.spatial.DVGrid.forward_model">forward_model() (seismic.monitor.spatial.DVGrid method)</a>
 </li>
       <li><a href="modules/API.html#seismic.trace_data.waveform.FS_Client">FS_Client (class in seismic.trace_data.waveform)</a>
 </li>
@@ -641,16 +655,18 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/API.html#seismic.correlate.correlate.generate_corr_inc">generate_corr_inc() (in module seismic.correlate.correlate)</a>
 </li>
+      <li><a href="modules/API.html#seismic.monitor.spatial.geo2cart">geo2cart() (in module seismic.monitor.spatial)</a>
+</li>
       <li><a href="modules/API.html#seismic.db.corr_hdf5.DBHandler.get_available_channels">get_available_channels() (seismic.db.corr_hdf5.DBHandler method)</a>
 </li>
       <li><a href="modules/API.html#seismic.db.corr_hdf5.DBHandler.get_available_starttimes">get_available_starttimes() (seismic.db.corr_hdf5.DBHandler method)</a>
 </li>
       <li><a href="modules/API.html#seismic.trace_data.waveform.Store_Client.get_available_stations">get_available_stations() (seismic.trace_data.waveform.Store_Client method)</a>
 </li>
-      <li><a href="modules/API.html#seismic.db.corr_hdf5.DBHandler.get_corr_options">get_corr_options() (seismic.db.corr_hdf5.DBHandler method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules/API.html#seismic.db.corr_hdf5.DBHandler.get_corr_options">get_corr_options() (seismic.db.corr_hdf5.DBHandler method)</a>
+</li>
       <li><a href="modules/API.html#seismic.db.corr_hdf5.DBHandler.get_data">get_data() (seismic.db.corr_hdf5.DBHandler method)</a>
 </li>
       <li><a href="modules/API.html#seismic.trace_data.waveform.get_day_in_folder">get_day_in_folder() (in module seismic.trace_data.waveform)</a>
@@ -737,6 +753,8 @@ document.write(`
 </li>
         <li><a href="modules/API.html#module-seismic.monitor.post_corr_process">seismic.monitor.post_corr_process</a>
 </li>
+        <li><a href="modules/API.html#module-seismic.monitor.spatial">seismic.monitor.spatial</a>
+</li>
         <li><a href="modules/API.html#module-seismic.monitor.stretch_mod">seismic.monitor.stretch_mod</a>
 </li>
         <li><a href="modules/API.html#module-seismic.plot.plot_correlation">seismic.plot.plot_correlation</a>
@@ -795,6 +813,8 @@ document.write(`
 </li>
         <li><a href="modules/API.html#seismic.monitor.dv.DV.plot">(seismic.monitor.dv.DV method)</a>
 </li>
+        <li><a href="modules/API.html#seismic.monitor.spatial.DVGrid.plot">(seismic.monitor.spatial.DVGrid method)</a>
+</li>
       </ul></li>
       <li><a href="modules/API.html#seismic.plot.plot_correlation.plot_corr_bulk">plot_corr_bulk() (in module seismic.plot.plot_correlation)</a>
 </li>
@@ -811,6 +831,8 @@ document.write(`
       <li><a href="modules/API.html#seismic.correlate.stream.CorrStream.pop_at_utcs">pop_at_utcs() (seismic.correlate.stream.CorrStream method)</a>
 </li>
       <li><a href="modules/API.html#seismic.correlate.correlate.preprocess_stream">preprocess_stream() (in module seismic.correlate.correlate)</a>
+</li>
+      <li><a href="modules/API.html#seismic.monitor.spatial.probability">probability() (in module seismic.monitor.spatial)</a>
 </li>
       <li><a href="modules/API.html#seismic.correlate.correlate.Correlator.pxcorr">pxcorr() (seismic.correlate.correlate.Correlator method)</a>
 </li>
@@ -933,6 +955,13 @@ document.write(`
 </li>
       </ul></li>
       <li>
+    seismic.monitor.spatial
+
+      <ul>
+        <li><a href="modules/API.html#module-seismic.monitor.spatial">module</a>
+</li>
+      </ul></li>
+      <li>
     seismic.monitor.stretch_mod
 
       <ul>
@@ -1000,6 +1029,8 @@ document.write(`
       <li><a href="modules/API.html#seismic.correlate.stream.CorrStream.select_corr_time">select_corr_time() (seismic.correlate.stream.CorrStream method)</a>
 </li>
       <li><a href="modules/API.html#seismic.trace_data.waveform.Store_Client.select_inventory_or_load_remote">select_inventory_or_load_remote() (seismic.trace_data.waveform.Store_Client method)</a>
+</li>
+      <li><a href="modules/API.html#seismic.monitor.spatial.sensitivity_kernel">sensitivity_kernel() (in module seismic.monitor.spatial)</a>
 </li>
       <li><a href="modules/API.html#seismic.plot.plot_utils.set_mpl_params">set_mpl_params() (in module seismic.plot.plot_utils)</a>
 </li>

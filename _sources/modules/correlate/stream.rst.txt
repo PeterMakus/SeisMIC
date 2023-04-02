@@ -31,7 +31,7 @@ and information about the coordinates of the stations.
 :py:class:`~seismic.correlate.stream.CorrTrace` does also come with its own plotting method :py:meth:`~seismic.correlate.stream.CorrTrace.plot`
 (check it for details). It can produce plots akin to this one:
 
-.. image:: ../../figures/corrtr.png
+.. image:: ../../figures/corrtr.svg
 
 CorrStream
 ++++++++++
@@ -41,7 +41,7 @@ However, it has methods to stack (:py:meth:`~seismic.correlate.stream.CorrStream
 select (:py:meth:`~seismic.correlate.stream.CorrStream.select_corr_time`), or slide (:py:meth:`~seismic.correlate.stream.CorrStream.slide`) time windows.
 It also enables us to create section stacks, sorted by interstation distance or time:
 
-.. image:: ../../figures/cst.svg
+.. image:: ../../figures/cst.png
 
 
 CorrBulk
@@ -49,5 +49,5 @@ CorrBulk
 
 :py:class:`~seismic.correlate.stream.CorrStream` does also have a method to create a :py:class:`~seismic.correlate.stream.CorrBulk` object
 (:py:meth:`~seismic.correlate.stream.CorrStream.create_corr_bulk`). Instead of relying on a list of traces, this object is based on numpy arrays,
-which makes postprocessing computationally cheaper. Check out :py:class:`~seismic.correlate.stream.CorrBulk` for available
-post processing functions.
+which makes all sorts of computations cheaper. Check out :py:class:`~seismic.correlate.stream.CorrBulk` for available functions.
+This is also the object that SeisMIC's own monitoring workflow is based on.

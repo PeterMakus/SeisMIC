@@ -134,7 +134,7 @@
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -283,7 +283,7 @@ document.write(`
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -568,6 +568,12 @@ This is meant to prevent mixing of differently processed data.</p></li>
 </div>
 <p>If there had been any data in our <a class="reference internal" href="../API.html#seismic.correlate.stream.CorrStream" title="seismic.correlate.stream.CorrStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrStream</span></code></a>, we could retrieve it as shown above.
 Network, station, and channel information are determined automatically from the <a class="reference internal" href="../API.html#seismic.correlate.stream.CorrTrace" title="seismic.correlate.stream.CorrTrace"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrTrace</span></code></a> header.</p>
+<section id="why-won-t-seismic-allow-me-to-an-old-file-again">
+<h3>Why won’t SeisMIC allow me to an old file again?<a class="headerlink" href="#why-won-t-seismic-allow-me-to-an-old-file-again" title="Permalink to this heading">#</a></h3>
+<p>Sometimes when re-executing your correlation workflow, you might encounter a <code class="docutils literal notranslate"><span class="pre">PermissionError</span></code>. This happens whenever you change your processing
+parameters in your <em>params.yaml</em> file under <em>corr</em>. Essentially, SeisMIC prevents you from mixing correlations that have been processed in different
+ways. <strong>So if you want to recompute your correlations with a new set of processing parameters, you need to write them to a different folder!</strong></p>
+</section>
 </section>
 </section>
 
@@ -624,7 +630,10 @@ Network, station, and channel information are determined automatically from the 
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#getting-an-overview-over-available-data">Getting an overview over available data</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#writing-correlations">Writing Correlations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#writing-correlations">Writing Correlations</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-won-t-seismic-allow-me-to-an-old-file-again">Why won’t SeisMIC allow me to an old file again?</a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 

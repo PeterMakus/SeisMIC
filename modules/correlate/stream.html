@@ -134,7 +134,7 @@
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -283,7 +283,7 @@ document.write(`
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -382,7 +382,7 @@ document.write(`
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="get_started.html">Get Started (Compute your first Noise Correlations)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Computing your first Noise Correlations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="correlator.html">The Correlator Object</a></li>
 </ul>
 <ul class="current nav bd-sidenav">
@@ -470,21 +470,21 @@ the start- and the endtime of the waveforms that were used to compute the correl
 and information about the coordinates of the stations.</p>
 <p><a class="reference internal" href="../API.html#seismic.correlate.stream.CorrTrace" title="seismic.correlate.stream.CorrTrace"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrTrace</span></code></a> does also come with its own plotting method <a class="reference internal" href="../API.html#seismic.correlate.stream.CorrTrace.plot" title="seismic.correlate.stream.CorrTrace.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot()</span></code></a>
 (check it for details). It can produce plots akin to this one:</p>
-<img alt="../../_images/corrtr.png" src="../../_images/corrtr.png" />
-</section>
+<img alt="../../_images/corrtr.svg" src="../../_images/corrtr.svg" /></section>
 <section id="corrstream">
 <h2>CorrStream<a class="headerlink" href="#corrstream" title="Permalink to this heading">#</a></h2>
 <p>Essentially, this class is just a fancy list of <a class="reference internal" href="../API.html#seismic.correlate.stream.CorrTrace" title="seismic.correlate.stream.CorrTrace"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrTrace</span></code></a> objects.
 However, it has methods to stack (<a class="reference internal" href="../API.html#seismic.correlate.stream.CorrStream.stack" title="seismic.correlate.stream.CorrStream.stack"><code class="xref py py-meth docutils literal notranslate"><span class="pre">stack()</span></code></a>),
 select (<a class="reference internal" href="../API.html#seismic.correlate.stream.CorrStream.select_corr_time" title="seismic.correlate.stream.CorrStream.select_corr_time"><code class="xref py py-meth docutils literal notranslate"><span class="pre">select_corr_time()</span></code></a>), or slide (<a class="reference internal" href="../API.html#seismic.correlate.stream.CorrStream.slide" title="seismic.correlate.stream.CorrStream.slide"><code class="xref py py-meth docutils literal notranslate"><span class="pre">slide()</span></code></a>) time windows.
 It also enables us to create section stacks, sorted by interstation distance or time:</p>
-<img alt="../../_images/cst.svg" src="../../_images/cst.svg" /></section>
+<img alt="../../_images/cst.png" src="../../_images/cst.png" />
+</section>
 <section id="corrbulk">
 <h2>CorrBulk<a class="headerlink" href="#corrbulk" title="Permalink to this heading">#</a></h2>
 <p><a class="reference internal" href="../API.html#seismic.correlate.stream.CorrStream" title="seismic.correlate.stream.CorrStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrStream</span></code></a> does also have a method to create a <a class="reference internal" href="../API.html#seismic.correlate.stream.CorrBulk" title="seismic.correlate.stream.CorrBulk"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrBulk</span></code></a> object
 (<a class="reference internal" href="../API.html#seismic.correlate.stream.CorrStream.create_corr_bulk" title="seismic.correlate.stream.CorrStream.create_corr_bulk"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create_corr_bulk()</span></code></a>). Instead of relying on a list of traces, this object is based on numpy arrays,
-which makes postprocessing computationally cheaper. Check out <a class="reference internal" href="../API.html#seismic.correlate.stream.CorrBulk" title="seismic.correlate.stream.CorrBulk"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrBulk</span></code></a> for available
-post processing functions.</p>
+which makes all sorts of computations cheaper. Check out <a class="reference internal" href="../API.html#seismic.correlate.stream.CorrBulk" title="seismic.correlate.stream.CorrBulk"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrBulk</span></code></a> for available functions.
+This is also the object that SeisMIC’s own monitoring workflow is based on.</p>
 </section>
 </section>
 

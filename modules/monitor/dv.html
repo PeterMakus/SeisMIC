@@ -134,7 +134,7 @@
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -283,7 +283,7 @@ document.write(`
     
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../intro.html">
-                        Introduction: Noise Interferometry with Green’s Function Retrieval
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
                       </a>
                     </li>
                 
@@ -456,22 +456,96 @@ graph LR
     classDef active fill:#f666, stroke-width:4px, stroke:#f06;
         </div><section id="reading-and-handling-of-dv-objects">
 <h1>Reading and Handling of DV objects<a class="headerlink" href="#reading-and-handling-of-dv-objects" title="Permalink to this heading">#</a></h1>
-<p><strong>SeisMIC</strong> uses <a class="reference internal" href="../API.html#seismic.monitor.dv.DV" title="seismic.monitor.dv.DV"><code class="xref py py-class docutils literal notranslate"><span class="pre">DV</span></code></a> objects to handle velocity changes. Those can for example saved, loaded, and plotted.</p>
+<p><strong>SeisMIC</strong> uses <a class="reference internal" href="../API.html#seismic.monitor.dv.DV" title="seismic.monitor.dv.DV"><code class="xref py py-class docutils literal notranslate"><span class="pre">DV</span></code></a> objects to handle velocity changes. Those can for example saved, loaded, and plotted.
+There are also a number of processing functions and methods that use <a class="reference internal" href="../API.html#seismic.monitor.dv.DV" title="seismic.monitor.dv.DV"><code class="xref py py-class docutils literal notranslate"><span class="pre">DV</span></code></a> objects.</p>
 <section id="read-a-dv-object-from-disk">
 <h2>Read a DV Object from Disk<a class="headerlink" href="#read-a-dv-object-from-disk" title="Permalink to this heading">#</a></h2>
-<p>Most likely, you will want to ready the velocity changes that were computed in the previous step. <strong>SeisMIC</strong> uses binary <code class="docutils literal notranslate"><span class="pre">npz</span></code> format to
+<p>Most likely, you will want to read the velocity changes that were computed in the previous step. <strong>SeisMIC</strong> uses binary <code class="docutils literal notranslate"><span class="pre">npz</span></code> format to
 store those. You will find the files in the folder that you have defined earlier (i.e., in the yaml file).
 Load the object with <a class="reference internal" href="../API.html#seismic.monitor.dv.read_dv" title="seismic.monitor.dv.read_dv"><code class="xref py py-func docutils literal notranslate"><span class="pre">seismic.monitor.dv.read_dv()</span></code></a>. It only takes one argument: the path to the dv object.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">seismic.monitor.dv</span> <span class="kn">import</span> <span class="n">read_dv</span>
 
 <span class="n">dv</span> <span class="o">=</span> <span class="n">read_dv</span><span class="p">(</span><span class="s1">&#39;/path/to/my/dv/DV-net0-net1.stat0-stat1.ch0-ch1.npz&#39;</span><span class="p">)</span>
+
+<span class="c1"># We can also print some information about them</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">dv</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>single_ref stretch velocity change estimate of X9-X9.IR1-IR1.HHE-HHE.
+starttdate: Mon Jan 25 00:00:00 2016
+enddate: Fri Feb  5 00:00:00 2016</p>
+<p>processed with the following parameters: {‘freq_min’: 2.0, ‘freq_max’: 4.0, ‘tw_start’: 3.5, ‘tw_len’: 8.5}</p>
 </section>
 <section id="plotting">
 <h2>Plotting<a class="headerlink" href="#plotting" title="Permalink to this heading">#</a></h2>
 <p>You can create a plot of the dv object with <a class="reference internal" href="../API.html#seismic.monitor.dv.DV.plot" title="seismic.monitor.dv.DV.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">seismic.monitor.dv.DV.plot()</span></code></a>. The result will look like this:</p>
 <img alt="../../_images/vchange.png" src="../../_images/vchange.png" />
+</section>
+<section id="stacking-averaging-results-from-several-stretching-estimations">
+<h2>Stacking/Averaging Results from several stretching estimations<a class="headerlink" href="#stacking-averaging-results-from-several-stretching-estimations" title="Permalink to this heading">#</a></h2>
+<p>As shown by <a class="reference external" href="https://doi.org/10.1093/gji/ggad038">Illien et al. (2023)</a>
+and <a class="reference external" href="https://doi.org/10.1029/2022JB025738">Makus et al. (2023)</a>,
+the similarity matrix (i.e., the result of the stretching grid search) from several
+component combinations or stations can be averaged to create more robust velocity change estimates.
+This is implemented in the function <a class="reference internal" href="../API.html#seismic.monitor.monitor.average_components" title="seismic.monitor.monitor.average_components"><code class="xref py py-func docutils literal notranslate"><span class="pre">seismic.monitor.monitor.average_components()</span></code></a>.</p>
+</section>
+<section id="inverting-velocity-changes-onto-a-spatial-grid">
+<h2>Inverting Velocity Changes onto a spatial grid<a class="headerlink" href="#inverting-velocity-changes-onto-a-spatial-grid" title="Permalink to this heading">#</a></h2>
+<p>The module <cite>seismic.monitor.spatial</cite> implements the surface wave spatial inversion as proposed by
+<a class="reference external" href="https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2013JB010399">Obermann et al. (2013)</a>.</p>
+<p>In pratice, you will create one <a class="reference internal" href="../API.html#seismic.monitor.spatial.DVGrid" title="seismic.monitor.spatial.DVGrid"><code class="xref py py-class docutils literal notranslate"><span class="pre">DVGrid</span></code></a> object for each time t that the map should be shown at.
+The inverse solution can be computed as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">UTCDateTime</span>
+
+<span class="kn">from</span> <span class="nn">seismic.monitor.spatial</span> <span class="kn">import</span> <span class="n">DVGrid</span>
+<span class="kn">from</span> <span class="nn">seismic.monitor.dv</span> <span class="kn">import</span> <span class="n">read_dv</span>
+
+<span class="c1"># define map dimensions</span>
+<span class="c1"># New, slightly larger coverage</span>
+<span class="n">lat</span> <span class="o">=</span> <span class="mf">10.5</span>
+<span class="n">lon</span> <span class="o">=</span> <span class="o">-</span><span class="mi">110</span>
+
+<span class="c1"># Y-extent in km</span>
+<span class="n">y</span> <span class="o">=</span> <span class="mi">75</span>
+
+<span class="c1"># X-Extent in km</span>
+<span class="n">x</span> <span class="o">=</span> <span class="mi">55</span>
+
+<span class="c1"># Resolution</span>
+<span class="n">res</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># km</span>
+
+<span class="c1"># time to check dv/v at</span>
+<span class="n">time</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="s1">&#39;2016-01-25T00:00:00&#39;</span><span class="p">)</span>
+
+<span class="c1"># inversion parameters</span>
+<span class="c1"># geo-parameters</span>
+<span class="n">vel</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># km/s</span>
+<span class="c1"># mean free path in kilometres</span>
+<span class="n">mf_path</span> <span class="o">=</span> <span class="mi">80</span>
+<span class="c1"># precision of the numerical integration</span>
+<span class="n">dt</span> <span class="o">=</span> <span class="mf">.05</span> <span class="c1"># s</span>
+
+<span class="c1"># Damping parameters for Least-Squares Inversion</span>
+<span class="c1"># needs to be thoroughly tested, e.g., L-curve criterion</span>
+<span class="n">corr_len</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># km</span>
+<span class="n">std_model</span> <span class="o">=</span> <span class="mf">.15</span>
+
+<span class="n">dvs_all</span> <span class="o">=</span> <span class="n">read_dv</span><span class="p">(</span><span class="s1">&#39;/path/to/my/dv/DV-*.npz&#39;</span><span class="p">)</span>
+
+<span class="c1"># create empty grid</span>
+<span class="n">dvgo</span> <span class="o">=</span> <span class="n">DVGrid</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="n">dvg</span><span class="o">.</span><span class="n">compute_dv_grid</span><span class="p">(</span><span class="n">dvs_all</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">vel</span><span class="p">,</span> <span class="n">mf_path</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">corr_len</span><span class="p">,</span> <span class="n">std_model</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you want to commit an inverse crime, the forward solution is also implemented in
+<a class="reference internal" href="../API.html#seismic.monitor.spatial.DVGrid.forward_model" title="seismic.monitor.spatial.DVGrid.forward_model"><code class="xref py py-meth docutils literal notranslate"><span class="pre">forward_model()</span></code></a>. Equally, you can compute the
+model resolution using <a class="reference internal" href="../API.html#seismic.monitor.spatial.DVGrid.compute_resolution" title="seismic.monitor.spatial.DVGrid.compute_resolution"><code class="xref py py-meth docutils literal notranslate"><span class="pre">compute_resolution()</span></code></a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="../API.html#seismic.monitor.spatial.DVGrid" title="seismic.monitor.spatial.DVGrid"><code class="xref py py-class docutils literal notranslate"><span class="pre">DVGrid</span></code></a> can access many of the required arguments from the <a class="reference internal" href="../API.html#seismic.monitor.dv.DV" title="seismic.monitor.dv.DV"><code class="xref py py-class docutils literal notranslate"><span class="pre">DV</span></code></a> object.
+such as the used frequency band or the coda lapse times. In some cases, you might want to overwrite those values though.</p>
+</div>
 </section>
 </section>
 
@@ -524,6 +598,8 @@ Load the object with <a class="reference internal" href="../API.html#seismic.mon
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#read-a-dv-object-from-disk">Read a DV Object from Disk</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plotting">Plotting</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stacking-averaging-results-from-several-stretching-estimations">Stacking/Averaging Results from several stretching estimations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#inverting-velocity-changes-onto-a-spatial-grid">Inverting Velocity Changes onto a spatial grid</a></li>
 </ul>
   </nav></div>
 

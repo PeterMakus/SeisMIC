@@ -1,0 +1,1308 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>seismic.monitor.spatial</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/clipboard.min.js"></script>
+    <script src="../../../_static/copybutton.js"></script>
+    <script src="https://unpkg.com/mermaid@9.4.0/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true});</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/seismic/monitor/spatial';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  <div class="navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    <p class="title logo__title"></p>
+  
+</a></div>
+    
+  </div>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/intro.html">
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/get_started.html">
+                        Getting Started with SeisMIC
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/trace_data.html">
+                        Trace data
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/correlate.html">
+                        Compute and Handle Correlations
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/corrdb.html">
+                        Save and Load Correlations
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/monitor.html">
+                        Monitor Velocity Changes
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/API.html">
+                        SeisMIC API
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/PeterMakus/SeisMIC" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/intro.html">
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/get_started.html">
+                        Getting Started with SeisMIC
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/trace_data.html">
+                        Trace data
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/correlate.html">
+                        Compute and Handle Correlations
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/corrdb.html">
+                        Save and Load Correlations
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/monitor.html">
+                        Monitor Velocity Changes
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/API.html">
+                        SeisMIC API
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/PeterMakus/SeisMIC" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumbs">
+  <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">seismic.monitor.spatial</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <h1>Source code for seismic.monitor.spatial</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Spatial imaging by means of a diffusion-based sensitivity kernel</span>
+<span class="sd">(see Obermann et al., 2013 and Pacheco and Snieder, 2005)</span>
+
+<span class="sd">Implementation here is just for the 2D case</span>
+
+<span class="sd">:copyright:</span>
+<span class="sd">   The SeisMIC development team (makus@gfz-potsdam.de).</span>
+<span class="sd">:license:</span>
+<span class="sd">    EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
+<span class="sd">   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)</span>
+<span class="sd">:author:</span>
+<span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
+
+<span class="sd">Created: Monday, 16th January 2023 10:53:31 am</span>
+<span class="sd">Last Modified: Wednesday, 22nd February 2023 03:43:40 pm</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Iterable</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="nn">mpl</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">obspy.geodetics.base</span> <span class="kn">import</span> <span class="n">locations2degrees</span> <span class="k">as</span> <span class="n">loc2deg</span>
+<span class="kn">from</span> <span class="nn">obspy.geodetics.base</span> <span class="kn">import</span> <span class="n">degrees2kilometers</span> <span class="k">as</span> <span class="n">deg2km</span>
+<span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">UTCDateTime</span>
+
+<span class="kn">from</span> <span class="nn">seismic.monitor.dv</span> <span class="kn">import</span> <span class="n">DV</span>
+
+
+<div class="viewcode-block" id="probability"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.spatial.probability">[docs]</a><span class="k">def</span> <span class="nf">probability</span><span class="p">(</span>
+    <span class="n">dist</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">vel</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">mf_path</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the probability for a wave with the given properties to pass</span>
+<span class="sd">    through a point at distance `dist`. Following the diffusion law.</span>
+
+<span class="sd">    Implementation as in Obermann et al. (2013).</span>
+
+<span class="sd">    :param dist: distance to the source. Can be a matrix.</span>
+<span class="sd">    :type dist: np.ndarray | float</span>
+<span class="sd">    :param t: time</span>
+<span class="sd">    :type t: float</span>
+<span class="sd">    :param vel: velocity for homogeneous velocities</span>
+<span class="sd">    :type vel: float</span>
+<span class="sd">    :param mf_path: Mean free path of the wave.</span>
+<span class="sd">    :type mf_path: float</span>
+<span class="sd">    :return: The probability. In the same shape as ``dist``.</span>
+<span class="sd">    :rtype: np.ndarray | float</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">dist</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Distances cannot be &lt; 0.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;t has to be &lt;= 0&#39;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+        <span class="c1"># there will be loads of runtimeerrors because of inf and nan values</span>
+        <span class="n">coherent</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">vel</span><span class="o">*</span><span class="n">t</span><span class="o">/</span><span class="n">mf_path</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">dist</span><span class="p">),</span> <span class="n">nan</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">posinf</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">neginf</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">coherent</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="n">vel</span><span class="o">*</span><span class="n">t</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">atol</span><span class="p">)</span>
+        <span class="c1"># If a is nan, set a to 0</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span>
+            <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">mf_path</span><span class="o">*</span><span class="n">vel</span><span class="o">*</span><span class="n">t</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">dist</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="p">(</span><span class="n">vel</span><span class="o">*</span><span class="n">t</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="c1"># If a is nan also b will be nan, set also 0</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">vel</span><span class="o">*</span><span class="n">t</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">-</span><span class="n">dist</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="o">-</span> <span class="n">vel</span><span class="o">*</span><span class="n">t</span><span class="p">)</span><span class="o">/</span><span class="n">mf_path</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">heaviside</span><span class="p">(</span><span class="n">vel</span><span class="o">*</span><span class="n">t</span><span class="o">-</span><span class="n">dist</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># Sensitivity is zero where nan and 1 if infinite</span>
+        <span class="c1"># (station coords coincide with grid coordinates)</span>
+        <span class="n">coda</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">*</span><span class="n">c</span><span class="o">/</span><span class="n">a</span><span class="p">,</span> <span class="n">posinf</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">neginf</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nan</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">prob</span> <span class="o">=</span> <span class="n">coherent</span> <span class="o">+</span> <span class="n">coda</span>
+    <span class="c1"># probability cannot be larger than 1. Might happen due to numerical</span>
+    <span class="c1"># inaccuraccies or coherent + coda both being infinite (i.e., 1)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">prob</span><span class="p">[</span><span class="n">prob</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">prob</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">prob</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">prob</span></div>
+
+
+<div class="viewcode-block" id="compute_grid_dist"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.spatial.compute_grid_dist">[docs]</a><span class="k">def</span> <span class="nf">compute_grid_dist</span><span class="p">(</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">y0</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the distance of each point on the grid x, y to x0, y0.</span>
+<span class="sd">    (2D)</span>
+
+<span class="sd">    :param x: X coordinate axis</span>
+<span class="sd">    :type x: np.ndarray</span>
+<span class="sd">    :param y: y coordiante axis</span>
+<span class="sd">    :type y: np.ndarray</span>
+<span class="sd">    :param x0: x-position of point</span>
+<span class="sd">    :type x0: float</span>
+<span class="sd">    :param y0: y-position of point</span>
+<span class="sd">    :type y0: float</span>
+<span class="sd">    :return: distance matrix in form of a 2D matrix.</span>
+<span class="sd">    :rtype: np.ndarray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">x0</span><span class="p">,</span> <span class="n">y</span><span class="o">-</span><span class="n">y0</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">X</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">Y</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span></div>
+
+
+<div class="viewcode-block" id="sensitivity_kernel"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.spatial.sensitivity_kernel">[docs]</a><span class="k">def</span> <span class="nf">sensitivity_kernel</span><span class="p">(</span>
+    <span class="n">s1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">s2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>  <span class="n">vel</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">mf_path</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes a 2D diffusion lawsurface-wave sensitivity kernel for an</span>
+<span class="sd">    ambient noise cross-correlation between two station ``s1`` and ``s2``.</span>
+
+<span class="sd">    Implementation as in Obermann et al. (2013). Limits for nan and inf</span>
+<span class="sd">    will return 0, or 1 respectively.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        A large ``dt`` can lead to artefacts in the kernel.</span>
+
+<span class="sd">    :param s1: Position of Station 1, format is [x, y].</span>
+<span class="sd">    :type s1: np.ndarray</span>
+<span class="sd">    :param s2: Position of Station 2, format is [x, y].</span>
+<span class="sd">    :type s2: np.ndarray</span>
+<span class="sd">    :param x: Monotonously increasing array holding the x-coordinates of the</span>
+<span class="sd">        grid the kernel should be computed on.</span>
+<span class="sd">    :type x: np.ndarray</span>
+<span class="sd">    :param y: Monotonously increasing array holding the y-coordinates of the</span>
+<span class="sd">        grid the kernel should be computed on.</span>
+<span class="sd">    :type y: np.ndarray</span>
+<span class="sd">    :param t: Time of coda that is probed. Usually set as the middle of the</span>
+<span class="sd">        used time window</span>
+<span class="sd">    :type t: float</span>
+<span class="sd">    :param dt: Sampling interval that the probability will be computed in.</span>
+<span class="sd">        Note that dt should not be too large. Otherwise, numerical artefacts</span>
+<span class="sd">        can occur.</span>
+<span class="sd">    :type dt: float</span>
+<span class="sd">    :param vel: Surface wave velocity. Note that units between coordinate grid</span>
+<span class="sd">        and velocity have to be consistent (i.e., km/s and km or m and m/s)</span>
+<span class="sd">    :type vel: float</span>
+<span class="sd">    :param mf_path: Mean free path of the wave (see Obermann et al. 2013 for</span>
+<span class="sd">        details)</span>
+<span class="sd">    :type mf_path: float</span>
+<span class="sd">    :return: The sensitivity_kernel of the grid. Can be plotted against.\</span>
+<span class="sd">        np.meshgrid(x, y)</span>
+<span class="sd">    :rtype: np.ndarray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">dt</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;dt has to be greater than 0.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">!=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">!=</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;x and y have to be monotonously increasing arrays.&#39;</span><span class="p">)</span>
+    <span class="n">T</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">t</span> <span class="o">+</span> <span class="n">dt</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+    <span class="n">dist_s1_s2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">s1</span><span class="o">-</span><span class="n">s2</span><span class="p">)</span>
+    <span class="n">denom</span> <span class="o">=</span> <span class="n">probability</span><span class="p">(</span><span class="n">dist_s1_s2</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">vel</span><span class="p">,</span> <span class="n">mf_path</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">dt</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">dist_s1_x0</span> <span class="o">=</span> <span class="n">compute_grid_dist</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">s1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">s1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">dist_s2_x0</span> <span class="o">=</span> <span class="n">compute_grid_dist</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">s2</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">s2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">nom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">probability</span><span class="p">(</span><span class="n">dist_s1_x0</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">vel</span><span class="p">,</span> <span class="n">mf_path</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">dt</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">probability</span><span class="p">(</span>
+            <span class="n">dist_s2_x0</span><span class="p">,</span> <span class="n">t</span><span class="o">-</span><span class="n">tt</span><span class="p">,</span> <span class="n">vel</span><span class="p">,</span> <span class="n">mf_path</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">dt</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">tt</span> <span class="ow">in</span> <span class="n">T</span><span class="p">],</span>
+        <span class="n">dx</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">K</span> <span class="o">=</span> <span class="n">nom</span><span class="o">/</span><span class="n">denom</span>
+    <span class="k">return</span> <span class="n">K</span></div>
+
+
+<div class="viewcode-block" id="data_variance"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.spatial.data_variance">[docs]</a><span class="k">def</span> <span class="nf">data_variance</span><span class="p">(</span>
+    <span class="n">corr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="n">bandwidth</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tw</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">freq_c</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the variance of the velocity change data based on the coherence</span>
+<span class="sd">    value between stretched reference trace and correlation function.</span>
+
+<span class="sd">    (see Obermann et. al. 2013)</span>
+
+<span class="sd">    :param corr: coherence</span>
+<span class="sd">    :type corr: np.ndarray | float</span>
+<span class="sd">    :param bandwidth: Bandwidth between low and highpass filter</span>
+<span class="sd">    :type bandwidth: float</span>
+<span class="sd">    :param tw: Time Window used for the dv/v computation. In the form</span>
+<span class="sd">        Tuple[tw_start, tw_end]</span>
+<span class="sd">    :type tw: Tuple[float, float]</span>
+<span class="sd">    :param freq_c: Centre frequency.</span>
+<span class="sd">    :type freq_c: float</span>
+<span class="sd">    :return: Data Variance in the same shape as corr</span>
+<span class="sd">    :rtype: np.ndarray | float</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">tw</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">tw</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Lapse time values have to be greater than 0s.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">bandwidth</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The bandwidth has to be &gt; 0 Hz.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">freq_c</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The centre frequeny has to be &gt; 0 Hz.&#39;</span><span class="p">)</span>
+    <span class="n">T</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="n">bandwidth</span>
+    <span class="n">p1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">corr</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">corr</span><span class="p">)</span>
+    <span class="n">nom</span> <span class="o">=</span> <span class="mi">6</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">T</span>
+    <span class="n">denom</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">freq_c</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">tw</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">3</span><span class="o">-</span><span class="n">tw</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">p2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">nom</span><span class="o">/</span><span class="n">denom</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">p1</span><span class="o">*</span><span class="n">p2</span></div>
+
+
+<div class="viewcode-block" id="compute_cm"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.spatial.compute_cm">[docs]</a><span class="k">def</span> <span class="nf">compute_cm</span><span class="p">(</span>
+    <span class="n">scaling_factor</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">corr_len</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">std_model</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">dist</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the model variance for the dv/v grid.</span>
+
+<span class="sd">    (see Obermann et. al. 2013)</span>
+
+<span class="sd">    :param scaling_factor: Scaling factor, dependent on the cell length.</span>
+<span class="sd">        (e.g., 1*cell_length)</span>
+<span class="sd">    :type scaling_factor: float</span>
+<span class="sd">    :param corr_len: Length over which the parameters are related (high</span>
+<span class="sd">        value means stronger smoothing).</span>
+<span class="sd">    :type corr_len: float</span>
+<span class="sd">    :param std_model: A-priori standard deviation of the model. Corresponds</span>
+<span class="sd">        to the best agreement between 1) the stability of the model for the</span>
+<span class="sd">        velocity variations and 2) the minimised difference between the model</span>
+<span class="sd">        predictions (output of the forward problem) and the data.</span>
+<span class="sd">        Can be estimated via the L-curve criterion (see Hansen 1992)</span>
+<span class="sd">    :type std_model: float</span>
+<span class="sd">    :param dist: Matrix containing distance between the two cells i and j.</span>
+<span class="sd">        Will always be 0 on the diagonal where i==j.</span>
+<span class="sd">    :type dist: np.ndarray</span>
+<span class="sd">    :return: Returns the model variance in the same shape as dist. I.e.,</span>
+<span class="sd">        NxN where N is the number of station combinations.</span>
+<span class="sd">    :rtype: np.ndarray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">p1</span> <span class="o">=</span> <span class="p">(</span><span class="n">std_model</span><span class="o">*</span><span class="n">scaling_factor</span><span class="o">/</span><span class="n">corr_len</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">smooth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dist</span><span class="o">/</span><span class="n">corr_len</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">p1</span><span class="o">*</span><span class="n">smooth</span></div>
+
+
+<div class="viewcode-block" id="geo2cart"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.spatial.geo2cart">[docs]</a><span class="k">def</span> <span class="nf">geo2cart</span><span class="p">(</span>
+    <span class="n">lat</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="n">lon</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">lat0</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert geographic coordinates to Northing and Easting for a local grid.</span>
+
+<span class="sd">    .. seealso::</span>
+<span class="sd">        http://wiki.gis.com/wiki/index.php/Easting_and_northing</span>
+
+<span class="sd">    :param lat: Latitude(s)</span>
+<span class="sd">    :type lat: np.ndarray | float</span>
+<span class="sd">    :param lon: Longitude(s)</span>
+<span class="sd">    :type lon: np.ndarray | float</span>
+<span class="sd">    :param lat0: Latitude of the lower left corner of the grid</span>
+<span class="sd">    :type lat0: float</span>
+<span class="sd">    :return: A tuple holding (Easting, Northing) in km and in the same shape</span>
+<span class="sd">        as ``lat`` and ``lon``.</span>
+<span class="sd">    :rtype: Tuple[np.ndarray, np.ndarray]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Northing</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">deg2km</span><span class="p">(</span><span class="n">lat</span><span class="p">)</span>
+    <span class="c1"># easting</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">deg2km</span><span class="p">(</span><span class="n">loc2deg</span><span class="p">(</span><span class="n">lat0</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">lat0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">lon</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="o">-</span><span class="n">x</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">x</span><span class="p">[</span><span class="n">lon</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span></div>
+
+
+<div class="viewcode-block" id="DVGrid"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.spatial.DVGrid">[docs]</a><span class="k">class</span> <span class="nc">DVGrid</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Object to handle spatially gridded DV objects.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">lat0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">lon0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">res</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialises the grid to compute dv/v on. The grid will be in</span>
+<span class="sd">        Cartesian coordinates with the lower left boarder (lon0, lat0)</span>
+<span class="sd">        as reference point.</span>
+
+<span class="sd">        :param lat0: Minimum latitude on the grid.</span>
+<span class="sd">        :type lat0: float</span>
+<span class="sd">        :param lon0: Minimum longitude on the grid</span>
+<span class="sd">        :type lon0: float</span>
+<span class="sd">        :param res: Resolution in km</span>
+<span class="sd">        :type res: float</span>
+<span class="sd">        :param x: Eastwards extent of the grid in km</span>
+<span class="sd">        :type x: float</span>
+<span class="sd">        :param y: Northwards extent of the grid in km</span>
+<span class="sd">        :type y: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lat0</span> <span class="o">=</span> <span class="n">lat0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lon0</span> <span class="o">=</span> <span class="n">lon0</span>
+
+        <span class="c1"># Compute local grid</span>
+        <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span> <span class="o">=</span> <span class="n">geo2cart</span><span class="p">(</span><span class="n">lat0</span><span class="p">,</span> <span class="n">lon0</span><span class="p">,</span> <span class="n">lat0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xaxis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">x0</span> <span class="o">+</span> <span class="n">x</span> <span class="o">+</span> <span class="n">res</span><span class="p">,</span> <span class="n">res</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yaxis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">y0</span><span class="p">,</span> <span class="n">y0</span> <span class="o">+</span> <span class="n">y</span> <span class="o">+</span> <span class="n">res</span><span class="p">,</span> <span class="n">res</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">res</span> <span class="o">=</span> <span class="n">res</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xgrid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ygrid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xaxis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">yaxis</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xgrid</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ygrid</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dist</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="DVGrid.forward_model"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.spatial.DVGrid.forward_model">[docs]</a>    <span class="k">def</span> <span class="nf">forward_model</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">dv_grid</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">vel</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">mf_path</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">dvs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">DV</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">utc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">tw</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">stat0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">stat1</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> \
+            <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Solves the forward problem associated to the grid computation.</span>
+<span class="sd">        I.e., computes the velocity changes theoretically measured at each</span>
+<span class="sd">        station for a given dv/v grid.</span>
+
+<span class="sd">        :param dv_grid: dv/v grid. Must have the same shape as self.xgrid</span>
+<span class="sd">        :type dv_grid: np.ndarray</span>
+<span class="sd">        :param dt: Sampling interval for the numerical integration of the</span>
+<span class="sd">            sensitivity kernels. Coarse spacing causes artefacts. Fine</span>
+<span class="sd">            spacing will result in higher computation times.</span>
+<span class="sd">        :type dt: float</span>
+<span class="sd">        :param vel: Wave velocity</span>
+<span class="sd">        :type vel: float</span>
+<span class="sd">        :param mf_path: Mean free path of a wave</span>
+<span class="sd">        :type mf_path: float</span>
+<span class="sd">        :param dvs: Iterator over :class:`~seismic.monitor.dv.DV` to</span>
+<span class="sd">            extract the parameters from. If this is defined ``utc`` has to</span>
+<span class="sd">            be defined as well. If it&#39;s None all other parameters have to be</span>
+<span class="sd">            defined, defaults to None</span>
+<span class="sd">        :type dvs: Optional[Iterable[DV]], optional</span>
+<span class="sd">        :param utc: The time to extract the properties from the dv</span>
+<span class="sd">            files from, defaults to None</span>
+<span class="sd">        :type utc: Optional[UTCDateTime], optional</span>
+<span class="sd">        :param tw: Lapse time Window used for the dv/v estimation,</span>
+<span class="sd">            defaults to None</span>
+<span class="sd">        :type tw: Optional[Tuple[float, float]], optional</span>
+<span class="sd">        :param stat0: Coordinates of the first station of the</span>
+<span class="sd">            cross-correlation. Given as an array with the form:</span>
+<span class="sd">            [(latitude0, longitude0), (latitude1, longitude1), ...],</span>
+<span class="sd">            defaults to None.</span>
+<span class="sd">        :type stat0: Optional[Iterable[Tuple[float, float]]], optional</span>
+<span class="sd">        :param stat1: Coordinates of the second station of the</span>
+<span class="sd">            cross-correlation. Given as an array with the form:</span>
+<span class="sd">            [(latitude0, longitude0), (latitude1, longitude1), ...],</span>
+<span class="sd">            defaults to None., defaults to None</span>
+<span class="sd">        :type stat1: Optional[Iterable[Tuple[float, float]]], optional</span>
+<span class="sd">        :raises TypeError: If too few variables are defined</span>
+<span class="sd">        :return: A vector with one dv/v value for each station combination</span>
+<span class="sd">            in the stat0-stat1 vectors.</span>
+<span class="sd">        :rtype: np.ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">dv_grid</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xgrid</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;Modelled dvgrid must have same shape as self.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">stat0</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">stat1</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">tw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">slat0</span><span class="p">,</span> <span class="n">slon0</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">stat0</span><span class="p">)</span>
+            <span class="n">slat1</span><span class="p">,</span> <span class="n">slon1</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">stat1</span><span class="p">)</span>
+            <span class="n">twe</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="n">dvs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">utc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">slat0</span><span class="p">,</span> <span class="n">slon0</span><span class="p">,</span> <span class="n">slat1</span><span class="p">,</span> <span class="n">slon1</span><span class="p">,</span> <span class="n">twe</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span>\
+                <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_info_dvs</span><span class="p">(</span><span class="n">dvs</span><span class="p">,</span> <span class="n">utc</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s1">&#39;Define either dv and utc or all other arguments.&#39;</span>
+            <span class="p">)</span>
+
+        <span class="n">tw</span> <span class="o">=</span> <span class="n">tw</span> <span class="ow">or</span> <span class="n">twe</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_sensitivity_kernels</span><span class="p">(</span>
+            <span class="n">slat0</span><span class="p">,</span> <span class="n">slon0</span><span class="p">,</span> <span class="n">slat1</span><span class="p">,</span> <span class="n">slon1</span><span class="p">,</span> <span class="p">(</span><span class="n">tw</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">tw</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">vel</span><span class="p">,</span> <span class="n">mf_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">dv_grid</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="DVGrid.compute_dv_grid"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.spatial.DVGrid.compute_dv_grid">[docs]</a>    <span class="k">def</span> <span class="nf">compute_dv_grid</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">dvs</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">DV</span><span class="p">],</span> <span class="n">utc</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>  <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">vel</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">mf_path</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">scaling_factor</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">corr_len</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">std_model</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tw</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">freq0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">freq1</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">compute_resolution</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform a linear least-squares inversion of station specific velocity</span>
+<span class="sd">        changes (dv/v) at time ``t``.</span>
+
+<span class="sd">        The algorithm will perform the following steps:</span>
+<span class="sd">        1. Computes the sensitivity kernels for each station pair.</span>
+<span class="sd">        2. Computes model and data variance.</span>
+<span class="sd">        3. Inverts the velocity changes onto a flattened grid.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            All computations are performed on a flattened grid, so that the</span>
+<span class="sd">            grid is actually just one-dimensional. The return value is</span>
+<span class="sd">            reshaped onto the shape of self.xgrid.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            The returned value and the value in self.vel_change is strictly</span>
+<span class="sd">            speaking not a velocity change, but an epsilon value. That</span>
+<span class="sd">            corresponds to -dv/v</span>
+
+<span class="sd">        .. warning::</span>
+<span class="sd">            Low values for ``dt`` can produce artefacts. Very high values</span>
+<span class="sd">            lead to a drastically increased computational cost.</span>
+
+<span class="sd">        :param dvs: The :class:``~seismic.monitor.dv.DV`` objects to use.</span>
+<span class="sd">            Note that the input can be an iterator, so that not actually all</span>
+<span class="sd">            dvs have to be loaded into RAM at the same time.</span>
+<span class="sd">        :type dvs: Iterator[DV]</span>
+<span class="sd">        :param utc: Time at which the velocity changes should be inverted.</span>
+<span class="sd">            Has to be covered by the ``DV`` objects.</span>
+<span class="sd">        :type utc: UTCDateTime</span>
+<span class="sd">        :param dt: Temporal resolution to perform the numerical integration on.</span>
+<span class="sd">            Note that low values can lead to artefacts in the sensitivity</span>
+<span class="sd">            kernel. High values will increase the computational demand</span>
+<span class="sd">            drastically.</span>
+<span class="sd">        :type dt: float</span>
+<span class="sd">        :param vel: Wave velocity in the region.</span>
+<span class="sd">        :type vel: float</span>
+<span class="sd">        :param mf_path: Mean free path (i.e., distance until which a wave</span>
+<span class="sd">            entirely loses it&#39;s directional information).</span>
+<span class="sd">        :type mf_path: float</span>
+<span class="sd">        :param scaling_factor: Scaling factor, dependent on the cell length.</span>
+<span class="sd">            (e.g., 1*cell_length)</span>
+<span class="sd">        :type scaling_factor: float</span>
+<span class="sd">        :param corr_len: Length over which the parameters are related (high</span>
+<span class="sd">            value means stronger smoothing).</span>
+<span class="sd">        :type corr_len: float</span>
+<span class="sd">        :param std_model: A-priori standard deviation of the model. Corresponds</span>
+<span class="sd">            to the best agreement between 1) the stability of the model for the</span>
+<span class="sd">            velocity variations and 2) the minimised difference between the</span>
+<span class="sd">            model predictions (output of the forward problem) and the data.</span>
+<span class="sd">            Can be estimated via the L-curve criterion (see Hansen 1992)</span>
+<span class="sd">        :type std_model: float</span>
+<span class="sd">        :param tw: Time window used to evaluate the velocity changes.</span>
+<span class="sd">            Given in the form Tuple[tw_start, tw_end]. Not required if</span>
+<span class="sd">            the used dvs have a ``dv_processing`` attribute.</span>
+<span class="sd">        :type tw: Tuple[float, float], optional</span>
+<span class="sd">        :param freq0: high-pass frequency of the used bandpass filter.</span>
+<span class="sd">            Not required if the used dvs have a ``dv_processing`` attribute.</span>
+<span class="sd">        :type freq0: float, optional</span>
+<span class="sd">        :param freq1: low-pass frequency of the used bandpass filter.</span>
+<span class="sd">            Not required  the used dvs have a ``dv_processing`` attribute.</span>
+<span class="sd">        :type freq1: float, optional</span>
+<span class="sd">        :param compute_resolution: Compute the resolution matrix?</span>
+<span class="sd">            Will be saved in self.resolution</span>
+<span class="sd">        :type compute_resolution: bool, defaults to False</span>
+<span class="sd">        :raises ValueError: For times that are not covered by the dvs</span>
+<span class="sd">            time-series.</span>
+<span class="sd">        :return: The dv-grid (with corresponding coordinates in</span>
+<span class="sd">            self.xgrid and self.ygrid or self.xaxis and self.yaxis,</span>
+<span class="sd">            respectively). Note this is actually an epsilon grid (meaning</span>
+<span class="sd">            it represents the stretch value i.e., -dv/v)</span>
+<span class="sd">        :rtype: np.ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vals</span><span class="p">,</span> <span class="n">corrs</span><span class="p">,</span> <span class="n">slat0</span><span class="p">,</span> <span class="n">slon0</span><span class="p">,</span> <span class="n">slat1</span><span class="p">,</span> <span class="n">slon1</span><span class="p">,</span> <span class="n">twe</span><span class="p">,</span> <span class="n">freq0e</span><span class="p">,</span> <span class="n">freq1e</span>\
+            <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_info_dvs</span><span class="p">(</span><span class="n">dvs</span><span class="p">,</span> <span class="n">utc</span><span class="p">)</span>
+        <span class="n">tw</span> <span class="o">=</span> <span class="n">tw</span> <span class="ow">or</span> <span class="n">twe</span>
+        <span class="n">freq0</span> <span class="o">=</span> <span class="n">freq0</span> <span class="ow">or</span> <span class="n">freq0e</span>
+        <span class="n">freq1</span> <span class="o">=</span> <span class="n">freq1</span> <span class="ow">or</span> <span class="n">freq1e</span>
+        <span class="k">if</span> <span class="kc">None</span> <span class="ow">in</span> <span class="p">[</span><span class="n">freq0</span><span class="p">,</span> <span class="n">freq1</span><span class="p">,</span> <span class="n">tw</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+                <span class="s1">&#39;The arguments freq0, freq1, and tw have to be defined if &#39;</span>
+                <span class="s1">&#39;dv does not have the attribute &quot;dv_processing&quot;.&#39;</span>
+            <span class="p">)</span>
+        <span class="n">skernels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_sensitivity_kernels</span><span class="p">(</span>
+            <span class="n">slat0</span><span class="p">,</span> <span class="n">slon0</span><span class="p">,</span> <span class="n">slat1</span><span class="p">,</span> <span class="n">slon1</span><span class="p">,</span> <span class="p">(</span><span class="n">tw</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">tw</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">vel</span><span class="p">,</span> <span class="n">mf_path</span><span class="p">)</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_dist_matrix</span><span class="p">()</span>
+        <span class="c1"># Model variance, smoothed diagonal matrix</span>
+        <span class="n">cm</span> <span class="o">=</span> <span class="n">compute_cm</span><span class="p">(</span><span class="n">scaling_factor</span><span class="p">,</span> <span class="n">corr_len</span><span class="p">,</span> <span class="n">std_model</span><span class="p">,</span> <span class="n">dist</span><span class="p">)</span>
+        <span class="c1"># Data variance, diagonal matrix</span>
+        <span class="n">cd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_cd</span><span class="p">(</span><span class="n">skernels</span><span class="p">,</span> <span class="n">freq0</span><span class="p">,</span> <span class="n">freq1</span><span class="p">,</span> <span class="n">tw</span><span class="p">,</span> <span class="n">corrs</span><span class="p">)</span>
+
+        <span class="c1"># Linear Least-Squares Inversion</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">cm</span><span class="p">,</span> <span class="n">skernels</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">skernels</span><span class="p">,</span> <span class="n">cm</span><span class="p">),</span> <span class="n">skernels</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">+</span> <span class="n">cd</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">c</span><span class="p">)</span>
+        <span class="c1"># m is the flattened array, reshape onto grid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vel_change</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xgrid</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">compute_resolution</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_resolution</span><span class="p">(</span><span class="n">skernels</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">vel_change</span></div>
+
+<div class="viewcode-block" id="DVGrid.compute_resolution"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.spatial.DVGrid.compute_resolution">[docs]</a>    <span class="k">def</span> <span class="nf">compute_resolution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">dvs</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">DV</span><span class="p">],</span> <span class="n">utc</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">scaling_factor</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">corr_len</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">std_model</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">vel</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">mf_path</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tw</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">freq0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">freq1</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> \
+            <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the model resolution of the dv/v model.</span>
+
+<span class="sd">        .. seealso::</span>
+<span class="sd">            Described in the supplement to Obermann (2013)</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            Note that it&#39;s significantly faster to perform a joint inversion</span>
+<span class="sd">            or a gridded dv/v and resolution rather than performing them</span>
+<span class="sd">            separately.</span>
+
+<span class="sd">        :param dvs: The :class:``~seismic.monitor.dv.DV`` objects to use.</span>
+<span class="sd">            Note that the input can be an iterator, so that not actually all</span>
+<span class="sd">            dvs have to be loaded into RAM at the same time.</span>
+<span class="sd">        :type dvs: Iterator[DV]</span>
+<span class="sd">        :param utc: Time at which the velocity changes should be inverted.</span>
+<span class="sd">            Has to be covered by the ``DV`` objects.</span>
+<span class="sd">        :type utc: UTCDateTime</span>
+<span class="sd">        :param dt: Temporal resolution to perform the numerical integration on.</span>
+<span class="sd">            Note that low values can lead to artefacts in the sensitivity</span>
+<span class="sd">            kernel. High values will increase the computational demand</span>
+<span class="sd">            drastically.</span>
+<span class="sd">        :type dt: float</span>
+<span class="sd">        :param vel: Wave velocity in the region.</span>
+<span class="sd">        :type vel: float</span>
+<span class="sd">        :param mf_path: Mean free path (i.e., distance until which a wave</span>
+<span class="sd">            entirely loses it&#39;s directional information).</span>
+<span class="sd">        :type mf_path: float</span>
+<span class="sd">        :param scaling_factor: Scaling factor, dependent on the cell length.</span>
+<span class="sd">            (e.g., 1*cell_length)</span>
+<span class="sd">        :type scaling_factor: float</span>
+<span class="sd">        :param corr_len: Length over which the parameters are related (high</span>
+<span class="sd">            value means stronger smoothing).</span>
+<span class="sd">        :type corr_len: float</span>
+<span class="sd">        :param std_model: A-priori standard deviation of the model. Corresponds</span>
+<span class="sd">            to the best agreement between 1) the stability of the model for the</span>
+<span class="sd">            velocity variations and 2) the minimised difference between the</span>
+<span class="sd">            model predictions (output of the forward problem) and the data.</span>
+<span class="sd">            Can be estimated via the L-curve criterion (see Hansen 1992)</span>
+<span class="sd">        :type std_model: float</span>
+<span class="sd">        :param tw: Time window used to evaluate the velocity changes.</span>
+<span class="sd">            Given in the form Tuple[tw_start, tw_end]. Not required if dv</span>
+<span class="sd">            has attribute ``dv_processing``.</span>
+<span class="sd">        :type tw: Tuple[float, float], optional</span>
+<span class="sd">        :param freq0: high-pass frequency of the used bandpass filter.</span>
+<span class="sd">            Not required if dv has attribute ``dv_processing``.</span>
+<span class="sd">        :type freq0: float, optional</span>
+<span class="sd">        :param freq1: low-pass frequency of the used bandpass filter.</span>
+<span class="sd">            Not required if dv has attribute ``dv_processing``.</span>
+<span class="sd">        :type freq1: float, optional</span>
+<span class="sd">        :raises ValueError: For times that are not covered by the dvs</span>
+<span class="sd">            time-series.</span>
+<span class="sd">        :return: A gridded resolution matrix.</span>
+<span class="sd">        :rtype: np.ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cm</span> <span class="o">=</span> <span class="n">compute_cm</span><span class="p">(</span>
+            <span class="n">scaling_factor</span><span class="p">,</span> <span class="n">corr_len</span><span class="p">,</span> <span class="n">std_model</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dist</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_dist_matrix</span><span class="p">())</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">corrs</span><span class="p">,</span> <span class="n">slat0</span><span class="p">,</span> <span class="n">slon0</span><span class="p">,</span> <span class="n">slat1</span><span class="p">,</span> <span class="n">slon1</span><span class="p">,</span> <span class="n">twe</span><span class="p">,</span> <span class="n">freq0e</span><span class="p">,</span> <span class="n">freq1e</span>\
+            <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_info_dvs</span><span class="p">(</span><span class="n">dvs</span><span class="p">,</span> <span class="n">utc</span><span class="p">)</span>
+        <span class="n">freq0</span> <span class="o">=</span> <span class="n">freq0</span> <span class="ow">or</span> <span class="n">freq0e</span>
+        <span class="n">freq1</span> <span class="o">=</span> <span class="n">freq1</span> <span class="ow">or</span> <span class="n">freq1e</span>
+        <span class="n">tw</span> <span class="o">=</span> <span class="n">tw</span> <span class="ow">or</span> <span class="n">twe</span>
+        <span class="k">if</span> <span class="kc">None</span> <span class="ow">in</span> <span class="p">[</span><span class="n">freq0</span><span class="p">,</span> <span class="n">freq1</span><span class="p">,</span> <span class="n">tw</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+                <span class="s1">&#39;The arguments freq0, freq1, and tw have to be defined if &#39;</span>
+                <span class="s1">&#39;dv does not have the attribute &quot;dv_processing&quot;.&#39;</span>
+            <span class="p">)</span>
+        <span class="n">skernels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_sensitivity_kernels</span><span class="p">(</span>
+            <span class="n">slat0</span><span class="p">,</span> <span class="n">slon0</span><span class="p">,</span> <span class="n">slat1</span><span class="p">,</span> <span class="n">slon1</span><span class="p">,</span> <span class="p">(</span><span class="n">tw</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">tw</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">vel</span><span class="p">,</span> <span class="n">mf_path</span><span class="p">)</span>
+        <span class="n">cd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_cd</span><span class="p">(</span><span class="n">skernels</span><span class="p">,</span> <span class="n">freq0</span><span class="p">,</span> <span class="n">freq1</span><span class="p">,</span> <span class="n">tw</span><span class="p">,</span> <span class="n">corrs</span><span class="p">)</span>
+
+        <span class="c1"># The actual inversion for the resolution</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">cm</span><span class="p">,</span> <span class="n">skernels</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">skernels</span><span class="p">,</span> <span class="n">cm</span><span class="p">),</span> <span class="n">skernels</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">+</span> <span class="n">cd</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_resolution</span><span class="p">(</span><span class="n">skernels</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span></div>
+
+    <span class="k">def</span> <span class="nf">_compute_resolution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">skernels</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+            <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The actual computation of the model resolution.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">skernels</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xgrid</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span>
+
+    <span class="k">def</span> <span class="nf">_extract_info_dvs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">dvs</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">DV</span><span class="p">],</span> <span class="n">utc</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+            <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract the reqired infos from a iterator over dv.</span>
+
+<span class="sd">        :param dvs: station-specific dvs to be used for the inversion</span>
+<span class="sd">        :type dvs: Iterable[DV]</span>
+<span class="sd">        :param utc: Time to perform the inversion for</span>
+<span class="sd">        :type utc: UTCDateTime</span>
+<span class="sd">        :raises ValueError: if ``utc`` is not covered by dvs</span>
+<span class="sd">        :return: dv/v estimates, coherency values, latituds_stat1,</span>
+<span class="sd">            longitudes_stat1, latitudes_stat2, longitudes_stat2.</span>
+<span class="sd">            All specific for time ``utc``</span>
+<span class="sd">        :rtype: Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vals</span><span class="p">,</span> <span class="n">corrs</span><span class="p">,</span> <span class="n">slat0</span><span class="p">,</span> <span class="n">slon0</span><span class="p">,</span> <span class="n">slat1</span><span class="p">,</span> <span class="n">slon1</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">dv</span> <span class="ow">in</span> <span class="n">dvs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">utc</span> <span class="o">&lt;</span> <span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">or</span> <span class="n">utc</span> <span class="o">&gt;</span> <span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;Time </span><span class="si">{</span><span class="n">utc</span><span class="si">}</span><span class="s1"> is outside of the dv time-series&#39;</span>
+                <span class="p">)</span>
+            <span class="n">ii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">)</span><span class="o">-</span><span class="n">utc</span><span class="p">))</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">dv</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+            <span class="n">corr</span> <span class="o">=</span> <span class="n">dv</span><span class="o">.</span><span class="n">corr</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">corr</span><span class="p">):</span>
+                <span class="c1"># No value</span>
+                <span class="k">continue</span>
+            <span class="n">vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="n">corrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">corr</span><span class="p">)</span>
+            <span class="n">slat0</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">stla</span><span class="p">)</span>
+            <span class="n">slon0</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">stlo</span><span class="p">)</span>
+            <span class="n">slat1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">evla</span><span class="p">)</span>
+            <span class="n">slon1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">evlo</span><span class="p">)</span>
+            <span class="n">processing</span> <span class="o">=</span> <span class="n">dv</span><span class="o">.</span><span class="n">dv_processing</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">vals</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;None of the given dvs have available data at </span><span class="si">{</span><span class="n">utc</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+        <span class="n">slat0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">slat0</span><span class="p">)</span>
+        <span class="n">slon0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">slon0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_stations</span><span class="p">(</span><span class="n">slat0</span><span class="p">,</span> <span class="n">slon0</span><span class="p">)</span>
+        <span class="n">slat1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">slat1</span><span class="p">)</span>
+        <span class="n">slon1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">slon1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_stations</span><span class="p">(</span><span class="n">slat1</span><span class="p">,</span> <span class="n">slon1</span><span class="p">)</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
+        <span class="n">corrs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">corrs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">processing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tw</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">processing</span><span class="p">[</span><span class="s1">&#39;tw_start&#39;</span><span class="p">],</span>
+                <span class="n">processing</span><span class="p">[</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">processing</span><span class="p">[</span><span class="s1">&#39;tw_len&#39;</span><span class="p">])</span>
+            <span class="n">freq0</span> <span class="o">=</span> <span class="n">processing</span><span class="p">[</span><span class="s1">&#39;freq_min&#39;</span><span class="p">]</span>
+            <span class="n">freq1</span> <span class="o">=</span> <span class="n">processing</span><span class="p">[</span><span class="s1">&#39;freq_max&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tw</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">freq0</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">freq1</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">vals</span><span class="p">,</span> <span class="n">corrs</span><span class="p">,</span> <span class="n">slat0</span><span class="p">,</span> <span class="n">slon0</span><span class="p">,</span> <span class="n">slat1</span><span class="p">,</span> <span class="n">slon1</span><span class="p">,</span> <span class="n">tw</span><span class="p">,</span> <span class="n">freq0</span><span class="p">,</span> <span class="n">freq1</span>
+
+    <span class="k">def</span> <span class="nf">_add_stations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lats</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">lons</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add Coordinates of the stations to self (coordinates are converted</span>
+<span class="sd">        from geographic coordinates to northing and easting).</span>
+
+<span class="sd">        :param lats: Station Latitudes</span>
+<span class="sd">        :type lats: Iterable[float]</span>
+<span class="sd">        :param lons: Station Longitudes</span>
+<span class="sd">        :type lons: Iterable[float]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">geo2cart</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lats</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lons</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">lat0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;statx&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">statx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">statx</span><span class="p">,</span> <span class="n">x</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">staty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">staty</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">statx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">staty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="c1"># make sure there are no duplicates</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">[(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">statx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">staty</span><span class="p">)]</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">coords</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">statx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">staty</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">coords</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">statx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">statx</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">staty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">staty</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_cd</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">skernels</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">freq0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">freq1</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="n">tw</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">corrs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the Variance of the data (in matrix form).</span>
+
+<span class="sd">        :param skernels: Sensitivity kernel matrix</span>
+<span class="sd">        :type skernels: np.ndarray</span>
+<span class="sd">        :param freq0: highpass frequency [Hz]</span>
+<span class="sd">        :type freq0: float</span>
+<span class="sd">        :param freq1: lowpass frequency [Hz]</span>
+<span class="sd">        :type freq1: float</span>
+<span class="sd">        :param tw: lapse time window used to determine dv/v</span>
+<span class="sd">        :type tw: Tuple[float, float]</span>
+<span class="sd">        :param corrs: Coherency values.</span>
+<span class="sd">        :type corrs: np.ndarray</span>
+<span class="sd">        :return: A diagonal matrix describing the data variance.</span>
+<span class="sd">        :rtype: np.ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">skernels</span><span class="p">))</span><span class="o">*</span><span class="n">data_variance</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">corrs</span><span class="p">),</span> <span class="n">freq1</span><span class="o">-</span><span class="n">freq0</span><span class="p">,</span> <span class="n">tw</span><span class="p">,</span> <span class="p">(</span><span class="n">freq1</span><span class="o">+</span><span class="n">freq0</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_dist_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes the distance from each cell to one another.</span>
+
+<span class="sd">        :return: 2D matrix holding distances between cells i and j.</span>
+<span class="sd">        :rtype: np.ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xf</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xf</span><span class="p">)))</span>
+        <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="p">(</span><span class="n">xx</span><span class="p">,</span> <span class="n">yy</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">yf</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dist</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">xf</span><span class="o">-</span><span class="n">xx</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">yf</span><span class="o">-</span><span class="n">yy</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dist</span>
+
+    <span class="k">def</span> <span class="nf">_find_coord</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">lat</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+            <span class="n">lon</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Finds a coordinate given in lat, lon on the Cartesian grid and</span>
+<span class="sd">        return its index</span>
+
+<span class="sd">        ..note:: The grid is flattened, so only one index i is returned</span>
+<span class="sd">            per lat/lon combination</span>
+
+<span class="sd">        :param lat: Latitude(s) of the points to determine</span>
+<span class="sd">        :type lat: float | np.ndarray</span>
+<span class="sd">        :param lon: Longitude(s) of the points to determine</span>
+<span class="sd">        :type lon: float | np.ndarray</span>
+<span class="sd">        :return: The indices of the points. Will have the same length</span>
+<span class="sd">            as lat/lon (note that either of the two can be a floating point</span>
+<span class="sd">            number).</span>
+<span class="sd">        :rtype: int | np.ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Find northing and easting of coordinates</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">geo2cart</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lat0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xf</span><span class="o">-</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="p">)</span> \
+                    <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">yf</span><span class="o">-</span><span class="n">y</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s1">&#39;The point is outside the coordinate grid&#39;</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xf</span><span class="o">-</span><span class="n">x</span><span class="p">)</span><span class="o">+</span><span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">yf</span><span class="o">-</span><span class="n">y</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xf</span><span class="o">-</span><span class="n">xx</span><span class="p">)</span> <span class="k">for</span> <span class="n">xx</span> <span class="ow">in</span> <span class="n">x</span><span class="p">])</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="p">)</span>\
+                <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">yf</span><span class="o">-</span><span class="n">yy</span><span class="p">)</span> <span class="k">for</span> <span class="n">yy</span> <span class="ow">in</span> <span class="n">y</span><span class="p">])</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;The point is outside the coordinate grid&#39;</span>
+            <span class="p">)</span>
+        <span class="n">ii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span>
+                <span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xf</span><span class="o">-</span><span class="n">xx</span><span class="p">)</span><span class="o">+</span><span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">yf</span><span class="o">-</span><span class="n">yy</span><span class="p">))</span> <span class="k">for</span> <span class="n">xx</span><span class="p">,</span> <span class="n">yy</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="n">ii</span>
+
+    <span class="k">def</span> <span class="nf">_compute_sensitivity_kernels</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">slat0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">slon0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">slat1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">slon1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">vel</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="n">mf_path</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes the sensitivity kernels of the station combinations station0</span>
+<span class="sd">        and station1.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            Station0 and station1 may be identical. Then, the output</span>
+<span class="sd">            corresponds to the sensitivity kernel of an auto or self</span>
+<span class="sd">            correlation.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            Handles computations for several dv objects, so the station</span>
+<span class="sd">            coordinates can be 1D arrays.</span>
+
+<span class="sd">        .. warning::</span>
+<span class="sd">            Low values for ``dt`` can produce artefacts. Very high values</span>
+<span class="sd">            lead to a drastically increased computational cost.</span>
+
+<span class="sd">        :param slat0: Latitude of the first station.</span>
+<span class="sd">        :type slat0: np.ndarray</span>
+<span class="sd">        :param slon0: Longitude of the first station</span>
+<span class="sd">        :type slon0: np.ndarray</span>
+<span class="sd">        :param slat1: Latitude of the second station.</span>
+<span class="sd">        :type slat1: np.ndarray</span>
+<span class="sd">        :param slon1: Longitude of the second station.</span>
+<span class="sd">        :type slon1: np.ndarray</span>
+<span class="sd">        :param t: Midpoint of the time lapse window used to evaluate dv/v.</span>
+<span class="sd">        :type t: float</span>
+<span class="sd">        :param dt: Resolution in which the numerical integration is</span>
+<span class="sd">            supposed to be performed. Note that low values produce artefacts.</span>
+<span class="sd">            High values have a high computational cost.</span>
+<span class="sd">        :type dt: float</span>
+<span class="sd">        :param vel: Wave velocity in the medium</span>
+<span class="sd">        :type vel: float</span>
+<span class="sd">        :param mf_path: Mean free path (i.e., distance until which a wave</span>
+<span class="sd">            entirely loses it&#39;s directional information).</span>
+<span class="sd">        :type mf_path: float</span>
+<span class="sd">        :return: Weighted matrix holding the sensitivity kernel for station i</span>
+<span class="sd">            on grid j</span>
+<span class="sd">        :rtype: np.ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span> <span class="o">=</span> <span class="n">geo2cart</span><span class="p">(</span><span class="n">slat0</span><span class="p">,</span> <span class="n">slon0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lat0</span><span class="p">)</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">geo2cart</span><span class="p">(</span><span class="n">slat1</span><span class="p">,</span> <span class="n">slon1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lat0</span><span class="p">)</span>
+        <span class="n">skernels</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">xx0</span><span class="p">,</span> <span class="n">yy0</span><span class="p">,</span> <span class="n">xx1</span><span class="p">,</span> <span class="n">yy1</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">):</span>
+            <span class="c1"># Station coordinates in cartesian</span>
+            <span class="n">s1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">xx0</span><span class="p">,</span> <span class="n">yy0</span><span class="p">])</span>
+            <span class="n">s2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">xx1</span><span class="p">,</span> <span class="n">yy1</span><span class="p">])</span>
+            <span class="n">sk</span> <span class="o">=</span> <span class="n">sensitivity_kernel</span><span class="p">(</span>
+                <span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xaxis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">yaxis</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">vel</span><span class="p">,</span> <span class="n">mf_path</span><span class="p">)</span>
+            <span class="n">skernels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sk</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">skernels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="n">t</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">skernels</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">skernels</span>
+
+<div class="viewcode-block" id="DVGrid.plot"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.spatial.DVGrid.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">plot_stations</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">cmap</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;seismic_r&#39;</span><span class="p">,</span>
+        <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">mpl</span><span class="o">.</span><span class="n">axis</span><span class="o">.</span><span class="n">Axis</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mpl</span><span class="o">.</span><span class="n">axis</span><span class="o">.</span><span class="n">Axis</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Simple heatplot of the dv/v grid in Cartesian coordinates.</span>
+
+<span class="sd">        :param plot_stations: plot station coordinates, defaults to True</span>
+<span class="sd">        :type plot_stations: bool, optional</span>
+<span class="sd">        :param cmap: Colormap to use, defaults to &#39;seismic&#39;</span>
+<span class="sd">        :type cmap: str, optional</span>
+<span class="sd">        :param ax: Axis to plot into, defaults to None</span>
+<span class="sd">        :type ax: Optional[mpl.axis.Axis], optional</span>
+<span class="sd">        :return: Returns the axis handle</span>
+<span class="sd">        :rtype: mpl.axis.Axis</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ax</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+            <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">mpl</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">TwoSlopeNorm</span><span class="p">(</span><span class="n">vcenter</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="nb">map</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span>
+            <span class="o">-</span><span class="mi">100</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vel_change</span><span class="p">),</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span>
+            <span class="n">extent</span><span class="o">=</span><span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">max</span><span class="p">()],</span>
+            <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">plot_stations</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">statx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">staty</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;v&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span>
+                <span class="n">s</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span>
+            <span class="nb">map</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;$\frac</span><span class="si">{dv}{v}</span><span class="s1">$ [%]&#39;</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Easting [km]&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Northing [km]&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ax</span></div></div>
+</pre></div>
+
+                </article>
+              
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright 2023, The SeisMIC development team..
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.3.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
