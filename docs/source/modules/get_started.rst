@@ -41,7 +41,20 @@ If you follow the instructions below, it should not be necessary to install depe
 Via PyPi
 ++++++++
 
-***Not yet possible*** 
+In general, we recommend using virtual environments (like conda or mamba).
+You can install SeisMIC from PyPi simply by executing the following commands:
+
+.. code-block:: bash
+
+    # Install mpi4py, we recommend using the precompiled version from conda-forge
+    conda install -c conda-forge mpi4py
+
+    # Install SeisMIC
+    pip install seismic
+
+.. note::
+
+    Developers should install SeisMIC from source code using GitHub's ``dev`` branch.
 
 Via GitHub
 ++++++++++
@@ -51,6 +64,15 @@ You can download the latest version of SeisMIC from `GitHub <https://github.com/
 After downloading just run the following commands **in the repository's folder**:
 
 .. code-blocK:: bash
+
+    # Download via wget or web-browser
+    wget https://github.com/PeterMakus/SeisMIC/archive/refs/heads/main.zip
+
+    # For developers download the dev branch
+    wget https://github.com/PeterMakus/SeisMIC/archive/refs/heads/dev.zip
+
+    # unzip the package
+    unzip main.zip  # or dev.zip
 
     # Change directory to the same directory that this repo is in (i.e., same directory as setup.py)
     cd $PathToThisRepo$

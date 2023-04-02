@@ -17,7 +17,7 @@ dependencies:
   - flake8
   - tqdm
   - pip:
-    - sphinx
+    - sphinx < 6.0
     - pydata-sphinx-theme
     - sphinx-copybutton
     - sphinxcontrib-mermaid
