@@ -435,7 +435,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Friday, 16th April 2021 03:21:30 pm</span>
-<span class="sd">Last Modified: Monday, 13th February 2023 10:33:35 am</span>
+<span class="sd">Last Modified: Monday, 3rd April 2023 02:36:49 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">ast</span>
 <span class="kn">import</span> <span class="nn">fnmatch</span>
@@ -673,7 +673,8 @@ document.write(`
         <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">3</span><span class="p">])</span>
         <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">channel</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">path</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">ch</span><span class="p">):</span>
-                <span class="n">out</span><span class="p">[</span><span class="n">match</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">path</span><span class="p">,</span> <span class="n">match</span><span class="p">])]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">match</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">k</span><span class="p">[:</span><span class="o">-</span><span class="mi">7</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">path</span><span class="p">,</span> <span class="n">match</span><span class="p">])]</span><span class="o">.</span><span class="n">keys</span><span class="p">())]</span>
         <span class="k">return</span> <span class="n">out</span></div>
 
 <div class="viewcode-block" id="DBHandler.get_available_channels"><a class="viewcode-back" href="../../../modules/API.html#seismic.db.corr_hdf5.DBHandler.get_available_channels">[docs]</a>    <span class="k">def</span> <span class="nf">get_available_channels</span><span class="p">(</span>
