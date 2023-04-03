@@ -24,7 +24,7 @@ If you follow the instructions below, it should not be necessary to install depe
 - geographiclib
 - h5py
 - matplotlib
-- mpi4py
+- mpi4py (see note below)
 - numpy
 - obspy
 - pip
@@ -38,10 +38,28 @@ If you follow the instructions below, it should not be necessary to install depe
 - sphinxcontrib-mermaid
 - tqdm
 
+.. note::
+
+    We recommend using the precompiled version of mpi4py from conda-forge. This might differ on your system if you
+    should experience problems with mpi4py, try a different precompiled version (for instance from PyPi).
+
 Via PyPi
 ++++++++
 
-***Not yet possible*** 
+In general, we recommend using virtual environments (like conda or mamba).
+You can install SeisMIC from PyPi simply by executing the following commands:
+
+.. code-block:: bash
+
+    # Install mpi4py, we recommend using the precompiled version from conda-forge
+    conda install -c conda-forge mpi4py
+
+    # Install SeisMIC
+    pip install seismic
+
+.. note::
+
+    Developers should install SeisMIC from source code using GitHub's ``dev`` branch.
 
 Via GitHub
 ++++++++++
@@ -51,6 +69,15 @@ You can download the latest version of SeisMIC from `GitHub <https://github.com/
 After downloading just run the following commands **in the repository's folder**:
 
 .. code-blocK:: bash
+
+    # Download via wget or web-browser
+    wget https://github.com/PeterMakus/SeisMIC/archive/refs/heads/main.zip
+
+    # For developers download the dev branch
+    wget https://github.com/PeterMakus/SeisMIC/archive/refs/heads/dev.zip
+
+    # unzip the package
+    unzip main.zip  # or dev.zip
 
     # Change directory to the same directory that this repo is in (i.e., same directory as setup.py)
     cd $PathToThisRepo$
@@ -64,6 +91,9 @@ After downloading just run the following commands **in the repository's folder**
     # Install your package
     pip install -e .
 
+    # optional: run the tests to see if your installation was successful
+    pytest tests
+
 .. note::
 
     While it is certainly recommendable to use a conda environment, you can also just install the package on your repository's python
@@ -73,4 +103,8 @@ Tutorial
 --------
 
 Along with the source code **SeisMIC** is distributed with a Jupyter notebook that provides you with an easy example on how
-to use the code in `examples/tutorial.ipynb`. Else, we recommend going throught this documentation.
+to use the code in `examples/tutorial.ipynb`.
+
+The tutorial is meant as a "kick-start" for you.
+
+Aside from the tutorial, we recommend you continue reading this documentation.

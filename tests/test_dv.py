@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 27th October 2021 12:58:15 pm
-Last Modified: Monday, 6th February 2023 04:37:05 pm
+Last Modified: Monday, 6th March 2023 11:40:07 am
 '''
 
 import unittest
@@ -26,7 +26,7 @@ from seismic.correlate.stats import CorrStats
 
 class TestDV(unittest.TestCase):
     def setUp(self):
-        sim_mat = np.reshape(np.arange(500), (10, 50))
+        sim_mat = np.reshape(np.arange(500), (10, 50))/500
         corr = np.max(sim_mat, axis=1)
         second_axis = np.random.random(50,)
         value = second_axis[np.argmax(sim_mat, axis=1)]
@@ -97,6 +97,13 @@ class TestDV(unittest.TestCase):
         np.testing.assert_allclose(dvc.sim_mat, self.dv.sim_mat)
         np.testing.assert_allclose(dvc.value, self.dv.value)
         np.testing.assert_allclose(dvc.corr, self.dv.corr)
+
+    def test_smooth_thres(self):
+        dvc = deepcopy(self.dv)
+        dvc.smooth_sim_mat(1, .5)
+        ii = self.dv.sim_mat < .5
+        np.testing.assert_array_equal(dvc.sim_mat[ii], np.nan)
+        np.testing.assert_allclose(dvc.sim_mat[~ii], self.dv.sim_mat[~ii])
 
 
 class TestReadDV(unittest.TestCase):

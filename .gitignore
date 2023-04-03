@@ -11,3 +11,5 @@ testnb.ipynb
 docs/_build
 docs/source/_build
 .coverage
+build
+dist

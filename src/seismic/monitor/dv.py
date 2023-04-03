@@ -8,12 +8,12 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Monday, 6th February 2023 04:36:34 pm
+Last Modified: Thursday, 9th March 2023 04:04:40 pm
 '''
 
 from datetime import datetime
 from glob import glob
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import warnings
 from zipfile import BadZipFile
 
@@ -186,17 +186,25 @@ class DV(object):
             normalize_simmat, sim_mat_Clim, figsize, dpi, xlim=xlim, ylim=ylim,
             title=title, plot_scatter=plot_scatter, return_ax=return_ax)
 
-    def smooth_sim_mat(self, win_len: int):
+    def smooth_sim_mat(
+            self, win_len: int, exclude_corr_below: Optional[float] = None):
         """
         Smoothes the similarity matrix along the correlation time axis.
 
         :param win_len: Length of the window in number of samples.
         :type win_len: int
+        :param exclude_corr_below: Exclude data points with a correlation
+            coefficient below the chosen threshold. Defaults to None (i.e.,
+            include all)
+        :type exclude_corr_below: float
 
         :note::
 
-            This action is perfomed in-place.
+            This action is perfomed in-place and irreversible as the original
+            data are not accesible any more.
         """
+        if exclude_corr_below is not None:
+            self.sim_mat[self.sim_mat < exclude_corr_below] = np.nan
         self.sim_mat = mu.nan_moving_av(self.sim_mat, int(win_len/2), axis=0)
 
         # Compute the dependencies again

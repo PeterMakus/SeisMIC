@@ -13,11 +13,11 @@
         click dv "../monitor/dv.html" "DV"
         classDef active fill:#f666, stroke-width:4px, stroke:#f06;
 
-Get Started (Compute your first Noise Correlations)
----------------------------------------------------
+Computing your first Noise Correlations
+---------------------------------------
 
 After having downloaded your data as shown `here <../trace_data/waveform.html#download-data>`_ (or retrieved seismic data any other way),
-we are ready to compute our first noise correlation!
+we are ready to compute our first noise correlations!
 In **SeisMIC**, parameters for the *preprocessing*, the *correlation*, and, subsequently,
 measuring the *change in seismic velocity* are provided as a *.yaml* file or as a python *dictionary*.
 An example for such a *.yaml* file is shown below (and provided in the repository as ``params_example.yaml``).
@@ -37,7 +37,7 @@ Setting the parameters
     # 'DEBUG', 'INFO', 'WARNING', 'ERROR', or 'CRITICAL'
     log_level: 'WARNING'
     # folder for figures
-    fig_subdir : 'figures'  # not in use yet
+    fig_subdir : 'figures'
 
 
     #### parameters that are network specific
@@ -46,11 +46,6 @@ Setting the parameters
         # type: list of strings or string, wildcards allowed
         network : 'D0'
         station : ['BZG', 'ESO', 'KBG', 'KIR']
-        # stations : ['D0.BZG', 'D0.ESO', 'D0.KBG', 'D0.KIR']
-        # list of channels
-        # type: list of strings
-        # actually not in use (yet)
-        # channels : ['HHZ','HHN','HHE']
 
     #### parameters for correlation (emperical Green's function creation)
     co:
@@ -76,7 +71,7 @@ Setting the parameters
         # native sampling_rate)
         sampling_rate : 25
         # Remove the instrument response, will take substantially more time
-        remove_response : False
+        remove_response : True
 
         # Method to combine different traces
         combination_method : 'betweenStations'
@@ -90,12 +85,13 @@ Setting the parameters
         # preprocessing of the original length time series
         # these function work on an obspy.Stream object given as first argument
         # and return an obspy.Stream object.
+        # available preimplemented functions are in seismic.correlate.preprocessing_stream
         preProcessing : [
                         {'function':'seismic.correlate.preprocessing_stream.detrend_st',
                         'args':{'type':'linear'}},
                         {'function':'seismic.correlate.preprocessing_stream.cos_taper_st',
-                        'args':{'taper_len': 10, # seconds
-                                'taper_at_masked': True}},
+                        'args':{'taper_len': 100, # seconds
+                                'lossless': True}}, # lossless tapering stitches additional data to trace, tapers, and removes the tapered ends after preprocessing
                         {'function':'seismic.correlate.preprocessing_stream.stream_filter',
                         'args':{'ftype':'bandpass',
                                 'filter_option':{'freqmin':0.01, #0.01
@@ -120,7 +116,7 @@ Setting the parameters
             delete_subdivision : False
 
         # parameters for correlation preprocessing
-        # Standard functions reside in seismic.correlate.preprocessing_td
+        # Standard functions reside in seismic.correlate.preprocessing_td and preprocessing_fd, respectively
         corr_args : {'TDpreProcessing':[
                                         {'function':'seismic.correlate.preprocessing_td.detrend',
                                         'args':{'type':'linear'}},
@@ -152,11 +148,6 @@ Setting the parameters
                     'combinations':[]
                     }
 
-        # Component rotation (only possible if 'direct_output' is not in 'corr_args')
-        # type: string ['NO', 'ZNE->ZRT', 'NE->RT']
-        # Not used yet
-        rotation : 'NO'
-
 
     #### parameters for the estimation of time differences
     dv:
@@ -178,11 +169,53 @@ Setting the parameters
 
         ### Definition of lapse time window
         tw_start : 20     # lapse time of first sample [s]
-        tw_len : 60       # length of window [s]
+        tw_len : 60       # length of window [s] Can be None if the whole (rest) of the coda should be used
+        sides : 'both'   # options are left (for acausal), right (causal), both, or single (for active source experiments where the first sample is the trigger time)
+        compute_tt : True  # Computes the travel time and adds it to tw_start (tt is 0 if not xstations). If true a rayleigh wave velocity has to be provided
+        rayleigh_wave_velocity : 1  # rayleigh wave velocity in km/s, will be ignored if compute_tt=False
         
+
         ### Range to try stretching
         stretch_range : 0.03
         stretch_steps : 1001
+    
+        #### Reference trace extraction
+        #  win_inc : Length in days of each reference time window to be used for trace extraction
+        # If == 0, only one trace will be extracted
+        # If > 0, mutliple reference traces will be used for the dv calculation
+        # Can also be a list if the length of the windows should vary
+        # See seismic.correlate.stream.CorrBulk.extract_multi_trace for details on arguments
+        dt_ref : {'win_inc' : 0, 'method': 'mean', 'percentile': 50}
+
+        # preprocessing on the correlation bulk or corr_stream before stretch estimation
+        preprocessing: [
+                        #{'function': 'pop_at_utcs', 'args': {'utcs': np.array([UTCDateTime()])},
+                        {'function': 'smooth', 'args': {'wsize': 48, 'wtype': 'hanning', 'axis': 1}}
+        ]
+
+        # postprocessing of dv objects before saving and plotting
+        postprocessing: [
+                        {'function': 'smooth_sim_mat', 'args': {'win_len': 7, exclude_corr_below: 0}}
+        ]
+
+    #### parameters to compute the waveform coherence
+    wfc:
+    # subfolder for storage of time difference results
+        subdir : 'wfc'
+
+        ### Definition of calender time windows for the time difference measurements
+        start_date : '2015-05-01 00:00:00.0'   # %Y-%m-%dT%H:%M:%S.%fZ'
+        end_date : '2016-01-01 00:00:00.0'
+        win_len : 86400                         # length of window in which EGFs are stacked
+        date_inc : 86400                        # increment of measurements
+
+        ### Frequencies
+        freq_min : 4
+        freq_max : 8
+
+        ### Definition of lapse time window
+        tw_start : 20     # lapse time of first sample [s]
+        tw_len : 60       # length of window [s]
     
         #### Reference trace extraction
         #  win_inc : Length in days of each reference time window to be used for trace extraction
@@ -197,12 +230,13 @@ Setting the parameters
                         {'function': 'smooth', 'args': {'wsize': 48, 'wtype': 'hanning', 'axis': 1}}
         ]
 
-        # postprocessing of dv objects before saving and plotting
-        postprocessing: [
-                        {'function': 'smooth_sim_mat', 'args': {'win_len': 7}}
-        ]
+        ### SAVING
+        # save components separately or only their average?
+        save_comps: False
 
-This might look a little intimidating at first glancec, but is actually quite straight-forward.
+
+
+This might look a little intimidating at first glancec, but it is actually quite straight-forward.
 To achieve a better understanding of what each of the parameters do, let's have a close look at them individually.
 
 Project Wide Parameters
@@ -225,6 +259,7 @@ Project Wide Parameters
 Those are parameters that govern the logging and the file-structure. ``proj_dir`` is the root directory, we have chosen when initialising our 
 :py:class:`~seismic.trace_data.waveform.Store_Client` as shown `here <../trace_data/waveform.html#download-data>`_ .
 ``fig_dir`` and ``log_dir`` are just subdirectories for figures and logs, respectively, and the log level decides how much will actually be logged.
+In most cases, *WARNING* is the appropriate choice - everything below will start spitting out a lot of information.
 
 Network Specific Parameters
 ===========================
@@ -244,6 +279,8 @@ Here, we decide which data to use (i.e., which data the correlator will look for
 .. note::
 
     If both ``network`` and ``station`` are lists, they have to have the same length.
+    The corresponding logic is: `[net0, net1, net2, net3]` and `[stat0, stat1, stat2, stat3]`
+    and so on.
 
 Correlation Arguments
 =====================
@@ -303,7 +340,7 @@ Let's start by getting the most obvious parameters out of the way:
 + ``Sampling_rate`` is the new sampling rate you will want your data to have. **SeisMIC** will take care of anti-alias filtering and determine whether data can be decimated.
 + ``remove_response`` if you want the data to be corrected for the instrument response, set this to ``True``.
 + ``combination_method`` decides which components you will want to correlate. See :py:func:`~seismic.correlate.correlate.calc_cross_combis` for allowed options.
-+ ``xcombinations`` If you want to save some computational resources and only compute specific combinations, use this function. If you want to limit the maximum distance between stations to cross-correlate you can use :py:meth:`seismic.correlate.correlate.Correlator.find_interstat_dist`
++ ``xcombinations`` If you want to save some computational resources and only compute specific combinations, use this function. If you want to limit the maximum distance between stations to cross-correlate you can use :py:meth:`seismic.correlate.correlate.Correlator.find_interstat_dist` to compute this parameter
 
 
 Preprocessing Arguments

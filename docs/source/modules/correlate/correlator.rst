@@ -58,3 +58,7 @@ This script can be iniated in bash using:
 
 where ``$number_cores$`` is the number of cores you want to initialise. The only method of :py:class:`~seismic.correlate.correlate.Correlator`
 that you will want to use is :py:meth:`~seismic.correlate.correlate.Correlator.pxcorr()`, which does not require any (additional) input.
+
+.. note::
+    On some MPI versions, the parameters are named differently. For example (`-n` could correspond to `-c`). When in doubt, refer to the help
+    or man page of your `mpirun` `mpiexec` command.

@@ -100,6 +100,15 @@ Module to handle velocity change objects.
     :members:
     :show-inheritance:
 
+seismic.monitor.spatial
++++++++++++++++++++++++
+Module to invert velocity change time series from a set of correlations to a spatial velocity field. Base on the algorithm proposed in
+[Obermann et al. (2013)](https://doi.org/10.1002/2013JB010399).
+
+.. automodule:: seismic.monitor.spatial
+    :members:
+    :show-inheritance:
+
 seismic.monitor.post_corr_process
 ++++++++++++++++++++++++++++++++++
 Holds the postprocessing functions for CorrBulks.

@@ -135,5 +135,12 @@ you will have to pay attention to a couple of particularities:
 
 If there had been any data in our :py:class:`~seismic.correlate.stream.CorrStream`, we could retrieve it as shown above.
 Network, station, and channel information are determined automatically from the :py:class:`~seismic.correlate.stream.CorrTrace` header.
+
+Why won't SeisMIC allow me to an old file again?
+################################################
+
+Sometimes when re-executing your correlation workflow, you might encounter a ``PermissionError``. This happens whenever you change your processing
+parameters in your *params.yaml* file under *corr*. Essentially, SeisMIC prevents you from mixing correlations that have been processed in different
+ways. **So if you want to recompute your correlations with a new set of processing parameters, you need to write them to a different folder!**
     
     

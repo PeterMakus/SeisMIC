@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Thursday, 16th February 2023 02:06:16 pm
+Last Modified: Wednesday, 22nd February 2023 03:43:40 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable
 import warnings
@@ -556,7 +556,7 @@ class DVGrid(object):
         """
         The actual computation of the model resolution.
         """
-        res = np.dot(np.dot(a, b), skernels)
+        res = np.sum(np.dot(np.dot(a, b), skernels), axis=-1)
         self.resolution = res.reshape(self.xgrid.shape)
         return self.resolution
 

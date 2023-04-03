@@ -8,9 +8,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 31st January 2023 03:06:46 pm
+Last Modified: Thursday, 9th March 2023 03:59:12 pm
 '''
 from copy import deepcopy
+import json
 import logging
 import os
 from typing import Generator, List, Tuple
@@ -31,7 +32,7 @@ from seismic.utils.miic_utils import log_lvl
 
 
 class Monitor(object):
-    def __init__(self, options: dict or str):
+    def __init__(self, options: dict | str):
         """
         Object that handles the computation of seismic velocity changes.
         This will access correlations that have been computed previously with
@@ -95,6 +96,23 @@ class Monitor(object):
         consoleHandler = logging.StreamHandler()
         consoleHandler.setFormatter(fmt)
         self.logger.addHandler(consoleHandler)
+
+        # Write the options dictionary to the log file
+        if self.rank == 0:
+            opt_dump = deepcopy(options)
+            # json cannot write the UTCDateTime objects that might be in here
+            for step in opt_dump['co']['preProcessing']:
+                if 'stream_mask_at_utc' in step['function']:
+                    startsstr = [
+                        t.format_fissures() for t in step['args']['starts']]
+                    step['args']['starts'] = startsstr
+                    if 'ends' in step['args']:
+                        endsstr = [
+                            t.format_fissures() for t in step['args']['ends']]
+                        step['args']['ends'] = endsstr
+            with open(os.path.join(
+                    logdir, 'params%s.txt' % tstr), 'w') as file:
+                file.write(json.dumps(opt_dump, indent=1))
 
         # Find available stations and network
         self.netlist, self.statlist, self.infiles = \
@@ -201,6 +219,13 @@ class Monitor(object):
                 f'appropriate value for lengthToSave. The value was {lts}.'
                 f' The direct-line distance between the stations is {d} km.'
             )
+
+        if 'preprocessing' in self.options['dv']:
+            for func in self.options['dv']['preprocessing']:
+                # This one goes on the CorrStream
+                if func['function'] == 'pop_at_utcs':
+                    f = cst.__getattribute__(func['function'])
+                    cst = f(**func['args'])
         cb = cst.create_corr_bulk(
             network=network, station=station, channel=channel, inplace=True)
 
@@ -216,6 +241,8 @@ class Monitor(object):
         # Preprocessing on the correlation bulk
         if 'preprocessing' in self.options['dv']:
             for func in self.options['dv']['preprocessing']:
+                if func['function'] == 'pop_at_utcs':
+                    continue
                 f = cb.__getattribute__(func['function'])
                 cb = f(**func['args'])
 
