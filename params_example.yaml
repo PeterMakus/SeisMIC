@@ -72,6 +72,10 @@ co:
                      #         'mute_value':3}}
                     ]
     # subdivision of the read sequences for correlation
+      # if this is set the stream processing will happen on the hourly subdivision. This has the
+    # advantage that data that already exists will not need to be preprocessed again
+    # On the other hand, computing a whole new database might be slower
+    preprocess_subdiv: True
     # type: presence of this key
     subdivision:
         # type: float [seconds]
