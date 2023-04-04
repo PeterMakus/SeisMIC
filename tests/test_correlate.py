@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Monday, 3rd April 2023 02:43:12 pm
+Last Modified: Tuesday, 4th April 2023 04:40:39 pm
 '''
 from copy import deepcopy
 import unittest
@@ -37,6 +37,7 @@ class TestCorrrelator(unittest.TestCase):
             'params_example.yaml')
         with open(self.param_example) as file:
             self.options = yaml.load(file, Loader=yaml.FullLoader)
+        self.options['co']['preprocess_subdiv'] = True
 
     @mock.patch('seismic.correlate.correlate.yaml.load')
     @mock.patch('builtins.open')
@@ -367,6 +368,7 @@ class TestCorrrelator(unittest.TestCase):
         for call in dbh_mock().add_correlation.call_args_list:
             self.assertEqual(3, call[0][0].count())
 
+    @mock.patch('seismic.utils.miic_utils.resample_or_decimate')
     @mock.patch('seismic.correlate.correlate.calc_cross_combis')
     @mock.patch('seismic.correlate.correlate.preprocess_stream')
     @mock.patch('seismic.correlate.correlate.mu.get_valid_traces')
@@ -375,7 +377,7 @@ class TestCorrrelator(unittest.TestCase):
     @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_generate(
         self, makedirs_mock, logging_mock, open_mock, gvt_mock,
-            ppst_mock, ccc_mock):
+            ppst_mock, ccc_mock, rod_mock):
         options = deepcopy(self.options)
         options['co']['subdivision']['corr_inc'] = 5
         options['co']['subdivision']['corr_len'] = 5
@@ -386,6 +388,7 @@ class TestCorrrelator(unittest.TestCase):
         sc_mock.inventory = self.inv
         sc_mock._load_local.return_value = self.st
         ppst_mock.return_value = self.st
+        rod_mock.return_value = self.st
         c = correlate.Correlator(sc_mock, options)
         c.station = [['AA', '00'], ['AA', '22'], ['AA', '33'], ['BB', '00']]
         ostart = None
@@ -395,6 +398,7 @@ class TestCorrrelator(unittest.TestCase):
                 # the right place
                 self.assertAlmostEqual(win[0].stats.starttime - ostart, 5)
             ostart = win[0].stats.starttime
+            # The last one could be shorter
             self.assertAlmostEqual(
                 win[0].stats.endtime-win[0].stats.starttime, 5, 1)
 
@@ -729,24 +733,6 @@ class TestPreProcessStream(unittest.TestCase):
         self.assertEqual(
             correlate.preprocess_stream(Stream(), **self.kwargs), Stream())
 
-    def test_wrong_sr(self):
-        x = np.random.randint(1, 100)
-        sr = self.st[0].stats.sampling_rate + x
-        kwargs = deepcopy(self.kwargs)
-        kwargs['sampling_rate'] = sr
-        with self.assertRaises(ValueError):
-            correlate.preprocess_stream(self.st, **kwargs)
-
-    def test_decimate(self):
-        st = correlate.preprocess_stream(self.st.copy(), **self.kwargs)
-        self.assertEqual(25, st[0].stats.sampling_rate)
-
-    def test_resample(self):
-        kwargs = deepcopy(self.kwargs)
-        kwargs['sampling_rate'] = 23
-        st = correlate.preprocess_stream(self.st.copy(), **kwargs)
-        self.assertEqual(23, st[0].stats.sampling_rate)
-
     def test_pad(self):
         kwargs = deepcopy(self.kwargs)
         kwargs['startt'] -= 10
@@ -770,7 +756,7 @@ class TestPreProcessStream(unittest.TestCase):
     def test_discard_short(self):
         kwargs = deepcopy(self.kwargs)
         kwargs['startt'] += 15
-        kwargs['endt'] -= 15
+        kwargs['endt'] -= 5
         kwargs['subdivision']['corr_len'] = 200
         st = correlate.preprocess_stream(self.st.copy(), **kwargs)
         self.assertFalse(st.count())

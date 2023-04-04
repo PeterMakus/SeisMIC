@@ -5,7 +5,7 @@ proj_dir : 'data'
 log_subdir : 'log'
 # levels:
 # 'DEBUG', 'INFO', 'WARNING', 'ERROR', or 'CRITICAL'
-log_level: 'DEBUG'
+log_level: 'WARNING'
 # folder for figures
 fig_subdir : 'figures'
 
@@ -80,6 +80,10 @@ co:
     # if this is set the stream processing will happen on the hourly subdivision. This has the
     # advantage that data that already exists will not need to be preprocessed again
     # On the other hand, computing a whole new database might be slower
+    # Recommended to be set to True if:
+    # a) You update your database and a lot of the data is already available (up to a magnitude faster)
+    # b) corr_len is close to read_len
+    # Is automatically set to False if you are computing a completely new db
     preprocess_subdiv: True
     # type: presence of this key
     subdivision:

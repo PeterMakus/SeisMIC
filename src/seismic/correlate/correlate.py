@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 4th April 2023 02:43:08 pm
+Last Modified: Tuesday, 4th April 2023 04:34:03 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -18,7 +18,6 @@ import logging
 import json
 import warnings
 import yaml
-import time
 
 from mpi4py import MPI
 import numpy as np
@@ -293,7 +292,6 @@ class Correlator(object):
                     self._write(cst, tag='subdivision')
                     cst.clear()
 
-
         # write the remaining data
         if self.options['subdivision']['recombine_subdivision'] and \
                 cst.count():
@@ -403,6 +401,17 @@ class Correlator(object):
             # find already available times
             self.ex_dict = self.find_existing_times('subdivision')
             self.logger.info('Already existing data: %s' % str(self.ex_dict))
+        else:
+            self.ex_dict = None
+
+        self.ex_dict = self.comm.bcast(self.ex_dict, root=0)
+
+        if not self.ex_dict and self.options['preprocess_subdiv']:
+            self.options['preprocess_subdiv'] = False
+            if self.rank == 0:
+                self.logger.warning(
+                    'No existing data found.\nAutomatically setting '
+                    'preprocess_subdiv to False to optimise performance.')
 
         # the time window that the loop will go over
         t0 = UTCDateTime(self.options['read_start']).timestamp
@@ -446,10 +455,6 @@ class Correlator(object):
                     continue
                 st.extend(stext)
 
-            # When there are fewer stations than cores
-            if not st.count():
-                continue
-
             # Stream based preprocessing
             # Downsampling
             # 04/04/2023 Downsample before preprocessing for performance
@@ -474,7 +479,7 @@ class Correlator(object):
             # -> Loop over correlation increments
             for ii, win in enumerate(generate_corr_inc(st, **self.options)):
                 winstart = startt + ii*self.options['subdivision']['corr_inc']
-                winend = winstart + ii*self.options['subdivision']['corr_len']
+                winend = winstart + self.options['subdivision']['corr_len']
 
                 # Gather time windows from all stations to all cores
                 winl = self.comm.allgather(win)
@@ -504,17 +509,27 @@ class Correlator(object):
                     np.hstack(self.options['combinations']))
                 popindices = np.flip(
                     np.setdiff1d(win_indices, combindices))
-                print(popindices)
-                print(combindices)
-                print(win_indices)
                 for popi in popindices:
                     del win[popi]
+                # now we have to recompute the combinations
+                if len(popindices):
+                    self.logger.debug('removing redundant data.')
+                    if self.rank == 0:
+                        self.logger.debug('Recalculating combinations...')
+                        self.options['combinations'] = calc_cross_combis(
+                            win, self.ex_dict,
+                            self.options['combination_method'],
+                            rcombis=self.rcombis)
+                    else:
+                        self.options['combinations'] = None
+                    self.options['combinations'] = self.comm.bcast(
+                        self.options['combinations'], root=0)
                 # Stream based preprocessing
                 if self.options['preprocess_subdiv']:
                     try:
                         self.logger.debug('Preprocessing stream...')
                         win = preprocess_stream(
-                            win, self.store_client, resp, startt, endt, tl,
+                            win, self.store_client, resp, winstart, winend, tl,
                             **self.options)
                     except ValueError as e:
                         self.logger.error(
@@ -1223,9 +1238,7 @@ def preprocess_stream(
     # Clip to these again to remove the taper
     old_starts = [deepcopy(tr.stats.starttime) for tr in st]
     old_ends = [deepcopy(tr.stats.endtime) for tr in st]
-    for tr in st:
-        if tr.stats.station == 'EDM':
-            continue
+
     if remove_response:
         # taper before instrument response removal
         if taper_len:
