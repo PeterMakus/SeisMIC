@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 4th April 2023 04:34:03 pm
+Last Modified: Tuesday, 4th April 2023 04:46:03 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -721,12 +721,12 @@ def _compare_existing_data(ex_corr: dict, tr0: Trace, tr1: Trace) -> bool:
     # try:
     try:
         if flip:
-            return corr_start.format_fissures()[:-7] in ex_corr[
+            return corr_start.format_fissures() in ex_corr[
                 f'{net1}.{stat1}'][f'{net0}.{stat0}'][
                 '%s-%s' % (
                     tr1.stats.channel, tr0.stats.channel)]
         else:
-            return corr_start.format_fissures()[:-7] in ex_corr[
+            return corr_start.format_fissures() in ex_corr[
                 f'{net0}.{stat0}'][f'{net1}.{stat1}'][
                 '%s-%s' % (
                     tr0.stats.channel, tr1.stats.channel)]
