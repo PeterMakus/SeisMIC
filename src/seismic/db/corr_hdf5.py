@@ -248,7 +248,8 @@ omitted." % path, category=UserWarning)
         path = '/'.join(path.split('/')[:-3])
         for ch in channel:
             for match in fnmatch.filter(self[path].keys(), ch):
-                out[match] = list(self['/'.join([path, match])].keys())
+                out[match] = [
+                    k[:-7] for k in list(self['/'.join([path, match])].keys())]
         return out
 
     def get_available_channels(

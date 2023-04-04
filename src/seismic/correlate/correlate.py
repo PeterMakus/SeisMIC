@@ -718,7 +718,6 @@ def _compare_existing_data(ex_corr: dict, tr0: Trace, tr1: Trace) -> bool:
     flip = ([net0, net1], [stat0, stat1]) != sort_comb_name_alphabetically(
         net0, stat0, net1, stat1)
     corr_start = max(tr0.stats.starttime, tr1.stats.starttime)
-    # try:
     try:
         if flip:
             return corr_start.format_fissures() in ex_corr[
