@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Monday, 6th February 2023 04:32:16 pm
+Last Modified: Tuesday, 4th April 2023 02:51:22 pm
 '''
 from typing import List, Tuple
 import logging
@@ -137,6 +137,8 @@ def resample_or_decimate(
     :return: The resampled stream
     :rtype: Stream
     """
+    if not len(data):
+        return data
     if isinstance(data, Stream):
         sr = data[0].stats.sampling_rate
         srl = [tr.stats.sampling_rate for tr in data]

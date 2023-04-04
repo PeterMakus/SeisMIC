@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 3rd April 2023 02:34:34 pm
+Last Modified: Tuesday, 4th April 2023 04:46:03 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -21,7 +21,7 @@ import yaml
 
 from mpi4py import MPI
 import numpy as np
-from obspy import Stream, UTCDateTime, Inventory
+from obspy import Stream, UTCDateTime, Inventory, Trace
 from tqdm import tqdm
 
 from seismic.correlate.stream import CorrTrace, CorrStream
@@ -254,6 +254,8 @@ class Correlator(object):
         initiating the object.
         """
         cst = CorrStream()
+        if self.rank == 0:
+            self.logger.debug('Reading Inventory files.')
         # Fetch station coordinates
         if self.rank == 0:
             try:
@@ -271,9 +273,11 @@ class Correlator(object):
         else:
             inv = None
         inv = self.comm.bcast(inv, root=0)
+
         for st, write_flag in self._generate_data():
             cst.extend(self._pxcorr_inner(st, inv))
             if write_flag:
+                self.logger.debug('Writing Correlations to file.')
                 # Here, we can recombine the correlations for the read_len
                 # size (i.e., stack)
                 # Write correlations to HDF5
@@ -304,6 +308,8 @@ class Correlator(object):
         # We start out by moving the stream into a matrix
         # Advantage of only doing this on rank 0?
         if self.rank == 0:
+            self.logger.debug(
+                'Converting Stream to Matrix')
             # put all the data into a single stream
             starttime = []
             npts = []
@@ -320,7 +326,6 @@ class Correlator(object):
         starttime = self.comm.bcast(starttime, root=0)
         npts = self.comm.bcast(npts, root=0)
         st = self.comm.bcast(st, root=0)
-
         # Tell the other processes the shape of A
         As = self.comm.bcast(As, root=0)
         if self.rank != 0:
@@ -331,8 +336,9 @@ class Correlator(object):
             {'starttime': starttime,
                 'sampling_rate': self.sampling_rate})
 
+        self.logger.debug('Computing Cross-Correlations.')
         A, startlags = self._pxcorr_matrix(A)
-
+        self.logger.debug('Converting Matrix to CorrStream.')
         # put trace into a stream
         cst = CorrStream()
         if A is None:
@@ -395,6 +401,17 @@ class Correlator(object):
             # find already available times
             self.ex_dict = self.find_existing_times('subdivision')
             self.logger.info('Already existing data: %s' % str(self.ex_dict))
+        else:
+            self.ex_dict = None
+
+        self.ex_dict = self.comm.bcast(self.ex_dict, root=0)
+
+        if not self.ex_dict and self.options['preprocess_subdiv']:
+            self.options['preprocess_subdiv'] = False
+            if self.rank == 0:
+                self.logger.warning(
+                    'No existing data found.\nAutomatically setting '
+                    'preprocess_subdiv to False to optimise performance.')
 
         # the time window that the loop will go over
         t0 = UTCDateTime(self.options['read_start']).timestamp
@@ -439,21 +456,30 @@ class Correlator(object):
                 st.extend(stext)
 
             # Stream based preprocessing
-            try:
-                st = preprocess_stream(
-                    st, self.store_client, resp, startt, endt, tl,
-                    **self.options)
-            except ValueError as e:
-                self.logger.error(
-                    'Stream preprocessing failed for '
-                    f'{st[0].stats.network}.{st[0].stats.station} and time '
-                    f'{t}.\nThe Original Error Message was {e}.')
-                continue
+            # Downsampling
+            # 04/04/2023 Downsample before preprocessing for performance
+            # Check sampling frequency
+            sampling_rate = self.options['sampling_rate']
+            # AA-Filter is done in this function as well
+            st = mu.resample_or_decimate(st, sampling_rate)
+
+            if not self.options['preprocess_subdiv']:
+                try:
+                    self.logger.debug('Preprocessing stream...')
+                    st = preprocess_stream(
+                        st, self.store_client, resp, startt, endt, tl,
+                        **self.options)
+                except ValueError as e:
+                    self.logger.error(
+                        'Stream preprocessing failed for '
+                        f'{st[0].stats.network}.{st[0].stats.station} and time'
+                        f' {t}.\nThe Original Error Message was {e}.')
+                    continue
             # Slice the stream in correlation length
             # -> Loop over correlation increments
             for ii, win in enumerate(generate_corr_inc(st, **self.options)):
                 winstart = startt + ii*self.options['subdivision']['corr_inc']
-                winend = winstart + ii*self.options['subdivision']['corr_len']
+                winend = winstart + self.options['subdivision']['corr_len']
 
                 # Gather time windows from all stations to all cores
                 winl = self.comm.allgather(win)
@@ -463,6 +489,7 @@ class Correlator(object):
 
                 # Get correlation combinations
                 if self.rank == 0:
+                    self.logger.debug('Calculating combinations...')
                     self.options['combinations'] = calc_cross_combis(
                         win, self.ex_dict, self.options['combination_method'],
                         rcombis=self.rcombis)
@@ -476,6 +503,48 @@ class Correlator(object):
                     self.logger.info(
                         f'No new data for times {winstart}-{winend}')
                     continue
+                # Remove traces that won't be accessed at all
+                win_indices = np.arange(len(win))
+                combindices = np.unique(
+                    np.hstack(self.options['combinations']))
+                popindices = np.flip(
+                    np.setdiff1d(win_indices, combindices))
+                for popi in popindices:
+                    del win[popi]
+                # now we have to recompute the combinations
+                if len(popindices):
+                    self.logger.debug('removing redundant data.')
+                    if self.rank == 0:
+                        self.logger.debug('Recalculating combinations...')
+                        self.options['combinations'] = calc_cross_combis(
+                            win, self.ex_dict,
+                            self.options['combination_method'],
+                            rcombis=self.rcombis)
+                    else:
+                        self.options['combinations'] = None
+                    self.options['combinations'] = self.comm.bcast(
+                        self.options['combinations'], root=0)
+                # Stream based preprocessing
+                if self.options['preprocess_subdiv']:
+                    try:
+                        self.logger.debug('Preprocessing stream...')
+                        win = preprocess_stream(
+                            win, self.store_client, resp, winstart, winend, tl,
+                            **self.options)
+                    except ValueError as e:
+                        self.logger.error(
+                            'Stream preprocessing failed for '
+                            f'{st[0].stats.network}.{st[0].stats.station}'
+                            ' and time '
+                            f'{t}.\nThe Original Error Message was {e}.')
+                        continue
+
+                if not len(win):
+                    # no new combinations for this time period
+                    self.logger.info(
+                        f'No new data for times {winstart}-{winend}')
+                    continue
+
                 self.logger.debug('Working on correlation times %s-%s' % (
                     str(win[0].stats.starttime), str(win[0].stats.endtime)))
                 yield win, write_flag
@@ -639,24 +708,29 @@ def st_to_np_array(st: Stream, npts: int) -> Tuple[np.ndarray, Stream]:
     return A, st
 
 
-def _compare_existing_data(ex_corr: dict, tr0: Stream, tr1: Stream) -> bool:
+def _compare_existing_data(ex_corr: dict, tr0: Trace, tr1: Trace) -> bool:
+    # The actual starttime for the header is the later one of the two
+    net0 = tr0.stats.network
+    stat0 = tr0.stats.station
+    net1 = tr1.stats.network
+    stat1 = tr1.stats.station
+    # Probably faster than checking a huge dict twice
+    flip = ([net0, net1], [stat0, stat1]) != sort_comb_name_alphabetically(
+        net0, stat0, net1, stat1)
+    corr_start = max(tr0.stats.starttime, tr1.stats.starttime)
     try:
-        if tr0.stats.starttime.format_fissures()[:-7] in ex_corr[
-            f'{tr0.stats.network}.{tr0.stats.station}'][
-                f'{tr1.stats.network}.{tr1.stats.station}'][
-            '%s-%s' % (
-                tr0.stats.channel, tr1.stats.channel)]:
-            return True
-    except KeyError:
-        try:
-            if tr1.stats.starttime.format_fissures()[:-7] in ex_corr[
-                f'{tr1.stats.network}.{tr1.stats.station}'][
-                    f'{tr0.stats.network}.{tr0.stats.station}'][
+        if flip:
+            return corr_start.format_fissures() in ex_corr[
+                f'{net1}.{stat1}'][f'{net0}.{stat0}'][
                 '%s-%s' % (
-                    tr1.stats.channel, tr0.stats.channel)]:
-                return True
-        except KeyError:
-            pass
+                    tr1.stats.channel, tr0.stats.channel)]
+        else:
+            return corr_start.format_fissures() in ex_corr[
+                f'{net0}.{stat0}'][f'{net1}.{stat1}'][
+                '%s-%s' % (
+                    tr0.stats.channel, tr1.stats.channel)]
+    except KeyError:
+        pass
     return False
 
 
@@ -1120,7 +1194,7 @@ def compute_network_station_combinations(
 def preprocess_stream(
     st: Stream, store_client: Store_Client, inv: Inventory or None,
     startt: UTCDateTime, endt: UTCDateTime, taper_len: float,
-    sampling_rate: float, remove_response: bool, subdivision: dict,
+    remove_response: bool, subdivision: dict,
     preProcessing: List[dict] = None,
         **kwargs) -> Stream:
     """
@@ -1141,9 +1215,6 @@ def preprocess_stream(
         taper to mitigate the acausal effects of the deconvolution. This is
         the length of such a taper in seconds.
     :type taper_len: float
-    :param sampling_rate: the sampling rate that the stream should be resampled
-        to in Hz.
-    :type sampling_rate: float
     :param remove_response: Should the instrument response be removed?
     :type remove_response: bool
     :param subdivision: Dictionary holding information about the correlation
@@ -1162,23 +1233,11 @@ def preprocess_stream(
     # To deal with any nans/masks
     st = st.split()
     st.sort(keys=['starttime'])
-    # Check sampling frequency
-    if sampling_rate > st[0].stats.sampling_rate:
-        raise ValueError(
-            'The new sample rate (%sHz) is higher than the trace\'s native' % (
-                str(sampling_rate))
-            + 'sample rate (%s Hz).' % (str(st[0].stats.sampling_rate)))
-
-    # Downsample
-    # AA-Filter is done in this function as well
-    st = mu.resample_or_decimate(st, sampling_rate)
 
     # Clip to these again to remove the taper
     old_starts = [deepcopy(tr.stats.starttime) for tr in st]
     old_ends = [deepcopy(tr.stats.endtime) for tr in st]
-    for tr in st:
-        if tr.stats.station == 'EDM':
-            continue
+
     if remove_response:
         # taper before instrument response removal
         if taper_len:
