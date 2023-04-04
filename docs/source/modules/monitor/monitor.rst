@@ -22,10 +22,15 @@ stations (for Cross-Correlations) or in station vicinity (for inter-component or
 This technique is grounded upon the assumption that a homogeneous change in velocity will result in a homogeneous stretching of the
 Green's function.
 
+.. note::
+    We are currently in the stage of implementing some other algorithms to estiamte dv/v.
+    If you don't want to wait, it should be easy for you to implement
+    a different algorithm yourself.
+
 Arguments in ``params.yaml``
 ++++++++++++++++++++++++++++
 
-To set the arguments for our velocity change computation, we will once again use the yaml file as shown before. Right at the bottom
+To set the arguments for our velocity change computation, we will once again use the yaml file as shown before. Closer to the bottom
 of this file, you will find a section with the key ``dv``:
 
 .. code-block:: yaml
@@ -46,17 +51,21 @@ of this file, you will find a section with the key ``dv``:
         date_inc : 86400                        # increment of measurements
 
         ### Frequencies
-        freq_min : 0.1
-        freq_max : 0.5
+        freq_min : 4
+        freq_max : 8
 
         ### Definition of lapse time window
         tw_start : 20     # lapse time of first sample [s]
-        tw_len : 60       # length of window [s]
+        tw_len : 60       # length of window [s] Can be None if the whole (rest) of the coda should be used
+        sides : 'both'   # options are left (for acausal), right (causal), both, or single (for active source experiments where the first sample is the trigger time)
+        compute_tt : True  # Computes the travel time and adds it to tw_start (tt is 0 if not xstations). If true a rayleigh wave velocity has to be provided
+        rayleigh_wave_velocity : 1  # rayleigh wave velocity in km/s, will be ignored if compute_tt=False
         
+
         ### Range to try stretching
         stretch_range : 0.03
         stretch_steps : 1001
-
+    
         #### Reference trace extraction
         #  win_inc : Length in days of each reference time window to be used for trace extraction
         # If == 0, only one trace will be extracted
@@ -65,14 +74,15 @@ of this file, you will find a section with the key ``dv``:
         # See seismic.correlate.stream.CorrBulk.extract_multi_trace for details on arguments
         dt_ref : {'win_inc' : 0, 'method': 'mean', 'percentile': 50}
 
-        # preprocessing on the correlation bulk before stretch estimation
+        # preprocessing on the correlation bulk or corr_stream before stretch estimation
         preprocessing: [
+                        #{'function': 'pop_at_utcs', 'args': {'utcs': np.array([UTCDateTime()])},
                         {'function': 'smooth', 'args': {'wsize': 48, 'wtype': 'hanning', 'axis': 1}}
         ]
 
         # postprocessing of dv objects before saving and plotting
         postprocessing: [
-                        {'function': 'smooth_sim_mat', 'args': {'win_len': 7}}
+                        {'function': 'smooth_sim_mat', 'args': {'win_len': 7, exclude_corr_below: 0}}
         ]
 
 As you can see, there are only fairly few settings that can be changed, some of which are very obvious again:
@@ -85,9 +95,12 @@ As you can see, there are only fairly few settings that can be changed, some of 
 + ``preprocessing``: List of functions that will be applied to the correlations prior to the interferometry. You can feed in your own custom functions. ``smooth`` does just simply apply a moving window along one axis. Physical window length is ``win_inc``*48 + 2*(``win_len`` - ``win_inc``).
 + ``postprocessing``: Functions that are applied to the :py:class:`~seismic.monitor.dv.DV` object. Same logic as for ``preprocessing``
 
-The other four parameters will actually influence the actual stretching. ``tw`` is the time window which should be stretched and
-compared with the lapsed correlations. ``stretch_range`` is the maximum absolute stretch to be tested and ``stretch_steps`` the number
-of increments that will be tested between the minimum and maximum stretching.
+The other four parameters will influence the actual stretching:
++ ``tw`` is the time window in the coda which should be stretched and compared with the lapsed correlations.
++ ``stretch_range`` is the maximum absolute stretch to be tested
++  ``stretch_steps`` the number of increments that will be tested between the minimum and maximum stretching.
++  ``sides`` decides whether seismic will compare both sides of the correlation functions (positive and negative lag-times / causal and acausal) or just one (if set to *single*)
++  The ``compute_tt`` and ``rayleigh_wave_velocity`` are only relevant for cross-correlations. If set, SeisMIC will add the time of theoretical arrival to the ``tw_start`` parameter.
 
 Computing the Reference Trace
 =============================
@@ -124,4 +137,5 @@ You can start the script using mpi:
     :py:meth:`~seismic.monitor.monitor.Monitor.compute_velocity_change_bulk` is the multi-core equivalent of
     :py:meth:`~seismic.monitor.monitor.Monitor.compute_velocity_change`. The latter takes a particular `hdf5` file
     as input, whereas the former will estimate the velocity changes of all `hdf5` files that are defined by
-    `co['subdir']` in the `params.yaml` file and fit the filters set in `net`.
+    `co['subdir']` in the `params.yaml` file and fit the filters set in `net`. This also means that the process
+    won't speed up any more if *number_of_cores* exceeds the number of hdf5 correlation files that you have computed previously.

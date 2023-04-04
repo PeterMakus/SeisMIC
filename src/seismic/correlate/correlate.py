@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 9th February 2023 01:57:52 pm
+Last Modified: Monday, 3rd April 2023 02:37:02 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -641,7 +641,7 @@ def st_to_np_array(st: Stream, npts: int) -> Tuple[np.ndarray, Stream]:
 
 def _compare_existing_data(ex_corr: dict, tr0: Stream, tr1: Stream) -> bool:
     try:
-        if tr0.stats.starttime.format_fissures() in ex_corr[
+        if tr0.stats.starttime.format_fissures()[:-7] in ex_corr[
             f'{tr0.stats.network}.{tr0.stats.station}'][
                 f'{tr1.stats.network}.{tr1.stats.station}'][
             '%s-%s' % (
@@ -649,7 +649,7 @@ def _compare_existing_data(ex_corr: dict, tr0: Stream, tr1: Stream) -> bool:
             return True
     except KeyError:
         try:
-            if tr1.stats.starttime.format_fissures() in ex_corr[
+            if tr1.stats.starttime.format_fissures()[:-7] in ex_corr[
                 f'{tr1.stats.network}.{tr1.stats.station}'][
                     f'{tr0.stats.network}.{tr0.stats.station}'][
                 '%s-%s' % (

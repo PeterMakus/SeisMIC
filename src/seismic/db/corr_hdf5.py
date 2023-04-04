@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Monday, 13th February 2023 10:33:35 am
+Last Modified: Monday, 3rd April 2023 02:36:49 pm
 '''
 import ast
 import fnmatch
@@ -248,7 +248,8 @@ omitted." % path, category=UserWarning)
         path = '/'.join(path.split('/')[:-3])
         for ch in channel:
             for match in fnmatch.filter(self[path].keys(), ch):
-                out[match] = list(self['/'.join([path, match])].keys())
+                out[match] = [
+                    k[:-7] for k in list(self['/'.join([path, match])].keys())]
         return out
 
     def get_available_channels(

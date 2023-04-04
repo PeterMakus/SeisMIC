@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Monday, 16th January 2023 11:14:10 am
+Last Modified: Monday, 3rd April 2023 02:43:12 pm
 '''
 from copy import deepcopy
 import unittest
@@ -486,7 +486,7 @@ class TestCompareExistingData(unittest.TestCase):
                 '%s.%s' % (tr1.stats.network, tr1.stats.station)][
             '%s-%s' % (
                 tr0.stats.channel, tr1.stats.channel)] = [
-                    tr0.stats.starttime]
+                    tr0.stats.starttime.format_fissures()[:-7]]
         self.ex_d = ex_d
         self.tr0 = tr0
         self.tr1 = tr1

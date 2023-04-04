@@ -9,7 +9,7 @@
 
 Created: Tuesday, 1st June 2021 10:42:03 am
 
-Last Modified: Monday, 13th February 2023 10:53:29 am
+Last Modified: Monday, 3rd April 2023 02:41:09 pm
 
 '''
 from copy import deepcopy
@@ -352,7 +352,7 @@ class TestDBHandler(unittest.TestCase):
         d['/'+'/'.join([tag, net, stat])][ch] = starttimes
         d['/'+'/'.join([tag, net, stat, ch])] = starttimes
         file_mock.side_effect = d.__getitem__
-        exp_result = {ch: list(starttimes.keys())}
+        exp_result = {ch: list(k[:-7] for k in starttimes)}
         self.assertEqual(
             self.dbh.get_available_starttimes(net, stat, tag, '*'),
             exp_result)
