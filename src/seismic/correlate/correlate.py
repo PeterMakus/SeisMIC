@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 4th April 2023 05:34:04 pm
+Last Modified: Tuesday, 4th April 2023 05:37:57 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -513,6 +513,21 @@ class Correlator(object):
                     del win[popi]
                 # now we have to recompute the combinations
                 self.logger.debug('removing redundant data.')
+                # Stream based preprocessing
+                if self.options['preprocess_subdiv']:
+                    try:
+                        self.logger.debug('Preprocessing stream...')
+                        win = preprocess_stream(
+                            win, self.store_client, resp, winstart, winend, tl,
+                            **self.options)
+                    except ValueError as e:
+                        self.logger.error(
+                            'Stream preprocessing failed for '
+                            f'{st[0].stats.network}.{st[0].stats.station}'
+                            ' and time '
+                            f'{t}.\nThe Original Error Message was {e}.')
+                        continue
+
                 if self.rank == 0:
                     self.logger.debug('Recalculating combinations...')
                     self.options['combinations'] = calc_cross_combis(
@@ -528,20 +543,6 @@ class Correlator(object):
                     self.logger.info(
                         f'No new data for times {winstart}-{winend}')
                     continue
-                # Stream based preprocessing
-                if self.options['preprocess_subdiv']:
-                    try:
-                        self.logger.debug('Preprocessing stream...')
-                        win = preprocess_stream(
-                            win, self.store_client, resp, winstart, winend, tl,
-                            **self.options)
-                    except ValueError as e:
-                        self.logger.error(
-                            'Stream preprocessing failed for '
-                            f'{st[0].stats.network}.{st[0].stats.station}'
-                            ' and time '
-                            f'{t}.\nThe Original Error Message was {e}.')
-                        continue
 
                 if not len(win):
                     # no new combinations for this time period
