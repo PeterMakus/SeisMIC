@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 5th April 2023 11:51:03 am
+Last Modified: Wednesday, 5th April 2023 05:20:16 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -518,8 +518,8 @@ class Correlator(object):
                     try:
                         self.logger.debug('Preprocessing stream...')
                         win = preprocess_stream(
-                            win, self.store_client, resp, winstart, winend, tl,
-                            **self.options)
+                            win, self.store_client, resp, winstart, winend,
+                            tl/2, **self.options)
                     except ValueError as e:
                         self.logger.error(
                             'Stream preprocessing failed for '
