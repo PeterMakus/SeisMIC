@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 4th April 2023 05:37:57 pm
+Last Modified: Wednesday, 5th April 2023 10:29:58 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -469,7 +469,7 @@ class Correlator(object):
                     st = preprocess_stream(
                         st, self.store_client, resp, startt, endt, tl,
                         **self.options)
-                except ValueError as e:
+                except Exception as e:
                     self.logger.error(
                         'Stream preprocessing failed for '
                         f'{st[0].stats.network}.{st[0].stats.station} and time'
