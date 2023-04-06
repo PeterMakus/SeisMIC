@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Tuesday, 6th December 2022 04:35:41 pm
+Last Modified: Thursday, 6th April 2023 03:45:47 pm
 '''
 
 import fnmatch
@@ -348,13 +348,15 @@ class Store_Client(object):
 
     def _write_inventory(self, ninv: Inventory):
         """write the inventory information"""
+        # Save inventory by station name, like this no old information
+        # can be deleted
         if self.inventory is not None:
             self.inventory += ninv
         else:
             self.inventory = ninv
-        self.inventory.write(
-            os.path.join(self.inv_dir, 'inventory.xml'),
-            format="STATIONXML", validate=True)
+        fname = os.path.join(
+            self.inv_dir, f'{ninv[0].code}.{ninv[0][0].code}.xml')
+        self.inventory.write(fname, format="STATIONXML", validate=True)
 
 
 class FS_Client(object):
