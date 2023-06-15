@@ -33,17 +33,20 @@ co:
     # Note that this is also the length of the correlation batches
     # that will be written (i.e., length that will be 
     # kept in memory before writing to disk)
+    # If you are unsure, keep defaults
     read_len : 86398
     read_inc : 86400
 
     # New sampling rate in Hz. Note that it will try to decimate
     # if possible (i.e., there is an integer factor from the
-    # native sampling_rate)
+    # native sampling_rate). Pay attention to Nyquist frequency for
+    # later steps
     sampling_rate : 25
     # Remove the instrument response, will take substantially more time
     remove_response : True
 
     # Method to combine different traces
+    # Options are: 'betweenStations', 'betweenComponents', 'autoComponents', 'allSimpleCombinations', or 'allCombinations'
     combination_method : 'betweenStations'
   
     # If you want only specific combinations to be computed enter them here
@@ -62,10 +65,12 @@ co:
                     {'function':'seismic.correlate.preprocessing_stream.cos_taper_st',
                       'args':{'taper_len': 100, # seconds
                               'lossless': True}}, # lossless tapering stitches additional data to trace, tapers, and removes the tapered ends after preprocessing
+                    # This is intended as a "technical" bandpass filter to remove unphysical signals, i.e., frequencies you would not expect in the data
                     {'function':'seismic.correlate.preprocessing_stream.stream_filter',
                       'args':{'ftype':'bandpass',
                               'filter_option':{'freqmin':0.01, #0.01
                                                'freqmax':12}}}
+                    # Mute data, when the amplitude is above a certain threshold
                      #{'function':'seismic.correlate.preprocessing_stream.stream_mute',
                      # 'args':{'taper_len':100,
                      #         'mute_method':'std_factor',
@@ -145,7 +150,7 @@ dv:
     freq_min : 4
     freq_max : 8
 
-    ### Definition of lapse time window
+    ### Definition of lapse time window, i.e. time window in the coda that is used for the dv/v estimate
     tw_start : 20     # lapse time of first sample [s]
     tw_len : 60       # length of window [s] Can be None if the whole (rest) of the coda should be used
     sides : 'both'   # options are left (for acausal), right (causal), both, or single (for active source experiments where the first sample is the trigger time)
@@ -154,7 +159,9 @@ dv:
     
 
     ### Range to try stretching
+    # maximum stretch factor
     stretch_range : 0.03
+    # number of stretching increments
     stretch_steps : 1001
   
     #### Reference trace extraction
@@ -167,7 +174,7 @@ dv:
 
     # preprocessing on the correlation bulk or corr_stream before stretch estimation
     preprocessing: [
-                    #{'function': 'pop_at_utcs', 'args': {'utcs': np.array([UTCDateTime()])},
+                    #{'function': 'pop_at_utcs', 'args': {'utcs': np.array([UTCDateTime()])},  # Used to remove correlations from certain times
                     {'function': 'smooth', 'args': {'wsize': 48, 'wtype': 'hanning', 'axis': 1}}
     ]
 
