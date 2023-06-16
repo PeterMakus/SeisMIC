@@ -12,7 +12,7 @@ dependencies:
   - prov
   - pytest
   - pyyaml
-  - python>=3.7
+  - python>=3.10
   - scipy
   - flake8
   - tqdm
