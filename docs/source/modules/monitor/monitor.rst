@@ -130,7 +130,7 @@ You can start the script using mpi:
 
 .. code-block:: bash
 
-    mpirun -n $number_of_cores$ python $path_to_file$/compute_dv.py+
+    mpirun -n $number_of_cores python $path_to_file/compute_dv.py+
 
 .. note::
 

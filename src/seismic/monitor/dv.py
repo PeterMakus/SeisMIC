@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Thursday, 9th March 2023 04:04:40 pm
+Last Modified: Friday, 16th June 2023 03:54:21 pm
 '''
 
 from datetime import datetime
@@ -140,7 +140,8 @@ class DV(object):
         sim_mat_Clim: List[float] = [], xlim: Tuple[datetime, datetime] = None,
         ylim: Tuple[int, int] = None, plot_scatter: bool = False,
         figsize: Tuple[float, float] = (9, 11), dpi: int = 144,
-        title: str = None, return_ax=False) -> Tuple[
+        title: str = None, return_ax=False, style: str = 'technical',
+        dateformat: str = '%d %b %y') -> Tuple[
             plt.figure, List[plt.axis]]:
         r"""
         Plots the dv object into a *multi-panel-view* of `similarity matrix`
@@ -179,12 +180,22 @@ class DV(object):
             Defaults to False.
             This overwrites any choice to save the figure.
         :type return_ax: bool, optional
+        :param style: Style of the plot. Defaults to 'technical'. The other
+            option would be 'publication' (looks better but is less
+            informative).
+        :type style: str, optional
+        :param dateformat: Format of the date on the x-axis. Defaults to
+            '%d %b %y'.
+        :type dateformat: str, optional
         :returns: If `return_ax` is set to True it returns fig and axes.
         """
         return plot_dv(
-            self.__dict__, save_dir, figure_file_name, mark_time,
-            normalize_simmat, sim_mat_Clim, figsize, dpi, xlim=xlim, ylim=ylim,
-            title=title, plot_scatter=plot_scatter, return_ax=return_ax)
+            style, self, save_dir=save_dir,
+            figure_file_name=figure_file_name, mark_time=mark_time,
+            normalize_simmat=normalize_simmat, sim_mat_Clim=sim_mat_Clim,
+            figsize=figsize, dpi=dpi, xlim=xlim, ylim=ylim,
+            title=title, plot_scatter=plot_scatter, return_ax=return_ax,
+            dateformat=dateformat)
 
     def smooth_sim_mat(
             self, win_len: int, exclude_corr_below: Optional[float] = None):
