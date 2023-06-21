@@ -8,23 +8,26 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Thursday, 6th April 2023 03:45:47 pm
+Last Modified: Wednesday, 21st June 2023 01:15:16 pm
 '''
 
 import fnmatch
 import os
 import datetime
 import glob
-from typing import List, Tuple
+from typing import List, Tuple, Generator
 import warnings
 import re
 
+import numpy as np
 from obspy.clients.fdsn import Client as rClient
 from obspy.clients.fdsn.header import FDSNNoDataException
 from obspy.clients.filesystem.sds import Client as lClient
 from obspy import read_inventory, UTCDateTime, read, Stream, Inventory
 from obspy.clients.fdsn.mass_downloader import RectangularDomain, \
     Restrictions, MassDownloader
+
+from seismic.utils.raw_analysis import spct_series_welch
 
 
 SDS_FMTSTR = os.path.join(
@@ -164,7 +167,7 @@ class Store_Client(object):
         return statlist
 
     def _get_mseed_storage(
-        self, network: 'str', station: 'str', location: str,
+        self, network: str, station: str, location: str,
         channel: str, starttime: UTCDateTime,
             endtime: UTCDateTime) -> bool or str:
 
@@ -357,6 +360,76 @@ class Store_Client(object):
         fname = os.path.join(
             self.inv_dir, f'{ninv[0].code}.{ninv[0][0].code}.xml')
         self.inventory.write(fname, format="STATIONXML", validate=True)
+
+    def _generate_time_windows(
+        self, network: str, station: str, channel: str, starttime: UTCDateTime,
+            endtime: UTCDateTime, increment: int = 86400) -> Generator[Stream]:
+        """
+        Generates time windows with the requested increment from the requested
+        station.
+
+        :param network: network code
+        :type network: str
+        :param station: station code
+        :type station: str
+        :param channel: Channel Code
+        :type channel: str
+        :param starttime: Starttime of the first window
+        :type starttime: UTCDateTime
+        :param endtime: Endtime of the last window
+        :type endtime: UTCDateTime
+        :param increment: increment and window length between the windows,
+            defaults to 86400
+        :type increment: int, optional
+        :yield: Stream with every window
+        :rtype: Generator[Stream]
+        """
+        starttimes = starttime + np.arange(0, endtime-starttime, increment)
+        for start in starttimes:
+            end = start + increment
+            st = self._load_local(
+                network, station, '*', channel, start, end,
+                attach_response=True)
+            yield st
+
+    def compute_spectrogram(
+        self, network: str, station: str, channel: str, starttime: UTCDateTime,
+        endtime: UTCDateTime, win_len: int,
+            read_increment: int = 86400) -> Tuple[
+                np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Computes a time series of spectrograms for the requested station and
+        channel.
+
+        # Enter plotting function here later
+        .. seealso:: Use function :func:`~seismic.plot` to generate
+
+        :param network: network code
+        :type network: str
+        :param station: station code
+        :type station: str
+        :param channel: channel code
+        :type channel: str
+        :param starttime: starttime of the first window
+        :type starttime: UTCDateTime
+        :param endtime: endtime of the last window
+        :type endtime: UTCDateTime
+        :param win_len: Length of each time window in seconds
+        :type win_len: int
+        :param read_increment: Increment to read data in - does not
+            influence the final result but has to be >= win_len,
+            defaults to 86400
+        :type read_increment: int, optional
+        :return: Frequency vector, time vector and spectrogram matrix
+        :rtype: Tuple[np.ndarray, np.ndarray, np.ndarray]
+        """
+        if read_increment < win_len:
+            raise ValueError(
+                'read_increment must be >= win_len, got {} and {}'.format(
+                    read_increment, win_len))
+        data_gen = self._generate_time_windows(
+            network, station, channel, starttime, endtime, read_increment)
+        return spct_series_welch(data_gen, win_len)
 
 
 class FS_Client(object):

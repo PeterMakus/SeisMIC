@@ -52,12 +52,6 @@ co:
     # Comment or set == None if not in use
     xcombinations : None
 
-    # If you want only specific combinations to be computed enter them here
-    # In the form [Net0-Net0.Stat0-Stat1]
-    # This option will only be consider if combination_method == 'betweenStations'
-    # Comment or set == None if not in use
-    xcombinations : None
-
     # preprocessing of the original length time series
     # these function work on an obspy.Stream object given as first argument
     # and return an obspy.Stream object.
