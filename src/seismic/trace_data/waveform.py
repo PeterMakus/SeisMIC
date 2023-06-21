@@ -8,14 +8,14 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Wednesday, 21st June 2023 01:15:16 pm
+Last Modified: Wednesday, 21st June 2023 05:37:29 pm
 '''
 
 import fnmatch
 import os
 import datetime
 import glob
-from typing import List, Tuple, Generator
+from typing import List, Tuple, Iterator
 import warnings
 import re
 
@@ -363,7 +363,7 @@ class Store_Client(object):
 
     def _generate_time_windows(
         self, network: str, station: str, channel: str, starttime: UTCDateTime,
-            endtime: UTCDateTime, increment: int = 86400) -> Generator[Stream]:
+            endtime: UTCDateTime, increment: int = 86400) -> Iterator[Stream]:
         """
         Generates time windows with the requested increment from the requested
         station.
@@ -382,14 +382,15 @@ class Store_Client(object):
             defaults to 86400
         :type increment: int, optional
         :yield: Stream with every window
-        :rtype: Generator[Stream]
+        :rtype: Iterator[Stream]
         """
-        starttimes = starttime + np.arange(0, endtime-starttime, increment)
+        starttimes = starttime.timestamp + np.arange(
+            0, endtime.timestamp-starttime.timestamp, increment)
         for start in starttimes:
-            end = start + increment
+            end = UTCDateTime(start + increment)
             st = self._load_local(
-                network, station, '*', channel, start, end,
-                attach_response=True)
+                network, station, '*', channel, UTCDateTime(start), end,
+                attach_response=True, _check_times=False)
             yield st
 
     def compute_spectrogram(
