@@ -10,7 +10,7 @@ Module for waveform data analysis. Contains spectrogram computation.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 12:22:00 pm
-Last Modified: Wednesday, 21st June 2023 05:28:30 pm
+Last Modified: Thursday, 22nd June 2023 01:04:57 pm
 '''
 from typing import Iterator
 
@@ -43,13 +43,13 @@ def spct_series_welch(streams: Iterator[Stream], window_length: int):
         st = st.merge()
         tr = preprocess(st[0])
         for wintr in tr.slide(window_length=window_length, step=window_length):
-            f, S = welch(wintr.data, fs=tr.stats.sampling_rate)
+            f, S = welch(wintr.data, fs=wintr.stats.sampling_rate)
             # interpolate onto a logarithmic frequency space
             # 512 points of resolution in f direction hardcoded for now
             f2 = np.logspace(-3, np.log10(f.max()), 512)
             S2 = pchip_interpolate(f, S, f2)
             specl.append(S2)
-            t.append(tr.stats.starttime)
+            t.append(wintr.stats.starttime)
     S = np.array(specl)
 
     t = np.array(t)

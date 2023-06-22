@@ -10,9 +10,10 @@ Plotting specral time series.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 04:54:20 pm
-Last Modified: Wednesday, 21st June 2023 05:42:28 pm
+Last Modified: Thursday, 22nd June 2023 01:15:03 pm
 '''
 
+import os
 from datetime import datetime
 from typing import Tuple
 import locale
@@ -21,11 +22,13 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import dates as mdates
 from matplotlib import colors
+from obspy import UTCDateTime
 
 from seismic.plot.plot_utils import set_mpl_params
 
 # Batlow colour scale
-batlow = "batlow.txt"
+batlow = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), 'batlow.txt')
 
 
 def plot_spct_series(
@@ -40,7 +43,7 @@ def plot_spct_series(
     :type S: np.ndarray
     :param f: Vector containing frequencies (Hz)
     :type f: np.ndarray
-    :param t: Vector containing times (in s)
+    :param t: Vector containing times as UTCDateTimes
     :type t: np.ndarray
     :param norm: Normalise the spectrum either on the time axis with
         norm='t' or on the frequency axis with norm='f', defaults to None.
@@ -81,6 +84,8 @@ def plot_spct_series(
     else:
         plt.ylim(.1, f.max())
 
+    t = np.array([UTCDateTime(tt).datetime for tt in t])
+
     if tlim is not None:
         plt.xlim(tlim)
         ii = np.argmin(abs(t-tlim[0]))
@@ -120,11 +125,12 @@ def plot_spct_series(
         t, f, S, shading='gouraud', cmap=cmap,
         norm=colors.LogNorm(), vmin=vmin, vmax=vmax)
     plt.colorbar(
-        pcm, label='energy (normalised)', orientation='horizontal', shrink=.6)
+        pcm, label='energy (normalised)', orientation='horizontal', shrink=.6,
+        pad=.25)
     plt.ylabel(r'$f$ [Hz]')
     ax = plt.gca()
     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
     ax.xaxis.set_major_formatter(
-        mdates.DateFormatter(mdates.AutoDateFormatter(ax.get_major_locator())))
+        mdates.AutoDateFormatter(ax.get_axes_locator()))
     plt.xticks(rotation=35)
     return ax
