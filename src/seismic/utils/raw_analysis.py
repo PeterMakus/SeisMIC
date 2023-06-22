@@ -10,7 +10,7 @@ Module for waveform data analysis. Contains spectrogram computation.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 12:22:00 pm
-Last Modified: Thursday, 22nd June 2023 01:04:57 pm
+Last Modified: Thursday, 22nd June 2023 01:39:55 pm
 '''
 from typing import Iterator
 
@@ -79,4 +79,3 @@ def preprocess(tr: Trace):
     tr.filter('bandpass', freqmin=0.01, freqmax=12)
 
     return tr
-
