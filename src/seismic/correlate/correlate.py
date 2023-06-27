@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 27th June 2023 12:19:28 pm
+Last Modified: Tuesday, 27th June 2023 03:00:35 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -173,10 +173,15 @@ class Correlator(object):
                 + '2. \'*\' That is, a wildcard (string).\n'
                 + '3. A list and network is a string describing one '
                 + 'station code.')
-        self.station = station
+        self.avail_raw_data = []
+        for net, stat in station:
+            self.avail_raw_data.extend(
+                self.store_client._translate_wildcards(net, stat))
+        self.station = np.unique(np.array([
+                [d[0], d[1]] for d in self.avail_raw_data]), axis=0).tolist()
         self.logger.debug(
             'Fetching data from the following stations:\n%a' % [
-                f'{n}.{s}' for n, s in station])
+                f'{n}.{s}' for n, s in self.station])
 
         self.sampling_rate = self.options['sampling_rate']
 
@@ -438,13 +443,6 @@ class Correlator(object):
         else:
             tl = 0
 
-        # 27.06.2023: Find available data to read. Also if wildcards
-        # are used
-        avail_raw_data = []
-        for net, stat in self.station:
-            avail_raw_data.extend(
-                self.store_client._translate_wildcards(net, stat))
-        print(f'Found available raw data data: {avail_raw_data}')
         # Loop over read increments
         for t in tqdm(loop_window):
             now = time.time()
@@ -458,14 +456,14 @@ class Correlator(object):
             # Better than just letting one core read as this avoids having to
             # send very big chunks of data using MPI (MPI communication does
             # not support more than 2GB/comm operation)
-            pmap = (
-                np.arange(len(avail_raw_data))*self.psize)/len(avail_raw_data)
+            pmap = np.arange(len(self.avail_raw_data))*self.psize/len(
+                self.avail_raw_data)
             pmap = pmap.astype(np.int32)
             ind = pmap == self.rank
-            ind = np.arange(len(avail_raw_data))[ind]
+            ind = np.arange(len(self.avail_raw_data))[ind]
 
             # loop over queried stations
-            for net, stat, cha in np.array(avail_raw_data)[ind]:
+            for net, stat, cha in np.array(self.avail_raw_data)[ind]:
                 # Load data
                 resp.extend(
                     self.store_client.inventory.select(
@@ -485,7 +483,14 @@ class Correlator(object):
             sampling_rate = self.options['sampling_rate']
             # AA-Filter is done in this function as well
             st = mu.resample_or_decimate(st, sampling_rate)
+            # The actual data in the mseeds was changed from int to float64
+            # now,
+            # Save some space by changing it back to 32 bit (most of the
+            # digitizers work at 24 bit anyways)
+            mu.stream_require_dtype(st, np.float32)
 
+            print(f'Daily Reading took {time.time() - now}s')
+            now = time.time()
             if not self.options['preprocess_subdiv']:
                 try:
                     self.logger.debug('Preprocessing stream...')
@@ -498,12 +503,10 @@ class Correlator(object):
                         f'{st[0].stats.network}.{st[0].stats.station} and time'
                         f' {t}.\nThe Original Error Message was {e}.')
                     continue
-            print(f'Length of the stream is {len(st)} for rank {self.rank}')
             print(f'Daily Preprocessing took {time.time() - now}s')
             # Slice the stream in correlation length
             # -> Loop over correlation increments
             for ii, win in enumerate(generate_corr_inc(st, **self.options)):
-                now = time.time()
                 winstart = startt + ii*self.options['subdivision']['corr_inc']
                 winend = winstart + self.options['subdivision']['corr_len']
 
@@ -537,23 +540,24 @@ class Correlator(object):
                     np.setdiff1d(win_indices, combindices))
                 for popi in popindices:
                     del win[popi]
-                # now we have to recompute the combinations
-                self.logger.debug('removing redundant data.')
-                if self.rank == 0:
-                    self.logger.debug('Recalculating combinations...')
-                    self.options['combinations'] = calc_cross_combis(
-                        win, self.ex_dict,
-                        self.options['combination_method'],
-                        rcombis=self.rcombis)
-                else:
-                    self.options['combinations'] = None
-                self.options['combinations'] = self.comm.bcast(
-                    self.options['combinations'], root=0)
-                if not len(self.options['combinations']):
-                    # no new combinations for this time period
-                    self.logger.info(
-                        f'No new data for times {winstart}-{winend}')
-                    continue
+                if len(popindices):
+                    # now we have to recompute the combinations
+                    self.logger.debug('removing redundant data.')
+                    if self.rank == 0:
+                        self.logger.debug('Recalculating combinations...')
+                        self.options['combinations'] = calc_cross_combis(
+                            win, self.ex_dict,
+                            self.options['combination_method'],
+                            rcombis=self.rcombis)
+                    else:
+                        self.options['combinations'] = None
+                    self.options['combinations'] = self.comm.bcast(
+                        self.options['combinations'], root=0)
+                    if not len(self.options['combinations']):
+                        # no new combinations for this time period
+                        self.logger.info(
+                            f'No new data for times {winstart}-{winend}')
+                        continue
                 # Stream based preprocessing
                 if self.options['preprocess_subdiv']:
                     try:
@@ -577,7 +581,6 @@ class Correlator(object):
 
                 self.logger.debug('Working on correlation times %s-%s' % (
                     str(win[0].stats.starttime), str(win[0].stats.endtime)))
-                print(f'Hourly Preprocessing took {time.time() - now}s')
                 yield win, write_flag
                 write_flag = False
 
@@ -1308,13 +1311,6 @@ def preprocess_stream(
     st.trim(startt, endt, pad=True)
 
     mu.discard_short_traces(st, subdivision['corr_len']/20)
-
-    # !Last operation before saving!
-    # The actual data in the mseeds was changed from int to float64
-    # now,
-    # Save some space by changing it back to 32 bit (most of the
-    # digitizers work at 24 bit anyways)
-    mu.stream_require_dtype(st, np.float32)
     return st
 
 

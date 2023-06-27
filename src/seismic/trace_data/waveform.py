@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Tuesday, 27th June 2023 12:20:36 pm
+Last Modified: Tuesday, 27th June 2023 02:45:14 pm
 '''
 
 import fnmatch
@@ -226,7 +226,19 @@ class Store_Client(object):
             return (None, None)
         return (starttime, endtime)
 
-    def _translate_wildcards(self, network: str, station: str):
+    def _translate_wildcards(self, network: str, station: str) -> List[
+            List[str]]:
+        """
+        Look up network and station names in database, so that wildcards
+        can be estimated into number of stations.
+
+        :param network: network string, may contain wildcards
+        :type network: str
+        :param station: station string, may contain wildcards
+        :type station: str
+        :return: _description_
+        :rtype: _type_
+        """
         dirlist = glob.glob(
             os.path.join(self.sds_root, '*', network, station, '*'))
         nets = [os.path.basename(
