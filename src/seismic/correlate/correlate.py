@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 27th June 2023 05:25:17 pm
+Last Modified: Tuesday, 27th June 2023 05:28:04 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -608,8 +608,7 @@ class Correlator(object):
 
         # use next fast len instead?
         fftsize = zmsize[1]//2+1
-        # B = np.zeros((fftsize, ntrc), dtype=complex)
-        B = np.zeros((ntrc, fftsize), dtype=complex)
+        B = np.zeros((ntrc, fftsize), dtype=np.float32)
 
         B[ind, :] = np.fft.rfft(A[ind, :], axis=1)
 
