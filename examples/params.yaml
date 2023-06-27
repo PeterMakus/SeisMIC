@@ -95,8 +95,9 @@ co:
     # parameters for correlation preprocessing
     # Standard functions reside in seismic.correlate.preprocessing_td and preprocessing_fd, respectively
     corr_args : {'TDpreProcessing':[
-                                    {'function':'seismic.correlate.preprocessing_td.detrend',
-                                    'args':{'type':'linear'}},
+                                    # detrend not recommended. Use preProcessing detrend_st instead (faster)
+                                    # {'function':'seismic.correlate.preprocessing_td.detrend',
+                                    # 'args':{'type':'linear'}},
                                    {'function':'seismic.correlate.preprocessing_td.TDfilter',
                                    'args':{'type':'bandpass','freqmin':2,'freqmax':4}},
                                     #{'function':'seismic.correlate.preprocessing_td.mute',
