@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 27th June 2023 03:28:23 pm
+Last Modified: Tuesday, 27th June 2023 04:31:47 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -340,13 +340,17 @@ class Correlator(object):
             {'starttime': starttime,
                 'sampling_rate': self.sampling_rate})
         self.logger.debug('Computing Cross-Correlations.')
+        now = time.time()
         A, startlags = self._pxcorr_matrix(A)
+        print('Time for pxcorr_matrix: %s' % (time.time() - now))
         self.logger.debug('Converting Matrix to CorrStream.')
         # put trace into a stream
+        now = time.time()
         cst = CorrStream()
         if A is None:
             # No new data
             return cst
+        # Why is that done for every core?
         for ii, (startlag, comb) in enumerate(
                 zip(startlags, self.options['combinations'])):
             endlag = startlag + A[:, ii].shape[0]/self.options['sampling_rate']
@@ -355,6 +359,7 @@ class Correlator(object):
                     A[:, ii].T, header1=st[comb[0]].stats,
                     header2=st[comb[1]].stats, inv=inv, start_lag=startlag,
                     end_lag=endlag))
+        print('Time for converting to CorrStream: %s' % (time.time() - now))
         return cst
 
     def _write(self, cst, tag: str):
@@ -694,8 +699,6 @@ class Correlator(object):
         self.logger.debug('%s %s' % (C.shape, C.dtype))
         self.logger.debug('combis: %s' % (self.options['combinations']))
 
-        # self.comm.barrier()  # I don't think this is necessary or even a
-        # good idea
         self.comm.Allreduce(MPI.IN_PLACE, [C, MPI.DOUBLE], op=MPI.SUM)
         self.comm.Allreduce(
             MPI.IN_PLACE, [startlags, MPI.DOUBLE], op=MPI.SUM)
@@ -715,9 +718,11 @@ def st_to_np_array(st: Stream, npts: int) -> Tuple[np.ndarray, Stream]:
     :return: A stream and a matrix
     :rtype: np.ndarray
     """
-    A = np.zeros((npts, st.count()), dtype=np.float32)  # np.float32
+    # A = np.zeros((npts, st.count()), dtype=np.float32)
+    A = np.zeros((st.count(), npts), dtype=np.float32)
     for ii, tr in enumerate(st):
-        A[:tr.stats.npts, ii] = tr.data
+        # A[:tr.stats.npts, ii] = tr.data
+        A[ii, :tr.stats.npts] = tr.data
         del tr.data  # Not needed any more, just uses up RAM
     return A, st
 
