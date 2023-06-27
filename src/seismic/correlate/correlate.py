@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 27th June 2023 03:00:35 pm
+Last Modified: Tuesday, 27th June 2023 03:28:23 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -325,36 +325,20 @@ class Correlator(object):
         """
 
         # We start out by moving the stream into a matrix
-        # Advantage of only doing this on rank 0?
-        if self.rank == 0:
-            self.logger.debug(
-                'Converting Stream to Matrix')
-            # put all the data into a single stream
-            starttime = []
-            npts = []
-            for tr in st:
-                starttime.append(tr.stats['starttime'])
-                npts.append(tr.stats['npts'])
-            npts = np.max(np.array(npts))
-            A, st = st_to_np_array(st, npts)
-            As = A.shape
-        else:
-            starttime = None
-            npts = None
-            As = None
-        starttime = self.comm.bcast(starttime, root=0)
-        npts = self.comm.bcast(npts, root=0)
-        st = self.comm.bcast(st, root=0)
-        # Tell the other processes the shape of A
-        As = self.comm.bcast(As, root=0)
-        if self.rank != 0:
-            A = np.empty(As, dtype=np.float32)
-        self.comm.Bcast([A, MPI.FLOAT], root=0)
+        self.logger.debug(
+            'Converting Stream to Matrix')
+        # put all the data into a single stream
+        starttime = []
+        npts = []
+        for tr in st:
+            starttime.append(tr.stats['starttime'])
+            npts.append(tr.stats['npts'])
+        npts = np.max(np.array(npts))
+        A, st = st_to_np_array(st, npts)
 
         self.options.update(
             {'starttime': starttime,
                 'sampling_rate': self.sampling_rate})
-
         self.logger.debug('Computing Cross-Correlations.')
         A, startlags = self._pxcorr_matrix(A)
         self.logger.debug('Converting Matrix to CorrStream.')
@@ -445,7 +429,6 @@ class Correlator(object):
 
         # Loop over read increments
         for t in tqdm(loop_window):
-            now = time.time()
             write_flag = True  # Write length is same as read length
             startt = UTCDateTime(t)
             endt = startt + self.options['read_len']
@@ -489,8 +472,6 @@ class Correlator(object):
             # digitizers work at 24 bit anyways)
             mu.stream_require_dtype(st, np.float32)
 
-            print(f'Daily Reading took {time.time() - now}s')
-            now = time.time()
             if not self.options['preprocess_subdiv']:
                 try:
                     self.logger.debug('Preprocessing stream...')
@@ -503,7 +484,6 @@ class Correlator(object):
                         f'{st[0].stats.network}.{st[0].stats.station} and time'
                         f' {t}.\nThe Original Error Message was {e}.')
                     continue
-            print(f'Daily Preprocessing took {time.time() - now}s')
             # Slice the stream in correlation length
             # -> Loop over correlation increments
             for ii, win in enumerate(generate_corr_inc(st, **self.options)):
