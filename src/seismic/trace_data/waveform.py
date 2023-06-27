@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Wednesday, 21st June 2023 05:37:29 pm
+Last Modified: Tuesday, 27th June 2023 12:20:36 pm
 '''
 
 import fnmatch
@@ -225,6 +225,16 @@ class Store_Client(object):
             warnings.warn(e, UserWarning)
             return (None, None)
         return (starttime, endtime)
+
+    def _translate_wildcards(self, network: str, station: str):
+        dirlist = glob.glob(
+            os.path.join(self.sds_root, '*', network, station, '*'))
+        nets = [os.path.basename(
+            os.path.dirname(os.path.dirname(i))) for i in dirlist]
+        stats = [os.path.basename(os.path.dirname(i)) for i in dirlist]
+        chans = [os.path.basename(i).split('.')[0] for i in dirlist]
+        # Create one nested list
+        return [[nets[i], stats[i], chans[i]] for i in range(len(dirlist))]
 
     def _load_remote(
         self, network: str, station: str, location: str, channel: str,

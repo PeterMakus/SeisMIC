@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 4th April 2023 05:31:39 pm
+Last Modified: Tuesday, 27th June 2023 12:19:28 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -18,6 +18,7 @@ import logging
 import json
 import warnings
 import yaml
+import time
 
 from mpi4py import MPI
 import numpy as np
@@ -274,9 +275,17 @@ class Correlator(object):
             inv = None
         inv = self.comm.bcast(inv, root=0)
 
+        t_pxcorr_inner = 0
+        t_write = 0
+        t_generate = 0
+        t0 = time.time()
         for st, write_flag in self._generate_data():
+            t_generate += time.time() - t0
+            t0 = time.time()
             cst.extend(self._pxcorr_inner(st, inv))
+            t_pxcorr_inner += time.time() - t0
             if write_flag:
+                t0 = time.time()
                 self.logger.debug('Writing Correlations to file.')
                 # Here, we can recombine the correlations for the read_len
                 # size (i.e., stack)
@@ -291,6 +300,8 @@ class Correlator(object):
                 elif cst.count():
                     self._write(cst, tag='subdivision')
                     cst.clear()
+                t_write += time.time() - t0
+            t0 = time.time()
 
         # write the remaining data
         if self.options['subdivision']['recombine_subdivision'] and \
@@ -299,6 +310,9 @@ class Correlator(object):
         if not self.options['subdivision']['delete_subdivision'] and \
                 cst.count():
             self._write(cst, tag='subdivision')
+        print('Time for pxcorr_inner: %s' % t_pxcorr_inner)
+        print('Time for writing: %s' % t_write)
+        print('Time for generating: %s' % t_generate)
 
     def _pxcorr_inner(self, st: Stream, inv: Inventory) -> CorrStream:
         """
@@ -424,8 +438,16 @@ class Correlator(object):
         else:
             tl = 0
 
+        # 27.06.2023: Find available data to read. Also if wildcards
+        # are used
+        avail_raw_data = []
+        for net, stat in self.station:
+            avail_raw_data.extend(
+                self.store_client._translate_wildcards(net, stat))
+        print(f'Found available raw data data: {avail_raw_data}')
         # Loop over read increments
         for t in tqdm(loop_window):
+            now = time.time()
             write_flag = True  # Write length is same as read length
             startt = UTCDateTime(t)
             endt = startt + self.options['read_len']
@@ -436,19 +458,20 @@ class Correlator(object):
             # Better than just letting one core read as this avoids having to
             # send very big chunks of data using MPI (MPI communication does
             # not support more than 2GB/comm operation)
-            pmap = (np.arange(len(self.station))*self.psize)/len(self.station)
+            pmap = (
+                np.arange(len(avail_raw_data))*self.psize)/len(avail_raw_data)
             pmap = pmap.astype(np.int32)
             ind = pmap == self.rank
-            ind = np.arange(len(self.station))[ind]
+            ind = np.arange(len(avail_raw_data))[ind]
 
             # loop over queried stations
-            for net, stat in np.array(self.station)[ind]:
+            for net, stat, cha in np.array(avail_raw_data)[ind]:
                 # Load data
                 resp.extend(
                     self.store_client.inventory.select(
                         net, stat))
                 stext = self.store_client._load_local(
-                    net, stat, '*', '*', startt, endt, True, False)
+                    net, stat, '*', cha, startt, endt, True, False)
                 mu.get_valid_traces(stext)
                 if stext is None or not len(stext):
                     # No data for this station to read
@@ -475,9 +498,12 @@ class Correlator(object):
                         f'{st[0].stats.network}.{st[0].stats.station} and time'
                         f' {t}.\nThe Original Error Message was {e}.')
                     continue
+            print(f'Length of the stream is {len(st)} for rank {self.rank}')
+            print(f'Daily Preprocessing took {time.time() - now}s')
             # Slice the stream in correlation length
             # -> Loop over correlation increments
             for ii, win in enumerate(generate_corr_inc(st, **self.options)):
+                now = time.time()
                 winstart = startt + ii*self.options['subdivision']['corr_inc']
                 winend = winstart + self.options['subdivision']['corr_len']
 
@@ -551,6 +577,7 @@ class Correlator(object):
 
                 self.logger.debug('Working on correlation times %s-%s' % (
                     str(win[0].stats.starttime), str(win[0].stats.endtime)))
+                print(f'Hourly Preprocessing took {time.time() - now}s')
                 yield win, write_flag
                 write_flag = False
 
