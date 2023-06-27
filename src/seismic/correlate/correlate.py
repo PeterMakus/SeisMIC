@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 27th June 2023 04:31:47 pm
+Last Modified: Tuesday, 27th June 2023 05:25:17 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -353,10 +353,10 @@ class Correlator(object):
         # Why is that done for every core?
         for ii, (startlag, comb) in enumerate(
                 zip(startlags, self.options['combinations'])):
-            endlag = startlag + A[:, ii].shape[0]/self.options['sampling_rate']
+            endlag = startlag + len(A[ii, :])/self.options['sampling_rate']
             cst.append(
                 CorrTrace(
-                    A[:, ii].T, header1=st[comb[0]].stats,
+                    A[ii], header1=st[comb[0]].stats,
                     header2=st[comb[1]].stats, inv=inv, start_lag=startlag,
                     end_lag=endlag))
         print('Time for converting to CorrStream: %s' % (time.time() - now))
@@ -572,7 +572,7 @@ class Correlator(object):
     def _pxcorr_matrix(self, A: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         # time domain processing
         # map of traces on processes
-        ntrc = A.shape[1]
+        ntrc = A.shape[0]
         pmap = (np.arange(ntrc)*self.psize)/ntrc
         # This step was not in the original but is necessary for it to work?
         # maybe a difference in an old python/np version?
@@ -596,7 +596,7 @@ class Correlator(object):
 
         for proc in corr_args['TDpreProcessing']:
             func = func_from_str(proc['function'])
-            A[:, ind] = func(A[:, ind], proc['args'], params)
+            A[ind, :] = func(A[ind, :], proc['args'], params)
 
         # zero-padding
         A = pptd.zeroPadding(A, {'type': 'avoidWrapFastLen'}, params)
@@ -605,12 +605,15 @@ class Correlator(object):
         # FFT
         # Allocate space for rfft of data
         zmsize = A.shape
-        fftsize = zmsize[0]//2+1
-        B = np.zeros((fftsize, ntrc), dtype=complex)
 
-        B[:, ind] = np.fft.rfft(A[:, ind], axis=0)
+        # use next fast len instead?
+        fftsize = zmsize[1]//2+1
+        # B = np.zeros((fftsize, ntrc), dtype=complex)
+        B = np.zeros((ntrc, fftsize), dtype=complex)
 
-        freqs = np.fft.rfftfreq(zmsize[0], 1./self.sampling_rate)
+        B[ind, :] = np.fft.rfft(A[ind, :], axis=1)
+
+        freqs = np.fft.rfftfreq(zmsize[1], 1./self.sampling_rate)
 
         ######################################
         # frequency domain pre-processing
@@ -622,7 +625,7 @@ class Correlator(object):
             # import any function that has been defined anywhere else (i.e,
             # not only within the miic framework)
             func = func_from_str(proc['function'])
-            B[:, ind] = func(B[:, ind], proc['args'], params)
+            B[ind, :] = func(B[ind, :], proc['args'], params)
 
         ######################################
         # collect results
@@ -636,9 +639,8 @@ class Correlator(object):
         sampleToSave = int(
             np.ceil(
                 corr_args['lengthToSave'] * self.sampling_rate))
-        C = np.zeros((sampleToSave*2+1, csize), dtype=np.float64)  # np.float64
+        C = np.zeros((csize, sampleToSave*2+1), dtype=np.float32)
 
-        # center = irfftsize // 2
         pmap = (np.arange(csize)*self.psize)/csize
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
@@ -662,31 +664,31 @@ class Correlator(object):
             if corr_args['normalize_correlation']:
                 norm = (
                     np.sqrt(
-                        2.*np.sum(B[:, self.options[
-                            'combinations'][ii][0]]
-                            * B[:, self.options['combinations'][ii][0]].conj())
-                        - B[0, self.options['combinations'][ii][0]]**2)
+                        2.*np.sum(B[self.options[
+                            'combinations'][ii][0], :]
+                            * B[self.options['combinations'][ii][0], :].conj())
+                        - B[self.options['combinations'][ii][0], 0]**2)
                     * np.sqrt(
-                        2.*np.sum(B[:, self.options[
-                            'combinations'][ii][1]]
-                            * B[:, self.options['combinations'][ii][1]].conj())
-                        - B[0, self.options['combinations'][ii][1]]**2)
+                        2.*np.sum(B[self.options[
+                            'combinations'][ii][1], :]
+                            * B[self.options['combinations'][ii][1], :].conj())
+                        - B[self.options['combinations'][ii][1], 0]**2)
                     / irfftsize).real
             else:
                 norm = 1.
+            # M = np.zeros_like(B)
             M = (
-                B[:, self.options['combinations'][ii][0]].conj()
-                * B[:, self.options['combinations'][ii][1]]
+                B[self.options['combinations'][ii][0], :].conj()
+                * B[self.options['combinations'][ii][1], :]
                 * np.exp(1j * freqs * offset * 2 * np.pi))
 
             ######################################
             # frequency domain postProcessing
             #
-
-            tmp = np.fft.irfft(M, axis=0).real
+            tmp = np.fft.irfft(M).real
 
             # cut the center and do fftshift
-            C[:, ii] = np.concatenate(
+            C[ii, :] = np.concatenate(
                 (tmp[-sampleToSave:], tmp[:sampleToSave+1]))/norm
             startlags[ii] = - sampleToSave / self.sampling_rate \
                 - roffset

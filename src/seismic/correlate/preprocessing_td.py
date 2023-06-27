@@ -10,7 +10,7 @@ Module that contains functions for preprocessing in the time domain
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:24:01 pm
-Last Modified: Monday, 16th January 2023 11:13:58 am
+Last Modified: Tuesday, 27th June 2023 04:58:03 pm
 '''
 from copy import deepcopy
 
@@ -45,11 +45,11 @@ def clip(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     :rtype: numpy.ndarray
     :return: clipped time series data
     """
-    stds = np.nanstd(A, axis=0)
-    for ind in range(A.shape[1]):
+    stds = np.nanstd(A, axis=1)
+    for ind in range(A.shape[0]):
         ts = args['std_factor']*stds[ind]
-        A[A[:, ind] > ts, ind] = ts
-        A[A[:, ind] < -ts, ind] = -ts
+        A[ind, A[ind, :] > ts] = ts
+        A[ind, A[ind, :] < -ts] = -ts
     return A
 
 
@@ -59,7 +59,7 @@ def detrend(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """
     try:
         A[np.logical_not(np.isnan(A))] = sp_detrend(
-            A[np.logical_not(np.isnan(A))], axis=0, overwrite_data=True,
+            A[np.logical_not(np.isnan(A))], axis=1, overwrite_data=True,
             **args)
     except ZeroDivisionError:
         # When the array is nothing but nans
@@ -125,7 +125,7 @@ def mute(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
 
     # return zeros if length of traces is shorter than taper
     ntap = int(args['taper_len']*params['sampling_rate'])
-    if A.shape[0] <= ntap:
+    if A.shape[1] <= ntap:
         return np.zeros_like(A)
 
     # filter if asked to
@@ -139,20 +139,20 @@ def mute(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
 
     # calculate threshold
     if 'threshold' in list(args.keys()):
-        thres = np.zeros(A.shape[1]) + args['threshold']
+        thres = np.zeros(A.shape[0]) + args['threshold']
     elif 'std_factor' in list(args.keys()):
-        thres = np.std(C, axis=0) * args['std_factor']
+        thres = np.std(C, axis=1) * args['std_factor']
     else:
-        thres = np.std(C, axis=0)
+        thres = np.std(C, axis=1)
 
     # calculate mask
     mask = np.ones_like(D)
-    mask[D > np.tile(np.atleast_2d(thres), (A.shape[0], 1))] = 0
+    mask[D > np.tile(np.atleast_2d(thres), (1, A.shape[0]))] = 0
     # extend the muted segments to make sure the whole segment is zero after
     if args['extend_gaps']:
         tap = np.ones(ntap)/ntap
-        for ind in range(A.shape[1]):
-            mask[:, ind] = np.convolve(mask[:, ind], tap, mode='same')
+        for ind in range(A.shape[0]):
+            mask[ind, :] = np.convolve(mask[ind, :], tap, mode='same')
         nmask = np.ones_like(D)
         nmask[mask < 1.] = 0
     else:
@@ -161,8 +161,8 @@ def mute(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     # apply taper
     tap = 2. - (np.cos(np.arange(ntap, dtype=float)/ntap*2.*np.pi) + 1.)
     tap /= ntap
-    for ind in range(A.shape[1]):
-        nmask[:, ind] = np.convolve(nmask[:, ind], tap, mode='same')
+    for ind in range(A.shape[0]):
+        nmask[ind, :] = np.convolve(nmask[ind, :], tap, mode='same')
 
     # mute data with tapered mask
     A *= nmask
@@ -187,10 +187,10 @@ def normalizeStandardDeviation(
     :rtype: numpy.ndarray
     :return: normalized time series data
     """
-    std = np.std(A, axis=0)
+    std = np.std(A, axis=1)
     # avoid creating nans or Zerodivisionerror
     std[np.where(std == 0)] = 1
-    A /= np.tile(std, (A.shape[0], 1))
+    A /= np.tile(std, (1, A.shape[1]))
     return A
 
 
@@ -249,8 +249,8 @@ def taper(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
         func = getattr(signal, args['type'])
     args = deepcopy(args)
     args.pop('type')
-    tap = func(A.shape[0], **args)
-    A *= np.tile(np.atleast_2d(tap).T, (1, A.shape[1]))
+    tap = func(A.shape[1], **args)
+    A *= np.tile(np.atleast_2d(tap), (A.shape[0], 1))
     return A
 
 
@@ -303,11 +303,11 @@ def TDnormalization(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     window = (
         np.ones(int(np.ceil(args['windowLength'] * params['sampling_rate'])))
         / np.ceil(args['windowLength']*params['sampling_rate']))
-    for ind in range(B.shape[1]):
-        B[:, ind] = np.convolve(B[:, ind], window, mode='same')
-        B[:, ind] = np.convolve(B[::-1, ind], window, mode='same')[::-1]
+    for ind in range(B.shape[0]):
+        B[ind, :] = np.convolve(B[ind], window, mode='same')
+        B[ind, :] = np.convolve(B[ind, ::-1], window, mode='same')[:, ::-1]
         # damping factor
-        B[:, ind] += np.max(B[:, ind])*1e-6
+        B[ind, :] += np.max(B[ind, :])*1e-6
     # normalization
     A /= np.sqrt(B)
     return A
@@ -343,12 +343,11 @@ def TDfilter(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     func = func_from_str('obspy.signal.filter.%s' % args['type'])
     args = deepcopy(args)
     args.pop('type')
-    # filtering in obspy.signal is done along the last dimension that why .T
-    A = func(A.T, df=params['sampling_rate'], **args).T
+    A = func(A, df=params['sampling_rate'], **args)
     return A
 
 
-def zeroPadding(A: np.ndarray, args: dict, params: dict, axis=0) -> np.ndarray:
+def zeroPadding(A: np.ndarray, args: dict, params: dict, axis=1) -> np.ndarray:
     """
     Append zeros to the traces
 
