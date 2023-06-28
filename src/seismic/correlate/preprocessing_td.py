@@ -10,7 +10,7 @@ Module that contains functions for preprocessing in the time domain
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:24:01 pm
-Last Modified: Tuesday, 27th June 2023 04:58:03 pm
+Last Modified: Wednesday, 28th June 2023 01:44:12 pm
 '''
 from copy import deepcopy
 
@@ -56,14 +56,17 @@ def clip(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
 def detrend(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """
     Remove trend from data
+
+    .. seealso:: :func:`scipy.signal.detrend` for input arguments
     """
-    try:
-        A[np.logical_not(np.isnan(A))] = sp_detrend(
-            A[np.logical_not(np.isnan(A))], axis=1, overwrite_data=True,
-            **args)
-    except ZeroDivisionError:
-        # When the array is nothing but nans
-        return A
+    for ii in range(A.shape[0]):
+        try:
+            A[ii, ~np.isnan(A[ii])] = sp_detrend(
+                A[ii, ~np.isnan(A[ii])], axis=-1, overwrite_data=True,
+                **args)
+        except ZeroDivisionError:
+            # When the array is nothing but nans
+            pass
     return A
 
 
@@ -132,7 +135,7 @@ def mute(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     if 'filter' in list(args.keys()):
         C = TDfilter(A, args['filter'], params)
     else:
-        C = deepcopy(A)
+        C = A
 
     # calculate envelope
     D = np.abs(C)
@@ -147,7 +150,7 @@ def mute(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
 
     # calculate mask
     mask = np.ones_like(D)
-    mask[D > np.tile(np.atleast_2d(thres), (1, A.shape[0]))] = 0
+    mask[D > np.tile(thres, (D.shape[1], 1)).T] = 0
     # extend the muted segments to make sure the whole segment is zero after
     if args['extend_gaps']:
         tap = np.ones(ntap)/ntap
@@ -187,10 +190,10 @@ def normalizeStandardDeviation(
     :rtype: numpy.ndarray
     :return: normalized time series data
     """
-    std = np.std(A, axis=1)
+    std = np.std(A, axis=-1)
     # avoid creating nans or Zerodivisionerror
     std[np.where(std == 0)] = 1
-    A /= np.tile(std, (1, A.shape[1]))
+    A = (A.T/std).T
     return A
 
 
@@ -303,11 +306,17 @@ def TDnormalization(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     window = (
         np.ones(int(np.ceil(args['windowLength'] * params['sampling_rate'])))
         / np.ceil(args['windowLength']*params['sampling_rate']))
-    for ind in range(B.shape[0]):
-        B[ind, :] = np.convolve(B[ind], window, mode='same')
-        B[ind, :] = np.convolve(B[ind, ::-1], window, mode='same')[:, ::-1]
+    if len(B.shape) == 1:
+        B = np.convolve(B, window, mode='same')
+        B = np.convolve(B[::-1], window, mode='same')[::-1]
         # damping factor
-        B[ind, :] += np.max(B[ind, :])*1e-6
+        B += np.max(B)*1e-6
+    else:
+        for ind in range(B.shape[0]):
+            B[ind, :] = np.convolve(B[ind], window, mode='same')
+            B[ind, :] = np.convolve(B[ind, ::-1], window, mode='same')[::-1]
+            # damping factor
+            B[ind, :] += np.max(B[ind, :])*1e-6
     # normalization
     A /= np.sqrt(B)
     return A
@@ -381,14 +390,13 @@ def zeroPadding(A: np.ndarray, args: dict, params: dict, axis=1) -> np.ndarray:
     """
     if A.ndim > 2 or axis > 1:
         raise NotImplementedError('Only two-dimensional arrays are supported.')
+    if A.ndim == 1 and len(A) == 0:
+        raise ValueError('Input Array is empty')
     npts = A.shape[axis]
     if A.ndim == 2:
         ntrc = A.shape[axis-1]
     elif A.ndim == 1:
         ntrc = 1
-    if not ntrc or not npts:
-        raise ValueError('Input Array is empty')
-
     if args['type'] == 'nextFastLen':
         N = next_fast_len(npts)
     elif args['type'] == 'avoidWrapAround':

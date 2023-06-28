@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Tuesday, 4th April 2023 04:47:31 pm
+Last Modified: Wednesday, 28th June 2023 03:06:30 pm
 '''
 from copy import deepcopy
 import unittest
@@ -48,6 +48,7 @@ class TestCorrrelator(unittest.TestCase):
         yaml_mock.return_value = self.options
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = []
+        sc_mock._translate_wildcards.return_value = []
         c = correlate.Correlator(sc_mock, self.param_example)
         self.assertDictEqual(self.options['co'], c.options)
         mkdir_calls = [
@@ -75,8 +76,10 @@ class TestCorrrelator(unittest.TestCase):
         options['net']['network'] = ['bla']
         options['net']['station'] = ['blub']
         sc_mock = mock.Mock(Store_Client)
-        sc_mock.get_available_stations.return_value = []
+        sc_mock._translate_wildcards.return_value = [['bla', 'blub', 'E']]
         c = correlate.Correlator(sc_mock, options)
+        sc_mock._translate_wildcards.assert_called_once_with('bla', 'blub')
+        sc_mock.get_available_stations.assert_not_called()
         self.assertDictEqual(self.options['co'], c.options)
         self.assertListEqual(c.station, [['bla', 'blub']])
 
@@ -107,7 +110,7 @@ class TestCorrrelator(unittest.TestCase):
         options['net']['network'] = '*'
         options['net']['station'] = '*'
         sc_mock = mock.Mock(Store_Client)
-        sc_mock.get_available_stations.return_value = [['lala', 'lolo']]
+        sc_mock._translate_wildcards.return_value = [['lala', 'lolo', 'E']]
         c = correlate.Correlator(sc_mock, options)
         self.assertListEqual(c.station, [['lala', 'lolo']])
 
@@ -120,10 +123,11 @@ class TestCorrrelator(unittest.TestCase):
         options['net']['network'] = 'lala'
         options['net']['station'] = '*'
         sc_mock = mock.Mock(Store_Client)
-        sc_mock.get_available_stations.return_value = [['lala', 'lolo']]
+        sc_mock._translate_wildcards.side_effect = (
+            [['lala', 'lolo', 'E']], [['lala', 'lolo', 'Z']])
         c = correlate.Correlator(sc_mock, options)
         self.assertListEqual(c.station, [['lala', 'lolo']])
-        sc_mock.get_available_stations.assert_called_once_with('lala')
+        sc_mock._translate_wildcards.assert_called_once_with('lala', '*')
 
     @mock.patch('builtins.open')
     @mock.patch('seismic.correlate.correlate.logging')
@@ -135,9 +139,12 @@ class TestCorrrelator(unittest.TestCase):
         options['net']['station'] = '*'
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = [['lala', 'lolo']]
+        sc_mock._translate_wildcards.side_effect = (
+            [['lala', 'lala', 'E']],
+            [['lolo', 'lolo', 'E']])
         c = correlate.Correlator(sc_mock, options)
         self.assertListEqual(
-            c.station, [['lala', 'lolo'], ['lala', 'lolo']])
+            c.station, [['lala', 'lala'], ['lolo', 'lolo']])
         calls = [mock.call('lala'), mock.call('lolo')]
         sc_mock.get_available_stations.assert_has_calls(calls)
 
@@ -163,7 +170,12 @@ class TestCorrrelator(unittest.TestCase):
         options['net']['network'] = ['lala', 'lolo']
         options['net']['station'] = ['le', 'li']
         sc_mock = mock.Mock(Store_Client)
+        sc_mock._translate_wildcards.side_effect = (
+            [['lala', 'le', 'E']], [['lolo', 'li', 'Z']])
         c = correlate.Correlator(sc_mock, options)
+        sc_mock._translate_wildcards.assert_has_calls([
+            mock.call('lala', 'le'), mock.call('lolo', 'li')])
+        sc_mock.get_available_stations.assert_not_called()
         self.assertListEqual(
             c.station, [['lala', 'le'], ['lolo', 'li']])
 
@@ -191,8 +203,8 @@ class TestCorrrelator(unittest.TestCase):
         options['net']['station'] = '*'
         options['co']['combination_method'] = 'betweenStations'
         sc_mock = mock.Mock(Store_Client)
-        sc_mock.get_available_stations.return_value = [
-            ['lala', 'lolo'], ['lala', 'lili']]
+        sc_mock._translate_wildcards.return_value = [
+            ['lala', 'lolo', 'E'], ['lala', 'lili', 'Z']]
         c = correlate.Correlator(sc_mock, options)
 
         sc_mock.select_inventory_or_load_remote.side_effect = [
@@ -201,12 +213,12 @@ class TestCorrrelator(unittest.TestCase):
         c.find_interstat_dist(10000)
         sc_mock.read_inventory.assert_called_once()
         sc_mock.select_inventory_or_load_remote.assert_called_with(
-            'lala', 'lili')
-        self.assertListEqual(
-            c.rcombis,
-            [
-                'lala-lala.lolo-lolo',
-                'lala-lala.lolo-lili', 'lala-lala.lili-lili'])
+            'lala', 'lolo')
+        self.assertSetEqual(
+            set(c.rcombis),
+            {
+                'lala-lala.lili-lolo',
+                'lala-lala.lili-lili', 'lala-lala.lolo-lolo'})
 
     @mock.patch('builtins.open')
     @mock.patch('seismic.correlate.correlate.logging')
@@ -218,8 +230,8 @@ class TestCorrrelator(unittest.TestCase):
         options['net']['station'] = '*'
         options['co']['combination_method'] = 'betweenComponents'
         sc_mock = mock.Mock(Store_Client)
-        sc_mock.get_available_stations.return_value = [
-            ['lala', 'lolo'], ['lala', 'lili']]
+        sc_mock._translate_wildcards.return_value = [
+            ['lala', 'lolo', 'E'], ['lala', 'lili', 'Z']]
         c = correlate.Correlator(sc_mock, options)
         with self.assertRaises(ValueError):
             c.find_interstat_dist(100)
@@ -238,6 +250,8 @@ class TestCorrrelator(unittest.TestCase):
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = [
             ['lala', 'lolo'], ['lala', 'lili']]
+        sc_mock._translate_wildcards.return_value = [
+            ['lala', 'lolo', 'E'], ['lala', 'lili', 'Z']]
         c = correlate.Correlator(sc_mock, options)
         netcombs = ['AA-BB', 'AA-BB', 'AA-AA', 'AA-CC']
         statcombs = ['00-00', '00-11', '22-33', '22-44']
@@ -265,6 +279,8 @@ class TestCorrrelator(unittest.TestCase):
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = [
             ['lala', 'lolo'], ['lala', 'lili']]
+        sc_mock._translate_wildcards.return_value = [
+            ['lala', 'lolo', 'E'], ['lala', 'lili', 'Z']]
         c = correlate.Correlator(sc_mock, options)
         sc_mock.read_inventory.return_value = self.inv
         cst_mock().stack.return_value = 'bla'
@@ -297,6 +313,8 @@ class TestCorrrelator(unittest.TestCase):
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = [
             ['lala', 'lolo'], ['lala', 'lili']]
+        sc_mock._translate_wildcards.return_value = [
+            ['lala', 'lolo', 'E'], ['lala', 'lili', 'Z']]
         c = correlate.Correlator(sc_mock, options)
         sc_mock.read_inventory.return_value = self.inv
         cst_mock().count.return_value = True
@@ -327,10 +345,12 @@ class TestCorrrelator(unittest.TestCase):
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = [
             ['lala', 'lolo'], ['lala', 'lili']]
+        sc_mock._translate_wildcards.return_value = [
+            ['lala', 'lolo', 'E'], ['lala', 'lili', 'Z']]
         c = correlate.Correlator(sc_mock, options)
         st_a_mock.return_value = (np.zeros((3, 5)), self.st)
         with mock.patch.object(c, '_pxcorr_matrix') as pxcm:
-            pxcm.return_value = (np.ones((5, 3)), np.arange(3))
+            pxcm.return_value = (np.ones((3, 5)), np.arange(5))
             cst = c._pxcorr_inner(self.st, self.inv)
             pxcm.assert_called_once()
         self.assertListEqual(
@@ -350,6 +370,8 @@ class TestCorrrelator(unittest.TestCase):
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = [
             ['lala', 'lolo'], ['lala', 'lili']]
+        sc_mock._translate_wildcards.return_value = [
+            ['lala', 'lolo', 'E'], ['lala', 'lili', 'Z']]
         c = correlate.Correlator(sc_mock, options)
         st2 = self.st.copy()
         cst0 = CorrStream()
@@ -385,6 +407,8 @@ class TestCorrrelator(unittest.TestCase):
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = [
             ['lala', 'lolo'], ['lala', 'lili']]
+        sc_mock._translate_wildcards.return_value = [
+            ['lala', 'lolo', 'E'], ['lala', 'lili', 'Z']]
         sc_mock.inventory = self.inv
         sc_mock._load_local.return_value = self.st
         ppst_mock.return_value = self.st
@@ -414,6 +438,8 @@ class TestCorrrelator(unittest.TestCase):
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = [
             ['lala', 'lolo'], ['lala', 'lili']]
+        sc_mock._translate_wildcards.return_value = [
+            ['lala', 'lolo', 'E'], ['lala', 'lili', 'Z']]
         sc_mock.select_inventory_or_load_remote.return_value = self.inv
         sc_mock._load_local.return_value = self.st
         c = correlate.Correlator(sc_mock, options)
@@ -426,10 +452,11 @@ class TestCorrrelator(unittest.TestCase):
             {'starttime': [tr.stats.starttime for tr in self.st],
                 'sampling_rate': self.st[0].stats.sampling_rate})
         # 13 is the fft size
-        shape = (101, 25)  # npts,ntrcs
-        ftshape = (51, 25)
+        shape = (25, 101)
+        ftshape = (25, 51)
         return_func = mock.MagicMock(side_effect=[
-            np.ones(shape), np.ones(ftshape)*3])
+            np.ones(shape, dtype=np.float32),
+            np.ones(ftshape, dtype=np.float32)])
         ffs_mock.return_value = return_func
         zp_mock.return_value = np.ones(shape)*2
         C, startlags = c._pxcorr_matrix(np.zeros(shape))
@@ -441,13 +468,13 @@ class TestCorrrelator(unittest.TestCase):
         self.assertListEqual([], return_func.call_args_list[0][0][1])
         # Check if the fft worked
         np.testing.assert_array_almost_equal(
-            np.fft.rfft(np.ones(shape)*2, axis=0),
+            np.fft.rfft(np.ones(shape)*2),
             return_func.call_args_list[1][0][0])
         np.testing.assert_array_equal(-np.ones((3,)), startlags)
         # Correlation should be one in the middle
         # Length is 51,3 as above
-        expC = np.zeros((51, 3))
-        expC[25] += 1
+        expC = np.zeros((3, 51))
+        expC[:, 25] += 1
         np.testing.assert_array_almost_equal(C, expC, decimal=2)
 
 
@@ -457,7 +484,7 @@ class TestStToNpArray(unittest.TestCase):
 
     def test_result_shape(self):
         A, _ = correlate.st_to_np_array(self.st, self.st[0].stats.npts)
-        self.assertEqual(A.shape, (self.st[0].stats.npts, self.st.count()))
+        self.assertEqual(A.shape, (self.st.count(), self.st[0].stats.npts))
 
     def test_deleted_data(self):
         _, st = correlate.st_to_np_array(self.st, self.st[0].stats.npts)
@@ -468,7 +495,7 @@ class TestStToNpArray(unittest.TestCase):
     def test_result(self):
         A, _ = correlate.st_to_np_array(self.st.copy(), self.st[0].stats.npts)
         for ii, tr in enumerate(self.st):
-            self.assertTrue(np.allclose(tr.data, A[:, ii]))
+            self.assertTrue(np.allclose(tr.data, A[ii]))
 
 
 class TestCompareExistingData(unittest.TestCase):

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 27th June 2023 05:28:04 pm
+Last Modified: Wednesday, 28th June 2023 03:08:12 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -137,11 +137,9 @@ class Correlator(object):
         if isinstance(network, list) and len(network) == 1:
             network = network[0]
 
-        if network == '*' and station == '*':
-            station = store_client.get_available_stations()
-        elif station == '*' and isinstance(network, str):
-            station = store_client.get_available_stations(network)
-        elif network == '*':
+        if (
+            network == '*'
+                and isinstance(station, str) and '*' not in station):
             raise ValueError(
                 'Stations has to be either: \n'
                 + '1. A list of the same length as the list of networks.\n'
@@ -178,7 +176,7 @@ class Correlator(object):
             self.avail_raw_data.extend(
                 self.store_client._translate_wildcards(net, stat))
         self.station = np.unique(np.array([
-                [d[0], d[1]] for d in self.avail_raw_data]), axis=0).tolist()
+            [d[0], d[1]] for d in self.avail_raw_data]), axis=0).tolist()
         self.logger.debug(
             'Fetching data from the following stations:\n%a' % [
                 f'{n}.{s}' for n, s in self.station])
@@ -608,7 +606,7 @@ class Correlator(object):
 
         # use next fast len instead?
         fftsize = zmsize[1]//2+1
-        B = np.zeros((ntrc, fftsize), dtype=np.float32)
+        B = np.zeros((ntrc, fftsize), dtype=np.csingle)
 
         B[ind, :] = np.fft.rfft(A[ind, :], axis=1)
 
@@ -629,7 +627,7 @@ class Correlator(object):
         ######################################
         # collect results
         self.comm.barrier()
-        self.comm.Allreduce(MPI.IN_PLACE, [B, MPI.DOUBLE], op=MPI.SUM)
+        self.comm.Allreduce(MPI.IN_PLACE, [B, MPI.FLOAT], op=MPI.SUM)
 
         ######################################
         # correlation
@@ -644,7 +642,7 @@ class Correlator(object):
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
         ind = np.arange(csize)[ind]
-        startlags = np.zeros(csize, dtype=np.float64)
+        startlags = np.zeros(csize, dtype=np.float32)
         for ii in ind:
             # offset of starttimes in samples(just remove fractions of samples)
             offset = (
@@ -700,9 +698,9 @@ class Correlator(object):
         self.logger.debug('%s %s' % (C.shape, C.dtype))
         self.logger.debug('combis: %s' % (self.options['combinations']))
 
-        self.comm.Allreduce(MPI.IN_PLACE, [C, MPI.DOUBLE], op=MPI.SUM)
+        self.comm.Allreduce(MPI.IN_PLACE, [C, MPI.FLOAT], op=MPI.SUM)
         self.comm.Allreduce(
-            MPI.IN_PLACE, [startlags, MPI.DOUBLE], op=MPI.SUM)
+            MPI.IN_PLACE, [startlags, MPI.FLOAT], op=MPI.SUM)
 
         return (C, startlags)
 

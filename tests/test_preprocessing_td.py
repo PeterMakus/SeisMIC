@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:54:28 pm
-Last Modified: Monday, 16th January 2023 11:14:10 am
+Last Modified: Wednesday, 28th June 2023 01:48:03 pm
 '''
 from copy import deepcopy
 import unittest
@@ -26,22 +26,22 @@ class TestClip(unittest.TestCase):
         args = {}
         args['std_factor'] = np.random.randint(2, 4)
         npts = np.random.randint(400, 749)
-        A = np.tile(gaussian(npts, 180), (2, 1)).T
+        A = np.tile(gaussian(npts, 180), (2, 1))
         res = pptd.clip(A.copy(), args, {})
         self.assertAlmostEqual(
-            np.std(A, axis=0)[0]*args['std_factor'], abs(res).max(axis=0)[0])
+            np.std(A, axis=1)[0]*args['std_factor'], abs(res).max(axis=1)[0])
 
     def test_std_0(self):
         args = {}
         args['std_factor'] = np.random.randint(2, 4)
-        A = np.ones((100, 5))
+        A = np.ones((5, 100))
         res = pptd.clip(A.copy(), args, {})
         self.assertTrue(np.all(res == np.zeros_like(A)))
 
 
 class TestDetrend(unittest.TestCase):
     def test_contains_nan(self):
-        data = np.ones((50, 25))
+        data = np.ones((25, 50))
         data[1:3, 9:12] = np.nan
         args = {'type': 'constant'}
         out = pptd.detrend(data, args, {})
@@ -52,6 +52,22 @@ class TestDetrend(unittest.TestCase):
         args = {'type': 'linear'}
         out = pptd.detrend(data, args, {})
         np.testing.assert_almost_equal(out, 0)
+
+    def test_result_const_2d(self):
+        data = np.vstack((np.ones((2, 500)), np.arange(500)))
+        exp = np.vstack((np.zeros((2, 500)), np.arange(500)-249.5))
+        args = {'type': 'constant'}
+        out = pptd.detrend(data, args, {})
+        np.testing.assert_almost_equal(out, exp)
+
+    def test_result_linear_2d(self):
+        data = np.vstack(
+            (np.cos(np.linspace(0, 2*np.pi, 500)), np.arange(500)))
+        exp = np.vstack(
+            (np.cos(np.linspace(0, 2*np.pi, 500)), np.zeros((500))))
+        args = {'type': 'linear'}
+        out = pptd.detrend(data, args, {})
+        np.testing.assert_almost_equal(out, exp, decimal=2)
 
     def test_only_nans(self):
         data = np.ones((50, 25))
@@ -125,22 +141,22 @@ class TestMute(unittest.TestCase):
         args['taper_len'] = 1
         args['extend_gaps'] = False
         npts = np.random.randint(400, 749)
-        A = np.tile(gaussian(npts, 180), (2, 1)).T
-        args['threshold'] = A[:, 0].max(axis=0)/np.random.randint(2, 4)
+        A = np.tile(gaussian(npts, 180), (2, 1))
+        args['threshold'] = A[0].max()/np.random.randint(2, 4)
         args['filter'] = 'blub'
         tdf_mock.return_value = deepcopy(A)
         res = pptd.mute(A, args, self.params)
         self.assertLessEqual(
-            res[:, 0].max(axis=0), args['threshold'])
+            res[0].max(), args['threshold'])
         tdf_mock.assert_called_once_with(A, 'blub', self.params)
 
 
 class TestNormalizeStd(unittest.TestCase):
     def test_result(self):
         npts = np.random.randint(400, 749)
-        A = np.tile(gaussian(npts, 180), (2, 1)).T
+        A = np.tile(gaussian(npts, 180), (2, 1))
         res = pptd.normalizeStandardDeviation(A, {}, {})
-        self.assertAlmostEqual(np.std(res, axis=0)[0], 1)
+        self.assertAlmostEqual(np.std(res, axis=1)[0], 1)
 
     def test_std_0(self):
         # Feed in DC signal to check this
@@ -162,18 +178,18 @@ class TestFDSignBitNormalisation(unittest.TestCase):
 
 class TestTaper(unittest.TestCase):
     def test_cosine_filter(self):
-        data = np.ones((50, 2))
+        data = np.ones((2, 50))
         exp = deepcopy(data)
-        exp[0, :] = 0
-        exp[-1, :] = 0
-        exp[1, :] = 0.5
-        exp[-2, :] = .5
+        exp[:, 0] = 0
+        exp[:, -1] = 0
+        exp[:, 1] = 0.5
+        exp[:, -2] = .5
         args = {'type': 'cosine_taper', 'p': 0.1}
         out = pptd.taper(data, args, {})
         np.testing.assert_allclose(out, exp)
 
     def test_other_taper(self):
-        data = np.ones((50, 2))
+        data = np.ones((2, 50))
         args = {'type': 'hann'}
         out = pptd.taper(deepcopy(data), args, {})
         np.testing.assert_array_less(out, data)
@@ -233,24 +249,24 @@ class TestZeroPadding(unittest.TestCase):
             (np.random.randint(100, 666), np.random.randint(2, 45)))
 
     def test_result_next_fast_len(self):
-        expected_len = next_fast_len(self.A.shape[0])
+        expected_len = next_fast_len(self.A.shape[1])
         self.assertEqual(pptd.zeroPadding(
-            self.A, {'type': 'nextFastLen'}, self.params).shape[0],
+            self.A, {'type': 'nextFastLen'}, self.params).shape[1],
             expected_len)
 
     def test_result_avoid_wrap_around(self):
-        expected_len = self.A.shape[0] + \
+        expected_len = self.A.shape[1] + \
             self.params['sampling_rate'] * self.params['lengthToSave']
         self.assertEqual(pptd.zeroPadding(
-            self.A, {'type': 'avoidWrapAround'}, self.params).shape[0],
+            self.A, {'type': 'avoidWrapAround'}, self.params).shape[1],
             expected_len)
 
     def test_result_avoid_wrap_fast_len(self):
         expected_len = next_fast_len(int(
-            self.A.shape[0]
+            self.A.shape[1]
             + self.params['sampling_rate'] * self.params['lengthToSave']))
         self.assertEqual(pptd.zeroPadding(
-            self.A, {'type': 'avoidWrapFastLen'}, self.params).shape[0],
+            self.A, {'type': 'avoidWrapFastLen'}, self.params).shape[1],
             expected_len)
 
     def test_result_next_fast_len_axis1(self):

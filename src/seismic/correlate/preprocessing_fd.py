@@ -11,7 +11,7 @@ Module containing functions for preprocessing in the frequency domain
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:40:11 pm
-Last Modified: Tuesday, 27th June 2023 05:01:34 pm
+Last Modified: Wednesday, 28th June 2023 02:00:00 pm
 '''
 from copy import deepcopy
 import logging
@@ -71,10 +71,10 @@ def FDsignBitNormalization(
     :rtype: numpy.ndarray
     :return: frequency transform of the 1-bit normalized data
     """
-    B = np.fft.irfft(B, axis=1)
-    # B should always be real, so this line does not make an awful lot of sense
-    C = np.sign(B.real)
-    return np.fft.rfft(C, axis=1)
+    B = np.fft.irfft(B)
+    # np.sign only takes the real part into account
+    C = np.sign(B)
+    return np.fft.rfft(C)
 
 
 def spectralWhitening(B: np.ndarray, args: dict, params) -> np.ndarray:
