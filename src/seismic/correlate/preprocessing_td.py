@@ -10,7 +10,7 @@ Module that contains functions for preprocessing in the time domain
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:24:01 pm
-Last Modified: Wednesday, 28th June 2023 01:44:12 pm
+Last Modified: Wednesday, 28th June 2023 03:37:03 pm
 '''
 from copy import deepcopy
 
@@ -59,13 +59,15 @@ def detrend(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
 
     .. seealso:: :func:`scipy.signal.detrend` for input arguments
     """
+    if np.all(np.isnan(A)):
+        return A
     for ii in range(A.shape[0]):
         try:
             A[ii, ~np.isnan(A[ii])] = sp_detrend(
                 A[ii, ~np.isnan(A[ii])], axis=-1, overwrite_data=True,
                 **args)
         except ZeroDivisionError:
-            # When the array is nothing but nans
+            # When the line is nothing but nans
             pass
     return A
 
