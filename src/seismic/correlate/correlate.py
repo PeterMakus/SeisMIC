@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 28th June 2023 03:33:51 pm
+Last Modified: Thursday, 29th June 2023 09:27:21 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -18,7 +18,6 @@ import logging
 import json
 import warnings
 import yaml
-import time
 
 from mpi4py import MPI
 import numpy as np
@@ -281,14 +280,14 @@ class Correlator(object):
         t_pxcorr_inner = 0
         t_write = 0
         t_generate = 0
-        t0 = time.time()
+        t0 = MPI.Wtime()
         for st, write_flag in self._generate_data():
-            t_generate += time.time() - t0
-            t0 = time.time()
+            t_generate += MPI.Wtime() - t0
+            t0 = MPI.Wtime()
             cst.extend(self._pxcorr_inner(st, inv))
-            t_pxcorr_inner += time.time() - t0
+            t_pxcorr_inner += MPI.Wtime() - t0
             if write_flag:
-                t0 = time.time()
+                t0 = MPI.Wtime()
                 self.logger.debug('Writing Correlations to file.')
                 # Here, we can recombine the correlations for the read_len
                 # size (i.e., stack)
@@ -303,8 +302,8 @@ class Correlator(object):
                 elif cst.count():
                     self._write(cst, tag='subdivision')
                     cst.clear()
-                t_write += time.time() - t0
-            t0 = time.time()
+                t_write += MPI.Wtime() - t0
+            t0 = MPI.Wtime()
 
         # write the remaining data
         if self.options['subdivision']['recombine_subdivision'] and \
@@ -338,12 +337,12 @@ class Correlator(object):
             {'starttime': starttime,
                 'sampling_rate': self.sampling_rate})
         self.logger.debug('Computing Cross-Correlations.')
-        now = time.time()
+        now = MPI.Wtime()
         A, startlags = self._pxcorr_matrix(A)
-        print('Time for pxcorr_matrix: %s' % (time.time() - now))
+        print('Time for pxcorr_matrix: %s' % (MPI.Wtime() - now))
         self.logger.debug('Converting Matrix to CorrStream.')
         # put trace into a stream
-        now = time.time()
+        now = MPI.Wtime()
         cst = CorrStream()
         if A is None:
             # No new data
@@ -357,7 +356,7 @@ class Correlator(object):
                     A[ii], header1=st[comb[0]].stats,
                     header2=st[comb[1]].stats, inv=inv, start_lag=startlag,
                     end_lag=endlag))
-        print('Time for converting to CorrStream: %s' % (time.time() - now))
+        print('Time for converting to CorrStream: %s' % (MPI.Wtime() - now))
         return cst
 
     def _write(self, cst, tag: str):
@@ -626,7 +625,6 @@ class Correlator(object):
 
         ######################################
         # collect results
-        self.comm.barrier()
         self.comm.Allreduce(MPI.IN_PLACE, [B, MPI.FLOAT], op=MPI.SUM)
 
         ######################################

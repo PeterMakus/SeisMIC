@@ -10,7 +10,7 @@ Module that contains functions for preprocessing in the time domain
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:24:01 pm
-Last Modified: Wednesday, 28th June 2023 03:37:03 pm
+Last Modified: Thursday, 29th June 2023 11:15:56 am
 '''
 from copy import deepcopy
 
@@ -55,6 +55,36 @@ def clip(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
 
 def detrend(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """
+    Detrend wrapper. Can call scipy.signal.detrend or a faster custom function.
+
+    :param A: 1 or 2D array
+    :type A: np.ndarray
+    :param args: arguments for detrend function
+    :type args: dict
+    :param params: params file
+    :type params: dict
+    :raises ValueError: For unknown detrend method
+    :raises ValueError: For unknown detrend type
+    :return: detrended data
+    :rtype: np.ndarray
+    """
+    method = args.get('method', 'qr')
+    if method == 'scipy':
+        return detrend_scipy(A, args, params)
+    elif method == 'qr':
+        detrend_type = args.get('type', 'linear')
+        if detrend_type == 'linear':
+            return detrendqr(A)
+        elif detrend_type == 'constant':
+            return demean(A)
+        else:
+            raise ValueError('Unknown detrend type')
+    else:
+        raise ValueError('Unknown detrend method')
+
+
+def detrend_scipy(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
+    """
     Remove trend from data
 
     .. seealso:: :func:`scipy.signal.detrend` for input arguments
@@ -70,6 +100,49 @@ def detrend(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
             # When the line is nothing but nans
             pass
     return A
+
+
+def detrendqr(data: np.ndarray) -> np.ndarray:
+    """
+    Remove trend from data using QR decomposition. Faster than
+    scipy.signal.detrend. Shamelessly adapted from
+    NoisePy
+
+    .. seealso:: Adapted from `NoisePy <https://doi.org/10.1785/0220190364>`_
+
+    :param data: 1 or 2D array
+    :type data: np.ndarray
+    :raises ValueError: For data with more than 2 dimensions
+    :return: detrended data
+    :rtype: np.ndarray
+    """
+    npts = data.shape[-1]
+    X = np.ones((npts, 2))
+    X[:, 0] = np.arange(0, npts, dtype=np.float32) / npts
+    Q, R = np.linalg.qr(X)
+    rq = np.dot(np.linalg.inv(R), Q.transpose())
+    if data.ndim == 1:
+        coeff = np.dot(rq, data)
+        data = data - np.dot(X, coeff)
+    elif data.ndim == 2:
+        for ii in range(data.shape[0]):
+            coeff = np.dot(rq, data[ii])
+            data[ii] = data[ii] - np.dot(X, coeff)
+    else:
+        raise ValueError('data must be 1D or 2D')
+    return data
+
+
+def demean(data: np.ndarray) -> np.ndarray:
+    """
+    Demean data
+
+    :param data: 1 or 2D array
+    :type data: np.ndarray
+    :return: demeaned data
+    :rtype: np.ndarray
+    """
+    return data - np.nanmean(data, axis=-1, keepdims=True)
 
 
 def mute(A: np.ndarray, args: dict, params: dict) -> np.ndarray:

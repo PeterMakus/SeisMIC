@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:54:28 pm
-Last Modified: Wednesday, 28th June 2023 03:37:06 pm
+Last Modified: Thursday, 29th June 2023 11:21:37 am
 '''
 from copy import deepcopy
 import unittest
@@ -40,24 +40,71 @@ class TestClip(unittest.TestCase):
 
 
 class TestDetrend(unittest.TestCase):
+    @mock.patch('seismic.correlate.preprocessing_td.detrend_scipy')
+    @mock.patch('seismic.correlate.preprocessing_td.detrendqr')
+    @mock.patch('seismic.correlate.preprocessing_td.demean')
+    def test_result(self, mock_demean, mock_detrendqr, mock_detrend_scipy):
+        data = np.random.rand(25, 50)
+        args = {'type': 'constant', 'method': 'scipy'}
+        pptd.detrend(data, args, {})
+        mock_detrend_scipy.assert_called_once_with(data, args, {})
+        mock_detrendqr.assert_not_called()
+        mock_demean.assert_not_called()
+
+    @mock.patch('seismic.correlate.preprocessing_td.detrend_scipy')
+    @mock.patch('seismic.correlate.preprocessing_td.detrendqr')
+    @mock.patch('seismic.correlate.preprocessing_td.demean')
+    def test_result_2(self, mock_demean, mock_detrendqr, mock_detrend_scipy):
+        data = np.random.rand(25, 50)
+        args = {'type': 'constant', 'method': 'qr'}
+        pptd.detrend(data, args, {})
+        mock_detrend_scipy.assert_not_called()
+        mock_demean.assert_called_once_with(data)
+        mock_detrendqr.assert_not_called()
+
+    @mock.patch('seismic.correlate.preprocessing_td.detrend_scipy')
+    @mock.patch('seismic.correlate.preprocessing_td.detrendqr')
+    @mock.patch('seismic.correlate.preprocessing_td.demean')
+    def test_result_3(self, mock_demean, mock_detrendqr, mock_detrend_scipy):
+        data = np.random.rand(25, 50)
+        args = {'type': 'linear', 'method': 'qr'}
+        pptd.detrend(data, args, {})
+        mock_detrend_scipy.assert_not_called()
+        mock_demean.assert_not_called()
+        mock_detrendqr.assert_called_once_with(data)
+
+    def test_unknown_type_error(self):
+        data = np.random.rand(25, 50)
+        args = {'type': 'bla', 'method': 'qr'}
+        with self.assertRaises(ValueError):
+            pptd.detrend(data, args, {})
+
+    def test_unknown_method_error(self):
+        data = np.random.rand(25, 50)
+        args = {'type': 'linear', 'method': 'bla'}
+        with self.assertRaises(ValueError):
+            pptd.detrend(data, args, {})
+
+
+class TestDetrendSciPy(unittest.TestCase):
     def test_contains_nan(self):
         data = np.ones((25, 50))
         data[1:3, 9:12] = np.nan
         args = {'type': 'constant'}
-        out = pptd.detrend(data, args, {})
+        out = pptd.detrend_scipy(data, args, {})
         np.testing.assert_almost_equal(out[np.logical_not(np.isnan(out))], 0)
 
     def test_result_linear(self):
         data = np.arange(500)
         args = {'type': 'linear'}
-        out = pptd.detrend(data, args, {})
+        out = pptd.detrend_scipy(data, args, {})
         np.testing.assert_almost_equal(out, 0)
 
     def test_result_const_2d(self):
         data = np.vstack((np.ones((2, 500)), np.arange(500)))
         exp = np.vstack((np.zeros((2, 500)), np.arange(500)-249.5))
         args = {'type': 'constant'}
-        out = pptd.detrend(data, args, {})
+        out = pptd.detrend_scipy(data, args, {})
         np.testing.assert_almost_equal(out, exp)
 
     def test_result_linear_2d(self):
@@ -66,14 +113,59 @@ class TestDetrend(unittest.TestCase):
         exp = np.vstack(
             (np.cos(np.linspace(0, 2*np.pi, 500)), np.zeros((500))))
         args = {'type': 'linear'}
-        out = pptd.detrend(data, args, {})
+        out = pptd.detrend_scipy(data, args, {})
         np.testing.assert_almost_equal(out, exp, decimal=2)
 
     def test_only_nans(self):
         data = np.ones((50, 25))
         data.fill(np.nan)
         args = {'type': 'linear'}
-        out = pptd.detrend(data, args, {})
+        out = pptd.detrend_scipy(data, args, {})
+        np.testing.assert_almost_equal(out, data)
+
+
+class TestDetrendQR(unittest.TestCase):
+    def test_contains_nan(self):
+        data = np.ones((25, 50))
+        data[1:3, 9:12] = np.nan
+        out = pptd.detrendqr(data)
+        np.testing.assert_almost_equal(out[~np.isnan(out)], 0)
+
+    def test_result_linear(self):
+        data = np.arange(500)
+        out = pptd.detrendqr(data)
+        np.testing.assert_almost_equal(out, 0, decimal=4)
+
+    def test_result_linear_2d(self):
+        data = np.vstack(
+            (np.cos(np.linspace(0, 2*np.pi, 500)), np.arange(500)))
+        exp = np.vstack(
+            (np.cos(np.linspace(0, 2*np.pi, 500)), np.zeros((500))))
+        out = pptd.detrendqr(data)
+        np.testing.assert_almost_equal(out, exp, decimal=2)
+
+    def test_only_nans(self):
+        data = np.ones((50, 25))
+        data.fill(np.nan)
+        out = pptd.detrendqr(data)
+        np.testing.assert_almost_equal(out, data)
+
+    def test_dim_error(self):
+        data = np.ones((50, 25, 2))
+        with self.assertRaises(ValueError):
+            pptd.detrendqr(data)
+
+
+class TestDemean(unittest.TestCase):
+    def test_result(self):
+        data = np.random.rand(25, 50)
+        out = pptd.demean(data)
+        np.testing.assert_almost_equal(out.mean(axis=1), 0)
+
+    def test_only_nans(self):
+        data = np.ones((50, 25))
+        data.fill(np.nan)
+        out = pptd.demean(data)
         np.testing.assert_almost_equal(out, data)
 
 
