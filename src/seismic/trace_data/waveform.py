@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Tuesday, 27th June 2023 02:45:14 pm
+Last Modified: Friday, 7th July 2023 03:08:34 pm
 '''
 
 import fnmatch
@@ -417,7 +417,7 @@ class Store_Client(object):
 
     def compute_spectrogram(
         self, network: str, station: str, channel: str, starttime: UTCDateTime,
-        endtime: UTCDateTime, win_len: int,
+        endtime: UTCDateTime, win_len: int, freq_max: float = 25,
             read_increment: int = 86400) -> Tuple[
                 np.ndarray, np.ndarray, np.ndarray]:
         """
@@ -439,6 +439,9 @@ class Store_Client(object):
         :type endtime: UTCDateTime
         :param win_len: Length of each time window in seconds
         :type win_len: int
+        :param freq_max: Maximum frequency to compute, defaults to 25.
+            Also determines the Nyquist frequency.
+        :type freq_max: float, optional
         :param read_increment: Increment to read data in - does not
             influence the final result but has to be >= win_len,
             defaults to 86400
@@ -452,7 +455,7 @@ class Store_Client(object):
                     read_increment, win_len))
         data_gen = self._generate_time_windows(
             network, station, channel, starttime, endtime, read_increment)
-        return spct_series_welch(data_gen, win_len)
+        return spct_series_welch(data_gen, win_len, freq_max)
 
 
 class FS_Client(object):

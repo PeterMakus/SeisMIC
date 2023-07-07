@@ -10,7 +10,7 @@ Module for waveform data analysis. Contains spectrogram computation.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 12:22:00 pm
-Last Modified: Thursday, 22nd June 2023 01:39:55 pm
+Last Modified: Friday, 7th July 2023 03:09:57 pm
 '''
 from typing import Iterator
 
@@ -22,7 +22,8 @@ from scipy.interpolate import pchip_interpolate
 from seismic.utils.miic_utils import resample_or_decimate
 
 
-def spct_series_welch(streams: Iterator[Stream], window_length: int):
+def spct_series_welch(
+        streams: Iterator[Stream], window_length: int, freqmax: float):
     """
     Computes a spectral time series. Each point in time is computed using the
     welch method. Windows overlap by half the windolength. The input stream can
@@ -32,6 +33,8 @@ def spct_series_welch(streams: Iterator[Stream], window_length: int):
     :type st: ~obspy.core.Stream
     :param window_length: window length in seconds for each datapoint in time
     :type window_length: int or float
+    :param freqmax: maximum frequency to be considered
+    :type freqmax: float
     :return: Arrays containing a frequency and time series and the spectral
         series.
     :rtype: np.ndarray
@@ -41,7 +44,7 @@ def spct_series_welch(streams: Iterator[Stream], window_length: int):
     t = []
     for st in streams:
         st = st.merge()
-        tr = preprocess(st[0])
+        tr = preprocess(st[0], freqmax)
         for wintr in tr.slide(window_length=window_length, step=window_length):
             f, S = welch(wintr.data, fs=wintr.stats.sampling_rate)
             # interpolate onto a logarithmic frequency space
@@ -56,7 +59,7 @@ def spct_series_welch(streams: Iterator[Stream], window_length: int):
     return f2, t, S.T
 
 
-def preprocess(tr: Trace):
+def preprocess(tr: Trace, freqmax: float):
     """
     Some very basic preprocessing on the string in order to plot the spectral
     series. Does the following steps:
@@ -70,12 +73,12 @@ def preprocess(tr: Trace):
     :rtype: ~obspy.core.Stream and ~obspy.core.Inventory
     """
     # Downsample to make computations faster
-    resample_or_decimate(tr, 25)
+    resample_or_decimate(tr, freqmax*2)
     tr.remove_response()
     # Detrend
     tr.detrend(type='linear')
 
     # highpass filter
-    tr.filter('bandpass', freqmin=0.01, freqmax=12)
+    tr.filter('highpass', freq=0.01)
 
     return tr
