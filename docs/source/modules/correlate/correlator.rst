@@ -29,6 +29,10 @@ A script to start your correlation could look like this:
     :linenos:
 
     from time import time
+    import os
+    # This tells numpy to only use one thread
+    # As we use MPI this is necessary to avoid overascribing threads
+    os.environ['OPENBLAS_NUM_THREADS'] = '1'
 
     from obspy.clients.fdsn import Client
 

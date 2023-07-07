@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 29th June 2023 09:27:21 am
+Last Modified: Friday, 7th July 2023 09:14:18 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple
@@ -277,17 +277,9 @@ class Correlator(object):
             inv = None
         inv = self.comm.bcast(inv, root=0)
 
-        t_pxcorr_inner = 0
-        t_write = 0
-        t_generate = 0
-        t0 = MPI.Wtime()
         for st, write_flag in self._generate_data():
-            t_generate += MPI.Wtime() - t0
-            t0 = MPI.Wtime()
             cst.extend(self._pxcorr_inner(st, inv))
-            t_pxcorr_inner += MPI.Wtime() - t0
             if write_flag:
-                t0 = MPI.Wtime()
                 self.logger.debug('Writing Correlations to file.')
                 # Here, we can recombine the correlations for the read_len
                 # size (i.e., stack)
@@ -302,8 +294,6 @@ class Correlator(object):
                 elif cst.count():
                     self._write(cst, tag='subdivision')
                     cst.clear()
-                t_write += MPI.Wtime() - t0
-            t0 = MPI.Wtime()
 
         # write the remaining data
         if self.options['subdivision']['recombine_subdivision'] and \
@@ -312,9 +302,6 @@ class Correlator(object):
         if not self.options['subdivision']['delete_subdivision'] and \
                 cst.count():
             self._write(cst, tag='subdivision')
-        print('Time for pxcorr_inner: %s' % t_pxcorr_inner)
-        print('Time for writing: %s' % t_write)
-        print('Time for generating: %s' % t_generate)
 
     def _pxcorr_inner(self, st: Stream, inv: Inventory) -> CorrStream:
         """
@@ -331,18 +318,15 @@ class Correlator(object):
             starttime.append(tr.stats['starttime'])
             npts.append(tr.stats['npts'])
         npts = np.max(np.array(npts))
-        A, st = st_to_np_array(st, npts)
 
+        A, st = st_to_np_array(st, npts)
         self.options.update(
             {'starttime': starttime,
                 'sampling_rate': self.sampling_rate})
         self.logger.debug('Computing Cross-Correlations.')
-        now = MPI.Wtime()
         A, startlags = self._pxcorr_matrix(A)
-        print('Time for pxcorr_matrix: %s' % (MPI.Wtime() - now))
         self.logger.debug('Converting Matrix to CorrStream.')
         # put trace into a stream
-        now = MPI.Wtime()
         cst = CorrStream()
         if A is None:
             # No new data
@@ -356,7 +340,6 @@ class Correlator(object):
                     A[ii], header1=st[comb[0]].stats,
                     header2=st[comb[1]].stats, inv=inv, start_lag=startlag,
                     end_lag=endlag))
-        print('Time for converting to CorrStream: %s' % (MPI.Wtime() - now))
         return cst
 
     def _write(self, cst, tag: str):
@@ -429,6 +412,16 @@ class Correlator(object):
         else:
             tl = 0
 
+        # Decide which process reads data from which station
+        # Better than just letting one core read as this avoids having to
+        # send very big chunks of data using MPI (MPI communication does
+        # not support more than 2GB/comm operation)
+        pmap = np.arange(len(self.avail_raw_data))*self.psize/len(
+            self.avail_raw_data)
+        pmap = pmap.astype(np.int32)
+        ind = pmap == self.rank
+        ind = np.arange(len(self.avail_raw_data))[ind]
+
         # Loop over read increments
         for t in tqdm(loop_window):
             write_flag = True  # Write length is same as read length
@@ -436,16 +429,6 @@ class Correlator(object):
             endt = startt + self.options['read_len']
             st = Stream()
             resp = Inventory()
-
-            # Decide which process reads data from which station
-            # Better than just letting one core read as this avoids having to
-            # send very big chunks of data using MPI (MPI communication does
-            # not support more than 2GB/comm operation)
-            pmap = np.arange(len(self.avail_raw_data))*self.psize/len(
-                self.avail_raw_data)
-            pmap = pmap.astype(np.int32)
-            ind = pmap == self.rank
-            ind = np.arange(len(self.avail_raw_data))[ind]
 
             # loop over queried stations
             for net, stat, cha in np.array(self.avail_raw_data)[ind]:
@@ -543,10 +526,9 @@ class Correlator(object):
                 # Stream based preprocessing
                 if self.options['preprocess_subdiv']:
                     try:
-                        self.logger.debug('Preprocessing stream...')
                         win = preprocess_stream(
-                            win, self.store_client, resp, winstart, winend, tl,
-                            **self.options)
+                            win, self.store_client, resp, winstart, winend,
+                            tl, **self.options)
                     except ValueError as e:
                         self.logger.error(
                             'Stream preprocessing failed for '
@@ -671,7 +653,7 @@ class Correlator(object):
                     / irfftsize).real
             else:
                 norm = 1.
-            # M = np.zeros_like(B)
+
             M = (
                 B[self.options['combinations'][ii][0], :].conj()
                 * B[self.options['combinations'][ii][1], :]
@@ -715,10 +697,8 @@ def st_to_np_array(st: Stream, npts: int) -> Tuple[np.ndarray, Stream]:
     :return: A stream and a matrix
     :rtype: np.ndarray
     """
-    # A = np.zeros((npts, st.count()), dtype=np.float32)
     A = np.zeros((st.count(), npts), dtype=np.float32)
     for ii, tr in enumerate(st):
-        # A[:tr.stats.npts, ii] = tr.data
         A[ii, :tr.stats.npts] = tr.data
         del tr.data  # Not needed any more, just uses up RAM
     return A, st
