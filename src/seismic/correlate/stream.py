@@ -10,7 +10,7 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Monday, 6th March 2023 11:30:07 am
+Last Modified: Friday, 7th July 2023 01:42:52 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -747,12 +747,13 @@ class CorrBulk(object):
         """
         wfc_dict = wfc_multi_reftr(
             self.data, ref_trc, time_window, sides, remove_nans)
-        stats = deepcopy(self.stats)
-        stats['tw_start'] = tw_start
-        stats['tw_len'] = tw_len
-        stats['freq_min'] = freq_min
-        stats['freq_max'] = freq_max
-        wfc = WFC(wfc_dict, stats)
+        wfc_processing = {
+            'tw_start': tw_start,
+            'tw_len': tw_len,
+            'freq_min': freq_min,
+            'freq_max': freq_max
+        }
+        wfc = WFC(wfc_dict, self.stats, wfc_processing)
         return wfc
 
     def _find_slice_index(

@@ -196,12 +196,14 @@ wfc:
     date_inc : 86400                        # increment of measurements
 
     ### Frequencies
-    freq_min : 4
-    freq_max : 8
+    # can be lists of same length
+    freq_min : [0.0625, 0.09, 0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5]
+    freq_max : [0.125, 0.18, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8, 10]
 
     ### Definition of lapse time window
-    tw_start : 20     # lapse time of first sample [s]
-    tw_len : 60       # length of window [s]
+    # can be lists of same length or tw_start: List and tw_len: single value (will be applied to all)
+    tw_start : [0, 1.25, 2.5, 3.75, 5, 6.25, 7.5, 8.75, 10, 11.25, 12.5, 13.75, 15, 16.25, 17.5, 17.75, 20]     # lapse time of first sample [s]
+    tw_len : 5       # length of window [s]
   
     #### Reference trace extraction
     #  win_inc : Length in days of each reference time window to be used for trace extraction
@@ -213,7 +215,7 @@ wfc:
 
     # preprocessing on the correlation bulk before stretch estimation
     preprocessing: [
-                    {'function': 'smooth', 'args': {'wsize': 48, 'wtype': 'hanning', 'axis': 1}}
+                    {'function': 'smooth', 'args': {'wsize': 4, 'wtype': 'hanning', 'axis': 1}}
     ]
 
     ### SAVING

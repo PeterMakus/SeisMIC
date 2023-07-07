@@ -39,7 +39,7 @@ co:
     # New sampling rate in Hz. Note that it will try to decimate
     # if possible (i.e., there is an integer factor from the
     # native sampling_rate)
-    sampling_rate : 10
+    sampling_rate : 25
     # Remove the instrument response, will take substantially more time
     remove_response : False
 
@@ -119,7 +119,7 @@ co:
                                     #  {'function':seismic.correlate.preprocessing_fd.FDsignBitNormalization,
                                     # 'args':{}}
                                     ],
-                 'lengthToSave':20,
+                 'lengthToSave':25,
                  'center_correlation':True,      # make sure zero correlation time is in the center
                  'normalize_correlation':True,
                  'combinations':[]
@@ -181,18 +181,20 @@ wfc:
     subdir : 'wfc'
 
     ### Definition of calender time windows for the time difference measurements
-    start_date : '2015-05-01 00:00:00.0'   # %Y-%m-%dT%H:%M:%S.%fZ'
-    end_date : '2016-01-01 00:00:00.0'
-    win_len : 86400                         # length of window in which EGFs are stacked
-    date_inc : 86400                        # increment of measurements
+    start_date : '2016-01-25 00:00:00.0'   # %Y-%m-%dT%H:%M:%S.%fZ'
+    end_date : '2016-02-05 00:00:00.0'
+    win_len : 3600                         # length of window in which EGFs are stacked
+    date_inc : 3600                        # increment of measurements
 
     ### Frequencies
-    freq_min : 4
-    freq_max : 8
+    # can be lists of same length
+    freq_min : [0.0625, 0.09, 0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5]
+    freq_max : [0.125, 0.18, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8, 10]
 
     ### Definition of lapse time window
-    tw_start : 20     # lapse time of first sample [s]
-    tw_len : 60       # length of window [s]
+    # can be lists of same length or tw_start: List and tw_len: single value (will be applied to all)
+    tw_start : [0, 1.25, 2.5, 3.75, 5, 6.25, 7.5, 8.75, 10, 11.25, 12.5, 13.75, 15, 16.25, 17.5, 17.75, 20]     # lapse time of first sample [s]
+    tw_len : 5       # length of window [s]
   
     #### Reference trace extraction
     #  win_inc : Length in days of each reference time window to be used for trace extraction
@@ -204,7 +206,7 @@ wfc:
 
     # preprocessing on the correlation bulk before stretch estimation
     preprocessing: [
-                    {'function': 'smooth', 'args': {'wsize': 48, 'wtype': 'hanning', 'axis': 1}}
+                    {'function': 'smooth', 'args': {'wsize': 4, 'wtype': 'hanning', 'axis': 1}}
     ]
 
     ### SAVING
