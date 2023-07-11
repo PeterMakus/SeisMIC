@@ -9,7 +9,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 8th November 2021 02:46:15 pm
-Last Modified: Friday, 7th July 2023 02:23:07 pm
+Last Modified: Tuesday, 11th July 2023 01:46:20 pm
 '''
 import os
 
@@ -34,7 +34,7 @@ def plot_wfc_bulk(
             'batlow', np.loadtxt(batlow))
         cmap.set_bad('k')
     cmesh = plt.pcolormesh(time_lag, cfreq, wfc, cmap=cmap)
-    plt.xlabel(r"Lag Time [s]")
+    plt.xlabel(r"Central Lag Time [s]")
     plt.ylabel(r"Centre Frequency [Hz]")
     plt.title(title)
     plt.colorbar(cmesh, label='Coherence')
