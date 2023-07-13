@@ -148,7 +148,7 @@ dv:
     tw_start : 3.5     # lapse time of first sample [s]
     tw_len : 8.5       # length of window [s] Can be None if the whole (rest) of the coda should be used
     sides : 'both'   # options are left (for acausal), right (causal), both, or single (for active source experiments where the first sample is the trigger time)
-    compute_tt : True  # Computes the travel time and adds it to tw_start (tt is 0 if not xstations). If true a rayleigh wave velocity has to be provided
+    compute_tt : False  # Computes the travel time and adds it to tw_start (tt is 0 if not xstations). If true a rayleigh wave velocity has to be provided
     rayleigh_wave_velocity : 1  # rayleigh wave velocity in km/s, will be ignored if compute_tt=False
     
 
