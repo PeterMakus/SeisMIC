@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Wednesday, 22nd February 2023 03:43:40 pm
+Last Modified: Thursday, 13th July 2023 05:06:46 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable
 import warnings
@@ -342,8 +342,8 @@ class DVGrid(object):
             raise ValueError(
                 'Modelled dvgrid must have same shape as self.')
         if stat0 is not None and stat1 is not None and tw is not None:
-            slat0, slon0 = zip(*stat0)
-            slat1, slon1 = zip(*stat1)
+            slat0, slon0 = np.array(list(zip(*stat0)))
+            slat1, slon1 = np.array(list(zip(*stat1)))
             twe = None
         elif dvs is not None and utc is not None:
             _, _, slat0, slon0, slat1, slon1, twe, _, _\
