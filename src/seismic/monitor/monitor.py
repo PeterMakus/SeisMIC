@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 7th July 2023 02:37:18 pm
+Last Modified: Friday, 14th July 2023 11:07:26 am
 '''
 from copy import deepcopy
 import json
@@ -748,6 +748,7 @@ def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
     statlist = []
     infiles = []
     for f in glob(os.path.join(indir, '*-*.*-*.h5')):
+        matched = False
         f = os.path.basename(f)
         split = f.split('.')
 
@@ -757,15 +758,25 @@ def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
         if isinstance(net['network'], str) and not fnmatch.filter(
                 nsplit, net['network']) == nsplit:
             continue
-        elif isinstance(net['network'], list) and (
-                nsplit[0] and nsplit[1]) not in net['network']:
-            continue
+        elif isinstance(net['network'], list):
+            # account for the case of wildcards in the network list
+            for n in net['network']:
+                if fnmatch.filter(nsplit, n) == nsplit:
+                    matched = True
+                    break
+            if not matched:
+                continue
         if isinstance(net['station'], str) and not fnmatch.filter(
                 ssplit, net['station']) == ssplit:
             continue
-        elif isinstance(net['station'], list) and (
-                ssplit[0] and ssplit[1]) not in net['station']:
-            continue
+        elif isinstance(net['station'], list):
+            # account for the case of wildcards in the station list
+            for s in net['station']:
+                if fnmatch.filter(ssplit, s) == ssplit:
+                    matched = True
+                    break
+            if not matched:
+                continue
 
         netlist.append(split[0])
         statlist.append(split[1])

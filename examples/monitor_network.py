@@ -12,7 +12,8 @@ yaml_f = 'params.yaml'
 with open(yaml_f, 'r') as f:
     params = yaml.load(f, Loader=yaml.FullLoader)
 params['net']['station'] = [
-    'IR1', 'IR12', 'IR17', 'IR18', 'IR3',  'SV3', 'SV7', 'SV13']
+    'IR1', 'IR12', 'IR17', 'IR18', 'IR3',  'SV*']
+# params['net']['station'] = ['*']
 
 params['dv']['start_date'] = '2016-01-28 00:00:00.0'
 params['dv']['end_date'] = '2016-02-02 00:00:00.0'
