@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 7th July 2023 02:50:27 pm
-Last Modified: Friday, 7th July 2023 03:50:55 pm
+Last Modified: Wednesday, 19th July 2023 11:58:20 am
 '''
 
 import unittest
@@ -48,7 +48,8 @@ class TestSpctSeriesWelch(unittest.TestCase):
         self.assertEqual(f.shape, (512,))
         self.assertEqual(t.shape, (9,))
         self.assertEqual(S.shape, (512, 9))
-        mock_preprocess.assert_called_once_with(self.st[0], 50)
+        mock_preprocess.assert_has_calls(
+            [mock.call(mock.ANY, 50) for tr in self.st.split()])
 
 
 class TestPreprocess(unittest.TestCase):
