@@ -10,9 +10,10 @@ Module for waveform data analysis. Contains spectrogram computation.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 12:22:00 pm
-Last Modified: Friday, 7th July 2023 03:09:57 pm
+Last Modified: Wednesday, 19th July 2023 10:46:16 am
 '''
 from typing import Iterator
+import warnings
 
 import numpy as np
 from obspy import Stream, Trace
@@ -44,7 +45,11 @@ def spct_series_welch(
     t = []
     for st in streams:
         st = st.merge()
-        tr = preprocess(st[0], freqmax)
+        try:
+            tr = preprocess(st[0], freqmax)
+        except IndexError:
+            warnings.warn('No data in stream for this time step.')
+            continue
         for wintr in tr.slide(window_length=window_length, step=window_length):
             f, S = welch(wintr.data, fs=wintr.stats.sampling_rate)
             # interpolate onto a logarithmic frequency space
