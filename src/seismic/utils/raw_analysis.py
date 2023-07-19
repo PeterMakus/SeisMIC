@@ -10,7 +10,7 @@ Module for waveform data analysis. Contains spectrogram computation.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 12:22:00 pm
-Last Modified: Wednesday, 19th July 2023 10:46:16 am
+Last Modified: Wednesday, 19th July 2023 11:53:08 am
 '''
 from typing import Iterator
 import warnings
@@ -44,9 +44,10 @@ def spct_series_welch(
     # List of actually available times
     t = []
     for st in streams:
-        st = st.merge()
         try:
-            tr = preprocess(st[0], freqmax)
+            # Don't preprocess masked values
+            tr = Stream(
+                [preprocess(tr, freqmax) for tr in st.split()]).merge()[0]
         except IndexError:
             warnings.warn('No data in stream for this time step.')
             continue
@@ -87,3 +88,6 @@ def preprocess(tr: Trace, freqmax: float):
     tr.filter('highpass', freq=0.01)
 
     return tr
+
+
+def preprocess
