@@ -10,7 +10,7 @@ Module for waveform data analysis. Contains spectrogram computation.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 12:22:00 pm
-Last Modified: Wednesday, 19th July 2023 11:55:05 am
+Last Modified: Thursday, 20th July 2023 09:56:34 am
 '''
 from typing import Iterator
 import warnings
@@ -52,13 +52,19 @@ def spct_series_welch(
             warnings.warn('No data in stream for this time step.')
             continue
         for wintr in tr.slide(window_length=window_length, step=window_length):
-            f, S = welch(wintr.data, fs=wintr.stats.sampling_rate)
-            # interpolate onto a logarithmic frequency space
-            # 512 points of resolution in f direction hardcoded for now
-            f2 = np.logspace(-3, np.log10(f.max()), 512)
-            S2 = pchip_interpolate(f, S, f2)
-            specl.append(S2)
-            t.append(wintr.stats.starttime)
+            try:
+                f, S = welch(wintr.data, fs=wintr.stats.sampling_rate)
+                # interpolate onto a logarithmic frequency space
+                # 512 points of resolution in f direction hardcoded for now
+                f2 = np.logspace(-3, np.log10(f.max()), 512)
+                S2 = pchip_interpolate(f, S, f2)
+                specl.append(S2)
+                t.append(wintr.stats.starttime)
+            except Exception as e:
+                warnings.warn(
+                    'Error while computing welch spectrum for time window: '
+                    f'{wintr.stats.starttime}. Skipping... Message: {e}')
+                continue
     S = np.array(specl)
 
     t = np.array(t)
