@@ -10,7 +10,7 @@ Module for waveform data analysis. Contains spectrogram computation.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 12:22:00 pm
-Last Modified: Thursday, 20th July 2023 09:56:34 am
+Last Modified: Thursday, 20th July 2023 01:34:52 pm
 '''
 from typing import Iterator
 import warnings
@@ -50,6 +50,11 @@ def spct_series_welch(
                 [preprocess(tr, freqmax) for tr in st.split()]).merge()[0]
         except IndexError:
             warnings.warn('No data in stream for this time step.')
+            continue
+        except Exception as e:
+            warnings.warn(
+                'Error while preprocessing stream. Skipping... Message: '
+                f'{e}')
             continue
         for wintr in tr.slide(window_length=window_length, step=window_length):
             try:
