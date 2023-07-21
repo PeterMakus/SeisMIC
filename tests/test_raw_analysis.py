@@ -8,11 +8,12 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 7th July 2023 02:50:27 pm
-Last Modified: Wednesday, 19th July 2023 11:58:20 am
+Last Modified: Friday, 21st July 2023 10:22:06 am
 '''
 
 import unittest
 from unittest import mock
+import warnings
 
 import numpy as np
 from obspy import read
@@ -50,6 +51,49 @@ class TestSpctSeriesWelch(unittest.TestCase):
         self.assertEqual(S.shape, (512, 9))
         mock_preprocess.assert_has_calls(
             [mock.call(mock.ANY, 50) for tr in self.st.split()])
+
+    @mock.patch('seismic.utils.raw_analysis.preprocess')
+    def test_indexerror_on_preprocess(self, mock_preprocess):
+        """
+        Test spct_series_welch with IndexError on preprocess.
+        """
+        mock_preprocess.side_effect = IndexError()
+        with warnings.catch_warnings(record=True) as w:
+            with self.assertRaises(UnboundLocalError):
+                ra.spct_series_welch([self.st], 10, 50)
+            self.assertEqual(len(w), 1)
+            self.assertEqual(w[0].category, UserWarning)
+            self.assertEqual(
+                str(w[0].message), 'No data in stream for this time step.')
+
+    @mock.patch('seismic.utils.raw_analysis.welch')
+    @mock.patch('seismic.utils.raw_analysis.preprocess')
+    def test_error_on_welch(self, mock_preprocess, mock_welch):
+        """
+        Test spct_series_welch with error on welch.
+        """
+        mock_preprocess.side_effect = side_effect_func
+        mock_welch.side_effect = Exception('bla')
+        with warnings.catch_warnings(record=True) as w:
+            with self.assertRaises(UnboundLocalError):
+                ra.spct_series_welch([self.st], 10, 50)
+            self.assertEqual(len(w), 9)
+            self.assertEqual(w[0].category, UserWarning)
+
+    @mock.patch('seismic.utils.raw_analysis.preprocess')
+    def test_error_on_preprocess(self, mock_preprocess):
+        """
+        Test spct_series_welch with error on preprocess.
+        """
+        mock_preprocess.side_effect = Exception('bla')
+        with warnings.catch_warnings(record=True) as w:
+            with self.assertRaises(UnboundLocalError):
+                ra.spct_series_welch([self.st], 10, 50)
+            self.assertEqual(len(w), 1)
+            self.assertEqual(w[0].category, UserWarning)
+            self.assertEqual(
+                str(w[0].message),
+                'Error while preprocessing stream. Skipping... Message: bla')
 
 
 class TestPreprocess(unittest.TestCase):

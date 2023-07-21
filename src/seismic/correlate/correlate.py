@@ -8,10 +8,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 14th July 2023 10:48:08 am
+Last Modified: Friday, 21st July 2023 10:04:39 am
 '''
 from copy import deepcopy
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Tuple, Optional
 from warnings import warn
 import os
 import logging
@@ -469,6 +469,7 @@ class Correlator(object):
                         f'{st[0].stats.network}.{st[0].stats.station} and time'
                         f' {t}.\nThe Original Error Message was {e}.')
                     continue
+
             # Slice the stream in correlation length
             # -> Loop over correlation increments
             for ii, win in enumerate(generate_corr_inc(st, **self.options)):
@@ -480,6 +481,7 @@ class Correlator(object):
                 win = Stream()
                 for winp in winl:
                     win.extend(winp)
+                win.sort()
 
                 # Get correlation combinations
                 if self.rank == 0:
@@ -507,8 +509,8 @@ class Correlator(object):
                     del win[popi]
                 if len(popindices):
                     # now we have to recompute the combinations
-                    self.logger.debug('removing redundant data.')
                     if self.rank == 0:
+                        self.logger.debug('removing redundant data.')
                         self.logger.debug('Recalculating combinations...')
                         self.options['combinations'] = calc_cross_combis(
                             win, self.ex_dict,
@@ -518,6 +520,7 @@ class Correlator(object):
                         self.options['combinations'] = None
                     self.options['combinations'] = self.comm.bcast(
                         self.options['combinations'], root=0)
+
                     if not len(self.options['combinations']):
                         # no new combinations for this time period
                         self.logger.info(
@@ -708,11 +711,14 @@ def _compare_existing_data(ex_corr: dict, tr0: Trace, tr1: Trace) -> bool:
     # The actual starttime for the header is the later one of the two
     net0 = tr0.stats.network
     stat0 = tr0.stats.station
+    cha0 = tr0.stats.channel
     net1 = tr1.stats.network
     stat1 = tr1.stats.station
+    cha1 = tr1.stats.channel
     # Probably faster than checking a huge dict twice
-    flip = ([net0, net1], [stat0, stat1]) != sort_comb_name_alphabetically(
-        net0, stat0, net1, stat1)
+    flip = ([net0, net1], [stat0, stat1], [cha0, cha1]) \
+        != sort_comb_name_alphabetically(
+        net0, stat0, net1, stat1, cha0, cha1)
     corr_start = max(tr0.stats.starttime, tr1.stats.starttime)
     try:
         if flip:
@@ -726,8 +732,7 @@ def _compare_existing_data(ex_corr: dict, tr0: Trace, tr1: Trace) -> bool:
                 '%s-%s' % (
                     tr0.stats.channel, tr1.stats.channel)]
     except KeyError:
-        pass
-    return False
+        return False
 
 
 def calc_cross_combis(
@@ -1056,7 +1061,9 @@ def calc_cross_combis(
 
 
 def sort_comb_name_alphabetically(
-    network1: str, station1: str, network2: str, station2: str) -> Tuple[
+    network1: str, station1: str, network2: str, station2: str,
+    channel1: Optional[str] = '',
+        channel2: Optional[str] = '') -> Tuple[
         list, list]:
     """
     Returns the alphabetically sorted network and station codes from the two
@@ -1106,18 +1113,20 @@ def sort_comb_name_alphabetically(
     if not all([isinstance(arg, str) for arg in [
             network1, network2, station1, station2]]):
         raise TypeError('All arguments have to be strings.')
-    sort1 = network1 + station1
-    sort2 = network2 + station2
+    sort1 = network1 + station1 + channel1
+    sort2 = network2 + station2 + channel2
     sort = [sort1, sort2]
     sorted = sort.copy()
     sorted.sort()
     if sort == sorted:
         netcomb = [network1, network2]
         statcomb = [station1, station2]
+        chacomb = [channel1, channel2]
     else:
         netcomb = [network2, network1]
         statcomb = [station2, station1]
-    return netcomb, statcomb
+        chacomb = [channel2, channel1]
+    return netcomb, statcomb, chacomb
 
 
 def compute_network_station_combinations(
@@ -1153,7 +1162,7 @@ def compute_network_station_combinations(
                 n2 = netlist[jj]
                 s2 = statlist[jj]
                 if n != n2 or s != s2:
-                    nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
+                    nc, sc, _ = sort_comb_name_alphabetically(n, s, n2, s2)
                     # Check requested combinations
                     if (
                         combis is not None
@@ -1171,13 +1180,13 @@ def compute_network_station_combinations(
             for jj in range(ii, len(netlist)):
                 n2 = netlist[jj]
                 s2 = statlist[jj]
-                nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
+                nc, sc, _ = sort_comb_name_alphabetically(n, s, n2, s2)
                 netcombs.append('%s-%s' % (nc[0], nc[1]))
                 statcombs.append('%s-%s' % (sc[0], sc[1]))
     elif method == 'allCombinations':
         for n, s in zip(netlist, statlist):
             for n2, s2 in zip(netlist, statlist):
-                nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
+                nc, sc, _ = sort_comb_name_alphabetically(n, s, n2, s2)
                 netcombs.append('%s-%s' % (nc[0], nc[1]))
                 statcombs.append('%s-%s' % (sc[0], sc[1]))
     else:

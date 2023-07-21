@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Wednesday, 28th June 2023 03:06:30 pm
+Last Modified: Friday, 21st July 2023 10:14:21 am
 '''
 from copy import deepcopy
 import unittest
@@ -653,7 +653,7 @@ class TestSortCombnameAlphabetically(unittest.TestCase):
         net1 = 'B'
         stat0 = 'Z'
         stat1 = 'C'
-        exp_result = ([net0, net1], [stat0, stat1])
+        exp_result = ([net0, net1], [stat0, stat1], ['', ''])
         self.assertEqual(
             correlate.sort_comb_name_alphabetically(net0, stat0, net1, stat1),
             exp_result)
@@ -663,9 +663,35 @@ class TestSortCombnameAlphabetically(unittest.TestCase):
         net1 = 'A'
         stat0 = 'Z'
         stat1 = 'C'
-        exp_result = ([net1, net0], [stat1, stat0])
+        exp_result = ([net1, net0], [stat1, stat0], ['', ''])
         self.assertEqual(
             correlate.sort_comb_name_alphabetically(net0, stat0, net1, stat1),
+            exp_result)
+
+    def test_between_comps(self):
+        net0 = 'A'
+        net1 = 'A'
+        stat0 = 'Z'
+        stat1 = 'Z'
+        cha0 = 'B'
+        cha1 = 'A'
+        exp_result = ([net0, net1], [stat0, stat1], [cha1, cha0])
+        self.assertEqual(
+            correlate.sort_comb_name_alphabetically(
+                net0, stat0, net1, stat1, cha0, cha1),
+            exp_result)
+
+    def test_between_comps_no_flip(self):
+        net0 = 'A'
+        net1 = 'A'
+        stat0 = 'Z'
+        stat1 = 'Z'
+        cha1 = 'B'
+        cha0 = 'A'
+        exp_result = ([net0, net1], [stat0, stat1], [cha0, cha1])
+        self.assertEqual(
+            correlate.sort_comb_name_alphabetically(
+                net0, stat0, net1, stat1, cha0, cha1),
             exp_result)
 
     def test_wrong_arg_type(self):
