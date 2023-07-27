@@ -105,10 +105,10 @@ co:
                                     #         'std_factor':3,
                                     #         'filter':{'type':'bandpass','freqmin':2,'freqmax':4},
                                     #         'extend_gaps':True}},
-                                   {'function':'seismic.correlate.preprocessing_td.clip',
-                                    'args':{'std_factor':2.5}},
-                                  #  {'function':'seismic.correlate.preprocessing_td.signBitNormalization',
-                                  #   'args': {}}
+                                  #  {'function':'seismic.correlate.preprocessing_td.clip',
+                                  #   'args':{'std_factor':2.5}},
+                                   {'function':'seismic.correlate.preprocessing_td.signBitNormalization',
+                                    'args': {}}
                                    ],
                   # Standard functions reside in seismic.correlate.preprocessing_fd
                  'FDpreProcessing':[
@@ -188,8 +188,8 @@ wfc:
 
     ### Frequencies
     # can be lists of same length
-    freq_min : [0.0625, 0.09, 0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 6, 8]
-    freq_max : [0.125, 0.18, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8, 10, 12, 12.49]
+    freq_min : [0.0625, 0.09, 0.125, 0.1875, 0.25, 0.375, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 6, 8]
+    freq_max : [0.125, 0.18, 0.25, 0.375, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8, 10, 12, 12.49]
 
     ### Definition of lapse time window
     # can be lists of same length or tw_start: List and tw_len: single value (will be applied to all)

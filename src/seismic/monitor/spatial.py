@@ -13,14 +13,14 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Thursday, 13th July 2023 05:06:46 pm
+Last Modified: Thursday, 27th July 2023 05:06:10 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable
 import warnings
 
-import numpy as np
 import matplotlib as mpl
 from matplotlib import pyplot as plt
+import numpy as np
 from obspy.geodetics.base import locations2degrees as loc2deg
 from obspy.geodetics.base import degrees2kilometers as deg2km
 from obspy import UTCDateTime
@@ -29,8 +29,8 @@ from seismic.monitor.dv import DV
 
 
 def probability(
-    dist: np.ndarray | float, t: float, vel: float,
-        mf_path: float, atol: float = 1e-3) -> np.ndarray | float:
+    dist: np.ndarray | float, t: np.ndarray | float, vel: float,
+        mf_path: float, atol: float) -> np.ndarray | float:
     """
     Compute the probability for a wave with the given properties to pass
     through a point at distance `dist`. Following the diffusion law.
@@ -40,7 +40,7 @@ def probability(
     :param dist: distance to the source. Can be a matrix.
     :type dist: np.ndarray | float
     :param t: time
-    :type t: float
+    :type t: float or 1D numpy array
     :param vel: velocity for homogeneous velocities
     :type vel: float
     :param mf_path: Mean free path of the wave.
@@ -50,31 +50,29 @@ def probability(
     """
     if np.any(dist < 0):
         raise ValueError('Distances cannot be < 0.')
-    if t < 0:
-        raise ValueError('t has to be <= 0')
+    # Numpy float precision can be a problem if comparing to 0
+    if np.any(t < -atol/vel):
+        raise ValueError('t has to be >= 0')
+    # if t is an array and dist is a 2D array, create a 3D output
+    # by broacasting t onto a 3D array of shape (dist.shape[0], dist.shape[1],
+    # t.shape[0])
+    if isinstance(t, np.ndarray):
+        t = t[:, np.newaxis, np.newaxis]
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         # there will be loads of runtimeerrors because of inf and nan values
         coherent = np.nan_to_num(
-            np.exp(-vel*t/mf_path)/(2*np.pi*dist), nan=0, posinf=1, neginf=0)
+            np.exp(-vel*t/mf_path)/(2*np.pi*dist),
+            nan=0, posinf=1, neginf=np.nan)
         coherent *= np.isclose(dist, vel*t, atol=atol)
-        # If a is nan, set a to 0
-        a = np.nan_to_num(
-            2*np.pi*mf_path*vel*t*np.sqrt(1 - dist**2/(vel*t)**2))
-        # If a is nan also b will be nan, set also 0
-        b = (np.nan_to_num(np.sqrt((vel*t)**2-dist**2)) - vel*t)/mf_path
-        c = np.heaviside(vel*t-dist, 1)
+
+        a = 2*np.pi*mf_path*vel*t*np.sqrt(1 - dist**2/(vel*t)**2)
+        b = (np.sqrt((vel*t)**2-dist**2) - vel*t)/mf_path
         # Sensitivity is zero where nan and 1 if infinite
         # (station coords coincide with grid coordinates)
-        coda = np.nan_to_num(np.exp(b)*c/a, posinf=1, neginf=1, nan=0)
+        coda = np.nan_to_num(np.exp(b)/a)
+        coda *= np.heaviside(vel*t-dist-atol, 0)
     prob = coherent + coda
-    # probability cannot be larger than 1. Might happen due to numerical
-    # inaccuraccies or coherent + coda both being infinite (i.e., 1)
-    try:
-        prob[prob > 1] = 1
-    except TypeError:
-        if prob > 1:
-            prob = 1
     return prob
 
 
@@ -140,18 +138,29 @@ def sensitivity_kernel(
         np.meshgrid(x, y)
     :rtype: np.ndarray
     """
+    atol = vel*dt/2
     if dt <= 0:
         raise ValueError('dt has to be greater than 0.')
     if np.any(np.diff(x) != x[1]-x[0]) or np.any(np.diff(y) != y[1]-y[0]):
         raise ValueError('x and y have to be monotonously increasing arrays.')
     T = np.arange(0, t + dt, dt)
     dist_s1_s2 = np.linalg.norm(s1-s2)
-    denom = probability(dist_s1_s2, t, vel, mf_path, atol=dt/2)
+    denom = probability(dist_s1_s2, t, vel, mf_path, atol=atol)
     dist_s1_x0 = compute_grid_dist(x, y, s1[0], s1[1])
+    if denom == 0:
+        return np.zeros_like(dist_s1_x0)
     dist_s2_x0 = compute_grid_dist(x, y, s2[0], s2[1])
+    # does the direct wave have to be divided by dt?
+    # This here takes way more time and RAM, I don't know why
+    # nom = np.trapz(
+    #     probability(
+    #         dist_s1_x0, T, vel, mf_path, atol=atol) * probability(
+    #         dist_s2_x0, t-T, vel, mf_path, atol=atol),
+    #     dx=dt, axis=0)
     nom = np.trapz(
-        [probability(dist_s1_x0, tt, vel, mf_path, atol=dt/2) * probability(
-            dist_s2_x0, t-tt, vel, mf_path, atol=dt/2) for tt in T],
+        [probability(
+            dist_s1_x0, tt, vel, mf_path, atol=atol) * probability(
+            dist_s2_x0, t-tt, vel, mf_path, atol=atol) for tt in T],
         dx=dt, axis=0)
     K = nom/denom
     return K
@@ -180,6 +189,10 @@ def data_variance(
     """
     if tw[0] < 0 or tw[1] < 0:
         raise ValueError('Lapse time values have to be greater than 0s.')
+    if tw[0] >= tw[1]:
+        raise ValueError(
+            'Lapse time values have to be in the form '
+            'Tuple[tw_start, tw_end] with tw_start < tw_end.')
     if bandwidth <= 0:
         raise ValueError('The bandwidth has to be > 0 Hz.')
     if freq_c <= 0:
@@ -260,7 +273,8 @@ class DVGrid(object):
     Object to handle spatially gridded DV objects.
     """
     def __init__(
-            self, lat0: float, lon0: float, res: float, x: float, y: float):
+        self, lat0: float, lon0: float, res: float, x: float, y: float,
+            dt: float, vel: float, mf_path: float):
         """
         Initialises the grid to compute dv/v on. The grid will be in
         Cartesian coordinates with the lower left boarder (lon0, lat0)
@@ -276,6 +290,14 @@ class DVGrid(object):
         :type x: float
         :param y: Northwards extent of the grid in km
         :type y: float
+        :param dt: Sampling interval for the numerical integration of the
+            sensitivity kernels. Coarse spacing might cause artefacts. Fine
+            spacing will result in higher computation times.
+        :type dt: float
+        :param vel: Wave velocity
+        :type vel: float
+        :param mf_path: Mean free path of a wave
+        :type mf_path: float
         """
         self.lat0 = lat0
         self.lon0 = lon0
@@ -289,10 +311,18 @@ class DVGrid(object):
         self.xf = self.xgrid.flatten()
         self.yf = self.ygrid.flatten()
         self.dist = None
+        self.dt = dt
+        self.vel = vel
+        self.mf_path = mf_path
+        # skernels is a dictionary holding the sensitivity kernels for each
+        # station pair. The key is a tuple of the station coordinates
+        # in cartesian coordinates and the lapse time in the coda
+        # (x0, y0, x1, y1, tau)
+        self.skernels = dict()
 
     def forward_model(
-        self, dv_grid: np.ndarray, dt: float, vel: float, mf_path: float,
-        dvs: Optional[Iterable[DV]] = None, utc: Optional[UTCDateTime] = None,
+        self, dv_grid: np.ndarray, dvs: Optional[Iterable[DV]] = None,
+        utc: Optional[UTCDateTime] = None,
         tw: Optional[Tuple[float, float]] = None,
         stat0: Optional[Iterable[Tuple[float, float]]] = None,
         stat1: Optional[Iterable[Tuple[float, float]]] = None) \
@@ -304,14 +334,6 @@ class DVGrid(object):
 
         :param dv_grid: dv/v grid. Must have the same shape as self.xgrid
         :type dv_grid: np.ndarray
-        :param dt: Sampling interval for the numerical integration of the
-            sensitivity kernels. Coarse spacing causes artefacts. Fine
-            spacing will result in higher computation times.
-        :type dt: float
-        :param vel: Wave velocity
-        :type vel: float
-        :param mf_path: Mean free path of a wave
-        :type mf_path: float
         :param dvs: Iterator over :class:`~seismic.monitor.dv.DV` to
             extract the parameters from. If this is defined ``utc`` has to
             be defined as well. If it's None all other parameters have to be
@@ -355,13 +377,13 @@ class DVGrid(object):
 
         tw = tw or twe
         G = self._compute_sensitivity_kernels(
-            slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2, dt, vel, mf_path)
+            slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2)
         return np.dot(G, dv_grid.flatten())
 
     def compute_dv_grid(
-        self, dvs: Iterator[DV], utc: UTCDateTime,  dt: float, vel: float,
-        mf_path: float, scaling_factor: float, corr_len: float,
-        std_model: float, tw: Optional[Tuple[float, float]] = None,
+        self, dvs: Iterator[DV], utc: UTCDateTime, scaling_factor: float,
+        corr_len: float, std_model: float,
+        tw: Optional[Tuple[float, float]] = None,
         freq0: Optional[float] = None, freq1: Optional[float] = None,
             compute_resolution: bool = False) -> np.ndarray:
         """
@@ -383,9 +405,6 @@ class DVGrid(object):
             speaking not a velocity change, but an epsilon value. That
             corresponds to -dv/v
 
-        .. warning::
-            Low values for ``dt`` can produce artefacts. Very high values
-            lead to a drastically increased computational cost.
 
         :param dvs: The :class:``~seismic.monitor.dv.DV`` objects to use.
             Note that the input can be an iterator, so that not actually all
@@ -394,16 +413,6 @@ class DVGrid(object):
         :param utc: Time at which the velocity changes should be inverted.
             Has to be covered by the ``DV`` objects.
         :type utc: UTCDateTime
-        :param dt: Temporal resolution to perform the numerical integration on.
-            Note that low values can lead to artefacts in the sensitivity
-            kernel. High values will increase the computational demand
-            drastically.
-        :type dt: float
-        :param vel: Wave velocity in the region.
-        :type vel: float
-        :param mf_path: Mean free path (i.e., distance until which a wave
-            entirely loses it's directional information).
-        :type mf_path: float
         :param scaling_factor: Scaling factor, dependent on the cell length.
             (e.g., 1*cell_length)
         :type scaling_factor: float
@@ -448,7 +457,7 @@ class DVGrid(object):
                 'dv does not have the attribute "dv_processing".'
             )
         skernels = self._compute_sensitivity_kernels(
-            slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2, dt, vel, mf_path)
+            slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2)
         dist = self._compute_dist_matrix()
         # Model variance, smoothed diagonal matrix
         cm = compute_cm(scaling_factor, corr_len, std_model, dist)
@@ -468,8 +477,8 @@ class DVGrid(object):
 
     def compute_resolution(
         self, dvs: Iterable[DV], utc: UTCDateTime, scaling_factor: float,
-        corr_len: float, dt: float, std_model: float, vel: float,
-        mf_path: float, tw: Optional[Tuple[float, float]] = None,
+        corr_len: float, std_model: float,
+        tw: Optional[Tuple[float, float]] = None,
         freq0: Optional[float] = None, freq1: Optional[float] = None) \
             -> np.ndarray:
         """
@@ -490,16 +499,6 @@ class DVGrid(object):
         :param utc: Time at which the velocity changes should be inverted.
             Has to be covered by the ``DV`` objects.
         :type utc: UTCDateTime
-        :param dt: Temporal resolution to perform the numerical integration on.
-            Note that low values can lead to artefacts in the sensitivity
-            kernel. High values will increase the computational demand
-            drastically.
-        :type dt: float
-        :param vel: Wave velocity in the region.
-        :type vel: float
-        :param mf_path: Mean free path (i.e., distance until which a wave
-            entirely loses it's directional information).
-        :type mf_path: float
         :param scaling_factor: Scaling factor, dependent on the cell length.
             (e.g., 1*cell_length)
         :type scaling_factor: float
@@ -541,7 +540,7 @@ class DVGrid(object):
                 'dv does not have the attribute "dv_processing".'
             )
         skernels = self._compute_sensitivity_kernels(
-            slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2, dt, vel, mf_path)
+            slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2)
         cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
 
         # The actual inversion for the resolution
@@ -633,15 +632,25 @@ class DVGrid(object):
         if hasattr(self, 'statx'):
             self.statx = np.hstack((self.statx, x))
             self.staty = np.hstack((self.staty, y))
+            self.statlon = np.hstack((self.statlon, lons))
+            self.statlat = np.hstack((self.statlat, lats))
         else:
             self.statx = np.array(x)
             self.staty = np.array(y)
+            self.statlon = np.array(lons)
+            self.statlat = np.array(lats)
         # make sure there are no duplicates
         coords = [(x, y) for x, y in zip(self.statx, self.staty)]
         coords = list(set(coords))
         self.statx, self.staty = zip(*coords)
         self.statx = np.array(self.statx)
         self.staty = np.array(self.staty)
+        # no duplicates for lat/lon
+        coords = [(lat, lon) for lat, lon in zip(self.statlat, self.statlon)]
+        coords = list(set(coords))
+        self.statlat, self.statlon = zip(*coords)
+        self.statlat = np.array(self.statlat)
+        self.statlon = np.array(self.statlon)
 
     def _compute_cd(
         self, skernels: np.ndarray, freq0: float, freq1: float,
@@ -655,7 +664,8 @@ class DVGrid(object):
         :type freq0: float
         :param freq1: lowpass frequency [Hz]
         :type freq1: float
-        :param tw: lapse time window used to determine dv/v
+        :param tw: lapse time window used to determine dv/v, in the form
+            Tuple[tw_start, tw_end]
         :type tw: Tuple[float, float]
         :param corrs: Coherency values.
         :type corrs: np.ndarray
@@ -718,8 +728,7 @@ class DVGrid(object):
 
     def _compute_sensitivity_kernels(
         self, slat0: np.ndarray, slon0: np.ndarray, slat1: np.ndarray,
-        slon1: np.ndarray, t: float, dt: float, vel: float,
-            mf_path: float) -> np.ndarray:
+            slon1: np.ndarray, t: float) -> np.ndarray:
         """
         Computes the sensitivity kernels of the station combinations station0
         and station1.
@@ -747,15 +756,6 @@ class DVGrid(object):
         :type slon1: np.ndarray
         :param t: Midpoint of the time lapse window used to evaluate dv/v.
         :type t: float
-        :param dt: Resolution in which the numerical integration is
-            supposed to be performed. Note that low values produce artefacts.
-            High values have a high computational cost.
-        :type dt: float
-        :param vel: Wave velocity in the medium
-        :type vel: float
-        :param mf_path: Mean free path (i.e., distance until which a wave
-            entirely loses it's directional information).
-        :type mf_path: float
         :return: Weighted matrix holding the sensitivity kernel for station i
             on grid j
         :rtype: np.ndarray
@@ -763,15 +763,21 @@ class DVGrid(object):
         x0, y0 = geo2cart(slat0, slon0, self.lat0)
         x1, y1 = geo2cart(slat1, slon1, self.lat0)
         skernels = []
+
         for xx0, yy0, xx1, yy1 in zip(x0, y0, x1, y1):
+            # Check if skernel was already computed in a previous iteration
+            if (xx0, yy0, xx1, yy1, t) in self.skernels:
+                skernels.append(self.skernels[(xx0, yy0, xx1, yy1, t)])
+                continue
             # Station coordinates in cartesian
             s1 = np.array([xx0, yy0])
             s2 = np.array([xx1, yy1])
             sk = sensitivity_kernel(
-                s1, s2, self.xaxis, self.yaxis, t, dt, vel, mf_path)
-            skernels.append(sk.flatten())
-        self.skernels = self.res**2/t * np.array(skernels)
-        return self.skernels
+                s1, s2, self.xaxis, self.yaxis, t, self.dt, self.vel,
+                self.mf_path)
+            skernels.append(self.res**2/t * sk.flatten())
+            self.skernels[(xx0, yy0, xx1, yy1, t)] = skernels[-1]
+        return np.array(skernels)
 
     def plot(
         self, plot_stations: bool = True, cmap: str = 'seismic_r',
