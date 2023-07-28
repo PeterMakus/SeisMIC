@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Friday, 28th July 2023 09:29:18 am
+Last Modified: Friday, 28th July 2023 09:38:16 am
 '''
 from typing import Tuple, Optional, Iterator, Iterable
 import warnings
@@ -673,7 +673,7 @@ class DVGrid(object):
         :rtype: np.ndarray
         """
         return np.eye(len(skernels))*data_variance(
-            np.array(corrs), freq1-freq0, tw, (freq1+freq0)/2)
+            np.array(corrs), freq1-freq0, tw, (freq1+freq0)/2)**2
 
     def _compute_dist_matrix(self) -> np.ndarray:
         """
