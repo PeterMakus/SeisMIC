@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 11:07:27 am
-Last Modified: Thursday, 27th July 2023 05:10:46 pm
+Last Modified: Friday, 28th July 2023 09:44:00 am
 '''
 
 import unittest
@@ -657,7 +657,7 @@ class TestDVGrid(unittest.TestCase):
         out = self.dvg._compute_cd(skernels, freq0, freq1, tw, corrs)
         dv_mock.assert_called_once_with(np.array('c'), 2, tw, 2)
         np.testing.assert_array_almost_equal(
-            np.eye(100)*dv_mock.return_value, out)
+            np.eye(100)*dv_mock.return_value**2, out)
 
     def test_compute_dist(self):
         dist = self.dvg._compute_dist_matrix()
