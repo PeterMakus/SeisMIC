@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 11:07:27 am
-Last Modified: Friday, 28th July 2023 09:44:00 am
+Last Modified: Friday, 28th July 2023 03:33:13 pm
 '''
 
 import unittest
@@ -179,6 +179,21 @@ class TestSensitivityKernel(unittest.TestCase):
         with self.assertRaises(ValueError):
             spt.sensitivity_kernel(s1, s2, x, y, t, dt, vel, mf_path)
 
+    @mock.patch('seismic.monitor.spatial.compute_grid_dist')
+    @mock.patch('seismic.monitor.spatial.probability')
+    def test_warn_on_large_dt(self, pbb_mock, cgd_mock):
+        dt = 1
+        s1 = s2 = np.array([5, 5])
+        x = y = np.arange(10)
+        t = 20
+        vel = mf_path = 1
+        cgd_mock.return_value = np.zeros((10, 10))
+        pbb_mock.side_effect = [1] + [np.ones((10, 10))]*50
+        with warnings.catch_warnings(record=True) as w:
+            spt.sensitivity_kernel(s1, s2, x, y, t, dt, vel, mf_path)
+        self.assertEqual(len(w), 1)
+        self.assertTrue(issubclass(w[0].category, UserWarning))
+
 
 class TestDataVariance(unittest.TestCase):
     def test_result(self):
@@ -223,6 +238,14 @@ class TestDataVariance(unittest.TestCase):
         with self.assertRaises(ValueError):
             spt.data_variance(corr, bw, tw, freq_c)
 
+    def test_raise_error_for_tw1_greater_than_tw0(self):
+        corr = np.ones(10)
+        bw = 2
+        tw = (10, 5)
+        freq_c = 3
+        with self.assertRaises(ValueError):
+            spt.data_variance(corr, bw, tw, freq_c)
+
 
 class TestComputeCM(unittest.TestCase):
     def test_result(self):
@@ -250,6 +273,14 @@ class TestGeo2Cart(unittest.TestCase):
         out = spt.geo2cart(lat, lon, lat0)
         self.assertEqual(out[0].shape, lon.shape)
         self.assertEqual(out[1].shape, lat.shape)
+        self.assertTrue(np.all(out[0] < 0))
+        self.assertTrue(np.all(out[1] >= 0))
+
+    def test_result_lonneg_float(self):
+        lat = 10.
+        lon = -10
+        lat0 = -5
+        out = spt.geo2cart(lat, lon, lat0)
         self.assertTrue(np.all(out[0] < 0))
         self.assertTrue(np.all(out[1] >= 0))
 
@@ -708,6 +739,25 @@ class TestDVGrid(unittest.TestCase):
             mock.call(slat1, slon1, self.dvg.lat0)]
         g2c_mock.assert_has_calls(calls)
         np.testing.assert_array_almost_equal(out, np.array([np.zeros((4))]))
+
+    @mock.patch('seismic.monitor.spatial.geo2cart')
+    @mock.patch('seismic.monitor.spatial.sensitivity_kernel')
+    def test_compute_sensitivity_kernels_already_computed(
+            self, sk_mock: mock.MagicMock, g2c_mock: mock.MagicMock):
+        slat0 = '0'
+        slon0 = '0'
+        slat1 = '1'
+        slon1 = '1'
+        self.dvg.skernels[(0, 1, 2, 3, 1)] = np.zeros((2, 2))
+        g2c_mock.side_effect = ([[0], [1]], [[2], [3]])
+        out = self.dvg._compute_sensitivity_kernels(
+            slat0, slon0, slat1, slon1, 1)
+        calls = [
+            mock.call(slat0, slon0, self.dvg.lat0),
+            mock.call(slat1, slon1, self.dvg.lat0)]
+        g2c_mock.assert_has_calls(calls)
+        sk_mock.assert_not_called()
+        np.testing.assert_array_almost_equal(out, np.array([np.zeros((2, 2))]))
 
 
 if __name__ == "__main__":

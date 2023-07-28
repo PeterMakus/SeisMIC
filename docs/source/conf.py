@@ -23,7 +23,7 @@ author = \
     'Peter Makus, Christoph Sens-Schönfelder, and the SeisMIC development Team'
 
 # The full version, including alpha/beta/rc tags
-release = '0.4.0'
+release = '0.4.1'
 
 
 # -- General configuration ---------------------------------------------------
@@ -37,7 +37,25 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.napoleon',
               'sphinx.ext.autosummary',
               'sphinxcontrib.mermaid',
-              'sphinx_copybutton']
+              'sphinx_copybutton',
+              'sphinx_gallery.gen_gallery',
+              ]
+
+# --------------------------------
+# Sphinx Gallery config
+# sphinx_gallery_conf = {
+#     # path to your example scripts
+#     'examples_dirs': ['../examples/tutorials'],
+#     # path to where to save gallery generated output
+#     'gallery_dirs': ["tutorials"],
+#     # Checks matplotlib for figure creation
+#     'image_scrapers': ('matplotlib'),
+#     # Which files to include
+#     'filename_pattern': r"\.py"
+# }
+
+# ---------------------------------
+
 # autosummary_generate = True
 
 # For docstring __init__ documentation

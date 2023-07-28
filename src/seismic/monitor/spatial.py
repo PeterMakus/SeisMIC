@@ -1,6 +1,6 @@
 '''
-Spatial imaging by means of a diffusion-based sensitivity kernel
-(see Obermann et al., 2013 and Pacheco and Snieder, 2005)
+Spatial imaging by means of a Boltzmann-equation-based sensitivity kernel
+(see Obermann et al., 2013 and Paasschens, 1997)
 
 Implementation here is just for the 2D case
 
@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Friday, 28th July 2023 09:38:16 am
+Last Modified: Friday, 28th July 2023 03:20:46 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable
 import warnings
@@ -102,14 +102,18 @@ def sensitivity_kernel(
     s1: np.ndarray, s2: np.ndarray, x: np.ndarray, y: np.ndarray, t: float,
         dt: float,  vel: float, mf_path: float) -> np.ndarray:
     """
-    Computes a 2D diffusion lawsurface-wave sensitivity kernel for an
+    Computes a 2D surface-wave sensitivity kernel for an
     ambient noise cross-correlation between two station ``s1`` and ``s2``.
+    The computation is based on a time-dependendent solution of the Boltzmann
+    equation for a homogeneous medium (see Obermann et al., 2013 and
+    Paasschens, 1997).
 
     Implementation as in Obermann et al. (2013). Limits for nan and inf
     will return 0, or 1 respectively.
 
     .. note::
-        A large ``dt`` can lead to artefacts in the kernel.
+        A large ``dt`` can lead to artefacts in the kernel. ``dt`` should
+        always be smaller than dx/(2*vel).
 
     :param s1: Position of Station 1, format is [x, y].
     :type s1: np.ndarray
@@ -143,6 +147,11 @@ def sensitivity_kernel(
         raise ValueError('dt has to be greater than 0.')
     if np.any(np.diff(x) != x[1]-x[0]) or np.any(np.diff(y) != y[1]-y[0]):
         raise ValueError('x and y have to be monotonously increasing arrays.')
+    if x[1]-x[0] < 2*vel*dt:
+        warnings.warn(
+            'dt is too large for the grid spacing. This can lead to '
+            'artefacts in the kernel. dt should be smaller than '
+            'dx/(2*vel).')
     T = np.arange(0, t + dt, dt)
     dist_s1_s2 = np.linalg.norm(s1-s2)
     denom = probability(dist_s1_s2, t, vel, mf_path, atol=atol)
