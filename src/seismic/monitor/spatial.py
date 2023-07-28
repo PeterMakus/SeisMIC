@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Thursday, 27th July 2023 05:06:10 pm
+Last Modified: Friday, 28th July 2023 09:29:18 am
 '''
 from typing import Tuple, Optional, Iterator, Iterable
 import warnings
@@ -198,7 +198,7 @@ def data_variance(
     if freq_c <= 0:
         raise ValueError('The centre frequeny has to be > 0 Hz.')
     T = 1/bandwidth
-    p1 = np.sqrt(1-corr)/(2*corr)
+    p1 = np.sqrt(1-corr**2)/(2*corr)
     nom = 6*np.sqrt(np.pi/2)*T
     denom = (2*np.pi*freq_c)**2*(tw[1]**3-tw[0]**3)
     p2 = np.sqrt(nom/denom)
