@@ -78,4 +78,4 @@ This version is an early release. If you encounter any issues or unexpected beha
 If you have any questions that do not require any changes in the source code, please use the [discussions feature](https://github.com/PeterMakus/SeisMIC/discussions)
 
 ## Contributing
-Thank you for contributing to PyGLImER! Have a look at our [guidelines for contributors](https://github.com/PeterMakus/SeisMIC/blob/main/CONTRIBUTING.md)
+Thank you for contributing to SeisMIC! Have a look at our [guidelines for contributors](https://github.com/PeterMakus/SeisMIC/blob/main/CONTRIBUTING.md)
