@@ -526,8 +526,6 @@ class Correlator(object):
                         self.logger.info(
                             f'No new data for times {winstart}-{winend}')
                         continue
-                # now we have to recompute the combinations
-                self.logger.debug('removing redundant data.')
                 # Stream based preprocessing
                 if self.options['preprocess_subdiv']:
                     try:
@@ -541,22 +539,6 @@ class Correlator(object):
                             ' and time '
                             f'{t}.\nThe Original Error Message was {e}.')
                         continue
-
-                if self.rank == 0:
-                    self.logger.debug('Recalculating combinations...')
-                    self.options['combinations'] = calc_cross_combis(
-                        win, self.ex_dict,
-                        self.options['combination_method'],
-                        rcombis=self.rcombis)
-                else:
-                    self.options['combinations'] = None
-                self.options['combinations'] = self.comm.bcast(
-                    self.options['combinations'], root=0)
-                if not len(self.options['combinations']):
-                    # no new combinations for this time period
-                    self.logger.info(
-                        f'No new data for times {winstart}-{winend}')
-                    continue
 
                 if not len(win):
                     # no new combinations for this time period
@@ -1263,26 +1245,22 @@ def preprocess_stream(
 
     if remove_response:
         # taper before instrument response removal
-        for tr in st:
-            if tr.stats.station == 'EDM':
-                continue
-
-            if taper_len:
-                tr = ppst.cos_taper_st(tr, taper_len, False, True)[0]
-            try:
-                if inv:
-                    ninv = inv
-                    tr.attach_response(ninv)
-                tr.remove_response(taper=False)  # Changed for testing purposes
-            except ValueError:
-                print('Station response not found ... loading from remote.')
-                # missing station response
-                ninv = store_client.rclient.get_stations(
-                    network=tr.stats.network, station=tr.stats.station,
-                    channel='*', level='response')
-                tr.attach_response(ninv)
-                tr.remove_response(taper=False)
-                store_client._write_inventory(ninv)
+        if taper_len:
+            st = ppst.cos_taper_st(st, taper_len, False, True)
+        try:
+            if inv:
+                ninv = inv
+                st.attach_response(ninv)
+            st.remove_response(taper=False)  # Changed for testing purposes
+        except ValueError:
+            print('Station response not found ... loading from remote.')
+            # missing station response
+            ninv = store_client.rclient.get_stations(
+                network=st[0].stats.network, station=st[0].stats.station,
+                channel='*', level='response')
+            st.attach_response(ninv)
+            st.remove_response(taper=False)
+            store_client._write_inventory(ninv)
 
     # Sometimes Z has reversed polarity
     if inv:
