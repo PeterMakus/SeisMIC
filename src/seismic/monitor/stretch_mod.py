@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Monday, 16th January 2023 11:13:58 am
+Last Modified: Monday, 7th August 2023 08:16:43 pm
 '''
 from typing import List, Tuple, Optional
 from copy import deepcopy
@@ -1225,7 +1225,7 @@ def create_shifted_ref_mat(
     """
     Create a matrix of shifted versions of a reference trace.
     """
-    assert len(ref_trc.shape) == 1 or ref_trc.shape[0] == 1,\
+    assert len(ref_trc.shape) == 1 or ref_trc.shape[0] == 1, \
         f"'ref_trc' must be a 1-dimensional array,  has shape {ref_trc.shape}."
     # squeeze the trace to 1D array
     ref_trc = np.squeeze(ref_trc)
