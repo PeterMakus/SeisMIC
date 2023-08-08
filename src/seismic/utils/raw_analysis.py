@@ -10,11 +10,12 @@ Module for waveform data analysis. Contains spectrogram computation.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 12:22:00 pm
-Last Modified: Thursday, 20th July 2023 01:34:52 pm
+Last Modified: Tuesday, 8th August 2023 10:14:38 am
 '''
 from typing import Iterator
 import warnings
 
+from mpi4py import MPI
 import numpy as np
 from obspy import Stream, Trace
 from scipy.signal import welch
@@ -30,6 +31,10 @@ def spct_series_welch(
     welch method. Windows overlap by half the windolength. The input stream can
     contain one or several traces from the same station. Frequency axis is
     logarithmic.
+
+    .. note::
+        MPI support since version 0.4.2
+
     :param st: Input Stream with data from one station.
     :type st: ~obspy.core.Stream
     :param window_length: window length in seconds for each datapoint in time
@@ -40,10 +45,13 @@ def spct_series_welch(
         series.
     :rtype: np.ndarray
     """
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    psize = comm.Get_size()
     specl = []
     # List of actually available times
     t = []
-    for st in streams:
+    for st in streams[rank::psize]:
         try:
             # Don't preprocess masked values
             tr = Stream(
@@ -70,8 +78,18 @@ def spct_series_welch(
                     'Error while computing welch spectrum for time window: '
                     f'{wintr.stats.starttime}. Skipping... Message: {e}')
                 continue
-    S = np.array(specl)
+    # Gather all the data
+    specl = comm.allgather(specl)
+    t = comm.allgather(t)
+    # Flatten the list
+    specl = [item for sublist in specl for item in sublist]
+    t = [item for sublist in t for item in sublist]
+    # Sort from values in t
+    specl = [x for _, x in sorted(zip(t, specl))]
+    t = sorted(t)
 
+    # Convert to numpy array
+    S = np.array(specl)
     t = np.array(t)
     return f2, t, S.T
 
