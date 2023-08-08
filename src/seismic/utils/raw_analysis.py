@@ -10,7 +10,7 @@ Module for waveform data analysis. Contains spectrogram computation.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 12:22:00 pm
-Last Modified: Tuesday, 8th August 2023 10:14:38 am
+Last Modified: Tuesday, 8th August 2023 10:23:45 am
 '''
 from typing import Iterator
 import warnings
@@ -51,7 +51,10 @@ def spct_series_welch(
     specl = []
     # List of actually available times
     t = []
-    for st in streams[rank::psize]:
+    for ii, st in enumerate(streams):
+        # Find out which stream to process
+        if ii % psize != rank:
+            continue
         try:
             # Don't preprocess masked values
             tr = Stream(
