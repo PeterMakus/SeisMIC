@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Friday, 7th July 2023 03:08:34 pm
+Last Modified: Tuesday, 8th August 2023 10:25:27 am
 '''
 
 import fnmatch
@@ -426,6 +426,9 @@ class Store_Client(object):
 
         # Enter plotting function here later
         .. seealso:: Use function :func:`~seismic.plot` to generate
+
+        .. note::
+            MPI support since version 0.4.2
 
         :param network: network code
         :type network: str
