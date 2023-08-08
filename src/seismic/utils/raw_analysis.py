@@ -10,7 +10,7 @@ Module for waveform data analysis. Contains spectrogram computation.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 12:22:00 pm
-Last Modified: Tuesday, 8th August 2023 10:23:45 am
+Last Modified: Tuesday, 8th August 2023 10:53:54 am
 '''
 from typing import Iterator
 import warnings
@@ -33,7 +33,8 @@ def spct_series_welch(
     logarithmic.
 
     .. note::
-        MPI support since version 0.4.2
+        MPI support since version 0.4.2. Then the result is only
+        available on rank 0. All other ranks return None. (to save RAM)
 
     :param st: Input Stream with data from one station.
     :type st: ~obspy.core.Stream
@@ -82,19 +83,22 @@ def spct_series_welch(
                     f'{wintr.stats.starttime}. Skipping... Message: {e}')
                 continue
     # Gather all the data
-    specl = comm.allgather(specl)
-    t = comm.allgather(t)
-    # Flatten the list
-    specl = [item for sublist in specl for item in sublist]
-    t = [item for sublist in t for item in sublist]
-    # Sort from values in t
-    specl = [x for _, x in sorted(zip(t, specl))]
-    t = sorted(t)
+    specl = comm.gather(specl, root=0)
+    t = comm.gather(t, root=0)
+    if rank == 0:
+        # Flatten the list
+        specl = [item for sublist in specl for item in sublist]
+        t = [item for sublist in t for item in sublist]
+        # Sort from values in t
+        specl = [x for _, x in sorted(zip(t, specl))]
+        t = sorted(t)
 
-    # Convert to numpy array
-    S = np.array(specl)
-    t = np.array(t)
-    return f2, t, S.T
+        # Convert to numpy array
+        S = np.array(specl)
+        t = np.array(t)
+        return f2, t, S.T
+    else:
+        return None, None, None
 
 
 def preprocess(tr: Trace, freqmax: float):

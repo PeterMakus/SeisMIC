@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Tuesday, 8th August 2023 10:25:27 am
+Last Modified: Tuesday, 8th August 2023 10:54:05 am
 '''
 
 import fnmatch
@@ -428,7 +428,8 @@ class Store_Client(object):
         .. seealso:: Use function :func:`~seismic.plot` to generate
 
         .. note::
-            MPI support since version 0.4.2
+            MPI support since version 0.4.2. Then the result is only
+            available on rank 0. All other ranks return None. (to save RAM)
 
         :param network: network code
         :type network: str
