@@ -10,7 +10,7 @@ Plotting specral time series.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 04:54:20 pm
-Last Modified: Thursday, 22nd June 2023 01:15:03 pm
+Last Modified: Monday, 21st August 2023 12:22:56 pm
 '''
 
 import os
@@ -125,7 +125,7 @@ def plot_spct_series(
         t, f, S, shading='gouraud', cmap=cmap,
         norm=colors.LogNorm(), vmin=vmin, vmax=vmax)
     plt.colorbar(
-        pcm, label='energy (normalised)', orientation='horizontal', shrink=.6,
+        pcm, label='Energy (normalised)', orientation='horizontal', shrink=.6,
         pad=.25)
     plt.ylabel(r'$f$ [Hz]')
     ax = plt.gca()

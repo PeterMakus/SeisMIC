@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Friday, 16th June 2023 04:02:23 pm
+Last Modified: Monday, 21st August 2023 12:22:18 pm
 '''
 
 from datetime import datetime
@@ -175,13 +175,13 @@ def plot_technical_dv(
 
         tit = "Time shift"
         dv_tick_delta = 5
-        dv_y_label = "time shift (sample)"
+        dv_y_label = "Time Shift (sample)"
     elif (value_type == 'shift') and (method == 'absolute_shift'):
         tit = "Time shift"
         dv_tick_delta = (
             np.max(dv.second_axis)
             - np.min(dv.second_axis))/5
-        dv_y_label = "time shift [s]"
+        dv_y_label = "Time Shift [s]"
     else:
         raise ValueError(f"Unknown dv type, {value_type}!")
 
