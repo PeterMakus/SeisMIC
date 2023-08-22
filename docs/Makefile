@@ -7,7 +7,7 @@ SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
 BUILDDIR      = _build
-GH_PAGES_SOURCES = docs src/seismic Makefile
+GH_PAGES_SOURCES = . ../src/seismic Makefile
 
 # Put it first so that "make" without argument is like "make help".
 help:
@@ -25,8 +25,12 @@ gh-pages:
 	rm -rf $(BUILDDIR) _sources _static _modules chapters
 	git checkout main $(GH_PAGES_SOURCES) .gitignore
 	git reset HEAD
+	jupyter nbconvert --to rst ../examples/*.ipynb
+	cp -Rp ../examples/*.rst $(SOURCEDIR)/modules/tutorials/
+	rm -rf ../examples/*.rst
+	cp -Rp ../examples/*files $(SOURCEDIR)/modules/tutorials/
+	rm -rf ../examples/*files
 	make html
-	#mv -fv $(BUILDDIR)/html/* ./
 	cp -frv $(BUILDDIR)/html/* ./ && rm -R $(BUILDDIR)/html/*
 	rm -rf $(GH_PAGES_SOURCES) $(BUILDDIR)
 	git add -A

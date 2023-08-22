@@ -38,20 +38,22 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.autosummary',
               'sphinxcontrib.mermaid',
               'sphinx_copybutton',
-              'sphinx_gallery.gen_gallery',
+            #   'sphinx_gallery.gen_gallery',
               ]
 
 # --------------------------------
 # Sphinx Gallery config
 # sphinx_gallery_conf = {
 #     # path to your example scripts
-#     'examples_dirs': ['../examples/tutorials'],
+#     'examples_dirs': ['../../examples/'],
 #     # path to where to save gallery generated output
-#     'gallery_dirs': ["tutorials"],
+#     'gallery_dirs': ["examples"],
 #     # Checks matplotlib for figure creation
 #     'image_scrapers': ('matplotlib'),
 #     # Which files to include
-#     'filename_pattern': r"\.py"
+#     'filename_pattern': r"tutorial\.py",
+#     # ignore
+#     'ignore_pattern': r'\.py',
 # }
 
 # ---------------------------------
@@ -92,7 +94,7 @@ html_static_path = ['_static']
 
 
 html_title = ""
-html_logo = "source/figures/seismic_logo_small.svg"
+html_logo = "figures/seismic_logo_small.png"
 # html_favicon = "chapters/figures/favicon.ico"
 
 html_context = {
