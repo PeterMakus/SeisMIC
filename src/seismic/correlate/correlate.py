@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 21st July 2023 10:04:39 am
+Last Modified: Wednesday, 23rd August 2023 09:16:41 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -359,7 +359,7 @@ class Correlator(object):
         # Better if the same cores keep writing to the same files
         codelist.sort()
         # Decide which process writes to which station
-        pmap = (np.arange(len(codelist))*self.psize)/len(codelist)
+        pmap = round(np.arange(len(codelist))*self.psize/len(codelist))
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
 
@@ -416,8 +416,8 @@ class Correlator(object):
         # Better than just letting one core read as this avoids having to
         # send very big chunks of data using MPI (MPI communication does
         # not support more than 2GB/comm operation)
-        pmap = np.arange(len(self.avail_raw_data))*self.psize/len(
-            self.avail_raw_data)
+        pmap = round(np.arange(len(self.avail_raw_data))*self.psize/len(
+            self.avail_raw_data))
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
         ind = np.arange(len(self.avail_raw_data))[ind]
@@ -555,7 +555,7 @@ class Correlator(object):
         # time domain processing
         # map of traces on processes
         ntrc = A.shape[0]
-        pmap = (np.arange(ntrc)*self.psize)/ntrc
+        pmap = round(np.arange(ntrc)*self.psize/ntrc)
         # This step was not in the original but is necessary for it to work?
         # maybe a difference in an old python/np version?
         pmap = pmap.astype(np.int32)
@@ -621,7 +621,7 @@ class Correlator(object):
                 corr_args['lengthToSave'] * self.sampling_rate))
         C = np.zeros((csize, sampleToSave*2+1), dtype=np.float32)
 
-        pmap = (np.arange(csize)*self.psize)/csize
+        pmap = round(np.arange(csize)*self.psize/csize)
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
         ind = np.arange(csize)[ind]
