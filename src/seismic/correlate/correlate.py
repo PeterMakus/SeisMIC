@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 23rd August 2023 09:59:57 am
+Last Modified: Wednesday, 23rd August 2023 02:23:06 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -170,10 +170,20 @@ class Correlator(object):
                 + '2. \'*\' That is, a wildcard (string).\n'
                 + '3. A list and network is a string describing one '
                 + 'station code.')
-        self.avail_raw_data = []
-        for net, stat in station:
-            self.avail_raw_data.extend(
-                self.store_client._translate_wildcards(net, stat))
+        if self.rank == 0:
+            self.avail_raw_data = []
+            for net, stat in station:
+                self.avail_raw_data.extend(
+                    self.store_client._translate_wildcards(net, stat))
+            # make sure this only contains unique combinations
+            # with several cores it added entries several times, don't know
+            # why?
+            self.avail_raw_data = np.unique(
+                self.avail_raw_data, axis=0).tolist()
+        else:
+            self.avail_raw_data = None
+        self.avail_raw_data = self.comm.bcast(
+            self.avail_raw_data)
         self.station = np.unique(np.array([
             [d[0], d[1]] for d in self.avail_raw_data]), axis=0).tolist()
         self.logger.debug(
@@ -539,6 +549,15 @@ class Correlator(object):
                             ' and time '
                             f'{t}.\nThe Original Error Message was {e}.')
                         continue
+                    if self.rank == 0:
+                        self.options['combinations'] = calc_cross_combis(
+                            win, self.ex_dict,
+                            self.options['combination_method'],
+                            rcombis=self.rcombis)
+                    else:
+                        self.options['combinations'] = None
+                    self.options['combinations'] = self.comm.bcast(
+                        self.options['combinations'], root=0)
 
                 if not len(win):
                     # no new combinations for this time period

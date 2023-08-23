@@ -10,7 +10,7 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Friday, 7th July 2023 01:42:52 pm
+Last Modified: Wednesday, 23rd August 2023 11:19:31 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -979,6 +979,21 @@ class CorrStream(Stream):
                     axis=0)):
                 cst_filt.append(ctr)
         return cst_filt
+
+    def remove_duplicates(self):
+        """
+        Removes CorrTraces that have the same starttime, endtime, and
+        sampling rate.
+
+        .. note:: This action is performed **in-place**. If you want to keep
+            the original data use
+            :func:`~seismic.correlate.stream.CorrStream.copy()`
+        """
+        cst_filt = CorrStream()
+        for ctr in self:
+            if ctr not in cst_filt:
+                cst_filt.append(ctr)
+        self.traces = cst_filt.traces
 
     def select_corr_time(
         self, starttime: UTCDateTime, endtime: UTCDateTime,
