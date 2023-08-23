@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 23rd August 2023 09:24:49 am
+Last Modified: Wednesday, 23rd August 2023 09:50:02 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -360,7 +360,7 @@ class Correlator(object):
         codelist.sort()
         # Decide which process writes to which station
         pmap = np.arange(len(codelist))*self.psize/len(codelist)
-        pmap = pmap.round().astype(np.int32)
+        pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
 
         for code in np.array(codelist)[ind]:
@@ -418,7 +418,7 @@ class Correlator(object):
         # not support more than 2GB/comm operation)
         pmap = np.arange(len(self.avail_raw_data))*self.psize/len(
             self.avail_raw_data)
-        pmap = pmap.round().astype(np.int32)
+        pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
         ind = np.arange(len(self.avail_raw_data))[ind]
 
@@ -558,7 +558,7 @@ class Correlator(object):
         pmap = np.arange(ntrc)*self.psize/ntrc
         # This step was not in the original but is necessary for it to work?
         # maybe a difference in an old python/np version?
-        pmap = pmap.round().astype(np.int32)
+        pmap = pmap.astype(np.int32)
 
         # indices for traces to be worked on by each process
         ind = pmap == self.rank
@@ -622,7 +622,7 @@ class Correlator(object):
         C = np.zeros((csize, sampleToSave*2+1), dtype=np.float32)
 
         pmap = np.arange(csize)*self.psize/csize
-        pmap = pmap.round().astype(np.int32)
+        pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
         ind = np.arange(csize)[ind]
         startlags = np.zeros(csize, dtype=np.float32)

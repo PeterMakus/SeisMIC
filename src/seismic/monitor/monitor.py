@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 23rd August 2023 09:25:08 am
+Last Modified: Wednesday, 23rd August 2023 09:50:02 am
 '''
 from copy import deepcopy
 import json
@@ -340,7 +340,7 @@ class Monitor(object):
             plist = None
         plist = self.comm.bcast(plist, root=0)
         pmap = np.arange(len(plist))*self.psize/len(plist)
-        pmap = pmap.round().astype(np.int32)
+        pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
         ind = np.arange(len(plist), dtype=int)[ind]
 
@@ -495,7 +495,7 @@ class Monitor(object):
             plist = None
         plist = self.comm.bcast(plist, root=0)
         pmap = np.arange(len(plist))*self.psize/len(plist)
-        pmap = pmap.round().astype(np.int32)
+        pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
         ind = np.arange(len(plist), dtype=int)[ind]
 
