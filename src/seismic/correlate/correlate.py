@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 23rd August 2023 09:50:02 am
+Last Modified: Wednesday, 23rd August 2023 09:59:57 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -481,7 +481,7 @@ class Correlator(object):
                 win = Stream()
                 for winp in winl:
                     win.extend(winp)
-                win.sort()
+                win.sort(keys=['network', 'station', 'channel'])
 
                 # Get correlation combinations
                 if self.rank == 0:
