@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 7th July 2023 02:50:27 pm
-Last Modified: Friday, 21st July 2023 10:22:06 am
+Last Modified: Thursday, 24th August 2023 11:09:22 am
 '''
 
 import unittest
@@ -59,7 +59,7 @@ class TestSpctSeriesWelch(unittest.TestCase):
         """
         mock_preprocess.side_effect = IndexError()
         with warnings.catch_warnings(record=True) as w:
-            with self.assertRaises(UnboundLocalError):
+            with self.assertRaises(ValueError):
                 ra.spct_series_welch([self.st], 10, 50)
             self.assertEqual(len(w), 1)
             self.assertEqual(w[0].category, UserWarning)
@@ -75,7 +75,7 @@ class TestSpctSeriesWelch(unittest.TestCase):
         mock_preprocess.side_effect = side_effect_func
         mock_welch.side_effect = Exception('bla')
         with warnings.catch_warnings(record=True) as w:
-            with self.assertRaises(UnboundLocalError):
+            with self.assertRaises(ValueError):
                 ra.spct_series_welch([self.st], 10, 50)
             self.assertEqual(len(w), 9)
             self.assertEqual(w[0].category, UserWarning)
@@ -87,7 +87,7 @@ class TestSpctSeriesWelch(unittest.TestCase):
         """
         mock_preprocess.side_effect = Exception('bla')
         with warnings.catch_warnings(record=True) as w:
-            with self.assertRaises(UnboundLocalError):
+            with self.assertRaises(ValueError):
                 ra.spct_series_welch([self.st], 10, 50)
             self.assertEqual(len(w), 1)
             self.assertEqual(w[0].category, UserWarning)

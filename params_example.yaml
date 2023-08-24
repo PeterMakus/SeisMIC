@@ -3,7 +3,7 @@
 proj_dir : '/path/to/project/root/'
 # Save the component combinations in separate hdf5 files
 # This is faster for multi-core if True
-# Set to False for compatibility with SeisMIC version < 0.4.6
+# Set to False for compatibility with SeisMIC version < 0.5.0
 save_comps_separately: True
 # directory for logging information
 log_subdir : 'log'

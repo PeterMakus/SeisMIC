@@ -10,7 +10,7 @@ Module for waveform data analysis. Contains spectrogram computation.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 12:22:00 pm
-Last Modified: Tuesday, 8th August 2023 10:53:54 am
+Last Modified: Thursday, 24th August 2023 10:52:44 am
 '''
 from typing import Iterator
 import warnings
@@ -96,7 +96,11 @@ def spct_series_welch(
         # Convert to numpy array
         S = np.array(specl)
         t = np.array(t)
-        return f2, t, S.T
+        try:
+            return f2, t, S.T
+        except UnboundLocalError:
+            raise ValueError(
+                'A spectrum could not be computed. Check earlier log messages')
     else:
         return None, None, None
 

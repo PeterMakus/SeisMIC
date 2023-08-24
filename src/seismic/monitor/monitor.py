@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 23rd August 2023 09:50:02 am
+Last Modified: Thursday, 24th August 2023 10:45:25 am
 '''
 from copy import deepcopy
 import json
@@ -56,6 +56,11 @@ class Monitor(object):
         self.indir = os.path.join(
             options['proj_dir'], options['co']['subdir']
         )
+        try:
+            self.save_comps_separately = options['save_comps_separately']
+        except KeyError:
+            # If it's not specified it's probably an old params.yaml
+            self.save_comps_separately = False
 
         # init MPI
         self.comm = MPI.COMM_WORLD
@@ -729,7 +734,8 @@ def make_time_list(
     return starttimes, endtimes
 
 
-def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
+def corr_find_filter(
+    indir: str, net: dict, **kwargs) -> Tuple[
         List[str], List[str], List[str]]:
     """
     1. Finds the files of available correlations.

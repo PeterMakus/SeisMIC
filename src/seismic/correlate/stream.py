@@ -10,7 +10,7 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Wednesday, 23rd August 2023 11:19:31 am
+Last Modified: Thursday, 24th August 2023 11:06:37 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -982,8 +982,7 @@ class CorrStream(Stream):
 
     def remove_duplicates(self):
         """
-        Removes CorrTraces that have the same starttime, endtime, and
-        sampling rate.
+        Removes identical CorrTraces.
 
         .. note:: This action is performed **in-place**. If you want to keep
             the original data use

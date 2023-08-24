@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Friday, 7th July 2023 02:35:51 pm
+Last Modified: Thursday, 24th August 2023 11:05:57 am
 '''
 
 import unittest
@@ -824,6 +824,11 @@ class TestCorrStream(unittest.TestCase):
                 ntr.stats['corr_end'] += delta*(ii+1)
                 self.st.append(ntr)
         self.len_tot = self.st[-1].stats.corr_end - self.st[0].stats.corr_start
+
+    def test_remove_duplicates(self):
+        self.st.extend(self.st)
+        self.st.remove_duplicates()
+        self.assertEqual(self.st.count(), 180)
 
     def test_wrong_input(self):
         with self.assertRaises(TypeError):

@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Friday, 21st July 2023 10:14:21 am
+Last Modified: Thursday, 24th August 2023 11:00:08 am
 '''
 from copy import deepcopy
 import unittest
@@ -363,10 +363,11 @@ class TestCorrrelator(unittest.TestCase):
     @mock.patch('builtins.open')
     @mock.patch('seismic.correlate.correlate.logging')
     @mock.patch('seismic.correlate.correlate.os.makedirs')
-    def test_write(
+    def test_write_one_file(
             self, makedirs_mock, logging_mock, open_mock, dbh_mock):
         options = deepcopy(self.options)
         options['co']['combinations'] = [(0, 0), (0, 1), (0, 2)]
+        options['save_comps_separately'] = False
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = [
             ['lala', 'lolo'], ['lala', 'lili']]
@@ -389,6 +390,38 @@ class TestCorrrelator(unittest.TestCase):
         # A bit cumbersome way to check whether all files were written
         for call in dbh_mock().add_correlation.call_args_list:
             self.assertEqual(3, call[0][0].count())
+
+    @mock.patch('seismic.db.corr_hdf5.DBHandler')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_write_three_file(
+            self, makedirs_mock, logging_mock, open_mock, dbh_mock):
+        options = deepcopy(self.options)
+        options['co']['combinations'] = [(0, 0), (0, 1), (0, 2)]
+        options['save_comps_separately'] = True
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [
+            ['lala', 'lolo'], ['lala', 'lili']]
+        sc_mock._translate_wildcards.return_value = [
+            ['lala', 'lolo', 'E'], ['lala', 'lili', 'Z']]
+        c = correlate.Correlator(sc_mock, options)
+        st2 = self.st.copy()
+        cst0 = CorrStream()
+        for tr in st2:
+            tr.stats.station = 'oo'
+            cst0.append(tr)
+        st2.extend(self.st)
+        cst1 = CorrStream()
+        for tr in self.st:
+            cst1.append(tr)
+        c._write(st2, 'mytag')
+        add_cst_calls = [
+            mock.call(mock.ANY, 'mytag'), mock.call(mock.ANY, 'mytag')]
+        dbh_mock().add_correlation.assert_has_calls(add_cst_calls)
+        # A bit cumbersome way to check whether all files were written
+        for call in dbh_mock().add_correlation.call_args_list:
+            self.assertEqual(1, call[0][0].count())
 
     @mock.patch('seismic.utils.miic_utils.resample_or_decimate')
     @mock.patch('seismic.correlate.correlate.calc_cross_combis')
