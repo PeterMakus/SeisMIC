@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 24th August 2023 10:12:30 am
+Last Modified: Thursday, 24th August 2023 10:18:06 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -65,6 +65,10 @@ class Correlator(object):
         # directories
         self.proj_dir = options['proj_dir']
         self.corr_dir = os.path.join(self.proj_dir, options['co']['subdir'])
+        try:
+            self.save_comps_separately = options['save_comps_separately']
+        except KeyError:
+            self.save_comps_separately = False
         logdir = os.path.join(self.proj_dir, options['log_subdir'])
         if self.rank == 0:
             os.makedirs(self.corr_dir, exist_ok=True)
