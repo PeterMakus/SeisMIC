@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 24th August 2023 10:18:06 am
+Last Modified: Thursday, 24th August 2023 02:03:47 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -152,9 +152,14 @@ class Correlator(object):
         elif isinstance(station, str) and isinstance(network, str):
             station = [[network, station]]
         elif station == '*' and isinstance(network, list):
-            station = []
-            for net in network:
-                station.extend(store_client.get_available_stations(net))
+            # This is most likely not thread-safe
+            if self.rank == 0:
+                station = []
+                for net in network:
+                    station.extend(store_client.get_available_stations(net))
+            else:
+                station = None
+            station = self.comm.bcast(station, root=0)
         elif isinstance(network, list) and isinstance(station, list):
             if len(network) != len(station):
                 raise ValueError(
@@ -345,15 +350,18 @@ class Correlator(object):
         if A is None:
             # No new data
             return cst
-        # Why is that done for every core?
-        for ii, (startlag, comb) in enumerate(
-                zip(startlags, self.options['combinations'])):
-            endlag = startlag + len(A[ii, :])/self.options['sampling_rate']
-            cst.append(
-                CorrTrace(
-                    A[ii], header1=st[comb[0]].stats,
-                    header2=st[comb[1]].stats, inv=inv, start_lag=startlag,
-                    end_lag=endlag))
+        if self.rank == 0:
+            for ii, (startlag, comb) in enumerate(
+                    zip(startlags, self.options['combinations'])):
+                endlag = startlag + len(A[ii, :])/self.options['sampling_rate']
+                cst.append(
+                    CorrTrace(
+                        A[ii], header1=st[comb[0]].stats,
+                        header2=st[comb[1]].stats, inv=inv, start_lag=startlag,
+                        end_lag=endlag))
+        else:
+            cst = None
+        cst = self.comm.bcast(cst, root=0)
         return cst
 
     def _write(self, cst, tag: str):
