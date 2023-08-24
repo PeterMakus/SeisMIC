@@ -80,30 +80,32 @@ and, if not, download them from remote (i.e., the FDSN server that we defined wh
 To access only already available data use:
     * response information:
 
-      * :func:`~seismic.trace_data.waveform.Store_Client.read_inventory` to read all available response information.
+      * :meth:`~seismic.trace_data.waveform.Store_Client.read_inventory` to read all available response information.
       * :attr:`~seismic.trace_data.waveform.Store_Client.inventory` to access the pythonic inventory object
         (see `obspy's documentation <https://docs.obspy.org/packages/autogen/obspy.core.inventory.inventory.Inventory.html>`_ for available methods)
     * waveform data:
 
-      * :func:`~seismic.trace_data.waveform.Store_Client._load_local` to load local data
+      * :meth:`~seismic.trace_data.waveform.Store_Client._load_local` to load local data
 
 If you would like to download missing data, use the following methods:
     * Response Information:
 
-      * :func:`~seismic.trace_data.waveform.Store_Client.select_inventory_or_load_remote`
+      * :meth:`~seismic.trace_data.waveform.Store_Client.select_inventory_or_load_remote`
     * waveform data:
 
-      * :func:`~seismic.trace_data.waveform.Store_Client.get_waveforms`
+      * :meth:`~seismic.trace_data.waveform.Store_Client.get_waveforms`
 
 Getting an overview of your database
 ====================================
 Once your database grows in size, you might not exactly know anymore, which data you have available.
 There are a couple of functions to help you:
 
-    * :func:`~seismic.trace_data.waveform.Store_Client.get_available_stations` returns all codes of stations
+    * :meth:`~seismic.trace_data.waveform.Store_Client.get_available_stations` returns all codes of stations
         for which data is available (a network may or may not be defined).
-    * :func:`~seismic.trace_data.waveform.Store_Client._get_times` returns the earliest and latest available
+    * :meth:`~seismic.trace_data.waveform.Store_Client._get_times` returns the earliest and latest available
         starttimes for a certain station.
+    * :meth:`~seismic.correlate.correlate.Store_Client_compute_spectrogram` can be used to examine the spectral content of the
+        data. Check out the `tutorial <../tutorials/tutorial>` for details on how to do that.
 
 
 Feed in Data in a Different Way

@@ -38,7 +38,6 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.autosummary',
               'sphinxcontrib.mermaid',
               'sphinx_copybutton',
-            #   'sphinx_gallery.gen_gallery',
               ]
 
 # --------------------------------
@@ -97,6 +96,7 @@ html_title = ""
 html_logo = "figures/seismic_logo_small.png"
 # html_favicon = "chapters/figures/favicon.ico"
 
+
 html_context = {
     # "github_url": "https://github.com", # or your GitHub Enterprise
     "github_user": 'PeterMakus',
@@ -107,13 +107,10 @@ html_context = {
 
 html_theme_options = {
     "github_url": "https://github.com/PeterMakus/SeisMIC",
-    "use_edit_page_button": True,
+    "use_edit_page_button": False,
     # "show_toc_level": 1,
-
-    "use_edit_page_button": True,
-
-    # "collapse_navigation": True,
-    "navigation_depth": 2,
-    # "navbar_align": "left"
+    "collapse_navigation": True,
+    "navigation_depth": 3,
+    # "navbar_align": "left",
 
 }

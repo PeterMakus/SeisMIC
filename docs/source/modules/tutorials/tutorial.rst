@@ -1,7 +1,7 @@
 **SeisMIC** Tutorial
 ====================
 
-.. image:: ../docs/source/figures/seismic_logo_small.png
+.. image:: ./seismic_logo.png
 
 In the following, we will go through a simple example to compute a
 ambient noise correlations and monitor velocity changes using
@@ -63,66 +63,36 @@ class and its method ``download_waveforms_mdl()``.
 
 .. parsed-literal::
 
-    [2023-07-21 11:14:52,981] - obspy.clients.fdsn.mass_downloader - INFO: Initializing FDSN client(s) for http://geofon.gfz-potsdam.de.
-    [2023-07-21 11:14:52,981] - obspy.clients.fdsn.mass_downloader - INFO: Initializing FDSN client(s) for http://geofon.gfz-potsdam.de.
-    [2023-07-21 11:14:52,981] - obspy.clients.fdsn.mass_downloader - INFO: Initializing FDSN client(s) for http://geofon.gfz-potsdam.de.
-    [2023-07-21 11:14:52,981] - obspy.clients.fdsn.mass_downloader - INFO: Initializing FDSN client(s) for http://geofon.gfz-potsdam.de.
-    [2023-07-21 11:14:52,984] - obspy.clients.fdsn.mass_downloader - INFO: Successfully initialized 1 client(s): http://geofon.gfz-potsdam.de.
-    [2023-07-21 11:14:52,984] - obspy.clients.fdsn.mass_downloader - INFO: Successfully initialized 1 client(s): http://geofon.gfz-potsdam.de.
-    [2023-07-21 11:14:52,984] - obspy.clients.fdsn.mass_downloader - INFO: Successfully initialized 1 client(s): http://geofon.gfz-potsdam.de.
-    [2023-07-21 11:14:52,984] - obspy.clients.fdsn.mass_downloader - INFO: Successfully initialized 1 client(s): http://geofon.gfz-potsdam.de.
-    [2023-07-21 11:14:52,986] - obspy.clients.fdsn.mass_downloader - INFO: Total acquired or preexisting stations: 0
-    [2023-07-21 11:14:52,986] - obspy.clients.fdsn.mass_downloader - INFO: Total acquired or preexisting stations: 0
-    [2023-07-21 11:14:52,986] - obspy.clients.fdsn.mass_downloader - INFO: Total acquired or preexisting stations: 0
-    [2023-07-21 11:14:52,986] - obspy.clients.fdsn.mass_downloader - INFO: Total acquired or preexisting stations: 0
-    [2023-07-21 11:14:52,987] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Requesting unreliable availability.
-    [2023-07-21 11:14:52,987] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Requesting unreliable availability.
-    [2023-07-21 11:14:52,987] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Requesting unreliable availability.
-    [2023-07-21 11:14:52,987] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Requesting unreliable availability.
-    [2023-07-21 11:14:53,065] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Successfully requested availability (0.08 seconds)
-    [2023-07-21 11:14:53,065] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Successfully requested availability (0.08 seconds)
-    [2023-07-21 11:14:53,065] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Successfully requested availability (0.08 seconds)
-    [2023-07-21 11:14:53,065] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Successfully requested availability (0.08 seconds)
-    [2023-07-21 11:14:53,067] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Found 1 stations (1 channels).
-    [2023-07-21 11:14:53,067] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Found 1 stations (1 channels).
-    [2023-07-21 11:14:53,067] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Found 1 stations (1 channels).
-    [2023-07-21 11:14:53,067] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Found 1 stations (1 channels).
-    [2023-07-21 11:14:53,069] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Will attempt to download data from 1 stations.
-    [2023-07-21 11:14:53,069] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Will attempt to download data from 1 stations.
-    [2023-07-21 11:14:53,069] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Will attempt to download data from 1 stations.
-    [2023-07-21 11:14:53,069] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Will attempt to download data from 1 stations.
-    [2023-07-21 11:14:53,071] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Status for 11 time intervals/channels before downloading: IGNORE
-    [2023-07-21 11:14:53,071] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Status for 11 time intervals/channels before downloading: IGNORE
-    [2023-07-21 11:14:53,071] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Status for 11 time intervals/channels before downloading: IGNORE
-    [2023-07-21 11:14:53,071] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Status for 11 time intervals/channels before downloading: IGNORE
-    [2023-07-21 11:14:53,072] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - No station information to download.
-    [2023-07-21 11:14:53,072] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - No station information to download.
-    [2023-07-21 11:14:53,072] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - No station information to download.
-    [2023-07-21 11:14:53,072] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - No station information to download.
-    [2023-07-21 11:14:53,074] - obspy.clients.fdsn.mass_downloader - INFO: ============================== Final report
-    [2023-07-21 11:14:53,074] - obspy.clients.fdsn.mass_downloader - INFO: ============================== Final report
-    [2023-07-21 11:14:53,074] - obspy.clients.fdsn.mass_downloader - INFO: ============================== Final report
-    [2023-07-21 11:14:53,074] - obspy.clients.fdsn.mass_downloader - INFO: ============================== Final report
-    [2023-07-21 11:14:53,075] - obspy.clients.fdsn.mass_downloader - INFO: 0 MiniSEED files [0.0 MB] already existed.
-    [2023-07-21 11:14:53,075] - obspy.clients.fdsn.mass_downloader - INFO: 0 MiniSEED files [0.0 MB] already existed.
-    [2023-07-21 11:14:53,075] - obspy.clients.fdsn.mass_downloader - INFO: 0 MiniSEED files [0.0 MB] already existed.
-    [2023-07-21 11:14:53,075] - obspy.clients.fdsn.mass_downloader - INFO: 0 MiniSEED files [0.0 MB] already existed.
-    [2023-07-21 11:14:53,076] - obspy.clients.fdsn.mass_downloader - INFO: 0 StationXML files [0.0 MB] already existed.
-    [2023-07-21 11:14:53,076] - obspy.clients.fdsn.mass_downloader - INFO: 0 StationXML files [0.0 MB] already existed.
-    [2023-07-21 11:14:53,076] - obspy.clients.fdsn.mass_downloader - INFO: 0 StationXML files [0.0 MB] already existed.
-    [2023-07-21 11:14:53,076] - obspy.clients.fdsn.mass_downloader - INFO: 0 StationXML files [0.0 MB] already existed.
-    [2023-07-21 11:14:53,078] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Acquired 0 MiniSEED files [0.0 MB].
-    [2023-07-21 11:14:53,078] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Acquired 0 MiniSEED files [0.0 MB].
-    [2023-07-21 11:14:53,078] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Acquired 0 MiniSEED files [0.0 MB].
-    [2023-07-21 11:14:53,078] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Acquired 0 MiniSEED files [0.0 MB].
-    [2023-07-21 11:14:53,079] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Acquired 0 StationXML files [0.0 MB].
-    [2023-07-21 11:14:53,079] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Acquired 0 StationXML files [0.0 MB].
-    [2023-07-21 11:14:53,079] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Acquired 0 StationXML files [0.0 MB].
-    [2023-07-21 11:14:53,079] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Acquired 0 StationXML files [0.0 MB].
-    [2023-07-21 11:14:53,080] - obspy.clients.fdsn.mass_downloader - INFO: Downloaded 0.0 MB in total.
-    [2023-07-21 11:14:53,080] - obspy.clients.fdsn.mass_downloader - INFO: Downloaded 0.0 MB in total.
-    [2023-07-21 11:14:53,080] - obspy.clients.fdsn.mass_downloader - INFO: Downloaded 0.0 MB in total.
-    [2023-07-21 11:14:53,080] - obspy.clients.fdsn.mass_downloader - INFO: Downloaded 0.0 MB in total.
+    [2023-08-24 10:50:29,755] - obspy.clients.fdsn.mass_downloader - INFO: Initializing FDSN client(s) for http://geofon.gfz-potsdam.de.
+    [2023-08-24 10:50:29,755] - obspy.clients.fdsn.mass_downloader - INFO: Initializing FDSN client(s) for http://geofon.gfz-potsdam.de.
+    [2023-08-24 10:50:29,757] - obspy.clients.fdsn.mass_downloader - INFO: Successfully initialized 1 client(s): http://geofon.gfz-potsdam.de.
+    [2023-08-24 10:50:29,757] - obspy.clients.fdsn.mass_downloader - INFO: Successfully initialized 1 client(s): http://geofon.gfz-potsdam.de.
+    [2023-08-24 10:50:29,758] - obspy.clients.fdsn.mass_downloader - INFO: Total acquired or preexisting stations: 0
+    [2023-08-24 10:50:29,758] - obspy.clients.fdsn.mass_downloader - INFO: Total acquired or preexisting stations: 0
+    [2023-08-24 10:50:29,759] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Requesting unreliable availability.
+    [2023-08-24 10:50:29,759] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Requesting unreliable availability.
+    [2023-08-24 10:50:29,906] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Successfully requested availability (0.15 seconds)
+    [2023-08-24 10:50:29,906] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Successfully requested availability (0.15 seconds)
+    [2023-08-24 10:50:29,909] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Found 1 stations (1 channels).
+    [2023-08-24 10:50:29,909] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Found 1 stations (1 channels).
+    [2023-08-24 10:50:29,911] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Will attempt to download data from 1 stations.
+    [2023-08-24 10:50:29,911] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Will attempt to download data from 1 stations.
+    [2023-08-24 10:50:29,913] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Status for 11 time intervals/channels before downloading: IGNORE
+    [2023-08-24 10:50:29,913] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Status for 11 time intervals/channels before downloading: IGNORE
+    [2023-08-24 10:50:29,915] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - No station information to download.
+    [2023-08-24 10:50:29,915] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - No station information to download.
+    [2023-08-24 10:50:29,916] - obspy.clients.fdsn.mass_downloader - INFO: ============================== Final report
+    [2023-08-24 10:50:29,916] - obspy.clients.fdsn.mass_downloader - INFO: ============================== Final report
+    [2023-08-24 10:50:29,917] - obspy.clients.fdsn.mass_downloader - INFO: 0 MiniSEED files [0.0 MB] already existed.
+    [2023-08-24 10:50:29,917] - obspy.clients.fdsn.mass_downloader - INFO: 0 MiniSEED files [0.0 MB] already existed.
+    [2023-08-24 10:50:29,918] - obspy.clients.fdsn.mass_downloader - INFO: 0 StationXML files [0.0 MB] already existed.
+    [2023-08-24 10:50:29,918] - obspy.clients.fdsn.mass_downloader - INFO: 0 StationXML files [0.0 MB] already existed.
+    [2023-08-24 10:50:29,919] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Acquired 0 MiniSEED files [0.0 MB].
+    [2023-08-24 10:50:29,919] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Acquired 0 MiniSEED files [0.0 MB].
+    [2023-08-24 10:50:29,920] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Acquired 0 StationXML files [0.0 MB].
+    [2023-08-24 10:50:29,920] - obspy.clients.fdsn.mass_downloader - INFO: Client 'http://geofon.gfz-potsdam.de' - Acquired 0 StationXML files [0.0 MB].
+    [2023-08-24 10:50:29,920] - obspy.clients.fdsn.mass_downloader - INFO: Downloaded 0.0 MB in total.
+    [2023-08-24 10:50:29,920] - obspy.clients.fdsn.mass_downloader - INFO: Downloaded 0.0 MB in total.
 
 
 Some notes about this: 1. The method ``download_waveforms_mdl()``
@@ -140,19 +110,7 @@ If everything worked fine. This should have created a folder called
 
 .. parsed-literal::
 
-    ['inventory',
-     'vel_change',
-     'corr_0.36_1.1',
-     'corr_0.16_0.49',
-     'figures',
-     'log',
-     'corr_0.03_0.1',
-     'mseed',
-     'corr_0.82_2.47',
-     'corr_1.85_5.55',
-     'corr_0.07_0.22',
-     'wfc',
-     'corr_4.16_12.49']
+    ['inventory', 'mseed']
 
 
 
@@ -208,6 +166,10 @@ look at it using bash.
     #### Project wide parameters
     # lowest level project directory
     proj_dir : 'data'
+    # Save the component combinations in separate hdf5 files
+    # This is faster for multi-core if True
+    # Set to False for compatibility with SeisMIC version < 0.4.6
+    save_comps_separately: True
     # directory for logging information
     log_subdir : 'log'
     # levels:
@@ -484,24 +446,24 @@ terminal.
 
     Correlator initiated
     Correlator initiated
-    2023-07-21 11:15:29,237 - WARNING - No existing data found.
+    2023-08-24 10:52:59,811 - WARNING - No existing data found.
     Automatically setting preprocess_subdiv to False to optimise performance.
       0%|          | 0/11 [00:00<?, ?it/s]Correlator initiated
     Correlator initiated
       0%|          | 0/11 [00:00<?, ?it/s]Correlator initiated
-    Correlator initiated
-    100%|██████████| 11/11 [00:15<00:00,  1.39s/it]
-    100%|██████████| 11/11 [00:14<00:00,  1.36s/it]
-    100%|██████████| 11/11 [00:14<00:00,  1.35s/it]
-    100%|██████████| 11/11 [00:14<00:00,  1.36s/it]
-    100%|██████████| 11/11 [00:14<00:00,  1.35s/it]
-    100%|██████████| 11/11 [00:15<00:00,  1.39s/it]
-    Correlation finished after 14.919074058532715 seconds
-    Correlation finished after 14.849216222763062 seconds
-    Correlation finished after Correlation finished after 14.84933614730835 seconds
-    14.9193696975708 seconds
-    Correlation finished after 15.333239555358887 seconds
-    Correlation finished after 15.5463285446167 seconds
+      0%|          | 0/11 [00:00<?, ?it/s]Correlator initiated
+    100%|██████████| 11/11 [00:16<00:00,  1.51s/it]
+    100%|██████████| 11/11 [00:20<00:00,  1.82s/it]
+    100%|██████████| 11/11 [00:20<00:00,  1.82s/it]
+    100%|██████████| 11/11 [00:19<00:00,  1.78s/it]
+    100%|██████████| 11/11 [00:20<00:00,  1.82s/it]
+    100%|██████████| 11/11 [00:20<00:00,  1.82s/it]
+    Correlation finished after 16.573271989822388 seconds
+    Correlation finished after 19.590983629226685 seconds
+    Correlation finished after 20.04919147491455 secondsCorrelation finished after 20.06204128265381 seconds
+    
+    Correlation finished after 20.04917287826538 seconds
+    Correlation finished after 20.276748657226562 seconds
 
 
 Now let’s have a look at those correlations. To do so, we use the
@@ -513,7 +475,7 @@ defined in our params.yaml file.
 
     from seismic.db.corr_hdf5 import CorrelationDataBase
     
-    with CorrelationDataBase(f'data/corr/{network}-{network}.{station}-{station}.h5', mode='r') as cdb:
+    with CorrelationDataBase(f'data/corr/{network}-{network}.{station}-{station}.HHE-HHE.h5', mode='r') as cdb:
         # find the available labels
         print(list(cdb.keys()))
 
@@ -531,7 +493,7 @@ being the length of the stack in seconds).
 
 .. code:: ipython3
 
-    with CorrelationDataBase(f'data/corr/{network}-{network}.{station}-{station}.h5', mode='r') as cdb:
+    with CorrelationDataBase(f'data/corr/{network}-{network}.{station}-{station}.HHE-HHE.h5', mode='r') as cdb:
         # find the available labels
         print(cdb.get_available_channels(
             tag='stack_86398', network=f'{network}-{network}', station=f'{station}-{station}'))
@@ -628,7 +590,15 @@ Let’s try and combine the two last plots
 
 
 
-.. image:: tutorial_files/tutorial_22_0.png
+
+.. parsed-literal::
+
+    Text(0.5, 1.0, '(b)')
+
+
+
+
+.. image:: tutorial_files/tutorial_22_1.png
 
 
 3. Waveform Coherence
@@ -651,20 +621,76 @@ while.
 
 .. parsed-literal::
 
-    100%|███████████████████████████████████████████| 11/11 [00:01<00:00,  7.31it/s]
-    100%|███████████████████████████████████████████| 11/11 [00:01<00:00,  7.41it/s]
-    100%|███████████████████████████████████████████| 11/11 [00:01<00:00,  7.25it/s]
-    100%|███████████████████████████████████████████| 11/11 [00:01<00:00,  8.49it/s]
-    100%|███████████████████████████████████████████| 11/11 [00:01<00:00,  8.39it/s]
-    100%|███████████████████████████████████████████| 11/11 [00:01<00:00,  7.31it/s]
-    100%|███████████████████████████████████████████| 11/11 [00:01<00:00,  6.19it/s]
-    100%|█████████████████████████████████████████████| 1/1 [00:01<00:00,  1.03s/it]
-    100%|█████████████████████████████████████████████| 1/1 [00:01<00:00,  1.05s/it]
-    100%|█████████████████████████████████████████████| 1/1 [00:01<00:00,  1.03s/it]
-    100%|█████████████████████████████████████████████| 1/1 [00:01<00:00,  1.02s/it]
-    100%|█████████████████████████████████████████████| 1/1 [00:00<00:00,  1.08it/s]
+    2023-08-24 10:54:53,301 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    100%|███████████████████████████████████████████| 11/11 [00:05<00:00,  1.92it/s]
+    2023-08-24 10:54:59,090 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:54:59,090 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    100%|███████████████████████████████████████████| 11/11 [00:05<00:00,  2.02it/s]
+    2023-08-24 10:55:04,616 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:04,616 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:04,616 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    100%|███████████████████████████████████████████| 11/11 [00:05<00:00,  2.04it/s]
+    2023-08-24 10:55:10,090 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:10,090 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:10,090 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:10,090 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    100%|███████████████████████████████████████████| 11/11 [00:05<00:00,  1.96it/s]
+    2023-08-24 10:55:15,767 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:15,767 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:15,767 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:15,767 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:15,767 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    100%|███████████████████████████████████████████| 11/11 [00:05<00:00,  1.97it/s]
+    2023-08-24 10:55:21,427 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:21,427 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:21,427 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:21,427 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:21,427 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:21,427 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    100%|███████████████████████████████████████████| 11/11 [00:05<00:00,  1.98it/s]
+    2023-08-24 10:55:27,068 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:27,068 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:27,068 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:27,068 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:27,068 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:27,068 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    2023-08-24 10:55:27,068 - WARNING - No existing data found.
+    Automatically setting preprocess_subdiv to False to optimise performance.
+    100%|███████████████████████████████████████████| 11/11 [00:05<00:00,  2.00it/s]
     100%|█████████████████████████████████████████████| 1/1 [00:00<00:00,  1.12it/s]
-    100%|█████████████████████████████████████████████| 1/1 [00:00<00:00,  1.03it/s]
+    100%|█████████████████████████████████████████████| 1/1 [00:00<00:00,  1.11it/s]
+    100%|█████████████████████████████████████████████| 1/1 [00:00<00:00,  1.07it/s]
+    100%|█████████████████████████████████████████████| 1/1 [00:00<00:00,  1.05it/s]
+    100%|█████████████████████████████████████████████| 1/1 [00:00<00:00,  1.07it/s]
+    100%|█████████████████████████████████████████████| 1/1 [00:00<00:00,  1.06it/s]
+    100%|█████████████████████████████████████████████| 1/1 [00:00<00:00,  1.07it/s]
 
 
 .. code:: ipython3
@@ -677,7 +703,15 @@ while.
 
 
 
-.. image:: tutorial_files/tutorial_25_0.png
+
+.. parsed-literal::
+
+    <Axes: xlabel='Central Lag Time [s]', ylabel='Centre Frequency [Hz]'>
+
+
+
+
+.. image:: tutorial_files/tutorial_25_1.png
 
 
 4. Monitoring
@@ -733,7 +767,7 @@ script:
     0it [00:00, ?it/s]
     0it [00:00, ?it/s]
     saving to X9-X9_IR1-IR1_HHE-HHE
-    100%|██████████| 1/1 [00:04<00:00,  4.49s/it]
+    100%|██████████| 1/1 [00:04<00:00,  4.43s/it]
 
 
 Make a first plot to get an idea of *dv/v*
@@ -799,7 +833,7 @@ mentioned publication
 
 .. parsed-literal::
 
-    <matplotlib.legend.Legend at 0x7fbc2f7c3f70>
+    <matplotlib.legend.Legend at 0x7f6293a57730>
 
 
 

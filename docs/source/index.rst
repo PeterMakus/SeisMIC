@@ -24,20 +24,15 @@ Its main use case is the monitoring of temporal changes in a mediums (e.g., moni
    modules/monitor
    modules/API
 
-**Waveform Download, Correlating, and Monitoring Velocity Changes** *Tools to
-get from 0 to Noise-Monitoring-Hero.*
+Tutorials
+---------
 
 .. toctree::
    :maxdepth: 2
+   :caption: A practical introduction to SeisMIC:
+   
 
-   modules/tutorials/tutorial
-
-**Spatial Inversion of dv/v** *Invert velocity changes onto a map*
-
-.. toctree::
-   :maxdepth: 2
-
-   modules/tutorials/spatial
+   modules/tutorials
 
 
 

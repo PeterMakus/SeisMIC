@@ -47,7 +47,7 @@ co:
     # later steps
     sampling_rate : 25
     # Remove the instrument response, will take substantially more time
-    remove_response : True
+    remove_response : False
 
     # Method to combine different traces
     # Options are: 'betweenStations', 'betweenComponents', 'autoComponents', 'allSimpleCombinations', or 'allCombinations'

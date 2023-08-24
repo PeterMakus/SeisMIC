@@ -65,57 +65,14 @@ Inverting Velocity Changes onto a spatial grid
 The module `seismic.monitor.spatial` implements the surface wave spatial inversion as proposed by
 `Obermann et al. (2013) <https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2013JB010399>`_.
 
-In pratice, you will create one :py:class:`~seismic.monitor.spatial.DVGrid` object for each time t that the map should be shown at. 
-The inverse solution can be computed as follows:
-
-.. code-block:: python
-
-    from obspy import UTCDateTime
-
-    from seismic.monitor.spatial import DVGrid
-    from seismic.monitor.dv import read_dv
-
-    # define map dimensions
-    # New, slightly larger coverage
-    lat = 10.5
-    lon = -110
-
-    # Y-extent in km
-    y = 75
-
-    # X-Extent in km
-    x = 55
-
-    # Resolution
-    res = 1  # km
-
-    # time to check dv/v at
-    time = UTCDateTime('2016-01-25T00:00:00')
-
-    # inversion parameters
-    # geo-parameters
-    vel = 1  # km/s
-    # mean free path in kilometres
-    mf_path = 80
-    # precision of the numerical integration
-    dt = .05 # s
-
-    # Damping parameters for Least-Squares Inversion
-    # needs to be thoroughly tested, e.g., L-curve criterion
-    corr_len = 1  # km
-    std_model = .15
-
-    dvs_all = read_dv('/path/to/my/dv/DV-*.npz')
-
-    # create empty grid
-    dvgo = DVGrid(lat, lon, res, x, y)
-
-    dvg.compute_dv_grid(dvs_all, time, dt, vel, mf_path, res, corr_len, std_model)
+In pratice, you will create one :py:class:`~seismic.monitor.spatial.DVGrid` and invert for each time t that you will want to
+have a separate map of. 
 
 If you want to commit an inverse crime, the forward solution is also implemented in
 :py:meth:`~seismic.monitor.spatial.DVGrid.forward_model`. Equally, you can compute the
 model resolution using :py:meth:`~seismic.monitor.spatial.DVGrid.compute_resolution`.
 
+For further details and a more thorough how-to, refer to the `spatial tutorial <../tutorials/spatial.rst>`_.
 
 .. note::
 
