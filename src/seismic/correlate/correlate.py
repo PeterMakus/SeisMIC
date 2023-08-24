@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 23rd August 2023 02:23:06 pm
+Last Modified: Thursday, 24th August 2023 10:12:30 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -364,8 +364,13 @@ class Correlator(object):
             return
 
         # Make sure that each core writes to a different file
-        codelist = list(set(
-            [f'{tr.stats.network}.{tr.stats.station}' for tr in cst]))
+        if self.save_comps_separately:
+            codelist = list(set(
+                [f'{tr.stats.network}.{tr.stats.station}.{tr.stats.channel}'
+                 for tr in cst]))
+        else:
+            codelist = list(set(
+                [f'{tr.stats.network}.{tr.stats.station}' for tr in cst]))
         # Better if the same cores keep writing to the same files
         codelist.sort()
         # Decide which process writes to which station
@@ -374,12 +379,21 @@ class Correlator(object):
         ind = pmap == self.rank
 
         for code in np.array(codelist)[ind]:
-            net, stat = code.split('.')
-            outf = os.path.join(self.corr_dir, f'{net}.{stat}.h5')
+            if self.save_comps_separately:
+                net, stat, cha = code.split('.')
+                outf = os.path.join(self.corr_dir, f'{net}.{stat}.{cha}.h5')
+            else:
+                net, stat = code.split('.')
+                outf = os.path.join(self.corr_dir, f'{net}.{stat}.h5')
             with CorrelationDataBase(
                     outf, corr_options=self.options) as cdb:
-                cdb.add_correlation(
-                    cst.select(network=net, station=stat), tag)
+                if self.save_comps_separately:
+                    cdb.add_correlation(
+                        cst.select(
+                            network=net, station=stat, channel=cha), tag)
+                else:
+                    cdb.add_correlation(
+                        cst.select(network=net, station=stat), tag)
 
     def _generate_data(self) -> Iterator[Tuple[Stream, bool]]:
         """
