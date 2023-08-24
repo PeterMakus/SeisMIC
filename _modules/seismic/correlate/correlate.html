@@ -108,8 +108,14 @@
   
   
   
+    
+    
+      
+    
+    
+    <img src="../../../_static/seismic_logo_small.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../../_static/seismic_logo_small.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
   
-    <p class="title logo__title"></p>
   
 </a></div>
     
@@ -179,6 +185,13 @@
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../../../modules/API.html">
                         SeisMIC API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
                       </a>
                     </li>
                 
@@ -327,6 +340,13 @@ document.write(`
                       </a>
                     </li>
                 
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
+                      </a>
+                    </li>
+                
                 </div>
             </div>
             
@@ -433,10 +453,10 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 29th March 2021 07:58:18 am</span>
-<span class="sd">Last Modified: Monday, 3rd April 2023 02:37:02 pm</span>
+<span class="sd">Last Modified: Thursday, 24th August 2023 02:03:47 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span>
 <span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -446,7 +466,7 @@ document.write(`
 
 <span class="kn">from</span> <span class="nn">mpi4py</span> <span class="kn">import</span> <span class="n">MPI</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">Inventory</span>
+<span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">Inventory</span><span class="p">,</span> <span class="n">Trace</span>
 <span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
 
 <span class="kn">from</span> <span class="nn">seismic.correlate.stream</span> <span class="kn">import</span> <span class="n">CorrTrace</span><span class="p">,</span> <span class="n">CorrStream</span>
@@ -458,7 +478,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">seismic.utils</span> <span class="kn">import</span> <span class="n">miic_utils</span> <span class="k">as</span> <span class="n">mu</span>
 
 
-<div class="viewcode-block" id="Correlator"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.correlate.Correlator">[docs]</a><span class="k">class</span> <span class="nc">Correlator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="Correlator"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.correlate.Correlator">[docs]</a><span class="k">class</span> <span class="nc">Correlator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Object to manage the actual Correlation (i.e., Green&#39;s function retrieval)</span>
 <span class="sd">    for the database.</span>
@@ -490,6 +510,10 @@ document.write(`
         <span class="c1"># directories</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">proj_dir</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;proj_dir&#39;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">corr_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proj_dir</span><span class="p">,</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;co&#39;</span><span class="p">][</span><span class="s1">&#39;subdir&#39;</span><span class="p">])</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_comps_separately</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;save_comps_separately&#39;</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_comps_separately</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="n">logdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proj_dir</span><span class="p">,</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;log_subdir&#39;</span><span class="p">])</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">corr_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -561,11 +585,9 @@ document.write(`
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">network</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">network</span> <span class="o">=</span> <span class="n">network</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
-        <span class="k">if</span> <span class="n">network</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span> <span class="ow">and</span> <span class="n">station</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
-            <span class="n">station</span> <span class="o">=</span> <span class="n">store_client</span><span class="o">.</span><span class="n">get_available_stations</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="n">station</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">station</span> <span class="o">=</span> <span class="n">store_client</span><span class="o">.</span><span class="n">get_available_stations</span><span class="p">(</span><span class="n">network</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">network</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">network</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span>
+                <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="s1">&#39;*&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">station</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s1">&#39;Stations has to be either: </span><span class="se">\n</span><span class="s1">&#39;</span>
                 <span class="o">+</span> <span class="s1">&#39;1. A list of the same length as the list of networks.</span><span class="se">\n</span><span class="s1">&#39;</span>
@@ -575,9 +597,14 @@ document.write(`
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">station</span> <span class="o">=</span> <span class="p">[[</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">]]</span>
         <span class="k">elif</span> <span class="n">station</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="n">station</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">net</span> <span class="ow">in</span> <span class="n">network</span><span class="p">:</span>
-                <span class="n">station</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">store_client</span><span class="o">.</span><span class="n">get_available_stations</span><span class="p">(</span><span class="n">net</span><span class="p">))</span>
+            <span class="c1"># This is most likely not thread-safe</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">station</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">net</span> <span class="ow">in</span> <span class="n">network</span><span class="p">:</span>
+                    <span class="n">station</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">store_client</span><span class="o">.</span><span class="n">get_available_stations</span><span class="p">(</span><span class="n">net</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">station</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">station</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">network</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">station</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -597,14 +624,29 @@ document.write(`
                 <span class="o">+</span> <span class="s1">&#39;2. </span><span class="se">\&#39;</span><span class="s1">*</span><span class="se">\&#39;</span><span class="s1"> That is, a wildcard (string).</span><span class="se">\n</span><span class="s1">&#39;</span>
                 <span class="o">+</span> <span class="s1">&#39;3. A list and network is a string describing one &#39;</span>
                 <span class="o">+</span> <span class="s1">&#39;station code.&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">station</span> <span class="o">=</span> <span class="n">station</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">net</span><span class="p">,</span> <span class="n">stat</span> <span class="ow">in</span> <span class="n">station</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">_translate_wildcards</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">))</span>
+            <span class="c1"># make sure this only contains unique combinations</span>
+            <span class="c1"># with several cores it added entries several times, don&#39;t know</span>
+            <span class="c1"># why?</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">station</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+            <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
             <span class="s1">&#39;Fetching data from the following stations:</span><span class="se">\n</span><span class="si">%a</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">[</span>
-                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">station</span><span class="p">])</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">station</span><span class="p">])</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">]</span>
 
-<div class="viewcode-block" id="Correlator.find_interstat_dist"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.correlate.Correlator.find_interstat_dist">[docs]</a>    <span class="k">def</span> <span class="nf">find_interstat_dist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dis</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<div class="viewcode-block" id="Correlator.find_interstat_dist"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.correlate.Correlator.find_interstat_dist">[docs]</a>    <span class="k">def</span> <span class="nf">find_interstat_dist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dis</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Find stations in database with interstation distance smaller than</span>
 <span class="sd">        dis.</span>
@@ -633,7 +675,7 @@ document.write(`
                 <span class="k">if</span> <span class="n">mu</span><span class="o">.</span><span class="n">filter_stat_dist</span><span class="p">(</span><span class="n">inv0</span><span class="p">,</span> <span class="n">inv1</span><span class="p">,</span> <span class="n">dis</span><span class="p">):</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">rcombis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n0</span><span class="p">,</span> <span class="n">n1</span><span class="p">,</span> <span class="n">s0</span><span class="p">,</span> <span class="n">s1</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="Correlator.find_existing_times"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.correlate.Correlator.find_existing_times">[docs]</a>    <span class="k">def</span> <span class="nf">find_existing_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<div class="viewcode-block" id="Correlator.find_existing_times"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.correlate.Correlator.find_existing_times">[docs]</a>    <span class="k">def</span> <span class="nf">find_existing_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns the already existing starttimes in form of a dictionary (see</span>
 <span class="sd">        below)</span>
@@ -673,12 +715,14 @@ document.write(`
             <span class="n">ex_dict</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n0</span><span class="p">,</span> <span class="n">s0</span><span class="p">)][</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">s1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">d</span>
         <span class="k">return</span> <span class="n">ex_dict</span></div>
 
-<div class="viewcode-block" id="Correlator.pxcorr"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.correlate.Correlator.pxcorr">[docs]</a>    <span class="k">def</span> <span class="nf">pxcorr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Correlator.pxcorr"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.correlate.Correlator.pxcorr">[docs]</a>    <span class="k">def</span> <span class="nf">pxcorr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Start the correlation with the parameters that were defined when</span>
 <span class="sd">        initiating the object.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">cst</span> <span class="o">=</span> <span class="n">CorrStream</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Reading Inventory files.&#39;</span><span class="p">)</span>
         <span class="c1"># Fetch station coordinates</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -696,9 +740,11 @@ document.write(`
         <span class="k">else</span><span class="p">:</span>
             <span class="n">inv</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">inv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">inv</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
         <span class="k">for</span> <span class="n">st</span><span class="p">,</span> <span class="n">write_flag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_data</span><span class="p">():</span>
             <span class="n">cst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pxcorr_inner</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">inv</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">write_flag</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Writing Correlations to file.&#39;</span><span class="p">)</span>
                 <span class="c1"># Here, we can recombine the correlations for the read_len</span>
                 <span class="c1"># size (i.e., stack)</span>
                 <span class="c1"># Write correlations to HDF5</span>
@@ -727,50 +773,40 @@ document.write(`
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># We start out by moving the stream into a matrix</span>
-        <span class="c1"># Advantage of only doing this on rank 0?</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="c1"># put all the data into a single stream</span>
-            <span class="n">starttime</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="n">npts</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
-                <span class="n">starttime</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;starttime&#39;</span><span class="p">])</span>
-                <span class="n">npts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;npts&#39;</span><span class="p">])</span>
-            <span class="n">npts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">npts</span><span class="p">))</span>
-            <span class="n">A</span><span class="p">,</span> <span class="n">st</span> <span class="o">=</span> <span class="n">st_to_np_array</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">npts</span><span class="p">)</span>
-            <span class="n">As</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">starttime</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="n">npts</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="n">As</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">starttime</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">starttime</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">npts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">npts</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s1">&#39;Converting Stream to Matrix&#39;</span><span class="p">)</span>
+        <span class="c1"># put all the data into a single stream</span>
+        <span class="n">starttime</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">npts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
+            <span class="n">starttime</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;starttime&#39;</span><span class="p">])</span>
+            <span class="n">npts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;npts&#39;</span><span class="p">])</span>
+        <span class="n">npts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">npts</span><span class="p">))</span>
 
-        <span class="c1"># Tell the other processes the shape of A</span>
-        <span class="n">As</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">As</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">As</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">Bcast</span><span class="p">([</span><span class="n">A</span><span class="p">,</span> <span class="n">MPI</span><span class="o">.</span><span class="n">FLOAT</span><span class="p">],</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-
+        <span class="n">A</span><span class="p">,</span> <span class="n">st</span> <span class="o">=</span> <span class="n">st_to_np_array</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">npts</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
             <span class="p">{</span><span class="s1">&#39;starttime&#39;</span><span class="p">:</span> <span class="n">starttime</span><span class="p">,</span>
                 <span class="s1">&#39;sampling_rate&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">})</span>
-
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Computing Cross-Correlations.&#39;</span><span class="p">)</span>
         <span class="n">A</span><span class="p">,</span> <span class="n">startlags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pxcorr_matrix</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
-
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Converting Matrix to CorrStream.&#39;</span><span class="p">)</span>
         <span class="c1"># put trace into a stream</span>
         <span class="n">cst</span> <span class="o">=</span> <span class="n">CorrStream</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">A</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># No new data</span>
             <span class="k">return</span> <span class="n">cst</span>
-        <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="p">(</span><span class="n">startlag</span><span class="p">,</span> <span class="n">comb</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
-                <span class="nb">zip</span><span class="p">(</span><span class="n">startlags</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">])):</span>
-            <span class="n">endlag</span> <span class="o">=</span> <span class="n">startlag</span> <span class="o">+</span> <span class="n">A</span><span class="p">[:,</span> <span class="n">ii</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">]</span>
-            <span class="n">cst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">CorrTrace</span><span class="p">(</span>
-                    <span class="n">A</span><span class="p">[:,</span> <span class="n">ii</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">header1</span><span class="o">=</span><span class="n">st</span><span class="p">[</span><span class="n">comb</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span>
-                    <span class="n">header2</span><span class="o">=</span><span class="n">st</span><span class="p">[</span><span class="n">comb</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="n">inv</span><span class="o">=</span><span class="n">inv</span><span class="p">,</span> <span class="n">start_lag</span><span class="o">=</span><span class="n">startlag</span><span class="p">,</span>
-                    <span class="n">end_lag</span><span class="o">=</span><span class="n">endlag</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="p">(</span><span class="n">startlag</span><span class="p">,</span> <span class="n">comb</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                    <span class="nb">zip</span><span class="p">(</span><span class="n">startlags</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">])):</span>
+                <span class="n">endlag</span> <span class="o">=</span> <span class="n">startlag</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:])</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">]</span>
+                <span class="n">cst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">CorrTrace</span><span class="p">(</span>
+                        <span class="n">A</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">header1</span><span class="o">=</span><span class="n">st</span><span class="p">[</span><span class="n">comb</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span>
+                        <span class="n">header2</span><span class="o">=</span><span class="n">st</span><span class="p">[</span><span class="n">comb</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="n">inv</span><span class="o">=</span><span class="n">inv</span><span class="p">,</span> <span class="n">start_lag</span><span class="o">=</span><span class="n">startlag</span><span class="p">,</span>
+                        <span class="n">end_lag</span><span class="o">=</span><span class="n">endlag</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cst</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">cst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">cst</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cst</span>
 
     <span class="k">def</span> <span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cst</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
@@ -785,22 +821,36 @@ document.write(`
             <span class="k">return</span>
 
         <span class="c1"># Make sure that each core writes to a different file</span>
-        <span class="n">codelist</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span>
-            <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">cst</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_comps_separately</span><span class="p">:</span>
+            <span class="n">codelist</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span>
+                <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span><span class="si">}</span><span class="s1">&#39;</span>
+                 <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">cst</span><span class="p">]))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">codelist</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span>
+                <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">cst</span><span class="p">]))</span>
         <span class="c1"># Better if the same cores keep writing to the same files</span>
         <span class="n">codelist</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
         <span class="c1"># Decide which process writes to which station</span>
-        <span class="n">pmap</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">codelist</span><span class="p">))</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">psize</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">codelist</span><span class="p">)</span>
+        <span class="n">pmap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">codelist</span><span class="p">))</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">psize</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">codelist</span><span class="p">)</span>
         <span class="n">pmap</span> <span class="o">=</span> <span class="n">pmap</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
         <span class="n">ind</span> <span class="o">=</span> <span class="n">pmap</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span>
 
         <span class="k">for</span> <span class="n">code</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">codelist</span><span class="p">)[</span><span class="n">ind</span><span class="p">]:</span>
-            <span class="n">net</span><span class="p">,</span> <span class="n">stat</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
-            <span class="n">outf</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">corr_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">net</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">stat</span><span class="si">}</span><span class="s1">.h5&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_comps_separately</span><span class="p">:</span>
+                <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="n">cha</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+                <span class="n">outf</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">corr_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">net</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">stat</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">cha</span><span class="si">}</span><span class="s1">.h5&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">net</span><span class="p">,</span> <span class="n">stat</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+                <span class="n">outf</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">corr_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">net</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">stat</span><span class="si">}</span><span class="s1">.h5&#39;</span><span class="p">)</span>
             <span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span>
                     <span class="n">outf</span><span class="p">,</span> <span class="n">corr_options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
-                <span class="n">cdb</span><span class="o">.</span><span class="n">add_correlation</span><span class="p">(</span>
-                    <span class="n">cst</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">network</span><span class="o">=</span><span class="n">net</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">stat</span><span class="p">),</span> <span class="n">tag</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_comps_separately</span><span class="p">:</span>
+                    <span class="n">cdb</span><span class="o">.</span><span class="n">add_correlation</span><span class="p">(</span>
+                        <span class="n">cst</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+                            <span class="n">network</span><span class="o">=</span><span class="n">net</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">stat</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="n">cha</span><span class="p">),</span> <span class="n">tag</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">cdb</span><span class="o">.</span><span class="n">add_correlation</span><span class="p">(</span>
+                        <span class="n">cst</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">network</span><span class="o">=</span><span class="n">net</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">stat</span><span class="p">),</span> <span class="n">tag</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_generate_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Stream</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -820,6 +870,17 @@ document.write(`
             <span class="c1"># find already available times</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ex_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_existing_times</span><span class="p">(</span><span class="s1">&#39;subdivision&#39;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Already existing data: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ex_dict</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ex_dict</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ex_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ex_dict</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ex_dict</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;preprocess_subdiv&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;preprocess_subdiv&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s1">&#39;No existing data found.</span><span class="se">\n</span><span class="s1">Automatically setting &#39;</span>
+                    <span class="s1">&#39;preprocess_subdiv to False to optimise performance.&#39;</span><span class="p">)</span>
 
         <span class="c1"># the time window that the loop will go over</span>
         <span class="n">t0</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;read_start&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">timestamp</span>
@@ -832,6 +893,16 @@ document.write(`
         <span class="k">else</span><span class="p">:</span>
             <span class="n">tl</span> <span class="o">=</span> <span class="mi">0</span>
 
+        <span class="c1"># Decide which process reads data from which station</span>
+        <span class="c1"># Better than just letting one core read as this avoids having to</span>
+        <span class="c1"># send very big chunks of data using MPI (MPI communication does</span>
+        <span class="c1"># not support more than 2GB/comm operation)</span>
+        <span class="n">pmap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span><span class="p">))</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">psize</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span><span class="p">)</span>
+        <span class="n">pmap</span> <span class="o">=</span> <span class="n">pmap</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">pmap</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span><span class="p">))[</span><span class="n">ind</span><span class="p">]</span>
+
         <span class="c1"># Loop over read increments</span>
         <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">loop_window</span><span class="p">):</span>
             <span class="n">write_flag</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Write length is same as read length</span>
@@ -840,23 +911,14 @@ document.write(`
             <span class="n">st</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
             <span class="n">resp</span> <span class="o">=</span> <span class="n">Inventory</span><span class="p">()</span>
 
-            <span class="c1"># Decide which process reads data from which station</span>
-            <span class="c1"># Better than just letting one core read as this avoids having to</span>
-            <span class="c1"># send very big chunks of data using MPI (MPI communication does</span>
-            <span class="c1"># not support more than 2GB/comm operation)</span>
-            <span class="n">pmap</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">station</span><span class="p">))</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">psize</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">station</span><span class="p">)</span>
-            <span class="n">pmap</span> <span class="o">=</span> <span class="n">pmap</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
-            <span class="n">ind</span> <span class="o">=</span> <span class="n">pmap</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span>
-            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">station</span><span class="p">))[</span><span class="n">ind</span><span class="p">]</span>
-
             <span class="c1"># loop over queried stations</span>
-            <span class="k">for</span> <span class="n">net</span><span class="p">,</span> <span class="n">stat</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">station</span><span class="p">)[</span><span class="n">ind</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="n">cha</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span><span class="p">)[</span><span class="n">ind</span><span class="p">]:</span>
                 <span class="c1"># Load data</span>
                 <span class="n">resp</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">inventory</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
                         <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">))</span>
                 <span class="n">stext</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">_load_local</span><span class="p">(</span>
-                    <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">startt</span><span class="p">,</span> <span class="n">endt</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+                    <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">cha</span><span class="p">,</span> <span class="n">startt</span><span class="p">,</span> <span class="n">endt</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
                 <span class="n">mu</span><span class="o">.</span><span class="n">get_valid_traces</span><span class="p">(</span><span class="n">stext</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">stext</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">stext</span><span class="p">):</span>
                     <span class="c1"># No data for this station to read</span>
@@ -864,30 +926,47 @@ document.write(`
                 <span class="n">st</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">stext</span><span class="p">)</span>
 
             <span class="c1"># Stream based preprocessing</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">st</span> <span class="o">=</span> <span class="n">preprocess_stream</span><span class="p">(</span>
-                    <span class="n">st</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="p">,</span> <span class="n">resp</span><span class="p">,</span> <span class="n">startt</span><span class="p">,</span> <span class="n">endt</span><span class="p">,</span> <span class="n">tl</span><span class="p">,</span>
-                    <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                    <span class="s1">&#39;Stream preprocessing failed for &#39;</span>
-                    <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="si">}</span><span class="s1"> and time &#39;</span>
-                    <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s1">.</span><span class="se">\n</span><span class="s1">The Original Error Message was </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
-                <span class="k">continue</span>
+            <span class="c1"># Downsampling</span>
+            <span class="c1"># 04/04/2023 Downsample before preprocessing for performance</span>
+            <span class="c1"># Check sampling frequency</span>
+            <span class="n">sampling_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">]</span>
+            <span class="c1"># AA-Filter is done in this function as well</span>
+            <span class="n">st</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">resample_or_decimate</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">)</span>
+            <span class="c1"># The actual data in the mseeds was changed from int to float64</span>
+            <span class="c1"># now,</span>
+            <span class="c1"># Save some space by changing it back to 32 bit (most of the</span>
+            <span class="c1"># digitizers work at 24 bit anyways)</span>
+            <span class="n">mu</span><span class="o">.</span><span class="n">stream_require_dtype</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;preprocess_subdiv&#39;</span><span class="p">]:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Preprocessing stream...&#39;</span><span class="p">)</span>
+                    <span class="n">st</span> <span class="o">=</span> <span class="n">preprocess_stream</span><span class="p">(</span>
+                        <span class="n">st</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="p">,</span> <span class="n">resp</span><span class="p">,</span> <span class="n">startt</span><span class="p">,</span> <span class="n">endt</span><span class="p">,</span> <span class="n">tl</span><span class="p">,</span>
+                        <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="s1">&#39;Stream preprocessing failed for &#39;</span>
+                        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="si">}</span><span class="s1"> and time&#39;</span>
+                        <span class="sa">f</span><span class="s1">&#39; </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s1">.</span><span class="se">\n</span><span class="s1">The Original Error Message was </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+
             <span class="c1"># Slice the stream in correlation length</span>
             <span class="c1"># -&gt; Loop over correlation increments</span>
             <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">win</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">generate_corr_inc</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)):</span>
                 <span class="n">winstart</span> <span class="o">=</span> <span class="n">startt</span> <span class="o">+</span> <span class="n">ii</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;subdivision&#39;</span><span class="p">][</span><span class="s1">&#39;corr_inc&#39;</span><span class="p">]</span>
-                <span class="n">winend</span> <span class="o">=</span> <span class="n">winstart</span> <span class="o">+</span> <span class="n">ii</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;subdivision&#39;</span><span class="p">][</span><span class="s1">&#39;corr_len&#39;</span><span class="p">]</span>
+                <span class="n">winend</span> <span class="o">=</span> <span class="n">winstart</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;subdivision&#39;</span><span class="p">][</span><span class="s1">&#39;corr_len&#39;</span><span class="p">]</span>
 
                 <span class="c1"># Gather time windows from all stations to all cores</span>
                 <span class="n">winl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">allgather</span><span class="p">(</span><span class="n">win</span><span class="p">)</span>
                 <span class="n">win</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">winp</span> <span class="ow">in</span> <span class="n">winl</span><span class="p">:</span>
                     <span class="n">win</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">winp</span><span class="p">)</span>
+                <span class="n">win</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">,</span> <span class="s1">&#39;station&#39;</span><span class="p">,</span> <span class="s1">&#39;channel&#39;</span><span class="p">])</span>
 
                 <span class="c1"># Get correlation combinations</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Calculating combinations...&#39;</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">calc_cross_combis</span><span class="p">(</span>
                         <span class="n">win</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ex_dict</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combination_method&#39;</span><span class="p">],</span>
                         <span class="n">rcombis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rcombis</span><span class="p">)</span>
@@ -901,6 +980,62 @@ document.write(`
                     <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                         <span class="sa">f</span><span class="s1">&#39;No new data for times </span><span class="si">{</span><span class="n">winstart</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">winend</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
                     <span class="k">continue</span>
+                <span class="c1"># Remove traces that won&#39;t be accessed at all</span>
+                <span class="n">win_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">win</span><span class="p">))</span>
+                <span class="n">combindices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">]))</span>
+                <span class="n">popindices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">setdiff1d</span><span class="p">(</span><span class="n">win_indices</span><span class="p">,</span> <span class="n">combindices</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">popi</span> <span class="ow">in</span> <span class="n">popindices</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="n">win</span><span class="p">[</span><span class="n">popi</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">popindices</span><span class="p">):</span>
+                    <span class="c1"># now we have to recompute the combinations</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;removing redundant data.&#39;</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Recalculating combinations...&#39;</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">calc_cross_combis</span><span class="p">(</span>
+                            <span class="n">win</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ex_dict</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combination_method&#39;</span><span class="p">],</span>
+                            <span class="n">rcombis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rcombis</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">],</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">]):</span>
+                        <span class="c1"># no new combinations for this time period</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s1">&#39;No new data for times </span><span class="si">{</span><span class="n">winstart</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">winend</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                <span class="c1"># Stream based preprocessing</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;preprocess_subdiv&#39;</span><span class="p">]:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">win</span> <span class="o">=</span> <span class="n">preprocess_stream</span><span class="p">(</span>
+                            <span class="n">win</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="p">,</span> <span class="n">resp</span><span class="p">,</span> <span class="n">winstart</span><span class="p">,</span> <span class="n">winend</span><span class="p">,</span>
+                            <span class="n">tl</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                            <span class="s1">&#39;Stream preprocessing failed for &#39;</span>
+                            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="si">}</span><span class="s1">&#39;</span>
+                            <span class="s1">&#39; and time &#39;</span>
+                            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s1">.</span><span class="se">\n</span><span class="s1">The Original Error Message was </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">calc_cross_combis</span><span class="p">(</span>
+                            <span class="n">win</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ex_dict</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combination_method&#39;</span><span class="p">],</span>
+                            <span class="n">rcombis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rcombis</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">],</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">win</span><span class="p">):</span>
+                    <span class="c1"># no new combinations for this time period</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;No new data for times </span><span class="si">{</span><span class="n">winstart</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">winend</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Working on correlation times </span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
                     <span class="nb">str</span><span class="p">(</span><span class="n">win</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">win</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">endtime</span><span class="p">)))</span>
                 <span class="k">yield</span> <span class="n">win</span><span class="p">,</span> <span class="n">write_flag</span>
@@ -909,8 +1044,8 @@ document.write(`
     <span class="k">def</span> <span class="nf">_pxcorr_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
         <span class="c1"># time domain processing</span>
         <span class="c1"># map of traces on processes</span>
-        <span class="n">ntrc</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">pmap</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">ntrc</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">psize</span><span class="p">)</span><span class="o">/</span><span class="n">ntrc</span>
+        <span class="n">ntrc</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">pmap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">ntrc</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">psize</span><span class="o">/</span><span class="n">ntrc</span>
         <span class="c1"># This step was not in the original but is necessary for it to work?</span>
         <span class="c1"># maybe a difference in an old python/np version?</span>
         <span class="n">pmap</span> <span class="o">=</span> <span class="n">pmap</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
@@ -933,7 +1068,7 @@ document.write(`
 
         <span class="k">for</span> <span class="n">proc</span> <span class="ow">in</span> <span class="n">corr_args</span><span class="p">[</span><span class="s1">&#39;TDpreProcessing&#39;</span><span class="p">]:</span>
             <span class="n">func</span> <span class="o">=</span> <span class="n">func_from_str</span><span class="p">(</span><span class="n">proc</span><span class="p">[</span><span class="s1">&#39;function&#39;</span><span class="p">])</span>
-            <span class="n">A</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">A</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">],</span> <span class="n">proc</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">],</span> <span class="n">params</span><span class="p">)</span>
+            <span class="n">A</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="p">:],</span> <span class="n">proc</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">],</span> <span class="n">params</span><span class="p">)</span>
 
         <span class="c1"># zero-padding</span>
         <span class="n">A</span> <span class="o">=</span> <span class="n">pptd</span><span class="o">.</span><span class="n">zeroPadding</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;avoidWrapFastLen&#39;</span><span class="p">},</span> <span class="n">params</span><span class="p">)</span>
@@ -942,12 +1077,14 @@ document.write(`
         <span class="c1"># FFT</span>
         <span class="c1"># Allocate space for rfft of data</span>
         <span class="n">zmsize</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span>
-        <span class="n">fftsize</span> <span class="o">=</span> <span class="n">zmsize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">//</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span>
-        <span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">fftsize</span><span class="p">,</span> <span class="n">ntrc</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
 
-        <span class="n">B</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfft</span><span class="p">(</span><span class="n">A</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># use next fast len instead?</span>
+        <span class="n">fftsize</span> <span class="o">=</span> <span class="n">zmsize</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">//</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">ntrc</span><span class="p">,</span> <span class="n">fftsize</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">csingle</span><span class="p">)</span>
 
-        <span class="n">freqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfftfreq</span><span class="p">(</span><span class="n">zmsize</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">1.</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)</span>
+        <span class="n">B</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfft</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">freqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfftfreq</span><span class="p">(</span><span class="n">zmsize</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">1.</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)</span>
 
         <span class="c1">######################################</span>
         <span class="c1"># frequency domain pre-processing</span>
@@ -959,12 +1096,11 @@ document.write(`
             <span class="c1"># import any function that has been defined anywhere else (i.e,</span>
             <span class="c1"># not only within the miic framework)</span>
             <span class="n">func</span> <span class="o">=</span> <span class="n">func_from_str</span><span class="p">(</span><span class="n">proc</span><span class="p">[</span><span class="s1">&#39;function&#39;</span><span class="p">])</span>
-            <span class="n">B</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">B</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">],</span> <span class="n">proc</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">],</span> <span class="n">params</span><span class="p">)</span>
+            <span class="n">B</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">B</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="p">:],</span> <span class="n">proc</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">],</span> <span class="n">params</span><span class="p">)</span>
 
         <span class="c1">######################################</span>
         <span class="c1"># collect results</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">barrier</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">Allreduce</span><span class="p">(</span><span class="n">MPI</span><span class="o">.</span><span class="n">IN_PLACE</span><span class="p">,</span> <span class="p">[</span><span class="n">B</span><span class="p">,</span> <span class="n">MPI</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">],</span> <span class="n">op</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">Allreduce</span><span class="p">(</span><span class="n">MPI</span><span class="o">.</span><span class="n">IN_PLACE</span><span class="p">,</span> <span class="p">[</span><span class="n">B</span><span class="p">,</span> <span class="n">MPI</span><span class="o">.</span><span class="n">FLOAT</span><span class="p">],</span> <span class="n">op</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span><span class="p">)</span>
 
         <span class="c1">######################################</span>
         <span class="c1"># correlation</span>
@@ -973,14 +1109,13 @@ document.write(`
         <span class="n">sampleToSave</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
             <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span>
                 <span class="n">corr_args</span><span class="p">[</span><span class="s1">&#39;lengthToSave&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">))</span>
-        <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">sampleToSave</span><span class="o">*</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">csize</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>  <span class="c1"># np.float64</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">csize</span><span class="p">,</span> <span class="n">sampleToSave</span><span class="o">*</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
 
-        <span class="c1"># center = irfftsize // 2</span>
-        <span class="n">pmap</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">csize</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">psize</span><span class="p">)</span><span class="o">/</span><span class="n">csize</span>
+        <span class="n">pmap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">csize</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">psize</span><span class="o">/</span><span class="n">csize</span>
         <span class="n">pmap</span> <span class="o">=</span> <span class="n">pmap</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
         <span class="n">ind</span> <span class="o">=</span> <span class="n">pmap</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span>
         <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">csize</span><span class="p">)[</span><span class="n">ind</span><span class="p">]</span>
-        <span class="n">startlags</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">csize</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">startlags</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">csize</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">ind</span><span class="p">:</span>
             <span class="c1"># offset of starttimes in samples(just remove fractions of samples)</span>
             <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span>
@@ -999,31 +1134,31 @@ document.write(`
             <span class="k">if</span> <span class="n">corr_args</span><span class="p">[</span><span class="s1">&#39;normalize_correlation&#39;</span><span class="p">]:</span>
                 <span class="n">norm</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
-                        <span class="mf">2.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">B</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span>
-                            <span class="s1">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span>
-                            <span class="o">*</span> <span class="n">B</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">conj</span><span class="p">())</span>
-                        <span class="o">-</span> <span class="n">B</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+                        <span class="mf">2.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">B</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span>
+                            <span class="s1">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="p">:]</span>
+                            <span class="o">*</span> <span class="n">B</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="p">:]</span><span class="o">.</span><span class="n">conj</span><span class="p">())</span>
+                        <span class="o">-</span> <span class="n">B</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
                     <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
-                        <span class="mf">2.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">B</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span>
-                            <span class="s1">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">1</span><span class="p">]]</span>
-                            <span class="o">*</span> <span class="n">B</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">conj</span><span class="p">())</span>
-                        <span class="o">-</span> <span class="n">B</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">1</span><span class="p">]]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+                        <span class="mf">2.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">B</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span>
+                            <span class="s1">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="p">:]</span>
+                            <span class="o">*</span> <span class="n">B</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="p">:]</span><span class="o">.</span><span class="n">conj</span><span class="p">())</span>
+                        <span class="o">-</span> <span class="n">B</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
                     <span class="o">/</span> <span class="n">irfftsize</span><span class="p">)</span><span class="o">.</span><span class="n">real</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">norm</span> <span class="o">=</span> <span class="mf">1.</span>
+
             <span class="n">M</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">B</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span>
-                <span class="o">*</span> <span class="n">B</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">1</span><span class="p">]]</span>
+                <span class="n">B</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="p">:]</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span>
+                <span class="o">*</span> <span class="n">B</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="p">:]</span>
                 <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">freqs</span> <span class="o">*</span> <span class="n">offset</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span>
 
             <span class="c1">######################################</span>
             <span class="c1"># frequency domain postProcessing</span>
             <span class="c1">#</span>
-
-            <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">irfft</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">real</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">irfft</span><span class="p">(</span><span class="n">M</span><span class="p">)</span><span class="o">.</span><span class="n">real</span>
 
             <span class="c1"># cut the center and do fftshift</span>
-            <span class="n">C</span><span class="p">[:,</span> <span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+            <span class="n">C</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
                 <span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="o">-</span><span class="n">sampleToSave</span><span class="p">:],</span> <span class="n">tmp</span><span class="p">[:</span><span class="n">sampleToSave</span><span class="o">+</span><span class="mi">1</span><span class="p">]))</span><span class="o">/</span><span class="n">norm</span>
             <span class="n">startlags</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span> <span class="n">sampleToSave</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span> \
                 <span class="o">-</span> <span class="n">roffset</span>
@@ -1036,16 +1171,14 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">C</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">C</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;combis: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">]))</span>
 
-        <span class="c1"># self.comm.barrier()  # I don&#39;t think this is necessary or even a</span>
-        <span class="c1"># good idea</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">Allreduce</span><span class="p">(</span><span class="n">MPI</span><span class="o">.</span><span class="n">IN_PLACE</span><span class="p">,</span> <span class="p">[</span><span class="n">C</span><span class="p">,</span> <span class="n">MPI</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">],</span> <span class="n">op</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">Allreduce</span><span class="p">(</span><span class="n">MPI</span><span class="o">.</span><span class="n">IN_PLACE</span><span class="p">,</span> <span class="p">[</span><span class="n">C</span><span class="p">,</span> <span class="n">MPI</span><span class="o">.</span><span class="n">FLOAT</span><span class="p">],</span> <span class="n">op</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">Allreduce</span><span class="p">(</span>
-            <span class="n">MPI</span><span class="o">.</span><span class="n">IN_PLACE</span><span class="p">,</span> <span class="p">[</span><span class="n">startlags</span><span class="p">,</span> <span class="n">MPI</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">],</span> <span class="n">op</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span><span class="p">)</span>
+            <span class="n">MPI</span><span class="o">.</span><span class="n">IN_PLACE</span><span class="p">,</span> <span class="p">[</span><span class="n">startlags</span><span class="p">,</span> <span class="n">MPI</span><span class="o">.</span><span class="n">FLOAT</span><span class="p">],</span> <span class="n">op</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="p">(</span><span class="n">C</span><span class="p">,</span> <span class="n">startlags</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="st_to_np_array"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.correlate.st_to_np_array">[docs]</a><span class="k">def</span> <span class="nf">st_to_np_array</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">npts</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Stream</span><span class="p">]:</span>
+<div class="viewcode-block" id="st_to_np_array"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.correlate.st_to_np_array">[docs]</a><span class="k">def</span> <span class="nf">st_to_np_array</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">npts</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Stream</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Converts an obspy stream to a matrix with the shape (npts, st.count()).</span>
 <span class="sd">    Also returns the same stream but without the data arrays in tr.data.</span>
@@ -1057,35 +1190,42 @@ document.write(`
 <span class="sd">    :return: A stream and a matrix</span>
 <span class="sd">    :rtype: np.ndarray</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">npts</span><span class="p">,</span> <span class="n">st</span><span class="o">.</span><span class="n">count</span><span class="p">()),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>  <span class="c1"># np.float32</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">st</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span> <span class="n">npts</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">tr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
-        <span class="n">A</span><span class="p">[:</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="p">,</span> <span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">A</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span>
         <span class="k">del</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span>  <span class="c1"># Not needed any more, just uses up RAM</span>
     <span class="k">return</span> <span class="n">A</span><span class="p">,</span> <span class="n">st</span></div>
 
 
-<span class="k">def</span> <span class="nf">_compare_existing_data</span><span class="p">(</span><span class="n">ex_corr</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">tr0</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">tr1</span><span class="p">:</span> <span class="n">Stream</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">_compare_existing_data</span><span class="p">(</span><span class="n">ex_corr</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">tr0</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">tr1</span><span class="p">:</span> <span class="n">Trace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="c1"># The actual starttime for the header is the later one of the two</span>
+    <span class="n">net0</span> <span class="o">=</span> <span class="n">tr0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span>
+    <span class="n">stat0</span> <span class="o">=</span> <span class="n">tr0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span>
+    <span class="n">cha0</span> <span class="o">=</span> <span class="n">tr0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span>
+    <span class="n">net1</span> <span class="o">=</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span>
+    <span class="n">stat1</span> <span class="o">=</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span>
+    <span class="n">cha1</span> <span class="o">=</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span>
+    <span class="c1"># Probably faster than checking a huge dict twice</span>
+    <span class="n">flip</span> <span class="o">=</span> <span class="p">([</span><span class="n">net0</span><span class="p">,</span> <span class="n">net1</span><span class="p">],</span> <span class="p">[</span><span class="n">stat0</span><span class="p">,</span> <span class="n">stat1</span><span class="p">],</span> <span class="p">[</span><span class="n">cha0</span><span class="p">,</span> <span class="n">cha1</span><span class="p">])</span> \
+        <span class="o">!=</span> <span class="n">sort_comb_name_alphabetically</span><span class="p">(</span>
+        <span class="n">net0</span><span class="p">,</span> <span class="n">stat0</span><span class="p">,</span> <span class="n">net1</span><span class="p">,</span> <span class="n">stat1</span><span class="p">,</span> <span class="n">cha0</span><span class="p">,</span> <span class="n">cha1</span><span class="p">)</span>
+    <span class="n">corr_start</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">tr0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">,</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">tr0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="o">.</span><span class="n">format_fissures</span><span class="p">()[:</span><span class="o">-</span><span class="mi">7</span><span class="p">]</span> <span class="ow">in</span> <span class="n">ex_corr</span><span class="p">[</span>
-            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">tr0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">tr0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">][</span>
-                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">][</span>
-            <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
-                <span class="n">tr0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span><span class="p">)]:</span>
-            <span class="k">return</span> <span class="kc">True</span>
-    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="o">.</span><span class="n">format_fissures</span><span class="p">()[:</span><span class="o">-</span><span class="mi">7</span><span class="p">]</span> <span class="ow">in</span> <span class="n">ex_corr</span><span class="p">[</span>
-                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">][</span>
-                    <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">tr0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">tr0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">][</span>
+        <span class="k">if</span> <span class="n">flip</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">corr_start</span><span class="o">.</span><span class="n">format_fissures</span><span class="p">()</span> <span class="ow">in</span> <span class="n">ex_corr</span><span class="p">[</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">net1</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">stat1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">][</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">net0</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">stat0</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">][</span>
                 <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
-                    <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="n">tr0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span><span class="p">)]:</span>
-                <span class="k">return</span> <span class="kc">True</span>
-        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-            <span class="k">pass</span>
-    <span class="k">return</span> <span class="kc">False</span>
+                    <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="n">tr0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">corr_start</span><span class="o">.</span><span class="n">format_fissures</span><span class="p">()</span> <span class="ow">in</span> <span class="n">ex_corr</span><span class="p">[</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">net0</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">stat0</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">][</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">net1</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">stat1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">][</span>
+                <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                    <span class="n">tr0</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span><span class="p">)]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
 
 
-<div class="viewcode-block" id="calc_cross_combis"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.correlate.calc_cross_combis">[docs]</a><span class="k">def</span> <span class="nf">calc_cross_combis</span><span class="p">(</span>
+<div class="viewcode-block" id="calc_cross_combis"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.correlate.calc_cross_combis">[docs]</a><span class="k">def</span> <span class="nf">calc_cross_combis</span><span class="p">(</span>
     <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">ex_corr</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;betweenStations&#39;</span><span class="p">,</span>
         <span class="n">rcombis</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1410,8 +1550,10 @@ document.write(`
 <span class="c1">#     return rtz</span>
 
 
-<div class="viewcode-block" id="sort_comb_name_alphabetically"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.correlate.sort_comb_name_alphabetically">[docs]</a><span class="k">def</span> <span class="nf">sort_comb_name_alphabetically</span><span class="p">(</span>
-    <span class="n">network1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">network2</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+<div class="viewcode-block" id="sort_comb_name_alphabetically"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.correlate.sort_comb_name_alphabetically">[docs]</a><span class="k">def</span> <span class="nf">sort_comb_name_alphabetically</span><span class="p">(</span>
+    <span class="n">network1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">network2</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station2</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">channel1</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="n">channel2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="nb">list</span><span class="p">,</span> <span class="nb">list</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Returns the alphabetically sorted network and station codes from the two</span>
@@ -1461,21 +1603,23 @@ document.write(`
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="p">[</span>
             <span class="n">network1</span><span class="p">,</span> <span class="n">network2</span><span class="p">,</span> <span class="n">station1</span><span class="p">,</span> <span class="n">station2</span><span class="p">]]):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;All arguments have to be strings.&#39;</span><span class="p">)</span>
-    <span class="n">sort1</span> <span class="o">=</span> <span class="n">network1</span> <span class="o">+</span> <span class="n">station1</span>
-    <span class="n">sort2</span> <span class="o">=</span> <span class="n">network2</span> <span class="o">+</span> <span class="n">station2</span>
+    <span class="n">sort1</span> <span class="o">=</span> <span class="n">network1</span> <span class="o">+</span> <span class="n">station1</span> <span class="o">+</span> <span class="n">channel1</span>
+    <span class="n">sort2</span> <span class="o">=</span> <span class="n">network2</span> <span class="o">+</span> <span class="n">station2</span> <span class="o">+</span> <span class="n">channel2</span>
     <span class="n">sort</span> <span class="o">=</span> <span class="p">[</span><span class="n">sort1</span><span class="p">,</span> <span class="n">sort2</span><span class="p">]</span>
     <span class="nb">sorted</span> <span class="o">=</span> <span class="n">sort</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="nb">sorted</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">sort</span> <span class="o">==</span> <span class="nb">sorted</span><span class="p">:</span>
         <span class="n">netcomb</span> <span class="o">=</span> <span class="p">[</span><span class="n">network1</span><span class="p">,</span> <span class="n">network2</span><span class="p">]</span>
         <span class="n">statcomb</span> <span class="o">=</span> <span class="p">[</span><span class="n">station1</span><span class="p">,</span> <span class="n">station2</span><span class="p">]</span>
+        <span class="n">chacomb</span> <span class="o">=</span> <span class="p">[</span><span class="n">channel1</span><span class="p">,</span> <span class="n">channel2</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">netcomb</span> <span class="o">=</span> <span class="p">[</span><span class="n">network2</span><span class="p">,</span> <span class="n">network1</span><span class="p">]</span>
         <span class="n">statcomb</span> <span class="o">=</span> <span class="p">[</span><span class="n">station2</span><span class="p">,</span> <span class="n">station1</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">netcomb</span><span class="p">,</span> <span class="n">statcomb</span></div>
+        <span class="n">chacomb</span> <span class="o">=</span> <span class="p">[</span><span class="n">channel2</span><span class="p">,</span> <span class="n">channel1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">netcomb</span><span class="p">,</span> <span class="n">statcomb</span><span class="p">,</span> <span class="n">chacomb</span></div>
 
 
-<div class="viewcode-block" id="compute_network_station_combinations"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.correlate.compute_network_station_combinations">[docs]</a><span class="k">def</span> <span class="nf">compute_network_station_combinations</span><span class="p">(</span>
+<div class="viewcode-block" id="compute_network_station_combinations"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.correlate.compute_network_station_combinations">[docs]</a><span class="k">def</span> <span class="nf">compute_network_station_combinations</span><span class="p">(</span>
     <span class="n">netlist</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">statlist</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
     <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;betweenStations&#39;</span><span class="p">,</span> <span class="n">combis</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="nb">list</span><span class="p">,</span> <span class="nb">list</span><span class="p">]:</span>
@@ -1508,7 +1652,7 @@ document.write(`
                 <span class="n">n2</span> <span class="o">=</span> <span class="n">netlist</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span>
                 <span class="n">s2</span> <span class="o">=</span> <span class="n">statlist</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span>
                 <span class="k">if</span> <span class="n">n</span> <span class="o">!=</span> <span class="n">n2</span> <span class="ow">or</span> <span class="n">s</span> <span class="o">!=</span> <span class="n">s2</span><span class="p">:</span>
-                    <span class="n">nc</span><span class="p">,</span> <span class="n">sc</span> <span class="o">=</span> <span class="n">sort_comb_name_alphabetically</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">s2</span><span class="p">)</span>
+                    <span class="n">nc</span><span class="p">,</span> <span class="n">sc</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">sort_comb_name_alphabetically</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">s2</span><span class="p">)</span>
                     <span class="c1"># Check requested combinations</span>
                     <span class="k">if</span> <span class="p">(</span>
                         <span class="n">combis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -1526,13 +1670,13 @@ document.write(`
             <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">netlist</span><span class="p">)):</span>
                 <span class="n">n2</span> <span class="o">=</span> <span class="n">netlist</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span>
                 <span class="n">s2</span> <span class="o">=</span> <span class="n">statlist</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span>
-                <span class="n">nc</span><span class="p">,</span> <span class="n">sc</span> <span class="o">=</span> <span class="n">sort_comb_name_alphabetically</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">s2</span><span class="p">)</span>
+                <span class="n">nc</span><span class="p">,</span> <span class="n">sc</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">sort_comb_name_alphabetically</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">s2</span><span class="p">)</span>
                 <span class="n">netcombs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">nc</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
                 <span class="n">statcombs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sc</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
     <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;allCombinations&#39;</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">netlist</span><span class="p">,</span> <span class="n">statlist</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">n2</span><span class="p">,</span> <span class="n">s2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">netlist</span><span class="p">,</span> <span class="n">statlist</span><span class="p">):</span>
-                <span class="n">nc</span><span class="p">,</span> <span class="n">sc</span> <span class="o">=</span> <span class="n">sort_comb_name_alphabetically</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">s2</span><span class="p">)</span>
+                <span class="n">nc</span><span class="p">,</span> <span class="n">sc</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">sort_comb_name_alphabetically</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">s2</span><span class="p">)</span>
                 <span class="n">netcombs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">nc</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
                 <span class="n">statcombs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sc</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
     <span class="k">else</span><span class="p">:</span>
@@ -1542,10 +1686,10 @@ document.write(`
     <span class="k">return</span> <span class="n">netcombs</span><span class="p">,</span> <span class="n">statcombs</span></div>
 
 
-<div class="viewcode-block" id="preprocess_stream"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.correlate.preprocess_stream">[docs]</a><span class="k">def</span> <span class="nf">preprocess_stream</span><span class="p">(</span>
+<div class="viewcode-block" id="preprocess_stream"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.correlate.preprocess_stream">[docs]</a><span class="k">def</span> <span class="nf">preprocess_stream</span><span class="p">(</span>
     <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">store_client</span><span class="p">:</span> <span class="n">Store_Client</span><span class="p">,</span> <span class="n">inv</span><span class="p">:</span> <span class="n">Inventory</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">startt</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endt</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">sampling_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">remove_response</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">subdivision</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="n">remove_response</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">subdivision</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
     <span class="n">preProcessing</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1566,9 +1710,6 @@ document.write(`
 <span class="sd">        taper to mitigate the acausal effects of the deconvolution. This is</span>
 <span class="sd">        the length of such a taper in seconds.</span>
 <span class="sd">    :type taper_len: float</span>
-<span class="sd">    :param sampling_rate: the sampling rate that the stream should be resampled</span>
-<span class="sd">        to in Hz.</span>
-<span class="sd">    :type sampling_rate: float</span>
 <span class="sd">    :param remove_response: Should the instrument response be removed?</span>
 <span class="sd">    :type remove_response: bool</span>
 <span class="sd">    :param subdivision: Dictionary holding information about the correlation</span>
@@ -1587,23 +1728,11 @@ document.write(`
     <span class="c1"># To deal with any nans/masks</span>
     <span class="n">st</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
     <span class="n">st</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;starttime&#39;</span><span class="p">])</span>
-    <span class="c1"># Check sampling frequency</span>
-    <span class="k">if</span> <span class="n">sampling_rate</span> <span class="o">&gt;</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s1">&#39;The new sample rate (</span><span class="si">%s</span><span class="s1">Hz) is higher than the trace</span><span class="se">\&#39;</span><span class="s1">s native&#39;</span> <span class="o">%</span> <span class="p">(</span>
-                <span class="nb">str</span><span class="p">(</span><span class="n">sampling_rate</span><span class="p">))</span>
-            <span class="o">+</span> <span class="s1">&#39;sample rate (</span><span class="si">%s</span><span class="s1"> Hz).&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)))</span>
-
-    <span class="c1"># Downsample</span>
-    <span class="c1"># AA-Filter is done in this function as well</span>
-    <span class="n">st</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">resample_or_decimate</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">)</span>
 
     <span class="c1"># Clip to these again to remove the taper</span>
     <span class="n">old_starts</span> <span class="o">=</span> <span class="p">[</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">)</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">]</span>
     <span class="n">old_ends</span> <span class="o">=</span> <span class="p">[</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">endtime</span><span class="p">)</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">]</span>
-    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span> <span class="o">==</span> <span class="s1">&#39;EDM&#39;</span><span class="p">:</span>
-            <span class="k">continue</span>
+
     <span class="k">if</span> <span class="n">remove_response</span><span class="p">:</span>
         <span class="c1"># taper before instrument response removal</span>
         <span class="k">if</span> <span class="n">taper_len</span><span class="p">:</span>
@@ -1625,7 +1754,10 @@ document.write(`
 
     <span class="c1"># Sometimes Z has reversed polarity</span>
     <span class="k">if</span> <span class="n">inv</span><span class="p">:</span>
-        <span class="n">mu</span><span class="o">.</span><span class="n">correct_polarity</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">inv</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">mu</span><span class="o">.</span><span class="n">correct_polarity</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">inv</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 
     <span class="n">mu</span><span class="o">.</span><span class="n">discard_short_traces</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">subdivision</span><span class="p">[</span><span class="s1">&#39;corr_len&#39;</span><span class="p">]</span><span class="o">/</span><span class="mi">20</span><span class="p">)</span>
 
@@ -1640,17 +1772,10 @@ document.write(`
     <span class="n">st</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">startt</span><span class="p">,</span> <span class="n">endt</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="n">mu</span><span class="o">.</span><span class="n">discard_short_traces</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">subdivision</span><span class="p">[</span><span class="s1">&#39;corr_len&#39;</span><span class="p">]</span><span class="o">/</span><span class="mi">20</span><span class="p">)</span>
-
-    <span class="c1"># !Last operation before saving!</span>
-    <span class="c1"># The actual data in the mseeds was changed from int to float64</span>
-    <span class="c1"># now,</span>
-    <span class="c1"># Save some space by changing it back to 32 bit (most of the</span>
-    <span class="c1"># digitizers work at 24 bit anyways)</span>
-    <span class="n">mu</span><span class="o">.</span><span class="n">stream_require_dtype</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">st</span></div>
 
 
-<div class="viewcode-block" id="generate_corr_inc"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.correlate.generate_corr_inc">[docs]</a><span class="k">def</span> <span class="nf">generate_corr_inc</span><span class="p">(</span>
+<div class="viewcode-block" id="generate_corr_inc"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.correlate.generate_corr_inc">[docs]</a><span class="k">def</span> <span class="nf">generate_corr_inc</span><span class="p">(</span>
     <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">subdivision</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">read_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Stream</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>

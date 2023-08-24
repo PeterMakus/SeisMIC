@@ -108,8 +108,14 @@
   
   
   
+    
+    
+      
+    
+    
+    <img src="../../../_static/seismic_logo_small.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../../_static/seismic_logo_small.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
   
-    <p class="title logo__title"></p>
   
 </a></div>
     
@@ -179,6 +185,13 @@
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../../../modules/API.html">
                         SeisMIC API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
                       </a>
                     </li>
                 
@@ -327,6 +340,13 @@ document.write(`
                       </a>
                     </li>
                 
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
+                      </a>
+                    </li>
+                
                 </div>
             </div>
             
@@ -433,36 +453,68 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Friday, 16th July 2021 02:30:02 pm</span>
-<span class="sd">Last Modified: Thursday, 3rd November 2022 10:51:46 am</span>
+<span class="sd">Last Modified: Monday, 21st August 2023 12:22:18 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span>
 <span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">locale</span>
 
 <span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="nn">mpl</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">dates</span> <span class="k">as</span> <span class="n">mdates</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">UTCDateTime</span>
 
 <span class="kn">from</span> <span class="nn">seismic.plot.plot_utils</span> <span class="kn">import</span> <span class="n">set_mpl_params</span>
 
 
-<div class="viewcode-block" id="plot_dv"><a class="viewcode-back" href="../../../modules/API.html#seismic.plot.plot_dv.plot_dv">[docs]</a><span class="k">def</span> <span class="nf">plot_dv</span><span class="p">(</span>
+<div class="viewcode-block" id="plot_fancy_dv"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.plot.plot_dv.plot_fancy_dv">[docs]</a><span class="k">def</span> <span class="nf">plot_fancy_dv</span><span class="p">(</span>
+    <span class="n">dv</span><span class="p">,</span> <span class="n">xlim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">ylim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">return_ax</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">dateformat</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1"> %b %y&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Prettier than the technical plot, but less informative&quot;&quot;&quot;</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+
+    <span class="n">val</span> <span class="o">=</span> <span class="o">-</span><span class="n">dv</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">corr</span><span class="p">)]</span><span class="o">*</span><span class="mi">100</span>
+    <span class="n">corr_starts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">)</span>
+    <span class="n">t_real</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">datetime</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">corr_starts</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">corr</span><span class="p">)]]</span>
+
+    <span class="c1"># plot dv/v</span>
+    <span class="nb">map</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+        <span class="n">t_real</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">dv</span><span class="o">.</span><span class="n">corr</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">corr</span><span class="p">)],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;inferno_r&#39;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">22</span><span class="p">)</span>
+
+    <span class="c1"># Correct format of X-Axis</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">ylim</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$\frac</span><span class="si">{dv}{v}</span><span class="s1">$ [%]&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+    <span class="n">locale</span><span class="o">.</span><span class="n">setlocale</span><span class="p">(</span><span class="n">locale</span><span class="o">.</span><span class="n">LC_ALL</span><span class="p">,</span> <span class="s2">&quot;en_GB.utf8&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">mdates</span><span class="o">.</span><span class="n">DateFormatter</span><span class="p">(</span><span class="n">dateformat</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">rotation</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+
+    <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span>
+        <span class="nb">map</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">.6</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Correlation Coefficient&#39;</span><span class="p">,</span> <span class="n">anchor</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">.8</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">xlim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="n">xlim</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">((</span><span class="nb">min</span><span class="p">(</span><span class="n">t_real</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">t_real</span><span class="p">)))</span>
+    <span class="k">if</span> <span class="n">return_ax</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span></div>
+
+
+<div class="viewcode-block" id="plot_technical_dv"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.plot.plot_dv.plot_technical_dv">[docs]</a><span class="k">def</span> <span class="nf">plot_technical_dv</span><span class="p">(</span>
     <span class="n">dv</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">figure_file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mark_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">normalize_simmat</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">sim_mat_Clim</span><span class="o">=</span><span class="p">[],</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">72</span><span class="p">,</span>
     <span class="n">ylim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">xlim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">plot_scatter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">return_ax</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Plot the &quot;extended&quot; dv dictionary</span>
-
-<span class="sd">    This function is thought to plot the result of the velocity change estimate</span>
-<span class="sd">    as output by :class:`~miic.core.stretch_mod.multi_ref_vchange_and_align`</span>
-<span class="sd">    and successively &quot;extended&quot; to contain also the timing in the form</span>
-<span class="sd">    {&#39;time&#39;: time_vect} where `time_vect` is a :class:`~numpy.ndarray` of</span>
-<span class="sd">    :class:`~datetime.datetime` objects.</span>
-<span class="sd">    This addition can be done, for example, using the function</span>
-<span class="sd">    :class:`~miic.core.miic_utils.add_var_to_dict`.</span>
+    <span class="n">return_ax</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plot a :class:`seismic.monitor.dv.DV` object</span>
 <span class="sd">    The produced figure is saved in `save_dir` that, if necessary, it is</span>
 <span class="sd">    created.</span>
 <span class="sd">    It is also possible to pass a &quot;special&quot; time value `mark_time` that will be</span>
@@ -526,16 +578,16 @@ document.write(`
 
     <span class="c1"># Extract the data from the dictionary</span>
 
-    <span class="n">value_type</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;value_type&#39;</span><span class="p">]</span>
-    <span class="n">method</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;method&#39;</span><span class="p">]</span>
-
-    <span class="n">corr</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;corr&#39;</span><span class="p">]</span>
-    <span class="n">dt</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
-    <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;sim_mat&#39;</span><span class="p">]</span>
-    <span class="n">stretch_vect</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;second_axis&#39;</span><span class="p">]</span>
+    <span class="n">value_type</span> <span class="o">=</span> <span class="n">dv</span><span class="o">.</span><span class="n">value_type</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="n">dv</span><span class="o">.</span><span class="n">method</span>
+    <span class="n">corr</span> <span class="o">=</span> <span class="n">dv</span><span class="o">.</span><span class="n">corr</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">dv</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">dv</span><span class="o">.</span><span class="n">sim_mat</span>
+    <span class="n">stretch_vect</span> <span class="o">=</span> <span class="n">dv</span><span class="o">.</span><span class="n">second_axis</span>
+    <span class="n">stats</span> <span class="o">=</span> <span class="n">dv</span><span class="o">.</span><span class="n">stats</span>
 
     <span class="n">rtime</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">utcdt</span><span class="o">.</span><span class="n">datetime</span> <span class="k">for</span> <span class="n">utcdt</span> <span class="ow">in</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">][</span><span class="s1">&#39;corr_start&#39;</span><span class="p">]],</span>
+        <span class="p">[</span><span class="n">utcdt</span><span class="o">.</span><span class="n">datetime</span> <span class="k">for</span> <span class="n">utcdt</span> <span class="ow">in</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;corr_start&#39;</span><span class="p">]],</span>
         <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">)</span>
 
     <span class="c1"># normalize simmat if requested</span>
@@ -568,19 +620,19 @@ document.write(`
 
         <span class="n">tit</span> <span class="o">=</span> <span class="s2">&quot;Time shift&quot;</span>
         <span class="n">dv_tick_delta</span> <span class="o">=</span> <span class="mi">5</span>
-        <span class="n">dv_y_label</span> <span class="o">=</span> <span class="s2">&quot;time shift (sample)&quot;</span>
+        <span class="n">dv_y_label</span> <span class="o">=</span> <span class="s2">&quot;Time Shift (sample)&quot;</span>
     <span class="k">elif</span> <span class="p">(</span><span class="n">value_type</span> <span class="o">==</span> <span class="s1">&#39;shift&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;absolute_shift&#39;</span><span class="p">):</span>
         <span class="n">tit</span> <span class="o">=</span> <span class="s2">&quot;Time shift&quot;</span>
         <span class="n">dv_tick_delta</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;second_axis&#39;</span><span class="p">])</span>
-            <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;second_axis&#39;</span><span class="p">]))</span><span class="o">/</span><span class="mi">5</span>
-        <span class="n">dv_y_label</span> <span class="o">=</span> <span class="s2">&quot;time shift [s]&quot;</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">second_axis</span><span class="p">)</span>
+            <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">second_axis</span><span class="p">))</span><span class="o">/</span><span class="mi">5</span>
+        <span class="n">dv_y_label</span> <span class="o">=</span> <span class="s2">&quot;Time Shift [s]&quot;</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown dv type, </span><span class="si">{</span><span class="n">value_type</span><span class="si">}</span><span class="s2">!&quot;</span><span class="p">)</span>
 
     <span class="n">f</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;n_stat&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">plot_scatter</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">dv</span><span class="o">.</span><span class="n">n_stat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">plot_scatter</span><span class="p">:</span>
         <span class="n">gs</span> <span class="o">=</span> <span class="n">mpl</span><span class="o">.</span><span class="n">gridspec</span><span class="o">.</span><span class="n">GridSpec</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">height_ratios</span><span class="o">=</span><span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">gs</span> <span class="o">=</span> <span class="n">mpl</span><span class="o">.</span><span class="n">gridspec</span><span class="o">.</span><span class="n">GridSpec</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">height_ratios</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
@@ -591,7 +643,7 @@ document.write(`
         <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
 
     <span class="c1"># plotting value is way easier now</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="o">-</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">],</span> <span class="s1">&#39;b.&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="o">-</span><span class="n">dv</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s1">&#39;b.&#39;</span><span class="p">)</span>
 
     <span class="c1"># Set extent so we can treat the axes properly (mainly y)</span>
     <span class="n">imh</span><span class="o">.</span><span class="n">set_extent</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">sim_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">stretch_vect</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">stretch_vect</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
@@ -617,7 +669,6 @@ document.write(`
 
     <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">get_xaxis</span><span class="p">()</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
 
-    <span class="n">stats</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">]</span>
     <span class="n">comb_mseedid</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
         <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">],</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;station&#39;</span><span class="p">],</span>  <span class="c1"># stats[&#39;location&#39;],</span>
         <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">])</span>
@@ -629,19 +680,17 @@ document.write(`
     <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">tit</span><span class="p">)</span>
     <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
     <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_position</span><span class="p">(</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
-    <span class="c1"># ax1.yaxis.label.set_rotation(270)</span>
-    <span class="c1"># ax1.yaxis.set_label_coords(1.03, 0.5)</span>
     <span class="n">ax1</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([])</span>
     <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">dv_y_label</span><span class="p">)</span>
 
     <span class="n">ax2</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
     <span class="k">if</span> <span class="n">plot_scatter</span><span class="p">:</span>
         <span class="c1"># reshape so we can plot a histogram</span>
-        <span class="n">histt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">t</span><span class="o">.</span><span class="n">timestamp</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;stats&#39;</span><span class="p">][</span><span class="s1">&#39;corr_start&#39;</span><span class="p">]])</span>
-        <span class="n">histt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">histt</span><span class="p">,</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;stretches&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">histcorrs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;corrs&#39;</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">histstretches</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;stretches&#39;</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">n_bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;sim_mat&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span><span class="o">//</span><span class="mi">10</span>
+        <span class="n">histt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">t</span><span class="o">.</span><span class="n">timestamp</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;corr_start&#39;</span><span class="p">]])</span>
+        <span class="n">histt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">histt</span><span class="p">,</span> <span class="n">dv</span><span class="o">.</span><span class="n">stretches</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">histcorrs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">corrs</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">histstretches</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="n">dv</span><span class="o">.</span><span class="n">stretches</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">n_bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">sim_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span><span class="o">//</span><span class="mi">10</span>
         <span class="c1"># remove nans</span>
         <span class="n">nanmask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">histcorrs</span><span class="p">)</span>
         <span class="n">histt</span> <span class="o">=</span> <span class="n">histt</span><span class="p">[</span><span class="n">nanmask</span><span class="p">]</span>
@@ -655,8 +704,6 @@ document.write(`
         <span class="n">xedges_v</span> <span class="o">=</span> <span class="p">[</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">xe</span><span class="p">)</span><span class="o">.</span><span class="n">datetime</span> <span class="k">for</span> <span class="n">xe</span> <span class="ow">in</span> <span class="n">xedges_v</span><span class="p">]</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">pcolor</span><span class="p">(</span><span class="n">xedges_v</span><span class="p">,</span> <span class="n">yedges_v</span><span class="p">,</span> <span class="n">H_v</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;binary&#39;</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rtime</span><span class="p">,</span> <span class="o">-</span><span class="n">dt</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-    <span class="k">if</span> <span class="s1">&#39;model_value&#39;</span> <span class="ow">in</span> <span class="n">dv</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rtime</span><span class="p">,</span> <span class="o">-</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;model_value&#39;</span><span class="p">],</span> <span class="s1">&#39;g.&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">xlim</span><span class="p">:</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
     <span class="k">else</span><span class="p">:</span>
@@ -682,8 +729,7 @@ document.write(`
     <span class="k">if</span> <span class="n">plot_scatter</span><span class="p">:</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">pcolor</span><span class="p">(</span><span class="n">xedges_c</span><span class="p">,</span> <span class="n">yedges_c</span><span class="p">,</span> <span class="n">H_c</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;binary&#39;</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rtime</span><span class="p">,</span> <span class="n">corr</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-    <span class="k">if</span> <span class="s1">&#39;model_corr&#39;</span> <span class="ow">in</span> <span class="n">dv</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rtime</span><span class="p">,</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;model_corr&#39;</span><span class="p">],</span> <span class="s1">&#39;g.&#39;</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="n">xlim</span><span class="p">:</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
     <span class="k">else</span><span class="p">:</span>
@@ -698,15 +744,15 @@ document.write(`
     <span class="n">ax3</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;major&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">ax3</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">MultipleLocator</span><span class="p">(</span><span class="mf">0.2</span><span class="p">))</span>
     <span class="c1"># Plot number of stations</span>
-    <span class="k">if</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;n_stat&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">plot_scatter</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">dv</span><span class="o">.</span><span class="n">n_stat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">plot_scatter</span><span class="p">:</span>
         <span class="n">ax4</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span>
-            <span class="n">rtime</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dv</span><span class="p">[</span><span class="s1">&#39;n_stat&#39;</span><span class="p">],</span> <span class="n">interpolate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">rtime</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dv</span><span class="o">.</span><span class="n">n_stat</span><span class="p">,</span> <span class="n">interpolate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">ax4</span><span class="o">.</span><span class="n">get_xticklabels</span><span class="p">(),</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
         <span class="n">ax3</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([])</span>
         <span class="n">ax4</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_position</span><span class="p">(</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
         <span class="n">ax4</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;N&quot;</span><span class="p">)</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">dv</span><span class="p">[</span><span class="s1">&#39;n_stat&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">*</span><span class="mf">1.1</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">n_stat</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">*</span><span class="mf">1.1</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">xlim</span><span class="p">:</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
@@ -726,8 +772,16 @@ document.write(`
                 <span class="s1">&#39;png&#39;</span><span class="p">,</span> <span class="s1">&#39;svg&#39;</span><span class="p">,</span> <span class="s1">&#39;pdf&#39;</span><span class="p">,</span> <span class="s1">&#39;jpg&#39;</span><span class="p">]:</span>
             <span class="n">figure_file_name</span> <span class="o">+=</span> <span class="s1">&#39;.png&#39;</span>
         <span class="n">f</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">figure_file_name</span><span class="p">),</span>
-                  <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">)</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+                  <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="plot_dv"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.plot.plot_dv.plot_dv">[docs]</a><span class="k">def</span> <span class="nf">plot_dv</span><span class="p">(</span><span class="n">style</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">style</span> <span class="o">==</span> <span class="s1">&#39;technical&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">plot_technical_dv</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">style</span> <span class="o">==</span> <span class="s1">&#39;publication&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">plot_fancy_dv</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unknown style: </span><span class="si">{</span><span class="n">style</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
 </pre></div>
 
                 </article>

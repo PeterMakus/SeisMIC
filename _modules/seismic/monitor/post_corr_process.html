@@ -108,8 +108,14 @@
   
   
   
+    
+    
+      
+    
+    
+    <img src="../../../_static/seismic_logo_small.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../../_static/seismic_logo_small.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
   
-    <p class="title logo__title"></p>
   
 </a></div>
     
@@ -179,6 +185,13 @@
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../../../modules/API.html">
                         SeisMIC API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
                       </a>
                     </li>
                 
@@ -327,6 +340,13 @@ document.write(`
                       </a>
                     </li>
                 
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
+                      </a>
+                    </li>
+                
                 </div>
             </div>
             
@@ -455,7 +475,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">seismic.monitor.trim</span> <span class="kn">import</span> <span class="n">corr_mat_trim</span>
 
 
-<div class="viewcode-block" id="corr_mat_clip"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_clip">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_clip</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">thres</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="corr_mat_clip"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_clip">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_clip</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">thres</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Clip the Input Matrix upper and lower bounds to a multiple of its</span>
 <span class="sd">    standard deviation. `thres` determines the factor and `axis` the axis</span>
@@ -541,7 +561,7 @@ document.write(`
     <span class="k">return</span> <span class="n">y</span><span class="p">[</span><span class="n">window_len</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="n">window_len</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="corr_mat_smooth"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_smooth">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_smooth</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_smooth"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_smooth">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_smooth</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">wsize</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">wtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;flat&#39;</span><span class="p">,</span>
         <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Smoothing of a correlation matrix.</span>
@@ -594,7 +614,7 @@ document.write(`
     <span class="k">return</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="unicode_to_string"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.unicode_to_string">[docs]</a><span class="k">def</span> <span class="nf">unicode_to_string</span><span class="p">(</span><span class="nb">input</span><span class="p">):</span>
+<div class="viewcode-block" id="unicode_to_string"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.unicode_to_string">[docs]</a><span class="k">def</span> <span class="nf">unicode_to_string</span><span class="p">(</span><span class="nb">input</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert all unicode strings to utf-8 strings</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -609,7 +629,7 @@ document.write(`
         <span class="k">return</span> <span class="nb">input</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_filter"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_filter">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_filter</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_filter"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_filter">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_filter</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">freqs</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
         <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Filter a correlation matrix.</span>
@@ -647,7 +667,7 @@ document.write(`
     <span class="k">return</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_resample"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_resample">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_resample</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_resample"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_resample">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_resample</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">start_times</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">],</span>
         <span class="n">end_times</span><span class="o">=</span><span class="p">[])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Function to create correlation matrices with constant sampling</span>
@@ -729,7 +749,7 @@ document.write(`
 
 
 <span class="c1"># Probably not necessary</span>
-<div class="viewcode-block" id="corr_mat_correct_decay"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_correct_decay">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_correct_decay</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="corr_mat_correct_decay"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_correct_decay">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_correct_decay</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Correct for the amplitude decay in a correlation matrix.</span>
 
@@ -777,7 +797,7 @@ document.write(`
     <span class="k">return</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_envelope"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_envelope">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_envelope</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="corr_mat_envelope"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_envelope">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_envelope</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Calculate the envelope of a correlation matrix.</span>
 
 <span class="sd">    The corrlation data of the correlation matrix are replaced by their</span>
@@ -800,7 +820,7 @@ document.write(`
     <span class="k">return</span> <span class="n">hilb</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_normalize"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_normalize">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_normalize</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_normalize"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_normalize">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_normalize</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">endtime</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;energy&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Correct amplitude variations with time in a correlation matrix.</span>
@@ -871,7 +891,7 @@ document.write(`
     <span class="k">return</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_mirror"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_mirror">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_mirror</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+<div class="viewcode-block" id="corr_mat_mirror"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_mirror">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_mirror</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Average the causal and acausal parts of a correlation matrix.</span>
@@ -924,7 +944,7 @@ document.write(`
     <span class="k">return</span> <span class="n">mir_data</span><span class="p">,</span> <span class="n">mir_stats</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_taper"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_taper">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_taper</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_taper"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_taper">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_taper</span><span class="p">(</span>
         <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Taper a correlation matrix.</span>
 
@@ -955,7 +975,7 @@ document.write(`
     <span class="k">return</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_taper_center"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_taper_center">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_taper_center</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_taper_center"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_taper_center">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_taper_center</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">slope_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1014,7 +1034,7 @@ document.write(`
     <span class="k">return</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_resample_time"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_resample_time">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_resample_time</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_resample_time"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_resample_time">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_resample_time</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1069,7 +1089,7 @@ document.write(`
     <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">stats</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_decimate"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_decimate">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_decimate</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_decimate"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_decimate">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_decimate</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">factor</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1110,7 +1130,7 @@ document.write(`
     <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">stats</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_resample_or_decimate"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_resample_or_decimate">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_resample_or_decimate</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_resample_or_decimate"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_resample_or_decimate">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_resample_or_decimate</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1139,7 +1159,7 @@ document.write(`
         <span class="k">return</span> <span class="n">corr_mat_resample_time</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">stats</span><span class="p">,</span> <span class="n">freq</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_extract_trace"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_extract_trace">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_extract_trace</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_extract_trace"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_extract_trace">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_extract_trace</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span>
         <span class="n">percentile</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">50.</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Extract a representative trace from a correlation matrix.</span>
@@ -1210,16 +1230,16 @@ document.write(`
     <span class="k">return</span> <span class="n">out</span></div>
 
 
-<div class="viewcode-block" id="Error"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.Error">[docs]</a><span class="k">class</span> <span class="nc">Error</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="viewcode-block" id="Error"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.Error">[docs]</a><span class="k">class</span> <span class="nc">Error</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="k">pass</span></div>
 
 
-<div class="viewcode-block" id="InputError"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.InputError">[docs]</a><span class="k">class</span> <span class="nc">InputError</span><span class="p">(</span><span class="n">Error</span><span class="p">):</span>
+<div class="viewcode-block" id="InputError"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.InputError">[docs]</a><span class="k">class</span> <span class="nc">InputError</span><span class="p">(</span><span class="n">Error</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>  <span class="n">msg</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_stretch"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_stretch">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_stretch</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_stretch"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_stretch">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_stretch</span><span class="p">(</span>
     <span class="n">cdata</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">tw</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">stretch_range</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
     <span class="n">stretch_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span>
@@ -1346,7 +1366,7 @@ document.write(`
     <span class="k">return</span> <span class="n">dv</span></div>
 
 
-<div class="viewcode-block" id="corr_mat_shift"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.corr_mat_shift">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_shift</span><span class="p">(</span>
+<div class="viewcode-block" id="corr_mat_shift"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_shift">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_shift</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">tw</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shift_range</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">shift_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">101</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span>
@@ -1474,7 +1494,7 @@ document.write(`
     <span class="k">return</span> <span class="n">dt</span></div>
 
 
-<div class="viewcode-block" id="measure_shift"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.measure_shift">[docs]</a><span class="k">def</span> <span class="nf">measure_shift</span><span class="p">(</span>
+<div class="viewcode-block" id="measure_shift"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.measure_shift">[docs]</a><span class="k">def</span> <span class="nf">measure_shift</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">tw</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shift_range</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">shift_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">101</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span>
@@ -1647,7 +1667,7 @@ document.write(`
     <span class="k">return</span> <span class="n">dt_list</span></div>
 
 
-<div class="viewcode-block" id="apply_shift"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.apply_shift">[docs]</a><span class="k">def</span> <span class="nf">apply_shift</span><span class="p">(</span>
+<div class="viewcode-block" id="apply_shift"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.apply_shift">[docs]</a><span class="k">def</span> <span class="nf">apply_shift</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">shifts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Apply a shift to a correlation matrix.</span>
@@ -1671,7 +1691,7 @@ document.write(`
     <span class="k">return</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="apply_stretch"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.post_corr_process.apply_stretch">[docs]</a><span class="k">def</span> <span class="nf">apply_stretch</span><span class="p">(</span>
+<div class="viewcode-block" id="apply_stretch"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.apply_stretch">[docs]</a><span class="k">def</span> <span class="nf">apply_stretch</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">stretches</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Apply a stretches to a correlation matrix.</span>

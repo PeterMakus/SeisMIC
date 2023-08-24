@@ -111,8 +111,14 @@
   
   
   
+    
+    
+      
+    
+    
+    <img src="../../_static/seismic_logo_small.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../_static/seismic_logo_small.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
   
-    <p class="title logo__title"></p>
   
 </a></div>
     
@@ -182,6 +188,13 @@
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../API.html">
                         SeisMIC API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
                       </a>
                     </li>
                 
@@ -334,6 +347,13 @@ document.write(`
                       </a>
                     </li>
                 
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
+                      </a>
+                    </li>
+                
                 </div>
             </div>
             
@@ -459,11 +479,11 @@ graph LR
 <p>The waveform module contains functions and classes that allow to read waveforms from a local database
 or download waveform data from <em>FDSN servers</em> by using the <a class="reference external" href="https://docs.obspy.org/packages/autogen/obspy.clients.fdsn.mass_downloader.html">Obspy Mass Downloader</a>.
 The downloaded data will then be written in a <em>seiscom data structure (SDS)</em>.
-Both data download and management of the raw database are handled using a <a class="reference internal" href="../API.html#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> object.</p>
+Both data download and management of the raw database are handled using a <a class="reference internal" href="../API/API.html#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> object.</p>
 <section id="download-data">
 <h2>Download Data<a class="headerlink" href="#download-data" title="Permalink to this heading">#</a></h2>
 <p>The recommended way to download continuous data for noise correlations is the method
-<a class="reference internal" href="../API.html#seismic.trace_data.waveform.Store_Client.download_waveforms_mdl" title="seismic.trace_data.waveform.Store_Client.download_waveforms_mdl"><code class="xref py py-func docutils literal notranslate"><span class="pre">download_waveforms_mdl()</span></code></a>. To use this method, we first need to initialise a <a class="reference internal" href="../API.html#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> object.
+<a class="reference internal" href="../API/API.html#seismic.trace_data.waveform.Store_Client.download_waveforms_mdl" title="seismic.trace_data.waveform.Store_Client.download_waveforms_mdl"><code class="xref py py-func docutils literal notranslate"><span class="pre">download_waveforms_mdl()</span></code></a>. To use this method, we first need to initialise a <a class="reference internal" href="../API/API.html#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> object.
 The code block below shows and example for downloading data from the <strong>IU.HRV</strong> station.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">from</span> <span class="nn">obspy.clients.fdsn</span> <span class="kn">import</span> <span class="n">Client</span>
 <span class="linenos"> 2</span><span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">UTCDateTime</span>
@@ -494,7 +514,7 @@ to decide which stations to download. To do that, define the parameters <code cl
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p><a class="reference internal" href="../API.html#seismic.trace_data.waveform.Store_Client.download_waveforms_mdl" title="seismic.trace_data.waveform.Store_Client.download_waveforms_mdl"><code class="xref py py-func docutils literal notranslate"><span class="pre">download_waveforms_mdl()</span></code></a> requires a list as input
+<p><a class="reference internal" href="../API/API.html#seismic.trace_data.waveform.Store_Client.download_waveforms_mdl" title="seismic.trace_data.waveform.Store_Client.download_waveforms_mdl"><code class="xref py py-func docutils literal notranslate"><span class="pre">download_waveforms_mdl()</span></code></a> requires a list as input
 of clients.</p>
 </div>
 </section>
@@ -506,24 +526,24 @@ of clients.</p>
 might not need this section.</p>
 </div>
 <p>Now, that we downloaded some waveform data, we might want to access it. This can as well be realised
-using <a class="reference internal" href="../API.html#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a>. In general, seismic data comes in two parts:
+using <a class="reference internal" href="../API/API.html#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a>. In general, seismic data comes in two parts:
 The waveform data in <em>.mseed</em> format and the Station Response information in <em>XML</em> format.
-<a class="reference internal" href="../API.html#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> comes with several methods to fetch the two. There
+<a class="reference internal" href="../API/API.html#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> comes with several methods to fetch the two. There
 are methods that will only read local data and methods that will check whether data is available locally
 and, if not, download them from remote (i.e., the FDSN server that we defined when initialising the
-<a class="reference internal" href="../API.html#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> object).</p>
+<a class="reference internal" href="../API/API.html#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> object).</p>
 <dl class="simple">
 <dt>To access only already available data use:</dt><dd><ul class="simple">
 <li><p>response information:</p>
 <ul>
-<li><p><a class="reference internal" href="../API.html#seismic.trace_data.waveform.Store_Client.read_inventory" title="seismic.trace_data.waveform.Store_Client.read_inventory"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_inventory()</span></code></a> to read all available response information.</p></li>
+<li><p><a class="reference internal" href="../API/API.html#seismic.trace_data.waveform.Store_Client.read_inventory" title="seismic.trace_data.waveform.Store_Client.read_inventory"><code class="xref py py-meth docutils literal notranslate"><span class="pre">read_inventory()</span></code></a> to read all available response information.</p></li>
 <li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">inventory</span></code> to access the pythonic inventory object
 (see <a class="reference external" href="https://docs.obspy.org/packages/autogen/obspy.core.inventory.inventory.Inventory.html">obspy’s documentation</a> for available methods)</p></li>
 </ul>
 </li>
 <li><p>waveform data:</p>
 <ul>
-<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_load_local()</span></code> to load local data</p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_load_local()</span></code> to load local data</p></li>
 </ul>
 </li>
 </ul>
@@ -531,12 +551,12 @@ and, if not, download them from remote (i.e., the FDSN server that we defined wh
 <dt>If you would like to download missing data, use the following methods:</dt><dd><ul class="simple">
 <li><p>Response Information:</p>
 <ul>
-<li><p><a class="reference internal" href="../API.html#seismic.trace_data.waveform.Store_Client.select_inventory_or_load_remote" title="seismic.trace_data.waveform.Store_Client.select_inventory_or_load_remote"><code class="xref py py-func docutils literal notranslate"><span class="pre">select_inventory_or_load_remote()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../API/API.html#seismic.trace_data.waveform.Store_Client.select_inventory_or_load_remote" title="seismic.trace_data.waveform.Store_Client.select_inventory_or_load_remote"><code class="xref py py-meth docutils literal notranslate"><span class="pre">select_inventory_or_load_remote()</span></code></a></p></li>
 </ul>
 </li>
 <li><p>waveform data:</p>
 <ul>
-<li><p><a class="reference internal" href="../API.html#seismic.trace_data.waveform.Store_Client.get_waveforms" title="seismic.trace_data.waveform.Store_Client.get_waveforms"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_waveforms()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../API/API.html#seismic.trace_data.waveform.Store_Client.get_waveforms" title="seismic.trace_data.waveform.Store_Client.get_waveforms"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_waveforms()</span></code></a></p></li>
 </ul>
 </li>
 </ul>
@@ -549,12 +569,17 @@ There are a couple of functions to help you:</p>
 <blockquote>
 <div><ul class="simple">
 <li><dl class="simple">
-<dt><a class="reference internal" href="../API.html#seismic.trace_data.waveform.Store_Client.get_available_stations" title="seismic.trace_data.waveform.Store_Client.get_available_stations"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_available_stations()</span></code></a> returns all codes of stations</dt><dd><p>for which data is available (a network may or may not be defined).</p>
+<dt><a class="reference internal" href="../API/API.html#seismic.trace_data.waveform.Store_Client.get_available_stations" title="seismic.trace_data.waveform.Store_Client.get_available_stations"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_available_stations()</span></code></a> returns all codes of stations</dt><dd><p>for which data is available (a network may or may not be defined).</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt><code class="xref py py-func docutils literal notranslate"><span class="pre">_get_times()</span></code> returns the earliest and latest available</dt><dd><p>starttimes for a certain station.</p>
+<dt><code class="xref py py-meth docutils literal notranslate"><span class="pre">_get_times()</span></code> returns the earliest and latest available</dt><dd><p>starttimes for a certain station.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="xref py py-meth docutils literal notranslate"><span class="pre">Store_Client_compute_spectrogram()</span></code> can be used to examine the spectral content of the</dt><dd><p>data. Check out the <cite>tutorial &lt;../tutorials/tutorial&gt;</cite> for details on how to do that.</p>
 </dd>
 </dl>
 </li>
@@ -652,21 +677,6 @@ it manually.</p>
 </li>
 </ul>
   </nav></div>
-
-  <div class="sidebar-secondary-item">
-  
-  <div class="tocsection editthispage">
-    <a href="https://github.com/PeterMakus/SeisMIC/edit/main/docs/modules/trace_data/waveform.rst">
-      <i class="fa-solid fa-pencil"></i>
-      
-      
-        
-          Edit on GitHub
-        
-      
-    </a>
-  </div>
-</div>
 
   <div class="sidebar-secondary-item">
   <div class="tocsection sourcelink">

@@ -1,0 +1,847 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Spatial Inversion of dv/v</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'modules/tutorials/spatial';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="prev" title="SeisMIC Tutorial" href="tutorial.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  <div class="navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/seismic_logo_small.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../_static/seismic_logo_small.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+</a></div>
+    
+  </div>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../intro.html">
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../get_started.html">
+                        Getting Started with SeisMIC
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../trace_data.html">
+                        Trace data
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../correlate.html">
+                        Compute and Handle Correlations
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../corrdb.html">
+                        Save and Load Correlations
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../monitor.html">
+                        Monitor Velocity Changes
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../API.html">
+                        SeisMIC API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/PeterMakus/SeisMIC" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../intro.html">
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../get_started.html">
+                        Getting Started with SeisMIC
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../trace_data.html">
+                        Trace data
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../correlate.html">
+                        Compute and Handle Correlations
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../corrdb.html">
+                        Save and Load Correlations
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../monitor.html">
+                        Monitor Velocity Changes
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../API.html">
+                        SeisMIC API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/PeterMakus/SeisMIC" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html"><strong>SeisMIC</strong> Tutorial</a></li>
+
+
+</ul>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Spatial Inversion of dv/v</a></li>
+
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumbs">
+  <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../tutorials.html" class="nav-link">Our tutorials: From Zero to Noise-Hero</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">Spatial Inversion of dv/v</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="spatial-inversion-of-dv-v">
+<h1>Spatial Inversion of dv/v<a class="headerlink" href="#spatial-inversion-of-dv-v" title="Permalink to this heading">#</a></h1>
+<p>This is the second notebook in the SeisMIC tutorial series. if you have
+not looked at the first notebook yet, we strongly comment starting
+<a class="reference external" href="./tutorial.ipynb">there</a>.</p>
+<p>SeisMIC can invert dv/v time series from several station combination
+onto a spatial grid using the method proposed by <a class="reference external" href="https://doi.org/10.1002/2013JB010399">Obermann, et
+al. (2013)</a>. This method is
+based on 2D sensitivity kernels that arise from the time-dependent
+solution of the Boltzmann equation for a homogeneous medium (see
+<a class="reference external" href="https://doi.org/10.1103/PhysRevE.56.1135">Paasschens, 1997</a>). A
+demonstration with real data would require a bit too much download and a
+very dense network.</p>
+<p>So for this demonstration we commit a little “inversion crime” and try
+to re-obtain a velocity change model that is already known to us.</p>
+<section id="define-the-parameters">
+<h2>Define the parameters<a class="headerlink" href="#define-the-parameters" title="Permalink to this heading">#</a></h2>
+<p>We use the class <code class="docutils literal notranslate"><span class="pre">seismic.monitor.spatial.DVGrid</span></code> to initialise an
+empty grid, for which we compute the sensitivity kernels, the forward
+model, and the inverse model.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from seismic.monitor.spatial import DVGrid
+
+# For convenience, we define the map at the equator
+lat0 = lon0 = 0  # lower left corner
+
+# Y- and X-extent in km
+y = x = 40
+res = 1  # resolution in km
+vel = 3  # wave velocity km/s
+mf_path = 30  # mean free path in km, dependent on the geology
+dt = 0.05  # Sampling interval to compute the sensitivity kernels
+# dt should be larger than res/vel. If not, the kernels will be aliased.
+# Small dt makes a smoother kernel, but the computation takes longer.
+
+# Initialise the grid
+dvg = DVGrid(lat0, lon0, res, x, y, dt, vel, mf_path)
+</pre></div>
+</div>
+</section>
+<section id="create-a-synthetic-velocity-grid">
+<h2>Create a synthetic velocity grid<a class="headerlink" href="#create-a-synthetic-velocity-grid" title="Permalink to this heading">#</a></h2>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import numpy as np
+from matplotlib import pyplot as plt
+from obspy import UTCDateTime
+
+from seismic.plot.plot_utils import set_mpl_params
+
+chkb = np.zeros_like(dvg.xgrid)
+for ii, yy in enumerate(np.arange(y/res+1)):
+    chkb[ii, :] = np.sin(
+        2*np.pi*np.arange(x/res+1)/(x/res)) + np.cos(2*np.pi*yy/(y/res))
+chkb /= 100
+
+# Plot the synthetic checkerboard
+set_mpl_params()
+plt.figure(figsize=(5, 5))
+plt.imshow(chkb*100, cmap=&#39;seismic_r&#39;)
+plt.colorbar(label=&#39;Velocity perturbation (%)&#39;)
+plt.title(&#39;Synthetic Velocity-Change Model&#39;)
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Text</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s1">&#39;Synthetic Velocity-Change Model&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../_images/spatial_4_1.png" src="../../_images/spatial_4_1.png" />
+</section>
+<section id="define-station-locations-and-compute-dv-v-values-for-each-combination">
+<h2>Define station locations and compute dv/v values for each combination<a class="headerlink" href="#define-station-locations-and-compute-dv-v-values-for-each-combination" title="Permalink to this heading">#</a></h2>
+<p>Now we will place stations randomly onto our grid and use a forward
+modelling approach to compute the velocity change that would be sensed
+between each station pair (i.e., now we will look at
+“cross-correlations”).</p>
+<p>Feel free to change the number of stations <code class="docutils literal notranslate"><span class="pre">nsta</span></code> to see by how much
+we can increase the accuracy of our inversion result.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from seismic.monitor.dv import DV
+from seismic.correlate.stats import CorrStats
+
+### parameters ###
+#  #### You can play with these parameters to see how it affects the result
+nsta = 2  # number of stations, increases computation time
+
+# lapse time parameters in s
+# don&#39;t set these to small (have to contain the ballistic wave arriving
+# with the velocity of the medium)
+tw_start = 10
+tw_len = 17
+
+# frequency band
+freq_min = .5
+freq_max = 1.5
+
+# Should the lapse time window be split up into several subwindows
+# Note that this could increase the spatial sensitivity. But obviously
+# also increases the computation time
+n_split = 1  # if n_split &gt; 1, tw_len has to be divided by n_split
+
+use_auto_correlations = True  # use auto correlations
+use_cross_correlations = True  # use cross correlations
+
+#  #### end of parameters ####
+
+
+# #### actual code ####
+# distribute stations randomly
+np.random.seed(1234)
+sta_x = np.random.random(nsta)*x
+sta_y = np.random.random(nsta)*y
+
+# convert into lat/lon not 100% but good enough as close to equator
+sta_lon = sta_x/111.19492664455873
+sta_lat = sta_y/111.19492664455873
+
+dvs = []
+tw_len = tw_len//n_split
+for slat0, slon0 in zip(sta_lat, sta_lon):
+    for slat1, slon1 in zip(sta_lat, sta_lon):
+        if slat0 == slat1 and slon0 == slon1 and not use_auto_correlations:
+            # we don&#39;t want auto correlations
+            continue
+        if any(
+            [slat0 != slat1, slon0 != slon1])\
+                and not use_cross_correlations:
+            # we don&#39;t want cross correlations
+            continue
+
+        # create dv.stats
+        cst = CorrStats(
+            {
+                &#39;stla&#39;: slat0, &#39;stlo&#39;: slon0, &#39;evla&#39;: slat1, &#39;evlo&#39;: slon1,
+                &#39;corr_start&#39;: np.array(
+                    [UTCDateTime(ii*3600) for ii in np.arange(35)]),
+                &#39;corr_end&#39;: np.array(
+                    [UTCDateTime((ii+1)*3600) for ii in np.arange(35)])})
+        for ii in range(n_split):
+            dv = DV(
+                .9*np.ones((35, )), np.ones((35, )), &#39;stretch&#39;, None,
+                None, &#39;modelled&#39;, cst,
+                dv_processing={
+                    &#39;tw_start&#39;: tw_start + ii*tw_len, &#39;tw_len&#39;: tw_len,
+                    &#39;freq_min&#39;: freq_min, &#39;freq_max&#39;: freq_max})
+            dvs.append(dv)
+</pre></div>
+</div>
+<section id="forward-modelling">
+<h3>Forward modelling<a class="headerlink" href="#forward-modelling" title="Permalink to this heading">#</a></h3>
+<p>Depending on your choice of parameters, this could take a little while.
+This will compute and cache the sensitivity kernels, so if you add more
+stations to the list afterwards, only new sensitivity kernels will be
+computed. All the parameters will be extracted from the <code class="docutils literal notranslate"><span class="pre">DV</span></code> objects.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fwd_model = dvg.forward_model(
+    chkb, dvs=dvs, utc=dvs[0].stats.corr_start[5])
+</pre></div>
+</div>
+</section>
+<section id="add-random-noise">
+<h3>add random noise<a class="headerlink" href="#add-random-noise" title="Permalink to this heading">#</a></h3>
+<p>add random noise to the forward model. You can play with the amplitude
+here</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># set standard deviation of the noise from zero
+noise_amp = 1e-3
+
+# add random noise
+# assign values. Technicall we should only set the value at index 5
+# but it doesn&#39;t really matter so much
+gen = np.random.Generator(np.random.PCG64(1234))
+for dv, fwd_val in zip(dvs, fwd_model):
+    dv.value[:] = fwd_val
+    dv.value += gen.normal(size=len(dv.value), scale=noise_amp)
+</pre></div>
+</div>
+</section>
+<section id="plot-a-sensitivity-kernel">
+<h3>plot a sensitivity kernel<a class="headerlink" href="#plot-a-sensitivity-kernel" title="Permalink to this heading">#</a></h3>
+<p>Let’s have a look at one of the kernels</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fig, ax = plt.subplots(subplot_kw={&quot;projection&quot;: &quot;3d&quot;}, figsize=(12, 9))
+surf = ax.plot_surface(dvg.xgrid, dvg.ygrid, np.reshape(list(dvg.skernels.values())[-2], dvg.xgrid.shape), linewidth=0, antialiased=True, cmap=&#39;viridis&#39;)
+plt.colorbar(surf);
+plt.xlabel(&#39;x (km)&#39;)
+plt.ylabel(&#39;y (km)&#39;)
+plt.title(&#39;An arbitrary sensitivity kernel&#39;)
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Text</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.92</span><span class="p">,</span> <span class="s1">&#39;An arbitrary sensitivity kernel&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../_images/spatial_12_1.png" src="../../_images/spatial_12_1.png" />
+</section>
+</section>
+<section id="compute-inverse-model">
+<h2>Compute inverse model<a class="headerlink" href="#compute-inverse-model" title="Permalink to this heading">#</a></h2>
+<p>For the inverse model, we will have to set damping parameters. These
+parameters are the <code class="docutils literal notranslate"><span class="pre">corr_len</span></code> that basically smoothes the final grid
+output to avoid sparsities. And <code class="docutils literal notranslate"><span class="pre">std_model</span></code>, which sets the allowed
+standard deviation of the output model (i.e., limits the search radius
+around a starting model=0). See Obermann et a., 2013 for details.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># smoothing parameters
+corr_len = 3  # correlation length in km
+std_model = 0.05  # standard deviation of the model
+
+inverse_model = dvg.compute_dv_grid(
+    dvs, dvs[0].stats.corr_start[5], scaling_factor=res, corr_len=corr_len,
+    std_model=std_model)
+
+# Let&#39;s have a first look at the result
+dvg.plot()
+plt.title(&#39;Inversion result&#39;);
+</pre></div>
+</div>
+<img alt="../../_images/spatial_14_0.png" src="../../_images/spatial_14_0.png" />
+<section id="plot-a-comparison-between-synthetic-and-inverse">
+<h3>Plot a comparison between synthetic and inverse<a class="headerlink" href="#plot-a-comparison-between-synthetic-and-inverse" title="Permalink to this heading">#</a></h3>
+<p>You will see that increasing the number of stations, will make the
+biggest difference to the accuracy of your inversion results. However,
+also using several time windows and both auto and cross-correlations
+will make an impact. However, it is important to choose the correct
+damping parameters. usually, these are determined via an L-curve
+criterion.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>set_mpl_params()
+
+plt.figure(figsize=(10, 6))
+ax1 = plt.subplot(1, 2, 1)
+
+dvg.plot(ax=ax1)
+ax2 = plt.subplot(1, 2, 2, sharey=ax1)
+
+# norm = mpl.colors.TwoSlopeNorm(vcenter=0)
+map2 = ax2.imshow(
+    -np.flipud(chkb)*100, cmap=&#39;seismic_r&#39;,
+    extent=[dvg.xaxis.min(), dvg.xaxis.max(), dvg.yaxis.min(), dvg.yaxis.max()]);
+plt.scatter(dvg.statx, dvg.staty, s=30, c=&#39;k&#39;, edgecolors=&#39;white&#39;, marker=&#39;v&#39;)
+plt.xlabel(&#39;Easting [km]&#39;)
+plt.ylabel(&#39;Northing [km]&#39;)
+plt.colorbar(map2, orientation=&#39;horizontal&#39;, label=r&#39;$\frac{dv}{v}$ [%]&#39;)
+
+ax1.set_title(&#39;Inversion result&#39;);
+ax2.set_title(&#39;Synthetic Velocity-Change Model&#39;);
+
+plt.suptitle(&#39;Comparison of the inversion result with the synthetic model&#39;);
+</pre></div>
+</div>
+<img alt="../../_images/spatial_16_0.png" src="../../_images/spatial_16_0.png" />
+</section>
+</section>
+</section>
+<section id="references">
+<h1>References<a class="headerlink" href="#references" title="Permalink to this heading">#</a></h1>
+<p><a class="reference external" href="https://doi.org/10.1002/2013JB010399">Obermann, A., Planès, T., Larose, E., and Campillo, M. (2013), Imaging
+preeruptive and coeruptive structural and mechanical changes of a
+volcano with ambient seismic noise, J. Geophys. Res. Solid Earth, 118,
+6285– 6294.</a></p>
+<p><a class="reference external" href="https://doi.org/10.1103/PhysRevE.56.1135">Paasschens, J. C. J. “Solution of the time-dependent Boltzmann
+equation.” Physical Review E 56.1 (1997):
+1135.</a></p>
+<section id="download-this-notebook">
+<h2>Download this notebook<a class="headerlink" href="#download-this-notebook" title="Permalink to this heading">#</a></h2>
+<p>You can download this notebook on our <a class="reference external" href="https://github.com/PeterMakus/SeisMIC/blob/main/examples/">GitHub
+page</a></p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="tutorial.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title"><strong>SeisMIC</strong> Tutorial</p>
+      </div>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Spatial Inversion of dv/v</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#define-the-parameters">Define the parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#create-a-synthetic-velocity-grid">Create a synthetic velocity grid</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#define-station-locations-and-compute-dv-v-values-for-each-combination">Define station locations and compute dv/v values for each combination</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#forward-modelling">Forward modelling</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#add-random-noise">add random noise</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-a-sensitivity-kernel">plot a sensitivity kernel</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compute-inverse-model">Compute inverse model</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-a-comparison-between-synthetic-and-inverse">Plot a comparison between synthetic and inverse</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#download-this-notebook">Download this notebook</a></li>
+</ul>
+</li>
+</ul>
+
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  <div class="tocsection sourcelink">
+    <a href="../../_sources/modules/tutorials/spatial.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright 2023, The SeisMIC development team..
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.3.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

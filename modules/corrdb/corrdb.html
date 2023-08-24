@@ -111,8 +111,14 @@
   
   
   
+    
+    
+      
+    
+    
+    <img src="../../_static/seismic_logo_small.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../_static/seismic_logo_small.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
   
-    <p class="title logo__title"></p>
   
 </a></div>
     
@@ -182,6 +188,13 @@
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../API.html">
                         SeisMIC API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
                       </a>
                     </li>
                 
@@ -334,6 +347,13 @@ document.write(`
                       </a>
                     </li>
                 
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
+                      </a>
+                    </li>
+                
                 </div>
             </div>
             
@@ -458,10 +478,15 @@ graph LR
 <p>In <strong>SeisMIC</strong>, correlations are stored in <a class="reference external" href="https://www.hdfgroup.org/downloads/hdf5/">HDF5</a> container files.
 This has the advantage of avoiding potential overhead caused by large amounts of correlation files.
 SeisMIC’s implementation relies on modified <a class="reference external" href="https://www.h5py.org/">h5py</a> classes. After computing your
-correlations as shown in the earlier steps, they will be saved in one file <em>per station-combination</em>
-(e.g., the file <code class="docutils literal notranslate"><span class="pre">IU-TA.HRV-M58A</span></code> holds the correlations of all components and locations of the two stations
+correlations as shown in the earlier steps, they will be saved in one file <em>per component-combination</em>
+(default since <strong>SeisMIC 0.5.0</strong>) or one file <em>per station combination</em> (for older databanks). You can
+alter this setting in your <em>params.yaml</em>.</p>
+<p><strong>Example for one file per component-combination:</strong>
+The file <code class="docutils literal notranslate"><span class="pre">IU-TA.HRV-M58A.HHZ-HHZ</span></code> holds the correlations of the two vertical components of the stations.</p>
+<p><strong>Example for one file per station-combination:</strong>
+The file <code class="docutils literal notranslate"><span class="pre">IU-TA.HRV-M58A</span></code> holds the correlations of all components and locations of the two stations
 with each other, whereas the file <code class="docutils literal notranslate"><span class="pre">IU-IU.HRV-HRV</span></code> holds all autocorrelations and intercomponent correlations
-of the station <code class="docutils literal notranslate"><span class="pre">IU.HRV</span></code>).</p>
+of the station <code class="docutils literal notranslate"><span class="pre">IU.HRV</span></code>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p><strong>SeisMIC</strong> makes use of SEED-like station codes. The general logic of those codes is:
@@ -469,9 +494,9 @@ of the station <code class="docutils literal notranslate"><span class="pre">IU.H
 Correlations will always only be computed alphabetically. That is, <strong>SeisMIC</strong> will not compute a
 correlation for <code class="docutils literal notranslate"><span class="pre">TA-IU.M58A-HRV</span></code> but only for <code class="docutils literal notranslate"><span class="pre">IU-TA.HRV-M58A</span></code>.</p>
 </div>
-<p>As a user, you will only ever be calling the <a class="reference internal" href="../API.html#seismic.db.corr_hdf5.CorrelationDataBase" title="seismic.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a> class.
-The only function of this class is to return a <a class="reference internal" href="../API.html#seismic.db.corr_hdf5.DBHandler" title="seismic.db.corr_hdf5.DBHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">DBHandler</span></code></a>, which hold all the
-“useful” functions. To call <a class="reference internal" href="../API.html#seismic.db.corr_hdf5.CorrelationDataBase" title="seismic.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a>, use a context manager like so:</p>
+<p>As a user, you will only ever be calling the <a class="reference internal" href="../API/API.html#seismic.db.corr_hdf5.CorrelationDataBase" title="seismic.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a> class.
+The only function of this class is to return a <a class="reference internal" href="../API/API.html#seismic.db.corr_hdf5.DBHandler" title="seismic.db.corr_hdf5.DBHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">DBHandler</span></code></a>, which hold all the
+“useful” functions. To call <a class="reference internal" href="../API/API.html#seismic.db.corr_hdf5.CorrelationDataBase" title="seismic.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a>, use a context manager like so:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">seismic.db.corr_hdf5</span> <span class="kn">import</span> <span class="n">CorrelationDataBase</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="s1">&#39;/path/to/myfile.h5&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="nb">type</span><span class="p">(</span><span class="n">cdb</span><span class="p">)</span>  <span class="c1"># This is a DBHandler</span>
@@ -480,7 +505,7 @@ The only function of this class is to return a <a class="reference internal" hre
 </div>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>Do not call <a class="reference internal" href="../API.html#seismic.db.corr_hdf5.DBHandler" title="seismic.db.corr_hdf5.DBHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">DBHandler</span></code></a> directly! This might lead to unexpected behaviour or
+<p>Do not call <a class="reference internal" href="../API/API.html#seismic.db.corr_hdf5.DBHandler" title="seismic.db.corr_hdf5.DBHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">DBHandler</span></code></a> directly! This might lead to unexpected behaviour or
 even dataloss due to corrupted hdf5 files.</p>
 </div>
 <div class="admonition warning">
@@ -491,7 +516,7 @@ with <code class="xref py py-meth docutils literal notranslate"><span class="pre
 <section id="reading-correlations">
 <h2>Reading Correlations<a class="headerlink" href="#reading-correlations" title="Permalink to this heading">#</a></h2>
 <p>The most common usecase is probably that you will want to access correlations that <strong>SeisMIC</strong> computed
-for you (as shown earlier). To do so, you can use the <a class="reference internal" href="../API.html#seismic.db.corr_hdf5.DBHandler.get_data" title="seismic.db.corr_hdf5.DBHandler.get_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_data()</span></code></a>
+for you (as shown earlier). To do so, you can use the <a class="reference internal" href="../API/API.html#seismic.db.corr_hdf5.DBHandler.get_data" title="seismic.db.corr_hdf5.DBHandler.get_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_data()</span></code></a>
 method:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">seismic.db.corr_hdf5</span> <span class="kn">import</span> <span class="n">CorrelationDataBase</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="s1">&#39;/path/to/myfile.h5&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
@@ -522,7 +547,7 @@ is similar to using a wildcard (i.e., load from earliest to latest available dat
 </section>
 <section id="getting-an-overview-over-available-data">
 <h3>Getting an overview over available data<a class="headerlink" href="#getting-an-overview-over-available-data" title="Permalink to this heading">#</a></h3>
-<p>Once you have a suffieciently large dataset, you might be confused about which data you have already produced.
+<p>Once you have a sufficiently large dataset, you might be confused about which data you have already produced.
 In this case, <strong>SeisMIC</strong> offers several methods to make your life a little easier:</p>
 <ol class="arabic simple">
 <li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">seismic.corr_hdf5.corrdb.DBHandler.get_available_starttimes()</span></code>: Returns a dictionary
@@ -566,8 +591,8 @@ This is meant to prevent mixing of differently processed data.</p></li>
 <span class="linenos">14</span>    <span class="n">cdb</span><span class="o">.</span><span class="n">add_correlation</span><span class="p">(</span><span class="n">cst</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;my_sensible_tag&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>If there had been any data in our <a class="reference internal" href="../API.html#seismic.correlate.stream.CorrStream" title="seismic.correlate.stream.CorrStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrStream</span></code></a>, we could retrieve it as shown above.
-Network, station, and channel information are determined automatically from the <a class="reference internal" href="../API.html#seismic.correlate.stream.CorrTrace" title="seismic.correlate.stream.CorrTrace"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrTrace</span></code></a> header.</p>
+<p>If there had been any data in our <a class="reference internal" href="../API/API.html#seismic.correlate.stream.CorrStream" title="seismic.correlate.stream.CorrStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrStream</span></code></a>, we could retrieve it as shown above.
+Network, station, and channel information are determined automatically from the <a class="reference internal" href="../API/API.html#seismic.correlate.stream.CorrTrace" title="seismic.correlate.stream.CorrTrace"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrTrace</span></code></a> header.</p>
 <section id="why-won-t-seismic-allow-me-to-an-old-file-again">
 <h3>Why won’t SeisMIC allow me to an old file again?<a class="headerlink" href="#why-won-t-seismic-allow-me-to-an-old-file-again" title="Permalink to this heading">#</a></h3>
 <p>Sometimes when re-executing your correlation workflow, you might encounter a <code class="docutils literal notranslate"><span class="pre">PermissionError</span></code>. This happens whenever you change your processing
@@ -636,21 +661,6 @@ ways. <strong>So if you want to recompute your correlations with a new set of pr
 </li>
 </ul>
   </nav></div>
-
-  <div class="sidebar-secondary-item">
-  
-  <div class="tocsection editthispage">
-    <a href="https://github.com/PeterMakus/SeisMIC/edit/main/docs/modules/corrdb/corrdb.rst">
-      <i class="fa-solid fa-pencil"></i>
-      
-      
-        
-          Edit on GitHub
-        
-      
-    </a>
-  </div>
-</div>
 
   <div class="sidebar-secondary-item">
   <div class="tocsection sourcelink">

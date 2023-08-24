@@ -109,8 +109,14 @@
   
   
   
+    
+    
+      
+    
+    
+    <img src="../_static/seismic_logo_small.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../_static/seismic_logo_small.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
   
-    <p class="title logo__title"></p>
   
 </a></div>
     
@@ -180,6 +186,13 @@
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="API.html">
                         SeisMIC API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
                       </a>
                     </li>
                 
@@ -332,6 +345,13 @@ document.write(`
                       </a>
                     </li>
                 
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
+                      </a>
+                    </li>
+                
                 </div>
             </div>
             
@@ -438,7 +458,8 @@ Most likely, your system will come with a preinstalled MPI. Else, we recommend <
 </section>
 <section id="python-dependencies">
 <h4>Python Dependencies<a class="headerlink" href="#python-dependencies" title="Permalink to this heading">#</a></h4>
-<p><strong>SeisMIC</strong> has been tested on Python3.8, but should in principle also be compatible with Python3.7 and later.
+<p><strong>SeisMIC</strong> has been tested on Python 3.10 and 3.11 and we recommend using either of these version.
+However, it should also be compatible with Python3.7 and later.
 If you follow the instructions below, it should not be necessary to install dependencies manually.
 <strong>SeisMIC</strong> depends on the following modules:</p>
 <ul class="simple">
@@ -479,7 +500,8 @@ pip<span class="w"> </span>install<span class="w"> </span>seismic
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Developers should install SeisMIC from source code using GitHub’s <code class="docutils literal notranslate"><span class="pre">dev</span></code> branch.</p>
+<p>Developers should install SeisMIC from source code using GitHub’s <code class="docutils literal notranslate"><span class="pre">dev</span></code> branch.
+You can also use this version if you want to explore the latest goodies.</p>
 </div>
 </section>
 <section id="via-github">
@@ -520,10 +542,11 @@ or in the currently active environment by executing the last command.</p>
 </section>
 <section id="tutorial">
 <h2>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this heading">#</a></h2>
-<p>Along with the source code <strong>SeisMIC</strong> is distributed with a Jupyter notebook that provides you with an easy example on how
-to use the code in <cite>examples/tutorial.ipynb</cite>.</p>
-<p>The tutorial is meant as a “kick-start” for you.</p>
-<p>Aside from the tutorial, we recommend you continue reading this documentation.</p>
+<p>Along with the source code <strong>SeisMIC</strong> is distributed with two Jupyter notebooks that provide you with an easy example on how
+to use the code in <cite>examples</cite> on the <a class="reference external" href="https://github.com/PeterMakus/SeisMIC">GitHub page</a>.
+These tutorials will encompass more topics and functionalities than the documentation. If you simply want to see
+a web version of those tutorials, you can find it at <a class="reference external" href="./modules/tutorials">tutorials</a>.</p>
+<p>Aside from the tutorials, we recommend you continue reading this documentation.</p>
 </section>
 </section>
 
@@ -587,21 +610,6 @@ to use the code in <cite>examples/tutorial.ipynb</cite>.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tutorial">Tutorial</a></li>
 </ul>
   </nav></div>
-
-  <div class="sidebar-secondary-item">
-  
-  <div class="tocsection editthispage">
-    <a href="https://github.com/PeterMakus/SeisMIC/edit/main/docs/modules/get_started.rst">
-      <i class="fa-solid fa-pencil"></i>
-      
-      
-        
-          Edit on GitHub
-        
-      
-    </a>
-  </div>
-</div>
 
   <div class="sidebar-secondary-item">
   <div class="tocsection sourcelink">

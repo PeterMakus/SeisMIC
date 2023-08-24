@@ -108,8 +108,14 @@
   
   
   
+    
+    
+      
+    
+    
+    <img src="../../../_static/seismic_logo_small.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../../_static/seismic_logo_small.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
   
-    <p class="title logo__title"></p>
   
 </a></div>
     
@@ -179,6 +185,13 @@
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../../../modules/API.html">
                         SeisMIC API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
                       </a>
                     </li>
                 
@@ -327,6 +340,13 @@ document.write(`
                       </a>
                     </li>
                 
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
+                      </a>
+                    </li>
+                
                 </div>
             </div>
             
@@ -433,7 +453,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 15th June 2021 04:12:18 pm</span>
-<span class="sd">Last Modified: Thursday, 9th March 2023 04:04:40 pm</span>
+<span class="sd">Last Modified: Friday, 16th June 2023 03:54:21 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
@@ -450,7 +470,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">seismic.correlate.stats</span> <span class="kn">import</span> <span class="n">CorrStats</span>
 
 
-<div class="viewcode-block" id="DV"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.dv.DV">[docs]</a><span class="k">class</span> <span class="nc">DV</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="DV"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.dv.DV">[docs]</a><span class="k">class</span> <span class="nc">DV</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A simple object to save velocity changes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -522,7 +542,7 @@ document.write(`
                 <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span><span class="p">)</span><span class="o">.</span><span class="n">ctime</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span>
         <span class="k">return</span> <span class="n">out</span>
 
-<div class="viewcode-block" id="DV.save"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.dv.DV.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<div class="viewcode-block" id="DV.save"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.dv.DV.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Saves the dv object to a compressed numpy binary format. The DV can</span>
 <span class="sd">        later be read using :func:`~seismic.monitor.dv.read_dv`.</span>
@@ -559,13 +579,14 @@ document.write(`
         <span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span>
             <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">to_save</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="DV.plot"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.dv.DV.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span>
+<div class="viewcode-block" id="DV.plot"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.dv.DV.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">figure_file_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">mark_time</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normalize_simmat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">sim_mat_Clim</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">xlim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">ylim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">plot_scatter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">figsize</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">),</span> <span class="n">dpi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">144</span><span class="p">,</span>
-        <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">return_ax</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+        <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">return_ax</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;technical&#39;</span><span class="p">,</span>
+        <span class="n">dateformat</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1"> %b %y&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Plots the dv object into a *multi-panel-view* of `similarity matrix`</span>
@@ -604,14 +625,24 @@ document.write(`
 <span class="sd">            Defaults to False.</span>
 <span class="sd">            This overwrites any choice to save the figure.</span>
 <span class="sd">        :type return_ax: bool, optional</span>
+<span class="sd">        :param style: Style of the plot. Defaults to &#39;technical&#39;. The other</span>
+<span class="sd">            option would be &#39;publication&#39; (looks better but is less</span>
+<span class="sd">            informative).</span>
+<span class="sd">        :type style: str, optional</span>
+<span class="sd">        :param dateformat: Format of the date on the x-axis. Defaults to</span>
+<span class="sd">            &#39;%d %b %y&#39;.</span>
+<span class="sd">        :type dateformat: str, optional</span>
 <span class="sd">        :returns: If `return_ax` is set to True it returns fig and axes.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">plot_dv</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">,</span> <span class="n">figure_file_name</span><span class="p">,</span> <span class="n">mark_time</span><span class="p">,</span>
-            <span class="n">normalize_simmat</span><span class="p">,</span> <span class="n">sim_mat_Clim</span><span class="p">,</span> <span class="n">figsize</span><span class="p">,</span> <span class="n">dpi</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="n">xlim</span><span class="p">,</span> <span class="n">ylim</span><span class="o">=</span><span class="n">ylim</span><span class="p">,</span>
-            <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">plot_scatter</span><span class="o">=</span><span class="n">plot_scatter</span><span class="p">,</span> <span class="n">return_ax</span><span class="o">=</span><span class="n">return_ax</span><span class="p">)</span></div>
+            <span class="n">style</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="n">save_dir</span><span class="p">,</span>
+            <span class="n">figure_file_name</span><span class="o">=</span><span class="n">figure_file_name</span><span class="p">,</span> <span class="n">mark_time</span><span class="o">=</span><span class="n">mark_time</span><span class="p">,</span>
+            <span class="n">normalize_simmat</span><span class="o">=</span><span class="n">normalize_simmat</span><span class="p">,</span> <span class="n">sim_mat_Clim</span><span class="o">=</span><span class="n">sim_mat_Clim</span><span class="p">,</span>
+            <span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="n">xlim</span><span class="p">,</span> <span class="n">ylim</span><span class="o">=</span><span class="n">ylim</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">plot_scatter</span><span class="o">=</span><span class="n">plot_scatter</span><span class="p">,</span> <span class="n">return_ax</span><span class="o">=</span><span class="n">return_ax</span><span class="p">,</span>
+            <span class="n">dateformat</span><span class="o">=</span><span class="n">dateformat</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="DV.smooth_sim_mat"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.dv.DV.smooth_sim_mat">[docs]</a>    <span class="k">def</span> <span class="nf">smooth_sim_mat</span><span class="p">(</span>
+<div class="viewcode-block" id="DV.smooth_sim_mat"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.dv.DV.smooth_sim_mat">[docs]</a>    <span class="k">def</span> <span class="nf">smooth_sim_mat</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">win_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">exclude_corr_below</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Smoothes the similarity matrix along the correlation time axis.</span>
@@ -639,7 +670,7 @@ document.write(`
         <span class="k">return</span> <span class="bp">self</span></div></div>
 
 
-<div class="viewcode-block" id="read_dv"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.dv.read_dv">[docs]</a><span class="k">def</span> <span class="nf">read_dv</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
+<div class="viewcode-block" id="read_dv"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.dv.read_dv">[docs]</a><span class="k">def</span> <span class="nf">read_dv</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Reads a saved velocity change object from an **.npz** file.</span>
 

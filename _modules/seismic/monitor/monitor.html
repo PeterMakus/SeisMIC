@@ -108,8 +108,14 @@
   
   
   
+    
+    
+      
+    
+    
+    <img src="../../../_static/seismic_logo_small.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../../_static/seismic_logo_small.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
   
-    <p class="title logo__title"></p>
   
 </a></div>
     
@@ -179,6 +185,13 @@
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../../../modules/API.html">
                         SeisMIC API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
                       </a>
                     </li>
                 
@@ -327,6 +340,13 @@ document.write(`
                       </a>
                     </li>
                 
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
+                      </a>
+                    </li>
+                
                 </div>
             </div>
             
@@ -433,7 +453,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Thursday, 3rd June 2021 04:15:57 pm</span>
-<span class="sd">Last Modified: Thursday, 9th March 2023 03:59:12 pm</span>
+<span class="sd">Last Modified: Thursday, 24th August 2023 10:45:25 am</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">import</span> <span class="nn">json</span>
@@ -456,7 +476,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">seismic.utils.miic_utils</span> <span class="kn">import</span> <span class="n">log_lvl</span>
 
 
-<div class="viewcode-block" id="Monitor"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.Monitor">[docs]</a><span class="k">class</span> <span class="nc">Monitor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="Monitor"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.Monitor">[docs]</a><span class="k">class</span> <span class="nc">Monitor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Object that handles the computation of seismic velocity changes.</span>
@@ -481,6 +501,11 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">indir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
             <span class="n">options</span><span class="p">[</span><span class="s1">&#39;proj_dir&#39;</span><span class="p">],</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;co&#39;</span><span class="p">][</span><span class="s1">&#39;subdir&#39;</span><span class="p">]</span>
         <span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_comps_separately</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;save_comps_separately&#39;</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="c1"># If it&#39;s not specified it&#39;s probably an old params.yaml</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_comps_separately</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="c1"># init MPI</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">comm</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
@@ -579,7 +604,7 @@ document.write(`
                     <span class="n">netlist</span><span class="p">,</span> <span class="n">statlist</span><span class="p">)]))</span>
         <span class="k">return</span> <span class="n">netlist</span><span class="p">,</span> <span class="n">statlist</span><span class="p">,</span> <span class="n">infiles</span>
 
-<div class="viewcode-block" id="Monitor.compute_velocity_change"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.Monitor.compute_velocity_change">[docs]</a>    <span class="k">def</span> <span class="nf">compute_velocity_change</span><span class="p">(</span>
+<div class="viewcode-block" id="Monitor.compute_velocity_change"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.Monitor.compute_velocity_change">[docs]</a>    <span class="k">def</span> <span class="nf">compute_velocity_change</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">corr_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
             <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ref_trcs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -742,7 +767,7 @@ document.write(`
                 <span class="n">save_dir</span><span class="o">=</span><span class="n">savedir</span><span class="p">,</span> <span class="n">figure_file_name</span><span class="o">=</span><span class="n">fname</span><span class="p">,</span>
                 <span class="n">normalize_simmat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sim_mat_Clim</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="Monitor.compute_velocity_change_bulk"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.Monitor.compute_velocity_change_bulk">[docs]</a>    <span class="k">def</span> <span class="nf">compute_velocity_change_bulk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Monitor.compute_velocity_change_bulk"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.Monitor.compute_velocity_change_bulk">[docs]</a>    <span class="k">def</span> <span class="nf">compute_velocity_change_bulk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute the velocity change for all correlations using MPI.</span>
 <span class="sd">        The parameters for the correlation defined in the *yaml* file will be</span>
@@ -764,7 +789,7 @@ document.write(`
         <span class="k">else</span><span class="p">:</span>
             <span class="n">plist</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">plist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">plist</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">pmap</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">plist</span><span class="p">))</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">psize</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">plist</span><span class="p">)</span>
+        <span class="n">pmap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">plist</span><span class="p">))</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">psize</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">plist</span><span class="p">)</span>
         <span class="n">pmap</span> <span class="o">=</span> <span class="n">pmap</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
         <span class="n">ind</span> <span class="o">=</span> <span class="n">pmap</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span>
         <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">plist</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)[</span><span class="n">ind</span><span class="p">]</span>
@@ -783,7 +808,7 @@ document.write(`
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1"> for file </span><span class="si">{</span><span class="n">corr_file</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Monitor.compute_components_average"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.Monitor.compute_components_average">[docs]</a>    <span class="k">def</span> <span class="nf">compute_components_average</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;AutoComponents&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="Monitor.compute_components_average"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.Monitor.compute_components_average">[docs]</a>    <span class="k">def</span> <span class="nf">compute_components_average</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;AutoComponents&#39;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Averages the Similarity matrix of different velocity changes in</span>
 <span class="sd">        the whole dv folder. Based upon those values, new dvs and correlations</span>
@@ -895,14 +920,14 @@ document.write(`
                     <span class="n">save_dir</span><span class="o">=</span><span class="n">savedir</span><span class="p">,</span> <span class="n">figure_file_name</span><span class="o">=</span><span class="n">fname</span><span class="p">,</span>
                     <span class="n">normalize_simmat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sim_mat_Clim</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="Monitor.compute_waveform_coherency_bulk"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.Monitor.compute_waveform_coherency_bulk">[docs]</a>    <span class="k">def</span> <span class="nf">compute_waveform_coherency_bulk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Monitor.compute_waveform_coherence_bulk"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.Monitor.compute_waveform_coherence_bulk">[docs]</a>    <span class="k">def</span> <span class="nf">compute_waveform_coherence_bulk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute the WFC for all specified (params file) correlations using MPI.</span>
 <span class="sd">        The parameters for the correlation defined in the *yaml* file will be</span>
 <span class="sd">        used.</span>
 
 <span class="sd">        This function will just call</span>
-<span class="sd">        :meth:`~seismic.monitor.monitor.Monitor.compute_waveform_coherency`</span>
+<span class="sd">        :meth:`~seismic.monitor.monitor.Monitor.compute_waveform_coherence`</span>
 <span class="sd">        several times.</span>
 <span class="sd">        Subsequently, the average of the different component combinations will</span>
 <span class="sd">        be computed.</span>
@@ -919,7 +944,7 @@ document.write(`
         <span class="k">else</span><span class="p">:</span>
             <span class="n">plist</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">plist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">plist</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">pmap</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">plist</span><span class="p">))</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">psize</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">plist</span><span class="p">)</span>
+        <span class="n">pmap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">plist</span><span class="p">))</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">psize</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">plist</span><span class="p">)</span>
         <span class="n">pmap</span> <span class="o">=</span> <span class="n">pmap</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
         <span class="n">ind</span> <span class="o">=</span> <span class="n">pmap</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span>
         <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">plist</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)[</span><span class="n">ind</span><span class="p">]</span>
@@ -928,11 +953,12 @@ document.write(`
         <span class="n">wfcl</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">ind</span><span class="p">):</span>
             <span class="n">corr_file</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="n">cha</span> <span class="o">=</span> <span class="n">plist</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">wfcl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">compute_waveform_coherency</span><span class="p">(</span>
-                    <span class="n">corr_file</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="n">cha</span><span class="p">))</span>
-            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">wfc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_waveform_coherence</span><span class="p">(</span>
+                    <span class="n">corr_file</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="n">cha</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">wfcl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wfc</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 
         <span class="n">outdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;proj_dir&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;subdir&#39;</span><span class="p">])</span>
@@ -942,32 +968,47 @@ document.write(`
         <span class="n">wfcl</span> <span class="o">=</span> <span class="p">[</span><span class="n">j</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">wfclu</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">i</span><span class="p">]</span>
         <span class="k">del</span> <span class="n">wfclu</span>
 
+        <span class="c1"># Find unique averaging groups</span>
         <span class="n">wfc_avl</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">wfcl</span><span class="p">):</span>
-            <span class="n">net</span> <span class="o">=</span> <span class="n">wfcl</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span>
-            <span class="n">stat</span> <span class="o">=</span> <span class="n">wfcl</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span>
-            <span class="c1"># find identical components</span>
-            <span class="n">wfc_avl</span> <span class="o">=</span> <span class="p">[</span><span class="n">wfc</span> <span class="k">for</span> <span class="n">wfc</span> <span class="ow">in</span> <span class="n">wfcl</span> <span class="k">if</span> <span class="nb">all</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">wfc</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span> <span class="o">==</span> <span class="n">net</span><span class="p">,</span> <span class="n">wfc</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span> <span class="o">==</span> <span class="n">stat</span><span class="p">])]</span>
-            <span class="c1"># remove original from list</span>
-            <span class="nb">list</span><span class="p">(</span><span class="n">wfcl</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ii</span><span class="p">)</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="p">(</span><span class="n">wfcl</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">wfc</span><span class="p">)</span> <span class="k">for</span> <span class="n">wfc</span> <span class="ow">in</span> <span class="n">wfc_avl</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">wfc</span> <span class="ow">in</span> <span class="n">wfcl</span><span class="p">:</span>
+            <span class="n">wfc_avl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">wfc</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="p">,</span> <span class="n">wfc</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="p">,</span>
+                    <span class="n">wfc</span><span class="o">.</span><span class="n">wfc_processing</span><span class="p">[</span><span class="s1">&#39;freq_min&#39;</span><span class="p">],</span>
+                    <span class="n">wfc</span><span class="o">.</span><span class="n">wfc_processing</span><span class="p">[</span><span class="s1">&#39;freq_max&#39;</span><span class="p">],</span>
+                    <span class="n">wfc</span><span class="o">.</span><span class="n">wfc_processing</span><span class="p">[</span><span class="s1">&#39;tw_start&#39;</span><span class="p">],</span>
+                    <span class="n">wfc</span><span class="o">.</span><span class="n">wfc_processing</span><span class="p">[</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]))</span>
+        <span class="n">wfc_avl</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">wfc_avl</span><span class="p">))</span>
+        <span class="n">wfcl_sub</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">avl</span> <span class="ow">in</span> <span class="n">wfc_avl</span><span class="p">:</span>
+            <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="n">fmin</span><span class="p">,</span> <span class="n">fmax</span><span class="p">,</span> <span class="n">tw_start</span><span class="p">,</span> <span class="n">tw_len</span> <span class="o">=</span> <span class="n">avl</span>
+            <span class="n">wfcl_sub</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">wfc</span> <span class="k">for</span> <span class="n">wfc</span> <span class="ow">in</span> <span class="n">wfcl</span> <span class="k">if</span> <span class="nb">all</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">wfc</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span> <span class="o">==</span> <span class="n">net</span><span class="p">,</span> <span class="n">wfc</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span> <span class="o">==</span> <span class="n">stat</span><span class="p">,</span>
+                        <span class="n">wfc</span><span class="o">.</span><span class="n">wfc_processing</span><span class="p">[</span><span class="s1">&#39;freq_min&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">fmin</span><span class="p">,</span>
+                        <span class="n">wfc</span><span class="o">.</span><span class="n">wfc_processing</span><span class="p">[</span><span class="s1">&#39;freq_max&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">fmax</span><span class="p">,</span>
+                        <span class="n">wfc</span><span class="o">.</span><span class="n">wfc_processing</span><span class="p">[</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">tw_start</span><span class="p">,</span>
+                        <span class="n">wfc</span><span class="o">.</span><span class="n">wfc_processing</span><span class="p">[</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">tw_len</span>
+                    <span class="p">])])</span>
+        <span class="k">for</span> <span class="n">wfc_avl</span> <span class="ow">in</span> <span class="n">wfcl_sub</span><span class="p">:</span>
             <span class="n">wfc</span> <span class="o">=</span> <span class="n">average_components_wfc</span><span class="p">(</span><span class="n">wfc_avl</span><span class="p">)</span>
-
             <span class="c1"># Write files</span>
             <span class="n">outf</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outdir</span><span class="p">,</span> <span class="s1">&#39;WFC-</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">.f</span><span class="si">%a</span><span class="s1">-</span><span class="si">%a</span><span class="s1">.tw</span><span class="si">%a</span><span class="s1">-</span><span class="si">%a</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
                 <span class="n">wfc</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="p">,</span> <span class="n">wfc</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="p">,</span> <span class="n">wfc</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span>
-                <span class="n">wfc</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">freq_min</span><span class="p">,</span> <span class="n">wfc</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">freq_max</span><span class="p">,</span> <span class="n">wfc</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">tw_start</span><span class="p">,</span>
-                <span class="n">wfc</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">tw_len</span><span class="p">))</span>
+                <span class="n">wfc</span><span class="o">.</span><span class="n">wfc_processing</span><span class="p">[</span><span class="s1">&#39;freq_min&#39;</span><span class="p">],</span>
+                <span class="n">wfc</span><span class="o">.</span><span class="n">wfc_processing</span><span class="p">[</span><span class="s1">&#39;freq_max&#39;</span><span class="p">],</span>
+                <span class="n">wfc</span><span class="o">.</span><span class="n">wfc_processing</span><span class="p">[</span><span class="s1">&#39;tw_start&#39;</span><span class="p">],</span>
+                <span class="n">wfc</span><span class="o">.</span><span class="n">wfc_processing</span><span class="p">[</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]))</span>
             <span class="n">wfc</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">outf</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Monitor.compute_waveform_coherency"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.Monitor.compute_waveform_coherency">[docs]</a>    <span class="k">def</span> <span class="nf">compute_waveform_coherency</span><span class="p">(</span>
+<div class="viewcode-block" id="Monitor.compute_waveform_coherence"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.Monitor.compute_waveform_coherence">[docs]</a>    <span class="k">def</span> <span class="nf">compute_waveform_coherence</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">corr_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
             <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WFC</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Computes the waveform coherency corresponding to one correlation (i.e.,</span>
+<span class="sd">        Computes the waveform coherence corresponding to one correlation (i.e.,</span>
 <span class="sd">        one single file).</span>
 
-<span class="sd">        The waveform coherency can be used as a measure of stability of</span>
+<span class="sd">        The waveform coherence can be used as a measure of stability of</span>
 <span class="sd">        a certain correlation. See Steinmann, et. al. (2021) for details.</span>
 
 <span class="sd">        :param corr_file: File to compute the wfc from</span>
@@ -981,11 +1022,11 @@ document.write(`
 <span class="sd">        :param channel: Channel combination code.</span>
 <span class="sd">        :type channel: str</span>
 <span class="sd">        :raises ValueError: For short correlations</span>
-<span class="sd">        :return: An object holding the waveform coherency</span>
+<span class="sd">        :return: An object holding the waveform coherence</span>
 <span class="sd">        :rtype: :class:`~seismic.monitor.wfc.WFC`</span>
 
 <span class="sd">        .. seealso:: To compute wfc for several correlations use:</span>
-<span class="sd">            :meth:`~seismic.monitor.monitor.Monitor.compute.waveform_coherency\</span>
+<span class="sd">            :meth:`~seismic.monitor.monitor.Monitor.compute.waveform_coherence\</span>
 <span class="sd">            _bulk`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Computing wfc for file: </span><span class="si">%s</span><span class="s1"> and channel: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
@@ -1009,58 +1050,98 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;date_inc&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;win_len&#39;</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Timelist created.&#39;</span><span class="p">)</span>
         <span class="n">cb</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">starttimes</span><span class="p">,</span> <span class="n">endtimes</span><span class="p">)</span>
-        <span class="n">cb</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;freq_min&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;freq_max&#39;</span><span class="p">]))</span>
 
-        <span class="c1"># Preprocessing on the correlation bulk</span>
-        <span class="k">if</span> <span class="s1">&#39;preprocessing&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">]:</span>
-            <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;preprocessing&#39;</span><span class="p">]:</span>
-                <span class="n">f</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="n">func</span><span class="p">[</span><span class="s1">&#39;function&#39;</span><span class="p">])</span>
-                <span class="n">cb</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="o">**</span><span class="n">func</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">])</span>
+        <span class="c1"># Allow lists so the computation does not have to be started x times</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;freq_min&#39;</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;freq_min&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;freq_min&#39;</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;freq_max&#39;</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;freq_max&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;freq_max&#39;</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;freq_min&#39;</span><span class="p">])</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;freq_max&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;freq_min and freq_max must be of same length.&#39;</span><span class="p">)</span>
 
-        <span class="c1"># Now, we make a copy of the cm to be trimmed</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">cbt</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span>
-                <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span>
-                    <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]),</span>
-                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span>
-                    <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">cbt</span> <span class="o">=</span> <span class="n">cb</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;dv&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">end_lag</span> \
-                <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">],</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">])</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;tw_start and tw_len must be of same length or tw_len must be&#39;</span>
+                <span class="s1">&#39; a single value.&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">])</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-            <span class="s1">&#39;Preprocessing finished.</span><span class="se">\n</span><span class="s1">Extracting reference trace...&#39;</span><span class="p">)</span>
+        <span class="n">cb_bac</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="n">cbt</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">20</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;CorrBulk extremely short.&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">fmin</span><span class="p">,</span> <span class="n">fmax</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;freq_min&#39;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;freq_max&#39;</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="n">fmin</span> <span class="o">&gt;=</span> <span class="n">fmax</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;freq_min must be smaller than freq_max.&#39;</span><span class="p">)</span>
+            <span class="n">cb</span><span class="o">.</span><span class="n">filter</span><span class="p">((</span><span class="n">fmin</span><span class="p">,</span> <span class="n">fmax</span><span class="p">))</span>
 
-        <span class="n">tr</span> <span class="o">=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">extract_multi_trace</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;dt_ref&#39;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Reference trace created.</span><span class="se">\n</span><span class="s1">Computing WFC...&#39;</span><span class="p">)</span>
+            <span class="c1"># Preprocessing on the correlation bulk</span>
+            <span class="k">if</span> <span class="s1">&#39;preprocessing&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">]:</span>
+                <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;preprocessing&#39;</span><span class="p">]:</span>
+                    <span class="n">f</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="n">func</span><span class="p">[</span><span class="s1">&#39;function&#39;</span><span class="p">])</span>
+                    <span class="n">cb</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="o">**</span><span class="n">func</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">])</span>
 
-        <span class="c1"># Compute time window</span>
-        <span class="n">tw</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">cbt</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">],</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span>
-                <span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">])</span><span class="o">*</span><span class="n">cbt</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)]</span>
-        <span class="n">wfc</span> <span class="o">=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">wfc</span><span class="p">(</span>
-            <span class="n">tr</span><span class="p">,</span> <span class="n">tw</span><span class="p">,</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">],</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;freq_min&#39;</span><span class="p">],</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;freq_max&#39;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;WFC computed.</span><span class="se">\n</span><span class="s1">Averaging over time axis...&#39;</span><span class="p">)</span>
-        <span class="c1"># Compute the average over the whole time window</span>
-        <span class="n">wfc</span><span class="o">.</span><span class="n">compute_average</span><span class="p">()</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;save_comps&#39;</span><span class="p">]:</span>
-            <span class="n">outf</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outdir</span><span class="p">,</span> <span class="s1">&#39;WFC-</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">.f</span><span class="si">%a</span><span class="s1">-</span><span class="si">%a</span><span class="s1">.tw</span><span class="si">%a</span><span class="s1">-</span><span class="si">%a</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
-                <span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">wfc</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">freq_min</span><span class="p">,</span>
-                <span class="n">wfc</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">freq_max</span><span class="p">,</span> <span class="n">wfc</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">tw_start</span><span class="p">,</span> <span class="n">wfc</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">tw_len</span><span class="p">))</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Writing WFC to </span><span class="si">{</span><span class="n">outf</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-            <span class="n">wfc</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">outf</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">wfc</span></div></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Preprocessing finished. Computing wfc for fmin: </span><span class="si">{</span><span class="n">fmin</span><span class="si">}</span><span class="s1"> &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;and fmax: </span><span class="si">{</span><span class="n">fmax</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s2">&quot;wfc&quot;</span><span class="p">][</span><span class="s2">&quot;tw_start&quot;</span><span class="p">])</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;time windows.&#39;</span><span class="p">)</span>
+
+            <span class="c1"># Now, we loop over the time windows</span>
+            <span class="k">for</span> <span class="n">tw_start</span><span class="p">,</span> <span class="n">tw_len</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_start&#39;</span><span class="p">],</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># Now, we make a copy of the cm to be trimmed</span>
+                    <span class="n">cbt</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span>
+                        <span class="o">-</span><span class="p">(</span><span class="n">tw_start</span> <span class="o">+</span> <span class="n">tw_len</span><span class="p">),</span> <span class="n">tw_start</span> <span class="o">+</span> <span class="n">tw_len</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">cbt</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">20</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;CorrBulk extremely short.&#39;</span><span class="p">)</span>
+
+                    <span class="n">tr</span> <span class="o">=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">extract_multi_trace</span><span class="p">(</span>
+                        <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;dt_ref&#39;</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="s1">&#39;Reference trace created.</span><span class="se">\n</span><span class="s1">Computing WFC...&#39;</span><span class="p">)</span>
+
+                    <span class="c1"># Compute time window</span>
+                    <span class="n">tw</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+                        <span class="n">tw_start</span><span class="o">*</span><span class="n">cbt</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">],</span>
+                        <span class="p">(</span><span class="n">tw_start</span><span class="o">+</span><span class="n">tw_len</span><span class="p">)</span><span class="o">*</span><span class="n">cbt</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)]</span>
+                    <span class="n">wfc</span> <span class="o">=</span> <span class="n">cbt</span><span class="o">.</span><span class="n">wfc</span><span class="p">(</span>
+                        <span class="n">tr</span><span class="p">,</span> <span class="n">tw</span><span class="p">,</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">tw_start</span><span class="p">,</span> <span class="n">tw_len</span><span class="p">,</span> <span class="n">fmin</span><span class="p">,</span> <span class="n">fmax</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="s1">&#39;WFC computed.</span><span class="se">\n</span><span class="s1">Averaging over time axis...&#39;</span><span class="p">)</span>
+                    <span class="c1"># Compute the average over the whole time window</span>
+                    <span class="n">wfc</span><span class="o">.</span><span class="n">compute_average</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;wfc&#39;</span><span class="p">][</span><span class="s1">&#39;save_comps&#39;</span><span class="p">]:</span>
+                        <span class="n">outf</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                            <span class="n">outdir</span><span class="p">,</span> <span class="s1">&#39;WFC-</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">.f</span><span class="si">%a</span><span class="s1">-</span><span class="si">%a</span><span class="s1">.tw</span><span class="si">%a</span><span class="s1">-</span><span class="si">%a</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                                <span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span>
+                                <span class="n">fmin</span><span class="p">,</span> <span class="n">fmax</span><span class="p">,</span> <span class="n">tw_start</span><span class="p">,</span> <span class="n">tw_len</span><span class="p">))</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Writing WFC to </span><span class="si">{</span><span class="n">outf</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                        <span class="n">wfc</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">outf</span><span class="p">)</span>
+                    <span class="k">yield</span> <span class="n">wfc</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="s1">&#39;Error computing WFC for fmin: &#39;</span>
+                        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">fmin</span><span class="si">}</span><span class="s1"> and fmax: </span><span class="si">{</span><span class="n">fmax</span><span class="si">}</span><span class="s1">&#39;</span>
+                        <span class="sa">f</span><span class="s1">&#39; and tw_start: </span><span class="si">{</span><span class="n">tw_start</span><span class="si">}</span><span class="s1"> and tw_len: </span><span class="si">{</span><span class="n">tw_len</span><span class="si">}</span><span class="s1">. &#39;</span>
+                        <span class="sa">f</span><span class="s1">&#39;Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">cb</span> <span class="o">=</span> <span class="n">cb_bac</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div></div>
 
 
-<div class="viewcode-block" id="make_time_list"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.make_time_list">[docs]</a><span class="k">def</span> <span class="nf">make_time_list</span><span class="p">(</span>
+<div class="viewcode-block" id="make_time_list"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.make_time_list">[docs]</a><span class="k">def</span> <span class="nf">make_time_list</span><span class="p">(</span>
     <span class="n">start_date</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">end_date</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">date_inc</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">win_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1098,7 +1179,8 @@ document.write(`
     <span class="k">return</span> <span class="n">starttimes</span><span class="p">,</span> <span class="n">endtimes</span></div>
 
 
-<div class="viewcode-block" id="corr_find_filter"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.corr_find_filter">[docs]</a><span class="k">def</span> <span class="nf">corr_find_filter</span><span class="p">(</span><span class="n">indir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">net</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+<div class="viewcode-block" id="corr_find_filter"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.corr_find_filter">[docs]</a><span class="k">def</span> <span class="nf">corr_find_filter</span><span class="p">(</span>
+    <span class="n">indir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">net</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    1. Finds the files of available correlations.</span>
@@ -1117,6 +1199,7 @@ document.write(`
     <span class="n">statlist</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">infiles</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">indir</span><span class="p">,</span> <span class="s1">&#39;*-*.*-*.h5&#39;</span><span class="p">)):</span>
+        <span class="n">matched</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="n">f</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
         <span class="n">split</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
 
@@ -1126,15 +1209,25 @@ document.write(`
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">net</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="n">nsplit</span><span class="p">,</span> <span class="n">net</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="n">nsplit</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">net</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">],</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
-                <span class="n">nsplit</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">nsplit</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">net</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">]:</span>
-            <span class="k">continue</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">net</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="c1"># account for the case of wildcards in the network list</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">net</span><span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">nsplit</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">==</span> <span class="n">nsplit</span><span class="p">:</span>
+                    <span class="n">matched</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">break</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">matched</span><span class="p">:</span>
+                <span class="k">continue</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">net</span><span class="p">[</span><span class="s1">&#39;station&#39;</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="n">ssplit</span><span class="p">,</span> <span class="n">net</span><span class="p">[</span><span class="s1">&#39;station&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="n">ssplit</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">net</span><span class="p">[</span><span class="s1">&#39;station&#39;</span><span class="p">],</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
-                <span class="n">ssplit</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">ssplit</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">net</span><span class="p">[</span><span class="s1">&#39;station&#39;</span><span class="p">]:</span>
-            <span class="k">continue</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">net</span><span class="p">[</span><span class="s1">&#39;station&#39;</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="c1"># account for the case of wildcards in the station list</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">net</span><span class="p">[</span><span class="s1">&#39;station&#39;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">ssplit</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="o">==</span> <span class="n">ssplit</span><span class="p">:</span>
+                    <span class="n">matched</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">break</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">matched</span><span class="p">:</span>
+                <span class="k">continue</span>
 
         <span class="n">netlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">split</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="n">statlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">split</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
@@ -1142,7 +1235,7 @@ document.write(`
     <span class="k">return</span> <span class="n">netlist</span><span class="p">,</span> <span class="n">statlist</span><span class="p">,</span> <span class="n">infiles</span></div>
 
 
-<div class="viewcode-block" id="correct_dv_shift"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.correct_dv_shift">[docs]</a><span class="k">def</span> <span class="nf">correct_dv_shift</span><span class="p">(</span>
+<div class="viewcode-block" id="correct_dv_shift"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.correct_dv_shift">[docs]</a><span class="k">def</span> <span class="nf">correct_dv_shift</span><span class="p">(</span>
     <span class="n">dv0</span><span class="p">:</span> <span class="n">DV</span><span class="p">,</span> <span class="n">dv1</span><span class="p">:</span> <span class="n">DV</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span>
         <span class="n">n_overlap</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">DV</span><span class="p">,</span> <span class="n">DV</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1227,7 +1320,7 @@ document.write(`
     <span class="k">return</span> <span class="n">dv0</span><span class="p">,</span> <span class="n">dv1</span></div>
 
 
-<div class="viewcode-block" id="correct_time_shift_several"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.correct_time_shift_several">[docs]</a><span class="k">def</span> <span class="nf">correct_time_shift_several</span><span class="p">(</span><span class="n">dvs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DV</span><span class="p">],</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n_overlap</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<div class="viewcode-block" id="correct_time_shift_several"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.correct_time_shift_several">[docs]</a><span class="k">def</span> <span class="nf">correct_time_shift_several</span><span class="p">(</span><span class="n">dvs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DV</span><span class="p">],</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n_overlap</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Suppose you have a number of dv/v time series from the same location,</span>
 <span class="sd">    but station codes changed several times. To stitch these together,</span>
@@ -1275,7 +1368,7 @@ document.write(`
                     <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">dv_r</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="average_components_mem_save"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.average_components_mem_save">[docs]</a><span class="k">def</span> <span class="nf">average_components_mem_save</span><span class="p">(</span>
+<div class="viewcode-block" id="average_components_mem_save"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.average_components_mem_save">[docs]</a><span class="k">def</span> <span class="nf">average_components_mem_save</span><span class="p">(</span>
         <span class="n">dvs</span><span class="p">:</span> <span class="n">Generator</span><span class="p">[</span><span class="n">DV</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">save_scatter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Averages the Similariy matrix of the DV objects. Based on those,</span>
@@ -1356,7 +1449,7 @@ document.write(`
     <span class="k">return</span> <span class="n">dvout</span></div>
 
 
-<div class="viewcode-block" id="average_components"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.average_components">[docs]</a><span class="k">def</span> <span class="nf">average_components</span><span class="p">(</span>
+<div class="viewcode-block" id="average_components"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.average_components">[docs]</a><span class="k">def</span> <span class="nf">average_components</span><span class="p">(</span>
     <span class="n">dvs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DV</span><span class="p">],</span> <span class="n">save_scatter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">correct_shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">correct_shift_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span>
         <span class="n">correct_shift_overlap</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
@@ -1437,7 +1530,7 @@ document.write(`
     <span class="k">return</span> <span class="n">dvout</span></div>
 
 
-<div class="viewcode-block" id="average_dvs_by_coords"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.average_dvs_by_coords">[docs]</a><span class="k">def</span> <span class="nf">average_dvs_by_coords</span><span class="p">(</span>
+<div class="viewcode-block" id="average_dvs_by_coords"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.average_dvs_by_coords">[docs]</a><span class="k">def</span> <span class="nf">average_dvs_by_coords</span><span class="p">(</span>
     <span class="n">dvs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DV</span><span class="p">],</span> <span class="n">lat</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">lon</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
         <span class="n">el</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">1e6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">),</span> <span class="n">return_std</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1490,7 +1583,7 @@ document.write(`
     <span class="k">return</span> <span class="n">av_dv</span></div>
 
 
-<div class="viewcode-block" id="average_components_wfc"><a class="viewcode-back" href="../../../modules/API.html#seismic.monitor.monitor.average_components_wfc">[docs]</a><span class="k">def</span> <span class="nf">average_components_wfc</span><span class="p">(</span><span class="n">wfcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">WFC</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">WFC</span><span class="p">:</span>
+<div class="viewcode-block" id="average_components_wfc"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.average_components_wfc">[docs]</a><span class="k">def</span> <span class="nf">average_components_wfc</span><span class="p">(</span><span class="n">wfcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">WFC</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">WFC</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Averages the Similariy matrix of the three DV objects. Based on those,</span>
 <span class="sd">    it computes a new dv value and a new correlation value.</span>
@@ -1506,14 +1599,15 @@ document.write(`
 <span class="sd">    :rtype: DV</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">stats</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">wfcs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
+    <span class="n">wfcp</span> <span class="o">=</span> <span class="n">wfcs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">wfc_processing</span>
     <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;av&#39;</span>
     <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;tw_start&#39;</span><span class="p">,</span> <span class="s1">&#39;tw_len&#39;</span><span class="p">,</span> <span class="s1">&#39;freq_min&#39;</span><span class="p">,</span> <span class="s1">&#39;freq_max&#39;</span><span class="p">]:</span>
-        <span class="k">if</span> <span class="nb">any</span><span class="p">((</span><span class="n">stats</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">!=</span> <span class="n">wfc</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">wfc</span> <span class="ow">in</span> <span class="n">wfcs</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">((</span><span class="n">wfcp</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">!=</span> <span class="n">wfc</span><span class="o">.</span><span class="n">wfc_processing</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">wfc</span> <span class="ow">in</span> <span class="n">wfcs</span><span class="p">)):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> is not allowed to differ.&#39;</span> <span class="o">%</span> <span class="n">k</span><span class="p">)</span>
     <span class="n">meandict</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">wfcs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
         <span class="n">meandict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">([</span><span class="n">wfc</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">wfc</span> <span class="ow">in</span> <span class="n">wfcs</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">wfcout</span> <span class="o">=</span> <span class="n">WFC</span><span class="p">(</span><span class="n">meandict</span><span class="p">,</span> <span class="n">stats</span><span class="p">)</span>
+    <span class="n">wfcout</span> <span class="o">=</span> <span class="n">WFC</span><span class="p">(</span><span class="n">meandict</span><span class="p">,</span> <span class="n">stats</span><span class="p">,</span> <span class="n">wfcp</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">wfcout</span></div>
 </pre></div>
 

@@ -108,8 +108,14 @@
   
   
   
+    
+    
+      
+    
+    
+    <img src="../../../_static/seismic_logo_small.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../../_static/seismic_logo_small.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
   
-    <p class="title logo__title"></p>
   
 </a></div>
     
@@ -179,6 +185,13 @@
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../../../modules/API.html">
                         SeisMIC API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
                       </a>
                     </li>
                 
@@ -327,6 +340,13 @@ document.write(`
                       </a>
                     </li>
                 
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
+                      </a>
+                    </li>
+                
                 </div>
             </div>
             
@@ -433,7 +453,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 19th July 2021 11:37:54 am</span>
-<span class="sd">Last Modified: Tuesday, 7th March 2023 11:58:04 am</span>
+<span class="sd">Last Modified: Monday, 21st August 2023 12:21:53 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span>
@@ -449,7 +469,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">seismic.plot.plot_utils</span> <span class="kn">import</span> <span class="n">set_mpl_params</span><span class="p">,</span> <span class="n">remove_topright</span><span class="p">,</span> <span class="n">remove_all</span>
 
 
-<div class="viewcode-block" id="plot_ctr"><a class="viewcode-back" href="../../../modules/API.html#seismic.plot.plot_correlation.plot_ctr">[docs]</a><span class="k">def</span> <span class="nf">plot_ctr</span><span class="p">(</span>
+<div class="viewcode-block" id="plot_ctr"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.plot.plot_correlation.plot_ctr">[docs]</a><span class="k">def</span> <span class="nf">plot_ctr</span><span class="p">(</span>
     <span class="n">corr</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">tlim</span><span class="p">:</span> <span class="nb">list</span> <span class="ow">or</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">outputdir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">clean</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">:</span>
     <span class="n">set_mpl_params</span><span class="p">()</span>
@@ -521,7 +541,7 @@ document.write(`
     <span class="k">return</span> <span class="n">ax</span></div>
 
 
-<div class="viewcode-block" id="plot_cst"><a class="viewcode-back" href="../../../modules/API.html#seismic.plot.plot_correlation.plot_cst">[docs]</a><span class="k">def</span> <span class="nf">plot_cst</span><span class="p">(</span>
+<div class="viewcode-block" id="plot_cst"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.plot.plot_correlation.plot_cst">[docs]</a><span class="k">def</span> <span class="nf">plot_cst</span><span class="p">(</span>
     <span class="n">cst</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">sort_by</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;corr_start&#39;</span><span class="p">,</span>
     <span class="n">timelimits</span><span class="p">:</span> <span class="nb">list</span> <span class="ow">or</span> <span class="nb">tuple</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">ylimits</span><span class="p">:</span> <span class="nb">list</span> <span class="ow">or</span> <span class="nb">tuple</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">scalingfactor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
@@ -622,7 +642,7 @@ document.write(`
     <span class="k">return</span> <span class="n">ax</span></div>
 
 
-<div class="viewcode-block" id="plot_corr_bulk"><a class="viewcode-back" href="../../../modules/API.html#seismic.plot.plot_correlation.plot_corr_bulk">[docs]</a><span class="k">def</span> <span class="nf">plot_corr_bulk</span><span class="p">(</span>
+<div class="viewcode-block" id="plot_corr_bulk"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.plot.plot_correlation.plot_corr_bulk">[docs]</a><span class="k">def</span> <span class="nf">plot_corr_bulk</span><span class="p">(</span>
     <span class="n">corr_bulk</span><span class="p">,</span>
     <span class="n">timelimits</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">ylimits</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -689,7 +709,7 @@ document.write(`
     <span class="k">return</span> <span class="n">ax</span></div>
 
 
-<div class="viewcode-block" id="sect_plot_corr_start"><a class="viewcode-back" href="../../../modules/API.html#seismic.plot.plot_correlation.sect_plot_corr_start">[docs]</a><span class="k">def</span> <span class="nf">sect_plot_corr_start</span><span class="p">(</span>
+<div class="viewcode-block" id="sect_plot_corr_start"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.plot.plot_correlation.sect_plot_corr_start">[docs]</a><span class="k">def</span> <span class="nf">sect_plot_corr_start</span><span class="p">(</span>
     <span class="n">cst</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span> <span class="n">scalingfactor</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">linewidth</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">ctr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cst</span><span class="p">):</span>
@@ -710,7 +730,7 @@ document.write(`
     <span class="k">return</span> <span class="n">times</span></div>
 
 
-<div class="viewcode-block" id="heat_plot_corr_start"><a class="viewcode-back" href="../../../modules/API.html#seismic.plot.plot_correlation.heat_plot_corr_start">[docs]</a><span class="k">def</span> <span class="nf">heat_plot_corr_start</span><span class="p">(</span>
+<div class="viewcode-block" id="heat_plot_corr_start"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.plot.plot_correlation.heat_plot_corr_start">[docs]</a><span class="k">def</span> <span class="nf">heat_plot_corr_start</span><span class="p">(</span>
         <span class="n">cst</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span> <span class="n">cmap</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">vmin</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">vmax</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">cst</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span> <span class="n">cst</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="p">))</span>
     <span class="c1"># y grid</span>
@@ -723,7 +743,7 @@ document.write(`
         <span class="n">times</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">data</span><span class="p">,</span> <span class="n">shading</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span>
         <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span>
-        <span class="n">ds</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;correlation coefficient&#39;</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">.6</span><span class="p">,</span>
+        <span class="n">ds</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Correlation Coefficient&#39;</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">.6</span><span class="p">,</span>
         <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">mpl</span><span class="o">.</span><span class="n">dates</span><span class="o">.</span><span class="n">AutoDateLocator</span><span class="p">())</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">mpl</span><span class="o">.</span><span class="n">dates</span><span class="o">.</span><span class="n">DateFormatter</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%d</span><span class="s1"> %h %y&#39;</span><span class="p">))</span>
@@ -731,7 +751,7 @@ document.write(`
     <span class="k">return</span> <span class="n">times</span></div>
 
 
-<div class="viewcode-block" id="sect_plot_dist"><a class="viewcode-back" href="../../../modules/API.html#seismic.plot.plot_correlation.sect_plot_dist">[docs]</a><span class="k">def</span> <span class="nf">sect_plot_dist</span><span class="p">(</span>
+<div class="viewcode-block" id="sect_plot_dist"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.plot.plot_correlation.sect_plot_dist">[docs]</a><span class="k">def</span> <span class="nf">sect_plot_dist</span><span class="p">(</span>
     <span class="n">cst</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span> <span class="n">scalingfactor</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">linewidth</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">plot_reference_v</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">ref_v</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -758,7 +778,7 @@ document.write(`
     <span class="k">return</span> <span class="n">times</span></div>
 
 
-<div class="viewcode-block" id="heat_plot_corr_dist"><a class="viewcode-back" href="../../../modules/API.html#seismic.plot.plot_correlation.heat_plot_corr_dist">[docs]</a><span class="k">def</span> <span class="nf">heat_plot_corr_dist</span><span class="p">(</span>
+<div class="viewcode-block" id="heat_plot_corr_dist"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.plot.plot_correlation.heat_plot_corr_dist">[docs]</a><span class="k">def</span> <span class="nf">heat_plot_corr_dist</span><span class="p">(</span>
     <span class="n">cst</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">,</span> <span class="n">cmap</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">vmin</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">vmax</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">plot_reference_v</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">ref_v</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]):</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">cst</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span> <span class="n">cst</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="p">))</span>
@@ -782,7 +802,7 @@ document.write(`
             <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">rv</span><span class="si">}</span><span class="s1">&#39;</span><span class="o">+</span><span class="sa">r</span><span class="s1">&#39;$\frac</span><span class="si">{km}{s}</span><span class="s1">$&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">rv</span> <span class="ow">in</span> <span class="n">ref_v</span><span class="p">]</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span>
-        <span class="n">ds</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;correlation coefficient&#39;</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">.6</span><span class="p">,</span>
+        <span class="n">ds</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Correlation Coefficient&#39;</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">.6</span><span class="p">,</span>
         <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ctr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">dist</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">))</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Distance [km]&quot;</span><span class="p">)</span>

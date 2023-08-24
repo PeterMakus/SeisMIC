@@ -23,7 +23,7 @@ This technique is grounded upon the assumption that a homogeneous change in velo
 Green's function.
 
 .. note::
-    We are currently in the stage of implementing some other algorithms to estiamte dv/v.
+    We are currently in the stage of implementing some other algorithms to estimate dv/v.
     If you don't want to wait, it should be easy for you to implement
     a different algorithm yourself.
 
@@ -119,6 +119,11 @@ script could look something like this:
     :caption: compute_dv.py
     :linenos:
 
+    import os
+    # This tells numpy to only use one thread
+    # As we use MPI this is necessary to avoid overascribing threads
+    os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
     from seismic.monitor.monitor import Monitor
 
     yaml_f = '/home/pm/Documents/PhD/Chaku/params.yaml'
@@ -130,7 +135,7 @@ You can start the script using mpi:
 
 .. code-block:: bash
 
-    mpirun -n $number_of_cores$ python $path_to_file$/compute_dv.py+
+    mpirun -n $number_of_cores python $path_to_file/compute_dv.py+
 
 .. note::
 
@@ -139,3 +144,11 @@ You can start the script using mpi:
     as input, whereas the former will estimate the velocity changes of all `hdf5` files that are defined by
     `co['subdir']` in the `params.yaml` file and fit the filters set in `net`. This also means that the process
     won't speed up any more if *number_of_cores* exceeds the number of hdf5 correlation files that you have computed previously.
+
+
+Computing the waveform coherence
+================================
+
+You might have noticed that there is another key called **wfc** in our *params.yaml*.
+This part is meant for the computation of the waveform coherence. If you want
+to learn more, refer to our `tutorial <../tutorials/tutorial>`_.

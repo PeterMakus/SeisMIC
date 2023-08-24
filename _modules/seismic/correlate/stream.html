@@ -108,8 +108,14 @@
   
   
   
+    
+    
+      
+    
+    
+    <img src="../../../_static/seismic_logo_small.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../../_static/seismic_logo_small.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
   
-    <p class="title logo__title"></p>
   
 </a></div>
     
@@ -179,6 +185,13 @@
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../../../modules/API.html">
                         SeisMIC API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
                       </a>
                     </li>
                 
@@ -327,6 +340,13 @@ document.write(`
                       </a>
                     </li>
                 
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
+                      </a>
+                    </li>
+                
                 </div>
             </div>
             
@@ -435,7 +455,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 20th April 2021 04:19:35 pm</span>
-<span class="sd">Last Modified: Monday, 6th March 2023 11:30:07 am</span>
+<span class="sd">Last Modified: Thursday, 24th August 2023 11:06:37 am</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
@@ -458,7 +478,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">seismic.monitor.trim</span> <span class="kn">import</span> <span class="n">corr_mat_trim</span>
 
 
-<div class="viewcode-block" id="CorrBulk"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk">[docs]</a><span class="k">class</span> <span class="nc">CorrBulk</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk">[docs]</a><span class="k">class</span> <span class="nc">CorrBulk</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An object for faster computations on several correlations. The input</span>
 <span class="sd">    correlation contain data from only one Station-Channel pair.</span>
@@ -493,7 +513,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;processing_bulk&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ref_trc</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="CorrBulk.plot"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.plot"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Plot the correlation traces contained.</span>
 
@@ -504,7 +524,7 @@ document.write(`
         <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_corr_bulk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ax</span></div>
 
-<div class="viewcode-block" id="CorrBulk.normalize"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.normalize">[docs]</a>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrBulk.normalize"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.normalize">[docs]</a>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">normtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;energy&#39;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -539,7 +559,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="n">proc_str</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.clip"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.clip">[docs]</a>    <span class="k">def</span> <span class="nf">clip</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thres</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.clip"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.clip">[docs]</a>    <span class="k">def</span> <span class="nf">clip</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thres</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Clip the correlation data&#39;s upper and lower bounds to a multiple of its</span>
 <span class="sd">        standard deviation. `thres` determines the factor and `axis` the axis</span>
@@ -561,7 +581,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="n">proc_str</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.copy"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.copy"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a copy of self</span>
 
@@ -569,7 +589,7 @@ document.write(`
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CorrBulk.correct_decay"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.correct_decay">[docs]</a>    <span class="k">def</span> <span class="nf">correct_decay</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.correct_decay"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.correct_decay">[docs]</a>    <span class="k">def</span> <span class="nf">correct_decay</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Correct for the amplitude decay in a correlation matrix.</span>
 
@@ -588,7 +608,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;Corrected for Amplitude Decay&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.correct_stretch"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.correct_stretch">[docs]</a>    <span class="k">def</span> <span class="nf">correct_stretch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dv</span><span class="p">:</span> <span class="n">DV</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.correct_stretch"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.correct_stretch">[docs]</a>    <span class="k">def</span> <span class="nf">correct_stretch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dv</span><span class="p">:</span> <span class="n">DV</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Correct stretching of correlation matrix</span>
 
@@ -611,7 +631,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;Applied time stretch&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.correct_shift"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.correct_shift">[docs]</a>    <span class="k">def</span> <span class="nf">correct_shift</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="n">DV</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.correct_shift"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.correct_shift">[docs]</a>    <span class="k">def</span> <span class="nf">correct_shift</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="n">DV</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Correct a shift of the traces.</span>
 
@@ -628,7 +648,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;Corrected for time shift&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.create_corr_stream"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.create_corr_stream">[docs]</a>    <span class="k">def</span> <span class="nf">create_corr_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ind</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.create_corr_stream"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.create_corr_stream">[docs]</a>    <span class="k">def</span> <span class="nf">create_corr_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ind</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Creates a :class:`~seismic.correlate.stream.CorrStream` object from</span>
 <span class="sd">        the current :class:`~seismic.correlate.stream.CorrBulk` object. This</span>
@@ -663,7 +683,7 @@ document.write(`
                 <span class="n">cst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ctr</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cst</span></div>
 
-<div class="viewcode-block" id="CorrBulk.envelope"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.envelope">[docs]</a>    <span class="k">def</span> <span class="nf">envelope</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.envelope"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.envelope">[docs]</a>    <span class="k">def</span> <span class="nf">envelope</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate the envelope of a correlation matrix.</span>
 
@@ -681,7 +701,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;Computed Envelope&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.filter"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.filter">[docs]</a>    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freqs</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.filter"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.filter">[docs]</a>    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freqs</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Filters the correlation matrix in the frequency band specified in</span>
 <span class="sd">        freqs using a zero phase filter of twice the order given in order.</span>
@@ -702,7 +722,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="n">proc</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.extract_trace"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.extract_trace">[docs]</a>    <span class="k">def</span> <span class="nf">extract_trace</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrBulk.extract_trace"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.extract_trace">[docs]</a>    <span class="k">def</span> <span class="nf">extract_trace</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span>
             <span class="n">percentile</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">50.</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -736,7 +756,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">ref_trc</span> <span class="o">=</span> <span class="n">outdata</span>
         <span class="k">return</span> <span class="n">outdata</span></div>
 
-<div class="viewcode-block" id="CorrBulk.extract_multi_trace"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.extract_multi_trace">[docs]</a>    <span class="k">def</span> <span class="nf">extract_multi_trace</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrBulk.extract_multi_trace"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.extract_multi_trace">[docs]</a>    <span class="k">def</span> <span class="nf">extract_multi_trace</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">win_inc</span><span class="p">:</span> <span class="nb">int</span> <span class="ow">or</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span>
             <span class="n">percentile</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">50.</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -800,7 +820,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">ref_trc</span> <span class="o">=</span> <span class="n">ref_trcs</span>
         <span class="k">return</span> <span class="n">ref_trcs</span></div>
 
-<div class="viewcode-block" id="CorrBulk.find_clock_shift"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.find_clock_shift">[docs]</a>    <span class="k">def</span> <span class="nf">find_clock_shift</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrBulk.find_clock_shift"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.find_clock_shift">[docs]</a>    <span class="k">def</span> <span class="nf">find_clock_shift</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">tw</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">shift_range</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">shift_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">101</span><span class="p">,</span>
             <span class="n">sides</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
@@ -836,7 +856,7 @@ document.write(`
             <span class="n">dv_dict</span><span class="p">[</span><span class="s1">&#39;sim_mat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
         <span class="k">return</span> <span class="n">DV</span><span class="p">(</span><span class="o">**</span><span class="n">dv_dict</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CorrBulk.measure_shift"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.measure_shift">[docs]</a>    <span class="k">def</span> <span class="nf">measure_shift</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrBulk.measure_shift"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.measure_shift">[docs]</a>    <span class="k">def</span> <span class="nf">measure_shift</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">tw</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">shift_range</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">shift_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">101</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span>
@@ -888,7 +908,7 @@ document.write(`
             <span class="n">sides</span><span class="o">=</span><span class="n">sides</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="o">=</span><span class="n">return_sim_mat</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">dt</span></div>
 
-<div class="viewcode-block" id="CorrBulk.mirror"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.mirror">[docs]</a>    <span class="k">def</span> <span class="nf">mirror</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.mirror"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.mirror">[docs]</a>    <span class="k">def</span> <span class="nf">mirror</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Average the causal and acausal (i.e., right and left) parts of the</span>
 <span class="sd">        correlation.</span>
@@ -901,7 +921,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;Mirrored.&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.resample"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.resample">[docs]</a>    <span class="k">def</span> <span class="nf">resample</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrBulk.resample"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.resample">[docs]</a>    <span class="k">def</span> <span class="nf">resample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">starttimes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">],</span>
             <span class="n">endtimes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Function to create correlation matrices with constant sampling</span>
@@ -934,7 +954,7 @@ document.write(`
             <span class="sa">f</span><span class="s1">&#39;Resampled. Starttimes: </span><span class="si">{</span><span class="n">starttimes</span><span class="si">}</span><span class="s1">, Endtimes: </span><span class="si">{</span><span class="n">endtimes</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.resample_time_axis"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.resample_time_axis">[docs]</a>    <span class="k">def</span> <span class="nf">resample_time_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.resample_time_axis"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.resample_time_axis">[docs]</a>    <span class="k">def</span> <span class="nf">resample_time_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Resample the lapse time axis of a correlation matrix. The correlations</span>
 <span class="sd">        are automatically filtered with a highpass filter of 0.4*sampling</span>
@@ -954,7 +974,7 @@ document.write(`
             <span class="sa">f</span><span class="s1">&#39;Resampled time axis. New sampling rate: </span><span class="si">{</span><span class="n">freq</span><span class="si">}</span><span class="s1">Hz&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.smooth"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.smooth">[docs]</a>    <span class="k">def</span> <span class="nf">smooth</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrBulk.smooth"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.smooth">[docs]</a>    <span class="k">def</span> <span class="nf">smooth</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">wsize</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">wtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;flat&#39;</span><span class="p">,</span>
             <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -987,7 +1007,7 @@ document.write(`
             <span class="sa">f</span><span class="s1">&#39;Smoothed. wsize: </span><span class="si">{</span><span class="n">wsize</span><span class="si">}</span><span class="s1">, wtype: </span><span class="si">{</span><span class="n">wtype</span><span class="si">}</span><span class="s1">, axis: </span><span class="si">{</span><span class="n">axis</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.stretch"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.stretch">[docs]</a>    <span class="k">def</span> <span class="nf">stretch</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrBulk.stretch"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.stretch">[docs]</a>    <span class="k">def</span> <span class="nf">stretch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">tw</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">stretch_range</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">stretch_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">101</span><span class="p">,</span>
         <span class="n">sides</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -1026,7 +1046,7 @@ document.write(`
             <span class="n">dv_dict</span><span class="p">[</span><span class="s1">&#39;sim_mat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
         <span class="k">return</span> <span class="n">DV</span><span class="p">(</span><span class="o">**</span><span class="n">dv_dict</span><span class="p">,</span> <span class="n">dv_processing</span><span class="o">=</span><span class="n">processing</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CorrBulk.save"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.save"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save the object to a numpy binary format (**.npz**)</span>
 
@@ -1037,7 +1057,7 @@ document.write(`
         <span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span>
             <span class="n">path</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CorrBulk.slice"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.slice">[docs]</a>    <span class="k">def</span> <span class="nf">slice</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrBulk.slice"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.slice">[docs]</a>    <span class="k">def</span> <span class="nf">slice</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
             <span class="n">include_partial</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1068,7 +1088,7 @@ document.write(`
                 <span class="c1"># Those will change automatically</span>
         <span class="k">return</span> <span class="n">CorrBulk</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">stats</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CorrBulk.taper"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.taper">[docs]</a>    <span class="k">def</span> <span class="nf">taper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.taper"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.taper">[docs]</a>    <span class="k">def</span> <span class="nf">taper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Taper the data.</span>
 
@@ -1084,7 +1104,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="n">proc</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.taper_center"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.taper_center">[docs]</a>    <span class="k">def</span> <span class="nf">taper_center</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">slope_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.taper_center"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.taper_center">[docs]</a>    <span class="k">def</span> <span class="nf">taper_center</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">slope_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Taper the central part of a correlation matrix.</span>
 
@@ -1113,7 +1133,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="n">proc</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.trim"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.trim">[docs]</a>    <span class="k">def</span> <span class="nf">trim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrBulk.trim"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.trim">[docs]</a>    <span class="k">def</span> <span class="nf">trim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">        Trim the correlation matrix to the period from `starttime` to</span>
@@ -1137,7 +1157,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">processing_bulk</span> <span class="o">+=</span> <span class="n">proc</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="CorrBulk.wfc"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrBulk.wfc">[docs]</a>    <span class="k">def</span> <span class="nf">wfc</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrBulk.wfc"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.wfc">[docs]</a>    <span class="k">def</span> <span class="nf">wfc</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">time_window</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">tw_start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tw_len</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">freq_min</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">freq_max</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
             <span class="n">remove_nans</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WFC</span><span class="p">:</span>
@@ -1172,12 +1192,13 @@ document.write(`
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">wfc_dict</span> <span class="o">=</span> <span class="n">wfc_multi_reftr</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">,</span> <span class="n">time_window</span><span class="p">,</span> <span class="n">sides</span><span class="p">,</span> <span class="n">remove_nans</span><span class="p">)</span>
-        <span class="n">stats</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
-        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tw_start</span>
-        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tw_len</span>
-        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;freq_min&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">freq_min</span>
-        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;freq_max&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">freq_max</span>
-        <span class="n">wfc</span> <span class="o">=</span> <span class="n">WFC</span><span class="p">(</span><span class="n">wfc_dict</span><span class="p">,</span> <span class="n">stats</span><span class="p">)</span>
+        <span class="n">wfc_processing</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;tw_start&#39;</span><span class="p">:</span> <span class="n">tw_start</span><span class="p">,</span>
+            <span class="s1">&#39;tw_len&#39;</span><span class="p">:</span> <span class="n">tw_len</span><span class="p">,</span>
+            <span class="s1">&#39;freq_min&#39;</span><span class="p">:</span> <span class="n">freq_min</span><span class="p">,</span>
+            <span class="s1">&#39;freq_max&#39;</span><span class="p">:</span> <span class="n">freq_max</span>
+        <span class="p">}</span>
+        <span class="n">wfc</span> <span class="o">=</span> <span class="n">WFC</span><span class="p">(</span><span class="n">wfc_dict</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="n">wfc_processing</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">wfc</span></div>
 
     <span class="k">def</span> <span class="nf">_find_slice_index</span><span class="p">(</span>
@@ -1212,7 +1233,7 @@ document.write(`
         <span class="k">return</span> <span class="n">ii</span></div>
 
 
-<div class="viewcode-block" id="read_corr_bulk"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.read_corr_bulk">[docs]</a><span class="k">def</span> <span class="nf">read_corr_bulk</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrBulk</span><span class="p">:</span>
+<div class="viewcode-block" id="read_corr_bulk"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.read_corr_bulk">[docs]</a><span class="k">def</span> <span class="nf">read_corr_bulk</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrBulk</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Reads a CorrBulk object from an **.npz** file.</span>
 
@@ -1226,7 +1247,7 @@ document.write(`
     <span class="k">return</span> <span class="n">CorrBulk</span><span class="p">(</span><span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">],</span> <span class="n">stats</span><span class="o">=</span><span class="n">stats</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="CorrStream"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrStream">[docs]</a><span class="k">class</span> <span class="nc">CorrStream</span><span class="p">(</span><span class="n">Stream</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrStream"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrStream">[docs]</a><span class="k">class</span> <span class="nc">CorrStream</span><span class="p">(</span><span class="n">Stream</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Baseclass to hold correlation traces. Basically just a list of the</span>
 <span class="sd">    correlation traces.</span>
@@ -1276,7 +1297,7 @@ document.write(`
                 <span class="s1">&#39;Stream.__str__(extended=True))&quot; to print all correlaitons]&#39;</span>
         <span class="k">return</span> <span class="n">out</span>
 
-<div class="viewcode-block" id="CorrStream.create_corr_bulk"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrStream.create_corr_bulk">[docs]</a>    <span class="k">def</span> <span class="nf">create_corr_bulk</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrStream.create_corr_bulk"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrStream.create_corr_bulk">[docs]</a>    <span class="k">def</span> <span class="nf">create_corr_bulk</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">location</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">times</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">UTCDateTime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrBulk</span><span class="p">:</span>
@@ -1333,7 +1354,7 @@ document.write(`
             <span class="n">stats</span> <span class="o">=</span> <span class="n">convert_statlist_to_bulk_stats</span><span class="p">(</span><span class="n">statlist</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">CorrBulk</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">stats</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CorrStream.plot"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrStream.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrStream.plot"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrStream.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">sort_by</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;corr_start&#39;</span><span class="p">,</span>
         <span class="n">timelimits</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">ylimits</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">scalingfactor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1385,7 +1406,7 @@ document.write(`
             <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ax</span></div>
 
-<div class="viewcode-block" id="CorrStream.pop_at_utcs"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrStream.pop_at_utcs">[docs]</a>    <span class="k">def</span> <span class="nf">pop_at_utcs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utcs</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">]):</span>
+<div class="viewcode-block" id="CorrStream.pop_at_utcs"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrStream.pop_at_utcs">[docs]</a>    <span class="k">def</span> <span class="nf">pop_at_utcs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utcs</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">]):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Remove Correlations that contain any time given in ``utcs``.</span>
 
@@ -1404,7 +1425,21 @@ document.write(`
                 <span class="n">cst_filt</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ctr</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cst_filt</span></div>
 
-<div class="viewcode-block" id="CorrStream.select_corr_time"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrStream.select_corr_time">[docs]</a>    <span class="k">def</span> <span class="nf">select_corr_time</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrStream.remove_duplicates"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrStream.remove_duplicates">[docs]</a>    <span class="k">def</span> <span class="nf">remove_duplicates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Removes identical CorrTraces.</span>
+
+<span class="sd">        .. note:: This action is performed **in-place**. If you want to keep</span>
+<span class="sd">            the original data use</span>
+<span class="sd">            :func:`~seismic.correlate.stream.CorrStream.copy()`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cst_filt</span> <span class="o">=</span> <span class="n">CorrStream</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">ctr</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ctr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cst_filt</span><span class="p">:</span>
+                <span class="n">cst_filt</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ctr</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">traces</span> <span class="o">=</span> <span class="n">cst_filt</span><span class="o">.</span><span class="n">traces</span></div>
+
+<div class="viewcode-block" id="CorrStream.select_corr_time"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrStream.select_corr_time">[docs]</a>    <span class="k">def</span> <span class="nf">select_corr_time</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
             <span class="n">include_partially_selected</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1447,7 +1482,7 @@ document.write(`
                 <span class="n">outst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">outst</span></div>
 
-<div class="viewcode-block" id="CorrStream.slide"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrStream.slide">[docs]</a>    <span class="k">def</span> <span class="nf">slide</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrStream.slide"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrStream.slide">[docs]</a>    <span class="k">def</span> <span class="nf">slide</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">window_length</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">include_partially_selected</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
             <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
@@ -1528,7 +1563,7 @@ document.write(`
                 <span class="k">continue</span>
             <span class="k">yield</span> <span class="n">temp</span></div>
 
-<div class="viewcode-block" id="CorrStream.stack"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrStream.stack">[docs]</a>    <span class="k">def</span> <span class="nf">stack</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrStream.stack"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrStream.stack">[docs]</a>    <span class="k">def</span> <span class="nf">stack</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">weight</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;by_length&#39;</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">stack_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
             <span class="n">regard_location</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
@@ -1605,7 +1640,7 @@ document.write(`
         <span class="k">return</span> <span class="n">A</span><span class="p">,</span> <span class="n">stats</span></div>
 
 
-<div class="viewcode-block" id="CorrTrace"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrTrace">[docs]</a><span class="k">class</span> <span class="nc">CorrTrace</span><span class="p">(</span><span class="n">Trace</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrTrace"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrTrace">[docs]</a><span class="k">class</span> <span class="nc">CorrTrace</span><span class="p">(</span><span class="n">Trace</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Baseclass to hold correlation data. Derived from the class</span>
 <span class="sd">    :class:`~obspy.core.trace.Trace`.</span>
@@ -1700,7 +1735,7 @@ document.write(`
             <span class="n">out</span> <span class="o">+=</span> <span class="s1">&#39; (masked)&#39;</span>
         <span class="k">return</span> <span class="n">trace_id</span> <span class="o">+</span> <span class="n">out</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
 
-<div class="viewcode-block" id="CorrTrace.plot"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrTrace.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span>
+<div class="viewcode-block" id="CorrTrace.plot"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrTrace.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">tlim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">outputdir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">clean</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1718,7 +1753,7 @@ document.write(`
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">plot_ctr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tlim</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">outputdir</span><span class="p">,</span> <span class="n">clean</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CorrTrace.times"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.CorrTrace.times">[docs]</a>    <span class="k">def</span> <span class="nf">times</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="CorrTrace.times"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrTrace.times">[docs]</a>    <span class="k">def</span> <span class="nf">times</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convenience Function that returns an array holding the lag times of the</span>
 <span class="sd">        correlation.</span>
@@ -1732,7 +1767,7 @@ document.write(`
             <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">start_lag</span></div></div>
 
 
-<div class="viewcode-block" id="alphabetical_correlation"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.alphabetical_correlation">[docs]</a><span class="k">def</span> <span class="nf">alphabetical_correlation</span><span class="p">(</span>
+<div class="viewcode-block" id="alphabetical_correlation"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.alphabetical_correlation">[docs]</a><span class="k">def</span> <span class="nf">alphabetical_correlation</span><span class="p">(</span>
     <span class="n">header1</span><span class="p">:</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">header2</span><span class="p">:</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">start_lag</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end_lag</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">inv</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">CorrStats</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1778,7 +1813,7 @@ document.write(`
     <span class="k">return</span> <span class="n">header</span><span class="p">,</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="combine_stats"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.combine_stats">[docs]</a><span class="k">def</span> <span class="nf">combine_stats</span><span class="p">(</span>
+<div class="viewcode-block" id="combine_stats"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.combine_stats">[docs]</a><span class="k">def</span> <span class="nf">combine_stats</span><span class="p">(</span>
     <span class="n">stats1</span><span class="p">:</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">stats2</span><span class="p">:</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">start_lag</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">inv</span><span class="p">:</span> <span class="n">Inventory</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrStats</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Combine the meta-information of two ObsPy Trace.Stats objects</span>
@@ -1902,7 +1937,7 @@ document.write(`
 <span class="n">Compare_Str_No_Loc</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{network}</span><span class="s2">.</span><span class="si">{station}</span><span class="s2">.</span><span class="si">{channel}</span><span class="s2">&quot;</span>
 
 
-<div class="viewcode-block" id="compare_tr_id"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.compare_tr_id">[docs]</a><span class="k">def</span> <span class="nf">compare_tr_id</span><span class="p">(</span><span class="n">tr0</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">tr1</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">regard_loc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<div class="viewcode-block" id="compare_tr_id"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.compare_tr_id">[docs]</a><span class="k">def</span> <span class="nf">compare_tr_id</span><span class="p">(</span><span class="n">tr0</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">tr1</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">regard_loc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check whether two traces are from the same channel, station, network, and,</span>
 <span class="sd">    optionally, location. Useful for stacking</span>
@@ -1924,7 +1959,7 @@ document.write(`
             <span class="o">==</span> <span class="n">Compare_Str_No_Loc</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="stack_st_by_group"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.stack_st_by_group">[docs]</a><span class="k">def</span> <span class="nf">stack_st_by_group</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">regard_loc</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">weight</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrStream</span><span class="p">:</span>
+<div class="viewcode-block" id="stack_st_by_group"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.stack_st_by_group">[docs]</a><span class="k">def</span> <span class="nf">stack_st_by_group</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">regard_loc</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">weight</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrStream</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Stack all traces that belong to the same network, station, channel, and</span>
 <span class="sd">    (optionally) location combination in the input stream.</span>
@@ -1949,7 +1984,7 @@ document.write(`
     <span class="k">return</span> <span class="n">stackst</span></div>
 
 
-<div class="viewcode-block" id="stack_st"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.stack_st">[docs]</a><span class="k">def</span> <span class="nf">stack_st</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">CorrStream</span><span class="p">,</span> <span class="n">weight</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">norm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrTrace</span><span class="p">:</span>
+<div class="viewcode-block" id="stack_st"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.stack_st">[docs]</a><span class="k">def</span> <span class="nf">stack_st</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">CorrStream</span><span class="p">,</span> <span class="n">weight</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">norm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrTrace</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Returns an average of the data of all traces in the stream. Also adjusts</span>
 <span class="sd">    the corr_start and corr_end parameters in the header.</span>
@@ -1990,7 +2025,7 @@ document.write(`
         <span class="k">return</span> <span class="n">CorrTrace</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">_header</span><span class="o">=</span><span class="n">stats</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="convert_statlist_to_bulk_stats"><a class="viewcode-back" href="../../../modules/API.html#seismic.correlate.stream.convert_statlist_to_bulk_stats">[docs]</a><span class="k">def</span> <span class="nf">convert_statlist_to_bulk_stats</span><span class="p">(</span>
+<div class="viewcode-block" id="convert_statlist_to_bulk_stats"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.convert_statlist_to_bulk_stats">[docs]</a><span class="k">def</span> <span class="nf">convert_statlist_to_bulk_stats</span><span class="p">(</span>
         <span class="n">statlist</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">CorrStats</span><span class="p">],</span> <span class="n">varying_loc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">varying_channel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrStats</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>

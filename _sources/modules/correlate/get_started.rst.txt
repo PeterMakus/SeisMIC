@@ -31,6 +31,10 @@ Setting the parameters
     #### Project wide parameters
     # lowest level project directory
     proj_dir : '/path/to/project/root/'
+    # Save the component combinations in separate hdf5 files
+    # This is faster for multi-core if True
+    # Set to False for compatibility with SeisMIC version < 0.5.0
+    save_comps_separately: True
     # directory for logging information
     log_subdir : 'log'
     # levels:
@@ -63,17 +67,20 @@ Setting the parameters
         # Note that this is also the length of the correlation batches
         # that will be written (i.e., length that will be 
         # kept in memory before writing to disk)
+        # If you are unsure, keep defaults
         read_len : 86398
         read_inc : 86400
 
         # New sampling rate in Hz. Note that it will try to decimate
         # if possible (i.e., there is an integer factor from the
-        # native sampling_rate)
+        # native sampling_rate). Pay attention to Nyquist frequency for
+        # later steps
         sampling_rate : 25
         # Remove the instrument response, will take substantially more time
         remove_response : True
 
         # Method to combine different traces
+        # Options are: 'betweenStations', 'betweenComponents', 'autoComponents', 'allSimpleCombinations', or 'allCombinations'
         combination_method : 'betweenStations'
     
         # If you want only specific combinations to be computed enter them here
@@ -92,16 +99,26 @@ Setting the parameters
                         {'function':'seismic.correlate.preprocessing_stream.cos_taper_st',
                         'args':{'taper_len': 100, # seconds
                                 'lossless': True}}, # lossless tapering stitches additional data to trace, tapers, and removes the tapered ends after preprocessing
+                        # This is intended as a "technical" bandpass filter to remove unphysical signals, i.e., frequencies you would not expect in the data
                         {'function':'seismic.correlate.preprocessing_stream.stream_filter',
                         'args':{'ftype':'bandpass',
                                 'filter_option':{'freqmin':0.01, #0.01
                                                 'freqmax':12}}}
+                        # Mute data, when the amplitude is above a certain threshold
                         #{'function':'seismic.correlate.preprocessing_stream.stream_mute',
                         # 'args':{'taper_len':100,
                         #         'mute_method':'std_factor',
                         #         'mute_value':3}}
                         ]
         # subdivision of the read sequences for correlation
+        # if this is set the stream processing will happen on the hourly subdivision. This has the
+        # advantage that data that already exists will not need to be preprocessed again
+        # On the other hand, computing a whole new database might be slower
+        # Recommended to be set to True if:
+        # a) You update your database and a lot of the data is already available (up to a magnitude faster)
+        # b) corr_len is close to read_len
+        # Is automatically set to False if no existing correlations are found
+        preprocess_subdiv: True
         # type: presence of this key
         subdivision:
             # type: float [seconds]
@@ -118,8 +135,9 @@ Setting the parameters
         # parameters for correlation preprocessing
         # Standard functions reside in seismic.correlate.preprocessing_td and preprocessing_fd, respectively
         corr_args : {'TDpreProcessing':[
-                                        {'function':'seismic.correlate.preprocessing_td.detrend',
-                                        'args':{'type':'linear'}},
+                                        # detrend not recommended. Use preProcessing detrend_st instead (faster)
+                                        # {'function':'seismic.correlate.preprocessing_td.detrend',
+                                        # 'args':{'type':'linear'}},
                                     {'function':'seismic.correlate.preprocessing_td.TDfilter',
                                     'args':{'type':'bandpass','freqmin':2,'freqmax':8}},
                                         #{'function':'seismic.correlate.preprocessing_td.mute',
@@ -167,7 +185,7 @@ Setting the parameters
         freq_min : 4
         freq_max : 8
 
-        ### Definition of lapse time window
+        ### Definition of lapse time window, i.e. time window in the coda that is used for the dv/v estimate
         tw_start : 20     # lapse time of first sample [s]
         tw_len : 60       # length of window [s] Can be None if the whole (rest) of the coda should be used
         sides : 'both'   # options are left (for acausal), right (causal), both, or single (for active source experiments where the first sample is the trigger time)
@@ -176,7 +194,9 @@ Setting the parameters
         
 
         ### Range to try stretching
+        # maximum stretch factor
         stretch_range : 0.03
+        # number of stretching increments
         stretch_steps : 1001
     
         #### Reference trace extraction
@@ -189,7 +209,7 @@ Setting the parameters
 
         # preprocessing on the correlation bulk or corr_stream before stretch estimation
         preprocessing: [
-                        #{'function': 'pop_at_utcs', 'args': {'utcs': np.array([UTCDateTime()])},
+                        #{'function': 'pop_at_utcs', 'args': {'utcs': np.array([UTCDateTime()])},  # Used to remove correlations from certain times
                         {'function': 'smooth', 'args': {'wsize': 48, 'wtype': 'hanning', 'axis': 1}}
         ]
 
@@ -210,12 +230,14 @@ Setting the parameters
         date_inc : 86400                        # increment of measurements
 
         ### Frequencies
-        freq_min : 4
-        freq_max : 8
+        # can be lists of same length
+        freq_min : [0.0625, 0.09, 0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5]
+        freq_max : [0.125, 0.18, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8, 10]
 
         ### Definition of lapse time window
-        tw_start : 20     # lapse time of first sample [s]
-        tw_len : 60       # length of window [s]
+        # can be lists of same length or tw_start: List and tw_len: single value (will be applied to all)
+        tw_start : [0, 1.25, 2.5, 3.75, 5, 6.25, 7.5, 8.75, 10, 11.25, 12.5, 13.75, 15, 16.25, 17.5, 17.75, 20]     # lapse time of first sample [s]
+        tw_len : 5       # length of window [s]
     
         #### Reference trace extraction
         #  win_inc : Length in days of each reference time window to be used for trace extraction
@@ -227,12 +249,13 @@ Setting the parameters
 
         # preprocessing on the correlation bulk before stretch estimation
         preprocessing: [
-                        {'function': 'smooth', 'args': {'wsize': 48, 'wtype': 'hanning', 'axis': 1}}
+                        {'function': 'smooth', 'args': {'wsize': 4, 'wtype': 'hanning', 'axis': 1}}
         ]
 
         ### SAVING
         # save components separately or only their average?
         save_comps: False
+
 
 
 
@@ -248,6 +271,10 @@ Project Wide Parameters
     #### Project wide parameters
     # lowest level project directory
     proj_dir : '/path/to/project/root/'
+    # Save the component combinations in separate hdf5 files
+    # This is faster for multi-core if True
+    # Set to False for compatibility with SeisMIC version < 0.5.0
+    save_comps_separately: True
     # directory for logging information
     log_subdir : 'log'
     # levels:
@@ -338,7 +365,7 @@ Let's start by getting the most obvious parameters out of the way:
         xcombinations : None
 
 + ``Sampling_rate`` is the new sampling rate you will want your data to have. **SeisMIC** will take care of anti-alias filtering and determine whether data can be decimated.
-+ ``remove_response`` if you want the data to be corrected for the instrument response, set this to ``True``.
++ ``remove_response`` if you want the data to be corrected for the instrument response, set this to ``True``. Instrument response removal in obspy is unfortunately quite expensive..
 + ``combination_method`` decides which components you will want to correlate. See :py:func:`~seismic.correlate.correlate.calc_cross_combis` for allowed options.
 + ``xcombinations`` If you want to save some computational resources and only compute specific combinations, use this function. If you want to limit the maximum distance between stations to cross-correlate you can use :py:meth:`seismic.correlate.correlate.Correlator.find_interstat_dist` to compute this parameter
 
@@ -366,14 +393,16 @@ An over view of available stream preprocessing functions can  be found in :mod:`
         # and return an obspy.Stream object.
         preProcessing : [
                         {'function':'seismic.correlate.preprocessing_stream.detrend_st',
-                        'args':{'type':'simple'}},
+                        'args':{'type':'linear'}},
                         {'function':'seismic.correlate.preprocessing_stream.cos_taper_st',
-                        'args':{'taper_len': 10, # seconds
-                                'taper_at_masked': True}},
+                        'args':{'taper_len': 100, # seconds
+                                'lossless': True}}, # lossless tapering stitches additional data to trace, tapers, and removes the tapered ends after preprocessing
+                        # This is intended as a "technical" bandpass filter to remove unphysical signals, i.e., frequencies you would not expect in the data
                         {'function':'seismic.correlate.preprocessing_stream.stream_filter',
                         'args':{'ftype':'bandpass',
-                                'filter_option':{'freqmin':0.01,
-                                                'freqmax':12.5}}}
+                                'filter_option':{'freqmin':0.01, #0.01
+                                                'freqmax':12}}}
+                        # Mute data, when the amplitude is above a certain threshold
                         #{'function':'seismic.correlate.preprocessing_stream.stream_mute',
                         # 'args':{'taper_len':100,
                         #         'mute_method':'std_factor',
@@ -392,8 +421,9 @@ Additionally, the ``args`` dictionary and a ``params`` dictionary will be passed
     # parameters for correlation preprocessing
     # Standard functions reside in seismic.correlate.preprocessing_td
     corr_args : {'TDpreProcessing':[
-                                    {'function':'seismic.correlate.preprocessing_td.detrend',
-                                    'args':{'type':'linear'}},
+                                    # detrend not recommended. Use preProcessing detrend_st instead (faster)
+                                    # {'function':'seismic.correlate.preprocessing_td.detrend',
+                                    # 'args':{'type':'linear'}},
                                    {'function':'seismic.correlate.preprocessing_td.TDfilter',
                                    'args':{'type':'bandpass','freqmin':2,'freqmax':8}},
                                     #{'function':'seismic.correlate.preprocessing_td.mute',
@@ -415,7 +445,8 @@ Additionally, the ``args`` dictionary and a ``params`` dictionary will be passed
                                      'args':{'flimit':[0.01,0.02,9,10]}}
                                     #  {'function':seismic.correlate.preprocessing_fd.FDsignBitNormalization,
                                     # 'args':{}}
-                                    ]
+                                    ],
+                ...
                 }
 
 Arguments for the actual correlation

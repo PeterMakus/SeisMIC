@@ -110,8 +110,14 @@
   
   
   
+    
+    
+      
+    
+    
+    <img src="_static/seismic_logo_small.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="_static/seismic_logo_small.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
   
-    <p class="title logo__title"></p>
   
 </a></div>
     
@@ -181,6 +187,13 @@
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="modules/API.html">
                         SeisMIC API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
                       </a>
                     </li>
                 
@@ -333,6 +346,13 @@ document.write(`
                       </a>
                     </li>
                 
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
+                      </a>
+                    </li>
+                
                 </div>
             </div>
             
@@ -461,48 +481,32 @@ Its main use case is the monitoring of temporal changes in a mediums (e.g., moni
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="modules/API.html"><code class="docutils literal notranslate"><span class="pre">SeisMIC</span></code> API</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="modules/API.html#seismic-trace-data">seismic.trace_data</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-trace-data-waveform">seismic.trace_data.waveform</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="modules/API.html#seismic-correlate">seismic.correlate</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-correlate-correlate">seismic.correlate.correlate</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-correlate-stream">seismic.correlate.stream</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-correlate-stats">seismic.correlate.stats</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-correlate-preprocessing-stream">seismic.correlate.preprocessing_stream</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-correlate-preprocessing-td">seismic.correlate.preprocessing_td</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-correlate-preprocessing-fd">seismic.correlate.preprocessing_fd</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="modules/API.html#seismic-db">seismic.db</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-db-corr-hdf5">seismic.db.corr_hdf5</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="modules/API.html#seismic-monitor">seismic.monitor</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-monitor-monitor">seismic.monitor.monitor</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-monitor-dv">seismic.monitor.dv</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-monitor-spatial">seismic.monitor.spatial</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-monitor-post-corr-process">seismic.monitor.post_corr_process</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-monitor-stretch-mod">seismic.monitor.stretch_mod</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="modules/API.html#seismic-plot">seismic.plot</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-plot-plot-correlation">seismic.plot.plot_correlation</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-plot-plot-dv">seismic.plot.plot_dv</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-plot-plot-multidv">seismic.plot.plot_multidv</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-plot-plot-utils">seismic.plot.plot_utils</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="modules/API.html#seismic-utils">seismic.utils</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-utils-io">seismic.utils.io</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#seismic-utils-fetch-func-from-str">seismic.utils.fetch_func_from_str</a></li>
-<li class="toctree-l3"><a class="reference internal" href="modules/API.html#module-seismic.utils.miic_utils">seismic.utils.miic_utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/API/API.html">API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/API/API.html#seismic-trace-data">seismic.trace_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/API/API.html#seismic-correlate">seismic.correlate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/API/API.html#seismic-db">seismic.db</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/API/API.html#seismic-monitor">seismic.monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/API/API.html#seismic-plot">seismic.plot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="modules/API/API.html#seismic-utils">seismic.utils</a></li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
 </div>
+<section id="tutorials">
+<h2>Tutorials<a class="headerlink" href="#tutorials" title="Permalink to this heading">#</a></h2>
+<div class="toctree-wrapper compound">
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">A practical introduction to SeisMIC:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules/tutorials.html">Our tutorials: From Zero to Noise-Hero</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/tutorials.html#basic-functionalities">Basic Functionalities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/tutorials.html#invert-velocity-changes-onto-a-map">Invert Velocity Changes onto a Map</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
 </section>
 <section id="interactive-flowchart">
 <h1>Interactive Flowchart<a class="headerlink" href="#interactive-flowchart" title="Permalink to this heading">#</a></h1>
@@ -585,27 +589,15 @@ graph TD
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">SeisMIC library documentation</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">SeisMIC library documentation</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tutorials">Tutorials</a></li>
+</ul>
+</li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#interactive-flowchart">Interactive Flowchart</a></li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 
   </nav></div>
-
-  <div class="sidebar-secondary-item">
-  
-  <div class="tocsection editthispage">
-    <a href="https://github.com/PeterMakus/SeisMIC/edit/main/docs/index.rst">
-      <i class="fa-solid fa-pencil"></i>
-      
-      
-        
-          Edit on GitHub
-        
-      
-    </a>
-  </div>
-</div>
 
   <div class="sidebar-secondary-item">
   <div class="tocsection sourcelink">

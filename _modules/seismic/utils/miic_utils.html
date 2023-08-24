@@ -108,8 +108,14 @@
   
   
   
+    
+    
+      
+    
+    
+    <img src="../../../_static/seismic_logo_small.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../../_static/seismic_logo_small.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
   
-    <p class="title logo__title"></p>
   
 </a></div>
     
@@ -179,6 +185,13 @@
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../../../modules/API.html">
                         SeisMIC API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
                       </a>
                     </li>
                 
@@ -327,6 +340,13 @@ document.write(`
                       </a>
                     </li>
                 
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
+                      </a>
+                    </li>
+                
                 </div>
             </div>
             
@@ -433,7 +453,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 29th March 2021 12:54:05 pm</span>
-<span class="sd">Last Modified: Monday, 6th February 2023 04:32:16 pm</span>
+<span class="sd">Last Modified: Wednesday, 5th April 2023 10:32:09 am</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -453,7 +473,7 @@ document.write(`
     <span class="s1">&#39;ERROR&#39;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">}</span>
 
 
-<div class="viewcode-block" id="trace_calc_az_baz_dist"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.trace_calc_az_baz_dist">[docs]</a><span class="k">def</span> <span class="nf">trace_calc_az_baz_dist</span><span class="p">(</span><span class="n">stats1</span><span class="p">:</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">stats2</span><span class="p">:</span> <span class="n">Stats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+<div class="viewcode-block" id="trace_calc_az_baz_dist"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.trace_calc_az_baz_dist">[docs]</a><span class="k">def</span> <span class="nf">trace_calc_az_baz_dist</span><span class="p">(</span><span class="n">stats1</span><span class="p">:</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">stats2</span><span class="p">:</span> <span class="n">Stats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return azimuth, back azimhut and distance between tr1 and tr2</span>
@@ -494,7 +514,7 @@ document.write(`
     <span class="k">return</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span><span class="p">,</span> <span class="n">dist</span></div>
 
 
-<div class="viewcode-block" id="filter_stat_dist"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.filter_stat_dist">[docs]</a><span class="k">def</span> <span class="nf">filter_stat_dist</span><span class="p">(</span><span class="n">inv1</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">,</span> <span class="n">inv2</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">,</span> <span class="n">thres</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<div class="viewcode-block" id="filter_stat_dist"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.filter_stat_dist">[docs]</a><span class="k">def</span> <span class="nf">filter_stat_dist</span><span class="p">(</span><span class="n">inv1</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">,</span> <span class="n">inv2</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">,</span> <span class="n">thres</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Very simple function to check whether to stations are closer than thres</span>
 <span class="sd">    to each other.</span>
@@ -511,7 +531,7 @@ document.write(`
     <span class="k">return</span> <span class="n">inv_calc_az_baz_dist</span><span class="p">(</span><span class="n">inv1</span><span class="p">,</span> <span class="n">inv2</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">thres</span></div>
 
 
-<div class="viewcode-block" id="inv_calc_az_baz_dist"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.inv_calc_az_baz_dist">[docs]</a><span class="k">def</span> <span class="nf">inv_calc_az_baz_dist</span><span class="p">(</span><span class="n">inv1</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">,</span> <span class="n">inv2</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+<div class="viewcode-block" id="inv_calc_az_baz_dist"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.inv_calc_az_baz_dist">[docs]</a><span class="k">def</span> <span class="nf">inv_calc_az_baz_dist</span><span class="p">(</span><span class="n">inv1</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">,</span> <span class="n">inv2</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Return azimuth, back azimuth and distance between stat1 and stat2</span>
 
@@ -549,7 +569,7 @@ document.write(`
     <span class="k">return</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span><span class="p">,</span> <span class="n">dist</span></div>
 
 
-<div class="viewcode-block" id="resample_or_decimate"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.resample_or_decimate">[docs]</a><span class="k">def</span> <span class="nf">resample_or_decimate</span><span class="p">(</span>
+<div class="viewcode-block" id="resample_or_decimate"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.resample_or_decimate">[docs]</a><span class="k">def</span> <span class="nf">resample_or_decimate</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">Trace</span> <span class="ow">or</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">sampling_rate_new</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="nb">filter</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span> <span class="ow">or</span> <span class="n">Trace</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Decimates the data if the desired new sampling rate allows to do so.</span>
@@ -563,6 +583,8 @@ document.write(`
 <span class="sd">    :rtype: Stream</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">Stream</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">data</span>
         <span class="n">sr</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span>
         <span class="n">srl</span> <span class="o">=</span> <span class="p">[</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">srl</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
@@ -604,7 +626,7 @@ document.write(`
         <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">srn</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="trim_stream_delta"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.trim_stream_delta">[docs]</a><span class="k">def</span> <span class="nf">trim_stream_delta</span><span class="p">(</span>
+<div class="viewcode-block" id="trim_stream_delta"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.trim_stream_delta">[docs]</a><span class="k">def</span> <span class="nf">trim_stream_delta</span><span class="p">(</span>
         <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Cut all traces to starttime+start and endtime-end. *args* and *kwargs* will</span>
@@ -631,7 +653,7 @@ document.write(`
     <span class="k">return</span> <span class="n">st</span></div>
 
 
-<div class="viewcode-block" id="trim_trace_delta"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.trim_trace_delta">[docs]</a><span class="k">def</span> <span class="nf">trim_trace_delta</span><span class="p">(</span>
+<div class="viewcode-block" id="trim_trace_delta"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.trim_trace_delta">[docs]</a><span class="k">def</span> <span class="nf">trim_trace_delta</span><span class="p">(</span>
         <span class="n">tr</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Trace</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Cut all traces to starttime+start and endtime-end. *args* and *kwargs* will</span>
@@ -669,7 +691,7 @@ document.write(`
     <span class="s1">&#39;stretch_steps&#39;</span><span class="p">,</span> <span class="s1">&#39;dt_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;preprocessing&#39;</span><span class="p">,</span> <span class="s1">&#39;postprocessing&#39;</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="save_header_to_np_array"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.save_header_to_np_array">[docs]</a><span class="k">def</span> <span class="nf">save_header_to_np_array</span><span class="p">(</span><span class="n">stats</span><span class="p">:</span> <span class="n">Stats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<div class="viewcode-block" id="save_header_to_np_array"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.save_header_to_np_array">[docs]</a><span class="k">def</span> <span class="nf">save_header_to_np_array</span><span class="p">(</span><span class="n">stats</span><span class="p">:</span> <span class="n">Stats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Converts an obspy header to a format that allows it to be saved in an</span>
 <span class="sd">    npz file (i.e., several gzipped npy files)</span>
@@ -689,7 +711,7 @@ document.write(`
     <span class="k">return</span> <span class="n">array_dict</span></div>
 
 
-<div class="viewcode-block" id="load_header_from_np_array"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.load_header_from_np_array">[docs]</a><span class="k">def</span> <span class="nf">load_header_from_np_array</span><span class="p">(</span><span class="n">array_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<div class="viewcode-block" id="load_header_from_np_array"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.load_header_from_np_array">[docs]</a><span class="k">def</span> <span class="nf">load_header_from_np_array</span><span class="p">(</span><span class="n">array_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Takes the *dictionary-like* return-value of `np.load` and converts the</span>
 <span class="sd">    corresponding keywords into an obspy header.</span>
@@ -714,7 +736,7 @@ document.write(`
     <span class="k">return</span> <span class="n">d</span></div>
 
 
-<div class="viewcode-block" id="convert_utc_to_timestamp"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.convert_utc_to_timestamp">[docs]</a><span class="k">def</span> <span class="nf">convert_utc_to_timestamp</span><span class="p">(</span>
+<div class="viewcode-block" id="convert_utc_to_timestamp"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.convert_utc_to_timestamp">[docs]</a><span class="k">def</span> <span class="nf">convert_utc_to_timestamp</span><span class="p">(</span>
         <span class="n">utcdt</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="ow">or</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Converts :class:`obspy.core.utcdatetime.UTCDateTime` objects to floats.</span>
@@ -731,7 +753,7 @@ document.write(`
     <span class="k">return</span> <span class="n">timestamp</span></div>
 
 
-<div class="viewcode-block" id="convert_timestamp_to_utcdt"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.convert_timestamp_to_utcdt">[docs]</a><span class="k">def</span> <span class="nf">convert_timestamp_to_utcdt</span><span class="p">(</span><span class="n">timestamp</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">]:</span>
+<div class="viewcode-block" id="convert_timestamp_to_utcdt"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.convert_timestamp_to_utcdt">[docs]</a><span class="k">def</span> <span class="nf">convert_timestamp_to_utcdt</span><span class="p">(</span><span class="n">timestamp</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Converts a numpy array holding timestamps (i.e., floats) to a list of</span>
 <span class="sd">    UTCDateTime objects</span>
@@ -749,7 +771,7 @@ document.write(`
     <span class="k">return</span> <span class="n">timestamp</span></div>
 
 
-<div class="viewcode-block" id="get_valid_traces"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.get_valid_traces">[docs]</a><span class="k">def</span> <span class="nf">get_valid_traces</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">):</span>
+<div class="viewcode-block" id="get_valid_traces"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.get_valid_traces">[docs]</a><span class="k">def</span> <span class="nf">get_valid_traces</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return only valid traces of a stream.</span>
 
 <span class="sd">    Remove traces that are 100% masked from a stream. This happens when</span>
@@ -766,7 +788,7 @@ document.write(`
     <span class="k">return</span></div>
 
 
-<div class="viewcode-block" id="discard_short_traces"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.discard_short_traces">[docs]</a><span class="k">def</span> <span class="nf">discard_short_traces</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<div class="viewcode-block" id="discard_short_traces"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.discard_short_traces">[docs]</a><span class="k">def</span> <span class="nf">discard_short_traces</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Discard all traces from stream that are shorter than length.</span>
 
@@ -784,7 +806,7 @@ document.write(`
     <span class="k">return</span></div>
 
 
-<div class="viewcode-block" id="nan_moving_av"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.nan_moving_av">[docs]</a><span class="k">def</span> <span class="nf">nan_moving_av</span><span class="p">(</span>
+<div class="viewcode-block" id="nan_moving_av"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.nan_moving_av">[docs]</a><span class="k">def</span> <span class="nf">nan_moving_av</span><span class="p">(</span>
         <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">win_half_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Returns a filtered version of data, disregarding the nans.</span>
@@ -812,7 +834,7 @@ document.write(`
     <span class="k">return</span> <span class="n">data_smooth</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="stream_require_dtype"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.stream_require_dtype">[docs]</a><span class="k">def</span> <span class="nf">stream_require_dtype</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
+<div class="viewcode-block" id="stream_require_dtype"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.stream_require_dtype">[docs]</a><span class="k">def</span> <span class="nf">stream_require_dtype</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Often it might make sense to change the data type of seismic data before</span>
 <span class="sd">    saving or broadcasting (e.g., to save memory). This function allows</span>
@@ -831,7 +853,7 @@ document.write(`
         <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="correct_polarity"><a class="viewcode-back" href="../../../modules/API.html#seismic.utils.miic_utils.correct_polarity">[docs]</a><span class="k">def</span> <span class="nf">correct_polarity</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">inv</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">):</span>
+<div class="viewcode-block" id="correct_polarity"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.correct_polarity">[docs]</a><span class="k">def</span> <span class="nf">correct_polarity</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">inv</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Sometimes the polarity of a seismometer&#39;s vertical component is reversed.</span>
 <span class="sd">    This simple functions flips the polarity if this should be the case.</span>

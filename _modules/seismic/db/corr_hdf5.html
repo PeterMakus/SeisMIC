@@ -108,8 +108,14 @@
   
   
   
+    
+    
+      
+    
+    
+    <img src="../../../_static/seismic_logo_small.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../../_static/seismic_logo_small.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
   
-    <p class="title logo__title"></p>
   
 </a></div>
     
@@ -179,6 +185,13 @@
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../../../modules/API.html">
                         SeisMIC API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
                       </a>
                     </li>
                 
@@ -327,6 +340,13 @@ document.write(`
                       </a>
                     </li>
                 
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
+                      </a>
+                    </li>
+                
                 </div>
             </div>
             
@@ -435,7 +455,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Friday, 16th April 2021 03:21:30 pm</span>
-<span class="sd">Last Modified: Monday, 3rd April 2023 02:36:49 pm</span>
+<span class="sd">Last Modified: Tuesday, 4th April 2023 05:04:21 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">ast</span>
 <span class="kn">import</span> <span class="nn">fnmatch</span>
@@ -457,7 +477,7 @@ document.write(`
 <span class="n">h5_FMTSTR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{dir}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{network}</span><span class="s2">.</span><span class="si">{station}</span><span class="s2">.h5&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="DBHandler"><a class="viewcode-back" href="../../../modules/API.html#seismic.db.corr_hdf5.DBHandler">[docs]</a><span class="k">class</span> <span class="nc">DBHandler</span><span class="p">(</span><span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">):</span>
+<div class="viewcode-block" id="DBHandler"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.db.corr_hdf5.DBHandler">[docs]</a><span class="k">class</span> <span class="nc">DBHandler</span><span class="p">(</span><span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The actual file handler of the hdf5 correlation files.</span>
 
@@ -518,12 +538,12 @@ document.write(`
     <span class="k">def</span> <span class="nf">_close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
-<div class="viewcode-block" id="DBHandler.add_corr_options"><a class="viewcode-back" href="../../../modules/API.html#seismic.db.corr_hdf5.DBHandler.add_corr_options">[docs]</a>    <span class="k">def</span> <span class="nf">add_corr_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">co</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+<div class="viewcode-block" id="DBHandler.add_corr_options"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.db.corr_hdf5.DBHandler.add_corr_options">[docs]</a>    <span class="k">def</span> <span class="nf">add_corr_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">co</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="n">sco</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">co_to_hdf5</span><span class="p">(</span><span class="n">co</span><span class="p">))</span>
         <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;co&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
         <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;co&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sco</span></div>
 
-<div class="viewcode-block" id="DBHandler.add_correlation"><a class="viewcode-back" href="../../../modules/API.html#seismic.db.corr_hdf5.DBHandler.add_correlation">[docs]</a>    <span class="k">def</span> <span class="nf">add_correlation</span><span class="p">(</span>
+<div class="viewcode-block" id="DBHandler.add_correlation"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.db.corr_hdf5.DBHandler.add_correlation">[docs]</a>    <span class="k">def</span> <span class="nf">add_correlation</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">CorrTrace</span> <span class="ow">or</span> <span class="n">CorrStream</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;subdivision&#39;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add correlation data to the hdf5 file. Can be accessed using the</span>
@@ -566,7 +586,7 @@ document.write(`
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;The dataset </span><span class="si">%s</span><span class="s2"> is already in file and will be </span><span class="se">\</span>
 <span class="s2">omitted.&quot;</span> <span class="o">%</span> <span class="n">path</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">UserWarning</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="DBHandler.get_corr_options"><a class="viewcode-back" href="../../../modules/API.html#seismic.db.corr_hdf5.DBHandler.get_corr_options">[docs]</a>    <span class="k">def</span> <span class="nf">get_corr_options</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<div class="viewcode-block" id="DBHandler.get_corr_options"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.db.corr_hdf5.DBHandler.get_corr_options">[docs]</a>    <span class="k">def</span> <span class="nf">get_corr_options</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">sco</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;co&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;co&#39;</span><span class="p">])</span>
             <span class="c1"># Run once more through co_to_hdf5 to account for</span>
@@ -577,7 +597,7 @@ document.write(`
             <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;No correlation options in file&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">co</span></div>
 
-<div class="viewcode-block" id="DBHandler.get_data"><a class="viewcode-back" href="../../../modules/API.html#seismic.db.corr_hdf5.DBHandler.get_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span>
+<div class="viewcode-block" id="DBHandler.get_data"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.db.corr_hdf5.DBHandler.get_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">corr_start</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">corr_end</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrStream</span><span class="p">:</span>
@@ -637,7 +657,7 @@ document.write(`
         <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">all_traces_recursive</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">path</span><span class="p">],</span> <span class="n">CorrStream</span><span class="p">(),</span> <span class="n">pattern</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="DBHandler.get_available_starttimes"><a class="viewcode-back" href="../../../modules/API.html#seismic.db.corr_hdf5.DBHandler.get_available_starttimes">[docs]</a>    <span class="k">def</span> <span class="nf">get_available_starttimes</span><span class="p">(</span>
+<div class="viewcode-block" id="DBHandler.get_available_starttimes"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.db.corr_hdf5.DBHandler.get_available_starttimes">[docs]</a>    <span class="k">def</span> <span class="nf">get_available_starttimes</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
             <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span> <span class="ow">or</span> <span class="nb">list</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -673,11 +693,10 @@ document.write(`
         <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">3</span><span class="p">])</span>
         <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">channel</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">path</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">ch</span><span class="p">):</span>
-                <span class="n">out</span><span class="p">[</span><span class="n">match</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-                    <span class="n">k</span><span class="p">[:</span><span class="o">-</span><span class="mi">7</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">path</span><span class="p">,</span> <span class="n">match</span><span class="p">])]</span><span class="o">.</span><span class="n">keys</span><span class="p">())]</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">match</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">path</span><span class="p">,</span> <span class="n">match</span><span class="p">])]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="k">return</span> <span class="n">out</span></div>
 
-<div class="viewcode-block" id="DBHandler.get_available_channels"><a class="viewcode-back" href="../../../modules/API.html#seismic.db.corr_hdf5.DBHandler.get_available_channels">[docs]</a>    <span class="k">def</span> <span class="nf">get_available_channels</span><span class="p">(</span>
+<div class="viewcode-block" id="DBHandler.get_available_channels"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.db.corr_hdf5.DBHandler.get_available_channels">[docs]</a>    <span class="k">def</span> <span class="nf">get_available_channels</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a list of all available channels (i.e., their combination</span>
@@ -703,7 +722,7 @@ document.write(`
             <span class="k">return</span> <span class="p">[]</span></div></div>
 
 
-<div class="viewcode-block" id="CorrelationDataBase"><a class="viewcode-back" href="../../../modules/API.html#seismic.db.corr_hdf5.CorrelationDataBase">[docs]</a><span class="k">class</span> <span class="nc">CorrelationDataBase</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="CorrelationDataBase"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.db.corr_hdf5.CorrelationDataBase">[docs]</a><span class="k">class</span> <span class="nc">CorrelationDataBase</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Base class to handle the hdf5 files that contain noise correlations.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -783,7 +802,7 @@ document.write(`
             <span class="k">return</span> <span class="kc">False</span></div>
 
 
-<div class="viewcode-block" id="all_traces_recursive"><a class="viewcode-back" href="../../../modules/API.html#seismic.db.corr_hdf5.all_traces_recursive">[docs]</a><span class="k">def</span> <span class="nf">all_traces_recursive</span><span class="p">(</span>
+<div class="viewcode-block" id="all_traces_recursive"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.db.corr_hdf5.all_traces_recursive">[docs]</a><span class="k">def</span> <span class="nf">all_traces_recursive</span><span class="p">(</span>
     <span class="n">group</span><span class="p">:</span> <span class="n">h5py</span><span class="o">.</span><span class="n">_hl</span><span class="o">.</span><span class="n">group</span><span class="o">.</span><span class="n">Group</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="n">CorrStream</span><span class="p">,</span>
         <span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrStream</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -811,7 +830,7 @@ document.write(`
     <span class="k">return</span> <span class="n">stream</span></div>
 
 
-<div class="viewcode-block" id="convert_header_to_hdf5"><a class="viewcode-back" href="../../../modules/API.html#seismic.db.corr_hdf5.convert_header_to_hdf5">[docs]</a><span class="k">def</span> <span class="nf">convert_header_to_hdf5</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">header</span><span class="p">:</span> <span class="n">Stats</span><span class="p">):</span>
+<div class="viewcode-block" id="convert_header_to_hdf5"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.db.corr_hdf5.convert_header_to_hdf5">[docs]</a><span class="k">def</span> <span class="nf">convert_header_to_hdf5</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">header</span><span class="p">:</span> <span class="n">Stats</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convert an :class:`~obspy.core.Stats` object and adds it to the provided</span>
 <span class="sd">    hdf5 dataset.</span>
@@ -836,7 +855,7 @@ document.write(`
             <span class="k">continue</span></div>
 
 
-<div class="viewcode-block" id="read_hdf5_header"><a class="viewcode-back" href="../../../modules/API.html#seismic.db.corr_hdf5.read_hdf5_header">[docs]</a><span class="k">def</span> <span class="nf">read_hdf5_header</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stats</span><span class="p">:</span>
+<div class="viewcode-block" id="read_hdf5_header"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.db.corr_hdf5.read_hdf5_header">[docs]</a><span class="k">def</span> <span class="nf">read_hdf5_header</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stats</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Takes an hdft5 dataset as input and returns the header of the CorrTrace.</span>
 
@@ -870,12 +889,12 @@ document.write(`
     <span class="k">return</span> <span class="n">Stats</span><span class="p">(</span><span class="n">header</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="co_to_hdf5"><a class="viewcode-back" href="../../../modules/API.html#seismic.db.corr_hdf5.co_to_hdf5">[docs]</a><span class="k">def</span> <span class="nf">co_to_hdf5</span><span class="p">(</span><span class="n">co</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<div class="viewcode-block" id="co_to_hdf5"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.db.corr_hdf5.co_to_hdf5">[docs]</a><span class="k">def</span> <span class="nf">co_to_hdf5</span><span class="p">(</span><span class="n">co</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
     <span class="n">coc</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">co</span><span class="p">)</span>
     <span class="n">remk</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s1">&#39;subdir&#39;</span><span class="p">,</span> <span class="s1">&#39;read_start&#39;</span><span class="p">,</span> <span class="s1">&#39;read_end&#39;</span><span class="p">,</span> <span class="s1">&#39;read_len&#39;</span><span class="p">,</span> <span class="s1">&#39;read_inc&#39;</span><span class="p">,</span>
         <span class="s1">&#39;combination_method&#39;</span><span class="p">,</span> <span class="s1">&#39;combinations&#39;</span><span class="p">,</span> <span class="s1">&#39;starttime&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;xcombinations&#39;</span><span class="p">]</span>
+        <span class="s1">&#39;xcombinations&#39;</span><span class="p">,</span> <span class="s1">&#39;preprocess_subdiv&#39;</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">remk</span><span class="p">:</span>
         <span class="n">coc</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">coc</span><span class="p">[</span><span class="s1">&#39;corr_args&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;combinations&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>

@@ -17,7 +17,8 @@ Most likely, your system will come with a preinstalled MPI. Else, we recommend `
 Python Dependencies
 ###################
 
-**SeisMIC** has been tested on Python3.8, but should in principle also be compatible with Python3.7 and later.
+**SeisMIC** has been tested on Python 3.10 and 3.11 and we recommend using either of these version.
+However, it should also be compatible with Python3.7 and later.
 If you follow the instructions below, it should not be necessary to install dependencies manually.
 **SeisMIC** depends on the following modules:
 
@@ -60,6 +61,7 @@ You can install SeisMIC from PyPi simply by executing the following commands:
 .. note::
 
     Developers should install SeisMIC from source code using GitHub's ``dev`` branch.
+    You can also use this version if you want to explore the latest goodies.
 
 Via GitHub
 ++++++++++
@@ -102,9 +104,9 @@ After downloading just run the following commands **in the repository's folder**
 Tutorial
 --------
 
-Along with the source code **SeisMIC** is distributed with a Jupyter notebook that provides you with an easy example on how
-to use the code in `examples/tutorial.ipynb`.
+Along with the source code **SeisMIC** is distributed with two Jupyter notebooks that provide you with an easy example on how
+to use the code in `examples` on the `GitHub page <https://github.com/PeterMakus/SeisMIC>`_.
+These tutorials will encompass more topics and functionalities than the documentation. If you simply want to see
+a web version of those tutorials, you can find it at `tutorials <./modules/tutorials>`_.
 
-The tutorial is meant as a "kick-start" for you.
-
-Aside from the tutorial, we recommend you continue reading this documentation.
+Aside from the tutorials, we recommend you continue reading this documentation.

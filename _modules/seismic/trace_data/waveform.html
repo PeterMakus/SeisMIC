@@ -108,8 +108,14 @@
   
   
   
+    
+    
+      
+    
+    
+    <img src="../../../_static/seismic_logo_small.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../../_static/seismic_logo_small.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
   
-    <p class="title logo__title"></p>
   
 </a></div>
     
@@ -179,6 +185,13 @@
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../../../modules/API.html">
                         SeisMIC API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
                       </a>
                     </li>
                 
@@ -327,6 +340,13 @@ document.write(`
                       </a>
                     </li>
                 
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../modules/tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
+                      </a>
+                    </li>
+                
                 </div>
             </div>
             
@@ -433,17 +453,18 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Thursday, 18th February 2021 02:30:02 pm</span>
-<span class="sd">Last Modified: Tuesday, 6th December 2022 04:35:41 pm</span>
+<span class="sd">Last Modified: Tuesday, 8th August 2023 10:54:05 am</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">import</span> <span class="nn">fnmatch</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">glob</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Iterator</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">import</span> <span class="nn">re</span>
 
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">obspy.clients.fdsn</span> <span class="kn">import</span> <span class="n">Client</span> <span class="k">as</span> <span class="n">rClient</span>
 <span class="kn">from</span> <span class="nn">obspy.clients.fdsn.header</span> <span class="kn">import</span> <span class="n">FDSNNoDataException</span>
 <span class="kn">from</span> <span class="nn">obspy.clients.filesystem.sds</span> <span class="kn">import</span> <span class="n">Client</span> <span class="k">as</span> <span class="n">lClient</span>
@@ -451,13 +472,15 @@ document.write(`
 <span class="kn">from</span> <span class="nn">obspy.clients.fdsn.mass_downloader</span> <span class="kn">import</span> <span class="n">RectangularDomain</span><span class="p">,</span> \
     <span class="n">Restrictions</span><span class="p">,</span> <span class="n">MassDownloader</span>
 
+<span class="kn">from</span> <span class="nn">seismic.utils.raw_analysis</span> <span class="kn">import</span> <span class="n">spct_series_welch</span>
+
 
 <span class="n">SDS_FMTSTR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
     <span class="s2">&quot;</span><span class="si">{year}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{network}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{station}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{channel}</span><span class="s2">.</span><span class="si">{sds_type}</span><span class="s2">&quot;</span><span class="p">,</span>
     <span class="s2">&quot;</span><span class="si">{network}</span><span class="s2">.</span><span class="si">{station}</span><span class="s2">.</span><span class="si">{location}</span><span class="s2">.</span><span class="si">{channel}</span><span class="s2">.</span><span class="si">{sds_type}</span><span class="s2">.</span><span class="si">{year}</span><span class="s2">.</span><span class="si">{doy:03d}</span><span class="s2">&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="Store_Client"><a class="viewcode-back" href="../../../modules/API.html#seismic.trace_data.waveform.Store_Client">[docs]</a><span class="k">class</span> <span class="nc">Store_Client</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="Store_Client"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.Store_Client">[docs]</a><span class="k">class</span> <span class="nc">Store_Client</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Client for request and local storage of waveform data</span>
 
@@ -501,7 +524,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">rclient</span> <span class="o">=</span> <span class="n">Client</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">read_only</span> <span class="o">=</span> <span class="n">read_only</span>
 
-<div class="viewcode-block" id="Store_Client.download_waveforms_mdl"><a class="viewcode-back" href="../../../modules/API.html#seismic.trace_data.waveform.Store_Client.download_waveforms_mdl">[docs]</a>    <span class="k">def</span> <span class="nf">download_waveforms_mdl</span><span class="p">(</span>
+<div class="viewcode-block" id="Store_Client.download_waveforms_mdl"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.Store_Client.download_waveforms_mdl">[docs]</a>    <span class="k">def</span> <span class="nf">download_waveforms_mdl</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
         <span class="n">clients</span><span class="p">:</span> <span class="nb">list</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">minlat</span><span class="p">:</span> <span class="nb">float</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">maxlat</span><span class="p">:</span> <span class="nb">float</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">minlon</span><span class="p">:</span> <span class="nb">float</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -541,7 +564,7 @@ document.write(`
             <span class="n">domain</span><span class="p">,</span> <span class="n">restrictions</span><span class="p">,</span> <span class="n">mseed_storage</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_mseed_storage</span><span class="p">,</span>
             <span class="n">stationxml_storage</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inv_dir</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Store_Client.get_waveforms"><a class="viewcode-back" href="../../../modules/API.html#seismic.trace_data.waveform.Store_Client.get_waveforms">[docs]</a>    <span class="k">def</span> <span class="nf">get_waveforms</span><span class="p">(</span>
+<div class="viewcode-block" id="Store_Client.get_waveforms"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.Store_Client.get_waveforms">[docs]</a>    <span class="k">def</span> <span class="nf">get_waveforms</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
             <span class="n">attach_response</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">_check_times</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
@@ -558,7 +581,7 @@ document.write(`
                 <span class="n">attach_response</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">st</span></div>
 
-<div class="viewcode-block" id="Store_Client.get_available_stations"><a class="viewcode-back" href="../../../modules/API.html#seismic.trace_data.waveform.Store_Client.get_available_stations">[docs]</a>    <span class="k">def</span> <span class="nf">get_available_stations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+<div class="viewcode-block" id="Store_Client.get_available_stations"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.Store_Client.get_available_stations">[docs]</a>    <span class="k">def</span> <span class="nf">get_available_stations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a list of stations for which raw data is available.</span>
 <span class="sd">        Very similar to the</span>
@@ -589,7 +612,7 @@ document.write(`
         <span class="k">return</span> <span class="n">statlist</span></div>
 
     <span class="k">def</span> <span class="nf">_get_mseed_storage</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
             <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">:</span>
 
@@ -648,6 +671,28 @@ document.write(`
             <span class="k">return</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">_translate_wildcards</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span>
+            <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Look up network and station names in database, so that wildcards</span>
+<span class="sd">        can be estimated into number of stations.</span>
+
+<span class="sd">        :param network: network string, may contain wildcards</span>
+<span class="sd">        :type network: str</span>
+<span class="sd">        :param station: station string, may contain wildcards</span>
+<span class="sd">        :type station: str</span>
+<span class="sd">        :return: _description_</span>
+<span class="sd">        :rtype: _type_</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dirlist</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sds_root</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">))</span>
+        <span class="n">nets</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">dirlist</span><span class="p">]</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">dirlist</span><span class="p">]</span>
+        <span class="n">chans</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">dirlist</span><span class="p">]</span>
+        <span class="c1"># Create one nested list</span>
+        <span class="k">return</span> <span class="p">[[</span><span class="n">nets</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">stats</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">chans</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dirlist</span><span class="p">))]</span>
+
     <span class="k">def</span> <span class="nf">_load_remote</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
@@ -704,7 +749,7 @@ document.write(`
         <span class="c1"># print(&quot;Success&quot;)</span>
         <span class="k">return</span> <span class="n">st</span>
 
-<div class="viewcode-block" id="Store_Client.read_inventory"><a class="viewcode-back" href="../../../modules/API.html#seismic.trace_data.waveform.Store_Client.read_inventory">[docs]</a>    <span class="k">def</span> <span class="nf">read_inventory</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span><span class="p">:</span>
+<div class="viewcode-block" id="Store_Client.read_inventory"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.Store_Client.read_inventory">[docs]</a>    <span class="k">def</span> <span class="nf">read_inventory</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Reads an up-to-date version of the corresponding Station Inventory.</span>
 
@@ -714,7 +759,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span> <span class="o">=</span> <span class="n">read_inventory</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inv_dir</span><span class="p">,</span> <span class="s1">&#39;*.xml&#39;</span><span class="p">))</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span></div>
 
-<div class="viewcode-block" id="Store_Client.select_inventory_or_load_remote"><a class="viewcode-back" href="../../../modules/API.html#seismic.trace_data.waveform.Store_Client.select_inventory_or_load_remote">[docs]</a>    <span class="k">def</span> <span class="nf">select_inventory_or_load_remote</span><span class="p">(</span>
+<div class="viewcode-block" id="Store_Client.select_inventory_or_load_remote"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.Store_Client.select_inventory_or_load_remote">[docs]</a>    <span class="k">def</span> <span class="nf">select_inventory_or_load_remote</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Checks whether the response for the provided station is in</span>
@@ -773,16 +818,96 @@ document.write(`
 
     <span class="k">def</span> <span class="nf">_write_inventory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ninv</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;write the inventory information&quot;&quot;&quot;</span>
+        <span class="c1"># Save inventory by station name, like this no old information</span>
+        <span class="c1"># can be deleted</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span> <span class="o">+=</span> <span class="n">ninv</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span> <span class="o">=</span> <span class="n">ninv</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inv_dir</span><span class="p">,</span> <span class="s1">&#39;inventory.xml&#39;</span><span class="p">),</span>
-            <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;STATIONXML&quot;</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+        <span class="n">fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inv_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ninv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">ninv</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s1">.xml&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;STATIONXML&quot;</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_generate_time_windows</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
+            <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">increment</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">86400</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Stream</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates time windows with the requested increment from the requested</span>
+<span class="sd">        station.</span>
+
+<span class="sd">        :param network: network code</span>
+<span class="sd">        :type network: str</span>
+<span class="sd">        :param station: station code</span>
+<span class="sd">        :type station: str</span>
+<span class="sd">        :param channel: Channel Code</span>
+<span class="sd">        :type channel: str</span>
+<span class="sd">        :param starttime: Starttime of the first window</span>
+<span class="sd">        :type starttime: UTCDateTime</span>
+<span class="sd">        :param endtime: Endtime of the last window</span>
+<span class="sd">        :type endtime: UTCDateTime</span>
+<span class="sd">        :param increment: increment and window length between the windows,</span>
+<span class="sd">            defaults to 86400</span>
+<span class="sd">        :type increment: int, optional</span>
+<span class="sd">        :yield: Stream with every window</span>
+<span class="sd">        :rtype: Iterator[Stream]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">starttimes</span> <span class="o">=</span> <span class="n">starttime</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+            <span class="mi">0</span><span class="p">,</span> <span class="n">endtime</span><span class="o">.</span><span class="n">timestamp</span><span class="o">-</span><span class="n">starttime</span><span class="o">.</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">increment</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="n">starttimes</span><span class="p">:</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="n">start</span> <span class="o">+</span> <span class="n">increment</span><span class="p">)</span>
+            <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_local</span><span class="p">(</span>
+                <span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="n">start</span><span class="p">),</span> <span class="n">end</span><span class="p">,</span>
+                <span class="n">attach_response</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">_check_times</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">st</span>
+
+<div class="viewcode-block" id="Store_Client.compute_spectrogram"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.Store_Client.compute_spectrogram">[docs]</a>    <span class="k">def</span> <span class="nf">compute_spectrogram</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
+        <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">win_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">freq_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">25</span><span class="p">,</span>
+            <span class="n">read_increment</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">86400</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes a time series of spectrograms for the requested station and</span>
+<span class="sd">        channel.</span>
+
+<span class="sd">        # Enter plotting function here later</span>
+<span class="sd">        .. seealso:: Use function :func:`~seismic.plot` to generate</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            MPI support since version 0.4.2. Then the result is only</span>
+<span class="sd">            available on rank 0. All other ranks return None. (to save RAM)</span>
+
+<span class="sd">        :param network: network code</span>
+<span class="sd">        :type network: str</span>
+<span class="sd">        :param station: station code</span>
+<span class="sd">        :type station: str</span>
+<span class="sd">        :param channel: channel code</span>
+<span class="sd">        :type channel: str</span>
+<span class="sd">        :param starttime: starttime of the first window</span>
+<span class="sd">        :type starttime: UTCDateTime</span>
+<span class="sd">        :param endtime: endtime of the last window</span>
+<span class="sd">        :type endtime: UTCDateTime</span>
+<span class="sd">        :param win_len: Length of each time window in seconds</span>
+<span class="sd">        :type win_len: int</span>
+<span class="sd">        :param freq_max: Maximum frequency to compute, defaults to 25.</span>
+<span class="sd">            Also determines the Nyquist frequency.</span>
+<span class="sd">        :type freq_max: float, optional</span>
+<span class="sd">        :param read_increment: Increment to read data in - does not</span>
+<span class="sd">            influence the final result but has to be &gt;= win_len,</span>
+<span class="sd">            defaults to 86400</span>
+<span class="sd">        :type read_increment: int, optional</span>
+<span class="sd">        :return: Frequency vector, time vector and spectrogram matrix</span>
+<span class="sd">        :rtype: Tuple[np.ndarray, np.ndarray, np.ndarray]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">read_increment</span> <span class="o">&lt;</span> <span class="n">win_len</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;read_increment must be &gt;= win_len, got </span><span class="si">{}</span><span class="s1"> and </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">read_increment</span><span class="p">,</span> <span class="n">win_len</span><span class="p">))</span>
+        <span class="n">data_gen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_time_windows</span><span class="p">(</span>
+            <span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span> <span class="n">read_increment</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">spct_series_welch</span><span class="p">(</span><span class="n">data_gen</span><span class="p">,</span> <span class="n">win_len</span><span class="p">,</span> <span class="n">freq_max</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="FS_Client"><a class="viewcode-back" href="../../../modules/API.html#seismic.trace_data.waveform.FS_Client">[docs]</a><span class="k">class</span> <span class="nc">FS_Client</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="FS_Client"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.FS_Client">[docs]</a><span class="k">class</span> <span class="nc">FS_Client</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Request Client for reading MSEED files from file system</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -794,7 +919,7 @@ document.write(`
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
 
-<div class="viewcode-block" id="FS_Client.get_waveforms"><a class="viewcode-back" href="../../../modules/API.html#seismic.trace_data.waveform.FS_Client.get_waveforms">[docs]</a>    <span class="k">def</span> <span class="nf">get_waveforms</span><span class="p">(</span>
+<div class="viewcode-block" id="FS_Client.get_waveforms"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.FS_Client.get_waveforms">[docs]</a>    <span class="k">def</span> <span class="nf">get_waveforms</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">trim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
             <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
@@ -814,7 +939,7 @@ document.write(`
 <span class="n">IDformat</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;%NET&#39;</span><span class="p">,</span> <span class="s1">&#39;%net&#39;</span><span class="p">,</span> <span class="s1">&#39;%STA&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">ta&#39;</span><span class="p">,</span> <span class="s1">&#39;%LOC&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%lo</span><span class="s1">c&#39;</span><span class="p">,</span> <span class="s1">&#39;%CHA&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%c</span><span class="s1">ha&#39;</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="read_from_filesystem"><a class="viewcode-back" href="../../../modules/API.html#seismic.trace_data.waveform.read_from_filesystem">[docs]</a><span class="k">def</span> <span class="nf">read_from_filesystem</span><span class="p">(</span>
+<div class="viewcode-block" id="read_from_filesystem"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.read_from_filesystem">[docs]</a><span class="k">def</span> <span class="nf">read_from_filesystem</span><span class="p">(</span>
     <span class="n">ID</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span>
     <span class="n">fs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;SDS_archive&#39;</span><span class="p">,</span> <span class="n">trim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
@@ -1089,7 +1214,7 @@ document.write(`
     <span class="k">return</span> <span class="n">res</span>
 
 
-<div class="viewcode-block" id="get_day_in_folder"><a class="viewcode-back" href="../../../modules/API.html#seismic.trace_data.waveform.get_day_in_folder">[docs]</a><span class="k">def</span> <span class="nf">get_day_in_folder</span><span class="p">(</span>
+<div class="viewcode-block" id="get_day_in_folder"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.get_day_in_folder">[docs]</a><span class="k">def</span> <span class="nf">get_day_in_folder</span><span class="p">(</span>
     <span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dirlist</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">UTCDateTime</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>

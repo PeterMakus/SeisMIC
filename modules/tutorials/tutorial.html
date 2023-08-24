@@ -1,0 +1,1383 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>SeisMIC Tutorial</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'modules/tutorials/tutorial';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Spatial Inversion of dv/v" href="spatial.html" />
+    <link rel="prev" title="Our tutorials: From Zero to Noise-Hero" href="../tutorials.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  <div class="navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/seismic_logo_small.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../_static/seismic_logo_small.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+</a></div>
+    
+  </div>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../intro.html">
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../get_started.html">
+                        Getting Started with SeisMIC
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../trace_data.html">
+                        Trace data
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../correlate.html">
+                        Compute and Handle Correlations
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../corrdb.html">
+                        Save and Load Correlations
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../monitor.html">
+                        Monitor Velocity Changes
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../API.html">
+                        SeisMIC API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/PeterMakus/SeisMIC" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../intro.html">
+                        Introduction: Noise Interferometry with (Partial) Green’s Function Retrieval
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../get_started.html">
+                        Getting Started with SeisMIC
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../trace_data.html">
+                        Trace data
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../correlate.html">
+                        Compute and Handle Correlations
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../corrdb.html">
+                        Save and Load Correlations
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../monitor.html">
+                        Monitor Velocity Changes
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../API.html">
+                        SeisMIC API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../tutorials.html">
+                        Our tutorials: From Zero to Noise-Hero
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/PeterMakus/SeisMIC" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#"><strong>SeisMIC</strong> Tutorial</a></li>
+
+
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="spatial.html">Spatial Inversion of dv/v</a></li>
+
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumbs">
+  <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../tutorials.html" class="nav-link">Our tutorials: From Zero to Noise-Hero</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><strong>SeisMIC</strong> Tutorial</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="seismic-tutorial">
+<h1><strong>SeisMIC</strong> Tutorial<a class="headerlink" href="#seismic-tutorial" title="Permalink to this heading">#</a></h1>
+<img alt="../../_images/seismic_logo.png" src="../../_images/seismic_logo.png" />
+<p>In the following, we will go through a simple example to compute a
+ambient noise correlations and monitor velocity changes using
+<strong>SeisMIC</strong>.</p>
+<p>The source code is hosted here:
+<a class="reference external" href="https://github.com/PeterMakus/SeisMIC">SeisMIC</a>.</p>
+<p>The documentation, which this notebook is based upon is located here:
+<a class="reference external" href="https://petermakus.github.io/SeisMIC/">SeisMIC Documentation</a>.</p>
+<p>As an exercise, we will download data from one channel of the station
+<code class="docutils literal notranslate"><span class="pre">X9.IR1</span></code> to investigate the coseismic velocity change caused by the
+M7.2 2016 Zhupanov earthquake (see <a class="reference external" href="https://doi.org/10.1029/2022JB025738">Makus et. al.,
+2023</a>). Without further ado,
+we’ll dive right into it starting with data download.</p>
+<section id="download-the-raw-data">
+<h2>1. Download the raw data<a class="headerlink" href="#download-the-raw-data" title="Permalink to this heading">#</a></h2>
+<p><strong>SeisMIC</strong> uses <a class="reference external" href="https://docs.obspy.org/">obspy</a> to download data
+from FDSN servers.</p>
+<p>To download the data, we will use the
+<code class="docutils literal notranslate"><span class="pre">`seismic.trace_data.waveform.Store_Client</span></code> &lt;<a class="reference external" href="https://petermakus.github.io/SeisMIC/modules/API.html#seismic.trace_data.waveform.Store_Client">https://petermakus.github.io/SeisMIC/modules/API.html#seismic.trace_data.waveform.Store_Client</a>&gt;`__
+class and its method <code class="docutils literal notranslate"><span class="pre">download_waveforms_mdl()</span></code>.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import os
+
+from obspy.clients.fdsn import Client
+from obspy import UTCDateTime
+
+from seismic.trace_data.waveform import Store_Client
+
+# Get notebook path for future reference of the database:
+try: ipynb_path
+except NameError: ipynb_path = os.getcwd()
+
+os.chdir(ipynb_path)
+
+root = os.path.join(ipynb_path, &#39;data&#39;)
+os.makedirs(root, exist_ok=True)
+
+starttime = UTCDateTime(2016, 1, 25)
+endtime = UTCDateTime(2016, 2, 5)
+network = &#39;X9&#39;
+station = &#39;IR1&#39;
+
+
+c = Client(&#39;GEOFON&#39;)
+sc = Store_Client(c, root, read_only=False)
+sc.download_waveforms_mdl(
+    starttime, endtime, clients=[c], network=network,
+    station=station, location=&#39;*&#39;, channel=&#39;HHE&#39;)
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">755</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Initializing</span> <span class="n">FDSN</span> <span class="n">client</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">geofon</span><span class="o">.</span><span class="n">gfz</span><span class="o">-</span><span class="n">potsdam</span><span class="o">.</span><span class="n">de</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">755</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Initializing</span> <span class="n">FDSN</span> <span class="n">client</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">geofon</span><span class="o">.</span><span class="n">gfz</span><span class="o">-</span><span class="n">potsdam</span><span class="o">.</span><span class="n">de</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">757</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Successfully</span> <span class="n">initialized</span> <span class="mi">1</span> <span class="n">client</span><span class="p">(</span><span class="n">s</span><span class="p">):</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">geofon</span><span class="o">.</span><span class="n">gfz</span><span class="o">-</span><span class="n">potsdam</span><span class="o">.</span><span class="n">de</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">757</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Successfully</span> <span class="n">initialized</span> <span class="mi">1</span> <span class="n">client</span><span class="p">(</span><span class="n">s</span><span class="p">):</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">geofon</span><span class="o">.</span><span class="n">gfz</span><span class="o">-</span><span class="n">potsdam</span><span class="o">.</span><span class="n">de</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">758</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Total</span> <span class="n">acquired</span> <span class="ow">or</span> <span class="n">preexisting</span> <span class="n">stations</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">758</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Total</span> <span class="n">acquired</span> <span class="ow">or</span> <span class="n">preexisting</span> <span class="n">stations</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">759</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Client</span> <span class="s1">&#39;http://geofon.gfz-potsdam.de&#39;</span> <span class="o">-</span> <span class="n">Requesting</span> <span class="n">unreliable</span> <span class="n">availability</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">759</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Client</span> <span class="s1">&#39;http://geofon.gfz-potsdam.de&#39;</span> <span class="o">-</span> <span class="n">Requesting</span> <span class="n">unreliable</span> <span class="n">availability</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">906</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Client</span> <span class="s1">&#39;http://geofon.gfz-potsdam.de&#39;</span> <span class="o">-</span> <span class="n">Successfully</span> <span class="n">requested</span> <span class="n">availability</span> <span class="p">(</span><span class="mf">0.15</span> <span class="n">seconds</span><span class="p">)</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">906</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Client</span> <span class="s1">&#39;http://geofon.gfz-potsdam.de&#39;</span> <span class="o">-</span> <span class="n">Successfully</span> <span class="n">requested</span> <span class="n">availability</span> <span class="p">(</span><span class="mf">0.15</span> <span class="n">seconds</span><span class="p">)</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">909</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Client</span> <span class="s1">&#39;http://geofon.gfz-potsdam.de&#39;</span> <span class="o">-</span> <span class="n">Found</span> <span class="mi">1</span> <span class="n">stations</span> <span class="p">(</span><span class="mi">1</span> <span class="n">channels</span><span class="p">)</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">909</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Client</span> <span class="s1">&#39;http://geofon.gfz-potsdam.de&#39;</span> <span class="o">-</span> <span class="n">Found</span> <span class="mi">1</span> <span class="n">stations</span> <span class="p">(</span><span class="mi">1</span> <span class="n">channels</span><span class="p">)</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">911</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Client</span> <span class="s1">&#39;http://geofon.gfz-potsdam.de&#39;</span> <span class="o">-</span> <span class="n">Will</span> <span class="n">attempt</span> <span class="n">to</span> <span class="n">download</span> <span class="n">data</span> <span class="kn">from</span> <span class="mi">1</span> <span class="n">stations</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">911</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Client</span> <span class="s1">&#39;http://geofon.gfz-potsdam.de&#39;</span> <span class="o">-</span> <span class="n">Will</span> <span class="n">attempt</span> <span class="n">to</span> <span class="n">download</span> <span class="n">data</span> <span class="kn">from</span> <span class="mi">1</span> <span class="n">stations</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">913</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Client</span> <span class="s1">&#39;http://geofon.gfz-potsdam.de&#39;</span> <span class="o">-</span> <span class="n">Status</span> <span class="k">for</span> <span class="mi">11</span> <span class="n">time</span> <span class="n">intervals</span><span class="o">/</span><span class="n">channels</span> <span class="n">before</span> <span class="n">downloading</span><span class="p">:</span> <span class="n">IGNORE</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">913</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Client</span> <span class="s1">&#39;http://geofon.gfz-potsdam.de&#39;</span> <span class="o">-</span> <span class="n">Status</span> <span class="k">for</span> <span class="mi">11</span> <span class="n">time</span> <span class="n">intervals</span><span class="o">/</span><span class="n">channels</span> <span class="n">before</span> <span class="n">downloading</span><span class="p">:</span> <span class="n">IGNORE</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">915</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Client</span> <span class="s1">&#39;http://geofon.gfz-potsdam.de&#39;</span> <span class="o">-</span> <span class="n">No</span> <span class="n">station</span> <span class="n">information</span> <span class="n">to</span> <span class="n">download</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">915</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Client</span> <span class="s1">&#39;http://geofon.gfz-potsdam.de&#39;</span> <span class="o">-</span> <span class="n">No</span> <span class="n">station</span> <span class="n">information</span> <span class="n">to</span> <span class="n">download</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">916</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="o">==============================</span> <span class="n">Final</span> <span class="n">report</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">916</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="o">==============================</span> <span class="n">Final</span> <span class="n">report</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">917</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="mi">0</span> <span class="n">MiniSEED</span> <span class="n">files</span> <span class="p">[</span><span class="mf">0.0</span> <span class="n">MB</span><span class="p">]</span> <span class="n">already</span> <span class="n">existed</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">917</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="mi">0</span> <span class="n">MiniSEED</span> <span class="n">files</span> <span class="p">[</span><span class="mf">0.0</span> <span class="n">MB</span><span class="p">]</span> <span class="n">already</span> <span class="n">existed</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">918</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="mi">0</span> <span class="n">StationXML</span> <span class="n">files</span> <span class="p">[</span><span class="mf">0.0</span> <span class="n">MB</span><span class="p">]</span> <span class="n">already</span> <span class="n">existed</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">918</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="mi">0</span> <span class="n">StationXML</span> <span class="n">files</span> <span class="p">[</span><span class="mf">0.0</span> <span class="n">MB</span><span class="p">]</span> <span class="n">already</span> <span class="n">existed</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">919</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Client</span> <span class="s1">&#39;http://geofon.gfz-potsdam.de&#39;</span> <span class="o">-</span> <span class="n">Acquired</span> <span class="mi">0</span> <span class="n">MiniSEED</span> <span class="n">files</span> <span class="p">[</span><span class="mf">0.0</span> <span class="n">MB</span><span class="p">]</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">919</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Client</span> <span class="s1">&#39;http://geofon.gfz-potsdam.de&#39;</span> <span class="o">-</span> <span class="n">Acquired</span> <span class="mi">0</span> <span class="n">MiniSEED</span> <span class="n">files</span> <span class="p">[</span><span class="mf">0.0</span> <span class="n">MB</span><span class="p">]</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">920</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Client</span> <span class="s1">&#39;http://geofon.gfz-potsdam.de&#39;</span> <span class="o">-</span> <span class="n">Acquired</span> <span class="mi">0</span> <span class="n">StationXML</span> <span class="n">files</span> <span class="p">[</span><span class="mf">0.0</span> <span class="n">MB</span><span class="p">]</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">920</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Client</span> <span class="s1">&#39;http://geofon.gfz-potsdam.de&#39;</span> <span class="o">-</span> <span class="n">Acquired</span> <span class="mi">0</span> <span class="n">StationXML</span> <span class="n">files</span> <span class="p">[</span><span class="mf">0.0</span> <span class="n">MB</span><span class="p">]</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">920</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Downloaded</span> <span class="mf">0.0</span> <span class="n">MB</span> <span class="ow">in</span> <span class="n">total</span><span class="o">.</span>
+<span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">920</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Downloaded</span> <span class="mf">0.0</span> <span class="n">MB</span> <span class="ow">in</span> <span class="n">total</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>Some notes about this: 1. The method <code class="docutils literal notranslate"><span class="pre">download_waveforms_mdl()</span></code>
+expects a list of clients as input. 2. All arguments accept wildcards</p>
+<p>If everything worked fine. This should have created a folder called
+<code class="docutils literal notranslate"><span class="pre">data/mseed</span></code> and <code class="docutils literal notranslate"><span class="pre">data/inventory</span></code>. Let’s check</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>os.listdir(&#39;./data/&#39;)
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s1">&#39;inventory&#39;</span><span class="p">,</span> <span class="s1">&#39;mseed&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<section id="plot-a-time-dependent-spectrogram">
+<h3>1.1 Plot a time-dependent spectrogram<a class="headerlink" href="#plot-a-time-dependent-spectrogram" title="Permalink to this heading">#</a></h3>
+<p>A good first step to evaluate how the noise looks in the different
+frequency bands is by plotting a spectral series. SeisMIC possesses an
+efficient implentation using Welch windows.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from seismic.plot.plot_spectrum import plot_spct_series
+from matplotlib import pyplot as plt
+
+f, t, S = sc.compute_spectrogram(&#39;X9&#39;, &#39;IR1&#39;, &#39;HHE&#39;, starttime, endtime, 7200, freq_max=12.5)
+fig = plt.figure(figsize=(9, 7))
+plot_spct_series(S, f, t, log_scale=True)
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">Axes</span><span class="p">:</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;$f$ [Hz]&#39;</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<img alt="../../_images/tutorial_6_1.png" src="../../_images/tutorial_6_1.png" />
+</section>
+</section>
+<section id="compute-correlations">
+<h2>2. Compute Correlations<a class="headerlink" href="#compute-correlations" title="Permalink to this heading">#</a></h2>
+<p>That seems to have worked, so we are ready to use this raw data to
+compute ambient noise correlations.</p>
+<section id="parameters">
+<h3>2.1 Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading">#</a></h3>
+<p>Parameters are provided as a <code class="docutils literal notranslate"><span class="pre">yaml</span></code> file or a <code class="docutils literal notranslate"><span class="pre">dict</span></code> object. This
+tutorial comes with an yaml file to process the data. Let’s have a short
+look at it using bash.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!cat params.yaml
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#### Project wide parameters</span>
+<span class="c1"># lowest level project directory</span>
+<span class="n">proj_dir</span> <span class="p">:</span> <span class="s1">&#39;data&#39;</span>
+<span class="c1"># Save the component combinations in separate hdf5 files</span>
+<span class="c1"># This is faster for multi-core if True</span>
+<span class="c1"># Set to False for compatibility with SeisMIC version &lt; 0.4.6</span>
+<span class="n">save_comps_separately</span><span class="p">:</span> <span class="kc">True</span>
+<span class="c1"># directory for logging information</span>
+<span class="n">log_subdir</span> <span class="p">:</span> <span class="s1">&#39;log&#39;</span>
+<span class="c1"># levels:</span>
+<span class="c1"># &#39;DEBUG&#39;, &#39;INFO&#39;, &#39;WARNING&#39;, &#39;ERROR&#39;, or &#39;CRITICAL&#39;</span>
+<span class="n">log_level</span><span class="p">:</span> <span class="s1">&#39;WARNING&#39;</span>
+<span class="c1"># folder for figures</span>
+<span class="n">fig_subdir</span> <span class="p">:</span> <span class="s1">&#39;figures&#39;</span>
+
+
+<span class="c1">#### parameters that are network specific</span>
+<span class="n">net</span><span class="p">:</span>
+    <span class="c1"># list of stations used in the project</span>
+    <span class="c1"># type: list of strings or string, wildcards allowed</span>
+    <span class="n">network</span> <span class="p">:</span> <span class="s1">&#39;X9&#39;</span>
+    <span class="n">station</span> <span class="p">:</span> <span class="s1">&#39;IR1&#39;</span>
+
+<span class="c1">#### parameters for correlation (emperical Green&#39;s function creation)</span>
+<span class="n">co</span><span class="p">:</span>
+    <span class="c1"># subdirectory of &#39;proj_dir&#39; to store correlation</span>
+    <span class="c1"># type: string</span>
+    <span class="n">subdir</span> <span class="p">:</span> <span class="s1">&#39;corr&#39;</span>
+    <span class="c1"># times sequences to read for cliping or muting on stream basis</span>
+    <span class="c1"># These should be long enough for the reference (e.g. the standard</span>
+    <span class="c1"># deviation) to be rather independent of the parts to remove</span>
+    <span class="c1"># type: string</span>
+    <span class="n">read_start</span> <span class="p">:</span> <span class="s1">&#39;2016-01-25 00:00:01.0&#39;</span>
+    <span class="n">read_end</span> <span class="p">:</span> <span class="s1">&#39;2016-02-05 00:00:00.0&#39;</span>
+    <span class="c1"># type: float [seconds]</span>
+    <span class="c1"># The longer the faster, but higher RAM usage.</span>
+    <span class="c1"># Note that this is also the length of the correlation batches</span>
+    <span class="c1"># that will be written (i.e., length that will be</span>
+    <span class="c1"># kept in memory before writing to disk)</span>
+    <span class="n">read_len</span> <span class="p">:</span> <span class="mi">86398</span>
+    <span class="n">read_inc</span> <span class="p">:</span> <span class="mi">86400</span>
+
+    <span class="c1"># New sampling rate in Hz. Note that it will try to decimate</span>
+    <span class="c1"># if possible (i.e., there is an integer factor from the</span>
+    <span class="c1"># native sampling_rate)</span>
+    <span class="n">sampling_rate</span> <span class="p">:</span> <span class="mi">25</span>
+    <span class="c1"># Remove the instrument response, will take substantially more time</span>
+    <span class="n">remove_response</span> <span class="p">:</span> <span class="kc">False</span>
+
+    <span class="c1"># Method to combine different traces</span>
+    <span class="n">combination_method</span> <span class="p">:</span> <span class="s1">&#39;autoComponents&#39;</span>
+
+    <span class="c1"># If you want only specific combinations to be computed enter them here</span>
+    <span class="c1"># In the form [Net0-Net0.Stat0-Stat1]</span>
+    <span class="c1"># This option will only be consider if combination_method == &#39;betweenStations&#39;</span>
+    <span class="c1"># Comment or set == None if not in use</span>
+    <span class="n">xcombinations</span> <span class="p">:</span> <span class="kc">None</span>
+
+    <span class="c1"># preprocessing of the original length time series</span>
+    <span class="c1"># these function work on an obspy.Stream object given as first argument</span>
+    <span class="c1"># and return an obspy.Stream object.</span>
+    <span class="n">preProcessing</span> <span class="p">:</span> <span class="p">[</span>
+                    <span class="p">{</span><span class="s1">&#39;function&#39;</span><span class="p">:</span><span class="s1">&#39;seismic.correlate.preprocessing_stream.detrend_st&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;args&#39;</span><span class="p">:{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;linear&#39;</span><span class="p">}},</span>
+                    <span class="p">{</span><span class="s1">&#39;function&#39;</span><span class="p">:</span><span class="s1">&#39;seismic.correlate.preprocessing_stream.cos_taper_st&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;args&#39;</span><span class="p">:{</span><span class="s1">&#39;taper_len&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="c1"># seconds</span>
+                              <span class="s1">&#39;lossless&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}},</span> <span class="c1"># lossless tapering stitches additional data to trace, tapers, and removes the tapered ends after preprocessing</span>
+                    <span class="p">{</span><span class="s1">&#39;function&#39;</span><span class="p">:</span><span class="s1">&#39;seismic.correlate.preprocessing_stream.stream_filter&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;args&#39;</span><span class="p">:{</span><span class="s1">&#39;ftype&#39;</span><span class="p">:</span><span class="s1">&#39;bandpass&#39;</span><span class="p">,</span>
+                              <span class="s1">&#39;filter_option&#39;</span><span class="p">:{</span><span class="s1">&#39;freqmin&#39;</span><span class="p">:</span><span class="mf">0.01</span><span class="p">,</span> <span class="c1">#0.01</span>
+                                               <span class="s1">&#39;freqmax&#39;</span><span class="p">:</span><span class="mf">12.49</span><span class="p">}}}</span>
+                     <span class="c1">#{&#39;function&#39;:&#39;seismic.correlate.preprocessing_stream.stream_mute&#39;,</span>
+                     <span class="c1"># &#39;args&#39;:{&#39;taper_len&#39;:100,</span>
+                     <span class="c1">#         &#39;mute_method&#39;:&#39;std_factor&#39;,</span>
+                     <span class="c1">#         &#39;mute_value&#39;:3}}</span>
+                    <span class="p">]</span>
+    <span class="c1"># subdivision of the read sequences for correlation</span>
+    <span class="c1"># if this is set the stream processing will happen on the hourly subdivision. This has the</span>
+    <span class="c1"># advantage that data that already exists will not need to be preprocessed again</span>
+    <span class="c1"># On the other hand, computing a whole new database might be slower</span>
+    <span class="c1"># Recommended to be set to True if:</span>
+    <span class="c1"># a) You update your database and a lot of the data is already available (up to a magnitude faster)</span>
+    <span class="c1"># b) corr_len is close to read_len</span>
+    <span class="c1"># Is automatically set to False if you are computing a completely new db</span>
+    <span class="n">preprocess_subdiv</span><span class="p">:</span> <span class="kc">True</span>
+    <span class="c1"># type: presence of this key</span>
+    <span class="n">subdivision</span><span class="p">:</span>
+        <span class="c1"># type: float [seconds]</span>
+        <span class="n">corr_inc</span> <span class="p">:</span> <span class="mi">3600</span>
+        <span class="n">corr_len</span> <span class="p">:</span> <span class="mi">3600</span>
+        <span class="c1"># recombine these subdivisions</span>
+        <span class="c1"># unused at the time</span>
+        <span class="c1"># type: boolean</span>
+        <span class="n">recombine_subdivision</span> <span class="p">:</span> <span class="kc">True</span>
+        <span class="c1"># delete</span>
+        <span class="c1"># type: booblean</span>
+        <span class="n">delete_subdivision</span> <span class="p">:</span> <span class="kc">False</span>
+
+    <span class="c1"># parameters for correlation preprocessing</span>
+    <span class="c1"># Standard functions reside in seismic.correlate.preprocessing_td and preprocessing_fd, respectively</span>
+    <span class="n">corr_args</span> <span class="p">:</span> <span class="p">{</span><span class="s1">&#39;TDpreProcessing&#39;</span><span class="p">:[</span>
+                                    <span class="p">{</span><span class="s1">&#39;function&#39;</span><span class="p">:</span><span class="s1">&#39;seismic.correlate.preprocessing_td.detrend&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;args&#39;</span><span class="p">:{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;linear&#39;</span><span class="p">}},</span>
+                                   <span class="p">{</span><span class="s1">&#39;function&#39;</span><span class="p">:</span><span class="s1">&#39;seismic.correlate.preprocessing_td.TDfilter&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;args&#39;</span><span class="p">:{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span><span class="s1">&#39;bandpass&#39;</span><span class="p">,</span><span class="s1">&#39;freqmin&#39;</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="s1">&#39;freqmax&#39;</span><span class="p">:</span><span class="mi">4</span><span class="p">}},</span>
+                                    <span class="c1">#{&#39;function&#39;:&#39;seismic.correlate.preprocessing_td.mute&#39;,</span>
+                                    <span class="c1"># &#39;args&#39;:{&#39;taper_len&#39;:100.,</span>
+                                           <span class="c1"># &#39;threshold&#39;:1000, absolute threshold</span>
+                                    <span class="c1">#         &#39;std_factor&#39;:3,</span>
+                                    <span class="c1">#         &#39;filter&#39;:{&#39;type&#39;:&#39;bandpass&#39;,&#39;freqmin&#39;:2,&#39;freqmax&#39;:4},</span>
+                                    <span class="c1">#         &#39;extend_gaps&#39;:True}},</span>
+                                  <span class="c1">#  {&#39;function&#39;:&#39;seismic.correlate.preprocessing_td.clip&#39;,</span>
+                                  <span class="c1">#   &#39;args&#39;:{&#39;std_factor&#39;:2.5}},</span>
+                                   <span class="p">{</span><span class="s1">&#39;function&#39;</span><span class="p">:</span><span class="s1">&#39;seismic.correlate.preprocessing_td.signBitNormalization&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="p">{}}</span>
+                                   <span class="p">],</span>
+                  <span class="c1"># Standard functions reside in seismic.correlate.preprocessing_fd</span>
+                 <span class="s1">&#39;FDpreProcessing&#39;</span><span class="p">:[</span>
+                                    <span class="c1"># {&#39;function&#39;:&#39;seismic.correlate.preprocessing_fd.spectralWhitening&#39;,</span>
+                                    <span class="c1">#  &#39;args&#39;:{&#39;joint_norm&#39;:False}},</span>
+                                    <span class="p">{</span><span class="s1">&#39;function&#39;</span><span class="p">:</span><span class="s1">&#39;seismic.correlate.preprocessing_fd.FDfilter&#39;</span><span class="p">,</span>
+                                     <span class="s1">&#39;args&#39;</span><span class="p">:{</span><span class="s1">&#39;flimit&#39;</span><span class="p">:[</span><span class="mf">1.33</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">]}}</span>
+                                    <span class="c1">#  {&#39;function&#39;:seismic.correlate.preprocessing_fd.FDsignBitNormalization,</span>
+                                    <span class="c1"># &#39;args&#39;:{}}</span>
+                                    <span class="p">],</span>
+                 <span class="s1">&#39;lengthToSave&#39;</span><span class="p">:</span><span class="mi">25</span><span class="p">,</span>
+                 <span class="s1">&#39;center_correlation&#39;</span><span class="p">:</span><span class="kc">True</span><span class="p">,</span>      <span class="c1"># make sure zero correlation time is in the center</span>
+                 <span class="s1">&#39;normalize_correlation&#39;</span><span class="p">:</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="s1">&#39;combinations&#39;</span><span class="p">:[]</span>
+                <span class="p">}</span>
+
+
+<span class="c1">#### parameters for the estimation of time differences</span>
+<span class="n">dv</span><span class="p">:</span>
+    <span class="c1"># subfolder for storage of time difference results</span>
+    <span class="n">subdir</span> <span class="p">:</span> <span class="s1">&#39;vel_change&#39;</span>
+
+    <span class="c1"># Plotting</span>
+    <span class="n">plot_vel_change</span> <span class="p">:</span> <span class="kc">True</span>
+
+    <span class="c1">### Definition of calender time windows for the time difference measurements</span>
+    <span class="n">start_date</span> <span class="p">:</span> <span class="s1">&#39;2016-01-25 00:00:00.0&#39;</span>   <span class="c1"># %Y-%m-%dT%H:%M:%S.%fZ&#39;</span>
+    <span class="n">end_date</span> <span class="p">:</span> <span class="s1">&#39;2016-02-05 00:00:00.0&#39;</span>
+    <span class="n">win_len</span> <span class="p">:</span> <span class="mi">3600</span>                         <span class="c1"># length of window in which EGFs are stacked</span>
+    <span class="n">date_inc</span> <span class="p">:</span> <span class="mi">3600</span>                        <span class="c1"># increment of measurements</span>
+
+    <span class="c1">### Frequencies</span>
+    <span class="n">freq_min</span> <span class="p">:</span> <span class="mi">2</span>
+    <span class="n">freq_max</span> <span class="p">:</span> <span class="mi">4</span>
+
+    <span class="c1">### Definition of lapse time window</span>
+    <span class="n">tw_start</span> <span class="p">:</span> <span class="mf">3.5</span>     <span class="c1"># lapse time of first sample [s]</span>
+    <span class="n">tw_len</span> <span class="p">:</span> <span class="mf">8.5</span>       <span class="c1"># length of window [s] Can be None if the whole (rest) of the coda should be used</span>
+    <span class="n">sides</span> <span class="p">:</span> <span class="s1">&#39;both&#39;</span>   <span class="c1"># options are left (for acausal), right (causal), both, or single (for active source experiments where the first sample is the trigger time)</span>
+    <span class="n">compute_tt</span> <span class="p">:</span> <span class="kc">False</span>  <span class="c1"># Computes the travel time and adds it to tw_start (tt is 0 if not xstations). If true a rayleigh wave velocity has to be provided</span>
+    <span class="n">rayleigh_wave_velocity</span> <span class="p">:</span> <span class="mi">1</span>  <span class="c1"># rayleigh wave velocity in km/s, will be ignored if compute_tt=False</span>
+
+
+    <span class="c1">### Range to try stretching</span>
+    <span class="n">stretch_range</span> <span class="p">:</span> <span class="mf">0.03</span>
+    <span class="n">stretch_steps</span> <span class="p">:</span> <span class="mi">1001</span>
+
+    <span class="c1">#### Reference trace extraction</span>
+    <span class="c1">#  win_inc : Length in days of each reference time window to be used for trace extraction</span>
+    <span class="c1"># If == 0, only one trace will be extracted</span>
+    <span class="c1"># If &gt; 0, mutliple reference traces will be used for the dv calculation</span>
+    <span class="c1"># Can also be a list if the length of the windows should vary</span>
+    <span class="c1"># See seismic.correlate.stream.CorrBulk.extract_multi_trace for details on arguments</span>
+    <span class="n">dt_ref</span> <span class="p">:</span> <span class="p">{</span><span class="s1">&#39;win_inc&#39;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="s1">&#39;percentile&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="p">}</span>
+
+    <span class="c1"># preprocessing on the correlation bulk or corr_stream before stretch estimation</span>
+    <span class="n">preprocessing</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="c1">#{&#39;function&#39;: &#39;pop_at_utcs&#39;, &#39;args&#39;: {&#39;utcs&#39;: np.array([UTCDateTime()])},</span>
+                    <span class="p">{</span><span class="s1">&#39;function&#39;</span><span class="p">:</span> <span class="s1">&#39;smooth&#39;</span><span class="p">,</span> <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;wsize&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;wtype&#39;</span><span class="p">:</span> <span class="s1">&#39;hanning&#39;</span><span class="p">,</span> <span class="s1">&#39;axis&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}}</span>
+    <span class="p">]</span>
+
+    <span class="c1"># postprocessing of dv objects before saving and plotting</span>
+    <span class="n">postprocessing</span><span class="p">:</span> <span class="p">[</span>
+                      <span class="c1"># {&#39;function&#39;: &#39;smooth_sim_mat&#39;, &#39;args&#39;: {&#39;win_len&#39;: 7, exclude_corr_below: 0}}</span>
+    <span class="p">]</span>
+
+<span class="c1">#### parameters to compute the waveform coherence</span>
+<span class="n">wfc</span><span class="p">:</span>
+  <span class="c1"># subfolder for storage of time difference results</span>
+    <span class="n">subdir</span> <span class="p">:</span> <span class="s1">&#39;wfc&#39;</span>
+
+    <span class="c1">### Definition of calender time windows for the time difference measurements</span>
+    <span class="n">start_date</span> <span class="p">:</span> <span class="s1">&#39;2016-01-25 00:00:00.0&#39;</span>   <span class="c1"># %Y-%m-%dT%H:%M:%S.%fZ&#39;</span>
+    <span class="n">end_date</span> <span class="p">:</span> <span class="s1">&#39;2016-02-05 00:00:00.0&#39;</span>
+    <span class="n">win_len</span> <span class="p">:</span> <span class="mi">3600</span>                         <span class="c1"># length of window in which EGFs are stacked</span>
+    <span class="n">date_inc</span> <span class="p">:</span> <span class="mi">3600</span>                        <span class="c1"># increment of measurements</span>
+
+    <span class="c1">### Frequencies</span>
+    <span class="c1"># can be lists of same length</span>
+    <span class="n">freq_min</span> <span class="p">:</span> <span class="p">[</span><span class="mf">0.0625</span><span class="p">,</span> <span class="mf">0.09</span><span class="p">,</span> <span class="mf">0.125</span><span class="p">,</span> <span class="mf">0.1875</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.375</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">]</span>
+    <span class="n">freq_max</span> <span class="p">:</span> <span class="p">[</span><span class="mf">0.125</span><span class="p">,</span> <span class="mf">0.18</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.375</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mf">12.49</span><span class="p">]</span>
+
+    <span class="c1">### Definition of lapse time window</span>
+    <span class="c1"># can be lists of same length or tw_start: List and tw_len: single value (will be applied to all)</span>
+    <span class="n">tw_start</span> <span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.25</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mf">3.75</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">6.25</span><span class="p">,</span> <span class="mf">7.5</span><span class="p">,</span> <span class="mf">8.75</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mf">11.25</span><span class="p">,</span> <span class="mf">12.5</span><span class="p">,</span> <span class="mf">13.75</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mf">16.25</span><span class="p">,</span> <span class="mf">17.5</span><span class="p">,</span> <span class="mf">17.75</span><span class="p">,</span> <span class="mi">20</span><span class="p">]</span>     <span class="c1"># lapse time of first sample [s]</span>
+    <span class="n">tw_len</span> <span class="p">:</span> <span class="mi">5</span>       <span class="c1"># length of window [s]</span>
+
+    <span class="c1">#### Reference trace extraction</span>
+    <span class="c1">#  win_inc : Length in days of each reference time window to be used for trace extraction</span>
+    <span class="c1"># If == 0, only one trace will be extracted</span>
+    <span class="c1"># If &gt; 0, mutliple reference traces will be used for the dv calculation</span>
+    <span class="c1"># Can also be a list if the length of the windows should vary</span>
+    <span class="c1"># See seismic.correlate.stream.CorrBulk.extract_multi_trace for details on arguments</span>
+    <span class="n">dt_ref</span> <span class="p">:</span> <span class="p">{</span><span class="s1">&#39;win_inc&#39;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="s1">&#39;percentile&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="p">}</span>
+
+    <span class="c1"># preprocessing on the correlation bulk before stretch estimation</span>
+    <span class="n">preprocessing</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">{</span><span class="s1">&#39;function&#39;</span><span class="p">:</span> <span class="s1">&#39;smooth&#39;</span><span class="p">,</span> <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;wsize&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;wtype&#39;</span><span class="p">:</span> <span class="s1">&#39;hanning&#39;</span><span class="p">,</span> <span class="s1">&#39;axis&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}}</span>
+    <span class="p">]</span>
+
+    <span class="c1">### SAVING</span>
+    <span class="c1"># save components separately or only their average?</span>
+    <span class="n">save_comps</span><span class="p">:</span> <span class="kc">False</span>
+</pre></div>
+</div>
+<p>Each of the parameters is described in the
+<a class="reference external" href="https://petermakus.github.io/SeisMIC/modules/correlate/get_started.html">Documentation</a>.</p>
+<p>To start the computation of the correlation we will use
+<code class="docutils literal notranslate"><span class="pre">`MPI</span></code> &lt;<a class="reference external" href="https://mpi4py.readthedocs.io/">https://mpi4py.readthedocs.io/</a>&gt;`__ and a simple python script,
+which could look like this:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!cat correlate.py
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="c1"># This tells numpy to only use one thread</span>
+<span class="c1"># As we use MPI this is necessary to avoid overascribing threads</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;OPENBLAS_NUM_THREADS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
+
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
+
+<span class="kn">from</span> <span class="nn">obspy.clients.fdsn</span> <span class="kn">import</span> <span class="n">Client</span>
+
+<span class="kn">from</span> <span class="nn">seismic.correlate.correlate</span> <span class="kn">import</span> <span class="n">Correlator</span>
+<span class="kn">from</span> <span class="nn">seismic.trace_data.waveform</span> <span class="kn">import</span> <span class="n">Store_Client</span>
+
+<span class="c1"># Path to the paramter file we created in the step before</span>
+<span class="n">params</span> <span class="o">=</span> <span class="s1">&#39;params.yaml&#39;</span>
+<span class="c1"># You don&#39;t have to set this (could be None)</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="s1">&#39;GEOFON&#39;</span><span class="p">)</span>
+<span class="c1"># root is the same as proj_dir in params.yaml</span>
+<span class="n">root</span> <span class="o">=</span> <span class="s1">&#39;data&#39;</span>
+<span class="n">sc</span> <span class="o">=</span> <span class="n">Store_Client</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
+
+<span class="n">c</span> <span class="o">=</span> <span class="n">Correlator</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Correlator initiated&#39;</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+<span class="n">st</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">pxcorr</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Correlation finished after&#39;</span><span class="p">,</span> <span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">x</span><span class="p">,</span> <span class="s1">&#39;seconds&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="start-correlation">
+<h2>2.2 Start correlation<a class="headerlink" href="#start-correlation" title="Permalink to this heading">#</a></h2>
+<p>To start the correlation, we will use the <code class="docutils literal notranslate"><span class="pre">mpirun</span></code> command in bash:</p>
+<p>Jupyter notebook limits the output, so if you wish to see the complete
+output, you might prefer actually executing these commands in a
+terminal.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import os
+# This gives number of threads, usually twice as many as physical cores
+ncpus = os.cpu_count()//2
+!mpirun -n $ncpus python correlate.py
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Correlator initiated
+Correlator initiated
+2023-08-24 10:52:59,811 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+  0%|          | 0/11 [00:00&lt;?, ?it/s]Correlator initiated
+Correlator initiated
+  0%|          | 0/11 [00:00&lt;?, ?it/s]Correlator initiated
+  0%|          | 0/11 [00:00&lt;?, ?it/s]Correlator initiated
+100%|██████████| 11/11 [00:16&lt;00:00,  1.51s/it]
+100%|██████████| 11/11 [00:20&lt;00:00,  1.82s/it]
+100%|██████████| 11/11 [00:20&lt;00:00,  1.82s/it]
+100%|██████████| 11/11 [00:19&lt;00:00,  1.78s/it]
+100%|██████████| 11/11 [00:20&lt;00:00,  1.82s/it]
+100%|██████████| 11/11 [00:20&lt;00:00,  1.82s/it]
+Correlation finished after 16.573271989822388 seconds
+Correlation finished after 19.590983629226685 seconds
+Correlation finished after 20.04919147491455 secondsCorrelation finished after 20.06204128265381 seconds
+
+Correlation finished after 20.04917287826538 seconds
+Correlation finished after 20.276748657226562 seconds
+</pre></div>
+</div>
+<p>Now let’s have a look at those correlations. To do so, we use the
+<code class="docutils literal notranslate"><span class="pre">`CorrelationDataBase</span></code> &lt;<a class="reference external" href="https://petermakus.github.io/SeisMIC/modules/API.html#seismic.db.corr_hdf5.CorrelationDataBase">https://petermakus.github.io/SeisMIC/modules/API.html#seismic.db.corr_hdf5.CorrelationDataBase</a>&gt;`__
+object. All correlations are saved in the folder <code class="docutils literal notranslate"><span class="pre">data/corr</span></code> as
+defined in our params.yaml file.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from seismic.db.corr_hdf5 import CorrelationDataBase
+
+with CorrelationDataBase(f&#39;data/corr/{network}-{network}.{station}-{station}.HHE-HHE.h5&#39;, mode=&#39;r&#39;) as cdb:
+    # find the available labels
+    print(list(cdb.keys()))
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s1">&#39;co&#39;</span><span class="p">,</span> <span class="s1">&#39;stack_86398&#39;</span><span class="p">,</span> <span class="s1">&#39;subdivision&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p><strong>SeisMIC’s</strong> standard labels are <code class="docutils literal notranslate"><span class="pre">'subdivision</span></code> for the correlations
+of corr_len and <code class="docutils literal notranslate"><span class="pre">stack_*stacklen*</span></code> for the stack (with <em>stacklen</em>
+being the length of the stack in seconds).</p>
+<p><strong>SeisMIC</strong> uses some sort of “combined seed codes” structured as above.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>with CorrelationDataBase(f&#39;data/corr/{network}-{network}.{station}-{station}.HHE-HHE.h5&#39;, mode=&#39;r&#39;) as cdb:
+    # find the available labels
+    print(cdb.get_available_channels(
+        tag=&#39;stack_86398&#39;, network=f&#39;{network}-{network}&#39;, station=f&#39;{station}-{station}&#39;))
+    print(cdb.get_available_starttimes(
+        tag=&#39;subdivision&#39;, network=f&#39;{network}-{network}&#39;, station=f&#39;{station}-{station}&#39;, channel=&#39;*&#39;))
+    cst = cdb.get_data(f&#39;{network}-{network}&#39;, f&#39;{station}-{station}&#39;, &#39;HHE-HHE&#39;, &#39;subdivision&#39;)
+print(type(cst))
+
+# filter frequencies, so we can see something
+cst = cst.filter(&#39;bandpass&#39;, freqmin=2, freqmax=4)
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[&#39;HHE-HHE&#39;]
+{&#39;HHE-HHE&#39;: [&#39;2016025T000001.0000Z&#39;, &#39;2016025T010001.0000Z&#39;, &#39;2016025T020001.0000Z&#39;, &#39;2016025T030001.0000Z&#39;, &#39;2016025T040001.0000Z&#39;, &#39;2016025T050001.0000Z&#39;, &#39;2016025T060001.0000Z&#39;, &#39;2016025T070001.0000Z&#39;, &#39;2016025T080001.0000Z&#39;, &#39;2016025T090001.0000Z&#39;, &#39;2016025T100001.0000Z&#39;, &#39;2016025T110001.0000Z&#39;, &#39;2016025T120001.0000Z&#39;, &#39;2016025T130001.0000Z&#39;, &#39;2016025T140001.0000Z&#39;, &#39;2016025T150001.0000Z&#39;, &#39;2016025T160001.0000Z&#39;, &#39;2016025T170001.0000Z&#39;, &#39;2016025T180001.0000Z&#39;, &#39;2016025T190001.0000Z&#39;, &#39;2016025T200001.0000Z&#39;, &#39;2016025T210001.0000Z&#39;, &#39;2016025T220001.0000Z&#39;, &#39;2016025T230001.0000Z&#39;, &#39;2016026T000001.0000Z&#39;, &#39;2016026T010001.0000Z&#39;, &#39;2016026T020001.0000Z&#39;, &#39;2016026T030001.0000Z&#39;, &#39;2016026T040001.0000Z&#39;, &#39;2016026T050001.0000Z&#39;, &#39;2016026T060001.0000Z&#39;, &#39;2016026T070001.0000Z&#39;, &#39;2016026T080001.0000Z&#39;, &#39;2016026T090001.0000Z&#39;, &#39;2016026T100001.0000Z&#39;, &#39;2016026T110001.0000Z&#39;, &#39;2016026T120001.0000Z&#39;, &#39;2016026T130001.0000Z&#39;, &#39;2016026T140001.0000Z&#39;, &#39;2016026T150001.0000Z&#39;, &#39;2016026T160001.0000Z&#39;, &#39;2016026T170001.0000Z&#39;, &#39;2016026T180001.0000Z&#39;, &#39;2016026T190001.0000Z&#39;, &#39;2016026T200001.0000Z&#39;, &#39;2016026T210001.0000Z&#39;, &#39;2016026T220001.0000Z&#39;, &#39;2016026T230001.0000Z&#39;, &#39;2016027T000001.0000Z&#39;, &#39;2016027T010001.0000Z&#39;, &#39;2016027T020001.0000Z&#39;, &#39;2016027T030001.0000Z&#39;, &#39;2016027T040001.0000Z&#39;, &#39;2016027T050001.0000Z&#39;, &#39;2016027T060001.0000Z&#39;, &#39;2016027T070001.0000Z&#39;, &#39;2016027T080001.0000Z&#39;, &#39;2016027T090001.0000Z&#39;, &#39;2016027T100001.0000Z&#39;, &#39;2016027T110001.0000Z&#39;, &#39;2016027T120001.0000Z&#39;, &#39;2016027T130001.0000Z&#39;, &#39;2016027T140001.0000Z&#39;, &#39;2016027T150001.0000Z&#39;, &#39;2016027T160001.0000Z&#39;, &#39;2016027T170001.0000Z&#39;, &#39;2016027T180001.0000Z&#39;, &#39;2016027T190001.0000Z&#39;, &#39;2016027T200001.0000Z&#39;, &#39;2016027T210001.0000Z&#39;, &#39;2016027T220001.0000Z&#39;, &#39;2016027T230001.0000Z&#39;, &#39;2016028T000001.0000Z&#39;, &#39;2016028T010001.0000Z&#39;, &#39;2016028T020001.0000Z&#39;, &#39;2016028T030001.0000Z&#39;, &#39;2016028T040001.0000Z&#39;, &#39;2016028T050001.0000Z&#39;, &#39;2016028T060001.0000Z&#39;, &#39;2016028T070001.0000Z&#39;, &#39;2016028T080001.0000Z&#39;, &#39;2016028T090001.0000Z&#39;, &#39;2016028T100001.0000Z&#39;, &#39;2016028T110001.0000Z&#39;, &#39;2016028T120001.0000Z&#39;, &#39;2016028T130001.0000Z&#39;, &#39;2016028T140001.0000Z&#39;, &#39;2016028T150001.0000Z&#39;, &#39;2016028T160001.0000Z&#39;, &#39;2016028T170001.0000Z&#39;, &#39;2016028T180001.0000Z&#39;, &#39;2016028T190001.0000Z&#39;, &#39;2016028T200001.0000Z&#39;, &#39;2016028T210001.0000Z&#39;, &#39;2016028T220001.0000Z&#39;, &#39;2016028T230001.0000Z&#39;, &#39;2016029T000001.0000Z&#39;, &#39;2016029T010001.0000Z&#39;, &#39;2016029T020001.0000Z&#39;, &#39;2016029T030001.0000Z&#39;, &#39;2016029T040001.0000Z&#39;, &#39;2016029T050001.0000Z&#39;, &#39;2016029T060001.0000Z&#39;, &#39;2016029T070001.0000Z&#39;, &#39;2016029T080001.0000Z&#39;, &#39;2016029T090001.0000Z&#39;, &#39;2016029T100001.0000Z&#39;, &#39;2016029T110001.0000Z&#39;, &#39;2016029T120001.0000Z&#39;, &#39;2016029T130001.0000Z&#39;, &#39;2016029T140001.0000Z&#39;, &#39;2016029T150001.0000Z&#39;, &#39;2016029T160001.0000Z&#39;, &#39;2016029T170001.0000Z&#39;, &#39;2016029T180001.0000Z&#39;, &#39;2016029T190001.0000Z&#39;, &#39;2016029T200001.0000Z&#39;, &#39;2016029T210001.0000Z&#39;, &#39;2016029T220001.0000Z&#39;, &#39;2016029T230001.0000Z&#39;, &#39;2016030T000001.0000Z&#39;, &#39;2016030T010001.0000Z&#39;, &#39;2016030T020001.0000Z&#39;, &#39;2016030T030001.0000Z&#39;, &#39;2016030T040001.0000Z&#39;, &#39;2016030T050001.0000Z&#39;, &#39;2016030T060001.0000Z&#39;, &#39;2016030T070001.0000Z&#39;, &#39;2016030T080001.0000Z&#39;, &#39;2016030T090001.0000Z&#39;, &#39;2016030T100001.0000Z&#39;, &#39;2016030T110001.0000Z&#39;, &#39;2016030T120001.0000Z&#39;, &#39;2016030T130001.0000Z&#39;, &#39;2016030T140001.0000Z&#39;, &#39;2016030T150001.0000Z&#39;, &#39;2016030T160001.0000Z&#39;, &#39;2016030T170001.0000Z&#39;, &#39;2016030T180001.0000Z&#39;, &#39;2016030T190001.0000Z&#39;, &#39;2016030T200001.0000Z&#39;, &#39;2016030T210001.0000Z&#39;, &#39;2016030T220001.0000Z&#39;, &#39;2016030T230001.0000Z&#39;, &#39;2016031T000001.0000Z&#39;, &#39;2016031T010001.0000Z&#39;, &#39;2016031T020001.0000Z&#39;, &#39;2016031T030001.0000Z&#39;, &#39;2016031T040001.0000Z&#39;, &#39;2016031T050001.0000Z&#39;, &#39;2016031T060001.0000Z&#39;, &#39;2016031T070001.0000Z&#39;, &#39;2016031T080001.0000Z&#39;, &#39;2016031T090001.0000Z&#39;, &#39;2016031T100001.0000Z&#39;, &#39;2016031T110001.0000Z&#39;, &#39;2016031T120001.0000Z&#39;, &#39;2016031T130001.0000Z&#39;, &#39;2016031T140001.0000Z&#39;, &#39;2016031T150001.0000Z&#39;, &#39;2016031T160001.0000Z&#39;, &#39;2016031T170001.0000Z&#39;, &#39;2016031T180001.0000Z&#39;, &#39;2016031T190001.0000Z&#39;, &#39;2016031T200001.0000Z&#39;, &#39;2016031T210001.0000Z&#39;, &#39;2016031T220001.0000Z&#39;, &#39;2016031T230001.0000Z&#39;, &#39;2016032T000001.0000Z&#39;, &#39;2016032T010001.0000Z&#39;, &#39;2016032T020001.0000Z&#39;, &#39;2016032T030001.0000Z&#39;, &#39;2016032T040001.0000Z&#39;, &#39;2016032T050001.0000Z&#39;, &#39;2016032T060001.0000Z&#39;, &#39;2016032T070001.0000Z&#39;, &#39;2016032T080001.0000Z&#39;, &#39;2016032T090001.0000Z&#39;, &#39;2016032T100001.0000Z&#39;, &#39;2016032T110001.0000Z&#39;, &#39;2016032T120001.0000Z&#39;, &#39;2016032T130001.0000Z&#39;, &#39;2016032T140001.0000Z&#39;, &#39;2016032T150001.0000Z&#39;, &#39;2016032T160001.0000Z&#39;, &#39;2016032T170001.0000Z&#39;, &#39;2016032T180001.0000Z&#39;, &#39;2016032T190001.0000Z&#39;, &#39;2016032T200001.0000Z&#39;, &#39;2016032T210001.0000Z&#39;, &#39;2016032T220001.0000Z&#39;, &#39;2016032T230001.0000Z&#39;, &#39;2016033T000001.0000Z&#39;, &#39;2016033T010001.0000Z&#39;, &#39;2016033T020001.0000Z&#39;, &#39;2016033T030001.0000Z&#39;, &#39;2016033T040001.0000Z&#39;, &#39;2016033T050001.0000Z&#39;, &#39;2016033T060001.0000Z&#39;, &#39;2016033T070001.0000Z&#39;, &#39;2016033T080001.0000Z&#39;, &#39;2016033T090001.0000Z&#39;, &#39;2016033T100001.0000Z&#39;, &#39;2016033T110001.0000Z&#39;, &#39;2016033T120001.0000Z&#39;, &#39;2016033T130001.0000Z&#39;, &#39;2016033T140001.0000Z&#39;, &#39;2016033T150001.0000Z&#39;, &#39;2016033T160001.0000Z&#39;, &#39;2016033T170001.0000Z&#39;, &#39;2016033T180001.0000Z&#39;, &#39;2016033T190001.0000Z&#39;, &#39;2016033T200001.0000Z&#39;, &#39;2016033T210001.0000Z&#39;, &#39;2016033T220001.0000Z&#39;, &#39;2016033T230001.0000Z&#39;, &#39;2016034T000001.0000Z&#39;, &#39;2016034T010001.0000Z&#39;, &#39;2016034T020001.0000Z&#39;, &#39;2016034T030001.0000Z&#39;, &#39;2016034T040001.0000Z&#39;, &#39;2016034T050001.0000Z&#39;, &#39;2016034T060001.0000Z&#39;, &#39;2016034T070001.0000Z&#39;, &#39;2016034T080001.0000Z&#39;, &#39;2016034T090001.0000Z&#39;, &#39;2016034T100001.0000Z&#39;, &#39;2016034T110001.0000Z&#39;, &#39;2016034T120001.0000Z&#39;, &#39;2016034T130001.0000Z&#39;, &#39;2016034T140001.0000Z&#39;, &#39;2016034T150001.0000Z&#39;, &#39;2016034T160001.0000Z&#39;, &#39;2016034T170001.0000Z&#39;, &#39;2016034T180001.0000Z&#39;, &#39;2016034T190001.0000Z&#39;, &#39;2016034T200001.0000Z&#39;, &#39;2016034T210001.0000Z&#39;, &#39;2016034T220001.0000Z&#39;, &#39;2016034T230001.0000Z&#39;, &#39;2016035T000001.0000Z&#39;, &#39;2016035T010001.0000Z&#39;, &#39;2016035T020001.0000Z&#39;, &#39;2016035T030001.0000Z&#39;, &#39;2016035T040001.0000Z&#39;, &#39;2016035T050001.0000Z&#39;, &#39;2016035T060001.0000Z&#39;, &#39;2016035T070001.0000Z&#39;, &#39;2016035T080001.0000Z&#39;, &#39;2016035T090001.0000Z&#39;, &#39;2016035T100001.0000Z&#39;, &#39;2016035T110001.0000Z&#39;, &#39;2016035T120001.0000Z&#39;, &#39;2016035T130001.0000Z&#39;, &#39;2016035T140001.0000Z&#39;, &#39;2016035T150001.0000Z&#39;, &#39;2016035T160001.0000Z&#39;, &#39;2016035T170001.0000Z&#39;, &#39;2016035T180001.0000Z&#39;, &#39;2016035T190001.0000Z&#39;, &#39;2016035T200001.0000Z&#39;, &#39;2016035T210001.0000Z&#39;, &#39;2016035T220001.0000Z&#39;, &#39;2016035T230001.0000Z&#39;]}
+&lt;class &#39;seismic.correlate.stream.CorrStream&#39;&gt;
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">cst</span></code> is now a
+<code class="docutils literal notranslate"><span class="pre">`CorrStream</span></code> &lt;<a class="reference external" href="https://petermakus.github.io/SeisMIC/modules/API.html#seismic.correlate.stream.CorrStream">https://petermakus.github.io/SeisMIC/modules/API.html#seismic.correlate.stream.CorrStream</a>&gt;`__
+- an obspy based object to handle correlations. We can plot those in a
+section plot for example by time:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from matplotlib import pyplot as plt
+
+plt.figure(figsize=(8, 10))
+ax0 = plt.subplot(2, 1, 1)
+
+cst.plot(timelimits=[-20, 20], cmap=&#39;seismic&#39;, vmin=-0.5, vmax=0.5, ax=ax0)
+ax0.set_title(f&#39;Autocorrelation {network}.{station}.HHE&#39;)
+ax1 = plt.subplot(2, 1, 2)
+cst.plot(scalingfactor=3, timelimits=[0, 20], type=&#39;section&#39;, ax=ax1)
+</pre></div>
+</div>
+<pre class="literal-block">&lt;Axes: xlabel='$\tau$ [s]'&gt;</pre>
+<img alt="../../_images/tutorial_18_1.png" src="../../_images/tutorial_18_1.png" />
+<p>If you look very very closely, you can see a slight time shift in the
+late coda on January 30th. This time shift is associated to the Zhupanov
+earthquake. We will try to quantify the velocity change in the
+following.</p>
+<p>We can also look at a single correlations or at a stack of correlations.
+SeisMIC can stack correlation with <code class="docutils literal notranslate"><span class="pre">CorrStream.stack</span></code>:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>corrstack = cst.stack()[0]
+corrstack.plot(tlim=[-20,20])
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">Axes</span><span class="p">:</span> <span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Lag Time [s]&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Correlation&#39;</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<img alt="../../_images/tutorial_20_1.png" src="../../_images/tutorial_20_1.png" />
+<section id="lets-try-and-combine-the-two-last-plots">
+<h3>Let’s try and combine the two last plots<a class="headerlink" href="#lets-try-and-combine-the-two-last-plots" title="Permalink to this heading">#</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure(figsize=(8, 10))
+ax0 = plt.subplot(2, 1, 1)
+
+cst.plot(timelimits=[-20, 20], cmap=&#39;seismic&#39;, vmin=-0.5, vmax=0.5, ax=ax0)
+ax0.set_title(f&#39;(a)&#39;)
+ax0.plot(
+    corrstack.times(),
+    [UTCDateTime(i).datetime for i in corrstack.data*3e5 +  UTCDateTime(2016, 1, 31).timestamp],
+    color=&#39;k&#39;, zorder=100, linewidth=1.1)
+
+ax1 = plt.subplot(2, 1, 2)
+cst.plot(scalingfactor=3, timelimits=[0, 20], type=&#39;section&#39;, ax=ax1)
+ax1.set_title(f&#39;(b)&#39;)
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Text</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s1">&#39;(b)&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="modules/tutorials/tutorial_files/tutorial_22_1.png" src="modules/tutorials/tutorial_files/tutorial_22_1.png" />
+</section>
+</section>
+<section id="waveform-coherence">
+<h2>3. Waveform Coherence<a class="headerlink" href="#waveform-coherence" title="Permalink to this heading">#</a></h2>
+<p>We can assess the average stability of the wavefield in different
+frequency bands and along the lapse time axis using a measure called the
+waveform coherence (see ,e.g., Steinmann, et al., 2021). The waveform
+coherence is the zero lag correlation of two noise correlations. Here we
+average them for one station and given frequency and lapse time bands.</p>
+<p>For this step, we will have to compute a few more noise correlations
+over various frequency bands. That’s why the next cell will take a
+while.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!python wfc.py
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>2023-08-24 10:54:53,301 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+100%|███████████████████████████████████████████| 11/11 [00:05&lt;00:00,  1.92it/s]
+2023-08-24 10:54:59,090 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:54:59,090 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+100%|███████████████████████████████████████████| 11/11 [00:05&lt;00:00,  2.02it/s]
+2023-08-24 10:55:04,616 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:04,616 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:04,616 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+100%|███████████████████████████████████████████| 11/11 [00:05&lt;00:00,  2.04it/s]
+2023-08-24 10:55:10,090 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:10,090 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:10,090 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:10,090 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+100%|███████████████████████████████████████████| 11/11 [00:05&lt;00:00,  1.96it/s]
+2023-08-24 10:55:15,767 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:15,767 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:15,767 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:15,767 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:15,767 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+100%|███████████████████████████████████████████| 11/11 [00:05&lt;00:00,  1.97it/s]
+2023-08-24 10:55:21,427 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:21,427 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:21,427 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:21,427 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:21,427 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:21,427 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+100%|███████████████████████████████████████████| 11/11 [00:05&lt;00:00,  1.98it/s]
+2023-08-24 10:55:27,068 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:27,068 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:27,068 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:27,068 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:27,068 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:27,068 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+2023-08-24 10:55:27,068 - WARNING - No existing data found.
+Automatically setting preprocess_subdiv to False to optimise performance.
+100%|███████████████████████████████████████████| 11/11 [00:05&lt;00:00,  2.00it/s]
+100%|█████████████████████████████████████████████| 1/1 [00:00&lt;00:00,  1.12it/s]
+100%|█████████████████████████████████████████████| 1/1 [00:00&lt;00:00,  1.11it/s]
+100%|█████████████████████████████████████████████| 1/1 [00:00&lt;00:00,  1.07it/s]
+100%|█████████████████████████████████████████████| 1/1 [00:00&lt;00:00,  1.05it/s]
+100%|█████████████████████████████████████████████| 1/1 [00:00&lt;00:00,  1.07it/s]
+100%|█████████████████████████████████████████████| 1/1 [00:00&lt;00:00,  1.06it/s]
+100%|█████████████████████████████████████████████| 1/1 [00:00&lt;00:00,  1.07it/s]
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from seismic.monitor.wfc import WFCBulk
+from seismic.monitor.wfc import read_wfc
+
+wfcs = read_wfc(&#39;data/wfc/WFC-X9-X9.IR1-IR1.av.*.npz&#39;)
+WFCBulk(wfcs).plot(log=True, cmap=&#39;batlow&#39;)
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">Axes</span><span class="p">:</span> <span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Central Lag Time [s]&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Centre Frequency [Hz]&#39;</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<img alt="modules/tutorials/tutorial_files/tutorial_25_1.png" src="modules/tutorials/tutorial_files/tutorial_25_1.png" />
+</section>
+<section id="monitoring">
+<h2>4. Monitoring<a class="headerlink" href="#monitoring" title="Permalink to this heading">#</a></h2>
+<p>Next, we will compute a velocity change estimate using the stretching
+technique (<a class="reference external" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2006gl027797">Sens-Schönfelder &amp; Wegler,
+2006</a>).
+You can find the corresponding parameters in the <code class="docutils literal notranslate"><span class="pre">dv</span></code> section of the
+<code class="docutils literal notranslate"><span class="pre">params.yaml</span></code> file.</p>
+<p>Similarly to the Correlation we can start the monitoring via a simple
+script:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!cat monitor.py
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="c1"># This tells numpy to only use one thread</span>
+<span class="c1"># As we use MPI this is necessary to avoid overascribing threads</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;OPENBLAS_NUM_THREADS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
+
+<span class="kn">from</span> <span class="nn">seismic.monitor.monitor</span> <span class="kn">import</span> <span class="n">Monitor</span>
+
+<span class="n">yaml_f</span> <span class="o">=</span> <span class="s1">&#39;params.yaml&#39;</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">Monitor</span><span class="p">(</span><span class="n">yaml_f</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">compute_velocity_change_bulk</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>try: ipynb_path
+except NameError: ipynb_path = os.getcwd()
+
+os.chdir(ipynb_path)
+
+# multi-core is not necessarily useful for this example
+# because the jobs are split into N jobs, where N is the number of
+# component combinations (in our case N==1)
+ncpus = os.cpu_count()//2
+!mpirun -n $ncpus python ./monitor.py
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>0it [00:00, ?it/s]
+0it [00:00, ?it/s]/1 [00:00&lt;?, ?it/s]
+0it [00:00, ?it/s]
+0it [00:00, ?it/s]
+0it [00:00, ?it/s]
+saving to X9-X9_IR1-IR1_HHE-HHE
+100%|██████████| 1/1 [00:04&lt;00:00,  4.43s/it]
+</pre></div>
+</div>
+<section id="make-a-first-plot-to-get-an-idea-of-dv-v">
+<h3>Make a first plot to get an idea of <em>dv/v</em><a class="headerlink" href="#make-a-first-plot-to-get-an-idea-of-dv-v" title="Permalink to this heading">#</a></h3>
+<p>We can use SeisMIC’s inbuilt plotting function for that. The velocity
+changes will in general be shown in decimal values.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from seismic.monitor.dv import read_dv
+dv = read_dv(f&#39;data/vel_change/DV-{network}-{network}.{station}-{station}.HHE-HHE.npz&#39;)
+dv.plot(ylim=(-0.01,0.01))
+
+# We can print some information about the dv object
+print(dv)
+</pre></div>
+</div>
+<img alt="../../_images/tutorial_30_0.png" src="../../_images/tutorial_30_0.png" />
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">single_ref</span> <span class="n">stretch</span> <span class="n">velocity</span> <span class="n">change</span> <span class="n">estimate</span> <span class="n">of</span> <span class="n">X9</span><span class="o">-</span><span class="n">X9</span><span class="o">.</span><span class="n">IR1</span><span class="o">-</span><span class="n">IR1</span><span class="o">.</span><span class="n">HHE</span><span class="o">-</span><span class="n">HHE</span><span class="o">.</span>
+<span class="n">starttdate</span><span class="p">:</span> <span class="n">Mon</span> <span class="n">Jan</span> <span class="mi">25</span> <span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span> <span class="mi">2016</span>
+<span class="n">enddate</span><span class="p">:</span> <span class="n">Fri</span> <span class="n">Feb</span>  <span class="mi">5</span> <span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span> <span class="mi">2016</span>
+
+<span class="n">processed</span> <span class="k">with</span> <span class="n">the</span> <span class="n">following</span> <span class="n">parameters</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;freq_min&#39;</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">,</span> <span class="s1">&#39;freq_max&#39;</span><span class="p">:</span> <span class="mf">4.0</span><span class="p">,</span> <span class="s1">&#39;tw_start&#39;</span><span class="p">:</span> <span class="mf">3.5</span><span class="p">,</span> <span class="s1">&#39;tw_len&#39;</span><span class="p">:</span> <span class="mf">8.5</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Even with comparably little data, we can see the velocity drop on
+January 30th. Note that due to the high energy noise, we are able to
+retrieve a very high resolution estimate of <em>dv/v</em>.</p>
+</section>
+</section>
+<section id="make-the-plot-look-a-little-nicer">
+<h2>Make the plot look a little nicer<a class="headerlink" href="#make-the-plot-look-a-little-nicer" title="Permalink to this heading">#</a></h2>
+<p>The plot above is very good if you just want to understand what is going
+on, but maybe it is not necessarily something you would want to put into
+a publication. Here is a code that makes the plot look like in the above
+mentioned publication</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from obspy import UTCDateTime
+
+from seismic.plot.plot_utils import set_mpl_params
+
+set_mpl_params()
+
+# Origin Time of the Zhupanov earthquake
+otime = UTCDateTime(2016, 1, 30, 3, 25).datetime
+
+fig, ax = dv.plot(style=&#39;publication&#39;, return_ax=True, ylim=(-.75,.75),
+                  dateformat=&#39;%d %b&#39;)
+
+plt.axvline(otime, linestyle=&#39;dashed&#39;, c=&#39;r&#39;, label=&#39;M7.2&#39;)
+plt.legend()
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">legend</span><span class="o">.</span><span class="n">Legend</span> <span class="n">at</span> <span class="mh">0x7f6293a57730</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<img alt="../../_images/tutorial_33_1.png" src="../../_images/tutorial_33_1.png" />
+</section>
+</section>
+<section id="what-comes-next">
+<h1>What comes next?<a class="headerlink" href="#what-comes-next" title="Permalink to this heading">#</a></h1>
+<section id="increasing-the-stability">
+<h2>Increasing the stability<a class="headerlink" href="#increasing-the-stability" title="Permalink to this heading">#</a></h2>
+<p>In this case, we are fortunate enough to receive a high-resolution
+<code class="docutils literal notranslate"><span class="pre">dv/v</span></code> estimate with the given parameters (not quite by coincidence
+;-)).</p>
+<p>For many other datasets, you might not be able to achieve satisfactory
+stability. Here are some suggestions on how you could tackle that: 1.
+Increase the smoothing. This can be done over a number of different
+ways, all of them can be configured in <code class="docutils literal notranslate"><span class="pre">params.yaml</span></code>: - increase
+<code class="docutils literal notranslate"><span class="pre">dv['win_len']</span></code> to stack correlations over the defined amount of time
+(in seconds) - in <code class="docutils literal notranslate"><span class="pre">dv['preprocessing']</span></code> increase the parameter
+<code class="docutils literal notranslate"><span class="pre">wsize</span></code> of the <code class="docutils literal notranslate"><span class="pre">smooth</span></code> function to smoooth the correlation
+functions over a larger amount of time (see
+<a class="reference external" href="https://petermakus.github.io/SeisMIC/modules/API.html#seismic.correlate.stream.CorrBulk.smooth">documentation</a>)
+- In <code class="docutils literal notranslate"><span class="pre">dv['postprocessing']</span></code> set a smoothing of the similarity matrix
+(see
+<a class="reference external" href="https://petermakus.github.io/SeisMIC/modules/API.html#seismic.monitor.dv.DV.smooth_sim_mat">documentation</a>)
+2. Try different frequencies, different lag time windows of the coda or
+a different preprocessing. 3. Stack the results from several component
+combinations as done in <a class="reference external" href="https://academic.oup.com/gji/article-abstract/234/1/124/7008901">Illien et
+al. 2023</a>.
+The corresponding function in Seismic is in
+<a class="reference external" href="https://petermakus.github.io/SeisMIC/modules/API.html#seismic.monitor.monitor.average_components">seismic.monitor.monitor.average_component_combinations()</a></p>
+</section>
+<section id="explore-other-processing-possibilities">
+<h2>Explore other processing possibilities<a class="headerlink" href="#explore-other-processing-possibilities" title="Permalink to this heading">#</a></h2>
+<p>There are a large number of flavours for different processing options
+explored. Some of which are natively shipped in SeisMIC. You can
+experiment with options to processing your noise correlation functions
+differently or compute <em>dv/v</em> differently (e.g., thinking about other
+algorithms than the stretching technique). By the way: the dictionaries
+in the different processing parameters in <code class="docutils literal notranslate"><span class="pre">params.yaml</span></code> allow to
+import external functions as long as they are scripted in the right way
+(see link).</p>
+</section>
+<section id="invert-for-a-velocity-change-map">
+<h2>Invert for a velocity change map<a class="headerlink" href="#invert-for-a-velocity-change-map" title="Permalink to this heading">#</a></h2>
+<p>The module <code class="docutils literal notranslate"><span class="pre">seismic.monitor.spatial</span></code> implements the surface wave
+spatial inversion as proposed by <a class="reference external" href="https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2013JB010399">Obermann et
+al. (2013)</a>.
+Consult the documentation, to learn how to work with spatial inversions.
+You can continue with the <a class="reference external" href="./spatial.ipynb">spatial Jupyter Notebook</a>
+to learn how to do a spatial inversion with SeisMIC.</p>
+</section>
+</section>
+<section id="references">
+<h1>References<a class="headerlink" href="#references" title="Permalink to this heading">#</a></h1>
+<p>List of references used in this notebook.</p>
+<p><a class="reference external" href="https://doi.org/10.1093/gji/ggad038">Illien, Luc, Christoph Sens-Schönfelder, and Kuan-Yu Ke. “Resolving
+minute temporal seismic velocity changes induced by earthquake damage:
+the more stations, the merrier?.” Geophysical Journal International
+234.1 (2023): 124-135.</a></p>
+<p><a class="reference external" href="https://doi.org/10.1029/2022JB025738">Makus, P., Sens-Schönfelder, C., Illien, L., Walter, T. R., Yates, A.,
+&amp; Tilmann, F. (2023). Deciphering the whisper of volcanoes: Monitoring
+velocity changes at Kamchatka’s Klyuchevskoy group with fluctuating
+noise fields. Journal of Geophysical Research: Solid Earth, 128,
+e2022JB025738.</a></p>
+<p><a class="reference external" href="https://doi.org/10.1002/2013JB010399">Obermann, A., Planès, T., Larose, E., and Campillo, M. (2013), Imaging
+preeruptive and coeruptive structural and mechanical changes of a
+volcano with ambient seismic noise, J. Geophys. Res. Solid Earth, 118,
+6285– 6294.</a></p>
+<p><a class="reference external" href="https://doi.org/10.1093/gji/ggaa406">Steinmann, R., Hadziioannou, C., &amp; Larose, E. (2020). Effect of
+centimetric freezing of the near subsurface on Rayleigh and Love wave
+velocity in ambient seismic noise correlations. Geophysical Journal
+International, 224(1), 626-636.</a></p>
+<section id="download-this-notebook">
+<h2>Download this notebook<a class="headerlink" href="#download-this-notebook" title="Permalink to this heading">#</a></h2>
+<p>You can download this notebook on our <a class="reference external" href="https://github.com/PeterMakus/SeisMIC/blob/main/examples/">GitHub
+page</a></p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../tutorials.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Our tutorials: From Zero to Noise-Hero</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="spatial.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Spatial Inversion of dv/v</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#"><strong>SeisMIC</strong> Tutorial</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#download-the-raw-data">1. Download the raw data</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-a-time-dependent-spectrogram">1.1 Plot a time-dependent spectrogram</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compute-correlations">2. Compute Correlations</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters">2.1 Parameters</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#start-correlation">2.2 Start correlation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lets-try-and-combine-the-two-last-plots">Let’s try and combine the two last plots</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#waveform-coherence">3. Waveform Coherence</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monitoring">4. Monitoring</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#make-a-first-plot-to-get-an-idea-of-dv-v">Make a first plot to get an idea of <em>dv/v</em></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#make-the-plot-look-a-little-nicer">Make the plot look a little nicer</a></li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#what-comes-next">What comes next?</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#increasing-the-stability">Increasing the stability</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#explore-other-processing-possibilities">Explore other processing possibilities</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#invert-for-a-velocity-change-map">Invert for a velocity change map</a></li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#download-this-notebook">Download this notebook</a></li>
+</ul>
+</li>
+</ul>
+
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  <div class="tocsection sourcelink">
+    <a href="../../_sources/modules/tutorials/tutorial.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright 2023, The SeisMIC development team..
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.3.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
