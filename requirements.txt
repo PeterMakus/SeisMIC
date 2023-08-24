@@ -2,12 +2,12 @@
 # note that this file contains requirements for automatic deployments
 # Broader requirements are specified in the environment.yml
 
-geographiclib ==2.0
+geographiclib
 h5py <=3.9.0
 matplotlib <=3.7.2
-mpi4py <=3.1.4
-numpy <=1.25.2
-obspy ==1.4.0
+mpi4py<=3.1.4
+numpy<=1.25.2
+obspy<=1.4.0, >=1.3.1
 pip
 prov
 pyyaml
