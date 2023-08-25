@@ -453,7 +453,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Thursday, 18th February 2021 02:30:02 pm</span>
-<span class="sd">Last Modified: Tuesday, 8th August 2023 10:54:05 am</span>
+<span class="sd">Last Modified: Friday, 25th August 2023 02:37:05 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">import</span> <span class="nn">fnmatch</span>
@@ -562,7 +562,9 @@ document.write(`
 
         <span class="n">mdl</span><span class="o">.</span><span class="n">download</span><span class="p">(</span>
             <span class="n">domain</span><span class="p">,</span> <span class="n">restrictions</span><span class="p">,</span> <span class="n">mseed_storage</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_mseed_storage</span><span class="p">,</span>
-            <span class="n">stationxml_storage</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inv_dir</span><span class="p">)</span></div>
+            <span class="n">stationxml_storage</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inv_dir</span><span class="p">)</span>
+        <span class="c1"># update inventory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">read_inventory</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="Store_Client.get_waveforms"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.Store_Client.get_waveforms">[docs]</a>    <span class="k">def</span> <span class="nf">get_waveforms</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
