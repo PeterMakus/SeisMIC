@@ -16,13 +16,10 @@ import os
 
 def test_flake8():
     test_dir = os.path.dirname(__file__)
-    package_dir = os.path.join(os.path.dirname(test_dir), "seismic")
-
+    package_dir = os.path.join(os.path.dirname(test_dir), 'src', "seismic")
     # Possibility to ignore some files and paths.
-    ignore_paths = [
-        os.path.join(package_dir, "doc"),
-        os.path.join(package_dir, ".git"),
-        os.path.join(package_dir, "examples")]
+    ignore_paths = []
+
     files = []
     for dirpath, _, filenames in os.walk(package_dir):
         ignore = False

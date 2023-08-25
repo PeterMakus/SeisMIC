@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Tuesday, 7th March 2023 11:58:04 am
+Last Modified: Monday, 21st August 2023 12:21:53 pm
 '''
 import os
 from typing import Tuple, Optional, List
@@ -298,7 +298,7 @@ def heat_plot_corr_start(
         times, np.array(y), data, shading='auto', cmap=cmap, vmin=vmin,
         vmax=vmax)
     plt.colorbar(
-        ds, label='correlation coefficient', shrink=.6,
+        ds, label='Correlation Coefficient', shrink=.6,
         orientation='horizontal')
     ax.yaxis.set_major_locator(mpl.dates.AutoDateLocator())
     ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h %y'))
@@ -357,7 +357,7 @@ def heat_plot_corr_dist(
             label=f'{rv}'+r'$\frac{km}{s}$') for rv in ref_v]
         plt.legend()
     plt.colorbar(
-        ds, label='correlation coefficient', shrink=.6,
+        ds, label='Correlation Coefficient', shrink=.6,
         orientation='horizontal')
     plt.yticks(np.linspace(0, ctr.stats.dist, 10, dtype=int))
     ax.set_ylabel(r"Distance [km]")

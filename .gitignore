@@ -13,3 +13,5 @@ docs/source/_build
 .coverage
 build
 dist
+docs/source/modules/tutorials/*.rst
+docs/source/modules/tutorials/*_files

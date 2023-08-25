@@ -10,7 +10,7 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Monday, 6th March 2023 11:30:07 am
+Last Modified: Thursday, 24th August 2023 11:06:37 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -747,12 +747,13 @@ class CorrBulk(object):
         """
         wfc_dict = wfc_multi_reftr(
             self.data, ref_trc, time_window, sides, remove_nans)
-        stats = deepcopy(self.stats)
-        stats['tw_start'] = tw_start
-        stats['tw_len'] = tw_len
-        stats['freq_min'] = freq_min
-        stats['freq_max'] = freq_max
-        wfc = WFC(wfc_dict, stats)
+        wfc_processing = {
+            'tw_start': tw_start,
+            'tw_len': tw_len,
+            'freq_min': freq_min,
+            'freq_max': freq_max
+        }
+        wfc = WFC(wfc_dict, self.stats, wfc_processing)
         return wfc
 
     def _find_slice_index(
@@ -978,6 +979,20 @@ class CorrStream(Stream):
                     axis=0)):
                 cst_filt.append(ctr)
         return cst_filt
+
+    def remove_duplicates(self):
+        """
+        Removes identical CorrTraces.
+
+        .. note:: This action is performed **in-place**. If you want to keep
+            the original data use
+            :func:`~seismic.correlate.stream.CorrStream.copy()`
+        """
+        cst_filt = CorrStream()
+        for ctr in self:
+            if ctr not in cst_filt:
+                cst_filt.append(ctr)
+        self.traces = cst_filt.traces
 
     def select_corr_time(
         self, starttime: UTCDateTime, endtime: UTCDateTime,

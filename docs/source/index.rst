@@ -24,6 +24,17 @@ Its main use case is the monitoring of temporal changes in a mediums (e.g., moni
    modules/monitor
    modules/API
 
+Tutorials
+---------
+
+.. toctree::
+   :maxdepth: 2
+   :caption: A practical introduction to SeisMIC:
+   
+
+   modules/tutorials
+
+
 
 Interactive Flowchart
 =====================

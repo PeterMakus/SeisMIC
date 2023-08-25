@@ -8,36 +8,68 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Thursday, 3rd November 2022 10:51:46 am
+Last Modified: Monday, 21st August 2023 12:22:18 pm
 '''
 
 from datetime import datetime
 from typing import Tuple, List
 import os
+import locale
 
 import matplotlib as mpl
 from matplotlib import pyplot as plt
+from matplotlib import dates as mdates
 import numpy as np
 from obspy import UTCDateTime
 
 from seismic.plot.plot_utils import set_mpl_params
 
 
-def plot_dv(
+def plot_fancy_dv(
+    dv, xlim: Tuple[datetime, datetime] = None,
+    ylim: Tuple[float, float] = None, return_ax: bool = False,
+        title: str = None, dateformat: str = '%d %b %y', *args, **kwargs):
+    """ Prettier than the technical plot, but less informative"""
+    fig = plt.figure(figsize=(12, 8))
+
+    val = -dv.value[~np.isnan(dv.corr)]*100
+    corr_starts = np.array(dv.stats.corr_start)
+    t_real = [t.datetime for t in corr_starts[~np.isnan(dv.corr)]]
+
+    # plot dv/v
+    map = plt.scatter(
+        t_real, val, c=dv.corr[~np.isnan(dv.corr)], cmap='inferno_r', s=22)
+
+    # Correct format of X-Axis
+    ax = plt.gca()
+    ax.set_ylim(ylim)
+    plt.ylabel(r'$\frac{dv}{v}$ [%]')
+    plt.grid(True, axis='y')
+    locale.setlocale(locale.LC_ALL, "en_GB.utf8")
+    ax.xaxis.set_major_formatter(mdates.DateFormatter(dateformat))
+    plt.xticks(rotation=25)
+
+    fig.colorbar(
+        map, orientation='horizontal', pad=0.1, shrink=.6,
+        label='Correlation Coefficient', anchor=(0.5, .8))
+    plt.title(title)
+    if xlim is not None:
+        plt.xlim(xlim)
+    else:
+        plt.xlim((min(t_real), max(t_real)))
+    if return_ax:
+        return fig, ax
+
+
+def plot_technical_dv(
     dv, save_dir='.', figure_file_name=None, mark_time=None,
     normalize_simmat=False, sim_mat_Clim=[], figsize=(9, 11), dpi=72,
     ylim: Tuple[float, float] = None, xlim: Tuple[datetime, datetime] = None,
     title: str = None, plot_scatter: bool = False,
-        return_ax: bool = False) -> Tuple[plt.figure, List[plt.axis]]:
-    """ Plot the "extended" dv dictionary
-
-    This function is thought to plot the result of the velocity change estimate
-    as output by :class:`~miic.core.stretch_mod.multi_ref_vchange_and_align`
-    and successively "extended" to contain also the timing in the form
-    {'time': time_vect} where `time_vect` is a :class:`~numpy.ndarray` of
-    :class:`~datetime.datetime` objects.
-    This addition can be done, for example, using the function
-    :class:`~miic.core.miic_utils.add_var_to_dict`.
+    return_ax: bool = False, *args,
+        **kwargs) -> Tuple[plt.figure, List[plt.axis]]:
+    """
+    Plot a :class:`seismic.monitor.dv.DV` object
     The produced figure is saved in `save_dir` that, if necessary, it is
     created.
     It is also possible to pass a "special" time value `mark_time` that will be
@@ -101,16 +133,16 @@ def plot_dv(
 
     # Extract the data from the dictionary
 
-    value_type = dv['value_type']
-    method = dv['method']
-
-    corr = dv['corr']
-    dt = dv['value']
-    sim_mat = dv['sim_mat']
-    stretch_vect = dv['second_axis']
+    value_type = dv.value_type
+    method = dv.method
+    corr = dv.corr
+    dt = dv.value
+    sim_mat = dv.sim_mat
+    stretch_vect = dv.second_axis
+    stats = dv.stats
 
     rtime = np.array(
-        [utcdt.datetime for utcdt in dv['stats']['corr_start']],
+        [utcdt.datetime for utcdt in stats['corr_start']],
         dtype=np.datetime64)
 
     # normalize simmat if requested
@@ -143,19 +175,19 @@ def plot_dv(
 
         tit = "Time shift"
         dv_tick_delta = 5
-        dv_y_label = "time shift (sample)"
+        dv_y_label = "Time Shift (sample)"
     elif (value_type == 'shift') and (method == 'absolute_shift'):
         tit = "Time shift"
         dv_tick_delta = (
-            np.max(dv['second_axis'])
-            - np.min(dv['second_axis']))/5
-        dv_y_label = "time shift [s]"
+            np.max(dv.second_axis)
+            - np.min(dv.second_axis))/5
+        dv_y_label = "Time Shift [s]"
     else:
         raise ValueError(f"Unknown dv type, {value_type}!")
 
     f = plt.figure(figsize=figsize, dpi=dpi)
 
-    if dv['n_stat'] is not None and plot_scatter:
+    if dv.n_stat is not None and plot_scatter:
         gs = mpl.gridspec.GridSpec(4, 1, height_ratios=[12, 4, 4, 1])
     else:
         gs = mpl.gridspec.GridSpec(3, 1, height_ratios=[3, 1, 1])
@@ -166,7 +198,7 @@ def plot_dv(
         aspect='auto')
 
     # plotting value is way easier now
-    plt.plot(-dv['value'], 'b.')
+    plt.plot(-dv.value, 'b.')
 
     # Set extent so we can treat the axes properly (mainly y)
     imh.set_extent((0, sim_mat.shape[0], stretch_vect[-1], stretch_vect[0]))
@@ -192,7 +224,6 @@ def plot_dv(
 
     plt.gca().get_xaxis().set_visible(False)
 
-    stats = dv['stats']
     comb_mseedid = '%s.%s.%s' % (
         stats['network'], stats['station'],  # stats['location'],
         stats['channel'])
@@ -204,19 +235,17 @@ def plot_dv(
     ax1.set_title(tit)
     ax1.yaxis.set_ticks_position('right')
     ax1.yaxis.set_label_position('left')
-    # ax1.yaxis.label.set_rotation(270)
-    # ax1.yaxis.set_label_coords(1.03, 0.5)
     ax1.set_xticklabels([])
     ax1.set_ylabel(dv_y_label)
 
     ax2 = f.add_subplot(gs[1])
     if plot_scatter:
         # reshape so we can plot a histogram
-        histt = np.array([t.timestamp for t in dv['stats']['corr_start']])
-        histt = np.tile(histt, dv['stretches'].shape[0])
-        histcorrs = np.reshape(dv['corrs'], -1)
-        histstretches = np.reshape(-dv['stretches'], -1)
-        n_bins = np.flip(np.array(dv['sim_mat'].shape))//10
+        histt = np.array([t.timestamp for t in stats['corr_start']])
+        histt = np.tile(histt, dv.stretches.shape[0])
+        histcorrs = np.reshape(dv.corrs, -1)
+        histstretches = np.reshape(-dv.stretches, -1)
+        n_bins = np.flip(np.array(dv.sim_mat.shape))//10
         # remove nans
         nanmask = ~np.isnan(histcorrs)
         histt = histt[nanmask]
@@ -230,8 +259,6 @@ def plot_dv(
         xedges_v = [UTCDateTime(xe).datetime for xe in xedges_v]
         plt.pcolor(xedges_v, yedges_v, H_v.T, cmap='binary')
     plt.plot(rtime, -dt, '.', markersize=3)
-    if 'model_value' in dv.keys():
-        plt.plot(rtime, -dv['model_value'], 'g.')
     if xlim:
         plt.xlim(xlim[0], xlim[1])
     else:
@@ -257,8 +284,7 @@ def plot_dv(
     if plot_scatter:
         plt.pcolor(xedges_c, yedges_c, H_c.T, cmap='binary')
     plt.plot(rtime, corr, '.', markersize=3)
-    if 'model_corr' in dv.keys():
-        plt.plot(rtime, dv['model_corr'], 'g.')
+
     if xlim:
         plt.xlim(xlim[0], xlim[1])
     else:
@@ -273,15 +299,15 @@ def plot_dv(
     ax3.xaxis.grid(True, 'major', linewidth=1)
     ax3.yaxis.set_major_locator(plt.MultipleLocator(0.2))
     # Plot number of stations
-    if dv['n_stat'] is not None and plot_scatter:
+    if dv.n_stat is not None and plot_scatter:
         ax4 = f.add_subplot(gs[3])
         plt.fill_between(
-            rtime, 0, dv['n_stat'], interpolate=False)
+            rtime, 0, dv.n_stat, interpolate=False)
         plt.setp(ax4.get_xticklabels(), rotation=45, ha='right')
         ax3.set_xticklabels([])
         ax4.yaxis.set_label_position('right')
         ax4.set_ylabel("N")
-        plt.ylim(0, int(dv['n_stat'].max()*1.1))
+        plt.ylim(0, int(dv.n_stat.max()*1.1))
         if xlim:
             plt.xlim(xlim[0], xlim[1])
         else:
@@ -302,4 +328,12 @@ def plot_dv(
             figure_file_name += '.png'
         f.savefig(os.path.join(save_dir, figure_file_name),
                   dpi=dpi)
-        plt.close()
+
+
+def plot_dv(style: str, *args, **kwargs):
+    if style == 'technical':
+        return plot_technical_dv(*args, **kwargs)
+    elif style == 'publication':
+        return plot_fancy_dv(*args, **kwargs)
+    else:
+        raise ValueError(f'Unknown style: {style}')

@@ -10,7 +10,7 @@ Module that contains functions for preprocessing on obspy streams
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:47:00 pm
-Last Modified: Thursday, 9th February 2023 01:55:45 pm
+Last Modified: Thursday, 29th June 2023 11:06:00 am
 '''
 from typing import List
 from warnings import warn

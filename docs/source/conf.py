@@ -23,8 +23,7 @@ author = \
     'Peter Makus, Christoph Sens-Schönfelder, and the SeisMIC development Team'
 
 # The full version, including alpha/beta/rc tags
-release = '0.3.12'
-
+release = '0.5.3'
 
 # -- General configuration ---------------------------------------------------
 
@@ -37,7 +36,26 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.napoleon',
               'sphinx.ext.autosummary',
               'sphinxcontrib.mermaid',
-              'sphinx_copybutton']
+              'sphinx_copybutton',
+              ]
+
+# --------------------------------
+# Sphinx Gallery config
+# sphinx_gallery_conf = {
+#     # path to your example scripts
+#     'examples_dirs': ['../../examples/'],
+#     # path to where to save gallery generated output
+#     'gallery_dirs': ["examples"],
+#     # Checks matplotlib for figure creation
+#     'image_scrapers': ('matplotlib'),
+#     # Which files to include
+#     'filename_pattern': r"tutorial\.py",
+#     # ignore
+#     'ignore_pattern': r'\.py',
+# }
+
+# ---------------------------------
+
 # autosummary_generate = True
 
 # For docstring __init__ documentation
@@ -74,8 +92,9 @@ html_static_path = ['_static']
 
 
 html_title = ""
-html_logo = "source/figures/seismic_logo_small.svg"
+html_logo = "figures/seismic_logo_small.png"
 # html_favicon = "chapters/figures/favicon.ico"
+
 
 html_context = {
     # "github_url": "https://github.com", # or your GitHub Enterprise
@@ -87,13 +106,10 @@ html_context = {
 
 html_theme_options = {
     "github_url": "https://github.com/PeterMakus/SeisMIC",
-    "use_edit_page_button": True,
+    "use_edit_page_button": False,
     # "show_toc_level": 1,
-
-    "use_edit_page_button": True,
-
-    # "collapse_navigation": True,
-    "navigation_depth": 2,
-    # "navbar_align": "left"
+    "collapse_navigation": True,
+    "navigation_depth": 3,
+    # "navbar_align": "left",
 
 }

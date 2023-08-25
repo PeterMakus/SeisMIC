@@ -8,10 +8,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 3rd April 2023 02:37:02 pm
+Last Modified: Friday, 25th August 2023 02:08:10 pm
 '''
 from copy import deepcopy
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Tuple, Optional
 from warnings import warn
 import os
 import logging
@@ -21,7 +21,7 @@ import yaml
 
 from mpi4py import MPI
 import numpy as np
-from obspy import Stream, UTCDateTime, Inventory
+from obspy import Stream, UTCDateTime, Inventory, Trace
 from tqdm import tqdm
 
 from seismic.correlate.stream import CorrTrace, CorrStream
@@ -65,6 +65,10 @@ class Correlator(object):
         # directories
         self.proj_dir = options['proj_dir']
         self.corr_dir = os.path.join(self.proj_dir, options['co']['subdir'])
+        try:
+            self.save_comps_separately = options['save_comps_separately']
+        except KeyError:
+            self.save_comps_separately = False
         logdir = os.path.join(self.proj_dir, options['log_subdir'])
         if self.rank == 0:
             os.makedirs(self.corr_dir, exist_ok=True)
@@ -136,11 +140,9 @@ class Correlator(object):
         if isinstance(network, list) and len(network) == 1:
             network = network[0]
 
-        if network == '*' and station == '*':
-            station = store_client.get_available_stations()
-        elif station == '*' and isinstance(network, str):
-            station = store_client.get_available_stations(network)
-        elif network == '*':
+        if (
+            network == '*'
+                and isinstance(station, str) and '*' not in station):
             raise ValueError(
                 'Stations has to be either: \n'
                 + '1. A list of the same length as the list of networks.\n'
@@ -150,9 +152,14 @@ class Correlator(object):
         elif isinstance(station, str) and isinstance(network, str):
             station = [[network, station]]
         elif station == '*' and isinstance(network, list):
-            station = []
-            for net in network:
-                station.extend(store_client.get_available_stations(net))
+            # This is most likely not thread-safe
+            if self.rank == 0:
+                station = []
+                for net in network:
+                    station.extend(store_client.get_available_stations(net))
+            else:
+                station = None
+            station = self.comm.bcast(station, root=0)
         elif isinstance(network, list) and isinstance(station, list):
             if len(network) != len(station):
                 raise ValueError(
@@ -172,10 +179,25 @@ class Correlator(object):
                 + '2. \'*\' That is, a wildcard (string).\n'
                 + '3. A list and network is a string describing one '
                 + 'station code.')
-        self.station = station
+        if self.rank == 0:
+            self.avail_raw_data = []
+            for net, stat in station:
+                self.avail_raw_data.extend(
+                    self.store_client._translate_wildcards(net, stat))
+            # make sure this only contains unique combinations
+            # with several cores it added entries several times, don't know
+            # why?
+            self.avail_raw_data = np.unique(
+                self.avail_raw_data, axis=0).tolist()
+        else:
+            self.avail_raw_data = None
+        self.avail_raw_data = self.comm.bcast(
+            self.avail_raw_data)
+        self.station = np.unique(np.array([
+            [d[0], d[1]] for d in self.avail_raw_data]), axis=0).tolist()
         self.logger.debug(
             'Fetching data from the following stations:\n%a' % [
-                f'{n}.{s}' for n, s in station])
+                f'{n}.{s}' for n, s in self.station])
 
         self.sampling_rate = self.options['sampling_rate']
 
@@ -254,6 +276,8 @@ class Correlator(object):
         initiating the object.
         """
         cst = CorrStream()
+        if self.rank == 0:
+            self.logger.debug('Reading Inventory files.')
         # Fetch station coordinates
         if self.rank == 0:
             try:
@@ -271,30 +295,22 @@ class Correlator(object):
         else:
             inv = None
         inv = self.comm.bcast(inv, root=0)
+
         for st, write_flag in self._generate_data():
             cst.extend(self._pxcorr_inner(st, inv))
             if write_flag:
+                self.logger.debug('Writing Correlations to file.')
                 # Here, we can recombine the correlations for the read_len
                 # size (i.e., stack)
                 # Write correlations to HDF5
-                if self.options['subdivision']['recombine_subdivision'] and \
-                        cst.count():
-                    stack = cst.stack(regard_location=False)
-                    tag = 'stack_%s' % str(self.options['read_len'])
-                    self._write(stack, tag)
-                if self.options['subdivision']['delete_subdivision']:
-                    cst.clear()
-                elif cst.count():
-                    self._write(cst, tag='subdivision')
+                if cst.count():
+                    self._write(cst)
                     cst.clear()
 
         # write the remaining data
-        if self.options['subdivision']['recombine_subdivision'] and \
-                cst.count():
-            self._write(cst.stack(regard_location=False), tag)
-        if not self.options['subdivision']['delete_subdivision'] and \
-                cst.count():
-            self._write(cst, tag='subdivision')
+        if cst.count():
+            self._write(cst)
+            cst.clear()
 
     def _pxcorr_inner(self, st: Stream, inv: Inventory) -> CorrStream:
         """
@@ -302,53 +318,43 @@ class Correlator(object):
         """
 
         # We start out by moving the stream into a matrix
-        # Advantage of only doing this on rank 0?
-        if self.rank == 0:
-            # put all the data into a single stream
-            starttime = []
-            npts = []
-            for tr in st:
-                starttime.append(tr.stats['starttime'])
-                npts.append(tr.stats['npts'])
-            npts = np.max(np.array(npts))
-            A, st = st_to_np_array(st, npts)
-            As = A.shape
-        else:
-            starttime = None
-            npts = None
-            As = None
-        starttime = self.comm.bcast(starttime, root=0)
-        npts = self.comm.bcast(npts, root=0)
-        st = self.comm.bcast(st, root=0)
+        self.logger.debug(
+            'Converting Stream to Matrix')
+        # put all the data into a single stream
+        starttime = []
+        npts = []
+        for tr in st:
+            starttime.append(tr.stats['starttime'])
+            npts.append(tr.stats['npts'])
+        npts = np.max(np.array(npts))
 
-        # Tell the other processes the shape of A
-        As = self.comm.bcast(As, root=0)
-        if self.rank != 0:
-            A = np.empty(As, dtype=np.float32)
-        self.comm.Bcast([A, MPI.FLOAT], root=0)
-
+        A, st = st_to_np_array(st, npts)
         self.options.update(
             {'starttime': starttime,
                 'sampling_rate': self.sampling_rate})
-
+        self.logger.debug('Computing Cross-Correlations.')
         A, startlags = self._pxcorr_matrix(A)
-
+        self.logger.debug('Converting Matrix to CorrStream.')
         # put trace into a stream
         cst = CorrStream()
         if A is None:
             # No new data
             return cst
-        for ii, (startlag, comb) in enumerate(
-                zip(startlags, self.options['combinations'])):
-            endlag = startlag + A[:, ii].shape[0]/self.options['sampling_rate']
-            cst.append(
-                CorrTrace(
-                    A[:, ii].T, header1=st[comb[0]].stats,
-                    header2=st[comb[1]].stats, inv=inv, start_lag=startlag,
-                    end_lag=endlag))
+        if self.rank == 0:
+            for ii, (startlag, comb) in enumerate(
+                    zip(startlags, self.options['combinations'])):
+                endlag = startlag + len(A[ii, :])/self.options['sampling_rate']
+                cst.append(
+                    CorrTrace(
+                        A[ii], header1=st[comb[0]].stats,
+                        header2=st[comb[1]].stats, inv=inv, start_lag=startlag,
+                        end_lag=endlag))
+        else:
+            cst = None
+        cst = self.comm.bcast(cst, root=0)
         return cst
 
-    def _write(self, cst, tag: str):
+    def _write(self, cst):
         """
         Write correlation stream to files.
 
@@ -360,22 +366,43 @@ class Correlator(object):
             return
 
         # Make sure that each core writes to a different file
-        codelist = list(set(
-            [f'{tr.stats.network}.{tr.stats.station}' for tr in cst]))
+        if self.save_comps_separately:
+            codelist = list(set(
+                [f'{tr.stats.network}.{tr.stats.station}.{tr.stats.channel}'
+                 for tr in cst]))
+        else:
+            codelist = list(set(
+                [f'{tr.stats.network}.{tr.stats.station}' for tr in cst]))
         # Better if the same cores keep writing to the same files
         codelist.sort()
         # Decide which process writes to which station
-        pmap = (np.arange(len(codelist))*self.psize)/len(codelist)
+        pmap = np.arange(len(codelist))*self.psize/len(codelist)
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
 
         for code in np.array(codelist)[ind]:
-            net, stat = code.split('.')
-            outf = os.path.join(self.corr_dir, f'{net}.{stat}.h5')
+            if self.save_comps_separately:
+                net, stat, cha = code.split('.')
+                outf = os.path.join(self.corr_dir, f'{net}.{stat}.{cha}.h5')
+                cstselect = cst.select(
+                    network=net, station=stat, channel=cha)
+            else:
+                net, stat = code.split('.')
+                outf = os.path.join(self.corr_dir, f'{net}.{stat}.h5')
+                cstselect = cst.select(network=net, station=stat)
+            if self.options['subdivision']['recombine_subdivision']:
+                stack = cstselect.stack(regard_location=False)
+                stacktag = 'stack_%s' % str(self.options['read_len'])
+            else:
+                stack = None
+            if self.options['subdivision']['delete_subdivision']:
+                cstselect.clear()
             with CorrelationDataBase(
                     outf, corr_options=self.options) as cdb:
-                cdb.add_correlation(
-                    cst.select(network=net, station=stat), tag)
+                if cstselect.count():
+                    cdb.add_correlation(cstselect, 'subdivision')
+                if stack is not None:
+                    cdb.add_correlation(stack, stacktag)
 
     def _generate_data(self) -> Iterator[Tuple[Stream, bool]]:
         """
@@ -395,6 +422,17 @@ class Correlator(object):
             # find already available times
             self.ex_dict = self.find_existing_times('subdivision')
             self.logger.info('Already existing data: %s' % str(self.ex_dict))
+        else:
+            self.ex_dict = None
+
+        self.ex_dict = self.comm.bcast(self.ex_dict, root=0)
+
+        if not self.ex_dict and self.options['preprocess_subdiv']:
+            self.options['preprocess_subdiv'] = False
+            if self.rank == 0:
+                self.logger.warning(
+                    'No existing data found.\nAutomatically setting '
+                    'preprocess_subdiv to False to optimise performance.')
 
         # the time window that the loop will go over
         t0 = UTCDateTime(self.options['read_start']).timestamp
@@ -407,6 +445,16 @@ class Correlator(object):
         else:
             tl = 0
 
+        # Decide which process reads data from which station
+        # Better than just letting one core read as this avoids having to
+        # send very big chunks of data using MPI (MPI communication does
+        # not support more than 2GB/comm operation)
+        pmap = np.arange(len(self.avail_raw_data))*self.psize/len(
+            self.avail_raw_data)
+        pmap = pmap.astype(np.int32)
+        ind = pmap == self.rank
+        ind = np.arange(len(self.avail_raw_data))[ind]
+
         # Loop over read increments
         for t in tqdm(loop_window):
             write_flag = True  # Write length is same as read length
@@ -415,23 +463,14 @@ class Correlator(object):
             st = Stream()
             resp = Inventory()
 
-            # Decide which process reads data from which station
-            # Better than just letting one core read as this avoids having to
-            # send very big chunks of data using MPI (MPI communication does
-            # not support more than 2GB/comm operation)
-            pmap = (np.arange(len(self.station))*self.psize)/len(self.station)
-            pmap = pmap.astype(np.int32)
-            ind = pmap == self.rank
-            ind = np.arange(len(self.station))[ind]
-
             # loop over queried stations
-            for net, stat in np.array(self.station)[ind]:
+            for net, stat, cha in np.array(self.avail_raw_data)[ind]:
                 # Load data
                 resp.extend(
                     self.store_client.inventory.select(
                         net, stat))
                 stext = self.store_client._load_local(
-                    net, stat, '*', '*', startt, endt, True, False)
+                    net, stat, '*', cha, startt, endt, True, False)
                 mu.get_valid_traces(stext)
                 if stext is None or not len(stext):
                     # No data for this station to read
@@ -439,30 +478,47 @@ class Correlator(object):
                 st.extend(stext)
 
             # Stream based preprocessing
-            try:
-                st = preprocess_stream(
-                    st, self.store_client, resp, startt, endt, tl,
-                    **self.options)
-            except ValueError as e:
-                self.logger.error(
-                    'Stream preprocessing failed for '
-                    f'{st[0].stats.network}.{st[0].stats.station} and time '
-                    f'{t}.\nThe Original Error Message was {e}.')
-                continue
+            # Downsampling
+            # 04/04/2023 Downsample before preprocessing for performance
+            # Check sampling frequency
+            sampling_rate = self.options['sampling_rate']
+            # AA-Filter is done in this function as well
+            st = mu.resample_or_decimate(st, sampling_rate)
+            # The actual data in the mseeds was changed from int to float64
+            # now,
+            # Save some space by changing it back to 32 bit (most of the
+            # digitizers work at 24 bit anyways)
+            mu.stream_require_dtype(st, np.float32)
+
+            if not self.options['preprocess_subdiv']:
+                try:
+                    self.logger.debug('Preprocessing stream...')
+                    st = preprocess_stream(
+                        st, self.store_client, resp, startt, endt, tl,
+                        **self.options)
+                except ValueError as e:
+                    self.logger.error(
+                        'Stream preprocessing failed for '
+                        f'{st[0].stats.network}.{st[0].stats.station} and time'
+                        f' {t}.\nThe Original Error Message was {e}.')
+                    continue
+
             # Slice the stream in correlation length
             # -> Loop over correlation increments
             for ii, win in enumerate(generate_corr_inc(st, **self.options)):
                 winstart = startt + ii*self.options['subdivision']['corr_inc']
-                winend = winstart + ii*self.options['subdivision']['corr_len']
+                winend = winstart + self.options['subdivision']['corr_len']
 
                 # Gather time windows from all stations to all cores
                 winl = self.comm.allgather(win)
                 win = Stream()
                 for winp in winl:
                     win.extend(winp)
+                win.sort(keys=['network', 'station', 'channel'])
 
                 # Get correlation combinations
                 if self.rank == 0:
+                    self.logger.debug('Calculating combinations...')
                     self.options['combinations'] = calc_cross_combis(
                         win, self.ex_dict, self.options['combination_method'],
                         rcombis=self.rcombis)
@@ -476,6 +532,62 @@ class Correlator(object):
                     self.logger.info(
                         f'No new data for times {winstart}-{winend}')
                     continue
+                # Remove traces that won't be accessed at all
+                win_indices = np.arange(len(win))
+                combindices = np.unique(
+                    np.hstack(self.options['combinations']))
+                popindices = np.flip(
+                    np.setdiff1d(win_indices, combindices))
+                for popi in popindices:
+                    del win[popi]
+                if len(popindices):
+                    # now we have to recompute the combinations
+                    if self.rank == 0:
+                        self.logger.debug('removing redundant data.')
+                        self.logger.debug('Recalculating combinations...')
+                        self.options['combinations'] = calc_cross_combis(
+                            win, self.ex_dict,
+                            self.options['combination_method'],
+                            rcombis=self.rcombis)
+                    else:
+                        self.options['combinations'] = None
+                    self.options['combinations'] = self.comm.bcast(
+                        self.options['combinations'], root=0)
+
+                    if not len(self.options['combinations']):
+                        # no new combinations for this time period
+                        self.logger.info(
+                            f'No new data for times {winstart}-{winend}')
+                        continue
+                # Stream based preprocessing
+                if self.options['preprocess_subdiv']:
+                    try:
+                        win = preprocess_stream(
+                            win, self.store_client, resp, winstart, winend,
+                            tl, **self.options)
+                    except ValueError as e:
+                        self.logger.error(
+                            'Stream preprocessing failed for '
+                            f'{st[0].stats.network}.{st[0].stats.station}'
+                            ' and time '
+                            f'{t}.\nThe Original Error Message was {e}.')
+                        continue
+                    if self.rank == 0:
+                        self.options['combinations'] = calc_cross_combis(
+                            win, self.ex_dict,
+                            self.options['combination_method'],
+                            rcombis=self.rcombis)
+                    else:
+                        self.options['combinations'] = None
+                    self.options['combinations'] = self.comm.bcast(
+                        self.options['combinations'], root=0)
+
+                if not len(win):
+                    # no new combinations for this time period
+                    self.logger.info(
+                        f'No new data for times {winstart}-{winend}')
+                    continue
+
                 self.logger.debug('Working on correlation times %s-%s' % (
                     str(win[0].stats.starttime), str(win[0].stats.endtime)))
                 yield win, write_flag
@@ -484,8 +596,8 @@ class Correlator(object):
     def _pxcorr_matrix(self, A: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         # time domain processing
         # map of traces on processes
-        ntrc = A.shape[1]
-        pmap = (np.arange(ntrc)*self.psize)/ntrc
+        ntrc = A.shape[0]
+        pmap = np.arange(ntrc)*self.psize/ntrc
         # This step was not in the original but is necessary for it to work?
         # maybe a difference in an old python/np version?
         pmap = pmap.astype(np.int32)
@@ -508,7 +620,7 @@ class Correlator(object):
 
         for proc in corr_args['TDpreProcessing']:
             func = func_from_str(proc['function'])
-            A[:, ind] = func(A[:, ind], proc['args'], params)
+            A[ind, :] = func(A[ind, :], proc['args'], params)
 
         # zero-padding
         A = pptd.zeroPadding(A, {'type': 'avoidWrapFastLen'}, params)
@@ -517,12 +629,14 @@ class Correlator(object):
         # FFT
         # Allocate space for rfft of data
         zmsize = A.shape
-        fftsize = zmsize[0]//2+1
-        B = np.zeros((fftsize, ntrc), dtype=complex)
 
-        B[:, ind] = np.fft.rfft(A[:, ind], axis=0)
+        # use next fast len instead?
+        fftsize = zmsize[1]//2+1
+        B = np.zeros((ntrc, fftsize), dtype=np.csingle)
 
-        freqs = np.fft.rfftfreq(zmsize[0], 1./self.sampling_rate)
+        B[ind, :] = np.fft.rfft(A[ind, :], axis=1)
+
+        freqs = np.fft.rfftfreq(zmsize[1], 1./self.sampling_rate)
 
         ######################################
         # frequency domain pre-processing
@@ -534,12 +648,11 @@ class Correlator(object):
             # import any function that has been defined anywhere else (i.e,
             # not only within the miic framework)
             func = func_from_str(proc['function'])
-            B[:, ind] = func(B[:, ind], proc['args'], params)
+            B[ind, :] = func(B[ind, :], proc['args'], params)
 
         ######################################
         # collect results
-        self.comm.barrier()
-        self.comm.Allreduce(MPI.IN_PLACE, [B, MPI.DOUBLE], op=MPI.SUM)
+        self.comm.Allreduce(MPI.IN_PLACE, [B, MPI.FLOAT], op=MPI.SUM)
 
         ######################################
         # correlation
@@ -548,14 +661,13 @@ class Correlator(object):
         sampleToSave = int(
             np.ceil(
                 corr_args['lengthToSave'] * self.sampling_rate))
-        C = np.zeros((sampleToSave*2+1, csize), dtype=np.float64)  # np.float64
+        C = np.zeros((csize, sampleToSave*2+1), dtype=np.float32)
 
-        # center = irfftsize // 2
-        pmap = (np.arange(csize)*self.psize)/csize
+        pmap = np.arange(csize)*self.psize/csize
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
         ind = np.arange(csize)[ind]
-        startlags = np.zeros(csize, dtype=np.float64)
+        startlags = np.zeros(csize, dtype=np.float32)
         for ii in ind:
             # offset of starttimes in samples(just remove fractions of samples)
             offset = (
@@ -574,31 +686,31 @@ class Correlator(object):
             if corr_args['normalize_correlation']:
                 norm = (
                     np.sqrt(
-                        2.*np.sum(B[:, self.options[
-                            'combinations'][ii][0]]
-                            * B[:, self.options['combinations'][ii][0]].conj())
-                        - B[0, self.options['combinations'][ii][0]]**2)
+                        2.*np.sum(B[self.options[
+                            'combinations'][ii][0], :]
+                            * B[self.options['combinations'][ii][0], :].conj())
+                        - B[self.options['combinations'][ii][0], 0]**2)
                     * np.sqrt(
-                        2.*np.sum(B[:, self.options[
-                            'combinations'][ii][1]]
-                            * B[:, self.options['combinations'][ii][1]].conj())
-                        - B[0, self.options['combinations'][ii][1]]**2)
+                        2.*np.sum(B[self.options[
+                            'combinations'][ii][1], :]
+                            * B[self.options['combinations'][ii][1], :].conj())
+                        - B[self.options['combinations'][ii][1], 0]**2)
                     / irfftsize).real
             else:
                 norm = 1.
+
             M = (
-                B[:, self.options['combinations'][ii][0]].conj()
-                * B[:, self.options['combinations'][ii][1]]
+                B[self.options['combinations'][ii][0], :].conj()
+                * B[self.options['combinations'][ii][1], :]
                 * np.exp(1j * freqs * offset * 2 * np.pi))
 
             ######################################
             # frequency domain postProcessing
             #
-
-            tmp = np.fft.irfft(M, axis=0).real
+            tmp = np.fft.irfft(M).real
 
             # cut the center and do fftshift
-            C[:, ii] = np.concatenate(
+            C[ii, :] = np.concatenate(
                 (tmp[-sampleToSave:], tmp[:sampleToSave+1]))/norm
             startlags[ii] = - sampleToSave / self.sampling_rate \
                 - roffset
@@ -611,11 +723,9 @@ class Correlator(object):
         self.logger.debug('%s %s' % (C.shape, C.dtype))
         self.logger.debug('combis: %s' % (self.options['combinations']))
 
-        # self.comm.barrier()  # I don't think this is necessary or even a
-        # good idea
-        self.comm.Allreduce(MPI.IN_PLACE, [C, MPI.DOUBLE], op=MPI.SUM)
+        self.comm.Allreduce(MPI.IN_PLACE, [C, MPI.FLOAT], op=MPI.SUM)
         self.comm.Allreduce(
-            MPI.IN_PLACE, [startlags, MPI.DOUBLE], op=MPI.SUM)
+            MPI.IN_PLACE, [startlags, MPI.FLOAT], op=MPI.SUM)
 
         return (C, startlags)
 
@@ -632,32 +742,39 @@ def st_to_np_array(st: Stream, npts: int) -> Tuple[np.ndarray, Stream]:
     :return: A stream and a matrix
     :rtype: np.ndarray
     """
-    A = np.zeros((npts, st.count()), dtype=np.float32)  # np.float32
+    A = np.zeros((st.count(), npts), dtype=np.float32)
     for ii, tr in enumerate(st):
-        A[:tr.stats.npts, ii] = tr.data
+        A[ii, :tr.stats.npts] = tr.data
         del tr.data  # Not needed any more, just uses up RAM
     return A, st
 
 
-def _compare_existing_data(ex_corr: dict, tr0: Stream, tr1: Stream) -> bool:
+def _compare_existing_data(ex_corr: dict, tr0: Trace, tr1: Trace) -> bool:
+    # The actual starttime for the header is the later one of the two
+    net0 = tr0.stats.network
+    stat0 = tr0.stats.station
+    cha0 = tr0.stats.channel
+    net1 = tr1.stats.network
+    stat1 = tr1.stats.station
+    cha1 = tr1.stats.channel
+    # Probably faster than checking a huge dict twice
+    flip = ([net0, net1], [stat0, stat1], [cha0, cha1]) \
+        != sort_comb_name_alphabetically(
+        net0, stat0, net1, stat1, cha0, cha1)
+    corr_start = max(tr0.stats.starttime, tr1.stats.starttime)
     try:
-        if tr0.stats.starttime.format_fissures()[:-7] in ex_corr[
-            f'{tr0.stats.network}.{tr0.stats.station}'][
-                f'{tr1.stats.network}.{tr1.stats.station}'][
-            '%s-%s' % (
-                tr0.stats.channel, tr1.stats.channel)]:
-            return True
-    except KeyError:
-        try:
-            if tr1.stats.starttime.format_fissures()[:-7] in ex_corr[
-                f'{tr1.stats.network}.{tr1.stats.station}'][
-                    f'{tr0.stats.network}.{tr0.stats.station}'][
+        if flip:
+            return corr_start.format_fissures() in ex_corr[
+                f'{net1}.{stat1}'][f'{net0}.{stat0}'][
                 '%s-%s' % (
-                    tr1.stats.channel, tr0.stats.channel)]:
-                return True
-        except KeyError:
-            pass
-    return False
+                    tr1.stats.channel, tr0.stats.channel)]
+        else:
+            return corr_start.format_fissures() in ex_corr[
+                f'{net0}.{stat0}'][f'{net1}.{stat1}'][
+                '%s-%s' % (
+                    tr0.stats.channel, tr1.stats.channel)]
+    except KeyError:
+        return False
 
 
 def calc_cross_combis(
@@ -986,7 +1103,9 @@ def calc_cross_combis(
 
 
 def sort_comb_name_alphabetically(
-    network1: str, station1: str, network2: str, station2: str) -> Tuple[
+    network1: str, station1: str, network2: str, station2: str,
+    channel1: Optional[str] = '',
+        channel2: Optional[str] = '') -> Tuple[
         list, list]:
     """
     Returns the alphabetically sorted network and station codes from the two
@@ -1036,18 +1155,20 @@ def sort_comb_name_alphabetically(
     if not all([isinstance(arg, str) for arg in [
             network1, network2, station1, station2]]):
         raise TypeError('All arguments have to be strings.')
-    sort1 = network1 + station1
-    sort2 = network2 + station2
+    sort1 = network1 + station1 + channel1
+    sort2 = network2 + station2 + channel2
     sort = [sort1, sort2]
     sorted = sort.copy()
     sorted.sort()
     if sort == sorted:
         netcomb = [network1, network2]
         statcomb = [station1, station2]
+        chacomb = [channel1, channel2]
     else:
         netcomb = [network2, network1]
         statcomb = [station2, station1]
-    return netcomb, statcomb
+        chacomb = [channel2, channel1]
+    return netcomb, statcomb, chacomb
 
 
 def compute_network_station_combinations(
@@ -1083,7 +1204,7 @@ def compute_network_station_combinations(
                 n2 = netlist[jj]
                 s2 = statlist[jj]
                 if n != n2 or s != s2:
-                    nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
+                    nc, sc, _ = sort_comb_name_alphabetically(n, s, n2, s2)
                     # Check requested combinations
                     if (
                         combis is not None
@@ -1101,13 +1222,13 @@ def compute_network_station_combinations(
             for jj in range(ii, len(netlist)):
                 n2 = netlist[jj]
                 s2 = statlist[jj]
-                nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
+                nc, sc, _ = sort_comb_name_alphabetically(n, s, n2, s2)
                 netcombs.append('%s-%s' % (nc[0], nc[1]))
                 statcombs.append('%s-%s' % (sc[0], sc[1]))
     elif method == 'allCombinations':
         for n, s in zip(netlist, statlist):
             for n2, s2 in zip(netlist, statlist):
-                nc, sc = sort_comb_name_alphabetically(n, s, n2, s2)
+                nc, sc, _ = sort_comb_name_alphabetically(n, s, n2, s2)
                 netcombs.append('%s-%s' % (nc[0], nc[1]))
                 statcombs.append('%s-%s' % (sc[0], sc[1]))
     else:
@@ -1120,7 +1241,7 @@ def compute_network_station_combinations(
 def preprocess_stream(
     st: Stream, store_client: Store_Client, inv: Inventory or None,
     startt: UTCDateTime, endt: UTCDateTime, taper_len: float,
-    sampling_rate: float, remove_response: bool, subdivision: dict,
+    remove_response: bool, subdivision: dict,
     preProcessing: List[dict] = None,
         **kwargs) -> Stream:
     """
@@ -1141,9 +1262,6 @@ def preprocess_stream(
         taper to mitigate the acausal effects of the deconvolution. This is
         the length of such a taper in seconds.
     :type taper_len: float
-    :param sampling_rate: the sampling rate that the stream should be resampled
-        to in Hz.
-    :type sampling_rate: float
     :param remove_response: Should the instrument response be removed?
     :type remove_response: bool
     :param subdivision: Dictionary holding information about the correlation
@@ -1162,23 +1280,11 @@ def preprocess_stream(
     # To deal with any nans/masks
     st = st.split()
     st.sort(keys=['starttime'])
-    # Check sampling frequency
-    if sampling_rate > st[0].stats.sampling_rate:
-        raise ValueError(
-            'The new sample rate (%sHz) is higher than the trace\'s native' % (
-                str(sampling_rate))
-            + 'sample rate (%s Hz).' % (str(st[0].stats.sampling_rate)))
-
-    # Downsample
-    # AA-Filter is done in this function as well
-    st = mu.resample_or_decimate(st, sampling_rate)
 
     # Clip to these again to remove the taper
     old_starts = [deepcopy(tr.stats.starttime) for tr in st]
     old_ends = [deepcopy(tr.stats.endtime) for tr in st]
-    for tr in st:
-        if tr.stats.station == 'EDM':
-            continue
+
     if remove_response:
         # taper before instrument response removal
         if taper_len:
@@ -1200,7 +1306,10 @@ def preprocess_stream(
 
     # Sometimes Z has reversed polarity
     if inv:
-        mu.correct_polarity(st, inv)
+        try:
+            mu.correct_polarity(st, inv)
+        except Exception as e:
+            print(e)
 
     mu.discard_short_traces(st, subdivision['corr_len']/20)
 
@@ -1215,13 +1324,6 @@ def preprocess_stream(
     st.trim(startt, endt, pad=True)
 
     mu.discard_short_traces(st, subdivision['corr_len']/20)
-
-    # !Last operation before saving!
-    # The actual data in the mseeds was changed from int to float64
-    # now,
-    # Save some space by changing it back to 32 bit (most of the
-    # digitizers work at 24 bit anyways)
-    mu.stream_require_dtype(st, np.float32)
     return st
 
 

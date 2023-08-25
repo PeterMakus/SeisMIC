@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Monday, 7th August 2023 08:16:43 pm
+Last Modified: Monday, 7th August 2023 08:15:39 pm
 '''
 from typing import List, Tuple, Optional
 from copy import deepcopy
@@ -423,7 +423,7 @@ def time_stretch_estimate(
 
     # generate the reference trace if not given (use the whole time span)
     if ref_trc is None:
-        ref_trc = np.nansum(mat, axis=0) / mat.shape[0]
+        ref_trc = np.nanmean(mat, axis=0)
 
     # generate time window if not given (use the full length of the correlation
     # trace)

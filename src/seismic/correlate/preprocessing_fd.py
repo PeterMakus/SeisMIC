@@ -11,7 +11,7 @@ Module containing functions for preprocessing in the frequency domain
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:40:11 pm
-Last Modified: Monday, 16th January 2023 11:13:58 am
+Last Modified: Wednesday, 28th June 2023 02:00:00 pm
 '''
 from copy import deepcopy
 import logging
@@ -44,8 +44,8 @@ def FDfilter(B: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """
     args = deepcopy(args)
     args.update({'freqs': params['freqs']})
-    tap = osignal.invsim.cosine_taper(B.shape[0], **args)
-    B *= np.tile(np.atleast_2d(tap).T, (1, B.shape[1]))
+    tap = osignal.invsim.cosine_taper(B.shape[1], **args)
+    B *= np.tile(np.atleast_2d(tap), (B.shape[0], 1))
     return B
 
 
@@ -71,10 +71,10 @@ def FDsignBitNormalization(
     :rtype: numpy.ndarray
     :return: frequency transform of the 1-bit normalized data
     """
-    B = np.fft.irfft(B, axis=0)
-    # B should always be real, so this line does not make an awful lot of sense
-    C = np.sign(B.real)
-    return np.fft.rfft(C, axis=0)
+    B = np.fft.irfft(B)
+    # np.sign only takes the real part into account
+    C = np.sign(B)
+    return np.fft.rfft(C)
 
 
 def spectralWhitening(B: np.ndarray, args: dict, params) -> np.ndarray:
@@ -101,11 +101,11 @@ def spectralWhitening(B: np.ndarray, args: dict, params) -> np.ndarray:
     absB = np.absolute(B)
     if 'joint_norm' in list(args.keys()):
         if args['joint_norm']:
-            assert B.shape[1] % 3 == 0, "for joint normalization the number\
+            assert B.shape[0] % 3 == 0, "for joint normalization the number\
                       of traces needs to the multiple of 3: %d" % B.shape[1]
-            for ii in np.arange(0, B.shape[1], 3):
-                absB[:, ii:ii+3] = np.tile(
-                    np.atleast_2d(np.mean(absB[:, ii:ii+3], axis=1)).T, [1, 3])
+            for ii in np.arange(0, B.shape[0], 3):
+                absB[ii:ii+3, :] = np.tile(
+                    np.atleast_2d(np.mean(absB[ii:ii+3, :], axis=0)), [3, 1])
     with np.errstate(invalid='raise'):
         try:
             B = np.true_divide(B, absB)
@@ -115,6 +115,6 @@ def spectralWhitening(B: np.ndarray, args: dict, params) -> np.ndarray:
             if not np.all(errargs[:, 0] == 0):
                 logging.debug(f'{e} {errargs}')
     # Set zero frequency component to zero
-    B[0, :] = 0.j
+    B[:, 0] = 0.j
 
     return B

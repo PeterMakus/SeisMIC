@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Monday, 6th March 2023 11:25:15 am
+Last Modified: Thursday, 24th August 2023 11:05:57 am
 '''
 
 import unittest
@@ -419,11 +419,13 @@ class TestCorrBulk(unittest.TestCase):
         wfc_func_mock.assert_called_once_with(
             mock.ANY, 'myreftr', 'lala', 'both', False)
         statsexp = deepcopy(self.cb.stats)
-        statsexp['tw_start'] = 0
-        statsexp['tw_len'] = 15
-        statsexp['freq_min'] = 1
-        statsexp['freq_max'] = 2
-        wfc_mock.assert_called_once_with({'test': 0}, statsexp)
+        wfc_processing = {
+            'tw_start': 0,
+            'tw_len': 15,
+            'freq_min': 1,
+            'freq_max': 2,
+        }
+        wfc_mock.assert_called_once_with({'test': 0}, statsexp, wfc_processing)
 
     def test_find_index_partial(self):
         start = self.cb.stats.corr_start[0] + 1
@@ -822,6 +824,11 @@ class TestCorrStream(unittest.TestCase):
                 ntr.stats['corr_end'] += delta*(ii+1)
                 self.st.append(ntr)
         self.len_tot = self.st[-1].stats.corr_end - self.st[0].stats.corr_start
+
+    def test_remove_duplicates(self):
+        self.st.extend(self.st)
+        self.st.remove_duplicates()
+        self.assertEqual(self.st.count(), 180)
 
     def test_wrong_input(self):
         with self.assertRaises(TypeError):

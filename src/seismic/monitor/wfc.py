@@ -8,12 +8,13 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 5th November 2021 08:19:58 am
-Last Modified: Monday, 16th January 2023 11:13:58 am
+Last Modified: Tuesday, 11th July 2023 04:42:52 pm
 '''
 import glob
 from typing import List
 
 import numpy as np
+from matplotlib import pyplot as plt
 
 from seismic.correlate.stats import CorrStats
 from seismic.utils import miic_utils as mu
@@ -28,7 +29,8 @@ class WFC(dict):
     The waveform coherency can be used as a measure of stability of
     a certain correlation. See Steinmann, et. al. (2021) for details.
     """
-    def __init__(self, wfc_dict: dict, stats: CorrStats):
+    def __init__(
+            self, wfc_dict: dict, stats: CorrStats, wfc_processing: dict):
         """
         Initialise WFC object.
 
@@ -42,9 +44,6 @@ class WFC(dict):
             bandpass filter and the used lapse time window.
         :type stats: CorrStats
         """
-        nec_keys = ['tw_start', 'tw_len', 'freq_min', 'freq_max']
-        if not all(k in stats for k in nec_keys):
-            raise ValueError(f'Stats has to contain the keys {nec_keys}.')
         for k, v in wfc_dict.items():
             self[k] = v
         del wfc_dict
@@ -52,6 +51,7 @@ class WFC(dict):
         self.av = {}
         self.stats = stats
         self.mean = np.array([])
+        self.wfc_processing = wfc_processing
 
     def compute_average(self):
         """
@@ -73,6 +73,7 @@ class WFC(dict):
         :type path: str
         """
         kwargs = mu.save_header_to_np_array(self.stats)
+        kwargs.update(self.wfc_processing)
         np.savez_compressed(path, mean=self.mean, **self.av, **self, **kwargs)
 
 
@@ -89,9 +90,13 @@ class WFCBulk(object):
         for wfc in wfcl:
             wfc.mean.size or wfc.compute_average()
             # Midpoint of bp-filter (centre frequency)
-            freq.append((wfc.stats.freq_max + wfc.stats.freq_min) / 2)
+            freq.append(
+                (wfc.wfc_processing['freq_max']
+                 + wfc.wfc_processing['freq_min']) / 2)
             # midpoint of lapse window
-            lw.append(wfc.stats.tw_start + wfc.stats.tw_len/2)
+            lw.append(
+                wfc.wfc_processing['tw_start']
+                + wfc.wfc_processing['tw_len']/2)
             means.append(wfc.mean)
         # create grids
         lwg, freqg = np.meshgrid(sorted(set(lw)), sorted(set(freq)))
@@ -109,9 +114,21 @@ class WFCBulk(object):
         self.cfreqg = freqg
         del freq
 
-    def plot(self, title: str = None, outfile: str = None):
-        plot_wfc_bulk(
-            self.lw, self.cfreq, self.wfc, title=title, outfile=outfile)
+    def plot(
+        self, title: str = None, log: bool = False,
+            cmap: str = 'viridis') -> plt.Axes:
+        """
+        Create a plot of the waveform coherency against frequency and lapse
+        time window.
+
+        :param title: Title of the plot, defaults to None
+        :type title: str, optional
+        :param log: plot on logarithmic frequency axis, defaults to False
+        :type log: bool, optional
+        """
+        return plot_wfc_bulk(
+            self.lw, self.cfreq, self.wfc, title=title,
+            log=log, cmap=cmap)
 
 
 def read_wfc(path: str) -> WFC:
@@ -139,7 +156,15 @@ def read_wfc(path: str) -> WFC:
             d[k] = v
         else:
             stats[k] = v
-    wfc = WFC(d, stats=CorrStats(mu.load_header_from_np_array(stats)))
+    wfc_processing = {
+        'tw_start': stats['tw_start'],
+        'tw_len': stats['tw_len'],
+        'freq_min': stats['freq_min'],
+        'freq_max': stats['freq_max']
+    }
+    wfc = WFC(
+        d, stats=CorrStats(mu.load_header_from_np_array(stats)),
+        wfc_processing=wfc_processing)
     wfc.av = av
     wfc.mean = mean
     return wfc

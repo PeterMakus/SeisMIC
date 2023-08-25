@@ -19,10 +19,17 @@ CorrelationDataBase and DBHandler objects
 In **SeisMIC**, correlations are stored in `HDF5 <https://www.hdfgroup.org/downloads/hdf5/>`_ container files.
 This has the advantage of avoiding potential overhead caused by large amounts of correlation files.
 SeisMIC's implementation relies on modified `h5py <https://www.h5py.org/>`_ classes. After computing your
-correlations as shown in the earlier steps, they will be saved in one file *per station-combination*
-(e.g., the file ``IU-TA.HRV-M58A`` holds the correlations of all components and locations of the two stations
+correlations as shown in the earlier steps, they will be saved in one file *per component-combination*
+(default since **SeisMIC 0.5.0**) or one file *per station combination* (for older databanks). You can
+alter this setting in your *params.yaml*.
+
+**Example for one file per component-combination:**
+The file ``IU-TA.HRV-M58A.HHZ-HHZ`` holds the correlations of the two vertical components of the stations.
+
+**Example for one file per station-combination:**
+The file ``IU-TA.HRV-M58A`` holds the correlations of all components and locations of the two stations
 with each other, whereas the file ``IU-IU.HRV-HRV`` holds all autocorrelations and intercomponent correlations
-of the station ``IU.HRV``).
+of the station ``IU.HRV``.
 
 .. note::
     **SeisMIC** makes use of SEED-like station codes. The general logic of those codes is:
@@ -88,7 +95,7 @@ You might want to get the dictionary that you used to produce the correlations i
 Getting an overview over available data
 #######################################
 
-Once you have a suffieciently large dataset, you might be confused about which data you have already produced.
+Once you have a sufficiently large dataset, you might be confused about which data you have already produced.
 In this case, **SeisMIC** offers several methods to make your life a little easier:
 
 1. :py:meth:`seismic.corr_hdf5.corrdb.DBHandler.get_available_starttimes`: Returns a dictionary

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Thursday, 9th March 2023 03:59:12 pm
+Last Modified: Thursday, 24th August 2023 10:45:25 am
 '''
 from copy import deepcopy
 import json
@@ -56,6 +56,11 @@ class Monitor(object):
         self.indir = os.path.join(
             options['proj_dir'], options['co']['subdir']
         )
+        try:
+            self.save_comps_separately = options['save_comps_separately']
+        except KeyError:
+            # If it's not specified it's probably an old params.yaml
+            self.save_comps_separately = False
 
         # init MPI
         self.comm = MPI.COMM_WORLD
@@ -339,7 +344,7 @@ class Monitor(object):
         else:
             plist = None
         plist = self.comm.bcast(plist, root=0)
-        pmap = (np.arange(len(plist))*self.psize)/len(plist)
+        pmap = np.arange(len(plist))*self.psize/len(plist)
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
         ind = np.arange(len(plist), dtype=int)[ind]
@@ -470,14 +475,14 @@ class Monitor(object):
                     save_dir=savedir, figure_file_name=fname,
                     normalize_simmat=True, sim_mat_Clim=[-1, 1])
 
-    def compute_waveform_coherency_bulk(self):
+    def compute_waveform_coherence_bulk(self):
         """
         Compute the WFC for all specified (params file) correlations using MPI.
         The parameters for the correlation defined in the *yaml* file will be
         used.
 
         This function will just call
-        :meth:`~seismic.monitor.monitor.Monitor.compute_waveform_coherency`
+        :meth:`~seismic.monitor.monitor.Monitor.compute_waveform_coherence`
         several times.
         Subsequently, the average of the different component combinations will
         be computed.
@@ -494,7 +499,7 @@ class Monitor(object):
         else:
             plist = None
         plist = self.comm.bcast(plist, root=0)
-        pmap = (np.arange(len(plist))*self.psize)/len(plist)
+        pmap = np.arange(len(plist))*self.psize/len(plist)
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
         ind = np.arange(len(plist), dtype=int)[ind]
@@ -503,11 +508,12 @@ class Monitor(object):
         wfcl = []
         for ii in tqdm(ind):
             corr_file, net, stat, cha = plist[ii]
-            try:
-                wfcl.append(self.compute_waveform_coherency(
-                    corr_file, tag, net, stat, cha))
-            except Exception as e:
-                self.logger.exception(e)
+            for wfc in self.compute_waveform_coherence(
+                    corr_file, tag, net, stat, cha):
+                try:
+                    wfcl.append(wfc)
+                except Exception as e:
+                    self.logger.exception(e)
 
         outdir = os.path.join(
             self.options['proj_dir'], self.options['wfc']['subdir'])
@@ -517,32 +523,47 @@ class Monitor(object):
         wfcl = [j for i in wfclu for j in i]
         del wfclu
 
+        # Find unique averaging groups
         wfc_avl = []
-        while len(wfcl):
-            net = wfcl[0].stats.network
-            stat = wfcl[0].stats.station
-            # find identical components
-            wfc_avl = [wfc for wfc in wfcl if all(
-                [wfc.stats.network == net, wfc.stats.station == stat])]
-            # remove original from list
-            list(wfcl.pop(ii) for ii in (wfcl.index(wfc) for wfc in wfc_avl))
+        for wfc in wfcl:
+            wfc_avl.append(
+                (wfc.stats.network, wfc.stats.station,
+                    wfc.wfc_processing['freq_min'],
+                    wfc.wfc_processing['freq_max'],
+                    wfc.wfc_processing['tw_start'],
+                    wfc.wfc_processing['tw_len']))
+        wfc_avl = list(set(wfc_avl))
+        wfcl_sub = []
+        for avl in wfc_avl:
+            net, stat, fmin, fmax, tw_start, tw_len = avl
+            wfcl_sub.append(
+                [wfc for wfc in wfcl if all(
+                    [
+                        wfc.stats.network == net, wfc.stats.station == stat,
+                        wfc.wfc_processing['freq_min'] == fmin,
+                        wfc.wfc_processing['freq_max'] == fmax,
+                        wfc.wfc_processing['tw_start'] == tw_start,
+                        wfc.wfc_processing['tw_len'] == tw_len
+                    ])])
+        for wfc_avl in wfcl_sub:
             wfc = average_components_wfc(wfc_avl)
-
             # Write files
             outf = os.path.join(outdir, 'WFC-%s.%s.%s.f%a-%a.tw%a-%a' % (
                 wfc.stats.network, wfc.stats.station, wfc.stats.channel,
-                wfc.stats.freq_min, wfc.stats.freq_max, wfc.stats.tw_start,
-                wfc.stats.tw_len))
+                wfc.wfc_processing['freq_min'],
+                wfc.wfc_processing['freq_max'],
+                wfc.wfc_processing['tw_start'],
+                wfc.wfc_processing['tw_len']))
             wfc.save(outf)
 
-    def compute_waveform_coherency(
+    def compute_waveform_coherence(
         self, corr_file: str, tag: str, network: str, station: str,
             channel: str) -> WFC:
         """
-        Computes the waveform coherency corresponding to one correlation (i.e.,
+        Computes the waveform coherence corresponding to one correlation (i.e.,
         one single file).
 
-        The waveform coherency can be used as a measure of stability of
+        The waveform coherence can be used as a measure of stability of
         a certain correlation. See Steinmann, et. al. (2021) for details.
 
         :param corr_file: File to compute the wfc from
@@ -556,11 +577,11 @@ class Monitor(object):
         :param channel: Channel combination code.
         :type channel: str
         :raises ValueError: For short correlations
-        :return: An object holding the waveform coherency
+        :return: An object holding the waveform coherence
         :rtype: :class:`~seismic.monitor.wfc.WFC`
 
         .. seealso:: To compute wfc for several correlations use:
-            :meth:`~seismic.monitor.monitor.Monitor.compute.waveform_coherency\
+            :meth:`~seismic.monitor.monitor.Monitor.compute.waveform_coherence\
             _bulk`.
         """
         self.logger.info('Computing wfc for file: %s and channel: %s' % (
@@ -584,55 +605,95 @@ class Monitor(object):
             self.options['wfc']['date_inc'], self.options['wfc']['win_len'])
         self.logger.debug('Timelist created.')
         cb.resample(starttimes, endtimes)
-        cb.filter(
-            (self.options['wfc']['freq_min'], self.options['wfc']['freq_max']))
 
-        # Preprocessing on the correlation bulk
-        if 'preprocessing' in self.options['wfc']:
-            for func in self.options['wfc']['preprocessing']:
-                f = cb.__getattribute__(func['function'])
-                cb = f(**func['args'])
+        # Allow lists so the computation does not have to be started x times
+        if not isinstance(self.options['wfc']['freq_min'], list):
+            self.options['wfc']['freq_min'] = [
+                self.options['wfc']['freq_min']]
+        if not isinstance(self.options['wfc']['freq_max'], list):
+            self.options['wfc']['freq_max'] = [
+                self.options['wfc']['freq_max']]
+        if len(self.options['wfc']['freq_min']) != len(
+                self.options['wfc']['freq_max']):
+            raise ValueError(
+                'freq_min and freq_max must be of same length.')
 
-        # Now, we make a copy of the cm to be trimmed
-        if self.options['wfc']['tw_len'] is not None:
-            cbt = cb.copy().trim(
-                -(self.options['wfc']['tw_start']
-                    + self.options['wfc']['tw_len']),
-                (self.options['wfc']['tw_start']
-                    + self.options['wfc']['tw_len']))
-        else:
-            cbt = cb
-            self.options['dv']['tw_len'] = cb.stats.end_lag \
-                - self.options['wfc']['tw_start']
+        if not isinstance(self.options['wfc']['tw_start'], list):
+            self.options['wfc']['tw_start'] = [
+                self.options['wfc']['tw_start']]
+        if isinstance(self.options['wfc']['tw_len'], list) and len(
+                self.options['wfc']['tw_len']) != len(
+                self.options['wfc']['tw_start']):
+            raise ValueError(
+                'tw_start and tw_len must be of same length or tw_len must be'
+                ' a single value.')
+        elif not isinstance(self.options['wfc']['tw_len'], list):
+            self.options['wfc']['tw_len'] = [
+                self.options['wfc']['tw_len']] * len(
+                self.options['wfc']['tw_start'])
 
-        self.logger.debug(
-            'Preprocessing finished.\nExtracting reference trace...')
+        cb_bac = cb.copy()
 
-        if cbt.data.shape[1] <= 20:
-            raise ValueError('CorrBulk extremely short.')
+        for fmin, fmax in zip(
+                self.options['wfc']['freq_min'],
+                self.options['wfc']['freq_max']):
+            if fmin >= fmax:
+                raise ValueError('freq_min must be smaller than freq_max.')
+            cb.filter((fmin, fmax))
 
-        tr = cbt.extract_multi_trace(**self.options['wfc']['dt_ref'])
-        self.logger.debug('Reference trace created.\nComputing WFC...')
+            # Preprocessing on the correlation bulk
+            if 'preprocessing' in self.options['wfc']:
+                for func in self.options['wfc']['preprocessing']:
+                    f = cb.__getattribute__(func['function'])
+                    cb = f(**func['args'])
 
-        # Compute time window
-        tw = [np.arange(
-            self.options['wfc']['tw_start']*cbt.stats['sampling_rate'],
-            (self.options['wfc']['tw_start']+self.options[
-                'wfc']['tw_len'])*cbt.stats['sampling_rate'], 1)]
-        wfc = cbt.wfc(
-            tr, tw, 'both', self.options['wfc']['tw_start'],
-            self.options['wfc']['tw_len'], self.options['wfc']['freq_min'],
-            self.options['wfc']['freq_max'])
-        self.logger.debug('WFC computed.\nAveraging over time axis...')
-        # Compute the average over the whole time window
-        wfc.compute_average()
-        if self.options['wfc']['save_comps']:
-            outf = os.path.join(outdir, 'WFC-%s.%s.%s.f%a-%a.tw%a-%a' % (
-                network, station, channel, wfc.stats.freq_min,
-                wfc.stats.freq_max, wfc.stats.tw_start, wfc.stats.tw_len))
-            self.logger.info(f'Writing WFC to {outf}')
-            wfc.save(outf)
-        return wfc
+            self.logger.debug(
+                f'Preprocessing finished. Computing wfc for fmin: {fmin} '
+                f'and fmax: {fmax} {len(self.options["wfc"]["tw_start"])}'
+                f'time windows.')
+
+            # Now, we loop over the time windows
+            for tw_start, tw_len in zip(
+                self.options['wfc']['tw_start'],
+                    self.options['wfc']['tw_len']):
+                try:
+                    # Now, we make a copy of the cm to be trimmed
+                    cbt = cb.copy().trim(
+                        -(tw_start + tw_len), tw_start + tw_len)
+
+                    if cbt.data.shape[1] <= 20:
+                        raise ValueError('CorrBulk extremely short.')
+
+                    tr = cbt.extract_multi_trace(
+                        **self.options['wfc']['dt_ref'])
+                    self.logger.debug(
+                        'Reference trace created.\nComputing WFC...')
+
+                    # Compute time window
+                    tw = [np.arange(
+                        tw_start*cbt.stats['sampling_rate'],
+                        (tw_start+tw_len)*cbt.stats['sampling_rate'], 1)]
+                    wfc = cbt.wfc(
+                        tr, tw, 'both', tw_start, tw_len, fmin, fmax)
+                    self.logger.debug(
+                        'WFC computed.\nAveraging over time axis...')
+                    # Compute the average over the whole time window
+                    wfc.compute_average()
+                    if self.options['wfc']['save_comps']:
+                        outf = os.path.join(
+                            outdir, 'WFC-%s.%s.%s.f%a-%a.tw%a-%a' % (
+                                network, station, channel,
+                                fmin, fmax, tw_start, tw_len))
+                        self.logger.info(f'Writing WFC to {outf}')
+                        wfc.save(outf)
+                    yield wfc
+                except Exception as e:
+                    self.logger.error(
+                        'Error computing WFC for fmin: '
+                        f'{fmin} and fmax: {fmax}'
+                        f' and tw_start: {tw_start} and tw_len: {tw_len}. '
+                        f'Error: {e}')
+            cb = cb_bac.copy()
 
 
 def make_time_list(
@@ -673,7 +734,8 @@ def make_time_list(
     return starttimes, endtimes
 
 
-def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
+def corr_find_filter(
+    indir: str, net: dict, **kwargs) -> Tuple[
         List[str], List[str], List[str]]:
     """
     1. Finds the files of available correlations.
@@ -692,6 +754,7 @@ def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
     statlist = []
     infiles = []
     for f in glob(os.path.join(indir, '*-*.*-*.h5')):
+        matched = False
         f = os.path.basename(f)
         split = f.split('.')
 
@@ -701,15 +764,25 @@ def corr_find_filter(indir: str, net: dict, **kwargs) -> Tuple[
         if isinstance(net['network'], str) and not fnmatch.filter(
                 nsplit, net['network']) == nsplit:
             continue
-        elif isinstance(net['network'], list) and (
-                nsplit[0] and nsplit[1]) not in net['network']:
-            continue
+        elif isinstance(net['network'], list):
+            # account for the case of wildcards in the network list
+            for n in net['network']:
+                if fnmatch.filter(nsplit, n) == nsplit:
+                    matched = True
+                    break
+            if not matched:
+                continue
         if isinstance(net['station'], str) and not fnmatch.filter(
                 ssplit, net['station']) == ssplit:
             continue
-        elif isinstance(net['station'], list) and (
-                ssplit[0] and ssplit[1]) not in net['station']:
-            continue
+        elif isinstance(net['station'], list):
+            # account for the case of wildcards in the station list
+            for s in net['station']:
+                if fnmatch.filter(ssplit, s) == ssplit:
+                    matched = True
+                    break
+            if not matched:
+                continue
 
         netlist.append(split[0])
         statlist.append(split[1])
@@ -1081,12 +1154,13 @@ def average_components_wfc(wfcs: List[WFC]) -> WFC:
     :rtype: DV
     """
     stats = deepcopy(wfcs[0].stats)
+    wfcp = wfcs[0].wfc_processing
     stats['channel'] = 'av'
     for k in ['tw_start', 'tw_len', 'freq_min', 'freq_max']:
-        if any((stats[k] != wfc.stats[k] for wfc in wfcs)):
+        if any((wfcp[k] != wfc.wfc_processing[k] for wfc in wfcs)):
             raise ValueError('%s is not allowed to differ.' % k)
     meandict = {}
     for k in wfcs[0].keys():
         meandict[k] = np.nanmean([wfc[k] for wfc in wfcs], axis=0)
-    wfcout = WFC(meandict, stats)
+    wfcout = WFC(meandict, stats, wfcp)
     return wfcout

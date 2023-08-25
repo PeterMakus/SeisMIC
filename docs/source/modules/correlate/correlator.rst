@@ -29,6 +29,10 @@ A script to start your correlation could look like this:
     :linenos:
 
     from time import time
+    import os
+    # This tells numpy to only use one thread
+    # As we use MPI this is necessary to avoid overascribing threads
+    os.environ['OPENBLAS_NUM_THREADS'] = '1'
 
     from obspy.clients.fdsn import Client
 
@@ -54,9 +58,9 @@ This script can be iniated in bash using:
 
 .. code-block:: bash
 
-    mpirun -n $number_cores$ python mycorrelation.py
+    mpirun -n $number_cores python mycorrelation.py
 
-where ``$number_cores$`` is the number of cores you want to initialise. The only method of :py:class:`~seismic.correlate.correlate.Correlator`
+where ``$number_cores`` is the number of cores you want to initialise. The only method of :py:class:`~seismic.correlate.correlate.Correlator`
 that you will want to use is :py:meth:`~seismic.correlate.correlate.Correlator.pxcorr()`, which does not require any (additional) input.
 
 .. note::
