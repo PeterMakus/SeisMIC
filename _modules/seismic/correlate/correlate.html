@@ -453,7 +453,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 29th March 2021 07:58:18 am</span>
-<span class="sd">Last Modified: Friday, 25th August 2023 01:50:28 pm</span>
+<span class="sd">Last Modified: Friday, 25th August 2023 01:54:57 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span>
@@ -841,10 +841,10 @@ document.write(`
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">stack</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;subdivision&#39;</span><span class="p">][</span><span class="s1">&#39;delete_subdivision&#39;</span><span class="p">]:</span>
-                <span class="n">cst</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+                <span class="n">cstselect</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
             <span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span>
                     <span class="n">outf</span><span class="p">,</span> <span class="n">corr_options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">cst</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">cstselect</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
                     <span class="n">cdb</span><span class="o">.</span><span class="n">add_correlation</span><span class="p">(</span><span class="n">cstselect</span><span class="p">,</span> <span class="s1">&#39;subdivision&#39;</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">stack</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">cdb</span><span class="o">.</span><span class="n">add_correlation</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">stacktag</span><span class="p">,</span> <span class="n">stacktag</span><span class="p">)</span>
