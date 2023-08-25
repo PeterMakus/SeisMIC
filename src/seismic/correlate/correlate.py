@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 25th August 2023 01:50:28 pm
+Last Modified: Friday, 25th August 2023 01:54:57 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -396,10 +396,10 @@ class Correlator(object):
             else:
                 stack = None
             if self.options['subdivision']['delete_subdivision']:
-                cst.clear()
+                cstselect.clear()
             with CorrelationDataBase(
                     outf, corr_options=self.options) as cdb:
-                if cst.count():
+                if cstselect.count():
                     cdb.add_correlation(cstselect, 'subdivision')
                 if stack is not None:
                     cdb.add_correlation(stack, stacktag, stacktag)
