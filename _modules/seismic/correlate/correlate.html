@@ -453,7 +453,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 29th March 2021 07:58:18 am</span>
-<span class="sd">Last Modified: Thursday, 24th August 2023 02:03:47 pm</span>
+<span class="sd">Last Modified: Friday, 25th August 2023 01:50:28 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span>
@@ -748,24 +748,14 @@ document.write(`
                 <span class="c1"># Here, we can recombine the correlations for the read_len</span>
                 <span class="c1"># size (i.e., stack)</span>
                 <span class="c1"># Write correlations to HDF5</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;subdivision&#39;</span><span class="p">][</span><span class="s1">&#39;recombine_subdivision&#39;</span><span class="p">]</span> <span class="ow">and</span> \
-                        <span class="n">cst</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
-                    <span class="n">stack</span> <span class="o">=</span> <span class="n">cst</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">regard_location</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-                    <span class="n">tag</span> <span class="o">=</span> <span class="s1">&#39;stack_</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;read_len&#39;</span><span class="p">])</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;subdivision&#39;</span><span class="p">][</span><span class="s1">&#39;delete_subdivision&#39;</span><span class="p">]:</span>
-                    <span class="n">cst</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-                <span class="k">elif</span> <span class="n">cst</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">cst</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;subdivision&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cst</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">cst</span><span class="p">)</span>
                     <span class="n">cst</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
         <span class="c1"># write the remaining data</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;subdivision&#39;</span><span class="p">][</span><span class="s1">&#39;recombine_subdivision&#39;</span><span class="p">]</span> <span class="ow">and</span> \
-                <span class="n">cst</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">cst</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">regard_location</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">tag</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;subdivision&#39;</span><span class="p">][</span><span class="s1">&#39;delete_subdivision&#39;</span><span class="p">]</span> <span class="ow">and</span> \
-                <span class="n">cst</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">cst</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;subdivision&#39;</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="n">cst</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">cst</span><span class="p">)</span>
+            <span class="n">cst</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">_pxcorr_inner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">inv</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CorrStream</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -809,7 +799,7 @@ document.write(`
         <span class="n">cst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">cst</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cst</span>
 
-    <span class="k">def</span> <span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cst</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cst</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Write correlation stream to files.</span>
 
@@ -839,18 +829,25 @@ document.write(`
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_comps_separately</span><span class="p">:</span>
                 <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="n">cha</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
                 <span class="n">outf</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">corr_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">net</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">stat</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">cha</span><span class="si">}</span><span class="s1">.h5&#39;</span><span class="p">)</span>
+                <span class="n">cstselect</span> <span class="o">=</span> <span class="n">cst</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+                    <span class="n">network</span><span class="o">=</span><span class="n">net</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">stat</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="n">cha</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">net</span><span class="p">,</span> <span class="n">stat</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
                 <span class="n">outf</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">corr_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">net</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">stat</span><span class="si">}</span><span class="s1">.h5&#39;</span><span class="p">)</span>
+                <span class="n">cstselect</span> <span class="o">=</span> <span class="n">cst</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">network</span><span class="o">=</span><span class="n">net</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">stat</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;subdivision&#39;</span><span class="p">][</span><span class="s1">&#39;recombine_subdivision&#39;</span><span class="p">]:</span>
+                <span class="n">stack</span> <span class="o">=</span> <span class="n">cstselect</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">regard_location</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">stacktag</span> <span class="o">=</span> <span class="s1">&#39;stack_</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;read_len&#39;</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">stack</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;subdivision&#39;</span><span class="p">][</span><span class="s1">&#39;delete_subdivision&#39;</span><span class="p">]:</span>
+                <span class="n">cst</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
             <span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span>
                     <span class="n">outf</span><span class="p">,</span> <span class="n">corr_options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_comps_separately</span><span class="p">:</span>
-                    <span class="n">cdb</span><span class="o">.</span><span class="n">add_correlation</span><span class="p">(</span>
-                        <span class="n">cst</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
-                            <span class="n">network</span><span class="o">=</span><span class="n">net</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">stat</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="n">cha</span><span class="p">),</span> <span class="n">tag</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">cdb</span><span class="o">.</span><span class="n">add_correlation</span><span class="p">(</span>
-                        <span class="n">cst</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">network</span><span class="o">=</span><span class="n">net</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">stat</span><span class="p">),</span> <span class="n">tag</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cst</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
+                    <span class="n">cdb</span><span class="o">.</span><span class="n">add_correlation</span><span class="p">(</span><span class="n">cstselect</span><span class="p">,</span> <span class="s1">&#39;subdivision&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">stack</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">cdb</span><span class="o">.</span><span class="n">add_correlation</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">stacktag</span><span class="p">,</span> <span class="n">stacktag</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_generate_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Stream</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
