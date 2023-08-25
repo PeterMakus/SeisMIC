@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Tuesday, 8th August 2023 10:54:05 am
+Last Modified: Friday, 25th August 2023 02:37:05 pm
 '''
 
 import fnmatch
@@ -118,6 +118,8 @@ class Store_Client(object):
         mdl.download(
             domain, restrictions, mseed_storage=self._get_mseed_storage,
             stationxml_storage=self.inv_dir)
+        # update inventory
+        self.read_inventory()
 
     def get_waveforms(
         self, network: str, station: str, location: str, channel: str,
