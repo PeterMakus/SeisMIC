@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 24th August 2023 02:03:47 pm
+Last Modified: Friday, 25th August 2023 01:50:28 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -303,24 +303,14 @@ class Correlator(object):
                 # Here, we can recombine the correlations for the read_len
                 # size (i.e., stack)
                 # Write correlations to HDF5
-                if self.options['subdivision']['recombine_subdivision'] and \
-                        cst.count():
-                    stack = cst.stack(regard_location=False)
-                    tag = 'stack_%s' % str(self.options['read_len'])
-                    self._write(stack, tag)
-                if self.options['subdivision']['delete_subdivision']:
-                    cst.clear()
-                elif cst.count():
-                    self._write(cst, tag='subdivision')
+                if cst.count():
+                    self._write(cst)
                     cst.clear()
 
         # write the remaining data
-        if self.options['subdivision']['recombine_subdivision'] and \
-                cst.count():
-            self._write(cst.stack(regard_location=False), tag)
-        if not self.options['subdivision']['delete_subdivision'] and \
-                cst.count():
-            self._write(cst, tag='subdivision')
+        if cst.count():
+            self._write(cst)
+            cst.clear()
 
     def _pxcorr_inner(self, st: Stream, inv: Inventory) -> CorrStream:
         """
@@ -364,7 +354,7 @@ class Correlator(object):
         cst = self.comm.bcast(cst, root=0)
         return cst
 
-    def _write(self, cst, tag: str):
+    def _write(self, cst):
         """
         Write correlation stream to files.
 
@@ -394,18 +384,25 @@ class Correlator(object):
             if self.save_comps_separately:
                 net, stat, cha = code.split('.')
                 outf = os.path.join(self.corr_dir, f'{net}.{stat}.{cha}.h5')
+                cstselect = cst.select(
+                    network=net, station=stat, channel=cha)
             else:
                 net, stat = code.split('.')
                 outf = os.path.join(self.corr_dir, f'{net}.{stat}.h5')
+                cstselect = cst.select(network=net, station=stat)
+            if self.options['subdivision']['recombine_subdivision']:
+                stack = cstselect.stack(regard_location=False)
+                stacktag = 'stack_%s' % str(self.options['read_len'])
+            else:
+                stack = None
+            if self.options['subdivision']['delete_subdivision']:
+                cst.clear()
             with CorrelationDataBase(
                     outf, corr_options=self.options) as cdb:
-                if self.save_comps_separately:
-                    cdb.add_correlation(
-                        cst.select(
-                            network=net, station=stat, channel=cha), tag)
-                else:
-                    cdb.add_correlation(
-                        cst.select(network=net, station=stat), tag)
+                if cst.count():
+                    cdb.add_correlation(cstselect, 'subdivision')
+                if stack is not None:
+                    cdb.add_correlation(stack, stacktag, stacktag)
 
     def _generate_data(self) -> Iterator[Tuple[Stream, bool]]:
         """
