@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 25th August 2023 01:54:57 pm
+Last Modified: Friday, 25th August 2023 02:08:10 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -402,7 +402,7 @@ class Correlator(object):
                 if cstselect.count():
                     cdb.add_correlation(cstselect, 'subdivision')
                 if stack is not None:
-                    cdb.add_correlation(stack, stacktag, stacktag)
+                    cdb.add_correlation(stack, stacktag)
 
     def _generate_data(self) -> Iterator[Tuple[Stream, bool]]:
         """

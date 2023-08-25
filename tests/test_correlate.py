@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Thursday, 24th August 2023 11:00:08 am
+Last Modified: Friday, 25th August 2023 02:07:11 pm
 '''
 from copy import deepcopy
 import unittest
@@ -22,7 +22,7 @@ from obspy.core.inventory.inventory import read_inventory
 import yaml
 
 from seismic.correlate import correlate
-from seismic.correlate.stream import CorrStream
+from seismic.correlate.stream import CorrStream, CorrTrace
 from seismic.trace_data.waveform import Store_Client
 
 
@@ -292,12 +292,8 @@ class TestCorrrelator(unittest.TestCase):
             c.pxcorr()
             c._generate_data.assert_called_once()
             c._pxcorr_inner.assert_called_once_with(self.st, self.inv)
-            cst_mock().stack.assert_called_with(regard_location=False)
             cst_mock().count.assert_called()
-            write_calls = [
-                mock.call('bla', 'stack_86398'),
-                mock.call('bla', 'stack_86398')
-            ]
+            write_calls = [mock.call(cst_mock()), mock.call(cst_mock())]
             c._write.assert_has_calls(write_calls)
         cst_mock().clear.assert_called()
         cst_mock().extend.assert_called_once()
@@ -328,8 +324,8 @@ class TestCorrrelator(unittest.TestCase):
             cst_mock().stack.assert_not_called()
             cst_mock().count.assert_called()
             write_calls = [
-                mock.call(mock.ANY, tag='subdivision'),
-                mock.call(mock.ANY, tag='subdivision')
+                mock.call(mock.ANY),
+                mock.call(mock.ANY)
             ]
             c._write.assert_has_calls(write_calls)
         cst_mock().extend.assert_called_once()
@@ -368,6 +364,7 @@ class TestCorrrelator(unittest.TestCase):
         options = deepcopy(self.options)
         options['co']['combinations'] = [(0, 0), (0, 1), (0, 2)]
         options['save_comps_separately'] = False
+        options['co']['subdivision']['recombine_subdivision'] = False
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = [
             ['lala', 'lolo'], ['lala', 'lili']]
@@ -383,7 +380,7 @@ class TestCorrrelator(unittest.TestCase):
         cst1 = CorrStream()
         for tr in self.st:
             cst1.append(tr)
-        c._write(st2, 'mytag')
+        c._write(st2)
         add_cst_calls = [
             mock.call(mock.ANY, 'mytag'), mock.call(mock.ANY, 'mytag')]
         dbh_mock().add_correlation.assert_has_calls(add_cst_calls)
@@ -410,14 +407,12 @@ class TestCorrrelator(unittest.TestCase):
         cst0 = CorrStream()
         for tr in st2:
             tr.stats.station = 'oo'
-            cst0.append(tr)
+            cst0.append(CorrTrace(tr.data))
         st2.extend(self.st)
-        cst1 = CorrStream()
-        for tr in self.st:
-            cst1.append(tr)
-        c._write(st2, 'mytag')
+        c._write(cst0)
         add_cst_calls = [
-            mock.call(mock.ANY, 'mytag'), mock.call(mock.ANY, 'mytag')]
+            mock.call(mock.ANY, 'subdivision'),
+            mock.call(mock.ANY, 'subdivision')]
         dbh_mock().add_correlation.assert_has_calls(add_cst_calls)
         # A bit cumbersome way to check whether all files were written
         for call in dbh_mock().add_correlation.call_args_list:
