@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Friday, 25th August 2023 02:07:11 pm
+Last Modified: Friday, 25th August 2023 02:29:01 pm
 '''
 from copy import deepcopy
 import unittest
@@ -382,7 +382,8 @@ class TestCorrrelator(unittest.TestCase):
             cst1.append(tr)
         c._write(st2)
         add_cst_calls = [
-            mock.call(mock.ANY, 'mytag'), mock.call(mock.ANY, 'mytag')]
+            mock.call(mock.ANY, 'subdivision'),
+            mock.call(mock.ANY, 'subdivision')]
         dbh_mock().add_correlation.assert_has_calls(add_cst_calls)
         # A bit cumbersome way to check whether all files were written
         for call in dbh_mock().add_correlation.call_args_list:
@@ -397,26 +398,44 @@ class TestCorrrelator(unittest.TestCase):
         options = deepcopy(self.options)
         options['co']['combinations'] = [(0, 0), (0, 1), (0, 2)]
         options['save_comps_separately'] = True
+        options['co']['subdivision']['recombine_subdivision'] = True
+        options['co']['subdivision']['delete_subdivision'] = True
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = [
             ['lala', 'lolo'], ['lala', 'lili']]
         sc_mock._translate_wildcards.return_value = [
             ['lala', 'lolo', 'E'], ['lala', 'lili', 'Z']]
         c = correlate.Correlator(sc_mock, options)
-        st2 = self.st.copy()
-        cst0 = CorrStream()
-        for tr in st2:
-            tr.stats.station = 'oo'
-            cst0.append(CorrTrace(tr.data))
-        st2.extend(self.st)
-        c._write(cst0)
+        cst_mock = mock.Mock(CorrStream)
+        cst_mock2 = mock.Mock(CorrStream)
+        cst_mock.select.return_value = cst_mock2
+        # make cst_mock iterable
+        cst_mock.__iter__ = mock.Mock(return_value=iter(self.st))
+        c._write(cst_mock)
+        select_calls = [
+            mock.call(network='BW', station='RJOB', channel='EHE'),
+            mock.call().stack(regard_location=False),
+            mock.call().clear(),
+            mock.call().count(),
+            mock.call(network='BW', station='RJOB', channel='EHN'),
+            mock.call().stack(regard_location=False),
+            mock.call().clear(),
+            mock.call().count(),
+            mock.call(network='BW', station='RJOB', channel='EHZ'),
+            mock.call().stack(regard_location=False),
+            mock.call().clear(),
+            mock.call().count()]
+        cst_mock.select.assert_has_calls(select_calls)
+        # Note that subdivision is still called because clear doesn't
+        # have a defined effect on a mock
         add_cst_calls = [
             mock.call(mock.ANY, 'subdivision'),
-            mock.call(mock.ANY, 'subdivision')]
+            mock.call(mock.ANY, 'stack_86398'),
+            mock.call(mock.ANY, 'subdivision'),
+            mock.call(mock.ANY, 'stack_86398'),
+            mock.call(mock.ANY, 'subdivision'),
+            mock.call(mock.ANY, 'stack_86398')]
         dbh_mock().add_correlation.assert_has_calls(add_cst_calls)
-        # A bit cumbersome way to check whether all files were written
-        for call in dbh_mock().add_correlation.call_args_list:
-            self.assertEqual(1, call[0][0].count())
 
     @mock.patch('seismic.utils.miic_utils.resample_or_decimate')
     @mock.patch('seismic.correlate.correlate.calc_cross_combis')
