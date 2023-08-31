@@ -453,7 +453,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Thursday, 18th February 2021 02:30:02 pm</span>
-<span class="sd">Last Modified: Friday, 25th August 2023 02:37:05 pm</span>
+<span class="sd">Last Modified: Thursday, 31st August 2023 04:41:22 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">import</span> <span class="nn">fnmatch</span>
@@ -865,7 +865,8 @@ document.write(`
 <div class="viewcode-block" id="Store_Client.compute_spectrogram"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.Store_Client.compute_spectrogram">[docs]</a>    <span class="k">def</span> <span class="nf">compute_spectrogram</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
         <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">win_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">freq_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">25</span><span class="p">,</span>
-            <span class="n">read_increment</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">86400</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+        <span class="n">read_increment</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">86400</span><span class="p">,</span>
+        <span class="n">remove_response</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
                 <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes a time series of spectrograms for the requested station and</span>
@@ -906,7 +907,8 @@ document.write(`
                     <span class="n">read_increment</span><span class="p">,</span> <span class="n">win_len</span><span class="p">))</span>
         <span class="n">data_gen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_time_windows</span><span class="p">(</span>
             <span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span> <span class="n">read_increment</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">spct_series_welch</span><span class="p">(</span><span class="n">data_gen</span><span class="p">,</span> <span class="n">win_len</span><span class="p">,</span> <span class="n">freq_max</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">spct_series_welch</span><span class="p">(</span>
+            <span class="n">data_gen</span><span class="p">,</span> <span class="n">win_len</span><span class="p">,</span> <span class="n">freq_max</span><span class="p">,</span> <span class="n">remove_response</span><span class="o">=</span><span class="n">remove_response</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="FS_Client"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.FS_Client">[docs]</a><span class="k">class</span> <span class="nc">FS_Client</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>

@@ -455,7 +455,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Wednesday, 21st June 2023 12:22:00 pm</span>
-<span class="sd">Last Modified: Thursday, 24th August 2023 10:52:44 am</span>
+<span class="sd">Last Modified: Thursday, 31st August 2023 04:40:30 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
@@ -470,7 +470,8 @@ document.write(`
 
 
 <div class="viewcode-block" id="spct_series_welch"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.raw_analysis.spct_series_welch">[docs]</a><span class="k">def</span> <span class="nf">spct_series_welch</span><span class="p">(</span>
-        <span class="n">streams</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Stream</span><span class="p">],</span> <span class="n">window_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">freqmax</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="n">streams</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Stream</span><span class="p">],</span> <span class="n">window_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">freqmax</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">remove_response</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Computes a spectral time series. Each point in time is computed using the</span>
 <span class="sd">    welch method. Windows overlap by half the windolength. The input stream can</span>
@@ -504,7 +505,10 @@ document.write(`
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># Don&#39;t preprocess masked values</span>
             <span class="n">tr</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">preprocess</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">freqmax</span><span class="p">)</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="o">.</span><span class="n">split</span><span class="p">()])</span><span class="o">.</span><span class="n">merge</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">[</span><span class="n">preprocess</span><span class="p">(</span>
+                    <span class="n">tr</span><span class="p">,</span>
+                    <span class="n">freqmax</span><span class="p">,</span>
+                    <span class="n">remove_response</span><span class="p">)</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="o">.</span><span class="n">split</span><span class="p">()])</span><span class="o">.</span><span class="n">merge</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;No data in stream for this time step.&#39;</span><span class="p">)</span>
             <span class="k">continue</span>
@@ -550,7 +554,7 @@ document.write(`
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span></div>
 
 
-<div class="viewcode-block" id="preprocess"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.raw_analysis.preprocess">[docs]</a><span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="n">tr</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">freqmax</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<div class="viewcode-block" id="preprocess"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.raw_analysis.preprocess">[docs]</a><span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="n">tr</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">freqmax</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">remove_response</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Some very basic preprocessing on the string in order to plot the spectral</span>
 <span class="sd">    series. Does the following steps:</span>
@@ -565,7 +569,9 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Downsample to make computations faster</span>
     <span class="n">resample_or_decimate</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">freqmax</span><span class="o">*</span><span class="mi">2</span><span class="p">)</span>
-    <span class="n">tr</span><span class="o">.</span><span class="n">remove_response</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">remove_response</span><span class="p">:</span>
+        <span class="c1"># Remove response</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">remove_response</span><span class="p">()</span>
     <span class="c1"># Detrend</span>
     <span class="n">tr</span><span class="o">.</span><span class="n">detrend</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
 
