@@ -10,7 +10,7 @@ Module for waveform data analysis. Contains spectrogram computation.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 12:22:00 pm
-Last Modified: Thursday, 24th August 2023 10:52:44 am
+Last Modified: Thursday, 31st August 2023 04:40:30 pm
 '''
 from typing import Iterator
 import warnings
@@ -25,7 +25,8 @@ from seismic.utils.miic_utils import resample_or_decimate
 
 
 def spct_series_welch(
-        streams: Iterator[Stream], window_length: int, freqmax: float):
+    streams: Iterator[Stream], window_length: int, freqmax: float,
+        remove_response: bool = True):
     """
     Computes a spectral time series. Each point in time is computed using the
     welch method. Windows overlap by half the windolength. The input stream can
@@ -59,7 +60,10 @@ def spct_series_welch(
         try:
             # Don't preprocess masked values
             tr = Stream(
-                [preprocess(tr, freqmax) for tr in st.split()]).merge()[0]
+                [preprocess(
+                    tr,
+                    freqmax,
+                    remove_response) for tr in st.split()]).merge()[0]
         except IndexError:
             warnings.warn('No data in stream for this time step.')
             continue
@@ -105,7 +109,7 @@ def spct_series_welch(
         return None, None, None
 
 
-def preprocess(tr: Trace, freqmax: float):
+def preprocess(tr: Trace, freqmax: float, remove_response: bool):
     """
     Some very basic preprocessing on the string in order to plot the spectral
     series. Does the following steps:
@@ -120,7 +124,9 @@ def preprocess(tr: Trace, freqmax: float):
     """
     # Downsample to make computations faster
     resample_or_decimate(tr, freqmax*2)
-    tr.remove_response()
+    if remove_response:
+        # Remove response
+        tr.remove_response()
     # Detrend
     tr.detrend(type='linear')
 

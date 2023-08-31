@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 7th July 2023 02:50:27 pm
-Last Modified: Thursday, 24th August 2023 11:09:22 am
+Last Modified: Thursday, 31st August 2023 04:49:13 pm
 '''
 
 import unittest
@@ -21,7 +21,7 @@ from obspy import read
 import seismic.utils.raw_analysis as ra
 
 
-def side_effect_func(value1, value2):
+def side_effect_func(value1, value2, value3):
     return value1
 
 
@@ -50,7 +50,7 @@ class TestSpctSeriesWelch(unittest.TestCase):
         self.assertEqual(t.shape, (9,))
         self.assertEqual(S.shape, (512, 9))
         mock_preprocess.assert_has_calls(
-            [mock.call(mock.ANY, 50) for tr in self.st.split()])
+            [mock.call(mock.ANY, 50, True) for tr in self.st.split()])
 
     @mock.patch('seismic.utils.raw_analysis.preprocess')
     def test_indexerror_on_preprocess(self, mock_preprocess):
@@ -112,11 +112,22 @@ class TestPreprocess(unittest.TestCase):
         """
         Test preprocess.
         """
-        tr = ra.preprocess(self.tr, 25)
+        tr = ra.preprocess(self.tr, 25, True)
         tr.detrend.assert_called_once_with(type='linear')
         mock_resample_or_decimate.assert_called_once_with(self.tr, 50)
         tr.filter.assert_called_once_with('highpass', freq=0.01)
         tr.remove_response.assert_called_once()
+
+    @mock.patch('seismic.utils.raw_analysis.resample_or_decimate')
+    def test_preprocess_norr(self, mock_resample_or_decimate):
+        """
+        Test preprocess.
+        """
+        tr = ra.preprocess(self.tr, 25, False)
+        tr.detrend.assert_called_once_with(type='linear')
+        mock_resample_or_decimate.assert_called_once_with(self.tr, 50)
+        tr.filter.assert_called_once_with('highpass', freq=0.01)
+        tr.remove_response.assert_not_called()
 
 
 if __name__ == '__main__':
