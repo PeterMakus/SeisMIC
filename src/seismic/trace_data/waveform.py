@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Friday, 25th August 2023 02:37:05 pm
+Last Modified: Thursday, 31st August 2023 04:41:22 pm
 '''
 
 import fnmatch
@@ -420,7 +420,8 @@ class Store_Client(object):
     def compute_spectrogram(
         self, network: str, station: str, channel: str, starttime: UTCDateTime,
         endtime: UTCDateTime, win_len: int, freq_max: float = 25,
-            read_increment: int = 86400) -> Tuple[
+        read_increment: int = 86400,
+        remove_response: bool = True) -> Tuple[
                 np.ndarray, np.ndarray, np.ndarray]:
         """
         Computes a time series of spectrograms for the requested station and
@@ -461,7 +462,8 @@ class Store_Client(object):
                     read_increment, win_len))
         data_gen = self._generate_time_windows(
             network, station, channel, starttime, endtime, read_increment)
-        return spct_series_welch(data_gen, win_len, freq_max)
+        return spct_series_welch(
+            data_gen, win_len, freq_max, remove_response=remove_response)
 
 
 class FS_Client(object):
