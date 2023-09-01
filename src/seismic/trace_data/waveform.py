@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Thursday, 31st August 2023 04:41:22 pm
+Last Modified: Friday, 1st September 2023 08:13:39 am
 '''
 
 import fnmatch
@@ -422,7 +422,7 @@ class Store_Client(object):
         endtime: UTCDateTime, win_len: int, freq_max: float = 25,
         read_increment: int = 86400,
         remove_response: bool = True) -> Tuple[
-                np.ndarray, np.ndarray, np.ndarray]:
+            np.ndarray, np.ndarray, np.ndarray]:
         """
         Computes a time series of spectrograms for the requested station and
         channel.
