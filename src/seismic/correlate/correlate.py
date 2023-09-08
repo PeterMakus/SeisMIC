@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 25th August 2023 02:08:10 pm
+Last Modified: Friday, 8th September 2023 01:10:28 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -483,7 +483,14 @@ class Correlator(object):
             # Check sampling frequency
             sampling_rate = self.options['sampling_rate']
             # AA-Filter is done in this function as well
-            st = mu.resample_or_decimate(st, sampling_rate)
+            try:
+                st = mu.resample_or_decimate(st, sampling_rate)
+            except ValueError as e:
+                self.logger.error(
+                    'Downsampling failed for '
+                    f'{st[0].stats.network}.{st[0].stats.station} and time'
+                    f' {t}.\nThe Original Error Message was {e}.')
+                continue
             # The actual data in the mseeds was changed from int to float64
             # now,
             # Save some space by changing it back to 32 bit (most of the
