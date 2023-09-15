@@ -9,12 +9,13 @@
 
 Created: Tuesday, 1st June 2021 10:42:03 am
 
-Last Modified: Tuesday, 4th April 2023 04:47:10 pm
+Last Modified: Friday, 15th September 2023 10:54:49 am
 
 '''
 from copy import deepcopy
 import unittest
 from unittest.mock import patch, MagicMock
+from unittest import mock
 import warnings
 
 from obspy import read, UTCDateTime
@@ -420,6 +421,131 @@ class TestDBHandler(unittest.TestCase):
         d = {}
         gi_mock.side_effect = d.__getitem__
         self.assertEqual([], self.dbh.get_available_channels(tag, net, stat))
+
+    def test_remove_data_wildcard_network(self):
+        with self.assertRaises(ValueError):
+            self.dbh.remove_data('*', 'x', 'x', 'x', 'x')
+
+    def test_remove_data_wildcard_station(self):
+        with self.assertRaises(ValueError):
+            self.dbh.remove_data('x', '*', 'x', 'x', 'x')
+
+    def test_remove_data_wildcard_channel(self):
+        with self.assertRaises(ValueError):
+            self.dbh.remove_data('x', 'x', '*', 'x', 'x')
+
+    def test_remove_data_corrstart_wrong_type(self):
+        with self.assertRaises(TypeError):
+            self.dbh.remove_data('x', 'x', 'x', 'x', 3)
+
+    @patch('seismic.db.corr_hdf5.h5py.File.__delitem__')
+    def test_remove_data_no_wildcard_not_alphabetical(
+            self, file_mock):
+        net = 'CD-AB'
+        stat = 'AB-CD'
+        ch = 'XX-XX'
+        tag = 'rand'
+        corr_start = UTCDateTime(0)
+        exp_path = corr_hdf5.hierarchy.format(
+            tag=tag, network='AB-CD', station='CD-AB', channel=ch,
+            corr_st=corr_start.format_fissures(),
+            corr_et='')[:-1]
+        d = {exp_path: 'x'}
+        file_mock.side_effect = d.__delitem__
+        self.dbh.remove_data(net, stat, ch, tag, corr_start)
+        file_mock.assert_called_with(exp_path)
+        self.assertDictEqual(d, {})
+
+    @patch('seismic.db.corr_hdf5.h5py.File.__delitem__')
+    def test_remove_data_no_wildcard(
+            self, file_mock):
+        net = 'AB-CD'
+        stat = 'CD-AB'
+        ch = 'XX-XX'
+        tag = 'rand'
+        corr_start = UTCDateTime(0)
+        exp_path = corr_hdf5.hierarchy.format(
+            tag=tag, network='AB-CD', station='CD-AB', channel=ch,
+            corr_st=corr_start.format_fissures(),
+            corr_et='')[:-1]
+        d = {exp_path: 'x'}
+        file_mock.side_effect = d.__delitem__
+        self.dbh.remove_data(net, stat, ch, tag, corr_start)
+        file_mock.assert_called_with(exp_path)
+        self.assertDictEqual(d, {})
+
+    @patch('seismic.db.corr_hdf5.h5py.File.__delitem__')
+    def test_remove_data_not_found(
+            self, file_mock):
+        net = 'AB-CD'
+        stat = 'CD-AB'
+        ch = 'XX-XX'
+        tag = 'rand'
+        corr_start = UTCDateTime(0)
+        exp_path = corr_hdf5.hierarchy.format(
+            tag=tag, network='AB-CD', station='CD-AB', channel=ch,
+            corr_st=corr_start.format_fissures(),
+            corr_et='')[:-1]
+        act_path = corr_hdf5.hierarchy.format(
+            tag=tag, network='AB-CD', station='OT-AB', channel=ch,
+            corr_st=corr_start.format_fissures(),
+            corr_et='')[:-1]
+        d = {act_path: 'x'}
+        file_mock.side_effect = d.__delitem__
+        with warnings.catch_warnings(record=True) as w:
+            self.dbh.remove_data(net, stat, ch, tag, corr_start)
+            file_mock.assert_called_with(exp_path)
+            self.assertEqual(len(w), 1)
+        self.assertDictEqual(d, {act_path: 'x'})
+
+    @patch('seismic.db.corr_hdf5.h5py.File.__delitem__')
+    def test_remove_data_corrstart_wildcard(
+            self, file_mock):
+        net = 'AB-CD'
+        stat = 'CD-AB'
+        ch = 'XX-XX'
+        tag = 'rand'
+        corr_start = '*'
+        exp_path = corr_hdf5.hierarchy.format(
+            tag=tag, network='AB-CD', station='CD-AB', channel=ch,
+            corr_st='*', corr_et='')[:-3]
+        act_path = corr_hdf5.hierarchy.format(
+            tag=tag, network='AB-CD', station='CD-AB', channel=ch,
+            corr_st=UTCDateTime(0).format_fissures(),
+            corr_et='bla')
+        d = {act_path: 'x'}
+        file_mock.side_effect = d.__delitem__
+        self.dbh.remove_data(net, stat, ch, tag, corr_start)
+        file_mock.assert_called_with(exp_path)
+
+    @patch('seismic.db.corr_hdf5.h5py.File.__delitem__')
+    def test_remove_data_partial_wildcard(self, file_mock):
+        net = 'AB-CD'
+        stat = 'CD-AB'
+        ch = 'XX-XX'
+        tag = 'rand'
+        # technically deletes the first 9 days of 1970
+        corr_start = UTCDateTime(0).format_fissures()[:-14] + '*'
+        act_paths = [
+            corr_hdf5.hierarchy.format(
+                tag=tag, network=net, station=stat, channel=ch,
+                corr_st=(UTCDateTime(0) + x).format_fissures(),
+                corr_et='')[:-1] for x in np.arange(11)*86400]
+        d = {x: 'x' for x in act_paths}
+        file_mock.side_effect = d.__delitem__
+        with mock.patch.object(
+                self.dbh, 'get_available_starttimes') as gas_mock:
+            gas_mock.return_value = {ch: [
+                (UTCDateTime(0) + x).format_fissures()
+                for x in np.arange(11)*86400]}
+            self.dbh.remove_data(net, stat, ch, tag, corr_start)
+            gas_mock.assert_called_once_with(
+                net, stat, tag, ch)
+        for x in act_paths[:-2]:
+            file_mock.assert_any_call(x)
+        # the last two times do not fit the pattern
+        self.assertDictEqual(
+            d, {x: 'x' for x in act_paths[-2:]})
 
 
 class TestCorrelationDataBase(unittest.TestCase):

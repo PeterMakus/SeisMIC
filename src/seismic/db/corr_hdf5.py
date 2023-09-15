@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Thursday, 14th September 2023 04:06:06 pm
+Last Modified: Friday, 15th September 2023 10:53:43 am
 '''
 import ast
 import fnmatch
@@ -181,8 +181,6 @@ omitted." % path, category=UserWarning)
                 'has to be given in fissures format, or a UTCDateTime object.'
                 f' Is {type(corr_start)}.'
             )
-        elif corr_start == '*':
-            corr_start = '*'
         path = hierarchy.format(
             tag=tag, network=network, station=station, channel=channel,
             corr_st=corr_start, corr_et='*')
