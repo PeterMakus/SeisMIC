@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 8th September 2023 01:10:28 pm
+Last Modified: Friday, 15th September 2023 01:19:02 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -18,6 +18,7 @@ import logging
 import json
 import warnings
 import yaml
+import glob
 
 from mpi4py import MPI
 import numpy as np
@@ -257,13 +258,16 @@ class Correlator(object):
             combis=self.rcombis)
         ex_dict = {}
         for nc, sc in zip(netcombs, statcombs):
-            outf = os.path.join(
-                self.corr_dir, '%s.%s.h5' % (nc, sc))
-            if not os.path.isfile(outf):
+            outfs = os.path.join(
+                self.corr_dir, '%s.%s*.h5' % (nc, sc))
+            if not len(glob.glob(outfs)):
                 continue
-            with CorrelationDataBase(
-                    outf, corr_options=self.options, mode='r') as cdb:
-                d = cdb.get_available_starttimes(nc, sc, tag, channel)
+            d = {}
+            for outf in glob.glob(outfs):
+                with CorrelationDataBase(
+                        outf, corr_options=self.options, mode='r') as cdb:
+                    d.update(
+                        cdb.get_available_starttimes(nc, sc, tag, channel))
             s0, s1 = sc.split('-')
             n0, n1 = nc.split('-')
             ex_dict.setdefault('%s.%s' % (n0, s0), {})

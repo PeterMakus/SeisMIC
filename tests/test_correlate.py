@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Friday, 25th August 2023 02:29:01 pm
+Last Modified: Friday, 15th September 2023 01:22:10 pm
 '''
 from copy import deepcopy
 import unittest
@@ -237,7 +237,7 @@ class TestCorrrelator(unittest.TestCase):
             c.find_interstat_dist(100)
 
     @mock.patch('seismic.db.corr_hdf5.DBHandler')
-    @mock.patch('seismic.correlate.correlate.os.path.isfile')
+    @mock.patch('seismic.correlate.correlate.glob.glob')
     @mock.patch(
         'seismic.correlate.correlate.compute_network_station_combinations')
     @mock.patch('builtins.open')
@@ -256,17 +256,20 @@ class TestCorrrelator(unittest.TestCase):
         netcombs = ['AA-BB', 'AA-BB', 'AA-AA', 'AA-CC']
         statcombs = ['00-00', '00-11', '22-33', '22-44']
         ccomb_mock.return_value = (netcombs, statcombs)
-        isfile = [True, False, True, False]
+        isfile = [['x.h5'], ['x.h5'], [], ['y.h5'], ['y.h5'], []]
         isfile_mock.side_effect = isfile
-        times = [[0, 1, 2], [3, 4, 5, 6]]
+        times = [{'a': [0, 1, 2]}, {'b': [3, 4, 5, 6]}]
         cdb_mock().get_available_starttimes.side_effect = times
         out = c.find_existing_times('mytag')
-        exp = {'AA.00': {'BB.00': [0, 1, 2]}, 'AA.22': {'AA.33': [3, 4, 5, 6]}}
+        exp = {
+            'AA.00': {'BB.00': {'a': [0, 1, 2]}},
+            'AA.22': {'AA.33': {'b': [3, 4, 5, 6]}}}
         self.assertDictEqual(out, exp)
-        isfile_calls = [mock.call(
-            os.path.join(c.corr_dir, f'{nc}.{sc}.h5')) for nc, sc in zip(
+        isfile_calls = [
+            os.path.join(c.corr_dir, f'{nc}.{sc}*.h5') for nc, sc in zip(
                 netcombs, statcombs)]
-        isfile_mock.assert_has_calls(isfile_calls)
+        for call in isfile_calls:
+            isfile_mock.assert_any_call(call)
 
     @mock.patch('seismic.correlate.correlate.CorrStream')
     @mock.patch('builtins.open')
