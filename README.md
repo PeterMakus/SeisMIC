@@ -69,7 +69,8 @@ Access SeisMIC's documentation [here](https://petermakus.github.io/SeisMIC/index
 SeisMIC comes with a few tutorials (Jupyter notebooks). You can find those in the `examples/` directory.
 
 ## Acknowledging the Use of SeisMIC in your Work
-If you should use SeisMIC to create published scientific content please cite [Makus, Peter; Sens-Schönfelder, Christoph (2022): Seismological Monitoring using Interferometric Concepts (SeisMIC). V. 0.1.27. GFZ Data Services. doi: 10.5880/GFZ.2.4.2022.002](https://doi.org/10.5880/GFZ.2.4.2022.002).
+If you should use SeisMIC to create published scientific content please cite our preprint: [Makus, P., & Sens-Schönfelder, C. (2023). SeisMIC-an Open Source Python Toolset to Compute Velocity Changes from Ambient Seismic Noise.
+]([https://doi.org/10.5880/GFZ.2.4.2022.002](https://doi.org/10.31223/X55669)).
 
 ## Reporting Bugs / Contact the developers
 This version is an early release. If you encounter any issues or unexpected behaviour, please [open an issue](https://github.com/PeterMakus/SeisMIC/issues/new/choose) here on GitHub.
