@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Thursday, 21st September 2023 11:50:13 am
+Last Modified: Thursday, 21st September 2023 01:05:51 pm
 '''
 from copy import deepcopy
 import json
@@ -246,7 +246,7 @@ class Monitor(object):
         # Preprocessing on the correlation bulk
         if 'preprocessing' in self.options['dv']:
             for func in self.options['dv']['preprocessing']:
-                if func['function'] == 'pop_at_utcs':
+                if func['function'] in ['pop_at_utcs', 'select_time']:
                     continue
                 f = cb.__getattribute__(func['function'])
                 cb = f(**func['args'])
@@ -652,6 +652,8 @@ class Monitor(object):
             # Preprocessing on the correlation bulk
             if 'preprocessing' in self.options['wfc']:
                 for func in self.options['wfc']['preprocessing']:
+                    if func['function'] in ['pop_at_utcs', 'select_time']:
+                        continue
                     f = cb.__getattribute__(func['function'])
                     cb = f(**func['args'])
 
