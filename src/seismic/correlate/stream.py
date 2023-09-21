@@ -10,7 +10,7 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Thursday, 21st September 2023 11:46:45 am
+Last Modified: Thursday, 21st September 2023 04:17:45 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -68,6 +68,25 @@ class CorrBulk(object):
             self.stats['ntrcs'], self.stats['npts'] = A.shape
         self.stats['processing_bulk'] = []
         self.ref_trc = None
+
+    def __getitem__(self, item):
+        list_keys = ['corr_start', 'corr_end', 'location', 'channel']
+        stats_out = deepcopy(self.stats)
+        if isinstance(item, int):
+            for key in list_keys:
+                value = stats_out[key]
+                if isinstance(value, list) or isinstance(value, np.ndarray):
+                    stats_out[key] = value[item]
+            return CorrTrace(self.data[item], _header=stats_out)
+        for key in list_keys:
+            value = stats_out[key]
+            if isinstance(value, list):
+                stats_out[key] = np.array(value)[item].tolist()
+            elif isinstance(value, np.ndarray):
+                stats_out[key] = value[item]
+        cb_out = CorrBulk(self.data[item], stats=stats_out)
+        cb_out.stats['ntrcs'] = cb_out.data.shape[0]
+        return cb_out
 
     def plot(self, **kwargs):
         """
