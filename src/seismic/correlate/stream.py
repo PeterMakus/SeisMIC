@@ -10,7 +10,7 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Thursday, 21st September 2023 04:17:45 pm
+Last Modified: Thursday, 21st September 2023 04:30:46 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -77,6 +77,8 @@ class CorrBulk(object):
                 value = stats_out[key]
                 if isinstance(value, list) or isinstance(value, np.ndarray):
                     stats_out[key] = value[item]
+            del stats_out['processing_bulk']
+            del stats_out['ntrcs']
             return CorrTrace(self.data[item], _header=stats_out)
         for key in list_keys:
             value = stats_out[key]

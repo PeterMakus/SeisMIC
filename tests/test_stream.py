@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Thursday, 24th August 2023 11:05:57 am
+Last Modified: Thursday, 21st September 2023 04:32:56 pm
 '''
 
 import unittest
@@ -55,6 +55,38 @@ class TestCorrBulk(unittest.TestCase):
         for v0, v1 in zip(cb.stats.values(), self.cb.stats.values()):
             self.assertEqual(v0, v1)
         np.testing.assert_array_equal(cb.data, np.zeros((5, 5)))
+
+    def test_get_item(self):
+        # test whether we can retriefe a subset of the CorrBulk
+        cb = self.cb[1:3]
+        self.assertEqual(cb.stats.ntrcs, 2)
+        self.assertNotEqual(cb, self.cb)
+        self.assertEqual(cb.stats.npts, self.cb.stats.npts)
+        np.testing.assert_array_equal(cb.data, self.cb.data[1:3])
+        np.testing.assert_array_equal(
+            cb.stats.corr_start, self.cb.stats.corr_start[1:3])
+        np.testing.assert_array_equal(
+            cb.stats.corr_end, self.cb.stats.corr_end[1:3])
+
+    def test_get_item_list(self):
+        cb = self.cb[[1, 2]]
+        self.assertEqual(cb.stats.ntrcs, 2)
+        self.assertNotEqual(cb, self.cb)
+        self.assertEqual(cb.stats.npts, self.cb.stats.npts)
+        np.testing.assert_array_equal(cb.data, self.cb.data[1:3])
+        np.testing.assert_array_equal(
+            cb.stats.corr_start, self.cb.stats.corr_start[1:3])
+        np.testing.assert_array_equal(
+            cb.stats.corr_end, self.cb.stats.corr_end[1:3])
+
+    def test_get_item_int(self):
+        ctr = self.cb[1]
+        self.assertNotIn('ntrcs', ctr.stats)
+        self.assertNotIn('processing_bulk', ctr.stats)
+        np.testing.assert_array_equal(ctr.data, self.cb.data[1])
+        self.assertEqual(ctr.stats.corr_start, self.cb.stats.corr_start[1])
+        self.assertEqual(ctr.stats.corr_end, self.cb.stats.corr_end[1])
+        self.assertIsInstance(ctr, stream.CorrTrace)
 
     @mock.patch('seismic.correlate.stream.pcp.corr_mat_normalize')
     def test_normalize(self, cmn_mock):

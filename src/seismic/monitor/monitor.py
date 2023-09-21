@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Thursday, 21st September 2023 04:19:04 pm
+Last Modified: Thursday, 21st September 2023 04:34:57 pm
 '''
 from copy import deepcopy
 import json
@@ -286,13 +286,6 @@ class Monitor(object):
             tw=tw, sides=self.options['dv']['sides'],
             ref_tr_trim=(trim0, trim1), ref_tr_stats=stats_copy,
             processing=self.options['dv'])
-        # if isinstance(self.options['dv']['exclude_above_corr'], float):
-        #     thresmask = np.where(
-        #         dv.corr > self.options['dv']['exclude_above_corr'])[0]
-            
-        #     popstarts = dv.stats.corr_start[thresmask]
-        #     popends = dv.stats.corr_end[thresmask]
-        #     popind = cbt._find_slice_index()
         ccb = cb.correct_stretch(dv)
 
         # extract the final reference trace (mean excluding very different
