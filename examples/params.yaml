@@ -171,6 +171,7 @@ dv:
     # preprocessing on the correlation bulk or corr_stream before stretch estimation
     preprocessing: [
                     #{'function': 'pop_at_utcs', 'args': {'utcs': np.array([UTCDateTime()])},
+                    #{'function': 'select_time', 'args': {'start': (0, 0, 0), 'end': (23, 0, 0), exclude=False}, # include only certain time of day (h, minute, second)
                     {'function': 'smooth', 'args': {'wsize': 4, 'wtype': 'hanning', 'axis': 1}}
     ]
 

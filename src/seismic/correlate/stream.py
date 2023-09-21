@@ -10,12 +10,13 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Thursday, 24th August 2023 11:06:37 am
+Last Modified: Thursday, 21st September 2023 11:46:45 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
 import warnings
 from matplotlib import pyplot as plt
+import datetime
 
 
 import numpy as np
@@ -1036,6 +1037,36 @@ class CorrStream(Stream):
                     and tr.stats.corr_end <= endtime:
                 outst.append(tr)
         return outst
+
+    def select_time(
+        self, start: Tuple[int, int, float], end: Tuple[int, int, float],
+            exclude: bool = False):
+        """
+        Selects correlations that are inside of the requested time window.
+
+        :param start: Start time given as Tuple in the form (h, m, s)
+        :type start: Tuple[int, int, float]
+        :param end: End time (refers to corr_end) given as Tuple in the form
+            (h, m, s).
+        :type end: Tuple[int, int, float]
+        :param exclude: Exclude the times inside of the (start, end) interval,
+            defaults to False
+        :type exclude: bool, optional
+        :return: A CorrStream holding the selected CorrTraces
+        :rtype: CorrStream
+        """
+        cst_select = CorrStream()
+        start = datetime.time(*start)
+        end = datetime.time(*end)
+        for tr in self:
+            if tr.stats.corr_start.time >= start \
+                    and tr.stats.corr_end.time <= end:
+                if not exclude:
+                    cst_select.append(tr)
+            else:
+                if exclude:
+                    cst_select.append(tr)
+        return cst_select
 
     def slide(
         self, window_length: float, step: float,

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Thursday, 24th August 2023 10:45:25 am
+Last Modified: Thursday, 21st September 2023 11:50:13 am
 '''
 from copy import deepcopy
 import json
@@ -228,7 +228,7 @@ class Monitor(object):
         if 'preprocessing' in self.options['dv']:
             for func in self.options['dv']['preprocessing']:
                 # This one goes on the CorrStream
-                if func['function'] == 'pop_at_utcs':
+                if func['function'] in ['pop_at_utcs', 'select_time']:
                     f = cst.__getattribute__(func['function'])
                     cst = f(**func['args'])
         cb = cst.create_corr_bulk(
@@ -589,6 +589,14 @@ class Monitor(object):
         with CorrelationDataBase(corr_file, mode='r') as cdb:
             # get the corrstream containing all the corrdata for this combi
             cst = cdb.get_data(network, station, channel, tag)
+
+        if 'preprocessing' in self.options['wfc']:
+            for func in self.options['wfc']['preprocessing']:
+                # This one goes on the CorrStream
+                if func['function'] in ['pop_at_utcs', 'select_time']:
+                    f = cst.__getattribute__(func['function'])
+                    cst = f(**func['args'])
+
         cb = cst.create_corr_bulk(inplace=True)
         outdir = os.path.join(
             self.options['proj_dir'], self.options['wfc']['subdir'])
