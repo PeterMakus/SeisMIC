@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Wednesday, 5th April 2023 10:32:09 am
+Last Modified: Friday, 22nd September 2023 12:53:41 pm
 '''
 from typing import List, Tuple
 import logging
@@ -427,3 +427,47 @@ def correct_polarity(st: Stream, inv: Inventory):
             tr.id, datetime=tr.stats.starttime)['dip']
         if dip > 0:
             tr.data *= -1
+
+
+def nan_helper(y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """Helper to handle indices and logical indices of NaNs.
+
+    :param y: numpy array with possible NaNs
+    :type y: 1d np.ndarray
+    :return: Tuple of two numpy arrays: The first one holds a logical mask
+        indicating the positions of nans, the second one is a function that
+        can be called to translate the first output to indices.
+    :rtype: Tuple[np.ndarray, np.ndarray]
+
+    .. example::
+
+            >>> # linear interpolation of NaNs
+            >>> nans, x = nan_helper(y)
+            >>> y[nans] = np.interp(x(nans), x(~nans), y[~nans])
+    """
+    return np.isnan(y), lambda z: z.nonzero()[0]
+
+
+def interpolate_gaps(A: np.ndarray, max_gap_len: int = -1) -> np.ndarray:
+    """
+    perform a linear interpolation where A is filled with nans.
+
+    :param A: np.ndarray, containing nans
+    :type A: np.ndarray
+    :param max_gap_len: maximum length to fill, defaults to -1
+    :type max_gap_len: int, optional
+    :return: The array with interpolated values
+    :rtype: np.ndarray
+    """
+    A = np.ma.masked_equal(A, np.nan)
+    if not np.isnan(A).any():
+        return A
+    if max_gap_len == -1:
+        max_gap_len = A.shape[-1]
+    for ii in range(A.shape[0]):
+        nans, x = nan_helper(A[ii])
+        if len(nans) > max_gap_len:
+            warnings.warn('Gap too large. Not interpolating.')
+            continue
+        A[ii][nans] = np.interp(x(nans), x(~nans), A[ii][~nans])
+    return A

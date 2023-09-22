@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 15th September 2023 01:19:02 pm
+Last Modified: Friday, 22nd September 2023 03:38:36 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -330,6 +330,14 @@ class Correlator(object):
         for tr in st:
             starttime.append(tr.stats['starttime'])
             npts.append(tr.stats['npts'])
+        if np.unique(starttime).size > 1:
+            raise ValueError(
+                'All traces have to start at the same time.'
+                ' This should not happen.')
+        if np.unique(npts).size > 1:
+            raise ValueError(
+                'All traces have to have the same length.'
+                ' This should not happen.')
         npts = np.max(np.array(npts))
 
         A, st = st_to_np_array(st, npts)
@@ -445,7 +453,7 @@ class Correlator(object):
 
         # Taper ends for the deconvolution
         if self.options['remove_response']:
-            tl = 100
+            tl = 20
         else:
             tl = 0
 
@@ -754,9 +762,16 @@ def st_to_np_array(st: Stream, npts: int) -> Tuple[np.ndarray, Stream]:
     :rtype: np.ndarray
     """
     A = np.zeros((st.count(), npts), dtype=np.float32)
+    # st = st.merge(method=1, fill_value='interpolate', interpolation_samples=10)
     for ii, tr in enumerate(st):
         A[ii, :tr.stats.npts] = tr.data
         del tr.data  # Not needed any more, just uses up RAM
+    # A = mu.interpolate_gaps(A, -1)
+    if np.any(np.isnan(A)):
+        print('NaNs in data.')
+    # Same if data is masked
+    if np.any(np.ma.getmask(A)):
+        print('Masked data.')
     return A, st
 
 
@@ -1250,7 +1265,7 @@ def compute_network_station_combinations(
 
 
 def preprocess_stream(
-    st: Stream, store_client: Store_Client, inv: Inventory or None,
+    st: Stream, store_client: Store_Client, inv: Inventory | None,
     startt: UTCDateTime, endt: UTCDateTime, taper_len: float,
     remove_response: bool, subdivision: dict,
     preProcessing: List[dict] = None,
@@ -1293,6 +1308,7 @@ def preprocess_stream(
     st.sort(keys=['starttime'])
 
     # Clip to these again to remove the taper
+    # unnecessary if lossless = false
     old_starts = [deepcopy(tr.stats.starttime) for tr in st]
     old_ends = [deepcopy(tr.stats.endtime) for tr in st]
 
@@ -1329,6 +1345,7 @@ def preprocess_stream(
             func = func_from_str(procStep['function'])
             st = func(st, **procStep['args'])
     # Remove the artificial taper from earlier
+    # unnecessary if lossless = False
     for tr, ostart, oend in zip(st, old_starts, old_ends):
         tr.trim(starttime=ostart, endtime=oend)
     st.merge()
@@ -1370,7 +1387,14 @@ def generate_corr_inc(
                 subdivision['corr_len']-st[0].stats.delta
             win = win0.trim(starttrim, endtrim, pad=True)
             mu.get_valid_traces(win)
-
+            # win = win.merge(method=-1)
+            # discard if there are nans or masked values
+            # if not win.count():
+            #     continue
+            # if np.any(np.isnan(win[0].data)):
+            #     continue
+            # if np.any(np.ma.getmask(win[0].data)):
+            #     continue
             yield win
 
     except IndexError:
