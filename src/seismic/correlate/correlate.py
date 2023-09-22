@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 22nd September 2023 03:38:36 pm
+Last Modified: Friday, 22nd September 2023 03:55:09 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -1303,6 +1303,12 @@ def preprocess_stream(
     """
     if not st.count():
         return st
+    # deal with overlaps
+    st = st.merge(method=-1)
+    # basically just masks values in between
+    st = st.merge()
+    # for up to ten samples, allow interpolation
+    st = mu.interpolate_gaps_st(st, 10)
     # To deal with any nans/masks
     st = st.split()
     st.sort(keys=['starttime'])

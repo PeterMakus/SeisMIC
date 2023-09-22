@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Friday, 22nd September 2023 12:53:41 pm
+Last Modified: Friday, 22nd September 2023 03:59:58 pm
 '''
 from typing import List, Tuple
 import logging
@@ -459,6 +459,8 @@ def interpolate_gaps(A: np.ndarray, max_gap_len: int = -1) -> np.ndarray:
     :return: The array with interpolated values
     :rtype: np.ndarray
     """
+    # not a good idea? where longer than max_gap_len I don't really want to do
+    # that
     A = np.ma.masked_equal(A, np.nan)
     if not np.isnan(A).any():
         return A
@@ -466,8 +468,25 @@ def interpolate_gaps(A: np.ndarray, max_gap_len: int = -1) -> np.ndarray:
         max_gap_len = A.shape[-1]
     for ii in range(A.shape[0]):
         nans, x = nan_helper(A[ii])
+        # this doesn't make sense needs to be implemented differently
         if len(nans) > max_gap_len:
             warnings.warn('Gap too large. Not interpolating.')
             continue
         A[ii][nans] = np.interp(x(nans), x(~nans), A[ii][~nans])
     return A
+
+
+def interpolate_gaps_st(st: Stream, max_gap_len: int = -1) -> Stream:
+    """
+    perform a linear interpolation where A is filled with nans.
+
+    :param st: Stream containing nans
+    :type st: Stream
+    :param max_gap_len: maximum length to fill, defaults to -1
+    :type max_gap_len: int, optional
+    :return: The stream with interpolated values
+    :rtype: Stream
+    """
+    for tr in st:
+        tr.data = interpolate_gaps(tr.data, max_gap_len)
+    return st
