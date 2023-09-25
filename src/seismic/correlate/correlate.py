@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 25th September 2023 06:22:14 pm
+Last Modified: Monday, 25th September 2023 06:25:54 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -604,6 +604,7 @@ class Correlator(object):
 
                 self.logger.debug('Working on correlation times %s-%s' % (
                     str(win[0].stats.starttime), str(win[0].stats.endtime)))
+                win = win.trim(winstart, winend, pad=True)
                 yield win, write_flag
                 write_flag = False
 
