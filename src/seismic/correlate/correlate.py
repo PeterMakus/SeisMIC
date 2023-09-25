@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 25th September 2023 06:17:21 pm
+Last Modified: Monday, 25th September 2023 06:22:14 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -333,7 +333,9 @@ class Correlator(object):
         if np.unique(starttime).size > 1:
             raise ValueError(
                 'All traces have to start at the same time.'
-                ' This should not happen.')
+                ' This should not happen.\n'
+                f'{np.unique(starttime)}\n'
+                f'npts: {np.unique(npts)}')
         if np.unique(npts).size > 1:
             raise ValueError(
                 'All traces have to have the same length.'
