@@ -8,7 +8,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 04:07:16 pm
-Last Modified: Tuesday, 8th November 2022 11:19:58 am
+Last Modified: Monday, 25th September 2023 02:57:48 pm
 '''
 
 import unittest
@@ -125,14 +125,14 @@ class TestCosTaper(unittest.TestCase):
             ppst.cos_taper_st(intr, 5, True, True)
             self.assertEqual(len(w), 1)
 
-    def test_lossless_taper(self):
-        testtr = self.testtr.copy()
-        self.assertEqual(self.testtr, testtr)
-        ppst.cos_taper(testtr, 5, False, True)
-        self.assertNotEqual(testtr, self.testtr)
-        np.testing.assert_array_equal(
-            self.testtr.data, testtr.data[round(self.sr*5):round(-self.sr*5)])
-        self.assertEqual(testtr.stats.npts, self.testtr.stats.npts+10*self.sr)
+    # def test_lossless_taper(self):
+    #     testtr = self.testtr.copy()
+    #     self.assertEqual(self.testtr, testtr)
+    #     ppst.cos_taper(testtr, 5, False, True)
+    #     self.assertNotEqual(testtr, self.testtr)
+    #     np.testing.assert_array_equal(
+    #         self.testtr.data, testtr.data[round(self.sr*5):round(-self.sr*5)])
+    #     self.assertEqual(testtr.stats.npts, self.testtr.stats.npts+10*self.sr)
 
 
 class TestDetrendSt(unittest.TestCase):

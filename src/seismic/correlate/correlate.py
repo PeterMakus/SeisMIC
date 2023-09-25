@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 15th September 2023 01:19:02 pm
+Last Modified: Monday, 25th September 2023 03:05:30 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -330,6 +330,14 @@ class Correlator(object):
         for tr in st:
             starttime.append(tr.stats['starttime'])
             npts.append(tr.stats['npts'])
+        if np.unique(starttime).size > 1:
+            raise ValueError(
+                'All traces have to start at the same time.'
+                ' This should not happen.')
+        if np.unique(npts).size > 1:
+            raise ValueError(
+                'All traces have to have the same length.'
+                ' This should not happen.')
         npts = np.max(np.array(npts))
 
         A, st = st_to_np_array(st, npts)
@@ -413,10 +421,6 @@ class Correlator(object):
         Returns an Iterator that loops over each start and end time with the
         requested window length.
 
-        Also will lead to the time windows being prolonged by the sum of
-        the length of the tapered end, so that no data is lost. Always
-        a hann taper so far. Taper length is 5% of the requested time
-        window on each side.
 
         :yield: An obspy stream containing the time window x for all stations
         that were active during this time.
@@ -443,11 +447,8 @@ class Correlator(object):
         t1 = UTCDateTime(self.options['read_end']).timestamp
         loop_window = np.arange(t0, t1, self.options['read_inc'])
 
-        # Taper ends for the deconvolution
-        if self.options['remove_response']:
-            tl = 100
-        else:
-            tl = 0
+        # Taper ends for the deconvolution and filtering
+        tl = 20
 
         # Decide which process reads data from which station
         # Better than just letting one core read as this avoids having to
@@ -1250,7 +1251,7 @@ def compute_network_station_combinations(
 
 
 def preprocess_stream(
-    st: Stream, store_client: Store_Client, inv: Inventory or None,
+    st: Stream, store_client: Store_Client, inv: Inventory | None,
     startt: UTCDateTime, endt: UTCDateTime, taper_len: float,
     remove_response: bool, subdivision: dict,
     preProcessing: List[dict] = None,
@@ -1288,18 +1289,14 @@ def preprocess_stream(
     """
     if not st.count():
         return st
+    st = ppst.detrend_st(st, 'linear')
+    # deal with overlaps
+    st = mu.gap_handler(st, 10, taper_len*4, taper_len)
     # To deal with any nans/masks
     st = st.split()
     st.sort(keys=['starttime'])
 
-    # Clip to these again to remove the taper
-    old_starts = [deepcopy(tr.stats.starttime) for tr in st]
-    old_ends = [deepcopy(tr.stats.endtime) for tr in st]
-
     if remove_response:
-        # taper before instrument response removal
-        if taper_len:
-            st = ppst.cos_taper_st(st, taper_len, False, True)
         try:
             if inv:
                 ninv = inv
@@ -1326,11 +1323,15 @@ def preprocess_stream(
 
     if preProcessing:
         for procStep in preProcessing:
+            if 'detrend_stream' in procStep['function'] \
+                    or 'cos_taper_st' in procStep['function']:
+                warnings.warn(
+                    'Tapering and Detrending are now always perfomed '
+                    'as part of the preprocessing. Ignoring parameter...',
+                    DeprecationWarning)
+                continue
             func = func_from_str(procStep['function'])
             st = func(st, **procStep['args'])
-    # Remove the artificial taper from earlier
-    for tr, ostart, oend in zip(st, old_starts, old_ends):
-        tr.trim(starttime=ostart, endtime=oend)
     st.merge()
     st.trim(startt, endt, pad=True)
 
@@ -1370,7 +1371,6 @@ def generate_corr_inc(
                 subdivision['corr_len']-st[0].stats.delta
             win = win0.trim(starttrim, endtrim, pad=True)
             mu.get_valid_traces(win)
-
             yield win
 
     except IndexError:
