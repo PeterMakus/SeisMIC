@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 25th September 2023 03:05:30 pm
+Last Modified: Monday, 25th September 2023 06:15:48 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -1296,6 +1296,9 @@ def preprocess_stream(
     st = st.split()
     st.sort(keys=['starttime'])
 
+    old_starts = [deepcopy(tr.stats.starttime) for tr in st]
+    old_ends = [deepcopy(tr.stats.endtime) for tr in st]
+
     if remove_response:
         try:
             if inv:
@@ -1332,6 +1335,10 @@ def preprocess_stream(
                 continue
             func = func_from_str(procStep['function'])
             st = func(st, **procStep['args'])
+    # Remove the artificial taper from earlier
+    # unnecessary if lossless = False
+    for tr, ostart, oend in zip(st, old_starts, old_ends):
+        tr.trim(starttime=ostart, endtime=oend)
     st.merge()
     st.trim(startt, endt, pad=True)
 
