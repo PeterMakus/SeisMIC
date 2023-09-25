@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 25th September 2023 06:29:33 pm
+Last Modified: Monday, 25th September 2023 06:35:17 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -330,16 +330,6 @@ class Correlator(object):
         for tr in st:
             starttime.append(tr.stats['starttime'])
             npts.append(tr.stats['npts'])
-        if np.unique(starttime).size > 1:
-            raise ValueError(
-                'All traces have to start at the same time.'
-                ' This should not happen.\n'
-                f'{np.unique(starttime)}\n'
-                f'npts: {np.unique(npts)}')
-        if np.unique(npts).size > 1:
-            raise ValueError(
-                'All traces have to have the same length.'
-                ' This should not happen.')
         npts = np.max(np.array(npts))
 
         A, st = st_to_np_array(st, npts)
@@ -606,7 +596,6 @@ class Correlator(object):
                     str(win[0].stats.starttime), str(win[0].stats.endtime)))
                 win = win.merge()
                 win = win.trim(winstart, winend, pad=True)
-                print(winstart, winend)
                 yield win, write_flag
                 write_flag = False
 
