@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Friday, 22nd September 2023 03:59:58 pm
+Last Modified: Monday, 25th September 2023 02:01:56 pm
 '''
 from typing import List, Tuple
 import logging
@@ -18,6 +18,8 @@ import warnings
 import numpy as np
 from obspy import Inventory, Stream, Trace, UTCDateTime
 from obspy.core import Stats, AttribDict
+
+from seismic.correlate.preprocessing_stream import cos_taper_st
 
 
 log_lvl = {
@@ -448,6 +450,41 @@ def nan_helper(y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     return np.isnan(y), lambda z: z.nonzero()[0]
 
 
+def gap_handler(
+    st: Stream, max_interpolation_length: int = 10,
+        retain_len: float = 0, taper_len: float = 10) -> Stream:
+    """
+    This function tries to interpolate gaps in a stream. If the gaps are too
+    large and the data snippets too short, the data will be discarded.
+    Around remaining gaps, the trace will be tapered.
+
+    :param st: Stream that might contain gaps
+    :type st: Stream
+    :param max_interpolation_length: maximum length in number of samples
+        to interpolate, defaults to 10
+    :type max_interpolation_length: int, optional
+    :param retain_len: length in seconds that a data snippet has to
+        have to be retained, defaults to 0
+    :type retain_len: int, optional
+    :param taper_len: Length of the taper in seconds, defaults to 10
+    :type taper_len: float, optional
+    :return: The sanitised stream
+    :rtype: Stream
+    """
+    # take care of overlaps
+    st = st.merge(method=-1)
+    # 1. try to interpolate gaps
+    st = interpolate_gaps_st(st, max_gap_len=max_interpolation_length)
+
+    # split trace and discard snippets that are shorter than retain_len
+    st = st.split()
+    discard_short_traces(st, retain_len)
+
+    # Taper the remaining bits at their ends
+    st = cos_taper_st(st, taper_len, False, False)
+    return st.merge()
+
+
 def interpolate_gaps(A: np.ndarray, max_gap_len: int = -1) -> np.ndarray:
     """
     perform a linear interpolation where A is filled with nans.
@@ -459,21 +496,26 @@ def interpolate_gaps(A: np.ndarray, max_gap_len: int = -1) -> np.ndarray:
     :return: The array with interpolated values
     :rtype: np.ndarray
     """
-    # not a good idea? where longer than max_gap_len I don't really want to do
-    # that
-    A = np.ma.masked_equal(A, np.nan)
-    if not np.isnan(A).any():
+    A = np.ma.masked_invalid(A)
+    if not np.ma.is_masked(A):
         return A
-    if max_gap_len == -1:
-        max_gap_len = A.shape[-1]
-    for ii in range(A.shape[0]):
-        nans, x = nan_helper(A[ii])
-        # this doesn't make sense needs to be implemented differently
-        if len(nans) > max_gap_len:
+    mask = np.ma.getmask(A)
+
+    maskconc = np.concatenate((
+        [mask[0]], mask[:-1] != mask[1:], [True]))
+    maskstart = np.where(np.all([maskconc[:-1], mask], axis=0))[0]
+    masklen = np.diff(np.where(maskconc)[0])[::2]
+
+    x = np.arange(len(A))
+
+    for mstart, ml in zip(maskstart, masklen):
+        if ml > max_gap_len:
             warnings.warn('Gap too large. Not interpolating.')
             continue
-        A[ii][nans] = np.interp(x(nans), x(~nans), A[ii][~nans])
-    return A
+        A[mstart:mstart+ml] = np.interp(
+            np.arange(mstart, mstart+ml), x[~mask],
+            A[~mask], left=np.nan, right=np.nan)
+    return np.ma.mask_invalid(A)
 
 
 def interpolate_gaps_st(st: Stream, max_gap_len: int = -1) -> Stream:

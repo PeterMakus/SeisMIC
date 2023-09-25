@@ -64,11 +64,6 @@ co:
     # and return an obspy.Stream object.
     # available preimplemented functions are in seismic.correlate.preprocessing_stream
     preProcessing : [
-                    {'function':'seismic.correlate.preprocessing_stream.detrend_st',
-                    'args':{'type':'linear'}},
-                    {'function':'seismic.correlate.preprocessing_stream.cos_taper_st',
-                      'args':{'taper_len': 100, # seconds
-                              'lossless': True}}, # lossless tapering stitches additional data to trace, tapers, and removes the tapered ends after preprocessing
                     # This is intended as a "technical" bandpass filter to remove unphysical signals, i.e., frequencies you would not expect in the data
                     {'function':'seismic.correlate.preprocessing_stream.stream_filter',
                       'args':{'ftype':'bandpass',

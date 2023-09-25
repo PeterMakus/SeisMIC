@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 22nd September 2023 03:55:09 pm
+Last Modified: Monday, 25th September 2023 02:41:58 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -451,11 +451,8 @@ class Correlator(object):
         t1 = UTCDateTime(self.options['read_end']).timestamp
         loop_window = np.arange(t0, t1, self.options['read_inc'])
 
-        # Taper ends for the deconvolution
-        if self.options['remove_response']:
-            tl = 20
-        else:
-            tl = 0
+        # Taper ends for the deconvolution and filtering
+        tl = 20
 
         # Decide which process reads data from which station
         # Better than just letting one core read as this avoids having to
@@ -762,16 +759,9 @@ def st_to_np_array(st: Stream, npts: int) -> Tuple[np.ndarray, Stream]:
     :rtype: np.ndarray
     """
     A = np.zeros((st.count(), npts), dtype=np.float32)
-    # st = st.merge(method=1, fill_value='interpolate', interpolation_samples=10)
     for ii, tr in enumerate(st):
         A[ii, :tr.stats.npts] = tr.data
         del tr.data  # Not needed any more, just uses up RAM
-    # A = mu.interpolate_gaps(A, -1)
-    if np.any(np.isnan(A)):
-        print('NaNs in data.')
-    # Same if data is masked
-    if np.any(np.ma.getmask(A)):
-        print('Masked data.')
     return A, st
 
 
@@ -1303,25 +1293,23 @@ def preprocess_stream(
     """
     if not st.count():
         return st
+    st = ppst.detrend_st(st, 'linear')
     # deal with overlaps
-    st = st.merge(method=-1)
-    # basically just masks values in between
-    st = st.merge()
-    # for up to ten samples, allow interpolation
-    st = mu.interpolate_gaps_st(st, 10)
+    st = mu.gap_handler(st, 10, taper_len*4, taper_len)
     # To deal with any nans/masks
     st = st.split()
     st.sort(keys=['starttime'])
 
     # Clip to these again to remove the taper
     # unnecessary if lossless = false
-    old_starts = [deepcopy(tr.stats.starttime) for tr in st]
-    old_ends = [deepcopy(tr.stats.endtime) for tr in st]
+    # old_starts = [deepcopy(tr.stats.starttime) for tr in st]
+    # old_ends = [deepcopy(tr.stats.endtime) for tr in st]
 
     if remove_response:
         # taper before instrument response removal
-        if taper_len:
-            st = ppst.cos_taper_st(st, taper_len, False, True)
+        # This is done before any ways now
+        # if taper_len:
+        #     st = ppst.cos_taper_st(st, taper_len, False, True)
         try:
             if inv:
                 ninv = inv
@@ -1348,12 +1336,19 @@ def preprocess_stream(
 
     if preProcessing:
         for procStep in preProcessing:
+            if 'detrend_stream' in procStep['function'] \
+                    or 'cos_taper_st' in procStep['function']:
+                warnings.warn(
+                    'Tapering and Detrending are now always perfomed '
+                    'as part of the preprocessing. Ignoring parameter...',
+                    DeprecationWarning)
+                continue
             func = func_from_str(procStep['function'])
             st = func(st, **procStep['args'])
     # Remove the artificial taper from earlier
     # unnecessary if lossless = False
-    for tr, ostart, oend in zip(st, old_starts, old_ends):
-        tr.trim(starttime=ostart, endtime=oend)
+    # for tr, ostart, oend in zip(st, old_starts, old_ends):
+    #     tr.trim(starttime=ostart, endtime=oend)
     st.merge()
     st.trim(startt, endt, pad=True)
 
