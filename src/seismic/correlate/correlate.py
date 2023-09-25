@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 25th September 2023 02:41:58 pm
+Last Modified: Monday, 25th September 2023 03:05:30 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -421,10 +421,6 @@ class Correlator(object):
         Returns an Iterator that loops over each start and end time with the
         requested window length.
 
-        Also will lead to the time windows being prolonged by the sum of
-        the length of the tapered end, so that no data is lost. Always
-        a hann taper so far. Taper length is 5% of the requested time
-        window on each side.
 
         :yield: An obspy stream containing the time window x for all stations
         that were active during this time.
@@ -1300,16 +1296,7 @@ def preprocess_stream(
     st = st.split()
     st.sort(keys=['starttime'])
 
-    # Clip to these again to remove the taper
-    # unnecessary if lossless = false
-    # old_starts = [deepcopy(tr.stats.starttime) for tr in st]
-    # old_ends = [deepcopy(tr.stats.endtime) for tr in st]
-
     if remove_response:
-        # taper before instrument response removal
-        # This is done before any ways now
-        # if taper_len:
-        #     st = ppst.cos_taper_st(st, taper_len, False, True)
         try:
             if inv:
                 ninv = inv
@@ -1345,10 +1332,6 @@ def preprocess_stream(
                 continue
             func = func_from_str(procStep['function'])
             st = func(st, **procStep['args'])
-    # Remove the artificial taper from earlier
-    # unnecessary if lossless = False
-    # for tr, ostart, oend in zip(st, old_starts, old_ends):
-    #     tr.trim(starttime=ostart, endtime=oend)
     st.merge()
     st.trim(startt, endt, pad=True)
 
@@ -1388,14 +1371,6 @@ def generate_corr_inc(
                 subdivision['corr_len']-st[0].stats.delta
             win = win0.trim(starttrim, endtrim, pad=True)
             mu.get_valid_traces(win)
-            # win = win.merge(method=-1)
-            # discard if there are nans or masked values
-            # if not win.count():
-            #     continue
-            # if np.any(np.isnan(win[0].data)):
-            #     continue
-            # if np.any(np.ma.getmask(win[0].data)):
-            #     continue
             yield win
 
     except IndexError:
