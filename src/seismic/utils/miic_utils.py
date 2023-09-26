@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Monday, 25th September 2023 02:01:56 pm
+Last Modified: Tuesday, 26th September 2023 06:59:57 pm
 '''
 from typing import List, Tuple
 import logging
@@ -506,16 +506,19 @@ def interpolate_gaps(A: np.ndarray, max_gap_len: int = -1) -> np.ndarray:
     maskstart = np.where(np.all([maskconc[:-1], mask], axis=0))[0]
     masklen = np.diff(np.where(maskconc)[0])[::2]
 
-    x = np.arange(len(A))
+    if max_gap_len == -1:
+        max_gap_len = len(A)
 
+    x = np.arange(len(A))
     for mstart, ml in zip(maskstart, masklen):
         if ml > max_gap_len:
-            warnings.warn('Gap too large. Not interpolating.')
+            warnings.warn(
+                'Gap too large. Not interpolating.', UserWarning)
             continue
         A[mstart:mstart+ml] = np.interp(
             np.arange(mstart, mstart+ml), x[~mask],
             A[~mask], left=np.nan, right=np.nan)
-    return np.ma.mask_invalid(A)
+    return np.ma.masked_invalid(A)
 
 
 def interpolate_gaps_st(st: Stream, max_gap_len: int = -1) -> Stream:

@@ -10,7 +10,7 @@ Module that contains functions for preprocessing on obspy streams
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:47:00 pm
-Last Modified: Monday, 25th September 2023 03:00:35 pm
+Last Modified: Tuesday, 26th September 2023 05:42:28 pm
 '''
 from typing import List
 from warnings import warn
@@ -101,15 +101,6 @@ def cos_taper(
     if tl_n * 2 > tr.stats.npts:
         raise ValueError(
             'Taper Length * 2 has to be smaller or equal to trace\'s length.')
-    # if lossless:
-    #     # pad trace
-    #     tr.trim(
-    #         starttime=tr.stats.starttime-taper_len,
-    #         endtime=tr.stats.endtime+taper_len,
-    #         pad=True, fill_value=0)
-    #     # Change Fill value to data from the trace
-    #     tr.data[:tl_n] = deepcopy(tr.data[tl_n:2*tl_n])
-    #     tr.data[-tl_n:] = deepcopy(tr.data[-2*tl_n:-tl_n])
     taper = np.ones_like(tr.data)
     tap = np.sin(np.linspace(0, np.pi, tl_n*2))
     taper[:tl_n] = tap[:tl_n]
