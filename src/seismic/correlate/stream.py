@@ -10,7 +10,7 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Friday, 29th September 2023 03:03:04 pm
+Last Modified: Friday, 29th September 2023 03:27:09 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -482,6 +482,8 @@ class CorrBulk(object):
         """
         if tw is not None:
             tw_list = [tw]
+        else:
+            tw_list = None
         dt = pcp.measure_shift(
             self.data, self.stats, ref_trc=ref_trc,
             tw=tw_list, shift_range=shift_range, shift_steps=shift_steps,
