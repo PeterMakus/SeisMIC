@@ -10,7 +10,7 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Thursday, 21st September 2023 04:30:46 pm
+Last Modified: Friday, 29th September 2023 10:25:50 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -388,7 +388,7 @@ class CorrBulk(object):
         else:
             while start < max(self.stats.corr_end):
                 end = start + inc_s
-                ii = self._find_slice_index(start, end, True)
+                ii = self._find_slice_index(start-inc_s/2, end+inc_s/2, True)
                 start = end
                 # stats don't need to be altered for this function
                 ref_trcs.append(pcp.corr_mat_extract_trace(

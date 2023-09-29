@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Thursday, 21st September 2023 04:34:57 pm
+Last Modified: Friday, 29th September 2023 09:44:32 am
 '''
 from copy import deepcopy
 import json
@@ -187,8 +187,9 @@ class Monitor(object):
             the chosen method in the config. Defaults to None
         :type ref_trcs: np.ndarray, optional
         """
-        self.logger.info('Computing velocity change for file: %s and channel:\
-%s' % (corr_file, channel))
+        self.logger.info(
+            f'Computing velocity change for file: {corr_file} and channel: '
+            f' {channel}.')
         with CorrelationDataBase(corr_file, mode='r') as cdb:
             # get the corrstream containing all the corrdata for this combi
             cst = cdb.get_data(network, station, channel, tag)

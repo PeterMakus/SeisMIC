@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Monday, 16th January 2023 11:13:58 am
+Last Modified: Friday, 29th September 2023 10:03:23 am
 '''
 
 from typing import List, Tuple, Optional
@@ -253,8 +253,8 @@ def corr_mat_resample(
     """
 
     if len(end_times) > 0 and (len(end_times) != len(start_times)):
-        raise ValueError("end_times should be empty or of the same length as \
-            start_times.")
+        raise ValueError(
+            "end_times should be empty or of the same length as start_times.")
 
     # old sampling times
     otime = np.array([ii.timestamp for ii in stats['corr_start']])
@@ -276,8 +276,7 @@ def corr_mat_resample(
             etime = stime + (stime[1] - stime[0])
 
     # create masked array to avoid nans
-    mm = np.ma.masked_array(
-        data, np.isnan(data))
+    mm = np.ma.masked_array(data, np.isnan(data))
 
     # new corr_data matrix
     nmat = np.empty([len(stime), data.shape[1]])
@@ -285,14 +284,14 @@ def corr_mat_resample(
 
     for ii in range(len(stime)):
         # index of measurements between start_time[ii] and end_time[ii]
-        ind = np.nonzero((otime >= stime[ii]) * (otime < etime[ii]))  # ind is
-        # a list(tuple) for dimensions
+        ind = np.nonzero((otime >= stime[ii]) * (otime < etime[ii]))
+        # ind is a list(tuple) for dimensions
         if len(ind[0]) == 1:
             # one measurement found
             nmat[ii, :] = data[ind[0], :]
         elif len(ind[0]) > 1:
             # more than one measurement in range
-            nmat[ii, :] = np.mean(mm[ind[0], :], 0).filled(np.nan)
+            nmat[ii, :] = np.mean(mm[ind[0], :], axis=0).filled(np.nan)
 
     # assign new data
     data = nmat
