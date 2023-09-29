@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Friday, 29th September 2023 10:57:58 am
+Last Modified: Friday, 29th September 2023 02:09:32 pm
 '''
 
 from typing import List, Tuple, Optional
@@ -101,8 +101,9 @@ def _smooth(
         return x
 
     if window not in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-        raise ValueError("Window is on of 'flat', 'hanning', 'hamming',\
-            'bartlett', 'blackman'")
+        raise ValueError(
+            "Window is not one of 'flat', 'hanning', 'hamming', "
+            "'bartlett', 'blackman'")
 
     s = np.r_[2 * x[0] - x[window_len:1:-1], x,
               2 * x[-1] - x[-1:-window_len:-1]]
@@ -1039,7 +1040,7 @@ def measure_shift(
     stored in the ``corr_data`` matrix (one for each row) with shifted
     versions  of reference trace stored in ``ref_trc``. The range of shifting
     to be tested is given in ``shift_range`` in seconds. It is used in a
-    symmetric way from -``shift_range`` to +``shift_range``. Shifting ist
+    symmetric way from -``shift_range`` to +``shift_range``. Shifting is
     tested ``shift_steps`` times. ``shift_steps`` should be an odd number to
     test zero shifting. The best match (shifting amount and corresponding
     correlation value) is calculated in specified time windows. Multiple time
@@ -1071,7 +1072,7 @@ def measure_shift(
     :param sides: Side of the traces to be used for the shifting estimate
         ('both' | 'single'). ``single`` is used for
         one-sided signals from active sources or if the time window shall
-        not be symmetric. For ``both`` the time window will be mirrowd about
+        not be symmetric. For ``both`` the time window will be mirrored about
         zero lag time, e.g. [start,end] will result in time windows
         [-end:-start] and [start:end] being used simultaneousy
 
@@ -1099,7 +1100,9 @@ def measure_shift(
         *method*: It is equal to 'single_ref' and specify in which "way" the
             values have been obtained.
     """
-
+    if shift_steps % 2 == 0:
+        raise ValueError(
+            "shift_steps must be an odd number to include zero shift")
     if sides not in ['both', 'single']:
         raise ValueError(
             f"'sides' must be either 'both' or 'single', not {sides}")

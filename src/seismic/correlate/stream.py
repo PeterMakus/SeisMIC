@@ -10,7 +10,7 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Friday, 29th September 2023 10:25:50 am
+Last Modified: Friday, 29th September 2023 02:06:36 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -424,6 +424,9 @@ class CorrBulk(object):
         :return: The shift as :class:`~seismic.monitor.dv.DV` object.
         :rtype: DV
         """
+        warnings.warn(
+            'This function is deprecated. Use measure_shift instead.',
+            DeprecationWarning)
         if ref_trc is None:
             ref_trc = self.ref_trc
         dv_dict = pcp.corr_mat_shift(
