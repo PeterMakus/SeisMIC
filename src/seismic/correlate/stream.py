@@ -10,7 +10,7 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Friday, 29th September 2023 02:06:36 pm
+Last Modified: Friday, 29th September 2023 03:03:04 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -910,6 +910,10 @@ class CorrStream(Stream):
         st = self.select(network, station, location, channel)
         if times:
             st = st.select_corr_time(times[0], times[1])
+        if not st.count():
+            raise ValueError(
+                f'CorrStream contains no data between {times[0]} and '
+                f'{times[1]}.')
         A = np.empty((st.count(), st[0].stats.npts))
         statlist = []
         # Double check sampling rate
