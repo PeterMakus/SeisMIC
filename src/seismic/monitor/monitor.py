@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 29th September 2023 09:44:32 am
+Last Modified: Friday, 29th September 2023 11:06:52 am
 '''
 from copy import deepcopy
 import json
@@ -280,8 +280,10 @@ class Monitor(object):
         tw = [np.arange(
             tw_start*cbt.stats['sampling_rate'],
             trim1*cbt.stats['sampling_rate'], 1)]
+        # 2023/09/29
+        # sim_mat is not required in this operation
         dv = cbt.stretch(
-            ref_trc=tr, return_sim_mat=True,
+            ref_trc=tr, return_sim_mat=False,
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],
             tw=tw, sides=self.options['dv']['sides'],
@@ -298,7 +300,7 @@ class Monitor(object):
 
         # obtain an improved time shift measurement
         dv = cbt.stretch(
-            ref_trc=tr, return_sim_mat=True,
+            ref_trc=tr, return_sim_mat=self.options['dv']['return_sim_mat'],
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],
             tw=tw, sides=self.options['dv']['sides'],

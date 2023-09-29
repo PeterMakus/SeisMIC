@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Friday, 29th September 2023 10:03:23 am
+Last Modified: Friday, 29th September 2023 10:57:58 am
 '''
 
 from typing import List, Tuple, Optional
@@ -870,24 +870,6 @@ def corr_mat_stretch(
     dta = -stats['start_lag']
     dte = stats['end_lag']
 
-    # format (trimm) the matrix for zero-time to be either at the beginning
-    # or at the center as required by
-    # miic.core.stretch_mod.time_stretch_estimate
-
-    # In case a reference is provided but the matrix needs to be trimmed the
-    # references also need to be trimmed. To do so we append the references to
-    # the matrix, trimm it and remove the references again
-    # if ref_trc is not None:
-    #     rts = ref_trc.shape
-    #     if len(rts) == 1:
-    #         nr = 1
-    #     else:
-    #         nr = rts[0]
-    #     data = np.concatenate((
-    #         data, np.atleast_2d(ref_trc)), 0)
-    #     reft = np.tile([UTCDateTime(1900, 1, 1)], (nr))
-    #     stats['corr_start'] = np.concatenate((stats['corr_start'], reft), 0)
-
     # trim the matrices
     if sides == "single":
         # extract the time>0 part of the matrix
@@ -902,11 +884,6 @@ def corr_mat_stretch(
     # create or extract references
     if ref_trc is None:
         ref_trc = corr_mat_extract_trace(data, stats)
-    # else:
-    #     # extract and remove references from corr matrix again
-    #     ref_trc = data[-nr:, :]
-    #     data = data[:-nr, :]
-    #     stats['corr_start'] = stats['corr_start'][:-nr]
 
     dv = multi_ref_vchange_and_align(
         data, ref_trc, tw=tw, stretch_range=stretch_range,

@@ -156,6 +156,9 @@ dv:
     ### Range to try stretching
     stretch_range : 0.03
     stretch_steps : 1001
+    # Return the similarity matrix for each dv/v estimate
+    # required for post processing. If False, saves some RAM and disk space
+    return_sim_mat : True
   
     #### Reference trace extraction
     #  win_inc : Length in days of each reference time window to be used for trace extraction
