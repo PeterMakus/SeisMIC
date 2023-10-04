@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Friday, 29th September 2023 02:09:32 pm
+Last Modified: Wednesday, 4th October 2023 09:29:49 am
 '''
 
 from typing import List, Tuple, Optional
@@ -1165,8 +1165,8 @@ def measure_shift(
     ref_mat = create_shifted_ref_mat(ref_trc, stats, shifts)
 
     # create space for results
-    dt_list = []
     # do computation for each time window
+    sim_mats = []
     for twi in tw:
         # create indices of time windows
         indices = np.arange(
@@ -1177,28 +1177,27 @@ def measure_shift(
         indices -= np.round(stats.start_lag * stats.sampling_rate)
         indices = indices.astype(int)
         # compare data and shifted reference
-        sim_mat = compare_with_modified_reference(data, ref_mat, indices)
-        corr = sim_mat.max(axis=1)
-        value = shifts[sim_mat.argmax(axis=1)]
-        # Set dt to NaN where the correlation is NaN instead of having it equal
-        # to one of the two stretch_range limits
-        value[np.isnan(corr)] = np.nan
-        # assemble results
-        dt = {
-            'stats': stats,
-            'corr': np.squeeze(corr),
-            'value': np.squeeze(value),
-            'second_axis': shifts,
-            'value_type': np.array(['shift']),
-            'method': np.array(['absolute_shift'])}
-        if return_sim_mat:
-            dt.update({'sim_mat': np.squeeze(sim_mat)})
-        else:
-            dt.update({'sim_mat': None})
-
-        dt_list.append(DV(**dt))
-
-    return dt_list
+        sim_mats.append(
+            compare_with_modified_reference(data, ref_mat, indices))
+    sim_mat = np.nanmean(sim_mats, axis=0)
+    corr = sim_mat.max(axis=1)
+    value = shifts[sim_mat.argmax(axis=1)]
+    # Set dt to NaN where the correlation is NaN instead of having it equal
+    # to one of the two stretch_range limits
+    value[np.isnan(corr)] = np.nan
+    # assemble results
+    dt = {
+        'stats': stats,
+        'corr': np.squeeze(corr),
+        'value': np.squeeze(value),
+        'second_axis': shifts,
+        'value_type': np.array(['shift']),
+        'method': np.array(['absolute_shift'])}
+    if return_sim_mat:
+        dt.update({'sim_mat': np.squeeze(sim_mat)})
+    else:
+        dt.update({'sim_mat': None})
+    return DV(**dt)
 
 
 def apply_shift(

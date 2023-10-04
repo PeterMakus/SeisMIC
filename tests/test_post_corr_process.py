@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 25th June 2021 09:33:09 am
-Last Modified: Monday, 16th January 2023 11:14:10 am
+Last Modified: Wednesday, 4th October 2023 09:36:24 am
 '''
 
 import unittest
@@ -607,7 +607,7 @@ class TestMeasureShift(unittest.TestCase):
         cmet_mock.return_value = np.ones_like(self.data[1, :]) * 10
         csrm_mock.return_value = np.ones_like(self.data) * 20
         cwmr_mock.return_value = np.ones_like(self.data) * -50
-        dtl = pcp.measure_shift(self.data, self.stats)
+        dt = pcp.measure_shift(self.data, self.stats)
         cmt_mock.assert_called_once_with(mock.ANY, self.stats, -50, 50)
         np.testing.assert_array_equal(
             cmt_mock.call_args[0][0], self.data)
@@ -624,8 +624,44 @@ class TestMeasureShift(unittest.TestCase):
             cwmr_mock.call_args[0][0], self.data)
         np.testing.assert_array_equal(
             cwmr_mock.call_args[0][1], np.ones_like(self.data) * 20)
-        dt = dtl[0]
-        self.assertEqual(len(dtl), 1)
+        self.assertIsInstance(dt, DV)
+        self.assertIsNone(dt.sim_mat)
+        np.testing.assert_array_equal(-50, dt.corr)
+        np.testing.assert_array_equal(-10, dt.value)
+        np.testing.assert_array_equal(['shift'], dt.value_type[0])
+        np.testing.assert_array_equal(['absolute_shift'], dt.method[0])
+        np.testing.assert_array_equal(
+            np.linspace(-10, 10, 101), dt.second_axis)
+
+    @mock.patch('seismic.monitor.post_corr_process.corr_mat_trim')
+    @mock.patch('seismic.monitor.post_corr_process.corr_mat_extract_trace')
+    @mock.patch('seismic.monitor.post_corr_process.create_shifted_ref_mat')
+    @mock.patch(
+        'seismic.monitor.post_corr_process.compare_with_modified_reference')
+    def test_result_serveral_tws(
+        self, cwmr_mock: mock.MagicMock, csrm_mock: mock.MagicMock,
+            cmet_mock: mock.MagicMock, cmt_mock: mock.MagicMock):
+        cmt_mock.return_value = (self.data, self.stats)
+        cmet_mock.return_value = np.ones_like(self.data[1, :]) * 10
+        csrm_mock.return_value = np.ones_like(self.data) * 20
+        cwmr_mock.return_value = np.ones_like(self.data) * -50
+        dt = pcp.measure_shift(self.data, self.stats, tw=[[2, 4], [3, 5]])
+        cmt_mock.assert_called_once_with(mock.ANY, self.stats, -15, 15)
+        np.testing.assert_array_equal(
+            cmt_mock.call_args[0][0], self.data)
+        cmet_mock.assert_called_once_with(mock.ANY, self.stats)
+        np.testing.assert_array_equal(
+            cmet_mock.call_args[0][0], self.data)
+        csrm_mock.assert_called_once_with(
+            mock.ANY, self.stats, mock.ANY)
+        np.testing.assert_array_equal(
+            csrm_mock.call_args[0][0], np.ones_like(self.data[1, :]) * 10)
+        np.testing.assert_array_equal(
+            csrm_mock.call_args[0][2], np.linspace(-10, 10, 101))
+        np.testing.assert_array_equal(
+            cwmr_mock.call_args[0][0], self.data)
+        np.testing.assert_array_equal(
+            cwmr_mock.call_args[0][1], np.ones_like(self.data) * 20)
         self.assertIsInstance(dt, DV)
         self.assertIsNone(dt.sim_mat)
         np.testing.assert_array_equal(-50, dt.corr)
@@ -647,7 +683,7 @@ class TestMeasureShift(unittest.TestCase):
         cmt_mock.return_value = (np.vstack((self.data, ref_trc)), self.stats)
         csrm_mock.return_value = np.ones_like(self.data) * 20
         cwmr_mock.return_value = np.ones_like(self.data) * -50
-        dtl = pcp.measure_shift(
+        dt = pcp.measure_shift(
             self.data, self.stats, ref_trc=ref_trc,
             return_sim_mat=True, sides='single')
         cmt_mock.assert_called_once_with(mock.ANY, mock.ANY, -50, 50)
@@ -663,8 +699,6 @@ class TestMeasureShift(unittest.TestCase):
             cwmr_mock.call_args[0][0], self.data)
         np.testing.assert_array_equal(
             cwmr_mock.call_args[0][1], np.ones_like(self.data) * 20)
-        dt = dtl[0]
-        self.assertEqual(len(dtl), 1)
         self.assertIsInstance(dt, DV)
         np.testing.assert_array_equal(
             np.ones_like(self.data) * -50, dt.sim_mat)

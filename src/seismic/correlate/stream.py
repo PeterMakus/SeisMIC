@@ -10,7 +10,7 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Friday, 29th September 2023 03:27:09 pm
+Last Modified: Wednesday, 4th October 2023 09:28:37 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -438,7 +438,7 @@ class CorrBulk(object):
 
     def measure_shift(
         self, ref_trc: Optional[np.ndarray] = None,
-        tw: Optional[List[float]] = None,
+        tw: Optional[List[Tuple[float, float]]] = None,
         shift_range: float = 10, shift_steps: int = 101, sides: str = 'both',
             return_sim_mat: bool = False) -> DV:
         """
@@ -480,13 +480,9 @@ class CorrBulk(object):
         :return: A DV object holding a shift value.
         :rtype: DV
         """
-        if tw is not None:
-            tw_list = [tw]
-        else:
-            tw_list = None
         dt = pcp.measure_shift(
             self.data, self.stats, ref_trc=ref_trc,
-            tw=tw_list, shift_range=shift_range, shift_steps=shift_steps,
+            tw=tw, shift_range=shift_range, shift_steps=shift_steps,
             sides=sides, return_sim_mat=return_sim_mat)[0]
         return dt
 
