@@ -10,7 +10,7 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Wednesday, 4th October 2023 09:28:37 am
+Last Modified: Wednesday, 4th October 2023 09:51:33 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -483,7 +483,7 @@ class CorrBulk(object):
         dt = pcp.measure_shift(
             self.data, self.stats, ref_trc=ref_trc,
             tw=tw, shift_range=shift_range, shift_steps=shift_steps,
-            sides=sides, return_sim_mat=return_sim_mat)[0]
+            sides=sides, return_sim_mat=return_sim_mat)
         return dt
 
     def mirror(self):

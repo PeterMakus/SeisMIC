@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Wednesday, 4th October 2023 09:37:48 am
+Last Modified: Wednesday, 4th October 2023 09:52:44 am
 '''
 
 import unittest
@@ -268,7 +268,7 @@ class TestCorrBulk(unittest.TestCase):
     @mock.patch('seismic.monitor.post_corr_process.measure_shift')
     def test_measure_shift(self, mshift_mock: mock.MagicMock):
         tw = [[0, 1]]
-        mshift_mock.return_value = ['bla', 'blub']
+        mshift_mock.return_value = 'bla'
         x = self.cb.measure_shift(tw=tw)
         mshift_mock.assert_called_once_with(
             mock.ANY, self.cb.stats, ref_trc=None, tw=tw,
