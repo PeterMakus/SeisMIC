@@ -1285,7 +1285,7 @@ def preprocess_stream(
         return st
     st = ppst.detrend_st(st, 'linear')
     # deal with overlaps
-    st = mu.gap_handler(st, 10, taper_len*4, taper_len)
+    st = mu.gap_handler(st, 0, taper_len*4, taper_len)
     # To deal with any nans/masks
     st = st.split()
     st.sort(keys=['starttime'])
