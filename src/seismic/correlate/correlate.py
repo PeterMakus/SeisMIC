@@ -1285,6 +1285,7 @@ def preprocess_stream(
         return st
     st = ppst.detrend_st(st, 'linear')
     # deal with overlaps
+    # This should be a setting in the parameter file
     st = mu.gap_handler(st, 0, taper_len*4, taper_len)
     # To deal with any nans/masks
     st = st.split()
@@ -1317,7 +1318,7 @@ def preprocess_stream(
 
     if preProcessing:
         for procStep in preProcessing:
-            if 'detrend_stream' in procStep['function'] \
+            if 'detrend_st' in procStep['function'] \
                     or 'cos_taper_st' in procStep['function']:
                 warnings.warn(
                     'Tapering and Detrending are now always perfomed '
