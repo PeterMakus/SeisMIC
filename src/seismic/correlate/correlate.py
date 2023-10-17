@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 25th September 2023 06:35:17 pm
+Last Modified: Tuesday, 17th October 2023 10:06:01 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -1292,20 +1292,22 @@ def preprocess_stream(
     st.sort(keys=['starttime'])
 
     if remove_response:
-        try:
-            if inv:
-                ninv = inv
-                st.attach_response(ninv)
-            st.remove_response(taper=False)  # Changed for testing purposes
-        except ValueError:
-            print('Station response not found ... loading from remote.')
-            # missing station response
-            ninv = store_client.rclient.get_stations(
-                network=st[0].stats.network, station=st[0].stats.station,
-                channel='*', level='response')
-            st.attach_response(ninv)
-            st.remove_response(taper=False)
-            store_client._write_inventory(ninv)
+        for tr in st:
+            if not tr.stats.station == 'EDM' and tr.stats.channel == 'EHZ':
+                try:
+                    if inv:
+                        ninv = inv
+                        tr.attach_response(ninv)
+                    tr.remove_response(taper=False)  # Changed for testing purposes
+                except ValueError:
+                    print('Station response not found ... loading from remote.')
+                    # missing station response
+                    ninv = store_client.rclient.get_stations(
+                        network=tr.stats.network, station=tr.stats.station,
+                        channel='*', level='response')
+                    tr.attach_response(ninv)
+                    tr.remove_response(taper=False)
+                    store_client._write_inventory(ninv)
 
     # Sometimes Z has reversed polarity
     if inv:
