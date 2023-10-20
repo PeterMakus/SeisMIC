@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Friday, 20th October 2023 02:28:40 pm
+Last Modified: Friday, 20th October 2023 04:34:04 pm
 '''
 import ast
 import fnmatch
@@ -516,7 +516,7 @@ def co_to_hdf5(co: dict) -> dict:
     remk = [
         'subdir', 'read_start', 'read_end', 'read_len', 'read_inc',
         'combination_method', 'combinations', 'starttime',
-        'xcombinations', 'preprocess_subdiv']
+        'xcombinations', 'preprocess_subdiv', 'allow_different_params']
     for key in remk:
         coc.pop(key, None)
         coc['corr_args'].pop('combinations', None)

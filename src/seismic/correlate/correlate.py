@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 20th October 2023 02:26:53 pm
+Last Modified: Friday, 20th October 2023 04:33:07 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -276,7 +276,8 @@ class Correlator(object):
             d = {}
             for outf in glob.glob(outfs):
                 with CorrelationDataBase(
-                        outf, corr_options=self.options, mode='r') as cdb:
+                    outf, corr_options=self.options, mode='r',
+                        _force=self._allow_different_params) as cdb:
                     d.update(
                         cdb.get_available_starttimes(nc, sc, tag, channel))
             s0, s1 = sc.split('-')
