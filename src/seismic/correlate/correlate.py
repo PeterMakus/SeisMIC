@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 25th September 2023 06:35:17 pm
+Last Modified: Friday, 20th October 2023 10:55:14 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -219,17 +219,23 @@ class Correlator(object):
             raise ValueError(
                 'This function is only available if combination method '
                 + 'is set to "betweenStations".')
-        # list of requested combinations
-        self.rcombis = []
         # Update the store clients invetory
         self.store_client.read_inventory()
-        for ii, (n0, s0) in enumerate(self.station):
-            inv0 = self.store_client.select_inventory_or_load_remote(n0, s0)
-            for n1, s1 in self.station[ii:]:
-                inv1 = self.store_client.select_inventory_or_load_remote(
-                    n1, s1)
-                if mu.filter_stat_dist(inv0, inv1, dis):
-                    self.rcombis.append('%s-%s.%s-%s' % (n0, n1, s0, s1))
+        # list of requested combinations
+        if self.rcombis is None:
+            self.rcombis = []
+            for ii, (n0, s0) in enumerate(self.station):
+                inv0 = self.store_client.select_inventory_or_load_remote(
+                    n0, s0)
+                for n1, s1 in self.station[ii:]:
+                    inv1 = self.store_client.select_inventory_or_load_remote(
+                        n1, s1)
+                    if mu.filter_stat_dist(inv0, inv1, dis):
+                        self.rcombis.append('%s-%s.%s-%s' % (n0, n1, s0, s1))
+        else:
+            raise ValueError(
+                'Either filter for specific cross correlations or a maximum '
+                + 'distance.')
 
     def find_existing_times(self, tag: str, channel: str = '*') -> dict:
         """
