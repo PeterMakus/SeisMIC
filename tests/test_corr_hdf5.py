@@ -9,7 +9,7 @@
 
 Created: Tuesday, 1st June 2021 10:42:03 am
 
-Last Modified: Friday, 15th September 2023 10:54:49 am
+Last Modified: Friday, 20th October 2023 02:42:49 pm
 
 '''
 from copy import deepcopy
@@ -154,7 +154,7 @@ class TestDBHandler(unittest.TestCase):
     def setUp(self, super_mock):
         self.file_mock = MagicMock()
         super_mock.return_value = self.file_mock
-        self.dbh = corr_hdf5.DBHandler('a', 'r', 'gzip9', None)
+        self.dbh = corr_hdf5.DBHandler('a', 'r', 'gzip9', None, False)
         tr = read()[0]
         tr.data = np.ones_like(tr.data, dtype=int)
         tr.stats['corr_start'] = tr.stats.starttime
@@ -173,13 +173,13 @@ class TestDBHandler(unittest.TestCase):
     def test_forbidden_compression(self, super_mock):
         super_mock.return_value = None
         with self.assertRaises(ValueError):
-            _ = corr_hdf5.DBHandler('a', 'a', 'notexisting5', None)
+            _ = corr_hdf5.DBHandler('a', 'a', 'notexisting5', None, False)
 
     @patch('seismic.db.corr_hdf5.super')
     def test_forbidden_compression_level(self, super_mock):
         super_mock.return_value = None
         with warnings.catch_warnings(record=True) as w:
-            dbh = corr_hdf5.DBHandler('a', 'a', 'gzip10', None)
+            dbh = corr_hdf5.DBHandler('a', 'a', 'gzip10', None, False)
             self.assertEqual(dbh.compression_opts, 9)
             self.assertEqual(len(w), 1)
 
@@ -187,13 +187,13 @@ class TestDBHandler(unittest.TestCase):
     def test_no_compression_level(self, super_mock):
         super_mock.return_value = None
         with self.assertRaises(IndexError):
-            _ = corr_hdf5.DBHandler('a', 'a', 'gzip', None)
+            _ = corr_hdf5.DBHandler('a', 'a', 'gzip', None, False)
 
     @patch('seismic.db.corr_hdf5.super')
     def test_no_compression_name(self, super_mock):
         super_mock.return_value = None
         with self.assertRaises(IndexError):
-            _ = corr_hdf5.DBHandler('a', 'a', '9', None)
+            _ = corr_hdf5.DBHandler('a', 'a', '9', None, False)
 
     def test_add_already_available_data(self):
         st = self.ctr.stats
@@ -214,7 +214,7 @@ class TestDBHandler(unittest.TestCase):
     @patch('seismic.db.corr_hdf5.super')
     def test_add_different_object(self, super_mock):
         super_mock.return_value = None
-        dbh = corr_hdf5.DBHandler('a', 'r', 'gzip9', None)
+        dbh = corr_hdf5.DBHandler('a', 'r', 'gzip9', None, False)
         with self.assertRaises(TypeError):
             dbh.add_correlation(read())
 
@@ -367,7 +367,7 @@ class TestDBHandler(unittest.TestCase):
         oco['sampling_rate'] = 100000
         gco_mock.return_value = oco
         with self.assertRaises(PermissionError):
-            corr_hdf5.DBHandler('a', 'a', 'gzip9', co)
+            corr_hdf5.DBHandler('a', 'a', 'gzip9', co, False)
 
     @patch('seismic.db.corr_hdf5.DBHandler.get_corr_options')
     @patch('seismic.db.corr_hdf5.h5py.File.__init__')
@@ -378,7 +378,17 @@ class TestDBHandler(unittest.TestCase):
         oco['nlub'] = 100000
         gco_mock.return_value = oco
         with self.assertRaises(PermissionError):
-            corr_hdf5.DBHandler('a', 'a', 'gzip9', co)
+            corr_hdf5.DBHandler('a', 'a', 'gzip9', co, False)
+
+    @patch('seismic.db.corr_hdf5.DBHandler.get_corr_options')
+    @patch('seismic.db.corr_hdf5.h5py.File.__init__')
+    def test_wrong_co_force(self, super_mock, gco_mock):
+        self.file_mock = MagicMock()
+        super_mock.return_value = self.file_mock
+        oco = deepcopy(co)
+        oco['nlub'] = 100000
+        gco_mock.return_value = oco
+        corr_hdf5.DBHandler('a', 'a', 'gzip9', co, True)
 
     @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_corr_options(self, gi_mock):
