@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 20th October 2023 10:55:14 am
+Last Modified: Friday, 20th October 2023 02:26:53 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -201,6 +201,11 @@ class Correlator(object):
                 f'{n}.{s}' for n, s in self.station])
 
         self.sampling_rate = self.options['sampling_rate']
+        if 'allow_different_params' in self.options:
+            self._allow_different_params = self.options[
+                'allow_different_params']
+        else:
+            self._allow_different_params = False
 
     def find_interstat_dist(self, dis: float):
         """
@@ -408,7 +413,8 @@ class Correlator(object):
             if self.options['subdivision']['delete_subdivision']:
                 cstselect.clear()
             with CorrelationDataBase(
-                    outf, corr_options=self.options) as cdb:
+                outf, corr_options=self.options,
+                    _force=self._allow_different_params) as cdb:
                 if cstselect.count():
                     cdb.add_correlation(cstselect, 'subdivision')
                 if stack is not None:
