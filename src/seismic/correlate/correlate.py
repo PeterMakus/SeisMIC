@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 20th October 2023 04:33:07 pm
+Last Modified: Saturday, 21st October 2023 08:44:57 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -1300,6 +1300,9 @@ def preprocess_stream(
     # deal with overlaps
     # This should be a setting in the parameter file
     st = mu.gap_handler(st, 1, taper_len*4, taper_len)
+    if not st.count():
+        # could happen after handling gaps
+        return st
     # To deal with any nans/masks
     st = st.split()
     st.sort(keys=['starttime'])
