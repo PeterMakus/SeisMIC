@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Saturday, 21st October 2023 08:44:57 pm
+Last Modified: Sunday, 22nd October 2023 09:02:47 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -583,11 +583,17 @@ class Correlator(object):
                             win, self.store_client, resp, winstart, winend,
                             tl, **self.options)
                     except ValueError as e:
-                        self.logger.error(
-                            'Stream preprocessing failed for '
-                            f'{st[0].stats.network}.{st[0].stats.station}'
-                            ' and time '
-                            f'{t}.\nThe Original Error Message was {e}.')
+                        if st.count():
+                            self.logger.error(
+                                'Stream preprocessing failed for '
+                                f'{st[0].stats.network}.{st[0].stats.station}'
+                                ' and time '
+                                f'{t}.\nThe Original Error Message was {e}.')
+                        else:
+                            self.logger.error(
+                                'Stream preprocessing failed for '
+                                'time '
+                                f'{t}.\nThe Original Error Message was {e}.')
                         continue
                     if self.rank == 0:
                         self.options['combinations'] = calc_cross_combis(
