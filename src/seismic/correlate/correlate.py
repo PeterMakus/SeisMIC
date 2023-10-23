@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 20th October 2023 04:33:07 pm
+Last Modified: Monday, 23rd October 2023 08:33:10 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -320,6 +320,7 @@ class Correlator(object):
                 # size (i.e., stack)
                 # Write correlations to HDF5
                 if cst.count():
+                    self.comm.Barrier()
                     self._write(cst)
                     cst.clear()
 
