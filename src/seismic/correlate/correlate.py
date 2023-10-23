@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 23rd October 2023 08:33:10 am
+Last Modified: Monday, 23rd October 2023 08:34:32 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -584,11 +584,17 @@ class Correlator(object):
                             win, self.store_client, resp, winstart, winend,
                             tl, **self.options)
                     except ValueError as e:
-                        self.logger.error(
-                            'Stream preprocessing failed for '
-                            f'{st[0].stats.network}.{st[0].stats.station}'
-                            ' and time '
-                            f'{t}.\nThe Original Error Message was {e}.')
+                        if st.count():
+                            self.logger.error(
+                                'Stream preprocessing failed for '
+                                f'{st[0].stats.network}.{st[0].stats.station}'
+                                ' and time '
+                                f'{t}.\nThe Original Error Message was {e}.')
+                        else:
+                            self.logger.error(
+                                'Stream preprocessing failed for '
+                                'time '
+                                f'{t}.\nThe Original Error Message was {e}.')
                         continue
                     if self.rank == 0:
                         self.options['combinations'] = calc_cross_combis(
@@ -1301,6 +1307,9 @@ def preprocess_stream(
     # deal with overlaps
     # This should be a setting in the parameter file
     st = mu.gap_handler(st, 1, taper_len*4, taper_len)
+    if not st.count():
+        # could happen after handling gaps
+        return st
     # To deal with any nans/masks
     st = st.split()
     st.sort(keys=['starttime'])
