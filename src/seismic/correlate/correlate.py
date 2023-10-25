@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 25th October 2023 10:03:46 am
+Last Modified: Wednesday, 25th October 2023 01:37:30 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -1346,8 +1346,12 @@ def preprocess_stream(
                         ninv = inv
                         tr.attach_response(ninv)
                     tr.remove_response(taper=False)  # Changed for testing purposes
-                except ValueError:
-                    print('Station response not found ... loading from remote.')
+                except ValueError as e:
+                    print(e)
+                    print(
+                        'Station response not found for ,
+                        f'{tr.stats.network}.{tr.stats.station}',
+                        ' ... loading from remote.')
                     # missing station response
                     ninv = store_client.rclient.get_stations(
                         network=tr.stats.network, station=tr.stats.station,
