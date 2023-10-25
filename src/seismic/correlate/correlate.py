@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 17th October 2023 10:06:01 am
+Last Modified: Wednesday, 25th October 2023 10:03:46 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -19,6 +19,7 @@ import json
 import warnings
 import yaml
 import glob
+import fnmatch
 
 from mpi4py import MPI
 import numpy as np
@@ -188,6 +189,9 @@ class Correlator(object):
             # make sure this only contains unique combinations
             # with several cores it added entries several times, don't know
             # why?
+            # In contrast to self.station, self.avail_raw_data also contains
+            # information about the available channels, so they can be
+            # read and processed on different cores
             self.avail_raw_data = np.unique(
                 self.avail_raw_data, axis=0).tolist()
         else:
@@ -196,11 +200,37 @@ class Correlator(object):
             self.avail_raw_data)
         self.station = np.unique(np.array([
             [d[0], d[1]] for d in self.avail_raw_data]), axis=0).tolist()
+        # if only certain combis are requested, remove stations not within
+        # these
+        self._filter_by_rcombis()
         self.logger.debug(
             'Fetching data from the following stations:\n%a' % [
                 f'{n}.{s}' for n, s in self.station])
 
         self.sampling_rate = self.options['sampling_rate']
+        if 'allow_different_params' in self.options:
+            self._allow_different_params = self.options[
+                'allow_different_params']
+        else:
+            self._allow_different_params = False
+
+    def _filter_by_rcombis(self):
+        """
+        Removes stations from the list of available stations that are not
+        requested in the cross-combinations.
+        """
+        if self.rcombis is None or self.options['combination_method'] \
+                != 'betweenStations':
+            return
+        self.station = [
+            [n, s] for n, s in self.station if
+            fnmatch.filter(self.rcombis, f'{n}-*.{s}-*') or fnmatch.filter(
+                self.rcombis, f'*-{n}.*-{s}')]
+        # same check for avail_raw_data
+        self.avail_raw_data = [
+            [n, s, c] for n, s, c in self.avail_raw_data if
+            fnmatch.filter(self.rcombis, f'{n}-*.{s}-*') or fnmatch.filter(
+                self.rcombis, f'*-{n}.*-{s}')]
 
     def find_interstat_dist(self, dis: float):
         """
@@ -219,17 +249,23 @@ class Correlator(object):
             raise ValueError(
                 'This function is only available if combination method '
                 + 'is set to "betweenStations".')
-        # list of requested combinations
-        self.rcombis = []
         # Update the store clients invetory
         self.store_client.read_inventory()
-        for ii, (n0, s0) in enumerate(self.station):
-            inv0 = self.store_client.select_inventory_or_load_remote(n0, s0)
-            for n1, s1 in self.station[ii:]:
-                inv1 = self.store_client.select_inventory_or_load_remote(
-                    n1, s1)
-                if mu.filter_stat_dist(inv0, inv1, dis):
-                    self.rcombis.append('%s-%s.%s-%s' % (n0, n1, s0, s1))
+        # list of requested combinations
+        if self.rcombis is None:
+            self.rcombis = []
+            for ii, (n0, s0) in enumerate(self.station):
+                inv0 = self.store_client.select_inventory_or_load_remote(
+                    n0, s0)
+                for n1, s1 in self.station[ii:]:
+                    inv1 = self.store_client.select_inventory_or_load_remote(
+                        n1, s1)
+                    if mu.filter_stat_dist(inv0, inv1, dis):
+                        self.rcombis.append('%s-%s.%s-%s' % (n0, n1, s0, s1))
+        else:
+            raise ValueError(
+                'Either filter for specific cross correlations or a maximum '
+                + 'distance.')
 
     def find_existing_times(self, tag: str, channel: str = '*') -> dict:
         """
@@ -265,7 +301,8 @@ class Correlator(object):
             d = {}
             for outf in glob.glob(outfs):
                 with CorrelationDataBase(
-                        outf, corr_options=self.options, mode='r') as cdb:
+                    outf, corr_options=self.options, mode='r',
+                        _force=self._allow_different_params) as cdb:
                     d.update(
                         cdb.get_available_starttimes(nc, sc, tag, channel))
             s0, s1 = sc.split('-')
@@ -402,7 +439,8 @@ class Correlator(object):
             if self.options['subdivision']['delete_subdivision']:
                 cstselect.clear()
             with CorrelationDataBase(
-                    outf, corr_options=self.options) as cdb:
+                outf, corr_options=self.options,
+                    _force=self._allow_different_params) as cdb:
                 if cstselect.count():
                     cdb.add_correlation(cstselect, 'subdivision')
                 if stack is not None:
@@ -570,11 +608,17 @@ class Correlator(object):
                             win, self.store_client, resp, winstart, winend,
                             tl, **self.options)
                     except ValueError as e:
-                        self.logger.error(
-                            'Stream preprocessing failed for '
-                            f'{st[0].stats.network}.{st[0].stats.station}'
-                            ' and time '
-                            f'{t}.\nThe Original Error Message was {e}.')
+                        if st.count():
+                            self.logger.error(
+                                'Stream preprocessing failed for '
+                                f'{st[0].stats.network}.{st[0].stats.station}'
+                                ' and time '
+                                f'{t}.\nThe Original Error Message was {e}.')
+                        else:
+                            self.logger.error(
+                                'Stream preprocessing failed for '
+                                'time '
+                                f'{t}.\nThe Original Error Message was {e}.')
                         continue
                     if self.rank == 0:
                         self.options['combinations'] = calc_cross_combis(
@@ -1287,6 +1331,9 @@ def preprocess_stream(
     # deal with overlaps
     # This should be a setting in the parameter file
     st = mu.gap_handler(st, 1, taper_len*4, taper_len)
+    if not st.count():
+        # could happen after handling gaps
+        return st
     # To deal with any nans/masks
     st = st.split()
     st.sort(keys=['starttime'])

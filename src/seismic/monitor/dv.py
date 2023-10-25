@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Friday, 16th June 2023 03:54:21 pm
+Last Modified: Friday, 20th October 2023 10:49:04 am
 '''
 
 from datetime import datetime
@@ -141,7 +141,7 @@ class DV(object):
         ylim: Tuple[int, int] = None, plot_scatter: bool = False,
         figsize: Tuple[float, float] = (9, 11), dpi: int = 144,
         title: str = None, return_ax=False, style: str = 'technical',
-        dateformat: str = '%d %b %y') -> Tuple[
+        dateformat: str = '%d %b %y', ax: plt.Axes = None) -> Tuple[
             plt.figure, List[plt.axis]]:
         r"""
         Plots the dv object into a *multi-panel-view* of `similarity matrix`
@@ -195,7 +195,7 @@ class DV(object):
             normalize_simmat=normalize_simmat, sim_mat_Clim=sim_mat_Clim,
             figsize=figsize, dpi=dpi, xlim=xlim, ylim=ylim,
             title=title, plot_scatter=plot_scatter, return_ax=return_ax,
-            dateformat=dateformat)
+            dateformat=dateformat, ax=ax)
 
     def smooth_sim_mat(
             self, win_len: int, exclude_corr_below: Optional[float] = None):

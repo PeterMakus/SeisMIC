@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Friday, 29th September 2023 03:18:50 pm
+Last Modified: Friday, 20th October 2023 10:48:34 am
 '''
 
 from datetime import datetime
@@ -28,20 +28,23 @@ from seismic.plot.plot_utils import set_mpl_params
 def plot_fancy_dv(
     dv, xlim: Tuple[datetime, datetime] = None,
     ylim: Tuple[float, float] = None, return_ax: bool = False,
-        title: str = None, dateformat: str = '%d %b %y', *args, **kwargs):
+    title: str = None, dateformat: str = '%d %b %y', ax: plt.axes = None,
+        *args, **kwargs):
     """ Prettier than the technical plot, but less informative"""
-    fig = plt.figure(figsize=(12, 8))
+    if not ax:
+        fig = plt.figure(figsize=(12, 8))
 
     val = -dv.value[~np.isnan(dv.corr)]*100
     corr_starts = np.array(dv.stats.corr_start)
     t_real = [t.datetime for t in corr_starts[~np.isnan(dv.corr)]]
 
+    ax = ax or plt.gca()
+
     # plot dv/v
-    map = plt.scatter(
+    map = ax.scatter(
         t_real, val, c=dv.corr[~np.isnan(dv.corr)], cmap='inferno_r', s=22)
 
     # Correct format of X-Axis
-    ax = plt.gca()
     ax.set_ylim(ylim)
     plt.ylabel(r'$\frac{dv}{v}$ [%]')
     plt.grid(True, axis='y')
