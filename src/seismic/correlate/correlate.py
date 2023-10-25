@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 25th October 2023 01:37:30 pm
+Last Modified: Wednesday, 25th October 2023 01:38:53 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -1349,7 +1349,7 @@ def preprocess_stream(
                 except ValueError as e:
                     print(e)
                     print(
-                        'Station response not found for ,
+                        'Station response not found for ',
                         f'{tr.stats.network}.{tr.stats.station}',
                         ' ... loading from remote.')
                     # missing station response
