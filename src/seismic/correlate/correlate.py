@@ -1339,22 +1339,20 @@ def preprocess_stream(
     st.sort(keys=['starttime'])
 
     if remove_response:
-        for tr in st:
-            if not tr.stats.station == 'EDM' and tr.stats.channel == 'EHZ':
-                try:
-                    if inv:
-                        ninv = inv
-                        tr.attach_response(ninv)
-                    tr.remove_response(taper=False)  # Changed for testing purposes
-                except ValueError:
-                    print('Station response not found ... loading from remote.')
-                    # missing station response
-                    ninv = store_client.rclient.get_stations(
-                        network=tr.stats.network, station=tr.stats.station,
-                        channel='*', level='response')
-                    tr.attach_response(ninv)
-                    tr.remove_response(taper=False)
-                    store_client._write_inventory(ninv)
+        try:
+            if inv:
+                ninv = inv
+                st.attach_response(ninv)
+            st.remove_response(taper=False)  # Changed for testing purposes
+        except ValueError:
+            print('Station response not found ... loading from remote.')
+            # missing station response
+            ninv = store_client.rclient.get_stations(
+                network=st[0].stats.network, station=st[0].stats.station,
+                channel='*', level='response')
+            st.attach_response(ninv)
+            st.remove_response(taper=False)
+            store_client._write_inventory(ninv)
 
     # Sometimes Z has reversed polarity
     if inv:
