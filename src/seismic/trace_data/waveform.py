@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Friday, 1st September 2023 08:13:39 am
+Last Modified: Wednesday, 25th October 2023 02:10:56 pm
 '''
 
 import fnmatch
@@ -383,7 +383,7 @@ class Store_Client(object):
             self.inventory = ninv
         fname = os.path.join(
             self.inv_dir, f'{ninv[0].code}.{ninv[0][0].code}.xml')
-        self.inventory.write(fname, format="STATIONXML", validate=True)
+        ninv.write(fname, format="STATIONXML", validate=True)
 
     def _generate_time_windows(
         self, network: str, station: str, channel: str, starttime: UTCDateTime,

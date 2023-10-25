@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Wednesday, 25th October 2023 10:04:16 am
+Last Modified: Wednesday, 25th October 2023 02:25:18 pm
 '''
 from copy import deepcopy
 import unittest
@@ -847,7 +847,7 @@ class TestPreProcessStream(unittest.TestCase):
         for tr in self.st:
             del tr.stats.response
         self.kwargs = {
-            'store_client': None,
+            'store_client': mock.MagicMock(),
             'inv': read_inventory(),
             'startt': self.st[0].stats.starttime,
             'endt': self.st[0].stats.endtime,
@@ -855,6 +855,7 @@ class TestPreProcessStream(unittest.TestCase):
             'sampling_rate': 25,
             'remove_response': False,
             'subdivision': {'corr_len': 20}}
+        self.kwargs['store_client'].inventory = read_inventory()
 
     def test_empty_stream(self):
         self.assertEqual(
@@ -895,8 +896,6 @@ class TestPreProcessStream(unittest.TestCase):
         self.assertTrue(np.any(
             'remove_response' in processing_step
             for processing_step in st[0].stats.processing))
-        # Check whether response was attached
-        self.assertTrue(st[0].stats.response)
 
     def test_taper(self):
         kwargs = deepcopy(self.kwargs)
@@ -920,8 +919,6 @@ class TestPreProcessStream(unittest.TestCase):
         self.assertTrue(np.any(
             'remove_response' in processing_step
             for processing_step in st[0].stats.processing))
-        # Check whether response was attached
-        self.assertTrue(st[0].stats.response)
         sc_mock.rclient.get_stations.assert_called_once()
 
     @mock.patch('seismic.correlate.correlate.func_from_str')

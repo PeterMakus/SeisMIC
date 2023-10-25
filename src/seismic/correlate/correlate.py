@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 25th October 2023 10:03:46 am
+Last Modified: Wednesday, 25th October 2023 02:18:45 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -496,14 +496,10 @@ class Correlator(object):
             startt = UTCDateTime(t)
             endt = startt + self.options['read_len']
             st = Stream()
-            resp = Inventory()
 
             # loop over queried stations
             for net, stat, cha in np.array(self.avail_raw_data)[ind]:
                 # Load data
-                resp.extend(
-                    self.store_client.inventory.select(
-                        net, stat))
                 stext = self.store_client._load_local(
                     net, stat, '*', cha, startt, endt, True, False)
                 mu.get_valid_traces(stext)
@@ -536,7 +532,7 @@ class Correlator(object):
                 try:
                     self.logger.debug('Preprocessing stream...')
                     st = preprocess_stream(
-                        st, self.store_client, resp, startt, endt, tl,
+                        st, self.store_client, startt, endt, tl,
                         **self.options)
                 except ValueError as e:
                     self.logger.error(
@@ -605,7 +601,7 @@ class Correlator(object):
                 if self.options['preprocess_subdiv']:
                     try:
                         win = preprocess_stream(
-                            win, self.store_client, resp, winstart, winend,
+                            win, self.store_client, winstart, winend,
                             tl, **self.options)
                     except ValueError as e:
                         if st.count():
@@ -1289,7 +1285,7 @@ def compute_network_station_combinations(
 
 
 def preprocess_stream(
-    st: Stream, store_client: Store_Client, inv: Inventory | None,
+    st: Stream, store_client: Store_Client,
     startt: UTCDateTime, endt: UTCDateTime, taper_len: float,
     remove_response: bool, subdivision: dict,
     preProcessing: List[dict] = None,
@@ -1338,21 +1334,19 @@ def preprocess_stream(
     st = st.split()
     st.sort(keys=['starttime'])
 
+    inv = store_client.inventory
     if remove_response:
         try:
-            if inv:
-                ninv = inv
-                st.attach_response(ninv)
-            st.remove_response(taper=False)  # Changed for testing purposes
+            st.remove_response(taper=False, inventory=inv)
         except ValueError:
             print('Station response not found ... loading from remote.')
             # missing station response
             ninv = store_client.rclient.get_stations(
                 network=st[0].stats.network, station=st[0].stats.station,
                 channel='*', level='response')
-            st.attach_response(ninv)
-            st.remove_response(taper=False)
+            st.remove_response(taper=False, inventory=ninv)
             store_client._write_inventory(ninv)
+            inv += ninv
 
     # Sometimes Z has reversed polarity
     if inv:
