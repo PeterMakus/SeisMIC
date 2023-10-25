@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Friday, 1st September 2023 08:13:39 am
+Last Modified: Wednesday, 25th October 2023 01:30:42 pm
 '''
 
 import fnmatch
@@ -332,7 +332,9 @@ class Store_Client(object):
         """
         inv = self.inventory.select(network=network, station=station)
         if not len(inv):
-            print('Station response not found ... loading from remote.')
+            print(
+                f'Station response for {network}.{station} not found',
+                '... loading from remote.')
             inv = self.rclient.get_stations(
                 network=network, station=station,
                 channel='*', level='response')
