@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 23rd October 2023 11:40:06 am
+Last Modified: Wednesday, 25th October 2023 10:03:46 am
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -19,6 +19,7 @@ import json
 import warnings
 import yaml
 import glob
+import fnmatch
 
 from mpi4py import MPI
 import numpy as np
@@ -188,6 +189,9 @@ class Correlator(object):
             # make sure this only contains unique combinations
             # with several cores it added entries several times, don't know
             # why?
+            # In contrast to self.station, self.avail_raw_data also contains
+            # information about the available channels, so they can be
+            # read and processed on different cores
             self.avail_raw_data = np.unique(
                 self.avail_raw_data, axis=0).tolist()
         else:
@@ -196,6 +200,9 @@ class Correlator(object):
             self.avail_raw_data)
         self.station = np.unique(np.array([
             [d[0], d[1]] for d in self.avail_raw_data]), axis=0).tolist()
+        # if only certain combis are requested, remove stations not within
+        # these
+        self._filter_by_rcombis()
         self.logger.debug(
             'Fetching data from the following stations:\n%a' % [
                 f'{n}.{s}' for n, s in self.station])
@@ -206,6 +213,24 @@ class Correlator(object):
                 'allow_different_params']
         else:
             self._allow_different_params = False
+
+    def _filter_by_rcombis(self):
+        """
+        Removes stations from the list of available stations that are not
+        requested in the cross-combinations.
+        """
+        if self.rcombis is None or self.options['combination_method'] \
+                != 'betweenStations':
+            return
+        self.station = [
+            [n, s] for n, s in self.station if
+            fnmatch.filter(self.rcombis, f'{n}-*.{s}-*') or fnmatch.filter(
+                self.rcombis, f'*-{n}.*-{s}')]
+        # same check for avail_raw_data
+        self.avail_raw_data = [
+            [n, s, c] for n, s, c in self.avail_raw_data if
+            fnmatch.filter(self.rcombis, f'{n}-*.{s}-*') or fnmatch.filter(
+                self.rcombis, f'*-{n}.*-{s}')]
 
     def find_interstat_dist(self, dis: float):
         """

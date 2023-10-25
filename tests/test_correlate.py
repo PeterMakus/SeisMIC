@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Monday, 25th September 2023 02:56:34 pm
+Last Modified: Wednesday, 25th October 2023 10:04:16 am
 '''
 from copy import deepcopy
 import unittest
@@ -38,6 +38,30 @@ class TestCorrrelator(unittest.TestCase):
         with open(self.param_example) as file:
             self.options = yaml.load(file, Loader=yaml.FullLoader)
         self.options['co']['preprocess_subdiv'] = True
+
+    @mock.patch('seismic.correlate.correlate.yaml.load')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_filter_by_rcombis(
+        self, makedirs_mock, logging_mock, open_mock, yaml_mock):
+        yaml_mock.return_value = self.options
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = []
+        sc_mock._translate_wildcards.return_value = []
+        c = correlate.Correlator(sc_mock, self.param_example)
+        c.station = [
+            ['NET1', 'STA1'], ['NET1', 'STA2'], ['NET2', 'STA1']]
+        c.avail_raw_data = [
+            ['NET1', 'STA1', 'CHAN1'], ['NET1', 'STA2', 'CHAN1'],
+            ['NET2', 'STA1', 'CHAN1']]
+        c.rcombis = ['NET1-NET2.STA1-STA1']
+        c._filter_by_rcombis()
+        self.assertListEqual(
+            c.station, [['NET1', 'STA1'], ['NET2', 'STA1']])
+        self.assertListEqual(
+            c.avail_raw_data, [
+                ['NET1', 'STA1', 'CHAN1'], ['NET2', 'STA1', 'CHAN1']])
 
     @mock.patch('seismic.correlate.correlate.yaml.load')
     @mock.patch('builtins.open')
@@ -943,6 +967,12 @@ class TestGenCorrInc(unittest.TestCase):
             for tr in st:
                 self.assertAlmostEqual(
                     45, tr.stats.npts/tr.stats.sampling_rate)
+
+
+class TestCorrelatorFilterByRcombis(unittest.TestCase):
+    def setUp(self):
+        self.corr = correlate.Correlator(None, None)
+        
 
 
 if __name__ == "__main__":
