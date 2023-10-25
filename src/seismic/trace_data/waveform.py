@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Wednesday, 25th October 2023 01:30:42 pm
+Last Modified: Wednesday, 25th October 2023 01:44:13 pm
 '''
 
 import fnmatch
@@ -375,7 +375,8 @@ class Store_Client(object):
             rst = tr
         rst.write(filename, format='MSEED')
 
-    def _write_inventory(self, ninv: Inventory):
+    def _write_inventory(
+            self, ninv: Inventory):
         """write the inventory information"""
         # Save inventory by station name, like this no old information
         # can be deleted
@@ -385,7 +386,7 @@ class Store_Client(object):
             self.inventory = ninv
         fname = os.path.join(
             self.inv_dir, f'{ninv[0].code}.{ninv[0][0].code}.xml')
-        self.inventory.write(fname, format="STATIONXML", validate=True)
+        ninv.write(fname, format="STATIONXML", validate=True)
 
     def _generate_time_windows(
         self, network: str, station: str, channel: str, starttime: UTCDateTime,
