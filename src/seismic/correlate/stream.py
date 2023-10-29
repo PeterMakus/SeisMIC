@@ -10,7 +10,7 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Wednesday, 4th October 2023 09:51:33 am
+Last Modified: Sunday, 29th October 2023 09:36:36 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -1516,7 +1516,7 @@ def combine_stats(
         stats['az'] = az
         stats['baz'] = baz
     except (AttributeError, KeyError):
-        if inv:
+        try:
             inv1 = inv.select(
                 network=stats1.network, station=stats1.station)
             inv2 = inv.select(
@@ -1533,7 +1533,7 @@ def combine_stats(
             stats['dist'] = dist / 1000
             stats['az'] = az
             stats['baz'] = baz
-        else:
+        except (IndexError, AttributeError):
             warnings.warn("No station coordinates provided.")
     stats.pop('sac', None)
     stats.pop('response', None)

@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Wednesday, 4th October 2023 09:52:44 am
+Last Modified: Sunday, 29th October 2023 09:40:23 am
 '''
 
 import unittest
@@ -619,8 +619,22 @@ class TestCombineStats(unittest.TestCase):
         self.assertEqual(stc.corr_start, st1.starttime)
         self.assertEqual(stc.corr_end, st1.endtime)
         self.assertEqual(stc.start_lag, -lag)
-
         self.assertEqual(stc.end_lag, -lag+(st0.npts-1)*st0.delta)
+
+    def test_no_coords_defined(self):
+        # We test this by using two different components
+        st0 = self.st[0].stats
+        st1 = self.st[1].stats
+        lag = np.random.randint(80, 120)
+        with warnings.catch_warnings(record=True) as w:
+            stc = stream.combine_stats(st0, st1, -lag)
+            self.assertEqual(len(w), 1)
+        keys = ['network', 'station', 'channel', 'location']
+        for k in keys:
+            self.assertEqual(stc[k], '%s-%s' % (st0[k], st1[k]))
+        self.assertEqual(stc.corr_start, st1.starttime)
+        self.assertEqual(stc.corr_end, st1.endtime)
+        self.assertEqual(stc.start_lag, -lag)
 
     def test_wrong_input(self):
         with self.assertRaises(TypeError):
