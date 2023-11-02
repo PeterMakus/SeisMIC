@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Friday, 20th October 2023 10:48:34 am
+Last Modified: Thursday, 2nd November 2023 04:58:04 pm
 '''
 
 from datetime import datetime
@@ -33,6 +33,8 @@ def plot_fancy_dv(
     """ Prettier than the technical plot, but less informative"""
     if not ax:
         fig = plt.figure(figsize=(12, 8))
+    else:
+        fig = ax.get_figure()
 
     val = -dv.value[~np.isnan(dv.corr)]*100
     corr_starts = np.array(dv.stats.corr_start)
