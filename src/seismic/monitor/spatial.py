@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Friday, 28th July 2023 03:20:46 pm
+Last Modified: Tuesday, 7th November 2023 03:44:01 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable
 import warnings
@@ -537,7 +537,7 @@ class DVGrid(object):
         """
         cm = compute_cm(
             scaling_factor, corr_len, std_model,
-            self.dist or self._compute_dist_matrix())
+            self._compute_dist_matrix())
         _, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
             = self._extract_info_dvs(dvs, utc)
         freq0 = freq0 or freq0e
@@ -691,6 +691,8 @@ class DVGrid(object):
         :return: 2D matrix holding distances between cells i and j.
         :rtype: np.ndarray
         """
+        if self.dist is not None:
+            return self.dist
         self.dist = np.zeros((len(self.xf), len(self.xf)))
         for ii, (xx, yy) in enumerate(zip(self.xf, self.yf)):
             self.dist[ii, :] = np.sqrt((self.xf-xx)**2+(self.yf-yy)**2)
