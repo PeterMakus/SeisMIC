@@ -1521,18 +1521,21 @@ def combine_stats(
                 network=stats1.network, station=stats1.station)
             inv2 = inv.select(
                 network=stats2.network, station=stats2.station)
-            stats['stla'] = inv1[0][0].latitude
-            stats['stlo'] = inv1[0][0].longitude
-            stats['stel'] = inv1[0][0].elevation
-            stats['evla'] = inv2[0][0].latitude
-            stats['evlo'] = inv2[0][0].longitude
-            stats['evel'] = inv2[0][0].elevation
+            try:
+                stats['stla'] = inv1[0][0].latitude
+                stats['stlo'] = inv1[0][0].longitude
+                stats['stel'] = inv1[0][0].elevation
+                stats['evla'] = inv2[0][0].latitude
+                stats['evlo'] = inv2[0][0].longitude
+                stats['evel'] = inv2[0][0].elevation
 
-            az, baz, dist = m3ut.inv_calc_az_baz_dist(inv1, inv2)
+                az, baz, dist = m3ut.inv_calc_az_baz_dist(inv1, inv2)
 
-            stats['dist'] = dist / 1000
-            stats['az'] = az
-            stats['baz'] = baz
+                stats['dist'] = dist / 1000
+                stats['az'] = az
+                stats['baz'] = baz
+            except IndexError:
+                warnings.warn("No station coordinates provided.")
         else:
             warnings.warn("No station coordinates provided.")
     stats.pop('sac', None)

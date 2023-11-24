@@ -33,6 +33,8 @@ def plot_fancy_dv(
     """ Prettier than the technical plot, but less informative"""
     if not ax:
         fig = plt.figure(figsize=(12, 8))
+    else:
+        fig = plt.gcf()
 
     val = -dv.value[~np.isnan(dv.corr)]*100
     corr_starts = np.array(dv.stats.corr_start)

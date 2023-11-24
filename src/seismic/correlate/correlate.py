@@ -420,31 +420,31 @@ class Correlator(object):
         pmap = np.arange(len(codelist))*self.psize/len(codelist)
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
-
-        for code in np.array(codelist)[ind]:
-            if self.save_comps_separately:
-                net, stat, cha = code.split('.')
-                outf = os.path.join(self.corr_dir, f'{net}.{stat}.{cha}.h5')
-                cstselect = cst.select(
-                    network=net, station=stat, channel=cha)
-            else:
-                net, stat = code.split('.')
-                outf = os.path.join(self.corr_dir, f'{net}.{stat}.h5')
-                cstselect = cst.select(network=net, station=stat)
-            if self.options['subdivision']['recombine_subdivision']:
-                stack = cstselect.stack(regard_location=False)
-                stacktag = 'stack_%s' % str(self.options['read_len'])
-            else:
-                stack = None
-            if self.options['subdivision']['delete_subdivision']:
-                cstselect.clear()
-            with CorrelationDataBase(
-                outf, corr_options=self.options,
-                    _force=self._allow_different_params) as cdb:
-                if cstselect.count():
-                    cdb.add_correlation(cstselect, 'subdivision')
-                if stack is not None:
-                    cdb.add_correlation(stack, stacktag)
+        if self.rank == 0:
+            for code in np.array(codelist):
+                if self.save_comps_separately:
+                    net, stat, cha = code.split('.')
+                    outf = os.path.join(self.corr_dir, f'{net}.{stat}.{cha}.h5')
+                    cstselect = cst.select(
+                        network=net, station=stat, channel=cha)
+                else:
+                    net, stat = code.split('.')
+                    outf = os.path.join(self.corr_dir, f'{net}.{stat}.h5')
+                    cstselect = cst.select(network=net, station=stat)
+                if self.options['subdivision']['recombine_subdivision']:
+                    stack = cstselect.stack(regard_location=False)
+                    stacktag = 'stack_%s' % str(self.options['read_len'])
+                else:
+                    stack = None
+                if self.options['subdivision']['delete_subdivision']:
+                    cstselect.clear()
+                with CorrelationDataBase(
+                    outf, corr_options=self.options,
+                        _force=self._allow_different_params) as cdb:
+                    if cstselect.count():
+                        cdb.add_correlation(cstselect, 'subdivision')
+                    if stack is not None:
+                        cdb.add_correlation(stack, stacktag)
 
     def _generate_data(self) -> Iterator[Tuple[Stream, bool]]:
         """
@@ -496,14 +496,9 @@ class Correlator(object):
             startt = UTCDateTime(t)
             endt = startt + self.options['read_len']
             st = Stream()
-            resp = Inventory()
 
             # loop over queried stations
             for net, stat, cha in np.array(self.avail_raw_data)[ind]:
-                # Load data
-                resp.extend(
-                    self.store_client.inventory.select(
-                        net, stat))
                 stext = self.store_client._load_local(
                     net, stat, '*', cha, startt, endt, True, False)
                 mu.get_valid_traces(stext)
@@ -536,7 +531,7 @@ class Correlator(object):
                 try:
                     self.logger.debug('Preprocessing stream...')
                     st = preprocess_stream(
-                        st, self.store_client, resp, startt, endt, tl,
+                        st, self.store_client, startt, endt, tl,
                         **self.options)
                 except ValueError as e:
                     self.logger.error(
@@ -605,7 +600,7 @@ class Correlator(object):
                 if self.options['preprocess_subdiv']:
                     try:
                         win = preprocess_stream(
-                            win, self.store_client, resp, winstart, winend,
+                            win, self.store_client, winstart, winend,
                             tl, **self.options)
                     except ValueError as e:
                         if st.count():
@@ -1289,7 +1284,7 @@ def compute_network_station_combinations(
 
 
 def preprocess_stream(
-    st: Stream, store_client: Store_Client, inv: Inventory | None,
+    st: Stream, store_client: Store_Client,
     startt: UTCDateTime, endt: UTCDateTime, taper_len: float,
     remove_response: bool, subdivision: dict,
     preProcessing: List[dict] = None,
@@ -1340,14 +1335,11 @@ def preprocess_stream(
 
     if remove_response:
         for tr in st:
+            inv = store_client.inventory
             if not tr.stats.station == 'EDM' and tr.stats.channel == 'EHZ':
                 try:
-                    if inv:
-                        ninv = inv
-                        tr.attach_response(ninv)
-                    tr.remove_response(taper=False)  # Changed for testing purposes
+                    tr.remove_response(taper=False, inventory=inv)  # Changed for testing purposes
                 except ValueError as e:
-                    print(e)
                     print(
                         'Station response not found for ',
                         f'{tr.stats.network}.{tr.stats.station}',
@@ -1359,6 +1351,7 @@ def preprocess_stream(
                     tr.attach_response(ninv)
                     tr.remove_response(taper=False)
                     store_client._write_inventory(ninv)
+                    inv += ninv
 
     # Sometimes Z has reversed polarity
     if inv:

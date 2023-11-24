@@ -537,7 +537,7 @@ class DVGrid(object):
         """
         cm = compute_cm(
             scaling_factor, corr_len, std_model,
-            self.dist or self._compute_dist_matrix())
+            self._compute_dist_matrix())
         _, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
             = self._extract_info_dvs(dvs, utc)
         freq0 = freq0 or freq0e
@@ -588,9 +588,10 @@ class DVGrid(object):
         vals, corrs, slat0, slon0, slat1, slon1 = [], [], [], [], [], []
         for dv in dvs:
             if utc < dv.stats.corr_start[0] or utc > dv.stats.corr_end[-1]:
-                raise IndexError(
+                warnings.warn(
                     f'Time {utc} is outside of the dv time-series'
                 )
+                continue
             ii = np.argmin(abs(np.array(dv.stats.corr_start)-utc))
             val = dv.value[ii]
             corr = dv.corr[ii]
@@ -599,10 +600,17 @@ class DVGrid(object):
                 continue
             vals.append(val)
             corrs.append(corr)
-            slat0.append(dv.stats.stla)
-            slon0.append(dv.stats.stlo)
-            slat1.append(dv.stats.evla)
-            slon1.append(dv.stats.evlo)
+            try:
+                slat0.append(dv.stats.stla)
+                slon0.append(dv.stats.stlo)
+                slat1.append(dv.stats.evla)
+                slon1.append(dv.stats.evlo)
+            except (AttributeError, KeyError):
+                warnings.warn(
+                    'No station coordinates provided for '
+                    f'{dv.stats.network}.{dv.stats.station}.{dv.stats.channel}'
+                )
+                continue
             processing = dv.dv_processing
         if not len(vals):
             raise IndexError(
@@ -691,6 +699,8 @@ class DVGrid(object):
         :return: 2D matrix holding distances between cells i and j.
         :rtype: np.ndarray
         """
+        if self.dist is not None:
+            return self.dist
         self.dist = np.zeros((len(self.xf), len(self.xf)))
         for ii, (xx, yy) in enumerate(zip(self.xf, self.yf)):
             self.dist[ii, :] = np.sqrt((self.xf-xx)**2+(self.yf-yy)**2)
