@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Friday, 24th November 2023 04:47:30 pm
+Last Modified: Tuesday, 28th November 2023 09:58:33 am
 '''
 from typing import Tuple, Optional, Iterator, Iterable
 import warnings
@@ -684,33 +684,22 @@ class DVGrid(object):
         # Model variance, smoothed diagonal matrix
         # cm = compute_cm(scaling_factor, corr_len, std_model, dist)
         # Data variance, diagonal matrix
-        cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
+        cd_inv = self._compute_cd(skernels, freq0, freq1, tw, corrs)
         # cd /= np.linalg.norm(cd)
         # cd /= np.mean(cd[np.nonzero(cd)])
         # cd is the diagonal matrix containing the data variance
         # to create a weighting matrix we have to take the inverse of cd
-        cd = np.linalg.inv(cd)
+        cd = np.linalg.inv(cd_inv)
 
         # Linear Least-Squares Inversion
-        # a = np.dot(cm, skernels.T)
-        # b = np.linalg.inv(np.dot(np.dot(skernels, cm), skernels.T) + cd)
-        # c = np.array(vals)
-        # m = np.dot(np.dot(a, b), c)
         # Compute the pseudo inverse of G using an svd
-        K = np.dot(skernels.T, np.linalg.inv(cd))
+        K = np.dot(skernels.T, cd_inv)
         K_w = np.dot(np.sqrt(cd), K.T)
         K_w = np.dot(K_w.T, np.sqrt(cd)).T
-        # K_w = K
         X, s, Y = np.linalg.svd(K_w, full_matrices=False)
 
-        # cd is diagonal
-        cd_inv = np.zeros((cd.shape[0], cd.shape[0]))
-        for i in range(cd.shape[0]):
-            if cd[i, i] == 0:
-                continue
-            cd_inv[i, i] = 1/np.sqrt(cd[i, i])
-        u = np.dot(cd_inv, X)
-        vh = np.dot(cd_inv, Y)
+        u = np.dot(np.sqrt(cd_inv), X)
+        vh = np.dot(np.sqrt(cd_inv), Y)
 
         # print(u.shape, s.shape, vh.shape)
         # # # truncate s to the highest 20 values
@@ -718,12 +707,14 @@ class DVGrid(object):
         # # s[3:] = 0
         # # Compute the pseudoinverse of s
         s_inv = np.zeros((vh.shape[0], u.shape[0]))
+        # I think s_inv should be transposed of what is above. if S has shape
+        # (n, m) then s_inv should have shape (m, n)
         for i in range(s.shape[0]):
-            if s[i] == 0:
+            if np.isclose(s[i], 0):
                 continue
             s_inv[i, i] = 1/s[i]
         # # Compute the pseudoinverse of G
-        G_inv = np.dot(vh.T, np.dot(np.dot(s_inv, u.T), cd))  #+cd
+        G_inv = np.dot(vh.T, np.dot(np.dot(s_inv, np.conj(u.T)), cd))
 
         # G_inv = np.dot(np.linalg.pinv(skernels), np.linalg.pinv(cd))
         # G_inv = np.linalg.pinv(skernels, rcond=cutoff)
