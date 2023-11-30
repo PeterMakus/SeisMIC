@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Thursday, 2nd November 2023 04:58:04 pm
+Last Modified: Thursday, 30th November 2023 09:54:29 am
 '''
 
 from datetime import datetime
@@ -31,6 +31,7 @@ def plot_fancy_dv(
     title: str = None, dateformat: str = '%d %b %y', ax: plt.axes = None,
         *args, **kwargs):
     """ Prettier than the technical plot, but less informative"""
+    set_mpl_params()
     if not ax:
         fig = plt.figure(figsize=(12, 8))
     else:
