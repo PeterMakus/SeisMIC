@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 5th December 2023 11:56:25 am
+Last Modified: Tuesday, 5th December 2023 01:54:22 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -489,8 +489,8 @@ class DVGrid(object):
         self, dvs: Iterator[DV], utcs: List[UTCDateTime],
         scaling_factor: float, corr_len: float, std_model: float,
         tw: Optional[Tuple[float, float]] = None,
-        freq0: Optional[float] = None, freq1: Optional[float] = None
-            ) -> np.ndarray:
+        freq0: Optional[float] = None, freq1: Optional[float] = None,
+            verbose: bool = False) -> np.ndarray:
         """
         Perform a linear least-squares inversion of station specific velocity
         changes (dv/v) at time ``t``.
@@ -559,9 +559,10 @@ class DVGrid(object):
         for ii, utc in enumerate(utcs):
             try:
                 vals, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
-                    = self._extract_info_dvs(dvs, utc)
+                    = self._extract_info_dvs(dvs, utc, verbose)
             except IndexError as e:
-                print(e)
+                if verbose:
+                    print(e)
                 x, P = predict(x, cm, np.eye(x.size))
                 x, P = update(x, P, None, 1)
                 dvgrid[..., ii] = x.reshape(self.xgrid.shape)
@@ -917,7 +918,7 @@ class DVGrid(object):
         return self.resolution
 
     def _extract_info_dvs(
-        self, dvs: Iterable[DV], utc: UTCDateTime) -> Tuple[
+        self, dvs: Iterable[DV], utc: UTCDateTime, verbose: bool) -> Tuple[
             np.ndarray, np.ndarray, np.ndarray, np.ndarray,
             Tuple[float, float], float, float]:
         """
@@ -936,10 +937,11 @@ class DVGrid(object):
         vals, corrs, slat0, slon0, slat1, slon1 = [], [], [], [], [], []
         for dv in dvs:
             if utc < dv.stats.corr_start[0] or utc > dv.stats.corr_end[-1]:
-                warnings.warn(
-                    f'Time {utc} is outside of the dv time-series'
-                    f' {dv.stats.id}'
-                )
+                if verbose:
+                    warnings.warn(
+                        f'Time {utc} is outside of the dv time-series'
+                        f' {dv.stats.id}'
+                    )
                 continue
             ii = np.argmin(abs(np.array(dv.stats.corr_start)-utc))
             val = dv.value[ii]
