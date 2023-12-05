@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 5th December 2023 09:22:01 am
+Last Modified: Tuesday, 5th December 2023 09:58:11 am
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -936,6 +936,7 @@ class DVGrid(object):
                     f'Time {utc} is outside of the dv time-series'
                     f' {dv.stats.id}'
                 )
+                continue
             ii = np.argmin(abs(np.array(dv.stats.corr_start)-utc))
             val = dv.value[ii]
             corr = dv.corr[ii]
