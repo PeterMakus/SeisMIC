@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 5th December 2023 01:57:22 pm
+Last Modified: Tuesday, 5th December 2023 02:01:02 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -946,7 +946,7 @@ class DVGrid(object):
             ii = np.argmin(abs(np.array(dv.stats.corr_start)-utc))
             val = dv.value[ii]
             corr = dv.corr[ii]
-            if np.isnan(val) or np.isnan(corr) or corr <= 1e-3:
+            if np.isnan(val) or np.isnan(corr) or corr <= 1e-3 or corr >= 1:
                 # No value
                 continue
             vals.append(val)
