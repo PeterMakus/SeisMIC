@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Monday, 4th December 2023 05:45:12 pm
+Last Modified: Monday, 4th December 2023 05:56:01 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -25,7 +25,6 @@ from obspy.geodetics.base import locations2degrees as loc2deg
 from obspy.geodetics.base import degrees2kilometers as deg2km
 from obspy import UTCDateTime
 from filterpy.kalman import predict, update
-from filterpy.common import Q_discrete_white_noise
 
 from seismic.monitor.dv import DV
 
@@ -557,8 +556,12 @@ class DVGrid(object):
         # Model variance, smoothed diagonal matrix
         cm = compute_cm(scaling_factor, corr_len, std_model, dist)
         for utc in utcs:
-            vals, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
-                = self._extract_info_dvs(dvs, utc)
+            try:
+                vals, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
+                    = self._extract_info_dvs(dvs, utc)
+            except IndexError as e:
+                print(e)
+                continue
             tw = tw or twe
             freq0 = freq0 or freq0e
             freq1 = freq1 or freq1e
@@ -576,9 +579,6 @@ class DVGrid(object):
             yield x.reshape(self.xgrid.shape)
         # m is the flattened array, reshape onto grid
         self.vel_change = x.reshape(self.xgrid.shape)
-        # if compute_resolution:
-        #     self.resolution = self._compute_resolution(skernels, a, b)
-        return self.vel_change
 
     def compute_dv_tsvd(
         self, dvs: Iterator[DV], utc: UTCDateTime, scaling_factor: float,
@@ -929,8 +929,9 @@ class DVGrid(object):
         vals, corrs, slat0, slon0, slat1, slon1 = [], [], [], [], [], []
         for dv in dvs:
             if utc < dv.stats.corr_start[0] or utc > dv.stats.corr_end[-1]:
-                raise IndexError(
+                warnings.warn(
                     f'Time {utc} is outside of the dv time-series'
+                    f' {dv.stats.id}'
                 )
             ii = np.argmin(abs(np.array(dv.stats.corr_start)-utc))
             val = dv.value[ii]
