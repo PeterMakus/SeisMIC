@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 5th December 2023 09:58:11 am
+Last Modified: Tuesday, 5th December 2023 11:41:22 am
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -576,8 +576,8 @@ class DVGrid(object):
                 slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2)
             # covariance matrix
             cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
-            x, P = predict(x, cm, np.eye(x.size))
-            x, P = update(x, P, vals, cd, skernels)
+            x, P = predict(x, cm, np.eye(x.size), alpha=1.02)
+            x, P = update(x, P, vals, cd, H=skernels)
             dvgrid[..., ii] = x.reshape(self.xgrid.shape)
         # m is the flattened array, reshape onto grid
         self.vel_change = dvgrid[..., -1]
@@ -588,7 +588,8 @@ class DVGrid(object):
         corr_len: float, std_model: float,
         tw: Optional[Tuple[float, float]] = None,
         freq0: Optional[float] = None, freq1: Optional[float] = None,
-            compute_resolution: bool = False, cutoff: float=.2) -> np.ndarray:
+        compute_resolution: bool = False,
+            cutoff: float = .2) -> np.ndarray:
         """
         Perform a linear least-squares inversion of station specific velocity
         changes (dv/v) at time ``t``.
@@ -706,7 +707,8 @@ class DVGrid(object):
         corr_len: float, std_model: float,
         tw: Optional[Tuple[float, float]] = None,
         freq0: Optional[float] = None, freq1: Optional[float] = None,
-            compute_resolution: bool = False, cutoff: float=.2) -> np.ndarray:
+        compute_resolution: bool = False,
+            cutoff: float = .2) -> np.ndarray:
         """
         Perform a linear least-squares inversion of station specific velocity
         changes (dv/v) at time ``t``.
