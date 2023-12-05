@@ -13,9 +13,9 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 28th November 2023 09:58:33 am
+Last Modified: Monday, 4th December 2023 04:00:23 pm
 '''
-from typing import Tuple, Optional, Iterator, Iterable
+from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
 
 import matplotlib as mpl
@@ -24,6 +24,7 @@ import numpy as np
 from obspy.geodetics.base import locations2degrees as loc2deg
 from obspy.geodetics.base import degrees2kilometers as deg2km
 from obspy import UTCDateTime
+from filterpy.kalman import predict, update
 
 from seismic.monitor.dv import DV
 
@@ -484,6 +485,95 @@ class DVGrid(object):
             self.resolution = self._compute_resolution(skernels, a, b)
         return self.vel_change
 
+    def compute_dv_kalman(
+        self, dvs: Iterator[DV], utcs: List[UTCDateTime],
+        tw: Optional[Tuple[float, float]] = None,
+        freq0: Optional[float] = None, freq1: Optional[float] = None
+            ) -> np.ndarray:
+        """
+        Perform a linear least-squares inversion of station specific velocity
+        changes (dv/v) at time ``t``.
+
+        The algorithm will perform the following steps:
+        1. Computes the sensitivity kernels for each station pair.
+        2. Computes model and data variance.
+        3. Inverts the velocity changes onto a flattened grid.
+
+        .. note::
+            All computations are performed on a flattened grid, so that the
+            grid is actually just one-dimensional. The return value is
+            reshaped onto the shape of self.xgrid.
+
+        .. note::
+            The returned value and the value in self.vel_change is strictly
+            speaking not a velocity change, but an epsilon value. That
+            corresponds to -dv/v
+
+
+        :param dvs: The :class:``~seismic.monitor.dv.DV`` objects to use.
+            Note that the input can be an iterator, so that not actually all
+            dvs have to be loaded into RAM at the same time.
+        :type dvs: Iterator[DV]
+        :param utc: Time at which the velocity changes should be inverted.
+            Has to be covered by the ``DV`` objects.
+        :type utc: UTCDateTime
+        :param scaling_factor: Scaling factor, dependent on the cell length.
+            (e.g., 1*cell_length)
+        :type scaling_factor: float
+        :param corr_len: Length over which the parameters are related (high
+            value means stronger smoothing).
+        :type corr_len: float
+        :param std_model: A-priori standard deviation of the model. Corresponds
+            to the best agreement between 1) the stability of the model for the
+            velocity variations and 2) the minimised difference between the
+            model predictions (output of the forward problem) and the data.
+            Can be estimated via the L-curve criterion (see Hansen 1992)
+        :type std_model: float
+        :param tw: Time window used to evaluate the velocity changes.
+            Given in the form Tuple[tw_start, tw_end]. Not required if
+            the used dvs have a ``dv_processing`` attribute.
+        :type tw: Tuple[float, float], optional
+        :param freq0: high-pass frequency of the used bandpass filter.
+            Not required if the used dvs have a ``dv_processing`` attribute.
+        :type freq0: float, optional
+        :param freq1: low-pass frequency of the used bandpass filter.
+            Not required  the used dvs have a ``dv_processing`` attribute.
+        :type freq1: float, optional
+        :param compute_resolution: Compute the resolution matrix?
+            Will be saved in self.resolution
+        :type compute_resolution: bool, defaults to False
+        :raises ValueError: For times that are not covered by the dvs
+            time-series.
+        :return: The dv-grid (with corresponding coordinates in
+            self.xgrid and self.ygrid or self.xaxis and self.yaxis,
+            respectively). Note this is actually an epsilon grid (meaning
+            it represents the stretch value i.e., -dv/v)
+        :rtype: np.ndarray
+        """
+        x = np.zeros_like(self.xgrid)
+        for utc in utcs:
+            vals, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
+                = self._extract_info_dvs(dvs, utc)
+            tw = tw or twe
+            freq0 = freq0 or freq0e
+            freq1 = freq1 or freq1e
+            if None in [freq0, freq1, tw]:
+                raise AttributeError(
+                    'The arguments freq0, freq1, and tw have to be defined if '
+                    'dv does not have the attribute "dv_processing".'
+                )
+            skernels = self._compute_sensitivity_kernels(
+                slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2)
+            # covariance matrix
+            cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
+            x, P = predict(x, np.eye(x.size), cd)
+            x, P = update(x, P, vals, cd, skernels)
+        # m is the flattened array, reshape onto grid
+        self.vel_change = x.reshape(self.xgrid.shape)
+        # if compute_resolution:
+        #     self.resolution = self._compute_resolution(skernels, a, b)
+        return self.vel_change
+
     def compute_dv_tsvd(
         self, dvs: Iterator[DV], utc: UTCDateTime, scaling_factor: float,
         corr_len: float, std_model: float,
@@ -566,7 +656,7 @@ class DVGrid(object):
         # Model variance, smoothed diagonal matrix
         # cm = compute_cm(scaling_factor, corr_len, std_model, dist)
         # Data variance, diagonal matrix
-        cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
+        # cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
 
         # Linear Least-Squares Inversion
         # a = np.dot(cm, skernels.T)
@@ -693,19 +783,17 @@ class DVGrid(object):
 
         # Linear Least-Squares Inversion
         # Compute the pseudo inverse of G using an svd
+        # why do I have to transpose skernels here?
         K = np.dot(skernels.T, cd_inv)
         K_w = np.dot(np.sqrt(cd), K.T)
         K_w = np.dot(K_w.T, np.sqrt(cd)).T
         X, s, Y = np.linalg.svd(K_w, full_matrices=False)
-
         u = np.dot(np.sqrt(cd_inv), X)
         vh = np.dot(np.sqrt(cd_inv), Y)
 
-        # print(u.shape, s.shape, vh.shape)
-        # # # truncate s to the highest 20 values
+        # truncate s
         s[s < max(s)*cutoff] = 0
-        # # s[3:] = 0
-        # # Compute the pseudoinverse of s
+        # Compute the pseudoinverse of s
         s_inv = np.zeros((vh.shape[0], u.shape[0]))
         # I think s_inv should be transposed of what is above. if S has shape
         # (n, m) then s_inv should have shape (m, n)
@@ -714,7 +802,11 @@ class DVGrid(object):
                 continue
             s_inv[i, i] = 1/s[i]
         # # Compute the pseudoinverse of G
-        G_inv = np.dot(vh.T, np.dot(np.dot(s_inv, np.conj(u.T)), cd))
+        # vh should not have to be transposed here
+        # G_inv = np.dot(vh.T, np.dot(np.dot(s_inv, np.conj(u.T)), cd))
+        a = np.dot(vh.T, s_inv)
+        G_inv = np.dot(a, np.conj(u.T))
+        G_inv = np.dot(G_inv, cd)
 
         # G_inv = np.dot(np.linalg.pinv(skernels), np.linalg.pinv(cd))
         # G_inv = np.linalg.pinv(skernels, rcond=cutoff)
