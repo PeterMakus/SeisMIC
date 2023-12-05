@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Monday, 4th December 2023 04:00:23 pm
+Last Modified: Monday, 4th December 2023 05:45:12 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -25,6 +25,7 @@ from obspy.geodetics.base import locations2degrees as loc2deg
 from obspy.geodetics.base import degrees2kilometers as deg2km
 from obspy import UTCDateTime
 from filterpy.kalman import predict, update
+from filterpy.common import Q_discrete_white_noise
 
 from seismic.monitor.dv import DV
 
@@ -487,6 +488,7 @@ class DVGrid(object):
 
     def compute_dv_kalman(
         self, dvs: Iterator[DV], utcs: List[UTCDateTime],
+        scaling_factor: float, corr_len: float, std_model: float,
         tw: Optional[Tuple[float, float]] = None,
         freq0: Optional[float] = None, freq1: Optional[float] = None
             ) -> np.ndarray:
@@ -550,7 +552,10 @@ class DVGrid(object):
             it represents the stretch value i.e., -dv/v)
         :rtype: np.ndarray
         """
-        x = np.zeros_like(self.xgrid)
+        x = np.zeros_like(self.xgrid).flatten()
+        dist = self._compute_dist_matrix()
+        # Model variance, smoothed diagonal matrix
+        cm = compute_cm(scaling_factor, corr_len, std_model, dist)
         for utc in utcs:
             vals, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
                 = self._extract_info_dvs(dvs, utc)
@@ -566,8 +571,9 @@ class DVGrid(object):
                 slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2)
             # covariance matrix
             cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
-            x, P = predict(x, np.eye(x.size), cd)
+            x, P = predict(x, cm, np.eye(x.size))
             x, P = update(x, P, vals, cd, skernels)
+            yield x.reshape(self.xgrid.shape)
         # m is the flattened array, reshape onto grid
         self.vel_change = x.reshape(self.xgrid.shape)
         # if compute_resolution:
