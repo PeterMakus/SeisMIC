@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Monday, 4th December 2023 05:56:01 pm
+Last Modified: Monday, 4th December 2023 09:17:09 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -555,7 +555,8 @@ class DVGrid(object):
         dist = self._compute_dist_matrix()
         # Model variance, smoothed diagonal matrix
         cm = compute_cm(scaling_factor, corr_len, std_model, dist)
-        for utc in utcs:
+        dvgrid = np.zeros((*self.xgrid.shape, len(utcs)))
+        for ii, utc in enumerate(utcs):
             try:
                 vals, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
                     = self._extract_info_dvs(dvs, utc)
@@ -576,9 +577,10 @@ class DVGrid(object):
             cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
             x, P = predict(x, cm, np.eye(x.size))
             x, P = update(x, P, vals, cd, skernels)
-            yield x.reshape(self.xgrid.shape)
+            dvgrid[..., ii] = x.reshape(self.xgrid.shape)
         # m is the flattened array, reshape onto grid
-        self.vel_change = x.reshape(self.xgrid.shape)
+        self.vel_change = dvgrid[..., -1]
+        return dvgrid
 
     def compute_dv_tsvd(
         self, dvs: Iterator[DV], utc: UTCDateTime, scaling_factor: float,
