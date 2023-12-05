@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Monday, 4th December 2023 09:17:09 pm
+Last Modified: Tuesday, 5th December 2023 09:22:01 am
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -562,6 +562,7 @@ class DVGrid(object):
                     = self._extract_info_dvs(dvs, utc)
             except IndexError as e:
                 print(e)
+                dvgrid[..., ii] += np.nan
                 continue
             tw = tw or twe
             freq0 = freq0 or freq0e
