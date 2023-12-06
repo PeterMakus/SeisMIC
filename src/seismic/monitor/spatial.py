@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 5th December 2023 04:38:23 pm
+Last Modified: Tuesday, 5th December 2023 04:39:51 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -335,8 +335,8 @@ class DVGrid(object):
         utc: Optional[UTCDateTime] = None,
         tw: Optional[Tuple[float, float]] = None,
         stat0: Optional[Iterable[Tuple[float, float]]] = None,
-        stat1: Optional[Iterable[Tuple[float, float]]] = None) \
-            -> np.ndarray:
+        stat1: Optional[Iterable[Tuple[float, float]]] = None,
+            verbose: bool = False) -> np.ndarray:
         """
         Solves the forward problem associated to the grid computation.
         I.e., computes the velocity changes theoretically measured at each
@@ -379,7 +379,7 @@ class DVGrid(object):
             twe = None
         elif dvs is not None and utc is not None:
             _, _, slat0, slon0, slat1, slon1, twe, _, _\
-                = self._extract_info_dvs(dvs, utc)
+                = self._extract_info_dvs(dvs, utc, verbose)
         else:
             raise TypeError(
                 'Define either dv and utc or all other arguments.'
