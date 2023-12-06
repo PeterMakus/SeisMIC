@@ -13,10 +13,11 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 5th December 2023 04:39:51 pm
+Last Modified: Wednesday, 6th December 2023 01:45:50 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
+import os
 
 import matplotlib as mpl
 from matplotlib import pyplot as plt
@@ -490,7 +491,9 @@ class DVGrid(object):
         scaling_factor: float, corr_len: float, std_model: float,
         tw: Optional[Tuple[float, float]] = None,
         freq0: Optional[float] = None, freq1: Optional[float] = None,
-            verbose: bool = False) -> np.ndarray:
+        verbose: bool = False, align_dv: bool = False,
+        align_step: int = 1, align_corr_thres: float = 0.,
+            _save_aligned: bool | str = False) -> np.ndarray:
         """
         Invert for a gridded velocity change time-series. This approach
         uses a Kalman filter to invert for the velocity changes on a grid.
@@ -564,15 +567,25 @@ class DVGrid(object):
         cm = compute_cm(scaling_factor, corr_len, std_model, dist)
         dvgrid = np.zeros((*self.xgrid.shape, len(utcs)))
         for ii, utc in enumerate(utcs):
+            if align_dv:
+                newly_aligned_dvs = self.align_dvs_to_grid(
+                    dvs, utc, align_step, align_corr_thres, _save_aligned)
+                # aligned in a previous step + newly aligned
+                dv_this_step = [
+                    dv for dv in dvs if 'aligned' in dv.dv_processing]
+                dv_this_step += newly_aligned_dvs
+            else:
+                dv_this_step = dvs
             try:
                 vals, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
-                    = self._extract_info_dvs(dvs, utc, verbose)
+                    = self._extract_info_dvs(dv_this_step, utc, verbose)
             except IndexError as e:
                 if verbose:
                     print(e)
                 x, P = predict(x, cm, np.eye(x.size))
                 x, P = update(x, P, None, 1)
                 dvgrid[..., ii] = x.reshape(self.xgrid.shape)
+                self.vel_change = dvgrid[..., -1]
                 continue
             tw = tw or twe
             freq0 = freq0 or freq0e
@@ -589,8 +602,7 @@ class DVGrid(object):
             x, P = predict(x, cm, np.eye(x.size))
             x, P = update(x, P, vals, cd, H=skernels)
             dvgrid[..., ii] = x.reshape(self.xgrid.shape)
-        # m is the flattened array, reshape onto grid
-        self.vel_change = dvgrid[..., -1]
+            self.vel_change = dvgrid[..., -1]
         return dvgrid
 
     def compute_dv_tsvd(
@@ -1146,3 +1158,56 @@ class DVGrid(object):
         plt.xlabel('Easting [km]')
         plt.ylabel('Northing [km]')
         return ax
+
+    def align_dvs_to_grid(
+        self, dvs: List[DV], utc: UTCDateTime, steps: int,
+            corr_thres: float, save: bool | str = False):
+        # identifiy the dvs that have already been shifted earlier
+        # and remove them from the list
+        dvs = [dv for dv in dvs if 'aligned' not in dv.dv_processing]
+        # 1. identify the dv/v curves that are available at the given time
+        dvs = [dv for dv in dvs if dv_starts(dv, utc, corr_thres)]
+        if not len(dvs):
+            return dvs
+        # Compute the foward value at each of the remaining dvs
+        if hasattr(self, 'vel_change'):
+            shifts = self.forward_model(self.vel_change, dvs, utc)
+        else:
+            shifts = np.zeros(len(dvs))
+        # Align the dv/v curves to the forward model
+        for dv, shift in zip(dvs, shifts):
+            align_dv_curves(dv, utc, steps, shift)
+            if save:
+                dv.save(os.path.join(save, f'DV-{dv.stats.id}.npz'))
+        return dvs
+
+
+def align_dv_curves(
+        dv: DV, utc: UTCDateTime, steps: int, value: float = 0.):
+    """
+    Align the dv/v curves to a given value at a given time.
+
+    :param dv: dv/v object to align
+    :type dv: DV
+    :param utc: Time at which the dv/v curve should be aligned
+    :type utc: UTCDateTime
+    :param value: Value to align the dv/v curve to
+    :type value: float
+    """
+    ii = np.argmin(abs(np.array(dv.stats.corr_start)-utc))
+    # to make it more stable we use the mean of the values around the
+    # given time
+    shift = np.nansum(
+        dv.value[ii-steps:ii+steps]*dv.corr[ii-steps:ii+steps])/np.nansum(
+            dv.corr[ii-steps:ii+steps])
+    dv.value -= shift-value
+    dv.dv_processing['aligned'] = value
+
+
+def dv_starts(dv: DV, utc: UTCDateTime, corr_thres: float):
+    if utc < dv.stats.corr_start[0] or utc > dv.stats.corr_end[-1]:
+        return False
+    ii = np.argmin(abs(np.array(dv.stats.corr_start)-utc))
+    if not dv.avail[ii] or dv.corr[ii] < corr_thres:
+        return False
+    return True
