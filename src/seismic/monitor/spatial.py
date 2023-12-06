@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 5th December 2023 02:01:02 pm
+Last Modified: Tuesday, 5th December 2023 04:38:23 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -492,13 +492,18 @@ class DVGrid(object):
         freq0: Optional[float] = None, freq1: Optional[float] = None,
             verbose: bool = False) -> np.ndarray:
         """
-        Perform a linear least-squares inversion of station specific velocity
-        changes (dv/v) at time ``t``.
+        Invert for a gridded velocity change time-series. This approach
+        uses a Kalman filter to invert for the velocity changes on a grid.
+        The distinct advantage of this approach is that the inversion is
+        aware of the temporal correlation of the velocity changes and adapts
+        the model variance accordingly. However, this approach is significantly
+        slower than the linear least-squares or tsvd approaches.
 
         The algorithm will perform the following steps:
         1. Computes the sensitivity kernels for each station pair.
         2. Computes model and data variance.
-        3. Inverts the velocity changes onto a flattened grid.
+        3. Inverts the velocity changes onto a flattened grid for each time
+            step.
 
         .. note::
             All computations are performed on a flattened grid, so that the
@@ -507,7 +512,7 @@ class DVGrid(object):
 
         .. note::
             The returned value and the value in self.vel_change is strictly
-            speaking not a velocity change, but an epsilon value. That
+            speaking not a velocity change, but an epsilon/stretch value that
             corresponds to -dv/v
 
 
@@ -515,9 +520,9 @@ class DVGrid(object):
             Note that the input can be an iterator, so that not actually all
             dvs have to be loaded into RAM at the same time.
         :type dvs: Iterator[DV]
-        :param utc: Time at which the velocity changes should be inverted.
-            Has to be covered by the ``DV`` objects.
-        :type utc: UTCDateTime
+        :param utcs: List of times at which the velocity changes should be
+            inverted.
+        :type utcs: List[UTCDateTime]
         :param scaling_factor: Scaling factor, dependent on the cell length.
             (e.g., 1*cell_length)
         :type scaling_factor: float
@@ -545,10 +550,12 @@ class DVGrid(object):
         :type compute_resolution: bool, defaults to False
         :raises ValueError: For times that are not covered by the dvs
             time-series.
-        :return: The dv-grid (with corresponding coordinates in
+        :return: A 3D dv-grid (with corresponding coordinates in
             self.xgrid and self.ygrid or self.xaxis and self.yaxis,
-            respectively). Note this is actually an epsilon grid (meaning
-            it represents the stretch value i.e., -dv/v)
+            respectively) utcs (input) is then the last axis.
+            Note this is actually an epsilon grid (meaning
+            it represents the stretch value i.e., -dv/v). The velocity change
+            in the last time step is saved in self.vel_change
         :rtype: np.ndarray
         """
         x = np.zeros_like(self.xgrid).flatten()
@@ -579,7 +586,7 @@ class DVGrid(object):
                 slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2)
             # covariance matrix
             cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
-            x, P = predict(x, cm, np.eye(x.size), alpha=1.02)
+            x, P = predict(x, cm, np.eye(x.size))
             x, P = update(x, P, vals, cd, H=skernels)
             dvgrid[..., ii] = x.reshape(self.xgrid.shape)
         # m is the flattened array, reshape onto grid
@@ -587,15 +594,18 @@ class DVGrid(object):
         return dvgrid
 
     def compute_dv_tsvd(
-        self, dvs: Iterator[DV], utc: UTCDateTime, scaling_factor: float,
-        corr_len: float, std_model: float,
+        self, dvs: Iterator[DV], utc: UTCDateTime,
         tw: Optional[Tuple[float, float]] = None,
         freq0: Optional[float] = None, freq1: Optional[float] = None,
-        compute_resolution: bool = False,
             cutoff: float = .2) -> np.ndarray:
         """
-        Perform a linear least-squares inversion of station specific velocity
-        changes (dv/v) at time ``t``.
+        Performs a truncated singular value decomposition (TSVD) to invert
+        for the dv/v grid. The advantage of this approach is that no
+        a-priori information and no subjective damping parameter has to be
+        defined. However, the disadvantage is that the inversion is not aware
+        of the data variance (defined by the correlation coefficient).
+        This can be a useful approach for dv estimates with a very
+        high stability.
 
         The algorithm will perform the following steps:
         1. Computes the sensitivity kernels for each station pair.
@@ -620,18 +630,6 @@ class DVGrid(object):
         :param utc: Time at which the velocity changes should be inverted.
             Has to be covered by the ``DV`` objects.
         :type utc: UTCDateTime
-        :param scaling_factor: Scaling factor, dependent on the cell length.
-            (e.g., 1*cell_length)
-        :type scaling_factor: float
-        :param corr_len: Length over which the parameters are related (high
-            value means stronger smoothing).
-        :type corr_len: float
-        :param std_model: A-priori standard deviation of the model. Corresponds
-            to the best agreement between 1) the stability of the model for the
-            velocity variations and 2) the minimised difference between the
-            model predictions (output of the forward problem) and the data.
-            Can be estimated via the L-curve criterion (see Hansen 1992)
-        :type std_model: float
         :param tw: Time window used to evaluate the velocity changes.
             Given in the form Tuple[tw_start, tw_end]. Not required if
             the used dvs have a ``dv_processing`` attribute.
@@ -645,6 +643,9 @@ class DVGrid(object):
         :param compute_resolution: Compute the resolution matrix?
             Will be saved in self.resolution
         :type compute_resolution: bool, defaults to False
+        :param cutoff: Cutoff value for the singular values. All singular
+            values below this fraction of the maximum singular value will be
+            set to 0.
         :raises ValueError: For times that are not covered by the dvs
             time-series.
         :return: The dv-grid (with corresponding coordinates in
@@ -665,44 +666,12 @@ class DVGrid(object):
             )
         skernels = self._compute_sensitivity_kernels(
             slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2)
-        # dist = self._compute_dist_matrix()
-        # Model variance, smoothed diagonal matrix
-        # cm = compute_cm(scaling_factor, corr_len, std_model, dist)
-        # Data variance, diagonal matrix
-        # cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
-
-        # Linear Least-Squares Inversion
-        # a = np.dot(cm, skernels.T)
-        # b = np.linalg.inv(np.dot(np.dot(skernels, cm), skernels.T) + cd)
-        # c = np.array(vals)
-        # m = np.dot(np.dot(a, b), c)
-        # Compute the pseudo inverse of G using an svd
-        # X, s, Y = np.linalg.svd(skernels, full_matrices=False)
-        # u = np.dot(1/np.sqrt(cd), X)
-        # vh = np.dot(1/np.sqrt(cd), Y)
-
-        # # print(u.shape, s.shape, vh.shape)
-        # # # # truncate s to the highest 20 values
-        # s[s < max(s)*cutoff] = 0
-        # # # s[3:] = 0
-        # # # Compute the pseudoinverse of s
-        # s_inv = np.zeros((vh.shape[0], u.shape[0]))
-        # for i in range(s.shape[0]):
-        #     if s[i] == 0:
-        #         continue
-        #     s_inv[i, i] = 1/s[i]
-        # s_inv[:s.shape[0], :s.shape[0]] = np.diag(1/s)
-        # # # Compute the pseudoinverse of G
-        # G_inv = np.dot(vh.T, np.dot(np.dot(s_inv, u.T), cd))  #+cd
-        # G_inv = np.dot(np.linalg.pinv(skernels), np.linalg.pinv(cd))
         G_inv = np.linalg.pinv(
             skernels, rcond=cutoff)
         # Compute the model
         m = np.dot(G_inv, vals)
         # m is the flattened array, reshape onto grid
         self.vel_change = m.reshape(self.xgrid.shape)
-        # if compute_resolution:
-        #     self.resolution = self._compute_resolution(skernels, a, b)
         return self.vel_change
 
     def compute_dv_twsvd(
