@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Thursday, 7th December 2023 03:19:10 pm
+Last Modified: Thursday, 7th December 2023 03:47:58 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -396,7 +396,8 @@ class DVGrid(object):
         corr_len: float, std_model: float,
         tw: Optional[Tuple[float, float]] = None,
         freq0: Optional[float] = None, freq1: Optional[float] = None,
-            compute_resolution: bool = False) -> np.ndarray:
+        compute_resolution: bool = False,
+            verbose: bool = False) -> np.ndarray:
         """
         Perform a linear least-squares inversion of station specific velocity
         changes (dv/v) at time ``t``.
@@ -458,7 +459,7 @@ class DVGrid(object):
         :rtype: np.ndarray
         """
         vals, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
-            = self._extract_info_dvs(dvs, utc)
+            = self._extract_info_dvs(dvs, utc, verbose)
         tw = tw or twe
         freq0 = freq0 or freq0e
         freq1 = freq1 or freq1e
@@ -608,7 +609,7 @@ class DVGrid(object):
         self, dvs: Iterator[DV], utc: UTCDateTime,
         tw: Optional[Tuple[float, float]] = None,
         freq0: Optional[float] = None, freq1: Optional[float] = None,
-            cutoff: float = .2) -> np.ndarray:
+            cutoff: float = .2, verbose: bool = False) -> np.ndarray:
         """
         Performs a truncated singular value decomposition (TSVD) to invert
         for the dv/v grid. The advantage of this approach is that no
@@ -666,7 +667,7 @@ class DVGrid(object):
         :rtype: np.ndarray
         """
         vals, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
-            = self._extract_info_dvs(dvs, utc)
+            = self._extract_info_dvs(dvs, utc, verbose)
         tw = tw or twe
         freq0 = freq0 or freq0e
         freq1 = freq1 or freq1e
@@ -691,7 +692,7 @@ class DVGrid(object):
         tw: Optional[Tuple[float, float]] = None,
         freq0: Optional[float] = None, freq1: Optional[float] = None,
         compute_resolution: bool = False,
-            cutoff: float = .2) -> np.ndarray:
+            cutoff: float = .2, verbose: bool = False) -> np.ndarray:
         """
         Perform a linear least-squares inversion of station specific velocity
         changes (dv/v) at time ``t``.
@@ -753,7 +754,7 @@ class DVGrid(object):
         :rtype: np.ndarray
         """
         vals, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
-            = self._extract_info_dvs(dvs, utc)
+            = self._extract_info_dvs(dvs, utc, verbose)
         tw = tw or twe
         freq0 = freq0 or freq0e
         freq1 = freq1 or freq1e
@@ -764,13 +765,7 @@ class DVGrid(object):
             )
         skernels = self._compute_sensitivity_kernels(
             slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2)
-        # dist = self._compute_dist_matrix()
-        # Model variance, smoothed diagonal matrix
-        # cm = compute_cm(scaling_factor, corr_len, std_model, dist)
-        # Data variance, diagonal matrix
         cd_inv = self._compute_cd(skernels, freq0, freq1, tw, corrs)
-        # cd /= np.linalg.norm(cd)
-        # cd /= np.mean(cd[np.nonzero(cd)])
         # cd is the diagonal matrix containing the data variance
         # to create a weighting matrix we have to take the inverse of cd
         cd = np.linalg.inv(cd_inv)
@@ -797,13 +792,9 @@ class DVGrid(object):
             s_inv[i, i] = 1/s[i]
         # # Compute the pseudoinverse of G
         # vh should not have to be transposed here
-        # G_inv = np.dot(vh.T, np.dot(np.dot(s_inv, np.conj(u.T)), cd))
         a = np.dot(vh.T, s_inv)
         G_inv = np.dot(a, np.conj(u.T))
         G_inv = np.dot(G_inv, cd)
-
-        # G_inv = np.dot(np.linalg.pinv(skernels), np.linalg.pinv(cd))
-        # G_inv = np.linalg.pinv(skernels, rcond=cutoff)
 
         # Compute the model
         m = np.dot(G_inv, vals)
