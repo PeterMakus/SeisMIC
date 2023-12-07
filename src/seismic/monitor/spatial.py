@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Wednesday, 6th December 2023 04:43:34 pm
+Last Modified: Wednesday, 6th December 2023 05:12:56 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -1162,7 +1162,24 @@ class DVGrid(object):
 
     def align_dvs_to_grid(
         self, dvs: List[DV], utc: UTCDateTime, steps: int,
-            corr_thres: float, save: bool | str = False):
+            corr_thres: float, save: bool | str = False) -> List[DV]:
+        """
+        Align dv/v curves to the forward model at a given time.
+
+        :param dvs: List of dv/v objects to align
+        :type dvs: List[DV]
+        :param utc: Time at which the dv/v curve should be aligned
+        :type utc: UTCDateTime
+        :param steps: Number of steps to use for the alignment
+        :type steps: int
+        :param corr_thres: Correlation threshold
+        :type corr_thres: float
+        :param save: If given, save the aligned dv/v curves to the given
+            directory. Defaults to False.
+        :type save: bool | str, optional
+        :return: List of dv/v curves that have been aligned
+        :rtype: List[DV]
+        """
         # identifiy the dvs that have already been shifted earlier
         # and remove them from the list
         dvs = [
@@ -1192,21 +1209,35 @@ class DVGrid(object):
 def align_dv_curves(
         dv: DV, utc: UTCDateTime, steps: int, value: float = 0.):
     """
-    Align the dv/v curves to a given value at a given time.
+    Align a dv/v curve to a given value at a given time.
 
     :param dv: dv/v object to align
     :type dv: DV
     :param utc: Time at which the dv/v curve should be aligned
     :type utc: UTCDateTime
-    :param value: Value to align the dv/v curve to
-    :type value: float
+    :param steps: Number of steps to use for the alignment
+    :type steps: int
+    :param value: Value to align the dv/v curve to, defaults to 0.
+    :type value: float, optional
     """
     ii = np.argmin(abs(np.array(dv.stats.corr_start)-utc))
     # to make it more stable we use the mean of the values around the
     # given time
-    shift = np.nansum(
-        dv.value[ii-steps:ii+steps]*dv.corr[ii-steps:ii+steps])/np.nansum(
-            dv.corr[ii-steps:ii+steps])
+    # this is a problem if ii is close to the beginning or end of the
+    # dv time-series
+
+    if ii < steps:
+        shift = np.nansum(
+            dv.value[:ii+steps]*dv.corr[:ii+steps])/np.nansum(
+                dv.corr[:ii+steps])
+    elif ii > len(dv.value)-steps:
+        shift = np.nansum(
+            dv.value[ii-steps:]*dv.corr[ii-steps:])/np.nansum(
+                dv.corr[ii-steps:])
+    else:
+        shift = np.nansum(
+            dv.value[ii-steps:ii+steps]*dv.corr[ii-steps:ii+steps])/np.nansum(
+                dv.corr[ii-steps:ii+steps])
     if np.isnan(shift):
         raise ValueError(
             'The shift value is nan. This should not happen.'
@@ -1215,7 +1246,23 @@ def align_dv_curves(
     dv.dv_processing['aligned'] = value
 
 
-def dv_starts(dv: DV, utc: UTCDateTime, corr_thres: float):
+def dv_starts(dv: DV, utc: UTCDateTime, corr_thres: float) -> bool:
+    """
+    Check if a dv/v curve is available at a given time and if it has a
+    correlation value above a given threshold.
+
+    :param dv: dv/v object to check
+    :type dv: DV
+    :param utc: Time at which the dv/v curve should be aligned
+    :type utc: UTCDateTime
+    :param corr_thres: Correlation threshold
+    :type corr_thres: float
+    :return: True if the dv/v curve is available and has a correlation
+        value above the threshold
+    :rtype: bool
+    """
+    if len(dv.value[dv.avail]) < 6:
+        return False
     if utc < dv.stats.corr_start[0] or utc > dv.stats.corr_end[-1]:
         return False
     ii = np.argmin(abs(np.array(dv.stats.corr_start)-utc))
