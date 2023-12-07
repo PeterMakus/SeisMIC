@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Tuesday, 26th September 2023 06:59:57 pm
+Last Modified: Wednesday, 6th December 2023 04:49:41 pm
 '''
 from typing import List, Tuple
 import logging
@@ -242,7 +242,7 @@ t_keys = ['starttime', 'endtime', 'corr_start', 'corr_end']
 # No stats, keys that are not in stats but attributes of the respective objects
 no_stats = [
     'corr', 'value', 'sim_mat', 'second_axis', 'method_array', 'vt_array',
-    'data', 'tw_len', 'tw_start', 'freq_min', 'freq_max', 'subdir',
+    'data', 'tw_len', 'tw_start', 'freq_min', 'freq_max', 'aligned', 'subdir',
     'plot_vel_change', 'start_date', 'end_date', 'win_len', 'date_inc',
     'sides', 'compute_tt', 'rayleigh_wave_velocity', 'stretch_range',
     'stretch_steps', 'dt_ref', 'preprocessing', 'postprocessing']

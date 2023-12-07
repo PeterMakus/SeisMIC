@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Wednesday, 6th December 2023 04:27:51 pm
+Last Modified: Wednesday, 6th December 2023 04:48:55 pm
 '''
 
 from datetime import datetime
@@ -251,9 +251,6 @@ def read_dv(path: str) -> DV:
     method = loaded['method_array']
     while not isinstance(method, str):
         method = method[0]
-    stretches = loaded.get('stretches', None)
-    corrs = loaded.get('corrs', None)
-    n_stat = loaded.get('n_stat', None)
     try:
         dv_processing = dict(
             freq_min=float(loaded['freq_min']),
@@ -266,5 +263,7 @@ def read_dv(path: str) -> DV:
         dv_processing = None
     return DV(
         loaded['corr'], loaded['value'], vt, loaded['sim_mat'],
-        loaded['second_axis'], method, stats=stats, stretches=stretches,
-        corrs=corrs, n_stat=n_stat, dv_processing=dv_processing)
+        loaded['second_axis'], method, stats=stats,
+        stretches=loaded.get('stretches', None),
+        corrs=loaded.get('corrs', None), n_stat=loaded.get('n_stat', None),
+        dv_processing=dv_processing)
