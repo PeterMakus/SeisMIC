@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Thursday, 7th December 2023 03:07:19 pm
+Last Modified: Thursday, 7th December 2023 03:19:10 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -585,8 +585,7 @@ class DVGrid(object):
                     print(e)
                 x, P = predict(x, cm, np.eye(x.size))
                 x, P = update(x, P, None, 1)
-                dvgrid[..., ii] = x.reshape(self.xgrid.shape)
-                self.vel_change = dvgrid[..., -1]
+                self.vel_change = dvgrid[..., ii] = x.reshape(self.xgrid.shape)
                 continue
             tw = tw or twe
             freq0 = freq0 or freq0e
@@ -602,8 +601,7 @@ class DVGrid(object):
             cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
             x, P = predict(x, cm, np.eye(x.size))
             x, P = update(x, P, vals, cd, H=skernels)
-            dvgrid[..., ii] = x.reshape(self.xgrid.shape)
-            self.vel_change = dvgrid[..., -1]
+            self.vel_change = dvgrid[..., ii] = x.reshape(self.xgrid.shape)
         return dvgrid
 
     def compute_dv_tsvd(
