@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Wednesday, 6th December 2023 04:23:33 pm
+Last Modified: Wednesday, 6th December 2023 04:42:56 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -1175,6 +1175,9 @@ class DVGrid(object):
         # Compute the foward value at each of the remaining dvs
         if hasattr(self, 'vel_change'):
             shifts = self.forward_model(self.vel_change, dvs, utc)
+            if np.any(np.isnan(shifts)):
+                raise ValueError(
+                    'The forward model returned nan values. why?')
         else:
             shifts = np.zeros(len(dvs))
         # Align the dv/v curves to the forward model
@@ -1203,6 +1206,9 @@ def align_dv_curves(
     shift = np.nansum(
         dv.value[ii-steps:ii+steps]*dv.corr[ii-steps:ii+steps])/np.nansum(
             dv.corr[ii-steps:ii+steps])
+    if np.isnan(shift):
+        raise ValueError(
+            'The shift value is nan. This should not happen.')
     dv.value -= shift-value
     dv.dv_processing['aligned'] = value
 
