@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Wednesday, 6th December 2023 05:12:56 pm
+Last Modified: Thursday, 7th December 2023 03:07:19 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -568,13 +568,13 @@ class DVGrid(object):
         dvgrid = np.zeros((*self.xgrid.shape, len(utcs)))
         for ii, utc in enumerate(utcs):
             if align_dv:
-                newly_aligned_dvs = self.align_dvs_to_grid(
+                # this operation is in-place
+                self.align_dvs_to_grid(
                     dvs, utc, align_step, align_corr_thres, _save_aligned)
                 # aligned in a previous step + newly aligned
                 dv_this_step = [
                     dv for dv in dvs if dv.dv_processing.get('aligned', False)
                     is not False]
-                dv_this_step += newly_aligned_dvs
             else:
                 dv_this_step = dvs
             try:
