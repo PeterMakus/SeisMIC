@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Friday, 20th October 2023 10:49:04 am
+Last Modified: Wednesday, 6th December 2023 04:27:51 pm
 '''
 
 from datetime import datetime
@@ -107,16 +107,13 @@ class DV(object):
         """
         kwargs = mu.save_header_to_np_array(self.stats)
         if self.dv_processing is not None:
-            try:
-                sides = self.dv_processing['sides']
-            except KeyError:
-                sides = 'unknown'
             kwargs.update({
                 'freq_min': self.dv_processing['freq_min'],
                 'freq_max': self.dv_processing['freq_max'],
                 'tw_len': self.dv_processing['tw_len'],
                 'tw_start': self.dv_processing['tw_start'],
-                'sides': sides
+                'sides': self.dv_processing.get('sides', 'unknown'),
+                'aligned': self.dv_processing.get('aligned', False)
             })
         kwargs.update({
             'method_array': np.array([self.method]),
@@ -254,21 +251,17 @@ def read_dv(path: str) -> DV:
     method = loaded['method_array']
     while not isinstance(method, str):
         method = method[0]
-    try:
-        stretches = loaded['stretches']
-        corrs = loaded['corrs']
-    except KeyError:
-        stretches = corrs = None
-    try:
-        n_stat = loaded['n_stat']
-    except KeyError:
-        n_stat = None
+    stretches = loaded.get('stretches', None)
+    corrs = loaded.get('corrs', None)
+    n_stat = loaded.get('n_stat', None)
     try:
         dv_processing = dict(
             freq_min=float(loaded['freq_min']),
             freq_max=float(loaded['freq_max']),
             tw_start=float(loaded['tw_start']),
             tw_len=float(loaded['tw_len']))
+        dv_processing['sides'] = loaded.get('sides', 'unknown')
+        dv_processing['aligned'] = loaded.get('aligned', False)
     except KeyError:
         dv_processing = None
     return DV(

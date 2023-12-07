@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Wednesday, 6th December 2023 01:45:50 pm
+Last Modified: Wednesday, 6th December 2023 04:23:33 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -572,7 +572,8 @@ class DVGrid(object):
                     dvs, utc, align_step, align_corr_thres, _save_aligned)
                 # aligned in a previous step + newly aligned
                 dv_this_step = [
-                    dv for dv in dvs if 'aligned' in dv.dv_processing]
+                    dv for dv in dvs if dv.dv_processing.get('aligned', False)
+                    is not False]
                 dv_this_step += newly_aligned_dvs
             else:
                 dv_this_step = dvs
@@ -1164,7 +1165,9 @@ class DVGrid(object):
             corr_thres: float, save: bool | str = False):
         # identifiy the dvs that have already been shifted earlier
         # and remove them from the list
-        dvs = [dv for dv in dvs if 'aligned' not in dv.dv_processing]
+        dvs = [
+            dv for dv in dvs if dv.dv_processing.get('aligned', False)
+            is False]
         # 1. identify the dv/v curves that are available at the given time
         dvs = [dv for dv in dvs if dv_starts(dv, utc, corr_thres)]
         if not len(dvs):
@@ -1208,6 +1211,6 @@ def dv_starts(dv: DV, utc: UTCDateTime, corr_thres: float):
     if utc < dv.stats.corr_start[0] or utc > dv.stats.corr_end[-1]:
         return False
     ii = np.argmin(abs(np.array(dv.stats.corr_start)-utc))
-    if not dv.avail[ii] or dv.corr[ii] < corr_thres:
+    if np.isnan(dv.corr[ii]) or dv.corr[ii] < corr_thres:
         return False
     return True
