@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 19th December 2023 10:25:58 am
+Last Modified: Tuesday, 19th December 2023 01:23:05 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -495,7 +495,7 @@ class DVGrid(object):
         verbose: bool = False, align_dv: bool = False,
         align_step: int = 1, align_corr_thres: float = 0.,
         _save_aligned: bool | str = False,
-            alpha: float = 1.) -> np.ndarray:
+            alpha: float = 1) -> np.ndarray:
         """
         Invert for a gridded velocity change time-series. This approach
         uses a Kalman filter to invert for the velocity changes on a grid.
