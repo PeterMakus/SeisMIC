@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Monday, 18th December 2023 06:45:03 pm
+Last Modified: Monday, 18th December 2023 06:50:57 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -601,7 +601,8 @@ class DVGrid(object):
                 slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2)
             # covariance matrix
             cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
-            P = P or cm
+            if P is None:
+                P = cm
             x, P = predict(x, cm, np.eye(x.size), alpha=1.02)
             x, P = update(x, P, vals, cd, H=skernels)
             self.vel_change = dvgrid[..., ii] = x.reshape(self.xgrid.shape)
