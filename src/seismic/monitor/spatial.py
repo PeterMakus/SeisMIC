@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 19th December 2023 01:23:05 pm
+Last Modified: Thursday, 21st December 2023 01:28:43 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -604,7 +604,7 @@ class DVGrid(object):
             cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
             if P is None:
                 P = cm
-            x, P = predict(x, P, np.eye(x.size), alpha=alpha)
+            x, P = predict(x, P, np.eye(x.size), Q=cm, alpha=alpha)
             x, P = update(x, P, vals, cd, H=skernels)
             self.vel_change = dvgrid[..., ii] = x.reshape(self.xgrid.shape)
         return dvgrid
