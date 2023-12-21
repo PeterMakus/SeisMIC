@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Thursday, 21st December 2023 01:28:43 pm
+Last Modified: Thursday, 21st December 2023 04:00:23 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -495,7 +495,7 @@ class DVGrid(object):
         verbose: bool = False, align_dv: bool = False,
         align_step: int = 1, align_corr_thres: float = 0.,
         _save_aligned: bool | str = False,
-            alpha: float = 1) -> np.ndarray:
+            alpha: float = 1, process_noise_factor: float = 1.) -> np.ndarray:
         """
         Invert for a gridded velocity change time-series. This approach
         uses a Kalman filter to invert for the velocity changes on a grid.
@@ -586,7 +586,8 @@ class DVGrid(object):
             except IndexError as e:
                 if verbose:
                     print(e)
-                x, P = predict(x, cm, np.eye(x.size))
+                x, P = predict(
+                    x, P, np.eye(x.size), Q=cm*process_noise_factor)
                 x, P = update(x, P, None, 1)
                 self.vel_change = dvgrid[..., ii] = x.reshape(self.xgrid.shape)
                 continue
@@ -604,7 +605,8 @@ class DVGrid(object):
             cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
             if P is None:
                 P = cm
-            x, P = predict(x, P, np.eye(x.size), Q=cm, alpha=alpha)
+            x, P = predict(
+                x, P, np.eye(x.size), Q=cm*process_noise_factor, alpha=alpha)
             x, P = update(x, P, vals, cd, H=skernels)
             self.vel_change = dvgrid[..., ii] = x.reshape(self.xgrid.shape)
         return dvgrid
