@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Thursday, 21st December 2023 04:00:23 pm
+Last Modified: Friday, 22nd December 2023 10:53:15 am
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -568,7 +568,7 @@ class DVGrid(object):
         # Model variance, smoothed diagonal matrix
         cm = compute_cm(scaling_factor, corr_len, std_model, dist)
         dvgrid = np.zeros((*self.xgrid.shape, len(utcs)))
-        P = None
+        P = 0
         for ii, utc in enumerate(utcs):
             if align_dv:
                 # this operation is in-place
@@ -603,8 +603,8 @@ class DVGrid(object):
                 slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2)
             # covariance matrix
             cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
-            if P is None:
-                P = cm
+            # if P is None:
+            #     P = cm
             x, P = predict(
                 x, P, np.eye(x.size), Q=cm*process_noise_factor, alpha=alpha)
             x, P = update(x, P, vals, cd, H=skernels)
