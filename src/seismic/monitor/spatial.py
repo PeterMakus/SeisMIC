@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Friday, 22nd December 2023 10:53:15 am
+Last Modified: Monday, 25th December 2023 05:58:47 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -489,13 +489,11 @@ class DVGrid(object):
 
     def compute_dv_kalman(
         self, dvs: Iterator[DV], utcs: List[UTCDateTime],
-        scaling_factor: float, corr_len: float, std_model: float,
+        scaling_factor: float, corr_len: float, std_dv: float, std_dt: float,
         tw: Optional[Tuple[float, float]] = None,
         freq0: Optional[float] = None, freq1: Optional[float] = None,
-        verbose: bool = False, align_dv: bool = False,
-        align_step: int = 1, align_corr_thres: float = 0.,
-        _save_aligned: bool | str = False,
-            alpha: float = 1, process_noise_factor: float = 1.) -> np.ndarray:
+        verbose: bool = False, alpha: float = 1,
+            observation_type: str = 'dv') -> np.ndarray:
         """
         Invert for a gridded velocity change time-series. This approach
         uses a Kalman filter to invert for the velocity changes on a grid.
@@ -563,33 +561,41 @@ class DVGrid(object):
             in the last time step is saved in self.vel_change
         :rtype: np.ndarray
         """
-        x = np.zeros_like(self.xgrid).flatten()
+        # ToDo: Adjust sizes of process noise and cm, think about the initial
+        # state covariance matrix
+        # x = np.zeros_like(self.xgrid).flatten()
+        # vector containing dv/v and its first derivative
+        x = np.zeros(self.xgrid.size*2)
         dist = self._compute_dist_matrix()
+        # process matrix
+        F = np.eye(x.size, dtype=np.float32)
+        # every second row is velocity of the row above
+        for ii in range(x.size//2):
+            F[2*ii, 2*ii+1] = 1  # assume constant sampling for now
         # Model variance, smoothed diagonal matrix
-        cm = compute_cm(scaling_factor, corr_len, std_model, dist)
+        # needs to be adapted for the new case
+        c_dv = compute_cm(scaling_factor, corr_len, std_dv, dist)
+        c_dt = compute_cm(scaling_factor, corr_len, std_dt, dist)
         dvgrid = np.zeros((*self.xgrid.shape, len(utcs)))
-        P = 0
+        P = np.zeros_like(F, dtype=np.float32)
+        # starting covariance, it's unknown so we allow a lot for c_dt
+        P[1::2, 1::2] = c_dt*100
+        # process noise
+        Q = np.zeros_like(P)
+        Q[::2, ::2] = c_dv
+        Q[1::2, 1::2] = c_dt
         for ii, utc in enumerate(utcs):
-            if align_dv:
-                # this operation is in-place
-                self.align_dvs_to_grid(
-                    dvs, utc, align_step, align_corr_thres, _save_aligned)
-                # aligned in a previous step + newly aligned
-                dv_this_step = [
-                    dv for dv in dvs if dv.dv_processing.get('aligned', False)
-                    is not False]
-            else:
-                dv_this_step = dvs
             try:
                 vals, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
-                    = self._extract_info_dvs(dv_this_step, utc, verbose)
+                    = self._extract_info_dvs(dvs, utc, verbose)
             except IndexError as e:
                 if verbose:
                     print(e)
                 x, P = predict(
-                    x, P, np.eye(x.size), Q=cm*process_noise_factor)
-                x, P = update(x, P, None, 1)
-                self.vel_change = dvgrid[..., ii] = x.reshape(self.xgrid.shape)
+                    x, P, F, Q=Q)
+                x, P = update(x, P, None, None)
+                self.vel_change = dvgrid[..., ii] = x[::2].reshape(
+                    self.xgrid.shape)
                 continue
             tw = tw or twe
             freq0 = freq0 or freq0e
@@ -601,14 +607,24 @@ class DVGrid(object):
                 )
             skernels = self._compute_sensitivity_kernels(
                 slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2)
-            # covariance matrix
+            H = np.zeros((skernels.shape[0], skernels.shape[1]*2))
+            # if my observation is dt
+            if observation_type == 'dv':
+                H[:, ::2] = skernels
+            elif observation_type == 'dt':
+                H[:, 1::2] = skernels
+            else:
+                raise ValueError(
+                    f'Observation type {observation_type} unknown. '
+                    'only "dv" and "dt" (1st derivative) are allowed.'
+                )
+            # observational noise
             cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
-            # if P is None:
-            #     P = cm
             x, P = predict(
-                x, P, np.eye(x.size), Q=cm*process_noise_factor, alpha=alpha)
-            x, P = update(x, P, vals, cd, H=skernels)
-            self.vel_change = dvgrid[..., ii] = x.reshape(self.xgrid.shape)
+                x, P, F, Q=Q, alpha=alpha)
+            x, P = update(x, P, vals, cd, H=H)
+            self.vel_change = dvgrid[..., ii] = x[::2].reshape(
+                    self.xgrid.shape)
         return dvgrid
 
     def compute_dv_tsvd(
