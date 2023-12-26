@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Monday, 25th December 2023 05:58:47 pm
+Last Modified: Tuesday, 26th December 2023 11:12:06 am
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -493,7 +493,10 @@ class DVGrid(object):
         tw: Optional[Tuple[float, float]] = None,
         freq0: Optional[float] = None, freq1: Optional[float] = None,
         verbose: bool = False, alpha: float = 1,
-            observation_type: str = 'dv') -> np.ndarray:
+        observation_type: str = 'dv', align_dv: bool = False,
+        align_step: int = 1, align_corr_thres: float = 0.,
+        _save_aligned: bool | str = False
+            ) -> np.ndarray:
         """
         Invert for a gridded velocity change time-series. This approach
         uses a Kalman filter to invert for the velocity changes on a grid.
@@ -585,9 +588,19 @@ class DVGrid(object):
         Q[::2, ::2] = c_dv
         Q[1::2, 1::2] = c_dt
         for ii, utc in enumerate(utcs):
+            if align_dv:
+                # this operation is in-place
+                self.align_dvs_to_grid(
+                    dvs, utc, align_step, align_corr_thres, _save_aligned)
+                # aligned in a previous step + newly aligned
+                dv_this_step = [
+                    dv for dv in dvs if dv.dv_processing.get('aligned', False)
+                    is not False]
+            else:
+                dv_this_step = dvs
             try:
                 vals, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
-                    = self._extract_info_dvs(dvs, utc, verbose)
+                    = self._extract_info_dvs(dv_this_step, utc, verbose)
             except IndexError as e:
                 if verbose:
                     print(e)
