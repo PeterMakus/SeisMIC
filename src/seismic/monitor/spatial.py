@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 26th December 2023 11:12:06 am
+Last Modified: Tuesday, 26th December 2023 06:15:05 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -582,7 +582,9 @@ class DVGrid(object):
         dvgrid = np.zeros((*self.xgrid.shape, len(utcs)))
         P = np.zeros_like(F, dtype=np.float32)
         # starting covariance, it's unknown so we allow a lot for c_dt
-        P[1::2, 1::2] = c_dt*100
+        # Let's say 2% more than that seems hard to imagine
+        P[1::2, 1::2] = compute_cm(
+            scaling_factor, corr_len, 0.02, dist)
         # process noise
         Q = np.zeros_like(P)
         Q[::2, ::2] = c_dv
@@ -605,7 +607,7 @@ class DVGrid(object):
                 if verbose:
                     print(e)
                 x, P = predict(
-                    x, P, F, Q=Q)
+                    x, P, F, Q=Q, alpha=alpha)
                 x, P = update(x, P, None, None)
                 self.vel_change = dvgrid[..., ii] = x[::2].reshape(
                     self.xgrid.shape)
