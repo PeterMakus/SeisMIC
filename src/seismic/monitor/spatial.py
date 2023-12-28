@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 26th December 2023 06:37:35 pm
+Last Modified: Thursday, 28th December 2023 05:47:16 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -585,6 +585,10 @@ class DVGrid(object):
         # Let's say 5% more than that seems hard to imagine
         P[1::2, 1::2] = compute_cm(
             scaling_factor, corr_len, 0.05, dist)
+        # The actual velocity grid is well-constrained, so we assign
+        # a low variance
+        P[0::2, 0::2] = compute_cm(
+            scaling_factor, corr_len, 1e-3, dist)
         # process noise
         Q = np.zeros_like(P)
         Q[::2, ::2] = c_dv
