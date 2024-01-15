@@ -37,6 +37,9 @@ SeisMIC (**Seismological Monitoring using Interferometric Concepts**) is a pytho
 conda install -c conda-forge mpi4py
 
 pip install seismic
+
+# If you want to execute the tutorials, you will have to install jupyter as well
+pip install jupyter
 ```
 ### Installation from Source Code
 To obtain the lates features, you can install SeisMIC from its source code, available on GitHub.
@@ -67,6 +70,9 @@ conda activate seismic
 
 # Install the package in editable mode
 pip install -e .
+
+# If you want to execute the tutorials, you will have to install jupyter as well
+pip install jupyter
 ```
 
 ## Getting started
