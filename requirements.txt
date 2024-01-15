@@ -3,7 +3,7 @@
 # Broader requirements are specified in the environment.yml
 
 geographiclib
-h5py <=3.9.0
+h5py ==3.9.0
 matplotlib <=3.7.2
 mpi4py<=3.1.4
 numpy<=1.25.2
