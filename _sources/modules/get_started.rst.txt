@@ -107,6 +107,6 @@ Tutorial
 Along with the source code **SeisMIC** is distributed with two Jupyter notebooks that provide you with an easy example on how
 to use the code in `examples` on the `GitHub page <https://github.com/PeterMakus/SeisMIC>`_.
 These tutorials will encompass more topics and functionalities than the documentation. If you simply want to see
-a web version of those tutorials, you can find it at `tutorials <./modules/tutorials>`_.
+a web version of those tutorials, you can find it at `tutorials <./tutorials>`_.
 
 Aside from the tutorials, we recommend you continue reading this documentation.
