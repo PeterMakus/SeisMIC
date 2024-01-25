@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Thursday, 28th December 2023 05:47:16 pm
+Last Modified: Thursday, 25th January 2024 02:37:38 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -250,7 +250,8 @@ def compute_cm(
 
 def geo2cart(
     lat: np.ndarray | float, lon: np.ndarray | float,
-        lat0: float) -> Tuple[np.ndarray | float, np.ndarray | float]:
+    lat0: float, lon0: float) -> Tuple[
+        np.ndarray | float, np.ndarray | float]:
     """
     Convert geographic coordinates to Northing and Easting for a local grid.
 
@@ -263,19 +264,20 @@ def geo2cart(
     :type lon: np.ndarray | float
     :param lat0: Latitude of the lower left corner of the grid
     :type lat0: float
+    :param lon0: Latitude of the lower left corner of the grid
+    :type lon0: float
     :return: A tuple holding (Easting, Northing) in km and in the same shape
         as ``lat`` and ``lon``.
     :rtype: Tuple[np.ndarray, np.ndarray]
     """
+    if np.any(lat < lat0) or np.any(lon < lon0):
+        raise ValueError(
+            'Latitude and longitude have to be greater or equal than the '
+            'lower left corner of the grid.')
     # Northing
-    y = deg2km(lat)
+    y = deg2km(lat-lat0)
     # easting
-    x = deg2km(loc2deg(lat0, lon, lat0, 0))
-    if isinstance(lon, float) or isinstance(lon, int):
-        if lon < 0:
-            x = -x
-    else:
-        x[lon < 0] *= -1
+    x = deg2km(loc2deg(lat0, lon, lat0, lon0))
     return x, y
 
 
@@ -314,7 +316,7 @@ class DVGrid(object):
         self.lon0 = lon0
 
         # Compute local grid
-        x0, y0 = geo2cart(lat0, lon0, lat0)
+        x0, y0 = 0, 0
         self.xaxis = np.arange(x0, x0 + x + res, res)
         self.yaxis = np.arange(y0, y0 + y + res, res)
         self.res = res
@@ -1001,7 +1003,7 @@ class DVGrid(object):
         :param lons: Station Longitudes
         :type lons: Iterable[float]
         """
-        x, y = geo2cart(np.array(lats), np.array(lons), self.lat0)
+        x, y = geo2cart(np.array(lats), np.array(lons), self.lat0, self.lon0)
         if hasattr(self, 'statx'):
             self.statx = np.hstack((self.statx, x))
             self.staty = np.hstack((self.staty, y))
@@ -1082,7 +1084,7 @@ class DVGrid(object):
         :rtype: int | np.ndarray
         """
         # Find northing and easting of coordinates
-        x, y = geo2cart(lat, lon, self.lat0)
+        x, y = geo2cart(lat, lon, self.lat0, self.lon0)
 
         if isinstance(x, float) or isinstance(x, int):
             if np.all(abs(self.xf-x) > self.res) \
@@ -1135,8 +1137,8 @@ class DVGrid(object):
             on grid j
         :rtype: np.ndarray
         """
-        x0, y0 = geo2cart(slat0, slon0, self.lat0)
-        x1, y1 = geo2cart(slat1, slon1, self.lat0)
+        x0, y0 = geo2cart(slat0, slon0, self.lat0, self.lon0)
+        x1, y1 = geo2cart(slat1, slon1, self.lat0, self.lon0)
         skernels = []
 
         for xx0, yy0, xx1, yy1 in zip(x0, y0, x1, y1):

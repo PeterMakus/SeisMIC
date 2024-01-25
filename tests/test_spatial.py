@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 11:07:27 am
-Last Modified: Friday, 28th July 2023 03:33:13 pm
+Last Modified: Thursday, 25th January 2024 02:42:24 pm
 '''
 
 import unittest
@@ -259,41 +259,32 @@ class TestGeo2Cart(unittest.TestCase):
     def test_result_latlonpos(self):
         lat = np.arange(10)
         lon = np.arange(11)
-        lat0 = 1
-        out = spt.geo2cart(lat, lon, lat0)
+        lat0 = 0
+        lon0 = 0
+        out = spt.geo2cart(lat, lon, lat0, lon0)
         self.assertEqual(out[0].shape, lon.shape)
         self.assertEqual(out[1].shape, lat.shape)
         self.assertTrue(np.all(out[0] >= 0))
         self.assertTrue(np.all(out[1] >= 0))
 
-    def test_result_lonneg(self):
+    def test_corner_inside(self):
         lat = np.arange(10)
-        lon = np.arange(-10, -5, 1)
-        lat0 = -5
-        out = spt.geo2cart(lat, lon, lat0)
-        self.assertEqual(out[0].shape, lon.shape)
-        self.assertEqual(out[1].shape, lat.shape)
-        self.assertTrue(np.all(out[0] < 0))
-        self.assertTrue(np.all(out[1] >= 0))
-
-    def test_result_lonneg_float(self):
-        lat = 10.
-        lon = -10
-        lat0 = -5
-        out = spt.geo2cart(lat, lon, lat0)
-        self.assertTrue(np.all(out[0] < 0))
-        self.assertTrue(np.all(out[1] >= 0))
+        lon = np.arange(11)
+        lat0 = 1
+        lon0 = 0
+        with self.assertRaises(ValueError):
+            spt.geo2cart(lat, lon, lat0, lon0)
 
     def test_result_len1(self):
         # Just making sure that it still remains a np array
         # otherwise this would introduce bugs
         lat = np.arange(1)
         lon = np.arange(-10, -9, 1)
+        lon0 = -11
         lat0 = -5
-        out = spt.geo2cart(lat, lon, lat0)
+        out = spt.geo2cart(lat, lon, lat0, lon0)
         self.assertEqual(out[0].shape, lon.shape)
         self.assertEqual(out[1].shape, lat.shape)
-        self.assertTrue(np.all(out[0] < 0))
         self.assertTrue(np.all(out[1] >= 0))
 
 
