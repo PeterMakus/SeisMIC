@@ -131,6 +131,7 @@ class Correlator(object):
         # find the available data
         network = options['net']['network']
         station = options['net']['station']
+        component = options['net']['component']
 
         # Store_Client
         self.store_client = store_client
@@ -183,7 +184,7 @@ class Correlator(object):
             self.avail_raw_data = []
             for net, stat in station:
                 self.avail_raw_data.extend(
-                    self.store_client._translate_wildcards(net, stat))
+                    self.store_client._translate_wildcards(net, stat, component))
             # make sure this only contains unique combinations
             # with several cores it added entries several times, don't know
             # why?
@@ -192,7 +193,7 @@ class Correlator(object):
         else:
             self.avail_raw_data = None
         self.avail_raw_data = self.comm.bcast(
-            self.avail_raw_data)
+            self.avail_raw_data, root=0)
         self.station = np.unique(np.array([
             [d[0], d[1]] for d in self.avail_raw_data]), axis=0).tolist()
         self.logger.debug(
@@ -777,6 +778,26 @@ def _compare_existing_data(ex_corr: dict, tr0: Trace, tr1: Trace) -> bool:
         return False
 
 
+def is_in_xcombis(id1: str, id2: str, rcombis: List[str] = None) -> bool:
+    """
+    Check if the specific combination is to be calculated according to 
+    xcombinations including the channel. xcombination are expected as 
+    Net1-Net2.Sta1-Sta2.Loc1-Loc2.Cha1-Cha2
+    """
+    for ida, idb in [[id1, id2], [id2,id1]]:
+        print(rcombis)
+        n1,s1,l1,c1 = ida.split('.')
+        n2,s2,l2,c2 = idb.split('.')
+        tcombi = n1+'-'+n2+'.'+s1+'-'+s2+'.'+l1+'-'+l2+'.'+c1+'-'+c2
+        print(tcombi)
+        for combi in rcombis:
+            if tcombi in combi:
+                print('true')
+                return True
+        print('false')
+    return False
+
+
 def calc_cross_combis(
     st: Stream, ex_corr: dict, method: str = 'betweenStations',
         rcombis: List[str] = None) -> list:
@@ -826,9 +847,11 @@ def calc_cross_combis(
                     # check first whether this combi is in dict
                     if _compare_existing_data(ex_corr, tr, tr1):
                         continue
-                    if rcombis is not None and not any(all(
-                        i0 in i1 for i0 in [
-                            n, n2, s, s2]) for i1 in rcombis):
+                    if rcombis is not None and not is_in_xcombis(tr.id, 
+                        tr1.id, rcombis):
+                        #and not any(all(
+                        #i0 in i1 for i0 in [
+                        #    n, n2, s, s2]) for i1 in rcombis):
                         # If particular combis are requested, compute only
                         # those
                         continue
