@@ -283,7 +283,7 @@ class TestCorrMatMirror(unittest.TestCase):
         exp_res = data[:, -251:]
         exp_res[:, 1:] += np.fliplr(data[:, 0:250])
         exp_res[:, 1:] /= 2
-        self.assertTrue(np.allclose(exp_res, mdata))
+        np.testing.assert_allclose(exp_res, mdata)
 
     def test_right_side(self):
         stats = CorrStats({
@@ -291,7 +291,7 @@ class TestCorrMatMirror(unittest.TestCase):
         data = np.empty((2, 251))
         mdata, mstats = pcp.corr_mat_mirror(data.copy(), stats.copy())
         self.assertEqual(mstats, stats)
-        self.assertTrue(np.all(mdata == data))
+        np.testing.assert_allclose(mdata, data)
 
     def test_left_side(self):
         stats = CorrStats({
@@ -299,7 +299,7 @@ class TestCorrMatMirror(unittest.TestCase):
         data = np.empty((2, 251))
         mdata, mstats = pcp.corr_mat_mirror(data.copy(), stats.copy())
         self.assertEqual(mstats, stats)
-        self.assertTrue(np.all(mdata == data))
+        np.testing.assert_allclose(mdata, data)
 
     def test_asymmetric_left(self):
         stats = CorrStats({
@@ -312,7 +312,7 @@ class TestCorrMatMirror(unittest.TestCase):
         exp_res = data[:, -251:]
         exp_res[:, 1:101] += np.fliplr(data[:, 0:100])
         exp_res[:, 1:101] /= 2
-        self.assertTrue(np.allclose(exp_res, mdata))
+        np.testing.assert_allclose(exp_res, mdata)
 
     def test_asymmetric_right(self):
         stats = CorrStats({
@@ -326,7 +326,7 @@ class TestCorrMatMirror(unittest.TestCase):
         exp_res[:, :101] = data[:, -101:]
         exp_res[:, 1:251] += np.fliplr(data[:, 0:250])
         exp_res[:, 1:101] /= 2
-        self.assertTrue(np.allclose(exp_res, mdata))
+        np.testing.assert_allclose(exp_res, mdata)
 
 
 class TestCorrMatTaper(unittest.TestCase):
