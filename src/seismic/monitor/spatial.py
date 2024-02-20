@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 20th February 2024 11:43:33 am
+Last Modified: Tuesday, 20th February 2024 11:45:15 am
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -989,8 +989,8 @@ class DVGrid(object):
         """
         Compute the posterior covariance matrix.
         """
-        a = np.dot(np.dot(skernels.T, np.inv(cd)), skernels)
-        return np.inv(a + np.inv(cm))
+        a = np.dot(np.dot(skernels.T, np.linalg.inv(cd)), skernels)
+        return np.linalg.inv(a + np.linalg.inv(cm))
 
     def _extract_info_dvs(
         self, dvs: Iterable[DV], utc: UTCDateTime, verbose: bool) -> Tuple[
