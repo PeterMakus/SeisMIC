@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 20th February 2024 11:36:20 am
+Last Modified: Tuesday, 20th February 2024 11:43:33 am
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -851,8 +851,8 @@ class DVGrid(object):
         self, dvs: Iterable[DV], utc: UTCDateTime, scaling_factor: float,
         corr_len: float, std_model: float,
         tw: Optional[Tuple[float, float]] = None,
-        freq0: Optional[float] = None, freq1: Optional[float] = None) \
-            -> np.ndarray:
+        freq0: Optional[float] = None, freq1: Optional[float] = None,
+            verbose: bool = False) -> np.ndarray:
         """
         Compute the model resolution of the dv/v model.
 
@@ -902,7 +902,7 @@ class DVGrid(object):
             scaling_factor, corr_len, std_model,
             self._compute_dist_matrix())
         _, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
-            = self._extract_info_dvs(dvs, utc)
+            = self._extract_info_dvs(dvs, utc, verbose)
         freq0 = freq0 or freq0e
         freq1 = freq1 or freq1e
         tw = tw or twe
@@ -925,8 +925,8 @@ class DVGrid(object):
         self, dvs: Iterable[DV], utc: UTCDateTime, scaling_factor: float,
         corr_len: float, std_model: float,
         tw: Optional[Tuple[float, float]] = None,
-        freq0: Optional[float] = None, freq1: Optional[float] = None) \
-            -> np.ndarray:
+        freq0: Optional[float] = None, freq1: Optional[float] = None,
+            verbose: bool = False) -> np.ndarray:
         """
         Computes the posterior covariance matrix of the dv/v model.
 
@@ -968,7 +968,7 @@ class DVGrid(object):
             scaling_factor, corr_len, std_model,
             self._compute_dist_matrix())
         _, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
-            = self._extract_info_dvs(dvs, utc)
+            = self._extract_info_dvs(dvs, utc, verbose)
         freq0 = freq0 or freq0e
         freq1 = freq1 or freq1e
         tw = tw or twe
