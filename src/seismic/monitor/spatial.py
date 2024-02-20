@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Thursday, 25th January 2024 02:37:38 pm
+Last Modified: Tuesday, 20th February 2024 11:36:20 am
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -921,15 +921,76 @@ class DVGrid(object):
         self.resolution = self._compute_resolution(skernels, a, b)
         return self.resolution
 
-    def _compute_resolution(
-        self, skernels: np.ndarray, a: np.ndarray,
-            b: np.ndarray) -> np.ndarray:
+    def compute_posterior_covariance(
+        self, dvs: Iterable[DV], utc: UTCDateTime, scaling_factor: float,
+        corr_len: float, std_model: float,
+        tw: Optional[Tuple[float, float]] = None,
+        freq0: Optional[float] = None, freq1: Optional[float] = None) \
+            -> np.ndarray:
         """
-        The actual computation of the model resolution.
+        Computes the posterior covariance matrix of the dv/v model.
+
+        :param dvs: The :class:``~seismic.monitor.dv.DV`` objects to use.
+            Note that the input can be an iterator, so that not actually all
+            dvs have to be loaded into RAM at the same time.
+        :type dvs: Iterator[DV]
+        :param utc: Time at which the velocity changes should be inverted.
+            Has to be covered by the ``DV`` objects.
+        :type utc: UTCDateTime
+        :param scaling_factor: Scaling factor, dependent on the cell length.
+            (e.g., 1*cell_length)
+        :type scaling_factor: float
+        :param corr_len: Length over which the parameters are related (high
+            value means stronger smoothing).
+        :type corr_len: float
+        :param std_model: A-priori standard deviation of the model. Corresponds
+            to the best agreement between 1) the stability of the model for the
+            velocity variations and 2) the minimised difference between the
+            model predictions (output of the forward problem) and the data.
+            Can be estimated via the L-curve criterion (see Hansen 1992)
+        :type std_model: float
+        :param tw: Time window used to evaluate the velocity changes.
+            Given in the form Tuple[tw_start, tw_end]. Not required if dv
+            has attribute ``dv_processing``.
+        :type tw: Tuple[float, float], optional
+        :param freq0: high-pass frequency of the used bandpass filter.
+            Not required if dv has attribute ``dv_processing``.
+        :type freq0: float, optional
+        :param freq1: low-pass frequency of the used bandpass filter.
+            Not required if dv has attribute ``dv_processing``.
+        :type freq1: float, optional
+        :raises ValueError: For times that are not covered by the dvs
+            time-series.
+        :return: A gridded resolution matrix.
+        :rtype: np.ndarray
         """
-        res = np.sum(np.dot(np.dot(a, b), skernels), axis=-1)
-        self.resolution = res.reshape(self.xgrid.shape)
-        return self.resolution
+        cm = compute_cm(
+            scaling_factor, corr_len, std_model,
+            self._compute_dist_matrix())
+        _, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
+            = self._extract_info_dvs(dvs, utc)
+        freq0 = freq0 or freq0e
+        freq1 = freq1 or freq1e
+        tw = tw or twe
+        if None in [freq0, freq1, tw]:
+            raise AttributeError(
+                'The arguments freq0, freq1, and tw have to be defined if '
+                'dv does not have the attribute "dv_processing".'
+            )
+        skernels = self._compute_sensitivity_kernels(
+            slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2)
+        cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
+
+        return self._compute_posterior_covariance(skernels, cm, cd)
+
+    def _compute_posterior_covariance(
+            self, skernels: np.ndarray, cm: np.ndarray,
+            cd: np.ndarray) -> np.ndarray:
+        """
+        Compute the posterior covariance matrix.
+        """
+        a = np.dot(np.dot(skernels.T, np.inv(cd)), skernels)
+        return np.inv(a + np.inv(cm))
 
     def _extract_info_dvs(
         self, dvs: Iterable[DV], utc: UTCDateTime, verbose: bool) -> Tuple[
