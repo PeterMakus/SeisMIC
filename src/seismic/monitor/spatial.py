@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 20th February 2024 11:45:15 am
+Last Modified: Tuesday, 27th February 2024 11:57:06 am
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -25,7 +25,6 @@ import numpy as np
 from obspy.geodetics.base import locations2degrees as loc2deg
 from obspy.geodetics.base import degrees2kilometers as deg2km
 from obspy import UTCDateTime
-from filterpy.kalman import predict, update
 
 from seismic.monitor.dv import DV
 
@@ -161,13 +160,6 @@ def sensitivity_kernel(
     if denom == 0:
         return np.zeros_like(dist_s1_x0)
     dist_s2_x0 = compute_grid_dist(x, y, s2[0], s2[1])
-    # does the direct wave have to be divided by dt?
-    # This here takes way more time and RAM, I don't know why
-    # nom = np.trapz(
-    #     probability(
-    #         dist_s1_x0, T, vel, mf_path, atol=atol) * probability(
-    #         dist_s2_x0, t-T, vel, mf_path, atol=atol),
-    #     dx=dt, axis=0)
     nom = np.trapz(
         [probability(
             dist_s1_x0, tt, vel, mf_path, atol=atol) * probability(
@@ -489,165 +481,6 @@ class DVGrid(object):
             self.resolution = self._compute_resolution(skernels, a, b)
         return self.vel_change
 
-    def compute_dv_kalman(
-        self, dvs: Iterator[DV], utcs: List[UTCDateTime],
-        scaling_factor: float, corr_len: float, std_dv: float, std_dt: float,
-        tw: Optional[Tuple[float, float]] = None,
-        freq0: Optional[float] = None, freq1: Optional[float] = None,
-        verbose: bool = False, alpha: float = 1,
-        observation_type: str = 'dv', align_dv: bool = False,
-        align_step: int = 1, align_corr_thres: float = 0.,
-        _save_aligned: bool | str = False
-            ) -> np.ndarray:
-        """
-        Invert for a gridded velocity change time-series. This approach
-        uses a Kalman filter to invert for the velocity changes on a grid.
-        The distinct advantage of this approach is that the inversion is
-        aware of the temporal correlation of the velocity changes and adapts
-        the model variance accordingly. However, this approach is significantly
-        slower than the linear least-squares or tsvd approaches.
-
-        The algorithm will perform the following steps:
-        1. Computes the sensitivity kernels for each station pair.
-        2. Computes model and data variance.
-        3. Inverts the velocity changes onto a flattened grid for each time
-            step.
-
-        .. note::
-            All computations are performed on a flattened grid, so that the
-            grid is actually just one-dimensional. The return value is
-            reshaped onto the shape of self.xgrid.
-
-        .. note::
-            The returned value and the value in self.vel_change is strictly
-            speaking not a velocity change, but an epsilon/stretch value that
-            corresponds to -dv/v
-
-
-        :param dvs: The :class:``~seismic.monitor.dv.DV`` objects to use.
-            Note that the input can be an iterator, so that not actually all
-            dvs have to be loaded into RAM at the same time.
-        :type dvs: Iterator[DV]
-        :param utcs: List of times at which the velocity changes should be
-            inverted.
-        :type utcs: List[UTCDateTime]
-        :param scaling_factor: Scaling factor, dependent on the cell length.
-            (e.g., 1*cell_length)
-        :type scaling_factor: float
-        :param corr_len: Length over which the parameters are related (high
-            value means stronger smoothing).
-        :type corr_len: float
-        :param std_model: A-priori standard deviation of the model. Corresponds
-            to the best agreement between 1) the stability of the model for the
-            velocity variations and 2) the minimised difference between the
-            model predictions (output of the forward problem) and the data.
-            Can be estimated via the L-curve criterion (see Hansen 1992)
-        :type std_model: float
-        :param tw: Time window used to evaluate the velocity changes.
-            Given in the form Tuple[tw_start, tw_end]. Not required if
-            the used dvs have a ``dv_processing`` attribute.
-        :type tw: Tuple[float, float], optional
-        :param freq0: high-pass frequency of the used bandpass filter.
-            Not required if the used dvs have a ``dv_processing`` attribute.
-        :type freq0: float, optional
-        :param freq1: low-pass frequency of the used bandpass filter.
-            Not required  the used dvs have a ``dv_processing`` attribute.
-        :type freq1: float, optional
-        :param compute_resolution: Compute the resolution matrix?
-            Will be saved in self.resolution
-        :type compute_resolution: bool, defaults to False
-        :raises ValueError: For times that are not covered by the dvs
-            time-series.
-        :return: A 3D dv-grid (with corresponding coordinates in
-            self.xgrid and self.ygrid or self.xaxis and self.yaxis,
-            respectively) utcs (input) is then the last axis.
-            Note this is actually an epsilon grid (meaning
-            it represents the stretch value i.e., -dv/v). The velocity change
-            in the last time step is saved in self.vel_change
-        :rtype: np.ndarray
-        """
-        # ToDo: Adjust sizes of process noise and cm, think about the initial
-        # state covariance matrix
-        # x = np.zeros_like(self.xgrid).flatten()
-        # vector containing dv/v and its first derivative
-        x = np.zeros(self.xgrid.size*2)
-        dist = self._compute_dist_matrix()
-        # process matrix
-        F = np.eye(x.size, dtype=np.float32)
-        # every second row is velocity of the row above
-        for ii in range(x.size//2):
-            F[2*ii, 2*ii+1] = 1  # assume constant sampling for now
-        # Model variance, smoothed diagonal matrix
-        # needs to be adapted for the new case
-        c_dv = compute_cm(scaling_factor, corr_len, std_dv, dist)
-        c_dt = compute_cm(scaling_factor, corr_len, std_dt, dist)
-        dvgrid = np.zeros((*self.xgrid.shape, len(utcs)))
-        P = np.zeros_like(F, dtype=np.float32)
-        # starting covariance, it's unknown so we allow a lot for c_dt
-        # Let's say 5% more than that seems hard to imagine
-        P[1::2, 1::2] = compute_cm(
-            scaling_factor, corr_len, 0.05, dist)
-        # The actual velocity grid is well-constrained, so we assign
-        # a low variance
-        P[0::2, 0::2] = compute_cm(
-            scaling_factor, corr_len, 1e-3, dist)
-        # process noise
-        Q = np.zeros_like(P)
-        Q[::2, ::2] = c_dv
-        Q[1::2, 1::2] = c_dt
-        for ii, utc in enumerate(utcs):
-            if align_dv:
-                # this operation is in-place
-                self.align_dvs_to_grid(
-                    dvs, utc, align_step, align_corr_thres, _save_aligned)
-                # aligned in a previous step + newly aligned
-                dv_this_step = [
-                    dv for dv in dvs if dv.dv_processing.get('aligned', False)
-                    is not False]
-            else:
-                dv_this_step = dvs
-            try:
-                vals, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
-                    = self._extract_info_dvs(dv_this_step, utc, verbose)
-            except IndexError as e:
-                if verbose:
-                    print(e)
-                x, P = predict(
-                    x, P, F, Q=Q, alpha=alpha)
-                x, P = update(x, P, None, None)
-                self.vel_change = dvgrid[..., ii] = x[::2].reshape(
-                    self.xgrid.shape)
-                continue
-            tw = tw or twe
-            freq0 = freq0 or freq0e
-            freq1 = freq1 or freq1e
-            if None in [freq0, freq1, tw]:
-                raise AttributeError(
-                    'The arguments freq0, freq1, and tw have to be defined if '
-                    'dv does not have the attribute "dv_processing".'
-                )
-            skernels = self._compute_sensitivity_kernels(
-                slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2)
-            H = np.zeros((skernels.shape[0], skernels.shape[1]*2))
-            # if my observation is dt
-            if observation_type == 'dv':
-                H[:, ::2] = skernels
-            elif observation_type == 'dt':
-                H[:, 1::2] = skernels
-            else:
-                raise ValueError(
-                    f'Observation type {observation_type} unknown. '
-                    'only "dv" and "dt" (1st derivative) are allowed.'
-                )
-            # observational noise
-            cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
-            x, P = predict(
-                x, P, F, Q=Q, alpha=alpha)
-            x, P = update(x, P, vals, cd, H=H)
-            self.vel_change = dvgrid[..., ii] = x[::2].reshape(
-                    self.xgrid.shape)
-        return dvgrid
-
     def compute_dv_tsvd(
         self, dvs: Iterator[DV], utc: UTCDateTime,
         tw: Optional[Tuple[float, float]] = None,
@@ -676,6 +509,12 @@ class DVGrid(object):
             The returned value and the value in self.vel_change is strictly
             speaking not a velocity change, but an epsilon value. That
             corresponds to -dv/v
+
+        .. warning::
+            This has not been thoroughly tested and has the disadvantage
+            that no "physical" prior weighting is done (as opposed to the
+            linear-least-squares method), where data weighting is performed
+            based on the coherence values.
 
 
         :param dvs: The :class:``~seismic.monitor.dv.DV`` objects to use.
@@ -727,124 +566,6 @@ class DVGrid(object):
         m = np.dot(G_inv, vals)
         # m is the flattened array, reshape onto grid
         self.vel_change = m.reshape(self.xgrid.shape)
-        return self.vel_change
-
-    def compute_dv_twsvd(
-        self, dvs: Iterator[DV], utc: UTCDateTime, scaling_factor: float,
-        corr_len: float, std_model: float,
-        tw: Optional[Tuple[float, float]] = None,
-        freq0: Optional[float] = None, freq1: Optional[float] = None,
-        compute_resolution: bool = False,
-            cutoff: float = .2, verbose: bool = False) -> np.ndarray:
-        """
-        Perform a linear least-squares inversion of station specific velocity
-        changes (dv/v) at time ``t``.
-
-        The algorithm will perform the following steps:
-        1. Computes the sensitivity kernels for each station pair.
-        2. Computes model and data variance.
-        3. Inverts the velocity changes onto a flattened grid.
-
-        .. note::
-            All computations are performed on a flattened grid, so that the
-            grid is actually just one-dimensional. The return value is
-            reshaped onto the shape of self.xgrid.
-
-        .. note::
-            The returned value and the value in self.vel_change is strictly
-            speaking not a velocity change, but an epsilon value. That
-            corresponds to -dv/v
-
-
-        :param dvs: The :class:``~seismic.monitor.dv.DV`` objects to use.
-            Note that the input can be an iterator, so that not actually all
-            dvs have to be loaded into RAM at the same time.
-        :type dvs: Iterator[DV]
-        :param utc: Time at which the velocity changes should be inverted.
-            Has to be covered by the ``DV`` objects.
-        :type utc: UTCDateTime
-        :param scaling_factor: Scaling factor, dependent on the cell length.
-            (e.g., 1*cell_length)
-        :type scaling_factor: float
-        :param corr_len: Length over which the parameters are related (high
-            value means stronger smoothing).
-        :type corr_len: float
-        :param std_model: A-priori standard deviation of the model. Corresponds
-            to the best agreement between 1) the stability of the model for the
-            velocity variations and 2) the minimised difference between the
-            model predictions (output of the forward problem) and the data.
-            Can be estimated via the L-curve criterion (see Hansen 1992)
-        :type std_model: float
-        :param tw: Time window used to evaluate the velocity changes.
-            Given in the form Tuple[tw_start, tw_end]. Not required if
-            the used dvs have a ``dv_processing`` attribute.
-        :type tw: Tuple[float, float], optional
-        :param freq0: high-pass frequency of the used bandpass filter.
-            Not required if the used dvs have a ``dv_processing`` attribute.
-        :type freq0: float, optional
-        :param freq1: low-pass frequency of the used bandpass filter.
-            Not required  the used dvs have a ``dv_processing`` attribute.
-        :type freq1: float, optional
-        :param compute_resolution: Compute the resolution matrix?
-            Will be saved in self.resolution
-        :type compute_resolution: bool, defaults to False
-        :raises ValueError: For times that are not covered by the dvs
-            time-series.
-        :return: The dv-grid (with corresponding coordinates in
-            self.xgrid and self.ygrid or self.xaxis and self.yaxis,
-            respectively). Note this is actually an epsilon grid (meaning
-            it represents the stretch value i.e., -dv/v)
-        :rtype: np.ndarray
-        """
-        vals, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
-            = self._extract_info_dvs(dvs, utc, verbose)
-        tw = tw or twe
-        freq0 = freq0 or freq0e
-        freq1 = freq1 or freq1e
-        if None in [freq0, freq1, tw]:
-            raise AttributeError(
-                'The arguments freq0, freq1, and tw have to be defined if '
-                'dv does not have the attribute "dv_processing".'
-            )
-        skernels = self._compute_sensitivity_kernels(
-            slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2)
-        cd_inv = self._compute_cd(skernels, freq0, freq1, tw, corrs)
-        # cd is the diagonal matrix containing the data variance
-        # to create a weighting matrix we have to take the inverse of cd
-        cd = np.linalg.inv(cd_inv)
-
-        # Linear Least-Squares Inversion
-        # Compute the pseudo inverse of G using an svd
-        # why do I have to transpose skernels here?
-        K = np.dot(skernels.T, cd_inv)
-        K_w = np.dot(np.sqrt(cd), K.T)
-        K_w = np.dot(K_w.T, np.sqrt(cd)).T
-        X, s, Y = np.linalg.svd(K_w, full_matrices=False)
-        u = np.dot(np.sqrt(cd_inv), X)
-        vh = np.dot(np.sqrt(cd_inv), Y)
-
-        # truncate s
-        s[s < max(s)*cutoff] = 0
-        # Compute the pseudoinverse of s
-        s_inv = np.zeros((vh.shape[0], u.shape[0]))
-        # I think s_inv should be transposed of what is above. if S has shape
-        # (n, m) then s_inv should have shape (m, n)
-        for i in range(s.shape[0]):
-            if np.isclose(s[i], 0):
-                continue
-            s_inv[i, i] = 1/s[i]
-        # # Compute the pseudoinverse of G
-        # vh should not have to be transposed here
-        a = np.dot(vh.T, s_inv)
-        G_inv = np.dot(a, np.conj(u.T))
-        G_inv = np.dot(G_inv, cd)
-
-        # Compute the model
-        m = np.dot(G_inv, vals)
-        # m is the flattened array, reshape onto grid
-        self.vel_change = m.reshape(self.xgrid.shape)
-        # if compute_resolution:
-        #     self.resolution = self._compute_resolution(skernels, a, b)
         return self.vel_change
 
     def compute_resolution(
@@ -991,6 +712,16 @@ class DVGrid(object):
         """
         a = np.dot(np.dot(skernels.T, np.linalg.inv(cd)), skernels)
         return np.linalg.inv(a + np.linalg.inv(cm))
+
+    def _compute_resolution(
+        self, skernels: np.ndarray, a: np.ndarray,
+            b: np.ndarray) -> np.ndarray:
+        """
+        The actual computation of the model resolution.
+        """
+        res = np.sum(np.dot(np.dot(a, b), skernels), axis=-1)
+        self.resolution = res.reshape(self.xgrid.shape)
+        return self.resolution
 
     def _extract_info_dvs(
         self, dvs: Iterable[DV], utc: UTCDateTime, verbose: bool) -> Tuple[
@@ -1146,14 +877,13 @@ class DVGrid(object):
         """
         # Find northing and easting of coordinates
         x, y = geo2cart(lat, lon, self.lat0, self.lon0)
-
-        if isinstance(x, float) or isinstance(x, int):
+        if not isinstance(x, np.ndarray):
             if np.all(abs(self.xf-x) > self.res) \
                     or np.all(abs(self.yf-y > self.res)):
                 raise ValueError(
                     'The point is outside the coordinate grid'
                 )
-            return np.argmin(abs(self.xf-x)+abs(self.yf-y))
+            return np.argmin(abs(self.xf-x)**2+abs(self.yf-y)**2)
         if np.all(np.array([abs(self.xf-xx) for xx in x]) > self.res)\
                 or np.all(np.array([abs(self.yf-yy) for yy in y]) > self.res):
             raise ValueError(
@@ -1161,7 +891,8 @@ class DVGrid(object):
             )
         ii = np.array(
             [np.argmin(
-                abs(self.xf-xx)+abs(self.yf-yy)) for xx, yy in zip(x, y)])
+                abs(self.xf-xx)**2+abs(self.yf-yy)**2) for xx, yy in zip(
+                    x, y)])
         return ii
 
     def _compute_sensitivity_kernels(

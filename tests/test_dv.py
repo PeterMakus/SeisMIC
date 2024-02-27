@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 27th October 2021 12:58:15 pm
-Last Modified: Monday, 6th March 2023 11:40:07 am
+Last Modified: Tuesday, 27th February 2024 01:52:46 pm
 '''
 
 import unittest
@@ -62,6 +62,7 @@ class TestDV(unittest.TestCase):
             corr=self.dv.corr, value=self.dv.value, sim_mat=self.dv.sim_mat,
             second_axis=self.dv.second_axis,
             method_array=np.array([self.dv.method]),
+            aligned=False,
             vt_array=np.array([self.dv.value_type]), corrs=self.dv.corrs,
             stretches=self.dv.stretches, n_stat=self.dv.n_stat,
             freq_min=0, freq_max=1, tw_start=2, tw_len=3, sides='bla')
@@ -81,6 +82,7 @@ class TestDV(unittest.TestCase):
             '/save/to/here',
             corr=self.dv.corr, value=self.dv.value, sim_mat=self.dv.sim_mat,
             second_axis=self.dv.second_axis,
+            aligned=False,
             method_array=np.array([self.dv.method]),
             vt_array=np.array([self.dv.value_type]), corrs=self.dv.corrs,
             stretches=self.dv.stretches, n_stat=self.dv.n_stat,
@@ -133,21 +135,23 @@ class TestReadDV(unittest.TestCase):
             'corr': np.nan, 'value': 1, 'vt_array': [['s']], 'sim_mat': 3,
             'second_axis': 4, 'method_array': [['d']],
             'stretches': 3, 'corrs': 5, 'freq_min': 0, 'freq_max': 1,
-            'tw_start': 2, 'tw_len': 3}
+            'tw_start': 2, 'tw_len': 3, 'sides': 'both',
+            'aligned': 5}
         dvout = dv.read_dv('/my/dv_file')
         npload_mock.assert_called_once_with('/my/dv_file')
         load_header_mock.assert_called_once_with({
             'corr': np.nan, 'value': 1, 'vt_array': [['s']], 'sim_mat': 3,
             'second_axis': 4, 'method_array': [['d']],
             'corrs': 5, 'stretches': 3, 'freq_min': 0, 'freq_max': 1,
-            'tw_start': 2, 'tw_len': 3})
+            'tw_start': 2, 'tw_len': 3, 'sides': 'both', 'aligned': 5})
         self.assertDictEqual(dvout.__dict__, {
             'corr': np.nan, 'value': 1, 'value_type': 's', 'sim_mat': 3,
             'second_axis': 4, 'method': 'd', 'stats': CorrStats(),
             'corrs': 5, 'stretches': 3, 'n_stat': None, 'avail': False,
             'dv_processing': {
-                'freq_min': 0, 'freq_max': 1,
-                'tw_start': 2, 'tw_len': 3}})
+                'aligned': 5, 'sides': 'both',
+                'freq_min': 0., 'freq_max': 1.,
+                'tw_start': 2., 'tw_len': 3.}})
 
     @patch('seismic.monitor.dv.np.load')
     @patch('seismic.monitor.dv.mu.load_header_from_np_array')

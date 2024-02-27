@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 11:07:27 am
-Last Modified: Thursday, 25th January 2024 02:42:24 pm
+Last Modified: Tuesday, 27th February 2024 11:58:51 am
 '''
 
 import unittest
@@ -63,9 +63,9 @@ class TestProbability(unittest.TestCase):
 
     def test_prob_rand(self):
         # in any other case this should be 0 < probability < 1
-        dist = np.random.rand() + 3
-        t = np.random.rand() + 5
-        c = 2/t + .01 + np.random.rand()
+        dist = 3
+        t = 5 + np.random.rand()
+        c = 2/t + .01
         # mf path should not matter
         self.assertGreater(spt.probability(dist, t, c, 10, c*t/2), 0)
         self.assertLess(spt.probability(dist, t, c, 10, c*t/2), 1)
@@ -307,7 +307,7 @@ class TestDVGrid(unittest.TestCase):
             st_mock.return_value, _ = np.meshgrid(
                 np.arange(100), np.arange(100))
             out = self.dvg.forward_model(mod, dvmock, utc=0)
-            ex_mock.assert_called_once_with(dvmock, 0)
+            ex_mock.assert_called_once_with(dvmock, 0, False)
             st_mock.assert_called_once_with(
                 'slat0', 'slon0', 'slat1', 'slon1', 5)
         np.testing.assert_allclose(out, np.ones(100)*4950)
@@ -360,7 +360,7 @@ class TestDVGrid(unittest.TestCase):
             out = self.dvg.compute_dv_grid(
                 dvmock, 0, scaling_factor, corr_len,
                 std_model, compute_resolution=False)
-            ex_mock.assert_called_once_with(dvmock, 0)
+            ex_mock.assert_called_once_with(dvmock, 0, False)
             st_mock.assert_called_once_with(
                 'slat0', 'slon0', 'slat1', 'slon1', 5)
             cd_mock.assert_called_once_with(
@@ -395,7 +395,7 @@ class TestDVGrid(unittest.TestCase):
                 dvmock, 0, scaling_factor, corr_len,
                 std_model, compute_resolution=True, tw=(3, 7), freq0=3,
                 freq1=5)
-            ex_mock.assert_called_once_with(dvmock, 0)
+            ex_mock.assert_called_once_with(dvmock, 0, False)
             st_mock.assert_called_once_with(
                 'slat0', 'slon0', 'slat1', 'slon1', 5)
             cd_mock.assert_called_once_with(
@@ -444,7 +444,7 @@ class TestDVGrid(unittest.TestCase):
 
             self.dvg.compute_resolution(
                 dvmock, 0, scaling_factor, corr_len, std_model)
-            ex_mock.assert_called_once_with(dvmock, 0)
+            ex_mock.assert_called_once_with(dvmock, 0, False)
             st_mock.assert_called_once_with(
                 'slat0', 'slon0', 'slat1', 'slon1', 5)
             cd_mock.assert_called_once_with(
@@ -476,7 +476,7 @@ class TestDVGrid(unittest.TestCase):
             self.dvg.compute_resolution(
                 dvmock, 0, scaling_factor, corr_len, std_model, tw=(3, 7),
                 freq0=3, freq1=5)
-            ex_mock.assert_called_once_with(dvmock, 0)
+            ex_mock.assert_called_once_with(dvmock, 0, False)
             st_mock.assert_called_once_with(
                 'slat0', 'slon0', 'slat1', 'slon1', 5)
             cd_mock.assert_called_once_with(
@@ -520,7 +520,7 @@ class TestDVGrid(unittest.TestCase):
             'tw_start': 3, 'tw_len': 4, 'freq_min': 1, 'freq_max': 3}
         with mock.patch.object(self.dvg, '_add_stations') as stat_mock:
             val, corr, slat0, slon0, slat1, slon1, tw, freq0, freq1\
-                = self.dvg._extract_info_dvs([dv], 155)
+                = self.dvg._extract_info_dvs([dv], 155, verbose=False)
             stat_mock.assert_has_calls([
                 mock.call(np.array(35.2), np.array(-5)),
                 mock.call(np.array(34.2), np.array(-6))]
@@ -548,7 +548,7 @@ class TestDVGrid(unittest.TestCase):
         dv.dv_processing = None
         with mock.patch.object(self.dvg, '_add_stations') as stat_mock:
             val, corr, slat0, slon0, slat1, slon1, tw, freq0, freq1\
-                = self.dvg._extract_info_dvs([dv], 155)
+                = self.dvg._extract_info_dvs([dv], 155, verbose=True)
             stat_mock.assert_has_calls([
                 mock.call(np.array(35.2), np.array(-5)),
                 mock.call(np.array(34.2), np.array(-6))]
@@ -579,7 +579,7 @@ class TestDVGrid(unittest.TestCase):
         dvs = [dv, dv2]
         with mock.patch.object(self.dvg, '_add_stations') as stat_mock:
             val, corr, slat0, slon0, slat1, slon1, tw, freq0, freq1\
-                = self.dvg._extract_info_dvs(dvs, 155)
+                = self.dvg._extract_info_dvs(dvs, 155, verbose=False)
             stat_mock.assert_has_calls([
                 mock.call(np.array(35.2), np.array(-5)),
                 mock.call(np.array(34.2), np.array(-6))]
@@ -606,7 +606,7 @@ class TestDVGrid(unittest.TestCase):
         dv.stats.evlo = -6
         dv.dv_processing = None
         with self.assertRaises(IndexError):
-            self.dvg._extract_info_dvs([dv], 155)
+            self.dvg._extract_info_dvs([dv], 155, verbose=False)
 
     def test_extract_dv_utc_outside(self):
         dv = mock.MagicMock()
@@ -620,7 +620,7 @@ class TestDVGrid(unittest.TestCase):
         dv.stats.evlo = -6
         dv.dv_processing = None
         with self.assertRaises(IndexError):
-            self.dvg._extract_info_dvs([dv], 500)
+            self.dvg._extract_info_dvs([dv], 500, verbose=False)
 
     @mock.patch('seismic.monitor.spatial.geo2cart')
     def test_add_stations_no_given(self, g2c_mock):
@@ -688,7 +688,8 @@ class TestDVGrid(unittest.TestCase):
     @mock.patch('seismic.monitor.spatial.geo2cart')
     def test_find_coord_float(self, g2c_mock: mock.MagicMock):
         g2c_mock.return_value = (self.dvg.xf[3], self.dvg.yf[3])
-        ii = self.dvg._find_coord(0, 0)
+        ii = self.dvg._find_coord(4, 5)
+        g2c_mock.assert_called_once_with(4, 5, self.dvg.lat0, self.dvg.lon0)
         self.assertEqual(ii, 3)
 
     @mock.patch('seismic.monitor.spatial.geo2cart')
@@ -726,8 +727,8 @@ class TestDVGrid(unittest.TestCase):
         out = self.dvg._compute_sensitivity_kernels(
             slat0, slon0, slat1, slon1, 1)
         calls = [
-            mock.call(slat0, slon0, self.dvg.lat0),
-            mock.call(slat1, slon1, self.dvg.lat0)]
+            mock.call(slat0, slon0, self.dvg.lat0, 0),
+            mock.call(slat1, slon1, self.dvg.lat0, 0)]
         g2c_mock.assert_has_calls(calls)
         np.testing.assert_array_almost_equal(out, np.array([np.zeros((4))]))
 
@@ -744,8 +745,8 @@ class TestDVGrid(unittest.TestCase):
         out = self.dvg._compute_sensitivity_kernels(
             slat0, slon0, slat1, slon1, 1)
         calls = [
-            mock.call(slat0, slon0, self.dvg.lat0),
-            mock.call(slat1, slon1, self.dvg.lat0)]
+            mock.call(slat0, slon0, self.dvg.lat0, 0),
+            mock.call(slat1, slon1, self.dvg.lat0, 0)]
         g2c_mock.assert_has_calls(calls)
         sk_mock.assert_not_called()
         np.testing.assert_array_almost_equal(out, np.array([np.zeros((2, 2))]))
