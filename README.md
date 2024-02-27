@@ -81,7 +81,7 @@ Access SeisMIC's documentation [here](https://petermakus.github.io/SeisMIC/index
 SeisMIC comes with a few tutorials (Jupyter notebooks). You can find those in the `examples/` directory.
 
 ## Acknowledging the Use of SeisMIC in your Work
-If you should use SeisMIC to create published scientific content please cite the SeisMIC paper: [Makus, P., & Sens-Schönfelder, C. (2023). SeisMIC-an Open Source Python Toolset to Compute Velocity Changes from Ambient Seismic Noise.](https://doi.org/10.26443/seismica.v3i1.1099).
+If you should use SeisMIC to create published scientific content please cite the SeisMIC paper: [Makus, P., & Sens-Schönfelder, C. (2024). SeisMIC-an Open Source Python Toolset to Compute Velocity Changes from Ambient Seismic Noise.](https://doi.org/10.26443/seismica.v3i1.1099).
 
 ## Reporting Bugs / Contact the developers
 This version is an early release. If you encounter any issues or unexpected behaviour, please [open an issue](https://github.com/PeterMakus/SeisMIC/issues/new/choose) here on GitHub.
