@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 25th June 2021 09:33:09 am
-Last Modified: Wednesday, 4th October 2023 09:36:24 am
+Last Modified: Wednesday, 28th February 2024 09:18:09 am
 '''
 
 import unittest
@@ -164,6 +164,14 @@ class TestCorrMatTrim(unittest.TestCase):
         end = 125
         ndata, _ = pcp.corr_mat_trim(self.data, self.stats, start, end)
         self.assertTrue(np.all(ndata == self.data))
+
+    def test_shape_vector(self):
+        data = np.ones((501,))
+        start = -10
+        end = 10
+        ndata, _ = pcp.corr_mat_trim(data, self.stats, start, end)
+        self.assertEqual(ndata.shape, (41,))
+        self.assertTrue(self.stats['npts'] == 41)
 
 
 class TestCorrMatResample(unittest.TestCase):

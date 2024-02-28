@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 11:07:27 am
-Last Modified: Tuesday, 27th February 2024 11:58:51 am
+Last Modified: Tuesday, 27th February 2024 03:10:52 pm
 '''
 
 import unittest
@@ -534,6 +534,17 @@ class TestDVGrid(unittest.TestCase):
         self.assertTupleEqual(tw, (3, 7))
         self.assertEqual(freq0, 1)
         self.assertEqual(freq1, 3)
+
+    def test_extract_dv_outside_time(self):
+        dv = mock.MagicMock()
+        dv.value = np.arange(100)
+        dv.corr = np.arange(100)/100
+        dv.stats.corr_start = np.arange(100) + 100
+        dv.stats.corr_end = dv.stats.corr_start + 1
+        with warnings.catch_warnings(record=True) as w:
+            with self.assertRaises(IndexError):
+                self.dvg._extract_info_dvs([dv], 1, verbose=True)
+            self.assertEqual(len(w), 1)
 
     def test_extract_dv_no_proc(self):
         dv = mock.MagicMock()
