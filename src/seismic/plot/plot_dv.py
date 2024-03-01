@@ -51,7 +51,10 @@ def plot_fancy_dv(
     ax.set_ylim(ylim)
     plt.ylabel(r'$\frac{dv}{v}$ [%]')
     plt.grid(True, axis='y')
-    locale.setlocale(locale.LC_ALL, "en_GB.utf8")
+    try:
+        locale.setlocale(locale.LC_ALL, "en_GB.utf8")
+    except:
+        locale.setlocale(locale.LC_ALL, "en_GB.utf-8")
     ax.xaxis.set_major_formatter(mdates.DateFormatter(dateformat))
     plt.xticks(rotation=25)
 

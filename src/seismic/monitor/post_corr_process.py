@@ -885,6 +885,8 @@ def corr_mat_stretch(
     # create or extract references
     if ref_trc is None:
         ref_trc = corr_mat_extract_trace(data, stats)
+    if ref_tr_stats is None:
+        ref_tr_stats = stats
 
     dv = multi_ref_vchange_and_align(
         data, ref_trc, tw=tw, stretch_range=stretch_range,
