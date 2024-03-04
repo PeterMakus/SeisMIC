@@ -1,6 +1,12 @@
 Our tutorials: From Zero to Noise-Hero
 ======================================
 
+Note that to execute this notebooks on your own machine, you will havev to install jupyter:
+
+.. code-block:: bash
+
+    pip install jupyter
+
 Basic Functionalities
 ---------------------
 - obtain raw data

@@ -194,8 +194,8 @@ class DV(object):
             title=title, plot_scatter=plot_scatter, return_ax=return_ax,
             dateformat=dateformat, ax=ax)
 
-    def smooth_sim_mat(
-            self, win_len: int, exclude_corr_below: Optional[float] = None):
+    def smooth_sim_mat(self, win_len: int, 
+        exclude_corr_below: Optional[float] = None):
         """
         Smoothes the similarity matrix along the correlation time axis.
 

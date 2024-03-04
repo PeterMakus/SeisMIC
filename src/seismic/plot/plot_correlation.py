@@ -231,6 +231,10 @@ def plot_corr_bulk(
     """
     set_mpl_params()
 
+    # check for constant sampling
+    if any(np.diff(corr_bulk.stats.corr_start,2)):
+        raise NotImplementedError('Correlation times have to be sampled'
+        ' at equal intervals.')
     # Create figure if no axes is specified
     if ax is None:
         plt.figure(figsize=(8, 6))
@@ -239,12 +243,13 @@ def plot_corr_bulk(
     extent = [
         corr_bulk.stats.start_lag,
         corr_bulk.stats.end_lag,
-        date2num(corr_bulk.stats.corr_start[0].datetime),
-        date2num(corr_bulk.stats.corr_start[-1].datetime)]
-    im = ax.imshow(corr_bulk.data, extent=extent, aspect='auto')
+        date2num(corr_bulk.stats.corr_start[-1].datetime),
+        date2num(corr_bulk.stats.corr_start[0].datetime)]
+    im = ax.imshow(corr_bulk.data, extent=extent, aspect='auto', 
+        cmap='seismic')
     ax.yaxis_date()
     ax.figure.autofmt_xdate(rotation=45)
-    ax.set_xlabel(r'$\{tau}$ [s]')
+    ax.set_xlabel(r'$\tau$ [s]')
 
     # Set limits
     if ylimits:
