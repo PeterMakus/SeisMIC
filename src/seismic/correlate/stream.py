@@ -10,7 +10,7 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Sunday, 29th October 2023 09:36:36 am
+Last Modified: Monday, 4th March 2024 02:40:32 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -644,7 +644,8 @@ class CorrBulk(object):
         refer to CorrStream.select_corr_time for details
         """
         cst = self.create_corr_stream()
-        scst = cst.select_corr_time(starttime=starttime, endtime=endtime,
+        scst = cst.select_corr_time(
+            starttime=starttime, endtime=endtime,
             include_partially_selected=include_partially_selected)
         return scst.create_corr_bulk()
 

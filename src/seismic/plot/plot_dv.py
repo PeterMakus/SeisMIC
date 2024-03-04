@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Thursday, 30th November 2023 09:54:29 am
+Last Modified: Monday, 4th March 2024 02:44:41 pm
 '''
 
 from datetime import datetime
@@ -53,7 +53,7 @@ def plot_fancy_dv(
     plt.grid(True, axis='y')
     try:
         locale.setlocale(locale.LC_ALL, "en_GB.utf8")
-    except:
+    except Exception:
         locale.setlocale(locale.LC_ALL, "en_GB.utf-8")
     ax.xaxis.set_major_formatter(mdates.DateFormatter(dateformat))
     plt.xticks(rotation=25)

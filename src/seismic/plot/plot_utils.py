@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 17th May 2021 12:25:54 pm
-Last Modified: Monday, 16th January 2023 11:13:58 am
+Last Modified: Monday, 4th March 2024 02:43:54 pm
 '''
 
 import locale
@@ -59,7 +59,7 @@ def set_mpl_params():
     # Show dates in English format
     try:
         locale.setlocale(locale.LC_ALL, "en_GB.utf8")
-    except:
+    except Exception:
         locale.setlocale(locale.LC_ALL, "en_GB.utf-8")
 
 

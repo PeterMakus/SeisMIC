@@ -20,6 +20,8 @@ net:
     # type: list of strings or string, wildcards allowed
     network : 'D0'
     station : ['BZG', 'ESO', 'KBG', 'KIR']
+    # For "component" only strings are allowed (no lists!)
+    component: 'Z'  # Use * or ? or None to allow all components
 
 #### parameters for correlation (emperical Green's function creation)
 co:

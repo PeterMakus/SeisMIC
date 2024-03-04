@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 19th July 2021 11:37:54 am
-Last Modified: Monday, 21st August 2023 12:21:53 pm
+Last Modified: Monday, 4th March 2024 02:42:42 pm
 '''
 import os
 from typing import Tuple, Optional, List
@@ -232,9 +232,9 @@ def plot_corr_bulk(
     set_mpl_params()
 
     # check for constant sampling
-    if any(np.diff(corr_bulk.stats.corr_start,2)):
-        raise NotImplementedError('Correlation times have to be sampled'
-        ' at equal intervals.')
+    if any(np.diff(corr_bulk.stats.corr_start, 2)):
+        raise NotImplementedError(
+            'Correlation times have to be sampled at equal intervals.')
     # Create figure if no axes is specified
     if ax is None:
         plt.figure(figsize=(8, 6))
@@ -245,8 +245,8 @@ def plot_corr_bulk(
         corr_bulk.stats.end_lag,
         date2num(corr_bulk.stats.corr_start[-1].datetime),
         date2num(corr_bulk.stats.corr_start[0].datetime)]
-    im = ax.imshow(corr_bulk.data, extent=extent, aspect='auto', 
-        cmap='seismic')
+    im = ax.imshow(
+        corr_bulk.data, extent=extent, aspect='auto', cmap='seismic')
     ax.yaxis_date()
     ax.figure.autofmt_xdate(rotation=45)
     ax.set_xlabel(r'$\tau$ [s]')

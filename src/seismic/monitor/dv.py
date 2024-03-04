@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Wednesday, 6th December 2023 04:48:55 pm
+Last Modified: Monday, 4th March 2024 02:41:37 pm
 '''
 
 from datetime import datetime
@@ -194,8 +194,8 @@ class DV(object):
             title=title, plot_scatter=plot_scatter, return_ax=return_ax,
             dateformat=dateformat, ax=ax)
 
-    def smooth_sim_mat(self, win_len: int, 
-        exclude_corr_below: Optional[float] = None):
+    def smooth_sim_mat(
+            self, win_len: int,  exclude_corr_below: Optional[float] = None):
         """
         Smoothes the similarity matrix along the correlation time axis.
 
