@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 11:07:27 am
-Last Modified: Wednesday, 28th February 2024 09:33:01 am
+Last Modified: Monday, 4th March 2024 03:09:11 pm
 '''
 
 import unittest
@@ -454,6 +454,26 @@ class TestDVGrid(unittest.TestCase):
         cm_mock.assert_called_once_with(
             scaling_factor, corr_len, std_model, mock.ANY)
         np.testing.assert_allclose(out, np.zeros((50, 50)))
+
+    @mock.patch('seismic.monitor.spatial.compute_cm')
+    def test_compute_posterior_cov_no_info(
+            self, cm_mock: mock.MagicMock):
+        cm_mock.return_value = np.eye(100)
+
+        scaling_factor, corr_len, std_model = [4, 5, 1]
+        dvmock = mock.MagicMock()
+        with (
+            mock.patch.object(self.dvg, '_extract_info_dvs') as ex_mock,
+            self.assertRaises(AttributeError)
+        ):
+            ex_mock.return_value = (
+                np.zeros(50), np.ones(50), 'slat0', 'slon0', 'slat1',
+                'slon1', None, None, None)
+            self.dvg.compute_posterior_covariance(
+                dvmock, 0, scaling_factor, corr_len, std_model)
+            ex_mock.assert_called_once_with(dvmock, 0, False)
+        cm_mock.assert_called_once_with(
+            scaling_factor, corr_len, std_model, mock.ANY)
 
     @mock.patch('seismic.monitor.spatial.compute_cm')
     def test_compute_res_from_dv(self, cm_mock: mock.MagicMock):
