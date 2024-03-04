@@ -228,8 +228,8 @@ class Store_Client(object):
             return (None, None)
         return (starttime, endtime)
 
-    def _translate_wildcards(self, network: str, station: str) -> List[
-            List[str]]:
+    def _translate_wildcards(self, network: str, station: str, 
+        component: str = '?') -> List[List[str]]:
         """
         Look up network and station names in database, so that wildcards
         can be estimated into number of stations.
@@ -238,11 +238,13 @@ class Store_Client(object):
         :type network: str
         :param station: station string, may contain wildcards
         :type station: str
+        :param componnt: component, i.e. Z, N, E or ? as wildcard
+        type componnt str
         :return: _description_
         :rtype: _type_
         """
         dirlist = glob.glob(
-            os.path.join(self.sds_root, '*', network, station, '*'))
+            os.path.join(self.sds_root, '*', network, station, '??'+component+'.?'))
         nets = [os.path.basename(
             os.path.dirname(os.path.dirname(i))) for i in dirlist]
         stats = [os.path.basename(os.path.dirname(i)) for i in dirlist]

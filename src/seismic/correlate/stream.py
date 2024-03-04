@@ -635,6 +635,19 @@ class CorrBulk(object):
         np.savez_compressed(
             path, data=self.data, **kwargs)
 
+    def select_corr_time(
+        self, starttime: UTCDateTime, endtime: UTCDateTime,
+            include_partially_selected: bool = True):
+        """
+        Selects correlations that are inside of the requested time window.
+
+        refer to CorrStream.select_corr_time for details
+        """
+        cst = self.create_corr_stream()
+        scst = cst.select_corr_time(starttime=starttime, endtime=endtime,
+            include_partially_selected=include_partially_selected)
+        return scst.create_corr_bulk()
+
     def slice(
         self, starttime: UTCDateTime, endtime: UTCDateTime,
             include_partial: bool = True):
