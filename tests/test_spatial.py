@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 11:07:27 am
-Last Modified: Tuesday, 27th February 2024 03:10:52 pm
+Last Modified: Wednesday, 28th February 2024 09:33:01 am
 '''
 
 import unittest
@@ -421,6 +421,41 @@ class TestDVGrid(unittest.TestCase):
             ex_mock.assert_called_once_with(dvmock, 0)
 
     @mock.patch('seismic.monitor.spatial.compute_cm')
+    def test_compute_posterior_cov(self, cm_mock: mock.MagicMock):
+        cm_mock.return_value = np.eye(100)
+
+        scaling_factor, corr_len, std_model = [4, 5, 1]
+        dvmock = mock.MagicMock()
+        with (
+            mock.patch.object(self.dvg, '_extract_info_dvs') as ex_mock,
+            mock.patch.object(
+                self.dvg, '_compute_sensitivity_kernels') as st_mock,
+            mock.patch.object(self.dvg, '_compute_dist_matrix') as dm_mock,
+            mock.patch.object(self.dvg, '_compute_cd') as cd_mock,
+            mock.patch.object(self.dvg, '_compute_posterior_covariance') as
+                pc_mock
+        ):
+            ex_mock.return_value = (
+                np.zeros(50), np.ones(50), 'slat0', 'slon0', 'slat1',
+                'slon1', (3, 7), 3, 5)
+            st_mock.return_value = np.ones((50, 100)) - .5
+            dm_mock.return_value, _ = np.meshgrid(
+                np.arange(100), np.arange(100))
+            cd_mock.return_value = np.eye(50)
+            pc_mock.return_value = np.zeros((50, 50))
+
+            out = self.dvg.compute_posterior_covariance(
+                dvmock, 0, scaling_factor, corr_len, std_model)
+            ex_mock.assert_called_once_with(dvmock, 0, False)
+            st_mock.assert_called_once_with(
+                'slat0', 'slon0', 'slat1', 'slon1', 5)
+            cd_mock.assert_called_once_with(
+                mock.ANY, 3, 5, (3, 7), mock.ANY)
+        cm_mock.assert_called_once_with(
+            scaling_factor, corr_len, std_model, mock.ANY)
+        np.testing.assert_allclose(out, np.zeros((50, 50)))
+
+    @mock.patch('seismic.monitor.spatial.compute_cm')
     def test_compute_res_from_dv(self, cm_mock: mock.MagicMock):
         cm_mock.return_value = np.zeros((100, 100))
 
@@ -695,6 +730,9 @@ class TestDVGrid(unittest.TestCase):
     def test_compute_dist(self):
         dist = self.dvg._compute_dist_matrix()
         self.assertTupleEqual(dist.shape, (100, 100))
+        # make sure it's taken from self.dist
+        dist2 = self.dvg._compute_dist_matrix()
+        np.testing.assert_array_equal(dist, dist2)
 
     @mock.patch('seismic.monitor.spatial.geo2cart')
     def test_find_coord_float(self, g2c_mock: mock.MagicMock):
