@@ -467,7 +467,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Thursday, 18th February 2021 02:30:02 pm</span>
-<span class="sd">Last Modified: Friday, 1st September 2023 08:13:39 am</span>
+<span class="sd">Last Modified: Monday, 4th March 2024 11:44:40 am</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">import</span> <span class="nn">fnmatch</span>
@@ -687,8 +687,9 @@ document.write(`
             <span class="k">return</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_translate_wildcards</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span>
-            <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+    <span class="k">def</span> <span class="nf">_translate_wildcards</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="n">component</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;?&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Look up network and station names in database, so that wildcards</span>
 <span class="sd">        can be estimated into number of stations.</span>
@@ -697,11 +698,14 @@ document.write(`
 <span class="sd">        :type network: str</span>
 <span class="sd">        :param station: station string, may contain wildcards</span>
 <span class="sd">        :type station: str</span>
+<span class="sd">        :param componnt: component, i.e. Z, N, E or ? as wildcard</span>
+<span class="sd">        type componnt str</span>
 <span class="sd">        :return: _description_</span>
 <span class="sd">        :rtype: _type_</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">dirlist</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sds_root</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">))</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sds_root</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="s1">&#39;??&#39;</span><span class="o">+</span><span class="n">component</span><span class="o">+</span><span class="s1">&#39;.?&#39;</span><span class="p">))</span>
         <span class="n">nets</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span>
             <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">dirlist</span><span class="p">]</span>
         <span class="n">stats</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">dirlist</span><span class="p">]</span>
@@ -842,7 +846,7 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span> <span class="o">=</span> <span class="n">ninv</span>
         <span class="n">fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">inv_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ninv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">ninv</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s1">.xml&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;STATIONXML&quot;</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">ninv</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;STATIONXML&quot;</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_generate_time_windows</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>

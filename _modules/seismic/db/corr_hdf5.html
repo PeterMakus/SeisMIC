@@ -469,7 +469,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Friday, 16th April 2021 03:21:30 pm</span>
-<span class="sd">Last Modified: Tuesday, 4th April 2023 05:04:21 pm</span>
+<span class="sd">Last Modified: Friday, 20th October 2023 04:34:04 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">ast</span>
 <span class="kn">import</span> <span class="nn">fnmatch</span>
@@ -504,7 +504,7 @@ document.write(`
 <span class="sd">    functions in addition to functions that are particularly useful for noise</span>
 <span class="sd">    correlations.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">compression</span><span class="p">,</span> <span class="n">co</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">compression</span><span class="p">,</span> <span class="n">co</span><span class="p">,</span> <span class="n">force</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">DBHandler</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">compression</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">compression</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(\w+?)(\d+)&#39;</span><span class="p">,</span> <span class="n">compression</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
@@ -531,7 +531,7 @@ document.write(`
         <span class="k">if</span> <span class="n">co</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">co_old</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_corr_options</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">co_old</span> <span class="o">!=</span> <span class="n">co_to_hdf5</span><span class="p">(</span><span class="n">co</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">co_old</span> <span class="o">!=</span> <span class="n">co_to_hdf5</span><span class="p">(</span><span class="n">co</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force</span><span class="p">:</span>
                     <span class="k">try</span><span class="p">:</span>
                         <span class="n">diff</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">co_old</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">co_to_hdf5</span><span class="p">(</span>
                             <span class="n">co</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="o">!=</span> <span class="n">co_old</span><span class="p">[</span><span class="n">k</span><span class="p">]}</span>
@@ -599,6 +599,70 @@ document.write(`
                 <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;The dataset </span><span class="si">%s</span><span class="s2"> is already in file and will be </span><span class="se">\</span>
 <span class="s2">omitted.&quot;</span> <span class="o">%</span> <span class="n">path</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">UserWarning</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DBHandler.remove_data"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.db.corr_hdf5.DBHandler.remove_data">[docs]</a>    <span class="k">def</span> <span class="nf">remove_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="n">corr_start</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">|</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Deletes the correlation from the file.</span>
+
+<span class="sd">        :param network: network string</span>
+<span class="sd">        :type network: str</span>
+<span class="sd">        :param station: station string</span>
+<span class="sd">        :type station: str</span>
+<span class="sd">        :param channel: channel string</span>
+<span class="sd">        :type channel: str</span>
+<span class="sd">        :param tag: tag</span>
+<span class="sd">        :type tag: str</span>
+<span class="sd">        :param corr_start: Correlation Start, may either be a UTCDateTime</span>
+<span class="sd">            object or a string. String is allowed to contain wildcards.</span>
+<span class="sd">        :type corr_start: UTCDateTime | str</span>
+<span class="sd">        :raises TypeError: if corr_start is not string or UTCDateTime</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s1">&#39;*&#39;</span> <span class="ow">in</span> <span class="n">network</span><span class="o">+</span><span class="n">station</span><span class="o">+</span><span class="n">channel</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;Network, Station, and channel code may not contain wildcards.&#39;</span>
+            <span class="p">)</span>
+        <span class="c1"># Make sure the request is structured correctly</span>
+        <span class="n">sort</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="n">chan</span><span class="p">])</span> <span class="k">for</span> <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="n">chan</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                <span class="n">network</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">),</span> <span class="n">station</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">),</span> <span class="n">channel</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">))]</span>
+        <span class="nb">sorted</span> <span class="o">=</span> <span class="n">sort</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="nb">sorted</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">sorted</span> <span class="o">!=</span> <span class="n">sort</span><span class="p">:</span>
+            <span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">channel</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;-&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">])</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                <span class="nb">sorted</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">),</span> <span class="nb">sorted</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">))]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">corr_start</span><span class="p">,</span> <span class="n">UTCDateTime</span><span class="p">):</span>
+            <span class="n">corr_start</span> <span class="o">=</span> <span class="n">corr_start</span><span class="o">.</span><span class="n">format_fissures</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">corr_start</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s1">&#39;corr_start has to be either a string, in which case it &#39;</span>
+                <span class="s1">&#39;has to be given in fissures format, or a UTCDateTime object.&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39; Is </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">corr_start</span><span class="p">)</span><span class="si">}</span><span class="s1">.&#39;</span>
+            <span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">hierarchy</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span> <span class="n">network</span><span class="o">=</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">station</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="n">channel</span><span class="p">,</span>
+            <span class="n">corr_st</span><span class="o">=</span><span class="n">corr_start</span><span class="p">,</span> <span class="n">corr_et</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;/*&#39;</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="c1"># Extremely ugly way of changing the path</span>
+        <span class="k">if</span> <span class="s1">&#39;*&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">path</span> <span class="ow">and</span> <span class="s1">&#39;?&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="p">[</span><span class="n">path</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;requested dataset </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1"> not found&#39;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="c1"># Now, we need to differ between the fnmatch pattern and the actually</span>
+        <span class="c1"># accessed path</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;?&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;/*&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">sst</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_available_starttimes</span><span class="p">(</span>
+                <span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">channel</span><span class="p">)[</span><span class="n">channel</span><span class="p">]:</span>
+            <span class="n">subpath</span> <span class="o">=</span> <span class="n">hierarchy</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span> <span class="n">network</span><span class="o">=</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">station</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="n">channel</span><span class="p">,</span>
+                <span class="n">corr_st</span><span class="o">=</span><span class="n">sst</span><span class="p">,</span> <span class="n">corr_et</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">fnmatch</span><span class="p">(</span><span class="n">subpath</span><span class="p">,</span> <span class="n">pattern</span><span class="p">):</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="p">[</span><span class="n">subpath</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="DBHandler.get_corr_options"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.db.corr_hdf5.DBHandler.get_corr_options">[docs]</a>    <span class="k">def</span> <span class="nf">get_corr_options</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
@@ -742,7 +806,7 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">corr_options</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span>
-            <span class="n">compression</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;gzip3&#39;</span><span class="p">):</span>
+            <span class="n">compression</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;gzip3&#39;</span><span class="p">,</span> <span class="n">_force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Access an hdf5 file holding correlations. The resulting file can be</span>
 <span class="sd">        accessed using all functionalities of</span>
@@ -764,6 +828,8 @@ document.write(`
 <span class="sd">            1 and 9 (i.e., 9 is the highest compression) or None for fastest</span>
 <span class="sd">            perfomance, defaults to &#39;gzip3&#39;.</span>
 <span class="sd">        :type compression: str, optional</span>
+<span class="sd">        :param _force: allow differnt correlation options, defaults to False</span>
+<span class="sd">        :type _force: bool, optional</span>
 
 <span class="sd">        .. warning::</span>
 
@@ -791,7 +857,7 @@ document.write(`
 <span class="sd">            250</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">if</span> <span class="n">corr_options</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">mode</span> <span class="o">!=</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">corr_options</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">mode</span> <span class="o">!=</span> <span class="s1">&#39;r&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_force</span><span class="p">:</span>
             <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;r&#39;</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
                 <span class="s1">&#39;Opening Correlation Databases without providing a correlation&#39;</span>
@@ -804,10 +870,11 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">compression</span> <span class="o">=</span> <span class="n">compression</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">co</span> <span class="o">=</span> <span class="n">corr_options</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">force</span> <span class="o">=</span> <span class="n">_force</span>
 
     <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DBHandler</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">db_handler</span> <span class="o">=</span> <span class="n">DBHandler</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">co</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">co</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">force</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_handler</span>
 
     <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">tb</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">bool</span><span class="p">:</span>
@@ -908,7 +975,7 @@ document.write(`
     <span class="n">remk</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s1">&#39;subdir&#39;</span><span class="p">,</span> <span class="s1">&#39;read_start&#39;</span><span class="p">,</span> <span class="s1">&#39;read_end&#39;</span><span class="p">,</span> <span class="s1">&#39;read_len&#39;</span><span class="p">,</span> <span class="s1">&#39;read_inc&#39;</span><span class="p">,</span>
         <span class="s1">&#39;combination_method&#39;</span><span class="p">,</span> <span class="s1">&#39;combinations&#39;</span><span class="p">,</span> <span class="s1">&#39;starttime&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;xcombinations&#39;</span><span class="p">,</span> <span class="s1">&#39;preprocess_subdiv&#39;</span><span class="p">]</span>
+        <span class="s1">&#39;xcombinations&#39;</span><span class="p">,</span> <span class="s1">&#39;preprocess_subdiv&#39;</span><span class="p">,</span> <span class="s1">&#39;allow_different_params&#39;</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">remk</span><span class="p">:</span>
         <span class="n">coc</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">coc</span><span class="p">[</span><span class="s1">&#39;corr_args&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;combinations&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>

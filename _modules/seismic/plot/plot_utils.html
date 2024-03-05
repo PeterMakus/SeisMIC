@@ -467,7 +467,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 17th May 2021 12:25:54 pm</span>
-<span class="sd">Last Modified: Monday, 16th January 2023 11:13:58 am</span>
+<span class="sd">Last Modified: Monday, 4th March 2024 02:43:54 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">import</span> <span class="nn">locale</span>
@@ -516,7 +516,10 @@ document.write(`
     <span class="p">}</span>
     <span class="n">mpl</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
     <span class="c1"># Show dates in English format</span>
-    <span class="n">locale</span><span class="o">.</span><span class="n">setlocale</span><span class="p">(</span><span class="n">locale</span><span class="o">.</span><span class="n">LC_ALL</span><span class="p">,</span> <span class="s2">&quot;en_GB.utf8&quot;</span><span class="p">)</span></div>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">locale</span><span class="o">.</span><span class="n">setlocale</span><span class="p">(</span><span class="n">locale</span><span class="o">.</span><span class="n">LC_ALL</span><span class="p">,</span> <span class="s2">&quot;en_GB.utf8&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">locale</span><span class="o">.</span><span class="n">setlocale</span><span class="p">(</span><span class="n">locale</span><span class="o">.</span><span class="n">LC_ALL</span><span class="p">,</span> <span class="s2">&quot;en_GB.utf-8&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="remove_all"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.plot.plot_utils.remove_all">[docs]</a><span class="k">def</span> <span class="nf">remove_all</span><span class="p">(</span>

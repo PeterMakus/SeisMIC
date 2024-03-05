@@ -469,18 +469,17 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 20th July 2021 03:47:00 pm</span>
-<span class="sd">Last Modified: Thursday, 29th June 2023 11:06:00 am</span>
+<span class="sd">Last Modified: Tuesday, 26th September 2023 05:42:28 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
 <span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">UTCDateTime</span>
 
 
 <div class="viewcode-block" id="cos_taper_st"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.preprocessing_stream.cos_taper_st">[docs]</a><span class="k">def</span> <span class="nf">cos_taper_st</span><span class="p">(</span>
-    <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">lossless</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">lossless</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">taper_at_masked</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Applies a cosine taper to the input Stream.</span>
@@ -538,6 +537,11 @@ document.write(`
 <span class="sd">        This action is performed in place. If you want to keep the</span>
 <span class="sd">        original data use :func:`~obspy.core.trace.Trace.copy`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">lossless</span><span class="p">:</span>
+        <span class="n">warn</span><span class="p">(</span>
+            <span class="s1">&#39;Lossless tapering deprecated. Setting False..&#39;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span>
+        <span class="p">)</span>
+        <span class="n">lossless</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="k">if</span> <span class="n">taper_len</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Taper length must be larger than 0 s&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">taper_at_masked</span><span class="p">:</span>
@@ -556,15 +560,6 @@ document.write(`
     <span class="k">if</span> <span class="n">tl_n</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">&gt;</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="s1">&#39;Taper Length * 2 has to be smaller or equal to trace</span><span class="se">\&#39;</span><span class="s1">s length.&#39;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">lossless</span><span class="p">:</span>
-        <span class="c1"># pad trace</span>
-        <span class="n">tr</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span>
-            <span class="n">starttime</span><span class="o">=</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="o">-</span><span class="n">taper_len</span><span class="p">,</span>
-            <span class="n">endtime</span><span class="o">=</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">endtime</span><span class="o">+</span><span class="n">taper_len</span><span class="p">,</span>
-            <span class="n">pad</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="c1"># Change Fill value to data from the trace</span>
-        <span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">[:</span><span class="n">tl_n</span><span class="p">]</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">tl_n</span><span class="p">:</span><span class="mi">2</span><span class="o">*</span><span class="n">tl_n</span><span class="p">])</span>
-        <span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="o">-</span><span class="n">tl_n</span><span class="p">:]</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">tl_n</span><span class="p">:</span><span class="o">-</span><span class="n">tl_n</span><span class="p">])</span>
     <span class="n">taper</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
     <span class="n">tap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">tl_n</span><span class="o">*</span><span class="mi">2</span><span class="p">))</span>
     <span class="n">taper</span><span class="p">[:</span><span class="n">tl_n</span><span class="p">]</span> <span class="o">=</span> <span class="n">tap</span><span class="p">[:</span><span class="n">tl_n</span><span class="p">]</span>

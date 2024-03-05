@@ -467,7 +467,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 19th July 2021 11:37:54 am</span>
-<span class="sd">Last Modified: Monday, 21st August 2023 12:21:53 pm</span>
+<span class="sd">Last Modified: Monday, 4th March 2024 02:42:42 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span>
@@ -690,6 +690,10 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">set_mpl_params</span><span class="p">()</span>
 
+    <span class="c1"># check for constant sampling</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">corr_bulk</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">,</span> <span class="mi">2</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s1">&#39;Correlation times have to be sampled at equal intervals.&#39;</span><span class="p">)</span>
     <span class="c1"># Create figure if no axes is specified</span>
     <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
@@ -698,12 +702,13 @@ document.write(`
     <span class="n">extent</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">corr_bulk</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">start_lag</span><span class="p">,</span>
         <span class="n">corr_bulk</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">end_lag</span><span class="p">,</span>
-        <span class="n">date2num</span><span class="p">(</span><span class="n">corr_bulk</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">datetime</span><span class="p">),</span>
-        <span class="n">date2num</span><span class="p">(</span><span class="n">corr_bulk</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">datetime</span><span class="p">)]</span>
-    <span class="n">im</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">corr_bulk</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="n">extent</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
+        <span class="n">date2num</span><span class="p">(</span><span class="n">corr_bulk</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">datetime</span><span class="p">),</span>
+        <span class="n">date2num</span><span class="p">(</span><span class="n">corr_bulk</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">datetime</span><span class="p">)]</span>
+    <span class="n">im</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span>
+        <span class="n">corr_bulk</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="n">extent</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;seismic&#39;</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">yaxis_date</span><span class="p">()</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">autofmt_xdate</span><span class="p">(</span><span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$\</span><span class="si">{tau}</span><span class="s1">$ [s]&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$\tau$ [s]&#39;</span><span class="p">)</span>
 
     <span class="c1"># Set limits</span>
     <span class="k">if</span> <span class="n">ylimits</span><span class="p">:</span>

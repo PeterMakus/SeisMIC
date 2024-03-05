@@ -467,7 +467,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 29th March 2021 07:58:18 am</span>
-<span class="sd">Last Modified: Friday, 25th August 2023 02:08:10 pm</span>
+<span class="sd">Last Modified: Monday, 4th March 2024 02:27:00 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span>
@@ -477,6 +477,8 @@ document.write(`
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">fnmatch</span>
 
 <span class="kn">from</span> <span class="nn">mpi4py</span> <span class="kn">import</span> <span class="n">MPI</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -590,6 +592,7 @@ document.write(`
         <span class="c1"># find the available data</span>
         <span class="n">network</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;net&#39;</span><span class="p">][</span><span class="s1">&#39;network&#39;</span><span class="p">]</span>
         <span class="n">station</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;net&#39;</span><span class="p">][</span><span class="s1">&#39;station&#39;</span><span class="p">]</span>
+        <span class="n">component</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;net&#39;</span><span class="p">][</span><span class="s1">&#39;component&#39;</span><span class="p">]</span>
 
         <span class="c1"># Store_Client</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span> <span class="o">=</span> <span class="n">store_client</span>
@@ -642,23 +645,53 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">net</span><span class="p">,</span> <span class="n">stat</span> <span class="ow">in</span> <span class="n">station</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">_translate_wildcards</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">_translate_wildcards</span><span class="p">(</span>
+                        <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="n">component</span><span class="p">))</span>
             <span class="c1"># make sure this only contains unique combinations</span>
             <span class="c1"># with several cores it added entries several times, don&#39;t know</span>
             <span class="c1"># why?</span>
+            <span class="c1"># In contrast to self.station, self.avail_raw_data also contains</span>
+            <span class="c1"># information about the available channels, so they can be</span>
+            <span class="c1"># read and processed on different cores</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">station</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
             <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="c1"># if only certain combis are requested, remove stations not within</span>
+        <span class="c1"># these</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filter_by_rcombis</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
             <span class="s1">&#39;Fetching data from the following stations:</span><span class="se">\n</span><span class="si">%a</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">[</span>
                 <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">station</span><span class="p">])</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s1">&#39;allow_different_params&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_allow_different_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span>
+                <span class="s1">&#39;allow_different_params&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_allow_different_params</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_filter_by_rcombis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Removes stations from the list of available stations that are not</span>
+<span class="sd">        requested in the cross-combinations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rcombis</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combination_method&#39;</span><span class="p">]</span> \
+                <span class="o">!=</span> <span class="s1">&#39;betweenStations&#39;</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">station</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">station</span> <span class="k">if</span>
+            <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rcombis</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1">-*.</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">-*&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">rcombis</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;*-</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1">.*-</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)]</span>
+        <span class="c1"># same check for avail_raw_data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span> <span class="k">if</span>
+            <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rcombis</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1">-*.</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">-*&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">rcombis</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;*-</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1">.*-</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)]</span>
 
 <div class="viewcode-block" id="Correlator.find_interstat_dist"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.correlate.Correlator.find_interstat_dist">[docs]</a>    <span class="k">def</span> <span class="nf">find_interstat_dist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dis</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -677,17 +710,23 @@ document.write(`
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s1">&#39;This function is only available if combination method &#39;</span>
                 <span class="o">+</span> <span class="s1">&#39;is set to &quot;betweenStations&quot;.&#39;</span><span class="p">)</span>
-        <span class="c1"># list of requested combinations</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">rcombis</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c1"># Update the store clients invetory</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">read_inventory</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="p">(</span><span class="n">n0</span><span class="p">,</span> <span class="n">s0</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">station</span><span class="p">):</span>
-            <span class="n">inv0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">select_inventory_or_load_remote</span><span class="p">(</span><span class="n">n0</span><span class="p">,</span> <span class="n">s0</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">n1</span><span class="p">,</span> <span class="n">s1</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">station</span><span class="p">[</span><span class="n">ii</span><span class="p">:]:</span>
-                <span class="n">inv1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">select_inventory_or_load_remote</span><span class="p">(</span>
-                    <span class="n">n1</span><span class="p">,</span> <span class="n">s1</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">mu</span><span class="o">.</span><span class="n">filter_stat_dist</span><span class="p">(</span><span class="n">inv0</span><span class="p">,</span> <span class="n">inv1</span><span class="p">,</span> <span class="n">dis</span><span class="p">):</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">rcombis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n0</span><span class="p">,</span> <span class="n">n1</span><span class="p">,</span> <span class="n">s0</span><span class="p">,</span> <span class="n">s1</span><span class="p">))</span></div>
+        <span class="c1"># list of requested combinations</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rcombis</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rcombis</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="p">(</span><span class="n">n0</span><span class="p">,</span> <span class="n">s0</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">station</span><span class="p">):</span>
+                <span class="n">inv0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">select_inventory_or_load_remote</span><span class="p">(</span>
+                    <span class="n">n0</span><span class="p">,</span> <span class="n">s0</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">n1</span><span class="p">,</span> <span class="n">s1</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">station</span><span class="p">[</span><span class="n">ii</span><span class="p">:]:</span>
+                    <span class="n">inv1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">select_inventory_or_load_remote</span><span class="p">(</span>
+                        <span class="n">n1</span><span class="p">,</span> <span class="n">s1</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">mu</span><span class="o">.</span><span class="n">filter_stat_dist</span><span class="p">(</span><span class="n">inv0</span><span class="p">,</span> <span class="n">inv1</span><span class="p">,</span> <span class="n">dis</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">rcombis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n0</span><span class="p">,</span> <span class="n">n1</span><span class="p">,</span> <span class="n">s0</span><span class="p">,</span> <span class="n">s1</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;Either filter for specific cross correlations or a maximum &#39;</span>
+                <span class="o">+</span> <span class="s1">&#39;distance.&#39;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Correlator.find_existing_times"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.correlate.Correlator.find_existing_times">[docs]</a>    <span class="k">def</span> <span class="nf">find_existing_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -716,13 +755,17 @@ document.write(`
             <span class="n">combis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rcombis</span><span class="p">)</span>
         <span class="n">ex_dict</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">nc</span><span class="p">,</span> <span class="n">sc</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">netcombs</span><span class="p">,</span> <span class="n">statcombs</span><span class="p">):</span>
-            <span class="n">outf</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">corr_dir</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">.h5&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nc</span><span class="p">,</span> <span class="n">sc</span><span class="p">))</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">outf</span><span class="p">):</span>
+            <span class="n">outfs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">corr_dir</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">*.h5&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nc</span><span class="p">,</span> <span class="n">sc</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">outfs</span><span class="p">)):</span>
                 <span class="k">continue</span>
-            <span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span>
-                    <span class="n">outf</span><span class="p">,</span> <span class="n">corr_options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
-                <span class="n">d</span> <span class="o">=</span> <span class="n">cdb</span><span class="o">.</span><span class="n">get_available_starttimes</span><span class="p">(</span><span class="n">nc</span><span class="p">,</span> <span class="n">sc</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">channel</span><span class="p">)</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">outf</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">outfs</span><span class="p">):</span>
+                <span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span>
+                    <span class="n">outf</span><span class="p">,</span> <span class="n">corr_options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span>
+                        <span class="n">_force</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_allow_different_params</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
+                    <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                        <span class="n">cdb</span><span class="o">.</span><span class="n">get_available_starttimes</span><span class="p">(</span><span class="n">nc</span><span class="p">,</span> <span class="n">sc</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">channel</span><span class="p">))</span>
             <span class="n">s0</span><span class="p">,</span> <span class="n">s1</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
             <span class="n">n0</span><span class="p">,</span> <span class="n">n1</span> <span class="o">=</span> <span class="n">nc</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
             <span class="n">ex_dict</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n0</span><span class="p">,</span> <span class="n">s0</span><span class="p">),</span> <span class="p">{})</span>
@@ -857,7 +900,8 @@ document.write(`
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;subdivision&#39;</span><span class="p">][</span><span class="s1">&#39;delete_subdivision&#39;</span><span class="p">]:</span>
                 <span class="n">cstselect</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
             <span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span>
-                    <span class="n">outf</span><span class="p">,</span> <span class="n">corr_options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
+                <span class="n">outf</span><span class="p">,</span> <span class="n">corr_options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">,</span>
+                    <span class="n">_force</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_allow_different_params</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">cstselect</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
                     <span class="n">cdb</span><span class="o">.</span><span class="n">add_correlation</span><span class="p">(</span><span class="n">cstselect</span><span class="p">,</span> <span class="s1">&#39;subdivision&#39;</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">stack</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -868,10 +912,6 @@ document.write(`
 <span class="sd">        Returns an Iterator that loops over each start and end time with the</span>
 <span class="sd">        requested window length.</span>
 
-<span class="sd">        Also will lead to the time windows being prolonged by the sum of</span>
-<span class="sd">        the length of the tapered end, so that no data is lost. Always</span>
-<span class="sd">        a hann taper so far. Taper length is 5% of the requested time</span>
-<span class="sd">        window on each side.</span>
 
 <span class="sd">        :yield: An obspy stream containing the time window x for all stations</span>
 <span class="sd">        that were active during this time.</span>
@@ -898,11 +938,8 @@ document.write(`
         <span class="n">t1</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;read_end&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">timestamp</span>
         <span class="n">loop_window</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;read_inc&#39;</span><span class="p">])</span>
 
-        <span class="c1"># Taper ends for the deconvolution</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;remove_response&#39;</span><span class="p">]:</span>
-            <span class="n">tl</span> <span class="o">=</span> <span class="mi">100</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">tl</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># Taper ends for the deconvolution and filtering</span>
+        <span class="n">tl</span> <span class="o">=</span> <span class="mi">20</span>
 
         <span class="c1"># Decide which process reads data from which station</span>
         <span class="c1"># Better than just letting one core read as this avoids having to</span>
@@ -920,14 +957,10 @@ document.write(`
             <span class="n">startt</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
             <span class="n">endt</span> <span class="o">=</span> <span class="n">startt</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;read_len&#39;</span><span class="p">]</span>
             <span class="n">st</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
-            <span class="n">resp</span> <span class="o">=</span> <span class="n">Inventory</span><span class="p">()</span>
 
             <span class="c1"># loop over queried stations</span>
             <span class="k">for</span> <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="n">cha</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">avail_raw_data</span><span class="p">)[</span><span class="n">ind</span><span class="p">]:</span>
                 <span class="c1"># Load data</span>
-                <span class="n">resp</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">inventory</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
-                        <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">))</span>
                 <span class="n">stext</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="o">.</span><span class="n">_load_local</span><span class="p">(</span>
                     <span class="n">net</span><span class="p">,</span> <span class="n">stat</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">cha</span><span class="p">,</span> <span class="n">startt</span><span class="p">,</span> <span class="n">endt</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
                 <span class="n">mu</span><span class="o">.</span><span class="n">get_valid_traces</span><span class="p">(</span><span class="n">stext</span><span class="p">)</span>
@@ -942,7 +975,14 @@ document.write(`
             <span class="c1"># Check sampling frequency</span>
             <span class="n">sampling_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">]</span>
             <span class="c1"># AA-Filter is done in this function as well</span>
-            <span class="n">st</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">resample_or_decimate</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">st</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">resample_or_decimate</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="s1">&#39;Downsampling failed for &#39;</span>
+                    <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="si">}</span><span class="s1"> and time&#39;</span>
+                    <span class="sa">f</span><span class="s1">&#39; </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s1">.</span><span class="se">\n</span><span class="s1">The Original Error Message was </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+                <span class="k">continue</span>
             <span class="c1"># The actual data in the mseeds was changed from int to float64</span>
             <span class="c1"># now,</span>
             <span class="c1"># Save some space by changing it back to 32 bit (most of the</span>
@@ -953,7 +993,7 @@ document.write(`
                 <span class="k">try</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Preprocessing stream...&#39;</span><span class="p">)</span>
                     <span class="n">st</span> <span class="o">=</span> <span class="n">preprocess_stream</span><span class="p">(</span>
-                        <span class="n">st</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="p">,</span> <span class="n">resp</span><span class="p">,</span> <span class="n">startt</span><span class="p">,</span> <span class="n">endt</span><span class="p">,</span> <span class="n">tl</span><span class="p">,</span>
+                        <span class="n">st</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="p">,</span> <span class="n">startt</span><span class="p">,</span> <span class="n">endt</span><span class="p">,</span> <span class="n">tl</span><span class="p">,</span>
                         <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
                 <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
@@ -1022,14 +1062,20 @@ document.write(`
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;preprocess_subdiv&#39;</span><span class="p">]:</span>
                     <span class="k">try</span><span class="p">:</span>
                         <span class="n">win</span> <span class="o">=</span> <span class="n">preprocess_stream</span><span class="p">(</span>
-                            <span class="n">win</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="p">,</span> <span class="n">resp</span><span class="p">,</span> <span class="n">winstart</span><span class="p">,</span> <span class="n">winend</span><span class="p">,</span>
+                            <span class="n">win</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_client</span><span class="p">,</span> <span class="n">winstart</span><span class="p">,</span> <span class="n">winend</span><span class="p">,</span>
                             <span class="n">tl</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
                     <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                            <span class="s1">&#39;Stream preprocessing failed for &#39;</span>
-                            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="si">}</span><span class="s1">&#39;</span>
-                            <span class="s1">&#39; and time &#39;</span>
-                            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s1">.</span><span class="se">\n</span><span class="s1">The Original Error Message was </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">st</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                                <span class="s1">&#39;Stream preprocessing failed for &#39;</span>
+                                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="si">}</span><span class="s1">&#39;</span>
+                                <span class="s1">&#39; and time &#39;</span>
+                                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s1">.</span><span class="se">\n</span><span class="s1">The Original Error Message was </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                                <span class="s1">&#39;Stream preprocessing failed for &#39;</span>
+                                <span class="s1">&#39;time &#39;</span>
+                                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s1">.</span><span class="se">\n</span><span class="s1">The Original Error Message was </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
                         <span class="k">continue</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;combinations&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">calc_cross_combis</span><span class="p">(</span>
@@ -1049,6 +1095,8 @@ document.write(`
 
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Working on correlation times </span><span class="si">%s</span><span class="s1">-</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
                     <span class="nb">str</span><span class="p">(</span><span class="n">win</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">win</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">endtime</span><span class="p">)))</span>
+                <span class="n">win</span> <span class="o">=</span> <span class="n">win</span><span class="o">.</span><span class="n">merge</span><span class="p">()</span>
+                <span class="n">win</span> <span class="o">=</span> <span class="n">win</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">winstart</span><span class="p">,</span> <span class="n">winend</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                 <span class="k">yield</span> <span class="n">win</span><span class="p">,</span> <span class="n">write_flag</span>
                 <span class="n">write_flag</span> <span class="o">=</span> <span class="kc">False</span>
 
@@ -1236,6 +1284,23 @@ document.write(`
         <span class="k">return</span> <span class="kc">False</span>
 
 
+<div class="viewcode-block" id="is_in_xcombis"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.correlate.is_in_xcombis">[docs]</a><span class="k">def</span> <span class="nf">is_in_xcombis</span><span class="p">(</span><span class="n">id1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">id2</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rcombis</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check if the specific combination is to be calculated according to</span>
+<span class="sd">    xcombinations including the channel. xcombination are expected as</span>
+<span class="sd">    Net1-Net2.Sta1-Sta2.Cha1-Cha2. (Channel information can be omitted)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n1</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">c1</span> <span class="o">=</span> <span class="n">id1</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+    <span class="n">n2</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">c2</span> <span class="o">=</span> <span class="n">id2</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+    <span class="n">tcombi</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">n1</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">n2</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">s1</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">s2</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">c1</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">c2</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="n">tcombi2</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">n2</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">n1</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">s2</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">s1</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">c2</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">c1</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="k">for</span> <span class="n">combi</span> <span class="ow">in</span> <span class="n">rcombis</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">fnmatch</span><span class="p">(</span><span class="n">tcombi</span><span class="p">,</span> <span class="n">combi</span><span class="o">+</span><span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">fnmatch</span><span class="p">(</span>
+                <span class="n">tcombi2</span><span class="p">,</span> <span class="n">combi</span><span class="o">+</span><span class="s1">&#39;*&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span></div>
+
+
 <div class="viewcode-block" id="calc_cross_combis"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.correlate.calc_cross_combis">[docs]</a><span class="k">def</span> <span class="nf">calc_cross_combis</span><span class="p">(</span>
     <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">ex_corr</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;betweenStations&#39;</span><span class="p">,</span>
         <span class="n">rcombis</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
@@ -1285,11 +1350,8 @@ document.write(`
                     <span class="c1"># check first whether this combi is in dict</span>
                     <span class="k">if</span> <span class="n">_compare_existing_data</span><span class="p">(</span><span class="n">ex_corr</span><span class="p">,</span> <span class="n">tr</span><span class="p">,</span> <span class="n">tr1</span><span class="p">):</span>
                         <span class="k">continue</span>
-                    <span class="k">if</span> <span class="n">rcombis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="nb">all</span><span class="p">(</span>
-                        <span class="n">i0</span> <span class="ow">in</span> <span class="n">i1</span> <span class="k">for</span> <span class="n">i0</span> <span class="ow">in</span> <span class="p">[</span>
-                            <span class="n">n</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">s2</span><span class="p">])</span> <span class="k">for</span> <span class="n">i1</span> <span class="ow">in</span> <span class="n">rcombis</span><span class="p">):</span>
-                        <span class="c1"># If particular combis are requested, compute only</span>
-                        <span class="c1"># those</span>
+                    <span class="k">if</span> <span class="n">rcombis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_in_xcombis</span><span class="p">(</span>
+                            <span class="n">tr</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">tr1</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">rcombis</span><span class="p">):</span>
                         <span class="k">continue</span>
                     <span class="n">combis</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ii</span><span class="p">,</span> <span class="n">jj</span><span class="p">))</span>
     <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;betweenComponents&#39;</span><span class="p">:</span>
@@ -1698,7 +1760,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="preprocess_stream"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.correlate.preprocess_stream">[docs]</a><span class="k">def</span> <span class="nf">preprocess_stream</span><span class="p">(</span>
-    <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">store_client</span><span class="p">:</span> <span class="n">Store_Client</span><span class="p">,</span> <span class="n">inv</span><span class="p">:</span> <span class="n">Inventory</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">store_client</span><span class="p">:</span> <span class="n">Store_Client</span><span class="p">,</span>
     <span class="n">startt</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endt</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">remove_response</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">subdivision</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
     <span class="n">preProcessing</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1736,32 +1798,30 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">st</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">st</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="n">ppst</span><span class="o">.</span><span class="n">detrend_st</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+    <span class="c1"># deal with overlaps</span>
+    <span class="c1"># This should be a setting in the parameter file</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">gap_handler</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">taper_len</span><span class="o">*</span><span class="mi">4</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">st</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
+        <span class="c1"># could happen after handling gaps</span>
+        <span class="k">return</span> <span class="n">st</span>
     <span class="c1"># To deal with any nans/masks</span>
     <span class="n">st</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
     <span class="n">st</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;starttime&#39;</span><span class="p">])</span>
 
-    <span class="c1"># Clip to these again to remove the taper</span>
-    <span class="n">old_starts</span> <span class="o">=</span> <span class="p">[</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">)</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">]</span>
-    <span class="n">old_ends</span> <span class="o">=</span> <span class="p">[</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">endtime</span><span class="p">)</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">]</span>
-
+    <span class="n">inv</span> <span class="o">=</span> <span class="n">store_client</span><span class="o">.</span><span class="n">inventory</span>
     <span class="k">if</span> <span class="n">remove_response</span><span class="p">:</span>
-        <span class="c1"># taper before instrument response removal</span>
-        <span class="k">if</span> <span class="n">taper_len</span><span class="p">:</span>
-            <span class="n">st</span> <span class="o">=</span> <span class="n">ppst</span><span class="o">.</span><span class="n">cos_taper_st</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">inv</span><span class="p">:</span>
-                <span class="n">ninv</span> <span class="o">=</span> <span class="n">inv</span>
-                <span class="n">st</span><span class="o">.</span><span class="n">attach_response</span><span class="p">(</span><span class="n">ninv</span><span class="p">)</span>
-            <span class="n">st</span><span class="o">.</span><span class="n">remove_response</span><span class="p">(</span><span class="n">taper</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># Changed for testing purposes</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">remove_response</span><span class="p">(</span><span class="n">taper</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inventory</span><span class="o">=</span><span class="n">inv</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Station response not found ... loading from remote.&#39;</span><span class="p">)</span>
             <span class="c1"># missing station response</span>
             <span class="n">ninv</span> <span class="o">=</span> <span class="n">store_client</span><span class="o">.</span><span class="n">rclient</span><span class="o">.</span><span class="n">get_stations</span><span class="p">(</span>
                 <span class="n">network</span><span class="o">=</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="p">,</span>
                 <span class="n">channel</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;response&#39;</span><span class="p">)</span>
-            <span class="n">st</span><span class="o">.</span><span class="n">attach_response</span><span class="p">(</span><span class="n">ninv</span><span class="p">)</span>
-            <span class="n">st</span><span class="o">.</span><span class="n">remove_response</span><span class="p">(</span><span class="n">taper</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">remove_response</span><span class="p">(</span><span class="n">taper</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inventory</span><span class="o">=</span><span class="n">ninv</span><span class="p">)</span>
             <span class="n">store_client</span><span class="o">.</span><span class="n">_write_inventory</span><span class="p">(</span><span class="n">ninv</span><span class="p">)</span>
+            <span class="n">inv</span> <span class="o">+=</span> <span class="n">ninv</span>
 
     <span class="c1"># Sometimes Z has reversed polarity</span>
     <span class="k">if</span> <span class="n">inv</span><span class="p">:</span>
@@ -1774,11 +1834,15 @@ document.write(`
 
     <span class="k">if</span> <span class="n">preProcessing</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">procStep</span> <span class="ow">in</span> <span class="n">preProcessing</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;detrend_st&#39;</span> <span class="ow">in</span> <span class="n">procStep</span><span class="p">[</span><span class="s1">&#39;function&#39;</span><span class="p">]</span> \
+                    <span class="ow">or</span> <span class="s1">&#39;cos_taper_st&#39;</span> <span class="ow">in</span> <span class="n">procStep</span><span class="p">[</span><span class="s1">&#39;function&#39;</span><span class="p">]:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s1">&#39;Tapering and Detrending are now always perfomed &#39;</span>
+                    <span class="s1">&#39;as part of the preprocessing. Ignoring parameter...&#39;</span><span class="p">,</span>
+                    <span class="ne">DeprecationWarning</span><span class="p">)</span>
+                <span class="k">continue</span>
             <span class="n">func</span> <span class="o">=</span> <span class="n">func_from_str</span><span class="p">(</span><span class="n">procStep</span><span class="p">[</span><span class="s1">&#39;function&#39;</span><span class="p">])</span>
             <span class="n">st</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="o">**</span><span class="n">procStep</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">])</span>
-    <span class="c1"># Remove the artificial taper from earlier</span>
-    <span class="k">for</span> <span class="n">tr</span><span class="p">,</span> <span class="n">ostart</span><span class="p">,</span> <span class="n">oend</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">old_starts</span><span class="p">,</span> <span class="n">old_ends</span><span class="p">):</span>
-        <span class="n">tr</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">starttime</span><span class="o">=</span><span class="n">ostart</span><span class="p">,</span> <span class="n">endtime</span><span class="o">=</span><span class="n">oend</span><span class="p">)</span>
     <span class="n">st</span><span class="o">.</span><span class="n">merge</span><span class="p">()</span>
     <span class="n">st</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">startt</span><span class="p">,</span> <span class="n">endt</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -1818,7 +1882,6 @@ document.write(`
                 <span class="n">subdivision</span><span class="p">[</span><span class="s1">&#39;corr_len&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">delta</span>
             <span class="n">win</span> <span class="o">=</span> <span class="n">win0</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">starttrim</span><span class="p">,</span> <span class="n">endtrim</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">mu</span><span class="o">.</span><span class="n">get_valid_traces</span><span class="p">(</span><span class="n">win</span><span class="p">)</span>
-
             <span class="k">yield</span> <span class="n">win</span>
 
     <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>

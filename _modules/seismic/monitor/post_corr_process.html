@@ -468,7 +468,7 @@ document.write(`
 <span class="sd">    Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 14th June 2021 08:50:57 am</span>
-<span class="sd">Last Modified: Monday, 16th January 2023 11:13:58 am</span>
+<span class="sd">Last Modified: Wednesday, 4th October 2023 09:29:49 am</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span>
@@ -560,8 +560,9 @@ document.write(`
         <span class="k">return</span> <span class="n">x</span>
 
     <span class="k">if</span> <span class="n">window</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;flat&#39;</span><span class="p">,</span> <span class="s1">&#39;hanning&#39;</span><span class="p">,</span> <span class="s1">&#39;hamming&#39;</span><span class="p">,</span> <span class="s1">&#39;bartlett&#39;</span><span class="p">,</span> <span class="s1">&#39;blackman&#39;</span><span class="p">]:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Window is on of &#39;flat&#39;, &#39;hanning&#39;, &#39;hamming&#39;,</span><span class="se">\</span>
-<span class="s2">            &#39;bartlett&#39;, &#39;blackman&#39;&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Window is not one of &#39;flat&#39;, &#39;hanning&#39;, &#39;hamming&#39;, &quot;</span>
+            <span class="s2">&quot;&#39;bartlett&#39;, &#39;blackman&#39;&quot;</span><span class="p">)</span>
 
     <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="n">window_len</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">x</span><span class="p">,</span>
               <span class="mi">2</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="n">window_len</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
@@ -712,8 +713,8 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">end_times</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">end_times</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">start_times</span><span class="p">)):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;end_times should be empty or of the same length as </span><span class="se">\</span>
-<span class="s2">            start_times.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;end_times should be empty or of the same length as start_times.&quot;</span><span class="p">)</span>
 
     <span class="c1"># old sampling times</span>
     <span class="n">otime</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ii</span><span class="o">.</span><span class="n">timestamp</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;corr_start&#39;</span><span class="p">]])</span>
@@ -735,8 +736,7 @@ document.write(`
             <span class="n">etime</span> <span class="o">=</span> <span class="n">stime</span> <span class="o">+</span> <span class="p">(</span><span class="n">stime</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">stime</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
     <span class="c1"># create masked array to avoid nans</span>
-    <span class="n">mm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_array</span><span class="p">(</span>
-        <span class="n">data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+    <span class="n">mm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
 
     <span class="c1"># new corr_data matrix</span>
     <span class="n">nmat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">stime</span><span class="p">),</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
@@ -744,14 +744,14 @@ document.write(`
 
     <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">stime</span><span class="p">)):</span>
         <span class="c1"># index of measurements between start_time[ii] and end_time[ii]</span>
-        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">((</span><span class="n">otime</span> <span class="o">&gt;=</span> <span class="n">stime</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span><span class="n">otime</span> <span class="o">&lt;</span> <span class="n">etime</span><span class="p">[</span><span class="n">ii</span><span class="p">]))</span>  <span class="c1"># ind is</span>
-        <span class="c1"># a list(tuple) for dimensions</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">((</span><span class="n">otime</span> <span class="o">&gt;=</span> <span class="n">stime</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span><span class="n">otime</span> <span class="o">&lt;</span> <span class="n">etime</span><span class="p">[</span><span class="n">ii</span><span class="p">]))</span>
+        <span class="c1"># ind is a list(tuple) for dimensions</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ind</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="c1"># one measurement found</span>
             <span class="n">nmat</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">ind</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">:]</span>
         <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">ind</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="c1"># more than one measurement in range</span>
-            <span class="n">nmat</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">mm</span><span class="p">[</span><span class="n">ind</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">:],</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">filled</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+            <span class="n">nmat</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">mm</span><span class="p">[</span><span class="n">ind</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">filled</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
 
     <span class="c1"># assign new data</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">nmat</span>
@@ -1330,24 +1330,6 @@ document.write(`
     <span class="n">dta</span> <span class="o">=</span> <span class="o">-</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;start_lag&#39;</span><span class="p">]</span>
     <span class="n">dte</span> <span class="o">=</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;end_lag&#39;</span><span class="p">]</span>
 
-    <span class="c1"># format (trimm) the matrix for zero-time to be either at the beginning</span>
-    <span class="c1"># or at the center as required by</span>
-    <span class="c1"># miic.core.stretch_mod.time_stretch_estimate</span>
-
-    <span class="c1"># In case a reference is provided but the matrix needs to be trimmed the</span>
-    <span class="c1"># references also need to be trimmed. To do so we append the references to</span>
-    <span class="c1"># the matrix, trimm it and remove the references again</span>
-    <span class="c1"># if ref_trc is not None:</span>
-    <span class="c1">#     rts = ref_trc.shape</span>
-    <span class="c1">#     if len(rts) == 1:</span>
-    <span class="c1">#         nr = 1</span>
-    <span class="c1">#     else:</span>
-    <span class="c1">#         nr = rts[0]</span>
-    <span class="c1">#     data = np.concatenate((</span>
-    <span class="c1">#         data, np.atleast_2d(ref_trc)), 0)</span>
-    <span class="c1">#     reft = np.tile([UTCDateTime(1900, 1, 1)], (nr))</span>
-    <span class="c1">#     stats[&#39;corr_start&#39;] = np.concatenate((stats[&#39;corr_start&#39;], reft), 0)</span>
-
     <span class="c1"># trim the matrices</span>
     <span class="k">if</span> <span class="n">sides</span> <span class="o">==</span> <span class="s2">&quot;single&quot;</span><span class="p">:</span>
         <span class="c1"># extract the time&gt;0 part of the matrix</span>
@@ -1362,11 +1344,8 @@ document.write(`
     <span class="c1"># create or extract references</span>
     <span class="k">if</span> <span class="n">ref_trc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">ref_trc</span> <span class="o">=</span> <span class="n">corr_mat_extract_trace</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">stats</span><span class="p">)</span>
-    <span class="c1"># else:</span>
-    <span class="c1">#     # extract and remove references from corr matrix again</span>
-    <span class="c1">#     ref_trc = data[-nr:, :]</span>
-    <span class="c1">#     data = data[:-nr, :]</span>
-    <span class="c1">#     stats[&#39;corr_start&#39;] = stats[&#39;corr_start&#39;][:-nr]</span>
+    <span class="k">if</span> <span class="n">ref_tr_stats</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ref_tr_stats</span> <span class="o">=</span> <span class="n">stats</span>
 
     <span class="n">dv</span> <span class="o">=</span> <span class="n">multi_ref_vchange_and_align</span><span class="p">(</span>
         <span class="n">data</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">,</span> <span class="n">tw</span><span class="o">=</span><span class="n">tw</span><span class="p">,</span> <span class="n">stretch_range</span><span class="o">=</span><span class="n">stretch_range</span><span class="p">,</span>
@@ -1522,7 +1501,7 @@ document.write(`
 <span class="sd">    stored in the ``corr_data`` matrix (one for each row) with shifted</span>
 <span class="sd">    versions  of reference trace stored in ``ref_trc``. The range of shifting</span>
 <span class="sd">    to be tested is given in ``shift_range`` in seconds. It is used in a</span>
-<span class="sd">    symmetric way from -``shift_range`` to +``shift_range``. Shifting ist</span>
+<span class="sd">    symmetric way from -``shift_range`` to +``shift_range``. Shifting is</span>
 <span class="sd">    tested ``shift_steps`` times. ``shift_steps`` should be an odd number to</span>
 <span class="sd">    test zero shifting. The best match (shifting amount and corresponding</span>
 <span class="sd">    correlation value) is calculated in specified time windows. Multiple time</span>
@@ -1554,7 +1533,7 @@ document.write(`
 <span class="sd">    :param sides: Side of the traces to be used for the shifting estimate</span>
 <span class="sd">        (&#39;both&#39; | &#39;single&#39;). ``single`` is used for</span>
 <span class="sd">        one-sided signals from active sources or if the time window shall</span>
-<span class="sd">        not be symmetric. For ``both`` the time window will be mirrowd about</span>
+<span class="sd">        not be symmetric. For ``both`` the time window will be mirrored about</span>
 <span class="sd">        zero lag time, e.g. [start,end] will result in time windows</span>
 <span class="sd">        [-end:-start] and [start:end] being used simultaneousy</span>
 
@@ -1582,7 +1561,9 @@ document.write(`
 <span class="sd">        *method*: It is equal to &#39;single_ref&#39; and specify in which &quot;way&quot; the</span>
 <span class="sd">            values have been obtained.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
+    <span class="k">if</span> <span class="n">shift_steps</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;shift_steps must be an odd number to include zero shift&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">sides</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="s1">&#39;single&#39;</span><span class="p">]:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;&#39;sides&#39; must be either &#39;both&#39; or &#39;single&#39;, not </span><span class="si">{</span><span class="n">sides</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -1645,8 +1626,8 @@ document.write(`
     <span class="n">ref_mat</span> <span class="o">=</span> <span class="n">create_shifted_ref_mat</span><span class="p">(</span><span class="n">ref_trc</span><span class="p">,</span> <span class="n">stats</span><span class="p">,</span> <span class="n">shifts</span><span class="p">)</span>
 
     <span class="c1"># create space for results</span>
-    <span class="n">dt_list</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="c1"># do computation for each time window</span>
+    <span class="n">sim_mats</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">twi</span> <span class="ow">in</span> <span class="n">tw</span><span class="p">:</span>
         <span class="c1"># create indices of time windows</span>
         <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
@@ -1657,28 +1638,27 @@ document.write(`
         <span class="n">indices</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">start_lag</span> <span class="o">*</span> <span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)</span>
         <span class="n">indices</span> <span class="o">=</span> <span class="n">indices</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
         <span class="c1"># compare data and shifted reference</span>
-        <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">compare_with_modified_reference</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ref_mat</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span>
-        <span class="n">corr</span> <span class="o">=</span> <span class="n">sim_mat</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">shifts</span><span class="p">[</span><span class="n">sim_mat</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
-        <span class="c1"># Set dt to NaN where the correlation is NaN instead of having it equal</span>
-        <span class="c1"># to one of the two stretch_range limits</span>
-        <span class="n">value</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">corr</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-        <span class="c1"># assemble results</span>
-        <span class="n">dt</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">&#39;stats&#39;</span><span class="p">:</span> <span class="n">stats</span><span class="p">,</span>
-            <span class="s1">&#39;corr&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">corr</span><span class="p">),</span>
-            <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">value</span><span class="p">),</span>
-            <span class="s1">&#39;second_axis&#39;</span><span class="p">:</span> <span class="n">shifts</span><span class="p">,</span>
-            <span class="s1">&#39;value_type&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;shift&#39;</span><span class="p">]),</span>
-            <span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;absolute_shift&#39;</span><span class="p">])}</span>
-        <span class="k">if</span> <span class="n">return_sim_mat</span><span class="p">:</span>
-            <span class="n">dt</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;sim_mat&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">sim_mat</span><span class="p">)})</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">dt</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;sim_mat&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span>
-
-        <span class="n">dt_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">DV</span><span class="p">(</span><span class="o">**</span><span class="n">dt</span><span class="p">))</span>
-
-    <span class="k">return</span> <span class="n">dt_list</span></div>
+        <span class="n">sim_mats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">compare_with_modified_reference</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ref_mat</span><span class="p">,</span> <span class="n">indices</span><span class="p">))</span>
+    <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">sim_mats</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">corr</span> <span class="o">=</span> <span class="n">sim_mat</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">shifts</span><span class="p">[</span><span class="n">sim_mat</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
+    <span class="c1"># Set dt to NaN where the correlation is NaN instead of having it equal</span>
+    <span class="c1"># to one of the two stretch_range limits</span>
+    <span class="n">value</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">corr</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="c1"># assemble results</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;stats&#39;</span><span class="p">:</span> <span class="n">stats</span><span class="p">,</span>
+        <span class="s1">&#39;corr&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">corr</span><span class="p">),</span>
+        <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">value</span><span class="p">),</span>
+        <span class="s1">&#39;second_axis&#39;</span><span class="p">:</span> <span class="n">shifts</span><span class="p">,</span>
+        <span class="s1">&#39;value_type&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;shift&#39;</span><span class="p">]),</span>
+        <span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;absolute_shift&#39;</span><span class="p">])}</span>
+    <span class="k">if</span> <span class="n">return_sim_mat</span><span class="p">:</span>
+        <span class="n">dt</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;sim_mat&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">sim_mat</span><span class="p">)})</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dt</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;sim_mat&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">DV</span><span class="p">(</span><span class="o">**</span><span class="n">dt</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="apply_shift"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.apply_shift">[docs]</a><span class="k">def</span> <span class="nf">apply_shift</span><span class="p">(</span>

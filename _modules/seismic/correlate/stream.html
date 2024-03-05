@@ -469,12 +469,13 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 20th April 2021 04:19:35 pm</span>
-<span class="sd">Last Modified: Thursday, 24th August 2023 11:06:37 am</span>
+<span class="sd">Last Modified: Monday, 4th March 2024 02:40:32 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
 
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -526,6 +527,27 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;ntrcs&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;npts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;processing_bulk&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ref_trc</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="n">list_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;corr_start&#39;</span><span class="p">,</span> <span class="s1">&#39;corr_end&#39;</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">,</span> <span class="s1">&#39;channel&#39;</span><span class="p">]</span>
+        <span class="n">stats_out</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">list_keys</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">stats_out</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                    <span class="n">stats_out</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+            <span class="k">del</span> <span class="n">stats_out</span><span class="p">[</span><span class="s1">&#39;processing_bulk&#39;</span><span class="p">]</span>
+            <span class="k">del</span> <span class="n">stats_out</span><span class="p">[</span><span class="s1">&#39;ntrcs&#39;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">CorrTrace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">item</span><span class="p">],</span> <span class="n">_header</span><span class="o">=</span><span class="n">stats_out</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">list_keys</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">stats_out</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">stats_out</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">value</span><span class="p">)[</span><span class="n">item</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                <span class="n">stats_out</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+        <span class="n">cb_out</span> <span class="o">=</span> <span class="n">CorrBulk</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">item</span><span class="p">],</span> <span class="n">stats</span><span class="o">=</span><span class="n">stats_out</span><span class="p">)</span>
+        <span class="n">cb_out</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;ntrcs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cb_out</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">cb_out</span>
 
 <div class="viewcode-block" id="CorrBulk.plot"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -825,7 +847,7 @@ document.write(`
         <span class="k">else</span><span class="p">:</span>
             <span class="k">while</span> <span class="n">start</span> <span class="o">&lt;</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span><span class="p">):</span>
                 <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">inc_s</span>
-                <span class="n">ii</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_slice_index</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+                <span class="n">ii</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_slice_index</span><span class="p">(</span><span class="n">start</span><span class="o">-</span><span class="n">inc_s</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">end</span><span class="o">+</span><span class="n">inc_s</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
                 <span class="n">start</span> <span class="o">=</span> <span class="n">end</span>
                 <span class="c1"># stats don&#39;t need to be altered for this function</span>
                 <span class="n">ref_trcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_extract_trace</span><span class="p">(</span>
@@ -861,6 +883,9 @@ document.write(`
 <span class="sd">        :return: The shift as :class:`~seismic.monitor.dv.DV` object.</span>
 <span class="sd">        :rtype: DV</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s1">&#39;This function is deprecated. Use measure_shift instead.&#39;</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">ref_trc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">ref_trc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_trc</span>
         <span class="n">dv_dict</span> <span class="o">=</span> <span class="n">pcp</span><span class="o">.</span><span class="n">corr_mat_shift</span><span class="p">(</span>
@@ -872,7 +897,7 @@ document.write(`
 
 <div class="viewcode-block" id="CorrBulk.measure_shift"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.measure_shift">[docs]</a>    <span class="k">def</span> <span class="nf">measure_shift</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">tw</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">tw</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">shift_range</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">shift_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">101</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span>
             <span class="n">return_sim_mat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -914,12 +939,10 @@ document.write(`
 <span class="sd">        :return: A DV object holding a shift value.</span>
 <span class="sd">        :rtype: DV</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">tw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">tw_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">tw</span><span class="p">]</span>
         <span class="n">dt</span> <span class="o">=</span> <span class="n">pcp</span><span class="o">.</span><span class="n">measure_shift</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">,</span> <span class="n">ref_trc</span><span class="o">=</span><span class="n">ref_trc</span><span class="p">,</span>
-            <span class="n">tw</span><span class="o">=</span><span class="n">tw_list</span><span class="p">,</span> <span class="n">shift_range</span><span class="o">=</span><span class="n">shift_range</span><span class="p">,</span> <span class="n">shift_steps</span><span class="o">=</span><span class="n">shift_steps</span><span class="p">,</span>
-            <span class="n">sides</span><span class="o">=</span><span class="n">sides</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="o">=</span><span class="n">return_sim_mat</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">tw</span><span class="o">=</span><span class="n">tw</span><span class="p">,</span> <span class="n">shift_range</span><span class="o">=</span><span class="n">shift_range</span><span class="p">,</span> <span class="n">shift_steps</span><span class="o">=</span><span class="n">shift_steps</span><span class="p">,</span>
+            <span class="n">sides</span><span class="o">=</span><span class="n">sides</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="o">=</span><span class="n">return_sim_mat</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">dt</span></div>
 
 <div class="viewcode-block" id="CorrBulk.mirror"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.mirror">[docs]</a>    <span class="k">def</span> <span class="nf">mirror</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1070,6 +1093,20 @@ document.write(`
         <span class="n">kwargs</span> <span class="o">=</span> <span class="n">m3ut</span><span class="o">.</span><span class="n">save_header_to_np_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
         <span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span>
             <span class="n">path</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CorrBulk.select_corr_time"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.select_corr_time">[docs]</a>    <span class="k">def</span> <span class="nf">select_corr_time</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
+            <span class="n">include_partially_selected</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Selects correlations that are inside of the requested time window.</span>
+
+<span class="sd">        refer to CorrStream.select_corr_time for details</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_corr_stream</span><span class="p">()</span>
+        <span class="n">scst</span> <span class="o">=</span> <span class="n">cst</span><span class="o">.</span><span class="n">select_corr_time</span><span class="p">(</span>
+            <span class="n">starttime</span><span class="o">=</span><span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="o">=</span><span class="n">endtime</span><span class="p">,</span>
+            <span class="n">include_partially_selected</span><span class="o">=</span><span class="n">include_partially_selected</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">scst</span><span class="o">.</span><span class="n">create_corr_bulk</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="CorrBulk.slice"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrBulk.slice">[docs]</a>    <span class="k">def</span> <span class="nf">slice</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
@@ -1344,6 +1381,10 @@ document.write(`
         <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">channel</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">times</span><span class="p">:</span>
             <span class="n">st</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">select_corr_time</span><span class="p">(</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">times</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">st</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;CorrStream contains no data between </span><span class="si">{</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1"> and &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">times</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
         <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">st</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="p">))</span>
         <span class="n">statlist</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c1"># Double check sampling rate</span>
@@ -1495,6 +1536,36 @@ document.write(`
                     <span class="ow">and</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span> <span class="o">&lt;=</span> <span class="n">endtime</span><span class="p">:</span>
                 <span class="n">outst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">outst</span></div>
+
+<div class="viewcode-block" id="CorrStream.select_time"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrStream.select_time">[docs]</a>    <span class="k">def</span> <span class="nf">select_time</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">end</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+            <span class="n">exclude</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Selects correlations that are inside of the requested time window.</span>
+
+<span class="sd">        :param start: Start time given as Tuple in the form (h, m, s)</span>
+<span class="sd">        :type start: Tuple[int, int, float]</span>
+<span class="sd">        :param end: End time (refers to corr_end) given as Tuple in the form</span>
+<span class="sd">            (h, m, s).</span>
+<span class="sd">        :type end: Tuple[int, int, float]</span>
+<span class="sd">        :param exclude: Exclude the times inside of the (start, end) interval,</span>
+<span class="sd">            defaults to False</span>
+<span class="sd">        :type exclude: bool, optional</span>
+<span class="sd">        :return: A CorrStream holding the selected CorrTraces</span>
+<span class="sd">        :rtype: CorrStream</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cst_select</span> <span class="o">=</span> <span class="n">CorrStream</span><span class="p">()</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="o">*</span><span class="n">start</span><span class="p">)</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="o">*</span><span class="n">end</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="o">.</span><span class="n">time</span> <span class="o">&gt;=</span> <span class="n">start</span> \
+                    <span class="ow">and</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span><span class="o">.</span><span class="n">time</span> <span class="o">&lt;=</span> <span class="n">end</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">exclude</span><span class="p">:</span>
+                    <span class="n">cst_select</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">exclude</span><span class="p">:</span>
+                    <span class="n">cst_select</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cst_select</span></div>
 
 <div class="viewcode-block" id="CorrStream.slide"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stream.CorrStream.slide">[docs]</a>    <span class="k">def</span> <span class="nf">slide</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">window_length</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
@@ -1918,7 +1989,7 @@ document.write(`
         <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;az&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">az</span>
         <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;baz&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">baz</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">inv</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
             <span class="n">inv1</span> <span class="o">=</span> <span class="n">inv</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
                 <span class="n">network</span><span class="o">=</span><span class="n">stats1</span><span class="o">.</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">stats1</span><span class="o">.</span><span class="n">station</span><span class="p">)</span>
             <span class="n">inv2</span> <span class="o">=</span> <span class="n">inv</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
@@ -1935,7 +2006,7 @@ document.write(`
             <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;dist&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist</span> <span class="o">/</span> <span class="mi">1000</span>
             <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;az&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">az</span>
             <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;baz&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">baz</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">IndexError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;No station coordinates provided.&quot;</span><span class="p">)</span>
     <span class="n">stats</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;sac&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">stats</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;response&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>

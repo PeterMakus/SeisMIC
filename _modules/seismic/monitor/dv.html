@@ -467,7 +467,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 15th June 2021 04:12:18 pm</span>
-<span class="sd">Last Modified: Friday, 16th June 2023 03:54:21 pm</span>
+<span class="sd">Last Modified: Tuesday, 5th March 2024 01:59:30 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
@@ -493,7 +493,7 @@ document.write(`
         <span class="n">sim_mat</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">second_axis</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">stretches</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">corrs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">n_stat</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">dv_processing</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">dv_processing</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Creates an object designed to hold and process velocity changes.</span>
 
@@ -565,17 +565,14 @@ document.write(`
 <span class="sd">        :type path: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">save_header_to_np_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dv_processing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">sides</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dv_processing</span><span class="p">[</span><span class="s1">&#39;sides&#39;</span><span class="p">]</span>
-            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-                <span class="n">sides</span> <span class="o">=</span> <span class="s1">&#39;unknown&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dv_processing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dv_processing</span><span class="p">):</span>
             <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
                 <span class="s1">&#39;freq_min&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dv_processing</span><span class="p">[</span><span class="s1">&#39;freq_min&#39;</span><span class="p">],</span>
                 <span class="s1">&#39;freq_max&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dv_processing</span><span class="p">[</span><span class="s1">&#39;freq_max&#39;</span><span class="p">],</span>
                 <span class="s1">&#39;tw_len&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dv_processing</span><span class="p">[</span><span class="s1">&#39;tw_len&#39;</span><span class="p">],</span>
                 <span class="s1">&#39;tw_start&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dv_processing</span><span class="p">[</span><span class="s1">&#39;tw_start&#39;</span><span class="p">],</span>
-                <span class="s1">&#39;sides&#39;</span><span class="p">:</span> <span class="n">sides</span>
+                <span class="s1">&#39;sides&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dv_processing</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sides&#39;</span><span class="p">,</span> <span class="s1">&#39;unknown&#39;</span><span class="p">),</span>
+                <span class="s1">&#39;aligned&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dv_processing</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;aligned&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
             <span class="p">})</span>
         <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
             <span class="s1">&#39;method_array&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">]),</span>
@@ -600,7 +597,7 @@ document.write(`
         <span class="n">ylim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">plot_scatter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">figsize</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">),</span> <span class="n">dpi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">144</span><span class="p">,</span>
         <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">return_ax</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;technical&#39;</span><span class="p">,</span>
-        <span class="n">dateformat</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1"> %b %y&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+        <span class="n">dateformat</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1"> %b %y&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Plots the dv object into a *multi-panel-view* of `similarity matrix`</span>
@@ -654,10 +651,10 @@ document.write(`
             <span class="n">normalize_simmat</span><span class="o">=</span><span class="n">normalize_simmat</span><span class="p">,</span> <span class="n">sim_mat_Clim</span><span class="o">=</span><span class="n">sim_mat_Clim</span><span class="p">,</span>
             <span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="n">xlim</span><span class="p">,</span> <span class="n">ylim</span><span class="o">=</span><span class="n">ylim</span><span class="p">,</span>
             <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">plot_scatter</span><span class="o">=</span><span class="n">plot_scatter</span><span class="p">,</span> <span class="n">return_ax</span><span class="o">=</span><span class="n">return_ax</span><span class="p">,</span>
-            <span class="n">dateformat</span><span class="o">=</span><span class="n">dateformat</span><span class="p">)</span></div>
+            <span class="n">dateformat</span><span class="o">=</span><span class="n">dateformat</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DV.smooth_sim_mat"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.dv.DV.smooth_sim_mat">[docs]</a>    <span class="k">def</span> <span class="nf">smooth_sim_mat</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">win_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">exclude_corr_below</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">win_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>  <span class="n">exclude_corr_below</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Smoothes the similarity matrix along the correlation time axis.</span>
 
@@ -714,26 +711,21 @@ document.write(`
     <span class="k">while</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="n">method</span> <span class="o">=</span> <span class="n">method</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">stretches</span> <span class="o">=</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;stretches&#39;</span><span class="p">]</span>
-        <span class="n">corrs</span> <span class="o">=</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;corrs&#39;</span><span class="p">]</span>
-    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-        <span class="n">stretches</span> <span class="o">=</span> <span class="n">corrs</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">n_stat</span> <span class="o">=</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;n_stat&#39;</span><span class="p">]</span>
-    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-        <span class="n">n_stat</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">try</span><span class="p">:</span>
         <span class="n">dv_processing</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
             <span class="n">freq_min</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;freq_min&#39;</span><span class="p">]),</span>
             <span class="n">freq_max</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;freq_max&#39;</span><span class="p">]),</span>
             <span class="n">tw_start</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;tw_start&#39;</span><span class="p">]),</span>
             <span class="n">tw_len</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;tw_len&#39;</span><span class="p">]))</span>
+        <span class="n">dv_processing</span><span class="p">[</span><span class="s1">&#39;sides&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">loaded</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sides&#39;</span><span class="p">,</span> <span class="s1">&#39;unknown&#39;</span><span class="p">)</span>
+        <span class="n">dv_processing</span><span class="p">[</span><span class="s1">&#39;aligned&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">loaded</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;aligned&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-        <span class="n">dv_processing</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">dv_processing</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">return</span> <span class="n">DV</span><span class="p">(</span>
         <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;corr&#39;</span><span class="p">],</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">],</span> <span class="n">vt</span><span class="p">,</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;sim_mat&#39;</span><span class="p">],</span>
-        <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;second_axis&#39;</span><span class="p">],</span> <span class="n">method</span><span class="p">,</span> <span class="n">stats</span><span class="o">=</span><span class="n">stats</span><span class="p">,</span> <span class="n">stretches</span><span class="o">=</span><span class="n">stretches</span><span class="p">,</span>
-        <span class="n">corrs</span><span class="o">=</span><span class="n">corrs</span><span class="p">,</span> <span class="n">n_stat</span><span class="o">=</span><span class="n">n_stat</span><span class="p">,</span> <span class="n">dv_processing</span><span class="o">=</span><span class="n">dv_processing</span><span class="p">)</span></div>
+        <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;second_axis&#39;</span><span class="p">],</span> <span class="n">method</span><span class="p">,</span> <span class="n">stats</span><span class="o">=</span><span class="n">stats</span><span class="p">,</span>
+        <span class="n">stretches</span><span class="o">=</span><span class="n">loaded</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;stretches&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">corrs</span><span class="o">=</span><span class="n">loaded</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;corrs&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">n_stat</span><span class="o">=</span><span class="n">loaded</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;n_stat&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">dv_processing</span><span class="o">=</span><span class="n">dv_processing</span><span class="p">)</span></div>
 </pre></div>
 
                 </article>

@@ -467,7 +467,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 29th March 2021 12:54:05 pm</span>
-<span class="sd">Last Modified: Wednesday, 5th April 2023 10:32:09 am</span>
+<span class="sd">Last Modified: Wednesday, 6th December 2023 04:49:41 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -477,6 +477,8 @@ document.write(`
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">Inventory</span><span class="p">,</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">UTCDateTime</span>
 <span class="kn">from</span> <span class="nn">obspy.core</span> <span class="kn">import</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">AttribDict</span>
+
+<span class="kn">from</span> <span class="nn">seismic.correlate.preprocessing_stream</span> <span class="kn">import</span> <span class="n">cos_taper_st</span>
 
 
 <span class="n">log_lvl</span> <span class="o">=</span> <span class="p">{</span>
@@ -699,7 +701,7 @@ document.write(`
 <span class="c1"># No stats, keys that are not in stats but attributes of the respective objects</span>
 <span class="n">no_stats</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s1">&#39;corr&#39;</span><span class="p">,</span> <span class="s1">&#39;value&#39;</span><span class="p">,</span> <span class="s1">&#39;sim_mat&#39;</span><span class="p">,</span> <span class="s1">&#39;second_axis&#39;</span><span class="p">,</span> <span class="s1">&#39;method_array&#39;</span><span class="p">,</span> <span class="s1">&#39;vt_array&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="s1">&#39;tw_len&#39;</span><span class="p">,</span> <span class="s1">&#39;tw_start&#39;</span><span class="p">,</span> <span class="s1">&#39;freq_min&#39;</span><span class="p">,</span> <span class="s1">&#39;freq_max&#39;</span><span class="p">,</span> <span class="s1">&#39;subdir&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="s1">&#39;tw_len&#39;</span><span class="p">,</span> <span class="s1">&#39;tw_start&#39;</span><span class="p">,</span> <span class="s1">&#39;freq_min&#39;</span><span class="p">,</span> <span class="s1">&#39;freq_max&#39;</span><span class="p">,</span> <span class="s1">&#39;aligned&#39;</span><span class="p">,</span> <span class="s1">&#39;subdir&#39;</span><span class="p">,</span>
     <span class="s1">&#39;plot_vel_change&#39;</span><span class="p">,</span> <span class="s1">&#39;start_date&#39;</span><span class="p">,</span> <span class="s1">&#39;end_date&#39;</span><span class="p">,</span> <span class="s1">&#39;win_len&#39;</span><span class="p">,</span> <span class="s1">&#39;date_inc&#39;</span><span class="p">,</span>
     <span class="s1">&#39;sides&#39;</span><span class="p">,</span> <span class="s1">&#39;compute_tt&#39;</span><span class="p">,</span> <span class="s1">&#39;rayleigh_wave_velocity&#39;</span><span class="p">,</span> <span class="s1">&#39;stretch_range&#39;</span><span class="p">,</span>
     <span class="s1">&#39;stretch_steps&#39;</span><span class="p">,</span> <span class="s1">&#39;dt_ref&#39;</span><span class="p">,</span> <span class="s1">&#39;preprocessing&#39;</span><span class="p">,</span> <span class="s1">&#39;postprocessing&#39;</span><span class="p">]</span>
@@ -886,6 +888,112 @@ document.write(`
             <span class="n">tr</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">datetime</span><span class="o">=</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">)[</span><span class="s1">&#39;dip&#39;</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">dip</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="nan_helper"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.nan_helper">[docs]</a><span class="k">def</span> <span class="nf">nan_helper</span><span class="p">(</span><span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper to handle indices and logical indices of NaNs.</span>
+
+<span class="sd">    :param y: numpy array with possible NaNs</span>
+<span class="sd">    :type y: 1d np.ndarray</span>
+<span class="sd">    :return: Tuple of two numpy arrays: The first one holds a logical mask</span>
+<span class="sd">        indicating the positions of nans, the second one is a function that</span>
+<span class="sd">        can be called to translate the first output to indices.</span>
+<span class="sd">    :rtype: Tuple[np.ndarray, np.ndarray]</span>
+
+<span class="sd">    .. example::</span>
+
+<span class="sd">            &gt;&gt;&gt; # linear interpolation of NaNs</span>
+<span class="sd">            &gt;&gt;&gt; nans, x = nan_helper(y)</span>
+<span class="sd">            &gt;&gt;&gt; y[nans] = np.interp(x(nans), x(~nans), y[~nans])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">z</span><span class="p">:</span> <span class="n">z</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="gap_handler"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.gap_handler">[docs]</a><span class="k">def</span> <span class="nf">gap_handler</span><span class="p">(</span>
+    <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">max_interpolation_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">retain_len</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function tries to interpolate gaps in a stream. If the gaps are too</span>
+<span class="sd">    large and the data snippets too short, the data will be discarded.</span>
+<span class="sd">    Around remaining gaps, the trace will be tapered.</span>
+
+<span class="sd">    :param st: Stream that might contain gaps</span>
+<span class="sd">    :type st: Stream</span>
+<span class="sd">    :param max_interpolation_length: maximum length in number of samples</span>
+<span class="sd">        to interpolate, defaults to 10</span>
+<span class="sd">    :type max_interpolation_length: int, optional</span>
+<span class="sd">    :param retain_len: length in seconds that a data snippet has to</span>
+<span class="sd">        have to be retained, defaults to 0</span>
+<span class="sd">    :type retain_len: int, optional</span>
+<span class="sd">    :param taper_len: Length of the taper in seconds, defaults to 10</span>
+<span class="sd">    :type taper_len: float, optional</span>
+<span class="sd">    :return: The sanitised stream</span>
+<span class="sd">    :rtype: Stream</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># take care of overlaps</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">method</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># 1. try to interpolate gaps</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="n">interpolate_gaps_st</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">max_gap_len</span><span class="o">=</span><span class="n">max_interpolation_length</span><span class="p">)</span>
+
+    <span class="c1"># split trace and discard snippets that are shorter than retain_len</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+    <span class="n">discard_short_traces</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">retain_len</span><span class="p">)</span>
+
+    <span class="c1"># Taper the remaining bits at their ends</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="n">cos_taper_st</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">st</span><span class="o">.</span><span class="n">merge</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="interpolate_gaps"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.interpolate_gaps">[docs]</a><span class="k">def</span> <span class="nf">interpolate_gaps</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">max_gap_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    perform a linear interpolation where A is filled with nans.</span>
+
+<span class="sd">    :param A: np.ndarray, containing nans</span>
+<span class="sd">    :type A: np.ndarray</span>
+<span class="sd">    :param max_gap_len: maximum length to fill, defaults to -1</span>
+<span class="sd">    :type max_gap_len: int, optional</span>
+<span class="sd">    :return: The array with interpolated values</span>
+<span class="sd">    :rtype: np.ndarray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_invalid</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">is_masked</span><span class="p">(</span><span class="n">A</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">A</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">getmask</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+
+    <span class="n">maskconc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span>
+        <span class="p">[</span><span class="n">mask</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">mask</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">mask</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="p">[</span><span class="kc">True</span><span class="p">]))</span>
+    <span class="n">maskstart</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">([</span><span class="n">maskconc</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">mask</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">masklen</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">maskconc</span><span class="p">)[</span><span class="mi">0</span><span class="p">])[::</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">max_gap_len</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">max_gap_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">A</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">mstart</span><span class="p">,</span> <span class="n">ml</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">maskstart</span><span class="p">,</span> <span class="n">masklen</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ml</span> <span class="o">&gt;</span> <span class="n">max_gap_len</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s1">&#39;Gap too large. Not interpolating.&#39;</span><span class="p">,</span> <span class="ne">UserWarning</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">A</span><span class="p">[</span><span class="n">mstart</span><span class="p">:</span><span class="n">mstart</span><span class="o">+</span><span class="n">ml</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">mstart</span><span class="p">,</span> <span class="n">mstart</span><span class="o">+</span><span class="n">ml</span><span class="p">),</span> <span class="n">x</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">],</span>
+            <span class="n">A</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">],</span> <span class="n">left</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_invalid</span><span class="p">(</span><span class="n">A</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="interpolate_gaps_st"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.interpolate_gaps_st">[docs]</a><span class="k">def</span> <span class="nf">interpolate_gaps_st</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">max_gap_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    perform a linear interpolation where A is filled with nans.</span>
+
+<span class="sd">    :param st: Stream containing nans</span>
+<span class="sd">    :type st: Stream</span>
+<span class="sd">    :param max_gap_len: maximum length to fill, defaults to -1</span>
+<span class="sd">    :type max_gap_len: int, optional</span>
+<span class="sd">    :return: The stream with interpolated values</span>
+<span class="sd">    :rtype: Stream</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">interpolate_gaps</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">max_gap_len</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">st</span></div>
 </pre></div>
 
                 </article>
