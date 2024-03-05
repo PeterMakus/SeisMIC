@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 27th February 2024 11:57:06 am
+Last Modified: Tuesday, 5th March 2024 02:50:57 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -1049,23 +1049,23 @@ def align_dv_curves(
     # given time
     # this is a problem if ii is close to the beginning or end of the
     # dv time-series
-
+    if np.all(np.isnan(dv.value[ii])):
+        raise ValueError(
+            'No time available.'
+            f' dv: {dv.stats.id}, utc: {utc}')
     if ii < steps:
         shift = np.nansum(
-            dv.value[:ii+steps]*dv.corr[:ii+steps])/np.nansum(
-                dv.corr[:ii+steps])
+            dv.value[:ii+steps+1]*dv.corr[:ii+steps+1])/np.nansum(
+                dv.corr[:ii+steps+1])
     elif ii > len(dv.value)-steps:
         shift = np.nansum(
             dv.value[ii-steps:]*dv.corr[ii-steps:])/np.nansum(
                 dv.corr[ii-steps:])
     else:
         shift = np.nansum(
-            dv.value[ii-steps:ii+steps]*dv.corr[ii-steps:ii+steps])/np.nansum(
-                dv.corr[ii-steps:ii+steps])
-    if np.isnan(shift):
-        raise ValueError(
-            'The shift value is nan. This should not happen.'
-            f' dv: {dv.stats.id}, utc: {utc}')
+            dv.value[ii-steps:ii+steps+1]*dv.corr[
+                ii-steps:ii+steps+1])/np.nansum(
+                dv.corr[ii-steps:ii+steps+1])
     dv.value -= shift-value
     dv.dv_processing['aligned'] = value
 

@@ -20,6 +20,7 @@ net:
     # type: list of strings or string, wildcards allowed
     network : 'X9'
     station : 'IR1'
+    component : 'E'
 
 #### parameters for correlation (emperical Green's function creation)
 co:

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Monday, 4th March 2024 02:41:37 pm
+Last Modified: Tuesday, 5th March 2024 01:59:30 pm
 '''
 
 from datetime import datetime
@@ -34,7 +34,7 @@ class DV(object):
         sim_mat: np.ndarray, second_axis: np.ndarray, method: str,
         stats: CorrStats, stretches: np.ndarray = None,
         corrs: np.ndarray = None, n_stat: np.ndarray = None,
-            dv_processing: dict = None):
+            dv_processing: dict = {}):
         """
         Creates an object designed to hold and process velocity changes.
 
@@ -106,7 +106,7 @@ class DV(object):
         :type path: str
         """
         kwargs = mu.save_header_to_np_array(self.stats)
-        if self.dv_processing is not None:
+        if self.dv_processing is not None and len(self.dv_processing):
             kwargs.update({
                 'freq_min': self.dv_processing['freq_min'],
                 'freq_max': self.dv_processing['freq_max'],
@@ -260,7 +260,7 @@ def read_dv(path: str) -> DV:
         dv_processing['sides'] = loaded.get('sides', 'unknown')
         dv_processing['aligned'] = loaded.get('aligned', False)
     except KeyError:
-        dv_processing = None
+        dv_processing = {}
     return DV(
         loaded['corr'], loaded['value'], vt, loaded['sim_mat'],
         loaded['second_axis'], method, stats=stats,

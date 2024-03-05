@@ -8,17 +8,21 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 11:07:27 am
-Last Modified: Monday, 4th March 2024 03:09:11 pm
+Last Modified: Tuesday, 5th March 2024 02:55:54 pm
 '''
 
 import unittest
 from unittest import mock
 import warnings
+import os
 from copy import deepcopy
 
+from obspy import UTCDateTime
 import numpy as np
 
 from seismic.monitor import spatial as spt
+from seismic.monitor.dv import DV
+from seismic.correlate.stats import CorrStats
 
 
 class TestProbability(unittest.TestCase):
@@ -819,6 +823,212 @@ class TestDVGrid(unittest.TestCase):
         g2c_mock.assert_has_calls(calls)
         sk_mock.assert_not_called()
         np.testing.assert_array_almost_equal(out, np.array([np.zeros((2, 2))]))
+
+    @mock.patch('seismic.monitor.spatial.dv_starts')
+    @mock.patch('seismic.monitor.spatial.align_dv_curves')
+    def test_align_dvs_to_grid_already_aligned(
+            self, align_mock: mock.MagicMock, starts_mock: mock.MagicMock):
+        dv = mock.MagicMock()
+        dv.stats.corr_start = np.arange(100)
+        dv.stats.corr_end = dv.stats.corr_start + 1
+        dv.value = np.arange(100)
+        dv.corr = np.arange(100)/100
+        dv.dv_processing = {'aligned': 0}
+        out = self.dvg.align_dvs_to_grid([dv], 0, 0, 0)
+        self.assertEqual(len(out), 0)
+        starts_mock.assert_not_called()
+        align_mock.assert_not_called()
+
+    @mock.patch('seismic.monitor.spatial.dv_starts')
+    @mock.patch('seismic.monitor.spatial.align_dv_curves')
+    def test_align_dvs_to_grid_not_started(
+            self, align_mock: mock.MagicMock, starts_mock: mock.MagicMock):
+        dv = mock.MagicMock()
+        dv.stats.corr_start = np.arange(100)
+        dv.stats.corr_end = dv.stats.corr_start + 1
+        dv.value = np.arange(100)
+        dv.corr = np.arange(100)/100
+        dv.dv_processing = {'aligned': False}
+        starts_mock.return_value = False
+        out = self.dvg.align_dvs_to_grid([dv], 0, 0, 0)
+        self.assertEqual(len(out), 0)
+        starts_mock.assert_called_once_with(dv, 0, 0)
+        align_mock.assert_not_called()
+
+    @mock.patch('seismic.monitor.spatial.dv_starts')
+    @mock.patch('seismic.monitor.spatial.align_dv_curves')
+    def test_align_dvs_to_grid_no_grid(
+            self, align_mock: mock.MagicMock, starts_mock: mock.MagicMock):
+        dv = mock.MagicMock()
+        dv.stats.corr_start = np.arange(100)
+        dv.stats.corr_end = dv.stats.corr_start + 1
+        dv.value = np.arange(100)
+        dv.corr = np.arange(100)/100
+        dv.dv_processing = {'aligned': False}
+        starts_mock.return_value = True
+        out = self.dvg.align_dvs_to_grid([dv], 0, 0, 0)
+        self.assertEqual(len(out), 1)
+        starts_mock.assert_called_once_with(dv, 0, 0)
+        align_mock.assert_called_once_with(dv, 0, 0, 0)
+
+    @mock.patch('seismic.monitor.spatial.dv_starts')
+    @mock.patch('seismic.monitor.spatial.align_dv_curves')
+    def test_align_dvs_to_grid_grid1(
+            self, align_mock: mock.MagicMock, starts_mock: mock.MagicMock):
+        dv = mock.MagicMock()
+        dv.stats.corr_start = np.arange(100)
+        dv.stats.corr_end = dv.stats.corr_start + 1
+        dv.stats.id = 'b'
+        dv.value = np.arange(100)
+        dv.corr = np.arange(100)/100
+        dv.dv_processing = {'aligned': False}
+        starts_mock.return_value = True
+        dvg = deepcopy(self.dvg)
+        dvg.vel_change = 1
+        with mock.patch.object(dvg, 'forward_model') as fwd_mock:
+            fwd_mock.return_value = [1]
+            out = dvg.align_dvs_to_grid([dv], 0, 0, 0, save='a')
+            fwd_mock.assert_called_once_with(
+                1, [dv], 0)
+        dv.save.assert_called_once_with(os.path.join('a', 'DV-b.npz'))
+        self.assertEqual(len(out), 1)
+        starts_mock.assert_called_once_with(dv, 0, 0)
+        align_mock.assert_called_once_with(dv, 0, 0, 1)
+
+    @mock.patch('seismic.monitor.spatial.dv_starts')
+    @mock.patch('seismic.monitor.spatial.align_dv_curves')
+    def test_align_dvs_to_grid_fwd_nan(
+            self, align_mock: mock.MagicMock, starts_mock: mock.MagicMock):
+        dv = mock.MagicMock()
+        dv.stats.corr_start = np.arange(100)
+        dv.stats.corr_end = dv.stats.corr_start + 1
+        dv.stats.id = 'b'
+        dv.value = np.arange(100)
+        dv.corr = np.arange(100)/100
+        dv.dv_processing = {'aligned': False}
+        starts_mock.return_value = True
+        dvg = deepcopy(self.dvg)
+        dvg.vel_change = 1
+        with mock.patch.object(dvg, 'forward_model') as fwd_mock:
+            fwd_mock.return_value = [np.nan]
+            with self.assertRaises(ValueError):
+                dvg.align_dvs_to_grid([dv], 0, 0, 0)
+            fwd_mock.assert_called_once_with(
+                1, [dv], 0)
+        starts_mock.assert_called_once_with(dv, 0, 0)
+
+
+class TestSpatial(unittest.TestCase):
+    def setUp(self):
+        stats = {
+            'corr_start': np.array(
+                [UTCDateTime(n*3600) for n in np.arange(100)]),
+            'id': 'test_object', 'dv_processing': {}}
+        self.dv = DV(
+            np.ones(100), np.ones(100), value_type='dv', sim_mat=[],
+            second_axis=[],
+            method='stretch', stats=CorrStats(stats), dv_processing={})
+        return super().setUp()
+
+    def test_align_dv_curves_const(self):
+        utc = UTCDateTime(0)  # Set a dummy UTCDateTime
+        steps = 10  # Set the number of steps
+        value = 0.5  # Set the value for alignment
+        # Call the align_dv_curves function
+        aligned_dv = deepcopy(self.dv)
+        spt.align_dv_curves(aligned_dv, utc, steps, value)
+        np.testing.assert_array_equal(aligned_dv.value, 0.5)
+        self.assertDictEqual(aligned_dv.dv_processing, {'aligned': value})
+
+    def test_align_dv_curves_lin(self):
+        utc = UTCDateTime(3600*5)  # Set a dummy UTCDateTime
+        steps = 4  # Set the number of steps
+        value = 0  # Set the value for alignment
+        # Call the align_dv_curves function
+        aligned_dv = deepcopy(self.dv)
+        aligned_dv.value = np.arange(100, dtype=float)
+        spt.align_dv_curves(aligned_dv, utc, steps, value)
+        np.testing.assert_array_equal(
+            aligned_dv.value, np.arange(100, dtype=float)-5)
+        self.assertDictEqual(aligned_dv.dv_processing, {'aligned': value})
+
+    def test_align_dv_curves_lin2(self):
+        utc = UTCDateTime(3600*99)  # Set a dummy UTCDateTime
+        steps = 4  # Set the number of steps
+        value = 0  # Set the value for alignment
+        # Call the align_dv_curves function
+        aligned_dv = deepcopy(self.dv)
+        aligned_dv.value = np.arange(100, dtype=float)
+        spt.align_dv_curves(aligned_dv, utc, steps, value)
+        np.testing.assert_array_equal(
+            aligned_dv.value, np.arange(100, dtype=float)-97)
+        self.assertDictEqual(aligned_dv.dv_processing, {'aligned': value})
+
+    def test_align_dv_all_nan(self):
+        utc = UTCDateTime(3600*99)  # Set a dummy UTCDateTime
+        steps = 4  # Set the number of steps
+        value = 0  # Set the value for alignment
+        # Call the align_dv_curves function
+        aligned_dv = deepcopy(self.dv)
+        aligned_dv.value = np.arange(100, dtype=float) + np.nan
+        with self.assertRaises(ValueError):
+            spt.align_dv_curves(aligned_dv, utc, steps, value)
+
+
+class TestDvStarts(unittest.TestCase):
+    def test_short_dv_object(self):
+        dv = DV(
+            np.ones(3), np.ones(3), value_type='dv', sim_mat=[],
+            second_axis=[],
+            method='stretch', stats=CorrStats({'id': 'test_object'}))
+        self.assertFalse(spt.dv_starts(dv, 0, 0))
+
+    def test_before_dv_start(self):
+        stats = {
+            'corr_start': np.array(
+                [UTCDateTime(n*3600+5e3) for n in np.arange(100)]),
+            'id': 'test_object', 'dv_processing': {}}
+        dv = DV(
+            np.ones(100), np.ones(100), value_type='dv', sim_mat=[],
+            second_axis=[],
+            method='stretch', stats=CorrStats(stats))
+        self.assertFalse(spt.dv_starts(dv, 0, 0))
+
+    def test_after_dv_start(self):
+        stats = {
+            'corr_start': np.array(
+                [UTCDateTime(n*3600+5e3) for n in np.arange(100)]),
+            'id': 'test_object', 'dv_processing': {}}
+        stats['corr_end'] = stats['corr_start']+3600
+        dv = DV(
+            np.ones(100), np.ones(100), value_type='dv', sim_mat=[],
+            second_axis=[],
+            method='stretch', stats=CorrStats(stats))
+        self.assertFalse(spt.dv_starts(dv, UTCDateTime(1e7), 0))
+
+    def test_low_corr(self):
+        stats = {
+            'corr_start': np.array(
+                [UTCDateTime(n*3600) for n in np.arange(100)]),
+            'id': 'test_object', 'dv_processing': {}}
+        stats['corr_end'] = stats['corr_start']+3600
+        dv = DV(
+            np.ones(100)*0.1, np.ones(100), value_type='dv', sim_mat=[],
+            second_axis=[],
+            method='stretch', stats=CorrStats(stats))
+        self.assertFalse(spt.dv_starts(dv, UTCDateTime(3600), 0.2))
+
+    def test_true(self):
+        stats = {
+            'corr_start': np.array(
+                [UTCDateTime(n*3600) for n in np.arange(100)]),
+            'id': 'test_object', 'dv_processing': {}}
+        stats['corr_end'] = stats['corr_start']+3600
+        dv = DV(
+            np.ones(100)*0.7, np.ones(100), value_type='dv', sim_mat=[],
+            second_axis=[],
+            method='stretch', stats=CorrStats(stats))
+        self.assertTrue(spt.dv_starts(dv, UTCDateTime(3600), 0.6))
 
 
 if __name__ == "__main__":
