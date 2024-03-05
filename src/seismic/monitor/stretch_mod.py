@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Monday, 7th August 2023 08:15:39 pm
+Last Modified: Friday, 29th September 2023 10:59:17 am
 '''
 from typing import List, Tuple, Optional
 from copy import deepcopy
@@ -930,8 +930,9 @@ def multi_ref_vchange_and_align(
         ref_trs = np.nan_to_num(ref_trs)
 
     if tw is not None and len(tw) > 1:
-        print(" The multi-reference vchange evaluation doesn't handle multiple\
-                time windows. Only the first time-window will be used")
+        print(
+            "The multi-reference vchange evaluation cannot handle multiple "
+            "time windows. Only the first time-window will be used")
         tw = tw[0]
 
     multi_ref_panel = multi_ref_vchange(

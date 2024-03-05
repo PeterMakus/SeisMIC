@@ -13,10 +13,11 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Friday, 28th July 2023 03:20:46 pm
+Last Modified: Tuesday, 5th March 2024 03:03:01 pm
 '''
-from typing import Tuple, Optional, Iterator, Iterable
+from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
+import os
 
 import matplotlib as mpl
 from matplotlib import pyplot as plt
@@ -159,13 +160,6 @@ def sensitivity_kernel(
     if denom == 0:
         return np.zeros_like(dist_s1_x0)
     dist_s2_x0 = compute_grid_dist(x, y, s2[0], s2[1])
-    # does the direct wave have to be divided by dt?
-    # This here takes way more time and RAM, I don't know why
-    # nom = np.trapz(
-    #     probability(
-    #         dist_s1_x0, T, vel, mf_path, atol=atol) * probability(
-    #         dist_s2_x0, t-T, vel, mf_path, atol=atol),
-    #     dx=dt, axis=0)
     nom = np.trapz(
         [probability(
             dist_s1_x0, tt, vel, mf_path, atol=atol) * probability(
@@ -248,7 +242,8 @@ def compute_cm(
 
 def geo2cart(
     lat: np.ndarray | float, lon: np.ndarray | float,
-        lat0: float) -> Tuple[np.ndarray | float, np.ndarray | float]:
+    lat0: float, lon0: float) -> Tuple[
+        np.ndarray | float, np.ndarray | float]:
     """
     Convert geographic coordinates to Northing and Easting for a local grid.
 
@@ -261,19 +256,20 @@ def geo2cart(
     :type lon: np.ndarray | float
     :param lat0: Latitude of the lower left corner of the grid
     :type lat0: float
+    :param lon0: Latitude of the lower left corner of the grid
+    :type lon0: float
     :return: A tuple holding (Easting, Northing) in km and in the same shape
         as ``lat`` and ``lon``.
     :rtype: Tuple[np.ndarray, np.ndarray]
     """
+    if np.any(lat < lat0) or np.any(lon < lon0):
+        raise ValueError(
+            'Latitude and longitude have to be greater or equal than the '
+            'lower left corner of the grid.')
     # Northing
-    y = deg2km(lat)
+    y = deg2km(lat-lat0)
     # easting
-    x = deg2km(loc2deg(lat0, lon, lat0, 0))
-    if isinstance(lon, float) or isinstance(lon, int):
-        if lon < 0:
-            x = -x
-    else:
-        x[lon < 0] *= -1
+    x = deg2km(loc2deg(lat0, lon, lat0, lon0))
     return x, y
 
 
@@ -312,7 +308,7 @@ class DVGrid(object):
         self.lon0 = lon0
 
         # Compute local grid
-        x0, y0 = geo2cart(lat0, lon0, lat0)
+        x0, y0 = 0, 0
         self.xaxis = np.arange(x0, x0 + x + res, res)
         self.yaxis = np.arange(y0, y0 + y + res, res)
         self.res = res
@@ -334,8 +330,8 @@ class DVGrid(object):
         utc: Optional[UTCDateTime] = None,
         tw: Optional[Tuple[float, float]] = None,
         stat0: Optional[Iterable[Tuple[float, float]]] = None,
-        stat1: Optional[Iterable[Tuple[float, float]]] = None) \
-            -> np.ndarray:
+        stat1: Optional[Iterable[Tuple[float, float]]] = None,
+            verbose: bool = False) -> np.ndarray:
         """
         Solves the forward problem associated to the grid computation.
         I.e., computes the velocity changes theoretically measured at each
@@ -378,7 +374,7 @@ class DVGrid(object):
             twe = None
         elif dvs is not None and utc is not None:
             _, _, slat0, slon0, slat1, slon1, twe, _, _\
-                = self._extract_info_dvs(dvs, utc)
+                = self._extract_info_dvs(dvs, utc, verbose)
         else:
             raise TypeError(
                 'Define either dv and utc or all other arguments.'
@@ -394,7 +390,8 @@ class DVGrid(object):
         corr_len: float, std_model: float,
         tw: Optional[Tuple[float, float]] = None,
         freq0: Optional[float] = None, freq1: Optional[float] = None,
-            compute_resolution: bool = False) -> np.ndarray:
+        compute_resolution: bool = False,
+            verbose: bool = False) -> np.ndarray:
         """
         Perform a linear least-squares inversion of station specific velocity
         changes (dv/v) at time ``t``.
@@ -456,7 +453,7 @@ class DVGrid(object):
         :rtype: np.ndarray
         """
         vals, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
-            = self._extract_info_dvs(dvs, utc)
+            = self._extract_info_dvs(dvs, utc, verbose)
         tw = tw or twe
         freq0 = freq0 or freq0e
         freq1 = freq1 or freq1e
@@ -484,12 +481,99 @@ class DVGrid(object):
             self.resolution = self._compute_resolution(skernels, a, b)
         return self.vel_change
 
+    def compute_dv_tsvd(
+        self, dvs: Iterator[DV], utc: UTCDateTime,
+        tw: Optional[Tuple[float, float]] = None,
+        freq0: Optional[float] = None, freq1: Optional[float] = None,
+            cutoff: float = .2, verbose: bool = False) -> np.ndarray:
+        """
+        Performs a truncated singular value decomposition (TSVD) to invert
+        for the dv/v grid. The advantage of this approach is that no
+        a-priori information and no subjective damping parameter has to be
+        defined. However, the disadvantage is that the inversion is not aware
+        of the data variance (defined by the correlation coefficient).
+        This can be a useful approach for dv estimates with a very
+        high stability.
+
+        The algorithm will perform the following steps:
+        1. Computes the sensitivity kernels for each station pair.
+        2. Computes model and data variance.
+        3. Inverts the velocity changes onto a flattened grid.
+
+        .. note::
+            All computations are performed on a flattened grid, so that the
+            grid is actually just one-dimensional. The return value is
+            reshaped onto the shape of self.xgrid.
+
+        .. note::
+            The returned value and the value in self.vel_change is strictly
+            speaking not a velocity change, but an epsilon value. That
+            corresponds to -dv/v
+
+        .. warning::
+            This has not been thoroughly tested and has the disadvantage
+            that no "physical" prior weighting is done (as opposed to the
+            linear-least-squares method), where data weighting is performed
+            based on the coherence values.
+
+
+        :param dvs: The :class:``~seismic.monitor.dv.DV`` objects to use.
+            Note that the input can be an iterator, so that not actually all
+            dvs have to be loaded into RAM at the same time.
+        :type dvs: Iterator[DV]
+        :param utc: Time at which the velocity changes should be inverted.
+            Has to be covered by the ``DV`` objects.
+        :type utc: UTCDateTime
+        :param tw: Time window used to evaluate the velocity changes.
+            Given in the form Tuple[tw_start, tw_end]. Not required if
+            the used dvs have a ``dv_processing`` attribute.
+        :type tw: Tuple[float, float], optional
+        :param freq0: high-pass frequency of the used bandpass filter.
+            Not required if the used dvs have a ``dv_processing`` attribute.
+        :type freq0: float, optional
+        :param freq1: low-pass frequency of the used bandpass filter.
+            Not required  the used dvs have a ``dv_processing`` attribute.
+        :type freq1: float, optional
+        :param compute_resolution: Compute the resolution matrix?
+            Will be saved in self.resolution
+        :type compute_resolution: bool, defaults to False
+        :param cutoff: Cutoff value for the singular values. All singular
+            values below this fraction of the maximum singular value will be
+            set to 0.
+        :raises ValueError: For times that are not covered by the dvs
+            time-series.
+        :return: The dv-grid (with corresponding coordinates in
+            self.xgrid and self.ygrid or self.xaxis and self.yaxis,
+            respectively). Note this is actually an epsilon grid (meaning
+            it represents the stretch value i.e., -dv/v)
+        :rtype: np.ndarray
+        """
+        vals, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
+            = self._extract_info_dvs(dvs, utc, verbose)
+        tw = tw or twe
+        freq0 = freq0 or freq0e
+        freq1 = freq1 or freq1e
+        if None in [freq0, freq1, tw]:
+            raise AttributeError(
+                'The arguments freq0, freq1, and tw have to be defined if '
+                'dv does not have the attribute "dv_processing".'
+            )
+        skernels = self._compute_sensitivity_kernels(
+            slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2)
+        G_inv = np.linalg.pinv(
+            skernels, rcond=cutoff)
+        # Compute the model
+        m = np.dot(G_inv, vals)
+        # m is the flattened array, reshape onto grid
+        self.vel_change = m.reshape(self.xgrid.shape)
+        return self.vel_change
+
     def compute_resolution(
         self, dvs: Iterable[DV], utc: UTCDateTime, scaling_factor: float,
         corr_len: float, std_model: float,
         tw: Optional[Tuple[float, float]] = None,
-        freq0: Optional[float] = None, freq1: Optional[float] = None) \
-            -> np.ndarray:
+        freq0: Optional[float] = None, freq1: Optional[float] = None,
+            verbose: bool = False) -> np.ndarray:
         """
         Compute the model resolution of the dv/v model.
 
@@ -537,9 +621,9 @@ class DVGrid(object):
         """
         cm = compute_cm(
             scaling_factor, corr_len, std_model,
-            self.dist or self._compute_dist_matrix())
+            self._compute_dist_matrix())
         _, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
-            = self._extract_info_dvs(dvs, utc)
+            = self._extract_info_dvs(dvs, utc, verbose)
         freq0 = freq0 or freq0e
         freq1 = freq1 or freq1e
         tw = tw or twe
@@ -558,6 +642,77 @@ class DVGrid(object):
         self.resolution = self._compute_resolution(skernels, a, b)
         return self.resolution
 
+    def compute_posterior_covariance(
+        self, dvs: Iterable[DV], utc: UTCDateTime, scaling_factor: float,
+        corr_len: float, std_model: float,
+        tw: Optional[Tuple[float, float]] = None,
+        freq0: Optional[float] = None, freq1: Optional[float] = None,
+            verbose: bool = False) -> np.ndarray:
+        """
+        Computes the posterior covariance matrix of the dv/v model.
+
+        :param dvs: The :class:``~seismic.monitor.dv.DV`` objects to use.
+            Note that the input can be an iterator, so that not actually all
+            dvs have to be loaded into RAM at the same time.
+        :type dvs: Iterator[DV]
+        :param utc: Time at which the velocity changes should be inverted.
+            Has to be covered by the ``DV`` objects.
+        :type utc: UTCDateTime
+        :param scaling_factor: Scaling factor, dependent on the cell length.
+            (e.g., 1*cell_length)
+        :type scaling_factor: float
+        :param corr_len: Length over which the parameters are related (high
+            value means stronger smoothing).
+        :type corr_len: float
+        :param std_model: A-priori standard deviation of the model. Corresponds
+            to the best agreement between 1) the stability of the model for the
+            velocity variations and 2) the minimised difference between the
+            model predictions (output of the forward problem) and the data.
+            Can be estimated via the L-curve criterion (see Hansen 1992)
+        :type std_model: float
+        :param tw: Time window used to evaluate the velocity changes.
+            Given in the form Tuple[tw_start, tw_end]. Not required if dv
+            has attribute ``dv_processing``.
+        :type tw: Tuple[float, float], optional
+        :param freq0: high-pass frequency of the used bandpass filter.
+            Not required if dv has attribute ``dv_processing``.
+        :type freq0: float, optional
+        :param freq1: low-pass frequency of the used bandpass filter.
+            Not required if dv has attribute ``dv_processing``.
+        :type freq1: float, optional
+        :raises ValueError: For times that are not covered by the dvs
+            time-series.
+        :return: A gridded resolution matrix.
+        :rtype: np.ndarray
+        """
+        cm = compute_cm(
+            scaling_factor, corr_len, std_model,
+            self._compute_dist_matrix())
+        _, corrs, slat0, slon0, slat1, slon1, twe, freq0e, freq1e\
+            = self._extract_info_dvs(dvs, utc, verbose)
+        freq0 = freq0 or freq0e
+        freq1 = freq1 or freq1e
+        tw = tw or twe
+        if None in [freq0, freq1, tw]:
+            raise AttributeError(
+                'The arguments freq0, freq1, and tw have to be defined if '
+                'dv does not have the attribute "dv_processing".'
+            )
+        skernels = self._compute_sensitivity_kernels(
+            slat0, slon0, slat1, slon1, (tw[0]+tw[1])/2)
+        cd = self._compute_cd(skernels, freq0, freq1, tw, corrs)
+
+        return self._compute_posterior_covariance(skernels, cm, cd)
+
+    def _compute_posterior_covariance(
+            self, skernels: np.ndarray, cm: np.ndarray,
+            cd: np.ndarray) -> np.ndarray:
+        """
+        Compute the posterior covariance matrix.
+        """
+        a = np.dot(np.dot(skernels.T, np.linalg.inv(cd)), skernels)
+        return np.linalg.inv(a + np.linalg.inv(cm))
+
     def _compute_resolution(
         self, skernels: np.ndarray, a: np.ndarray,
             b: np.ndarray) -> np.ndarray:
@@ -569,7 +724,7 @@ class DVGrid(object):
         return self.resolution
 
     def _extract_info_dvs(
-        self, dvs: Iterable[DV], utc: UTCDateTime) -> Tuple[
+        self, dvs: Iterable[DV], utc: UTCDateTime, verbose: bool) -> Tuple[
             np.ndarray, np.ndarray, np.ndarray, np.ndarray,
             Tuple[float, float], float, float]:
         """
@@ -588,13 +743,16 @@ class DVGrid(object):
         vals, corrs, slat0, slon0, slat1, slon1 = [], [], [], [], [], []
         for dv in dvs:
             if utc < dv.stats.corr_start[0] or utc > dv.stats.corr_end[-1]:
-                raise IndexError(
-                    f'Time {utc} is outside of the dv time-series'
-                )
+                if verbose:
+                    warnings.warn(
+                        f'Time {utc} is outside of the dv time-series'
+                        f' {dv.stats.id}'
+                    )
+                continue
             ii = np.argmin(abs(np.array(dv.stats.corr_start)-utc))
             val = dv.value[ii]
             corr = dv.corr[ii]
-            if np.isnan(val) or np.isnan(corr):
+            if np.isnan(val) or np.isnan(corr) or corr <= 1e-3 or corr >= 1:
                 # No value
                 continue
             vals.append(val)
@@ -637,7 +795,7 @@ class DVGrid(object):
         :param lons: Station Longitudes
         :type lons: Iterable[float]
         """
-        x, y = geo2cart(np.array(lats), np.array(lons), self.lat0)
+        x, y = geo2cart(np.array(lats), np.array(lons), self.lat0, self.lon0)
         if hasattr(self, 'statx'):
             self.statx = np.hstack((self.statx, x))
             self.staty = np.hstack((self.staty, y))
@@ -691,6 +849,8 @@ class DVGrid(object):
         :return: 2D matrix holding distances between cells i and j.
         :rtype: np.ndarray
         """
+        if self.dist is not None:
+            return self.dist
         self.dist = np.zeros((len(self.xf), len(self.xf)))
         for ii, (xx, yy) in enumerate(zip(self.xf, self.yf)):
             self.dist[ii, :] = np.sqrt((self.xf-xx)**2+(self.yf-yy)**2)
@@ -716,15 +876,14 @@ class DVGrid(object):
         :rtype: int | np.ndarray
         """
         # Find northing and easting of coordinates
-        x, y = geo2cart(lat, lon, self.lat0)
-
-        if isinstance(x, float) or isinstance(x, int):
+        x, y = geo2cart(lat, lon, self.lat0, self.lon0)
+        if not isinstance(x, np.ndarray):
             if np.all(abs(self.xf-x) > self.res) \
                     or np.all(abs(self.yf-y > self.res)):
                 raise ValueError(
                     'The point is outside the coordinate grid'
                 )
-            return np.argmin(abs(self.xf-x)+abs(self.yf-y))
+            return np.argmin(abs(self.xf-x)**2+abs(self.yf-y)**2)
         if np.all(np.array([abs(self.xf-xx) for xx in x]) > self.res)\
                 or np.all(np.array([abs(self.yf-yy) for yy in y]) > self.res):
             raise ValueError(
@@ -732,7 +891,8 @@ class DVGrid(object):
             )
         ii = np.array(
             [np.argmin(
-                abs(self.xf-xx)+abs(self.yf-yy)) for xx, yy in zip(x, y)])
+                abs(self.xf-xx)**2+abs(self.yf-yy)**2) for xx, yy in zip(
+                    x, y)])
         return ii
 
     def _compute_sensitivity_kernels(
@@ -769,8 +929,8 @@ class DVGrid(object):
             on grid j
         :rtype: np.ndarray
         """
-        x0, y0 = geo2cart(slat0, slon0, self.lat0)
-        x1, y1 = geo2cart(slat1, slon1, self.lat0)
+        x0, y0 = geo2cart(slat0, slon0, self.lat0, self.lon0)
+        x1, y1 = geo2cart(slat1, slon1, self.lat0, self.lon0)
         skernels = []
 
         for xx0, yy0, xx1, yy1 in zip(x0, y0, x1, y1):
@@ -823,3 +983,112 @@ class DVGrid(object):
         plt.xlabel('Easting [km]')
         plt.ylabel('Northing [km]')
         return ax
+
+    def align_dvs_to_grid(
+        self, dvs: List[DV], utc: UTCDateTime, steps: int,
+            corr_thres: float, save: bool | str = False) -> List[DV]:
+        """
+        Align dv/v curves to the forward model at a given time.
+
+        :param dvs: List of dv/v objects to align
+        :type dvs: List[DV]
+        :param utc: Time at which the dv/v curve should be aligned
+        :type utc: UTCDateTime
+        :param steps: Number of steps to use for the alignment
+        :type steps: int
+        :param corr_thres: Correlation threshold
+        :type corr_thres: float
+        :param save: If given, save the aligned dv/v curves to the given
+            directory. Defaults to False.
+        :type save: bool | str, optional
+        :return: List of dv/v curves that have been aligned
+        :rtype: List[DV]
+        """
+        # identifiy the dvs that have already been shifted earlier
+        # and remove them from the list
+        dvs = [
+            dv for dv in dvs if dv.dv_processing.get('aligned', False)
+            is False]
+        # 1. identify the dv/v curves that are available at the given time
+        dvs = [dv for dv in dvs if dv_starts(dv, utc, corr_thres)]
+        if not len(dvs):
+            return dvs
+        # Compute the foward value at each of the remaining dvs
+        if hasattr(self, 'vel_change'):
+            shifts = self.forward_model(self.vel_change, dvs, utc)
+            if np.any(np.isnan(shifts)):
+                raise ValueError(
+                    'The forward model returned nan values. why?'
+                    f'utc: {utc}')
+        else:
+            shifts = np.zeros(len(dvs))
+        # Align the dv/v curves to the forward model
+        for dv, shift in zip(dvs, shifts):
+            align_dv_curves(dv, utc, steps, shift)
+            if save:
+                dv.save(os.path.join(save, f'DV-{dv.stats.id}.npz'))
+        return dvs
+
+
+def align_dv_curves(
+        dv: DV, utc: UTCDateTime, steps: int, value: float = 0.):
+    """
+    Align a dv/v curve to a given value at a given time.
+
+    :param dv: dv/v object to align
+    :type dv: DV
+    :param utc: Time at which the dv/v curve should be aligned
+    :type utc: UTCDateTime
+    :param steps: Number of steps to use for the alignment
+    :type steps: int
+    :param value: Value to align the dv/v curve to, defaults to 0.
+    :type value: float, optional
+    """
+    ii = np.argmin(abs(np.array(dv.stats.corr_start)-utc))
+    # to make it more stable we use the mean of the values around the
+    # given time
+    # this is a problem if ii is close to the beginning or end of the
+    # dv time-series
+    if np.all(np.isnan(dv.value[ii])):
+        raise ValueError(
+            'No time available.'
+            f' dv: {dv.stats.id}, utc: {utc}')
+    if ii < steps:
+        shift = np.nansum(
+            dv.value[:ii+steps+1]*dv.corr[:ii+steps+1])/np.nansum(
+                dv.corr[:ii+steps+1])
+    elif ii > len(dv.value)-steps:
+        shift = np.nansum(
+            dv.value[ii-steps:]*dv.corr[ii-steps:])/np.nansum(
+                dv.corr[ii-steps:])
+    else:
+        shift = np.nansum(
+            dv.value[ii-steps:ii+steps+1]*dv.corr[
+                ii-steps:ii+steps+1])/np.nansum(dv.corr[ii-steps:ii+steps+1])
+    dv.value -= shift-value
+    dv.dv_processing['aligned'] = value
+
+
+def dv_starts(dv: DV, utc: UTCDateTime, corr_thres: float) -> bool:
+    """
+    Check if a dv/v curve is available at a given time and if it has a
+    correlation value above a given threshold.
+
+    :param dv: dv/v object to check
+    :type dv: DV
+    :param utc: Time at which the dv/v curve should be aligned
+    :type utc: UTCDateTime
+    :param corr_thres: Correlation threshold
+    :type corr_thres: float
+    :return: True if the dv/v curve is available and has a correlation
+        value above the threshold
+    :rtype: bool
+    """
+    if len(dv.value[dv.avail]) < 6:
+        return False
+    if utc < dv.stats.corr_start[0] or utc > dv.stats.corr_end[-1]:
+        return False
+    ii = np.argmin(abs(np.array(dv.stats.corr_start)-utc))
+    if np.isnan(dv.corr[ii]) or dv.corr[ii] < corr_thres:
+        return False
+    return True

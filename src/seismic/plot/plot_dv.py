@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th July 2021 02:30:02 pm
-Last Modified: Monday, 21st August 2023 12:22:18 pm
+Last Modified: Monday, 4th March 2024 02:44:41 pm
 '''
 
 from datetime import datetime
@@ -28,24 +28,33 @@ from seismic.plot.plot_utils import set_mpl_params
 def plot_fancy_dv(
     dv, xlim: Tuple[datetime, datetime] = None,
     ylim: Tuple[float, float] = None, return_ax: bool = False,
-        title: str = None, dateformat: str = '%d %b %y', *args, **kwargs):
+    title: str = None, dateformat: str = '%d %b %y', ax: plt.axes = None,
+        *args, **kwargs):
     """ Prettier than the technical plot, but less informative"""
-    fig = plt.figure(figsize=(12, 8))
+    set_mpl_params()
+    if not ax:
+        fig = plt.figure(figsize=(12, 8))
+    else:
+        fig = ax.get_figure()
 
     val = -dv.value[~np.isnan(dv.corr)]*100
     corr_starts = np.array(dv.stats.corr_start)
     t_real = [t.datetime for t in corr_starts[~np.isnan(dv.corr)]]
 
+    ax = ax or plt.gca()
+
     # plot dv/v
-    map = plt.scatter(
+    map = ax.scatter(
         t_real, val, c=dv.corr[~np.isnan(dv.corr)], cmap='inferno_r', s=22)
 
     # Correct format of X-Axis
-    ax = plt.gca()
     ax.set_ylim(ylim)
     plt.ylabel(r'$\frac{dv}{v}$ [%]')
     plt.grid(True, axis='y')
-    locale.setlocale(locale.LC_ALL, "en_GB.utf8")
+    try:
+        locale.setlocale(locale.LC_ALL, "en_GB.utf8")
+    except Exception:
+        locale.setlocale(locale.LC_ALL, "en_GB.utf-8")
     ax.xaxis.set_major_formatter(mdates.DateFormatter(dateformat))
     plt.xticks(rotation=25)
 
@@ -140,13 +149,14 @@ def plot_technical_dv(
     sim_mat = dv.sim_mat
     stretch_vect = dv.second_axis
     stats = dv.stats
+    plot_sim_mat = sim_mat.size > 0
 
     rtime = np.array(
         [utcdt.datetime for utcdt in stats['corr_start']],
         dtype=np.datetime64)
 
-    # normalize simmat if requested
-    if normalize_simmat:
+    # normalize simmat if requested and if dv contains simmat
+    if normalize_simmat and plot_sim_mat:
         sim_mat = sim_mat/np.tile(
             np.max(sim_mat, axis=1), (sim_mat.shape[1], 1)).T
 
@@ -193,15 +203,18 @@ def plot_technical_dv(
         gs = mpl.gridspec.GridSpec(3, 1, height_ratios=[3, 1, 1])
 
     ax1 = f.add_subplot(gs[0])
-    imh = plt.imshow(
-        np.flipud(sim_mat.T).astype(float), interpolation='none',
-        aspect='auto')
+    if plot_sim_mat:
+        imh = plt.imshow(
+            np.flipud(sim_mat.T).astype(float), interpolation='none',
+            aspect='auto')
 
     # plotting value is way easier now
     plt.plot(-dv.value, 'b.')
 
     # Set extent so we can treat the axes properly (mainly y)
-    imh.set_extent((0, sim_mat.shape[0], stretch_vect[-1], stretch_vect[0]))
+    if plot_sim_mat:
+        imh.set_extent((
+            0, sim_mat.shape[0], stretch_vect[-1], stretch_vect[0]))
 
     ###
     if xlim:
@@ -211,15 +224,15 @@ def plot_technical_dv(
         ax1.set_xlim(xl0, xl1+1)
         plt.xlim(xl0, xl1+1)
     else:
-        ax1.set_xlim(0, sim_mat.shape[0])
-        plt.xlim(0, sim_mat.shape[0])
+        ax1.set_xlim(0, len(dv.value))
+        plt.xlim(0, len(dv.value))
 
     if value_type == 'stretch':
         ax1.invert_yaxis()
     if ylim:
         plt.ylim(ylim)
     # ###
-    if sim_mat_Clim:
+    if sim_mat_Clim and plot_sim_mat:
         imh.set_clim(sim_mat_Clim[0], sim_mat_Clim[1])
 
     plt.gca().get_xaxis().set_visible(False)

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Friday, 1st September 2023 08:13:39 am
+Last Modified: Monday, 4th March 2024 11:44:40 am
 '''
 
 import fnmatch
@@ -228,8 +228,9 @@ class Store_Client(object):
             return (None, None)
         return (starttime, endtime)
 
-    def _translate_wildcards(self, network: str, station: str) -> List[
-            List[str]]:
+    def _translate_wildcards(
+        self, network: str, station: str,
+            component: str = '?') -> List[List[str]]:
         """
         Look up network and station names in database, so that wildcards
         can be estimated into number of stations.
@@ -238,11 +239,14 @@ class Store_Client(object):
         :type network: str
         :param station: station string, may contain wildcards
         :type station: str
+        :param componnt: component, i.e. Z, N, E or ? as wildcard
+        type componnt str
         :return: _description_
         :rtype: _type_
         """
         dirlist = glob.glob(
-            os.path.join(self.sds_root, '*', network, station, '*'))
+            os.path.join(
+                self.sds_root, '*', network, station, '??'+component+'.?'))
         nets = [os.path.basename(
             os.path.dirname(os.path.dirname(i))) for i in dirlist]
         stats = [os.path.basename(os.path.dirname(i)) for i in dirlist]
@@ -383,7 +387,7 @@ class Store_Client(object):
             self.inventory = ninv
         fname = os.path.join(
             self.inv_dir, f'{ninv[0].code}.{ninv[0][0].code}.xml')
-        self.inventory.write(fname, format="STATIONXML", validate=True)
+        ninv.write(fname, format="STATIONXML", validate=True)
 
     def _generate_time_windows(
         self, network: str, station: str, channel: str, starttime: UTCDateTime,

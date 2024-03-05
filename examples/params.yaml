@@ -20,6 +20,7 @@ net:
     # type: list of strings or string, wildcards allowed
     network : 'X9'
     station : 'IR1'
+    component : 'E'
 
 #### parameters for correlation (emperical Green's function creation)
 co:
@@ -60,11 +61,6 @@ co:
     # these function work on an obspy.Stream object given as first argument
     # and return an obspy.Stream object.
     preProcessing : [
-                    {'function':'seismic.correlate.preprocessing_stream.detrend_st',
-                    'args':{'type':'linear'}},
-                    {'function':'seismic.correlate.preprocessing_stream.cos_taper_st',
-                      'args':{'taper_len': 100, # seconds
-                              'lossless': True}}, # lossless tapering stitches additional data to trace, tapers, and removes the tapered ends after preprocessing
                     {'function':'seismic.correlate.preprocessing_stream.stream_filter',
                       'args':{'ftype':'bandpass',
                               'filter_option':{'freqmin':0.01, #0.01
@@ -99,6 +95,8 @@ co:
     # parameters for correlation preprocessing
     # Standard functions reside in seismic.correlate.preprocessing_td and preprocessing_fd, respectively
     corr_args : {'TDpreProcessing':[
+                                  {'function':'seismic.correlate.preprocessing_td.taper',
+                                    'args':{'type':'cosine_taper', 'p': 0.02}},
                                     {'function':'seismic.correlate.preprocessing_td.detrend',
                                     'args':{'type':'linear'}},
                                    {'function':'seismic.correlate.preprocessing_td.TDfilter',
@@ -159,6 +157,9 @@ dv:
     ### Range to try stretching
     stretch_range : 0.03
     stretch_steps : 1001
+    # Return the similarity matrix for each dv/v estimate
+    # required for post processing. If False, saves some RAM and disk space
+    return_sim_mat : True
   
     #### Reference trace extraction
     #  win_inc : Length in days of each reference time window to be used for trace extraction
@@ -171,6 +172,7 @@ dv:
     # preprocessing on the correlation bulk or corr_stream before stretch estimation
     preprocessing: [
                     #{'function': 'pop_at_utcs', 'args': {'utcs': np.array([UTCDateTime()])},
+                    #{'function': 'select_time', 'args': {'start': (0, 0, 0), 'end': (23, 0, 0), exclude=False}, # include only certain time of day (h, minute, second)
                     {'function': 'smooth', 'args': {'wsize': 4, 'wtype': 'hanning', 'axis': 1}}
     ]
 

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Friday, 16th June 2023 03:54:21 pm
+Last Modified: Tuesday, 5th March 2024 01:59:30 pm
 '''
 
 from datetime import datetime
@@ -34,7 +34,7 @@ class DV(object):
         sim_mat: np.ndarray, second_axis: np.ndarray, method: str,
         stats: CorrStats, stretches: np.ndarray = None,
         corrs: np.ndarray = None, n_stat: np.ndarray = None,
-            dv_processing: dict = None):
+            dv_processing: dict = {}):
         """
         Creates an object designed to hold and process velocity changes.
 
@@ -106,17 +106,14 @@ class DV(object):
         :type path: str
         """
         kwargs = mu.save_header_to_np_array(self.stats)
-        if self.dv_processing is not None:
-            try:
-                sides = self.dv_processing['sides']
-            except KeyError:
-                sides = 'unknown'
+        if self.dv_processing is not None and len(self.dv_processing):
             kwargs.update({
                 'freq_min': self.dv_processing['freq_min'],
                 'freq_max': self.dv_processing['freq_max'],
                 'tw_len': self.dv_processing['tw_len'],
                 'tw_start': self.dv_processing['tw_start'],
-                'sides': sides
+                'sides': self.dv_processing.get('sides', 'unknown'),
+                'aligned': self.dv_processing.get('aligned', False)
             })
         kwargs.update({
             'method_array': np.array([self.method]),
@@ -141,7 +138,7 @@ class DV(object):
         ylim: Tuple[int, int] = None, plot_scatter: bool = False,
         figsize: Tuple[float, float] = (9, 11), dpi: int = 144,
         title: str = None, return_ax=False, style: str = 'technical',
-        dateformat: str = '%d %b %y') -> Tuple[
+        dateformat: str = '%d %b %y', ax: plt.Axes = None) -> Tuple[
             plt.figure, List[plt.axis]]:
         r"""
         Plots the dv object into a *multi-panel-view* of `similarity matrix`
@@ -195,10 +192,10 @@ class DV(object):
             normalize_simmat=normalize_simmat, sim_mat_Clim=sim_mat_Clim,
             figsize=figsize, dpi=dpi, xlim=xlim, ylim=ylim,
             title=title, plot_scatter=plot_scatter, return_ax=return_ax,
-            dateformat=dateformat)
+            dateformat=dateformat, ax=ax)
 
     def smooth_sim_mat(
-            self, win_len: int, exclude_corr_below: Optional[float] = None):
+            self, win_len: int,  exclude_corr_below: Optional[float] = None):
         """
         Smoothes the similarity matrix along the correlation time axis.
 
@@ -255,23 +252,18 @@ def read_dv(path: str) -> DV:
     while not isinstance(method, str):
         method = method[0]
     try:
-        stretches = loaded['stretches']
-        corrs = loaded['corrs']
-    except KeyError:
-        stretches = corrs = None
-    try:
-        n_stat = loaded['n_stat']
-    except KeyError:
-        n_stat = None
-    try:
         dv_processing = dict(
             freq_min=float(loaded['freq_min']),
             freq_max=float(loaded['freq_max']),
             tw_start=float(loaded['tw_start']),
             tw_len=float(loaded['tw_len']))
+        dv_processing['sides'] = loaded.get('sides', 'unknown')
+        dv_processing['aligned'] = loaded.get('aligned', False)
     except KeyError:
-        dv_processing = None
+        dv_processing = {}
     return DV(
         loaded['corr'], loaded['value'], vt, loaded['sim_mat'],
-        loaded['second_axis'], method, stats=stats, stretches=stretches,
-        corrs=corrs, n_stat=n_stat, dv_processing=dv_processing)
+        loaded['second_axis'], method, stats=stats,
+        stretches=loaded.get('stretches', None),
+        corrs=loaded.get('corrs', None), n_stat=loaded.get('n_stat', None),
+        dv_processing=dv_processing)

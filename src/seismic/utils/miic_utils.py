@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Wednesday, 5th April 2023 10:32:09 am
+Last Modified: Wednesday, 6th December 2023 04:49:41 pm
 '''
 from typing import List, Tuple
 import logging
@@ -18,6 +18,8 @@ import warnings
 import numpy as np
 from obspy import Inventory, Stream, Trace, UTCDateTime
 from obspy.core import Stats, AttribDict
+
+from seismic.correlate.preprocessing_stream import cos_taper_st
 
 
 log_lvl = {
@@ -240,7 +242,7 @@ t_keys = ['starttime', 'endtime', 'corr_start', 'corr_end']
 # No stats, keys that are not in stats but attributes of the respective objects
 no_stats = [
     'corr', 'value', 'sim_mat', 'second_axis', 'method_array', 'vt_array',
-    'data', 'tw_len', 'tw_start', 'freq_min', 'freq_max', 'subdir',
+    'data', 'tw_len', 'tw_start', 'freq_min', 'freq_max', 'aligned', 'subdir',
     'plot_vel_change', 'start_date', 'end_date', 'win_len', 'date_inc',
     'sides', 'compute_tt', 'rayleigh_wave_velocity', 'stretch_range',
     'stretch_steps', 'dt_ref', 'preprocessing', 'postprocessing']
@@ -427,3 +429,109 @@ def correct_polarity(st: Stream, inv: Inventory):
             tr.id, datetime=tr.stats.starttime)['dip']
         if dip > 0:
             tr.data *= -1
+
+
+def nan_helper(y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """Helper to handle indices and logical indices of NaNs.
+
+    :param y: numpy array with possible NaNs
+    :type y: 1d np.ndarray
+    :return: Tuple of two numpy arrays: The first one holds a logical mask
+        indicating the positions of nans, the second one is a function that
+        can be called to translate the first output to indices.
+    :rtype: Tuple[np.ndarray, np.ndarray]
+
+    .. example::
+
+            >>> # linear interpolation of NaNs
+            >>> nans, x = nan_helper(y)
+            >>> y[nans] = np.interp(x(nans), x(~nans), y[~nans])
+    """
+    return np.isnan(y), lambda z: z.nonzero()[0]
+
+
+def gap_handler(
+    st: Stream, max_interpolation_length: int = 10,
+        retain_len: float = 0, taper_len: float = 10) -> Stream:
+    """
+    This function tries to interpolate gaps in a stream. If the gaps are too
+    large and the data snippets too short, the data will be discarded.
+    Around remaining gaps, the trace will be tapered.
+
+    :param st: Stream that might contain gaps
+    :type st: Stream
+    :param max_interpolation_length: maximum length in number of samples
+        to interpolate, defaults to 10
+    :type max_interpolation_length: int, optional
+    :param retain_len: length in seconds that a data snippet has to
+        have to be retained, defaults to 0
+    :type retain_len: int, optional
+    :param taper_len: Length of the taper in seconds, defaults to 10
+    :type taper_len: float, optional
+    :return: The sanitised stream
+    :rtype: Stream
+    """
+    # take care of overlaps
+    st = st.merge(method=-1)
+    # 1. try to interpolate gaps
+    st = interpolate_gaps_st(st, max_gap_len=max_interpolation_length)
+
+    # split trace and discard snippets that are shorter than retain_len
+    st = st.split()
+    discard_short_traces(st, retain_len)
+
+    # Taper the remaining bits at their ends
+    st = cos_taper_st(st, taper_len, False, False)
+    return st.merge()
+
+
+def interpolate_gaps(A: np.ndarray, max_gap_len: int = -1) -> np.ndarray:
+    """
+    perform a linear interpolation where A is filled with nans.
+
+    :param A: np.ndarray, containing nans
+    :type A: np.ndarray
+    :param max_gap_len: maximum length to fill, defaults to -1
+    :type max_gap_len: int, optional
+    :return: The array with interpolated values
+    :rtype: np.ndarray
+    """
+    A = np.ma.masked_invalid(A)
+    if not np.ma.is_masked(A):
+        return A
+    mask = np.ma.getmask(A)
+
+    maskconc = np.concatenate((
+        [mask[0]], mask[:-1] != mask[1:], [True]))
+    maskstart = np.where(np.all([maskconc[:-1], mask], axis=0))[0]
+    masklen = np.diff(np.where(maskconc)[0])[::2]
+
+    if max_gap_len == -1:
+        max_gap_len = len(A)
+
+    x = np.arange(len(A))
+    for mstart, ml in zip(maskstart, masklen):
+        if ml > max_gap_len:
+            warnings.warn(
+                'Gap too large. Not interpolating.', UserWarning)
+            continue
+        A[mstart:mstart+ml] = np.interp(
+            np.arange(mstart, mstart+ml), x[~mask],
+            A[~mask], left=np.nan, right=np.nan)
+    return np.ma.masked_invalid(A)
+
+
+def interpolate_gaps_st(st: Stream, max_gap_len: int = -1) -> Stream:
+    """
+    perform a linear interpolation where A is filled with nans.
+
+    :param st: Stream containing nans
+    :type st: Stream
+    :param max_gap_len: maximum length to fill, defaults to -1
+    :type max_gap_len: int, optional
+    :return: The stream with interpolated values
+    :rtype: Stream
+    """
+    for tr in st:
+        tr.data = interpolate_gaps(tr.data, max_gap_len)
+    return st

@@ -10,12 +10,13 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Thursday, 24th August 2023 11:06:37 am
+Last Modified: Monday, 4th March 2024 02:40:32 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
 import warnings
 from matplotlib import pyplot as plt
+import datetime
 
 
 import numpy as np
@@ -67,6 +68,27 @@ class CorrBulk(object):
             self.stats['ntrcs'], self.stats['npts'] = A.shape
         self.stats['processing_bulk'] = []
         self.ref_trc = None
+
+    def __getitem__(self, item):
+        list_keys = ['corr_start', 'corr_end', 'location', 'channel']
+        stats_out = deepcopy(self.stats)
+        if isinstance(item, int):
+            for key in list_keys:
+                value = stats_out[key]
+                if isinstance(value, list) or isinstance(value, np.ndarray):
+                    stats_out[key] = value[item]
+            del stats_out['processing_bulk']
+            del stats_out['ntrcs']
+            return CorrTrace(self.data[item], _header=stats_out)
+        for key in list_keys:
+            value = stats_out[key]
+            if isinstance(value, list):
+                stats_out[key] = np.array(value)[item].tolist()
+            elif isinstance(value, np.ndarray):
+                stats_out[key] = value[item]
+        cb_out = CorrBulk(self.data[item], stats=stats_out)
+        cb_out.stats['ntrcs'] = cb_out.data.shape[0]
+        return cb_out
 
     def plot(self, **kwargs):
         """
@@ -366,7 +388,7 @@ class CorrBulk(object):
         else:
             while start < max(self.stats.corr_end):
                 end = start + inc_s
-                ii = self._find_slice_index(start, end, True)
+                ii = self._find_slice_index(start-inc_s/2, end+inc_s/2, True)
                 start = end
                 # stats don't need to be altered for this function
                 ref_trcs.append(pcp.corr_mat_extract_trace(
@@ -402,6 +424,9 @@ class CorrBulk(object):
         :return: The shift as :class:`~seismic.monitor.dv.DV` object.
         :rtype: DV
         """
+        warnings.warn(
+            'This function is deprecated. Use measure_shift instead.',
+            DeprecationWarning)
         if ref_trc is None:
             ref_trc = self.ref_trc
         dv_dict = pcp.corr_mat_shift(
@@ -413,7 +438,7 @@ class CorrBulk(object):
 
     def measure_shift(
         self, ref_trc: Optional[np.ndarray] = None,
-        tw: Optional[List[float]] = None,
+        tw: Optional[List[Tuple[float, float]]] = None,
         shift_range: float = 10, shift_steps: int = 101, sides: str = 'both',
             return_sim_mat: bool = False) -> DV:
         """
@@ -455,12 +480,10 @@ class CorrBulk(object):
         :return: A DV object holding a shift value.
         :rtype: DV
         """
-        if tw is not None:
-            tw_list = [tw]
         dt = pcp.measure_shift(
             self.data, self.stats, ref_trc=ref_trc,
-            tw=tw_list, shift_range=shift_range, shift_steps=shift_steps,
-            sides=sides, return_sim_mat=return_sim_mat)[0]
+            tw=tw, shift_range=shift_range, shift_steps=shift_steps,
+            sides=sides, return_sim_mat=return_sim_mat)
         return dt
 
     def mirror(self):
@@ -611,6 +634,20 @@ class CorrBulk(object):
         kwargs = m3ut.save_header_to_np_array(self.stats)
         np.savez_compressed(
             path, data=self.data, **kwargs)
+
+    def select_corr_time(
+        self, starttime: UTCDateTime, endtime: UTCDateTime,
+            include_partially_selected: bool = True):
+        """
+        Selects correlations that are inside of the requested time window.
+
+        refer to CorrStream.select_corr_time for details
+        """
+        cst = self.create_corr_stream()
+        scst = cst.select_corr_time(
+            starttime=starttime, endtime=endtime,
+            include_partially_selected=include_partially_selected)
+        return scst.create_corr_bulk()
 
     def slice(
         self, starttime: UTCDateTime, endtime: UTCDateTime,
@@ -885,6 +922,10 @@ class CorrStream(Stream):
         st = self.select(network, station, location, channel)
         if times:
             st = st.select_corr_time(times[0], times[1])
+        if not st.count():
+            raise ValueError(
+                f'CorrStream contains no data between {times[0]} and '
+                f'{times[1]}.')
         A = np.empty((st.count(), st[0].stats.npts))
         statlist = []
         # Double check sampling rate
@@ -1036,6 +1077,36 @@ class CorrStream(Stream):
                     and tr.stats.corr_end <= endtime:
                 outst.append(tr)
         return outst
+
+    def select_time(
+        self, start: Tuple[int, int, float], end: Tuple[int, int, float],
+            exclude: bool = False):
+        """
+        Selects correlations that are inside of the requested time window.
+
+        :param start: Start time given as Tuple in the form (h, m, s)
+        :type start: Tuple[int, int, float]
+        :param end: End time (refers to corr_end) given as Tuple in the form
+            (h, m, s).
+        :type end: Tuple[int, int, float]
+        :param exclude: Exclude the times inside of the (start, end) interval,
+            defaults to False
+        :type exclude: bool, optional
+        :return: A CorrStream holding the selected CorrTraces
+        :rtype: CorrStream
+        """
+        cst_select = CorrStream()
+        start = datetime.time(*start)
+        end = datetime.time(*end)
+        for tr in self:
+            if tr.stats.corr_start.time >= start \
+                    and tr.stats.corr_end.time <= end:
+                if not exclude:
+                    cst_select.append(tr)
+            else:
+                if exclude:
+                    cst_select.append(tr)
+        return cst_select
 
     def slide(
         self, window_length: float, step: float,
@@ -1459,7 +1530,7 @@ def combine_stats(
         stats['az'] = az
         stats['baz'] = baz
     except (AttributeError, KeyError):
-        if inv:
+        try:
             inv1 = inv.select(
                 network=stats1.network, station=stats1.station)
             inv2 = inv.select(
@@ -1476,7 +1547,7 @@ def combine_stats(
             stats['dist'] = dist / 1000
             stats['az'] = az
             stats['baz'] = baz
-        else:
+        except (IndexError, AttributeError):
             warnings.warn("No station coordinates provided.")
     stats.pop('sac', None)
     stats.pop('response', None)

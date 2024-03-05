@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Tuesday, 4th April 2023 05:04:21 pm
+Last Modified: Friday, 20th October 2023 04:34:04 pm
 '''
 import ast
 import fnmatch
@@ -45,7 +45,7 @@ class DBHandler(h5py.File):
     functions in addition to functions that are particularly useful for noise
     correlations.
     """
-    def __init__(self, path, mode, compression, co):
+    def __init__(self, path, mode, compression, co, force):
         super(DBHandler, self).__init__(path, mode=mode)
         if isinstance(compression, str):
             self.compression = re.findall(r'(\w+?)(\d+)', compression)[0][0]
@@ -72,7 +72,7 @@ class DBHandler(h5py.File):
         if co is not None:
             try:
                 co_old = self.get_corr_options()
-                if co_old != co_to_hdf5(co):
+                if co_old != co_to_hdf5(co) and not force:
                     try:
                         diff = {k: (v, co_old[k]) for k, v in co_to_hdf5(
                             co).items() if v != co_old[k]}
@@ -140,6 +140,70 @@ class DBHandler(h5py.File):
                 print(e)
                 warnings.warn("The dataset %s is already in file and will be \
 omitted." % path, category=UserWarning)
+
+    def remove_data(
+        self, network: str, station: str, channel: str, tag: str,
+            corr_start: UTCDateTime | str):
+        """
+        Deletes the correlation from the file.
+
+        :param network: network string
+        :type network: str
+        :param station: station string
+        :type station: str
+        :param channel: channel string
+        :type channel: str
+        :param tag: tag
+        :type tag: str
+        :param corr_start: Correlation Start, may either be a UTCDateTime
+            object or a string. String is allowed to contain wildcards.
+        :type corr_start: UTCDateTime | str
+        :raises TypeError: if corr_start is not string or UTCDateTime
+        """
+        if '*' in network+station+channel:
+            raise ValueError(
+                'Network, Station, and channel code may not contain wildcards.'
+            )
+        # Make sure the request is structured correctly
+        sort = ['.'.join([net, stat, chan]) for net, stat, chan in zip(
+                network.split('-'), station.split('-'), channel.split('-'))]
+        sorted = sort.copy()
+        sorted.sort()
+        if sorted != sort:
+            network, station, channel = ['-'.join([a, b]) for a, b in zip(
+                sorted[0].split('.'), sorted[1].split('.'))]
+
+        if isinstance(corr_start, UTCDateTime):
+            corr_start = corr_start.format_fissures()
+        elif not isinstance(corr_start, str):
+            raise TypeError(
+                'corr_start has to be either a string, in which case it '
+                'has to be given in fissures format, or a UTCDateTime object.'
+                f' Is {type(corr_start)}.'
+            )
+        path = hierarchy.format(
+            tag=tag, network=network, station=station, channel=channel,
+            corr_st=corr_start, corr_et='*')
+        while path[-2:] == '/*':
+            path = path[:-2]
+        # Extremely ugly way of changing the path
+        if '*' not in path and '?' not in path:
+            try:
+                del self[path]
+            except KeyError:
+                warnings.warn(f'requested dataset {path} not found')
+            return
+        # Now, we need to differ between the fnmatch pattern and the actually
+        # accessed path
+        path = path.replace('?', '*')
+        pattern = path.replace('/*', '*')
+        for sst in self.get_available_starttimes(
+                network, station, tag, channel)[channel]:
+            subpath = hierarchy.format(
+                tag=tag, network=network, station=station, channel=channel,
+                corr_st=sst, corr_et='')[:-1]
+            if fnmatch.fnmatch(subpath, pattern):
+                del self[subpath]
 
     def get_corr_options(self) -> dict:
         try:
@@ -283,7 +347,7 @@ class CorrelationDataBase(object):
     """
     def __init__(
         self, path: str, corr_options: dict = None, mode: str = 'a',
-            compression: str = 'gzip3'):
+            compression: str = 'gzip3', _force: bool = False):
         """
         Access an hdf5 file holding correlations. The resulting file can be
         accessed using all functionalities of
@@ -305,6 +369,8 @@ class CorrelationDataBase(object):
             1 and 9 (i.e., 9 is the highest compression) or None for fastest
             perfomance, defaults to 'gzip3'.
         :type compression: str, optional
+        :param _force: allow differnt correlation options, defaults to False
+        :type _force: bool, optional
 
         .. warning::
 
@@ -332,7 +398,7 @@ class CorrelationDataBase(object):
             250
         """
 
-        if corr_options is None and mode != 'r':
+        if corr_options is None and mode != 'r' and not _force:
             mode = 'r'
             warnings.warn(
                 'Opening Correlation Databases without providing a correlation'
@@ -345,10 +411,11 @@ class CorrelationDataBase(object):
         self.mode = mode
         self.compression = compression
         self.co = corr_options
+        self.force = _force
 
     def __enter__(self) -> DBHandler:
         self.db_handler = DBHandler(
-            self.path, self.mode, self.compression, self.co)
+            self.path, self.mode, self.compression, self.co, self.force)
         return self.db_handler
 
     def __exit__(self, exc_type, exc_value, tb) -> None or bool:
@@ -449,7 +516,7 @@ def co_to_hdf5(co: dict) -> dict:
     remk = [
         'subdir', 'read_start', 'read_end', 'read_len', 'read_inc',
         'combination_method', 'combinations', 'starttime',
-        'xcombinations', 'preprocess_subdiv']
+        'xcombinations', 'preprocess_subdiv', 'allow_different_params']
     for key in remk:
         coc.pop(key, None)
         coc['corr_args'].pop('combinations', None)

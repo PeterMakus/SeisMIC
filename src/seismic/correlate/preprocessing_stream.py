@@ -10,18 +10,17 @@ Module that contains functions for preprocessing on obspy streams
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:47:00 pm
-Last Modified: Thursday, 29th June 2023 11:06:00 am
+Last Modified: Tuesday, 26th September 2023 05:42:28 pm
 '''
 from typing import List
 from warnings import warn
-from copy import deepcopy
 
 import numpy as np
 from obspy import Stream, Trace, UTCDateTime
 
 
 def cos_taper_st(
-    st: Stream, taper_len: float, lossless: bool,
+    st: Stream, taper_len: float, lossless: bool = False,
         taper_at_masked: bool = False) -> Stream:
     """
     Applies a cosine taper to the input Stream.
@@ -79,6 +78,11 @@ def cos_taper(
         This action is performed in place. If you want to keep the
         original data use :func:`~obspy.core.trace.Trace.copy`.
     """
+    if lossless:
+        warn(
+            'Lossless tapering deprecated. Setting False..', DeprecationWarning
+        )
+        lossless = False
     if taper_len <= 0:
         raise ValueError('Taper length must be larger than 0 s')
     if taper_at_masked:
@@ -97,15 +101,6 @@ def cos_taper(
     if tl_n * 2 > tr.stats.npts:
         raise ValueError(
             'Taper Length * 2 has to be smaller or equal to trace\'s length.')
-    if lossless:
-        # pad trace
-        tr.trim(
-            starttime=tr.stats.starttime-taper_len,
-            endtime=tr.stats.endtime+taper_len,
-            pad=True, fill_value=0)
-        # Change Fill value to data from the trace
-        tr.data[:tl_n] = deepcopy(tr.data[tl_n:2*tl_n])
-        tr.data[-tl_n:] = deepcopy(tr.data[-2*tl_n:-tl_n])
     taper = np.ones_like(tr.data)
     tap = np.sin(np.linspace(0, np.pi, tl_n*2))
     taper[:tl_n] = tap[:tl_n]

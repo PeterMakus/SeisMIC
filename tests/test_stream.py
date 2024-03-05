@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Thursday, 24th August 2023 11:05:57 am
+Last Modified: Sunday, 29th October 2023 09:40:23 am
 '''
 
 import unittest
@@ -55,6 +55,38 @@ class TestCorrBulk(unittest.TestCase):
         for v0, v1 in zip(cb.stats.values(), self.cb.stats.values()):
             self.assertEqual(v0, v1)
         np.testing.assert_array_equal(cb.data, np.zeros((5, 5)))
+
+    def test_get_item(self):
+        # test whether we can retriefe a subset of the CorrBulk
+        cb = self.cb[1:3]
+        self.assertEqual(cb.stats.ntrcs, 2)
+        self.assertNotEqual(cb, self.cb)
+        self.assertEqual(cb.stats.npts, self.cb.stats.npts)
+        np.testing.assert_array_equal(cb.data, self.cb.data[1:3])
+        np.testing.assert_array_equal(
+            cb.stats.corr_start, self.cb.stats.corr_start[1:3])
+        np.testing.assert_array_equal(
+            cb.stats.corr_end, self.cb.stats.corr_end[1:3])
+
+    def test_get_item_list(self):
+        cb = self.cb[[1, 2]]
+        self.assertEqual(cb.stats.ntrcs, 2)
+        self.assertNotEqual(cb, self.cb)
+        self.assertEqual(cb.stats.npts, self.cb.stats.npts)
+        np.testing.assert_array_equal(cb.data, self.cb.data[1:3])
+        np.testing.assert_array_equal(
+            cb.stats.corr_start, self.cb.stats.corr_start[1:3])
+        np.testing.assert_array_equal(
+            cb.stats.corr_end, self.cb.stats.corr_end[1:3])
+
+    def test_get_item_int(self):
+        ctr = self.cb[1]
+        self.assertNotIn('ntrcs', ctr.stats)
+        self.assertNotIn('processing_bulk', ctr.stats)
+        np.testing.assert_array_equal(ctr.data, self.cb.data[1])
+        self.assertEqual(ctr.stats.corr_start, self.cb.stats.corr_start[1])
+        self.assertEqual(ctr.stats.corr_end, self.cb.stats.corr_end[1])
+        self.assertIsInstance(ctr, stream.CorrTrace)
 
     @mock.patch('seismic.correlate.stream.pcp.corr_mat_normalize')
     def test_normalize(self, cmn_mock):
@@ -235,11 +267,11 @@ class TestCorrBulk(unittest.TestCase):
 
     @mock.patch('seismic.monitor.post_corr_process.measure_shift')
     def test_measure_shift(self, mshift_mock: mock.MagicMock):
-        tw = [0, 1]
-        mshift_mock.return_value = ['bla', 'blub']
+        tw = [[0, 1]]
+        mshift_mock.return_value = 'bla'
         x = self.cb.measure_shift(tw=tw)
         mshift_mock.assert_called_once_with(
-            mock.ANY, self.cb.stats, ref_trc=None, tw=[tw],
+            mock.ANY, self.cb.stats, ref_trc=None, tw=tw,
             shift_range=10, shift_steps=101, sides='both', return_sim_mat=False
         )
         np.testing.assert_array_equal(
@@ -587,8 +619,22 @@ class TestCombineStats(unittest.TestCase):
         self.assertEqual(stc.corr_start, st1.starttime)
         self.assertEqual(stc.corr_end, st1.endtime)
         self.assertEqual(stc.start_lag, -lag)
-
         self.assertEqual(stc.end_lag, -lag+(st0.npts-1)*st0.delta)
+
+    def test_no_coords_defined(self):
+        # We test this by using two different components
+        st0 = self.st[0].stats
+        st1 = self.st[1].stats
+        lag = np.random.randint(80, 120)
+        with warnings.catch_warnings(record=True) as w:
+            stc = stream.combine_stats(st0, st1, -lag)
+            self.assertEqual(len(w), 1)
+        keys = ['network', 'station', 'channel', 'location']
+        for k in keys:
+            self.assertEqual(stc[k], '%s-%s' % (st0[k], st1[k]))
+        self.assertEqual(stc.corr_start, st1.starttime)
+        self.assertEqual(stc.corr_end, st1.endtime)
+        self.assertEqual(stc.start_lag, -lag)
 
     def test_wrong_input(self):
         with self.assertRaises(TypeError):

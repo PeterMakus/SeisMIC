@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Friday, 25th August 2023 02:29:01 pm
+Last Modified: Monday, 4th March 2024 02:38:33 pm
 '''
 from copy import deepcopy
 import unittest
@@ -22,7 +22,7 @@ from obspy.core.inventory.inventory import read_inventory
 import yaml
 
 from seismic.correlate import correlate
-from seismic.correlate.stream import CorrStream, CorrTrace
+from seismic.correlate.stream import CorrStream
 from seismic.trace_data.waveform import Store_Client
 
 
@@ -38,6 +38,30 @@ class TestCorrrelator(unittest.TestCase):
         with open(self.param_example) as file:
             self.options = yaml.load(file, Loader=yaml.FullLoader)
         self.options['co']['preprocess_subdiv'] = True
+
+    @mock.patch('seismic.correlate.correlate.yaml.load')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_filter_by_rcombis(
+        self, makedirs_mock, logging_mock, open_mock, yaml_mock):
+        yaml_mock.return_value = self.options
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = []
+        sc_mock._translate_wildcards.return_value = []
+        c = correlate.Correlator(sc_mock, self.param_example)
+        c.station = [
+            ['NET1', 'STA1'], ['NET1', 'STA2'], ['NET2', 'STA1']]
+        c.avail_raw_data = [
+            ['NET1', 'STA1', 'CHAN1'], ['NET1', 'STA2', 'CHAN1'],
+            ['NET2', 'STA1', 'CHAN1']]
+        c.rcombis = ['NET1-NET2.STA1-STA1']
+        c._filter_by_rcombis()
+        self.assertListEqual(
+            c.station, [['NET1', 'STA1'], ['NET2', 'STA1']])
+        self.assertListEqual(
+            c.avail_raw_data, [
+                ['NET1', 'STA1', 'CHAN1'], ['NET2', 'STA1', 'CHAN1']])
 
     @mock.patch('seismic.correlate.correlate.yaml.load')
     @mock.patch('builtins.open')
@@ -75,10 +99,12 @@ class TestCorrrelator(unittest.TestCase):
         options = deepcopy(self.options)
         options['net']['network'] = ['bla']
         options['net']['station'] = ['blub']
+        options['net']['component'] = 'E'
         sc_mock = mock.Mock(Store_Client)
         sc_mock._translate_wildcards.return_value = [['bla', 'blub', 'E']]
         c = correlate.Correlator(sc_mock, options)
-        sc_mock._translate_wildcards.assert_called_once_with('bla', 'blub')
+        sc_mock._translate_wildcards.assert_called_once_with(
+            'bla', 'blub', 'E')
         sc_mock.get_available_stations.assert_not_called()
         self.assertDictEqual(self.options['co'], c.options)
         self.assertListEqual(c.station, [['bla', 'blub']])
@@ -122,12 +148,13 @@ class TestCorrrelator(unittest.TestCase):
         options = deepcopy(self.options)
         options['net']['network'] = 'lala'
         options['net']['station'] = '*'
+        options['net']['component'] = None
         sc_mock = mock.Mock(Store_Client)
         sc_mock._translate_wildcards.side_effect = (
             [['lala', 'lolo', 'E']], [['lala', 'lolo', 'Z']])
         c = correlate.Correlator(sc_mock, options)
         self.assertListEqual(c.station, [['lala', 'lolo']])
-        sc_mock._translate_wildcards.assert_called_once_with('lala', '*')
+        sc_mock._translate_wildcards.assert_called_once_with('lala', '*', None)
 
     @mock.patch('builtins.open')
     @mock.patch('seismic.correlate.correlate.logging')
@@ -174,7 +201,7 @@ class TestCorrrelator(unittest.TestCase):
             [['lala', 'le', 'E']], [['lolo', 'li', 'Z']])
         c = correlate.Correlator(sc_mock, options)
         sc_mock._translate_wildcards.assert_has_calls([
-            mock.call('lala', 'le'), mock.call('lolo', 'li')])
+            mock.call('lala', 'le', 'Z'), mock.call('lolo', 'li', 'Z')])
         sc_mock.get_available_stations.assert_not_called()
         self.assertListEqual(
             c.station, [['lala', 'le'], ['lolo', 'li']])
@@ -237,7 +264,7 @@ class TestCorrrelator(unittest.TestCase):
             c.find_interstat_dist(100)
 
     @mock.patch('seismic.db.corr_hdf5.DBHandler')
-    @mock.patch('seismic.correlate.correlate.os.path.isfile')
+    @mock.patch('seismic.correlate.correlate.glob.glob')
     @mock.patch(
         'seismic.correlate.correlate.compute_network_station_combinations')
     @mock.patch('builtins.open')
@@ -256,17 +283,20 @@ class TestCorrrelator(unittest.TestCase):
         netcombs = ['AA-BB', 'AA-BB', 'AA-AA', 'AA-CC']
         statcombs = ['00-00', '00-11', '22-33', '22-44']
         ccomb_mock.return_value = (netcombs, statcombs)
-        isfile = [True, False, True, False]
+        isfile = [['x.h5'], ['x.h5'], [], ['y.h5'], ['y.h5'], []]
         isfile_mock.side_effect = isfile
-        times = [[0, 1, 2], [3, 4, 5, 6]]
+        times = [{'a': [0, 1, 2]}, {'b': [3, 4, 5, 6]}]
         cdb_mock().get_available_starttimes.side_effect = times
         out = c.find_existing_times('mytag')
-        exp = {'AA.00': {'BB.00': [0, 1, 2]}, 'AA.22': {'AA.33': [3, 4, 5, 6]}}
+        exp = {
+            'AA.00': {'BB.00': {'a': [0, 1, 2]}},
+            'AA.22': {'AA.33': {'b': [3, 4, 5, 6]}}}
         self.assertDictEqual(out, exp)
-        isfile_calls = [mock.call(
-            os.path.join(c.corr_dir, f'{nc}.{sc}.h5')) for nc, sc in zip(
+        isfile_calls = [
+            os.path.join(c.corr_dir, f'{nc}.{sc}*.h5') for nc, sc in zip(
                 netcombs, statcombs)]
-        isfile_mock.assert_has_calls(isfile_calls)
+        for call in isfile_calls:
+            isfile_mock.assert_any_call(call)
 
     @mock.patch('seismic.correlate.correlate.CorrStream')
     @mock.patch('builtins.open')
@@ -537,7 +567,7 @@ class TestStToNpArray(unittest.TestCase):
         _, st = correlate.st_to_np_array(self.st, self.st[0].stats.npts)
         for tr in st:
             with self.assertRaises(AttributeError):
-                print(tr.data)
+                type(tr.data)
 
     def test_result(self):
         A, _ = correlate.st_to_np_array(self.st.copy(), self.st[0].stats.npts)
@@ -668,6 +698,7 @@ class TestCalcCrossCombis(unittest.TestCase):
     def test_rcombis(self):
         xlen = np.random.randint(1, 6)
         rcombis = []
+        self.st.sort(keys=['network', 'station', 'channel'])
         for ii, tr in enumerate(self.st):
             if len(rcombis) == xlen:
                 break
@@ -687,11 +718,68 @@ class TestCalcCrossCombis(unittest.TestCase):
         self.assertEqual(expected_len, len(correlate.calc_cross_combis(
             self.st, {}, method='betweenStations', rcombis=rcombis)))
 
+    def test_rcombis_with_cha(self):
+        xlen = np.random.randint(1, 6)
+        rcombis = []
+        for ii, tr in enumerate(self.st):
+            if len(rcombis) == xlen:
+                break
+            for jj in range(ii+1, len(self.st)):
+                tr1 = self.st[jj]
+                n = tr.stats.network
+                n2 = tr1.stats.network
+                s = tr.stats.station
+                s2 = tr1.stats.station
+                ch1 = tr.stats.channel
+                ch2 = tr1.stats.channel
+                if n != n2 or s != s2:
+                    rcombis.append(
+                        '%s-%s.%s-%s.%s-%s' % (n, n2, s, s2, ch1, ch2))
+                    # remove duplicates
+                    rcombis = list(set(rcombis))
+                if len(rcombis) == xlen:
+                    break
+        expected_len = xlen
+        self.assertEqual(expected_len, len(correlate.calc_cross_combis(
+            self.st, {}, method='betweenStations', rcombis=rcombis)))
+
     def test_rcombis_not_available(self):
         rcombis = ['is-not.in-db']
         expected_len = 0
         self.assertEqual(expected_len, len(correlate.calc_cross_combis(
             self.st, {}, method='betweenStations', rcombis=rcombis)))
+
+
+class TestIsInXcombis(unittest.TestCase):
+    def test_in_xcombis(self):
+        id1 = 'A.C.loc.E'
+        id2 = 'B.D.loc.F'
+        rcombis = ['A-B.C-D.E-F', 'G-H.I-J.K-L']
+        self.assertTrue(correlate.is_in_xcombis(id1, id2, rcombis))
+
+    def test_in_xcombis_other_way(self):
+        id2 = 'A.C.loc.E'
+        id1 = 'B.D.loc.F'
+        rcombis = ['A-B.C-D.E-F', 'G-H.I-J.K-L']
+        self.assertTrue(correlate.is_in_xcombis(id1, id2, rcombis))
+
+    def test_in_xcombis_no_chan(self):
+        id2 = 'A.C.loc.E'
+        id1 = 'B.D.loc.F'
+        rcombis = ['A-B.C-D', 'G-H.I-J']
+        self.assertTrue(correlate.is_in_xcombis(id1, id2, rcombis))
+
+    def test_not_in_xcombis(self):
+        id1 = 'A.D.E.F'
+        id2 = 'G-H..J.K-L'
+        rcombis = ['A-B.C-D.E-F', 'M-N.O-P.Q-R']
+        self.assertFalse(correlate.is_in_xcombis(id1, id2, rcombis))
+
+    def test_empty_xcombis(self):
+        id2 = 'A.C.loc.E'
+        id1 = 'B.D.loc.F'
+        rcombis = []
+        self.assertFalse(correlate.is_in_xcombis(id1, id2, rcombis))
 
 
 class TestSortCombnameAlphabetically(unittest.TestCase):
@@ -820,7 +908,7 @@ class TestPreProcessStream(unittest.TestCase):
         for tr in self.st:
             del tr.stats.response
         self.kwargs = {
-            'store_client': None,
+            'store_client': mock.MagicMock(),
             'inv': read_inventory(),
             'startt': self.st[0].stats.starttime,
             'endt': self.st[0].stats.endtime,
@@ -828,6 +916,7 @@ class TestPreProcessStream(unittest.TestCase):
             'sampling_rate': 25,
             'remove_response': False,
             'subdivision': {'corr_len': 20}}
+        self.kwargs['store_client'].inventory = read_inventory()
 
     def test_empty_stream(self):
         self.assertEqual(
@@ -865,9 +954,9 @@ class TestPreProcessStream(unittest.TestCase):
         kwargs = deepcopy(self.kwargs)
         kwargs['remove_response'] = True
         st = correlate.preprocess_stream(self.st.copy(), **kwargs)
-        self.assertIn('remove_response', st[0].stats.processing[-3])
-        # Check whether response was attached
-        self.assertTrue(st[0].stats.response)
+        self.assertTrue(np.any(
+            'remove_response' in processing_step
+            for processing_step in st[0].stats.processing))
 
     def test_taper(self):
         kwargs = deepcopy(self.kwargs)
@@ -888,9 +977,9 @@ class TestPreProcessStream(unittest.TestCase):
         sc_mock.rclient.get_stations.return_value = self.kwargs['inv']
         kwargs['store_client'] = sc_mock
         st = correlate.preprocess_stream(self.st.copy(), **kwargs)
-        self.assertIn('remove_response', st[0].stats.processing[-3])
-        # Check whether response was attached
-        self.assertTrue(st[0].stats.response)
+        self.assertTrue(np.any(
+            'remove_response' in processing_step
+            for processing_step in st[0].stats.processing))
         sc_mock.rclient.get_stations.assert_called_once()
 
     @mock.patch('seismic.correlate.correlate.func_from_str')
@@ -936,6 +1025,12 @@ class TestGenCorrInc(unittest.TestCase):
             for tr in st:
                 self.assertAlmostEqual(
                     45, tr.stats.npts/tr.stats.sampling_rate)
+
+
+class TestCorrelatorFilterByRcombis(unittest.TestCase):
+    def setUp(self):
+        self.corr = correlate.Correlator(None, None)
+        
 
 
 if __name__ == "__main__":

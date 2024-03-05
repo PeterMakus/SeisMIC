@@ -8,12 +8,13 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Monday, 16th January 2023 11:14:10 am
+Last Modified: Tuesday, 26th September 2023 07:08:22 pm
 '''
 from copy import deepcopy
 import unittest
 import math as mathematics
 from unittest import mock
+import warnings
 
 import numpy as np
 from obspy.core.trace import Stats
@@ -357,6 +358,106 @@ class TestCorrectPolarity(unittest.TestCase):
             st_correct.select(component="Z")[0].data,
             self.st.select(component="Z")[0].data
         )
+
+
+class TestNanHelper(unittest.TestCase):
+    def test_result(self):
+        # create 1d array that holds nans
+        y = np.arange(15, dtype=float)
+        y[11:13] = y[3] = np.nan
+        nans, x = mu.nan_helper(y)
+        np.testing.assert_array_equal(True, nans[nans])
+        np.testing.assert_array_equal(False, ~nans[nans])
+        np.testing.assert_array_equal(
+            x(nans), [3, 11, 12]
+        )
+        np.testing.assert_array_equal(
+            x(~nans), np.hstack((np.arange(3), np.arange(4, 11), [13, 14]))
+        )
+
+    def test_no_nans(self):
+        y = np.arange(15)
+        nans, x = mu.nan_helper(y)
+        np.testing.assert_array_equal(False, nans)
+        np.testing.assert_array_equal(
+            x(nans), []
+        )
+
+
+class TestGapHandler(unittest.TestCase):
+    @mock.patch('seismic.utils.miic_utils.interpolate_gaps_st')
+    @mock.patch('seismic.utils.miic_utils.cos_taper_st')
+    def test_nothing_to_do(
+            self, ct_mock: mock.MagicMock, igst_mock: mock.MagicMock):
+        st = read()
+        ct_mock.return_value = st
+        igst_mock.return_value = st
+        with mock.patch.multiple(
+            st, merge=mock.MagicMock(return_value=st),
+            split=mock.MagicMock(return_value=st),
+        ):
+            out = mu.gap_handler(st, 20, 100, 15)
+            ct_mock.assert_called_once_with(st, 15, False, False)
+            igst_mock.assert_called_once_with(st, max_gap_len=20)
+            st.merge.assert_has_calls(
+                [mock.call(method=-1), mock.call()]
+            )
+            self.assertEqual(out, st)
+
+
+class TestInterpolateGaps(unittest.TestCase):
+    def test_not_masked_no_nan(self):
+        A = np.ones(5)
+        np.testing.assert_array_equal(A, mu.interpolate_gaps(A, 10))
+
+    def test_length_above_threshold(self):
+        x = np.arange(50, dtype=float)
+        x[5:35] = np.nan
+        x[38:43] = np.nan
+        with warnings.catch_warnings(record=True) as w:
+            out = mu.interpolate_gaps(deepcopy(x), max_gap_len=4)
+            np.testing.assert_array_equal(
+                x, out)
+            self.assertNotEqual(len(w), 0)
+        self.assertTrue(np.ma.is_masked(out))
+
+    def test_interpolate_one_skip_one(self):
+        x = np.arange(50, dtype=float)
+        x[5:35] = np.nan
+        x[38:43] = np.nan
+        with warnings.catch_warnings(record=True) as w:
+            out = mu.interpolate_gaps(deepcopy(x), max_gap_len=7)
+            self.assertNotEqual(len(w), 0)
+        np.testing.assert_array_equal(
+            True, np.isnan(out[5:35]))
+        np.testing.assert_array_equal(
+            False, np.isnan(out[35:]))
+        self.assertTrue(np.ma.is_masked(out))
+
+    def test_interpolate_all(self):
+        x = np.arange(50, dtype=float)
+        x[5:35] = np.nan
+        x[38:43] = np.nan
+        with warnings.catch_warnings(record=True) as w:
+            out = mu.interpolate_gaps(deepcopy(x), max_gap_len=-1)
+            self.assertEqual(len(w), 0)
+        np.testing.assert_array_equal(
+            False, np.isnan(out))
+        self.assertFalse(np.ma.is_masked(out))
+
+
+class TestInterpolateGapsSt(unittest.TestCase):
+    @mock.patch('seismic.utils.miic_utils.interpolate_gaps')
+    def test_result(self, ig_mock: mock.MagicMock):
+        st = read()
+        ig_mock.return_value = np.zeros(5)
+        out = mu.interpolate_gaps_st(st.copy(), 15)
+        calls = [mock.call(mock.ANY, 15) for tr in st]
+        ig_mock.assert_has_calls(calls)
+        for tr in out:
+            np.testing.assert_array_equal(tr.data, np.zeros(5))
+        for cal, tr in zip(ig_mock.call_args_list, st):
+            np.testing.assert_array_equal(tr.data, cal[0][0])
 
 
 if __name__ == "__main__":

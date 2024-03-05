@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Thursday, 24th August 2023 10:45:25 am
+Last Modified: Friday, 29th September 2023 11:06:52 am
 '''
 from copy import deepcopy
 import json
@@ -187,8 +187,9 @@ class Monitor(object):
             the chosen method in the config. Defaults to None
         :type ref_trcs: np.ndarray, optional
         """
-        self.logger.info('Computing velocity change for file: %s and channel:\
-%s' % (corr_file, channel))
+        self.logger.info(
+            f'Computing velocity change for file: {corr_file} and channel: '
+            f' {channel}.')
         with CorrelationDataBase(corr_file, mode='r') as cdb:
             # get the corrstream containing all the corrdata for this combi
             cst = cdb.get_data(network, station, channel, tag)
@@ -228,7 +229,7 @@ class Monitor(object):
         if 'preprocessing' in self.options['dv']:
             for func in self.options['dv']['preprocessing']:
                 # This one goes on the CorrStream
-                if func['function'] == 'pop_at_utcs':
+                if func['function'] in ['pop_at_utcs', 'select_time']:
                     f = cst.__getattribute__(func['function'])
                     cst = f(**func['args'])
         cb = cst.create_corr_bulk(
@@ -246,7 +247,7 @@ class Monitor(object):
         # Preprocessing on the correlation bulk
         if 'preprocessing' in self.options['dv']:
             for func in self.options['dv']['preprocessing']:
-                if func['function'] == 'pop_at_utcs':
+                if func['function'] in ['pop_at_utcs', 'select_time']:
                     continue
                 f = cb.__getattribute__(func['function'])
                 cb = f(**func['args'])
@@ -279,8 +280,10 @@ class Monitor(object):
         tw = [np.arange(
             tw_start*cbt.stats['sampling_rate'],
             trim1*cbt.stats['sampling_rate'], 1)]
+        # 2023/09/29
+        # sim_mat is not required in this operation
         dv = cbt.stretch(
-            ref_trc=tr, return_sim_mat=True,
+            ref_trc=tr, return_sim_mat=False,
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],
             tw=tw, sides=self.options['dv']['sides'],
@@ -297,7 +300,7 @@ class Monitor(object):
 
         # obtain an improved time shift measurement
         dv = cbt.stretch(
-            ref_trc=tr, return_sim_mat=True,
+            ref_trc=tr, return_sim_mat=self.options['dv']['return_sim_mat'],
             stretch_steps=self.options['dv']['stretch_steps'],
             stretch_range=self.options['dv']['stretch_range'],
             tw=tw, sides=self.options['dv']['sides'],
@@ -589,6 +592,14 @@ class Monitor(object):
         with CorrelationDataBase(corr_file, mode='r') as cdb:
             # get the corrstream containing all the corrdata for this combi
             cst = cdb.get_data(network, station, channel, tag)
+
+        if 'preprocessing' in self.options['wfc']:
+            for func in self.options['wfc']['preprocessing']:
+                # This one goes on the CorrStream
+                if func['function'] in ['pop_at_utcs', 'select_time']:
+                    f = cst.__getattribute__(func['function'])
+                    cst = f(**func['args'])
+
         cb = cst.create_corr_bulk(inplace=True)
         outdir = os.path.join(
             self.options['proj_dir'], self.options['wfc']['subdir'])
@@ -644,6 +655,8 @@ class Monitor(object):
             # Preprocessing on the correlation bulk
             if 'preprocessing' in self.options['wfc']:
                 for func in self.options['wfc']['preprocessing']:
+                    if func['function'] in ['pop_at_utcs', 'select_time']:
+                        continue
                     f = cb.__getattribute__(func['function'])
                     cb = f(**func['args'])
 

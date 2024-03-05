@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 25th August 2023 02:08:10 pm
+Last Modified: Monday, 4th March 2024 02:27:00 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -18,6 +18,8 @@ import logging
 import json
 import warnings
 import yaml
+import glob
+import fnmatch
 
 from mpi4py import MPI
 import numpy as np
@@ -131,6 +133,7 @@ class Correlator(object):
         # find the available data
         network = options['net']['network']
         station = options['net']['station']
+        component = options['net']['component']
 
         # Store_Client
         self.store_client = store_client
@@ -183,23 +186,53 @@ class Correlator(object):
             self.avail_raw_data = []
             for net, stat in station:
                 self.avail_raw_data.extend(
-                    self.store_client._translate_wildcards(net, stat))
+                    self.store_client._translate_wildcards(
+                        net, stat, component))
             # make sure this only contains unique combinations
             # with several cores it added entries several times, don't know
             # why?
+            # In contrast to self.station, self.avail_raw_data also contains
+            # information about the available channels, so they can be
+            # read and processed on different cores
             self.avail_raw_data = np.unique(
                 self.avail_raw_data, axis=0).tolist()
         else:
             self.avail_raw_data = None
         self.avail_raw_data = self.comm.bcast(
-            self.avail_raw_data)
+            self.avail_raw_data, root=0)
         self.station = np.unique(np.array([
             [d[0], d[1]] for d in self.avail_raw_data]), axis=0).tolist()
+        # if only certain combis are requested, remove stations not within
+        # these
+        self._filter_by_rcombis()
         self.logger.debug(
             'Fetching data from the following stations:\n%a' % [
                 f'{n}.{s}' for n, s in self.station])
 
         self.sampling_rate = self.options['sampling_rate']
+        if 'allow_different_params' in self.options:
+            self._allow_different_params = self.options[
+                'allow_different_params']
+        else:
+            self._allow_different_params = False
+
+    def _filter_by_rcombis(self):
+        """
+        Removes stations from the list of available stations that are not
+        requested in the cross-combinations.
+        """
+        if self.rcombis is None or self.options['combination_method'] \
+                != 'betweenStations':
+            return
+        self.station = [
+            [n, s] for n, s in self.station if
+            fnmatch.filter(self.rcombis, f'{n}-*.{s}-*') or fnmatch.filter(
+                self.rcombis, f'*-{n}.*-{s}')]
+        # same check for avail_raw_data
+        self.avail_raw_data = [
+            [n, s, c] for n, s, c in self.avail_raw_data if
+            fnmatch.filter(self.rcombis, f'{n}-*.{s}-*') or fnmatch.filter(
+                self.rcombis, f'*-{n}.*-{s}')]
 
     def find_interstat_dist(self, dis: float):
         """
@@ -218,17 +251,23 @@ class Correlator(object):
             raise ValueError(
                 'This function is only available if combination method '
                 + 'is set to "betweenStations".')
-        # list of requested combinations
-        self.rcombis = []
         # Update the store clients invetory
         self.store_client.read_inventory()
-        for ii, (n0, s0) in enumerate(self.station):
-            inv0 = self.store_client.select_inventory_or_load_remote(n0, s0)
-            for n1, s1 in self.station[ii:]:
-                inv1 = self.store_client.select_inventory_or_load_remote(
-                    n1, s1)
-                if mu.filter_stat_dist(inv0, inv1, dis):
-                    self.rcombis.append('%s-%s.%s-%s' % (n0, n1, s0, s1))
+        # list of requested combinations
+        if self.rcombis is None:
+            self.rcombis = []
+            for ii, (n0, s0) in enumerate(self.station):
+                inv0 = self.store_client.select_inventory_or_load_remote(
+                    n0, s0)
+                for n1, s1 in self.station[ii:]:
+                    inv1 = self.store_client.select_inventory_or_load_remote(
+                        n1, s1)
+                    if mu.filter_stat_dist(inv0, inv1, dis):
+                        self.rcombis.append('%s-%s.%s-%s' % (n0, n1, s0, s1))
+        else:
+            raise ValueError(
+                'Either filter for specific cross correlations or a maximum '
+                + 'distance.')
 
     def find_existing_times(self, tag: str, channel: str = '*') -> dict:
         """
@@ -257,13 +296,17 @@ class Correlator(object):
             combis=self.rcombis)
         ex_dict = {}
         for nc, sc in zip(netcombs, statcombs):
-            outf = os.path.join(
-                self.corr_dir, '%s.%s.h5' % (nc, sc))
-            if not os.path.isfile(outf):
+            outfs = os.path.join(
+                self.corr_dir, '%s.%s*.h5' % (nc, sc))
+            if not len(glob.glob(outfs)):
                 continue
-            with CorrelationDataBase(
-                    outf, corr_options=self.options, mode='r') as cdb:
-                d = cdb.get_available_starttimes(nc, sc, tag, channel)
+            d = {}
+            for outf in glob.glob(outfs):
+                with CorrelationDataBase(
+                    outf, corr_options=self.options, mode='r',
+                        _force=self._allow_different_params) as cdb:
+                    d.update(
+                        cdb.get_available_starttimes(nc, sc, tag, channel))
             s0, s1 = sc.split('-')
             n0, n1 = nc.split('-')
             ex_dict.setdefault('%s.%s' % (n0, s0), {})
@@ -398,7 +441,8 @@ class Correlator(object):
             if self.options['subdivision']['delete_subdivision']:
                 cstselect.clear()
             with CorrelationDataBase(
-                    outf, corr_options=self.options) as cdb:
+                outf, corr_options=self.options,
+                    _force=self._allow_different_params) as cdb:
                 if cstselect.count():
                     cdb.add_correlation(cstselect, 'subdivision')
                 if stack is not None:
@@ -409,10 +453,6 @@ class Correlator(object):
         Returns an Iterator that loops over each start and end time with the
         requested window length.
 
-        Also will lead to the time windows being prolonged by the sum of
-        the length of the tapered end, so that no data is lost. Always
-        a hann taper so far. Taper length is 5% of the requested time
-        window on each side.
 
         :yield: An obspy stream containing the time window x for all stations
         that were active during this time.
@@ -439,11 +479,8 @@ class Correlator(object):
         t1 = UTCDateTime(self.options['read_end']).timestamp
         loop_window = np.arange(t0, t1, self.options['read_inc'])
 
-        # Taper ends for the deconvolution
-        if self.options['remove_response']:
-            tl = 100
-        else:
-            tl = 0
+        # Taper ends for the deconvolution and filtering
+        tl = 20
 
         # Decide which process reads data from which station
         # Better than just letting one core read as this avoids having to
@@ -461,14 +498,10 @@ class Correlator(object):
             startt = UTCDateTime(t)
             endt = startt + self.options['read_len']
             st = Stream()
-            resp = Inventory()
 
             # loop over queried stations
             for net, stat, cha in np.array(self.avail_raw_data)[ind]:
                 # Load data
-                resp.extend(
-                    self.store_client.inventory.select(
-                        net, stat))
                 stext = self.store_client._load_local(
                     net, stat, '*', cha, startt, endt, True, False)
                 mu.get_valid_traces(stext)
@@ -483,7 +516,14 @@ class Correlator(object):
             # Check sampling frequency
             sampling_rate = self.options['sampling_rate']
             # AA-Filter is done in this function as well
-            st = mu.resample_or_decimate(st, sampling_rate)
+            try:
+                st = mu.resample_or_decimate(st, sampling_rate)
+            except ValueError as e:
+                self.logger.error(
+                    'Downsampling failed for '
+                    f'{st[0].stats.network}.{st[0].stats.station} and time'
+                    f' {t}.\nThe Original Error Message was {e}.')
+                continue
             # The actual data in the mseeds was changed from int to float64
             # now,
             # Save some space by changing it back to 32 bit (most of the
@@ -494,7 +534,7 @@ class Correlator(object):
                 try:
                     self.logger.debug('Preprocessing stream...')
                     st = preprocess_stream(
-                        st, self.store_client, resp, startt, endt, tl,
+                        st, self.store_client, startt, endt, tl,
                         **self.options)
                 except ValueError as e:
                     self.logger.error(
@@ -563,14 +603,20 @@ class Correlator(object):
                 if self.options['preprocess_subdiv']:
                     try:
                         win = preprocess_stream(
-                            win, self.store_client, resp, winstart, winend,
+                            win, self.store_client, winstart, winend,
                             tl, **self.options)
                     except ValueError as e:
-                        self.logger.error(
-                            'Stream preprocessing failed for '
-                            f'{st[0].stats.network}.{st[0].stats.station}'
-                            ' and time '
-                            f'{t}.\nThe Original Error Message was {e}.')
+                        if st.count():
+                            self.logger.error(
+                                'Stream preprocessing failed for '
+                                f'{st[0].stats.network}.{st[0].stats.station}'
+                                ' and time '
+                                f'{t}.\nThe Original Error Message was {e}.')
+                        else:
+                            self.logger.error(
+                                'Stream preprocessing failed for '
+                                'time '
+                                f'{t}.\nThe Original Error Message was {e}.')
                         continue
                     if self.rank == 0:
                         self.options['combinations'] = calc_cross_combis(
@@ -590,6 +636,8 @@ class Correlator(object):
 
                 self.logger.debug('Working on correlation times %s-%s' % (
                     str(win[0].stats.starttime), str(win[0].stats.endtime)))
+                win = win.merge()
+                win = win.trim(winstart, winend, pad=True)
                 yield win, write_flag
                 write_flag = False
 
@@ -777,6 +825,23 @@ def _compare_existing_data(ex_corr: dict, tr0: Trace, tr1: Trace) -> bool:
         return False
 
 
+def is_in_xcombis(id1: str, id2: str, rcombis: List[str] = None) -> bool:
+    """
+    Check if the specific combination is to be calculated according to
+    xcombinations including the channel. xcombination are expected as
+    Net1-Net2.Sta1-Sta2.Cha1-Cha2. (Channel information can be omitted)
+    """
+    n1, s1, _, c1 = id1.split('.')
+    n2, s2, _, c2 = id2.split('.')
+    tcombi = f'{n1}-{n2}.{s1}-{s2}.{c1}-{c2}'
+    tcombi2 = f'{n2}-{n1}.{s2}-{s1}.{c2}-{c1}'
+    for combi in rcombis:
+        if fnmatch.fnmatch(tcombi, combi+'*') or fnmatch.fnmatch(
+                tcombi2, combi+'*'):
+            return True
+    return False
+
+
 def calc_cross_combis(
     st: Stream, ex_corr: dict, method: str = 'betweenStations',
         rcombis: List[str] = None) -> list:
@@ -826,11 +891,8 @@ def calc_cross_combis(
                     # check first whether this combi is in dict
                     if _compare_existing_data(ex_corr, tr, tr1):
                         continue
-                    if rcombis is not None and not any(all(
-                        i0 in i1 for i0 in [
-                            n, n2, s, s2]) for i1 in rcombis):
-                        # If particular combis are requested, compute only
-                        # those
+                    if rcombis is not None and not is_in_xcombis(
+                            tr.id, tr1.id, rcombis):
                         continue
                     combis.append((ii, jj))
     elif method == 'betweenComponents':
@@ -1239,7 +1301,7 @@ def compute_network_station_combinations(
 
 
 def preprocess_stream(
-    st: Stream, store_client: Store_Client, inv: Inventory or None,
+    st: Stream, store_client: Store_Client,
     startt: UTCDateTime, endt: UTCDateTime, taper_len: float,
     remove_response: bool, subdivision: dict,
     preProcessing: List[dict] = None,
@@ -1277,32 +1339,30 @@ def preprocess_stream(
     """
     if not st.count():
         return st
+    st = ppst.detrend_st(st, 'linear')
+    # deal with overlaps
+    # This should be a setting in the parameter file
+    st = mu.gap_handler(st, 1, taper_len*4, taper_len)
+    if not st.count():
+        # could happen after handling gaps
+        return st
     # To deal with any nans/masks
     st = st.split()
     st.sort(keys=['starttime'])
 
-    # Clip to these again to remove the taper
-    old_starts = [deepcopy(tr.stats.starttime) for tr in st]
-    old_ends = [deepcopy(tr.stats.endtime) for tr in st]
-
+    inv = store_client.inventory
     if remove_response:
-        # taper before instrument response removal
-        if taper_len:
-            st = ppst.cos_taper_st(st, taper_len, False, True)
         try:
-            if inv:
-                ninv = inv
-                st.attach_response(ninv)
-            st.remove_response(taper=False)  # Changed for testing purposes
+            st.remove_response(taper=False, inventory=inv)
         except ValueError:
             print('Station response not found ... loading from remote.')
             # missing station response
             ninv = store_client.rclient.get_stations(
                 network=st[0].stats.network, station=st[0].stats.station,
                 channel='*', level='response')
-            st.attach_response(ninv)
-            st.remove_response(taper=False)
+            st.remove_response(taper=False, inventory=ninv)
             store_client._write_inventory(ninv)
+            inv += ninv
 
     # Sometimes Z has reversed polarity
     if inv:
@@ -1315,11 +1375,15 @@ def preprocess_stream(
 
     if preProcessing:
         for procStep in preProcessing:
+            if 'detrend_st' in procStep['function'] \
+                    or 'cos_taper_st' in procStep['function']:
+                warnings.warn(
+                    'Tapering and Detrending are now always perfomed '
+                    'as part of the preprocessing. Ignoring parameter...',
+                    DeprecationWarning)
+                continue
             func = func_from_str(procStep['function'])
             st = func(st, **procStep['args'])
-    # Remove the artificial taper from earlier
-    for tr, ostart, oend in zip(st, old_starts, old_ends):
-        tr.trim(starttime=ostart, endtime=oend)
     st.merge()
     st.trim(startt, endt, pad=True)
 
@@ -1359,7 +1423,6 @@ def generate_corr_inc(
                 subdivision['corr_len']-st[0].stats.delta
             win = win0.trim(starttrim, endtrim, pad=True)
             mu.get_valid_traces(win)
-
             yield win
 
     except IndexError:

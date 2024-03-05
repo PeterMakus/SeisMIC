@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Monday, 16th January 2023 11:13:58 am
+Last Modified: Wednesday, 4th October 2023 09:29:49 am
 '''
 
 from typing import List, Tuple, Optional
@@ -101,8 +101,9 @@ def _smooth(
         return x
 
     if window not in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-        raise ValueError("Window is on of 'flat', 'hanning', 'hamming',\
-            'bartlett', 'blackman'")
+        raise ValueError(
+            "Window is not one of 'flat', 'hanning', 'hamming', "
+            "'bartlett', 'blackman'")
 
     s = np.r_[2 * x[0] - x[window_len:1:-1], x,
               2 * x[-1] - x[-1:-window_len:-1]]
@@ -253,8 +254,8 @@ def corr_mat_resample(
     """
 
     if len(end_times) > 0 and (len(end_times) != len(start_times)):
-        raise ValueError("end_times should be empty or of the same length as \
-            start_times.")
+        raise ValueError(
+            "end_times should be empty or of the same length as start_times.")
 
     # old sampling times
     otime = np.array([ii.timestamp for ii in stats['corr_start']])
@@ -276,8 +277,7 @@ def corr_mat_resample(
             etime = stime + (stime[1] - stime[0])
 
     # create masked array to avoid nans
-    mm = np.ma.masked_array(
-        data, np.isnan(data))
+    mm = np.ma.masked_array(data, np.isnan(data))
 
     # new corr_data matrix
     nmat = np.empty([len(stime), data.shape[1]])
@@ -285,14 +285,14 @@ def corr_mat_resample(
 
     for ii in range(len(stime)):
         # index of measurements between start_time[ii] and end_time[ii]
-        ind = np.nonzero((otime >= stime[ii]) * (otime < etime[ii]))  # ind is
-        # a list(tuple) for dimensions
+        ind = np.nonzero((otime >= stime[ii]) * (otime < etime[ii]))
+        # ind is a list(tuple) for dimensions
         if len(ind[0]) == 1:
             # one measurement found
             nmat[ii, :] = data[ind[0], :]
         elif len(ind[0]) > 1:
             # more than one measurement in range
-            nmat[ii, :] = np.mean(mm[ind[0], :], 0).filled(np.nan)
+            nmat[ii, :] = np.mean(mm[ind[0], :], axis=0).filled(np.nan)
 
     # assign new data
     data = nmat
@@ -871,24 +871,6 @@ def corr_mat_stretch(
     dta = -stats['start_lag']
     dte = stats['end_lag']
 
-    # format (trimm) the matrix for zero-time to be either at the beginning
-    # or at the center as required by
-    # miic.core.stretch_mod.time_stretch_estimate
-
-    # In case a reference is provided but the matrix needs to be trimmed the
-    # references also need to be trimmed. To do so we append the references to
-    # the matrix, trimm it and remove the references again
-    # if ref_trc is not None:
-    #     rts = ref_trc.shape
-    #     if len(rts) == 1:
-    #         nr = 1
-    #     else:
-    #         nr = rts[0]
-    #     data = np.concatenate((
-    #         data, np.atleast_2d(ref_trc)), 0)
-    #     reft = np.tile([UTCDateTime(1900, 1, 1)], (nr))
-    #     stats['corr_start'] = np.concatenate((stats['corr_start'], reft), 0)
-
     # trim the matrices
     if sides == "single":
         # extract the time>0 part of the matrix
@@ -903,11 +885,8 @@ def corr_mat_stretch(
     # create or extract references
     if ref_trc is None:
         ref_trc = corr_mat_extract_trace(data, stats)
-    # else:
-    #     # extract and remove references from corr matrix again
-    #     ref_trc = data[-nr:, :]
-    #     data = data[:-nr, :]
-    #     stats['corr_start'] = stats['corr_start'][:-nr]
+    if ref_tr_stats is None:
+        ref_tr_stats = stats
 
     dv = multi_ref_vchange_and_align(
         data, ref_trc, tw=tw, stretch_range=stretch_range,
@@ -1063,7 +1042,7 @@ def measure_shift(
     stored in the ``corr_data`` matrix (one for each row) with shifted
     versions  of reference trace stored in ``ref_trc``. The range of shifting
     to be tested is given in ``shift_range`` in seconds. It is used in a
-    symmetric way from -``shift_range`` to +``shift_range``. Shifting ist
+    symmetric way from -``shift_range`` to +``shift_range``. Shifting is
     tested ``shift_steps`` times. ``shift_steps`` should be an odd number to
     test zero shifting. The best match (shifting amount and corresponding
     correlation value) is calculated in specified time windows. Multiple time
@@ -1095,7 +1074,7 @@ def measure_shift(
     :param sides: Side of the traces to be used for the shifting estimate
         ('both' | 'single'). ``single`` is used for
         one-sided signals from active sources or if the time window shall
-        not be symmetric. For ``both`` the time window will be mirrowd about
+        not be symmetric. For ``both`` the time window will be mirrored about
         zero lag time, e.g. [start,end] will result in time windows
         [-end:-start] and [start:end] being used simultaneousy
 
@@ -1123,7 +1102,9 @@ def measure_shift(
         *method*: It is equal to 'single_ref' and specify in which "way" the
             values have been obtained.
     """
-
+    if shift_steps % 2 == 0:
+        raise ValueError(
+            "shift_steps must be an odd number to include zero shift")
     if sides not in ['both', 'single']:
         raise ValueError(
             f"'sides' must be either 'both' or 'single', not {sides}")
@@ -1186,8 +1167,8 @@ def measure_shift(
     ref_mat = create_shifted_ref_mat(ref_trc, stats, shifts)
 
     # create space for results
-    dt_list = []
     # do computation for each time window
+    sim_mats = []
     for twi in tw:
         # create indices of time windows
         indices = np.arange(
@@ -1198,28 +1179,27 @@ def measure_shift(
         indices -= np.round(stats.start_lag * stats.sampling_rate)
         indices = indices.astype(int)
         # compare data and shifted reference
-        sim_mat = compare_with_modified_reference(data, ref_mat, indices)
-        corr = sim_mat.max(axis=1)
-        value = shifts[sim_mat.argmax(axis=1)]
-        # Set dt to NaN where the correlation is NaN instead of having it equal
-        # to one of the two stretch_range limits
-        value[np.isnan(corr)] = np.nan
-        # assemble results
-        dt = {
-            'stats': stats,
-            'corr': np.squeeze(corr),
-            'value': np.squeeze(value),
-            'second_axis': shifts,
-            'value_type': np.array(['shift']),
-            'method': np.array(['absolute_shift'])}
-        if return_sim_mat:
-            dt.update({'sim_mat': np.squeeze(sim_mat)})
-        else:
-            dt.update({'sim_mat': None})
-
-        dt_list.append(DV(**dt))
-
-    return dt_list
+        sim_mats.append(
+            compare_with_modified_reference(data, ref_mat, indices))
+    sim_mat = np.nanmean(sim_mats, axis=0)
+    corr = sim_mat.max(axis=1)
+    value = shifts[sim_mat.argmax(axis=1)]
+    # Set dt to NaN where the correlation is NaN instead of having it equal
+    # to one of the two stretch_range limits
+    value[np.isnan(corr)] = np.nan
+    # assemble results
+    dt = {
+        'stats': stats,
+        'corr': np.squeeze(corr),
+        'value': np.squeeze(value),
+        'second_axis': shifts,
+        'value_type': np.array(['shift']),
+        'method': np.array(['absolute_shift'])}
+    if return_sim_mat:
+        dt.update({'sim_mat': np.squeeze(sim_mat)})
+    else:
+        dt.update({'sim_mat': None})
+    return DV(**dt)
 
 
 def apply_shift(
