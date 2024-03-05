@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 27th October 2021 12:58:15 pm
-Last Modified: Tuesday, 27th February 2024 01:52:46 pm
+Last Modified: Tuesday, 5th March 2024 03:01:56 pm
 '''
 
 import unittest
@@ -125,7 +125,7 @@ class TestReadDV(unittest.TestCase):
             'corr': 0, 'value': 1, 'value_type': 's', 'sim_mat': 3,
             'second_axis': 4, 'method': 'd', 'stats': CorrStats(),
             'corrs': None, 'stretches': None, 'n_stat': None,
-            'dv_processing': None, 'avail': True})
+            'dv_processing': {}, 'avail': True})
 
     @patch('seismic.monitor.dv.np.load')
     @patch('seismic.monitor.dv.mu.load_header_from_np_array')
@@ -170,7 +170,7 @@ class TestReadDV(unittest.TestCase):
         self.assertDictEqual(dvout.__dict__, {
             'corr': 0, 'value': 1, 'value_type': 's', 'sim_mat': 3,
             'second_axis': 4, 'method': 'd', 'stats': CorrStats(),
-            'corrs': 5, 'stretches': 3, 'n_stat': 1, 'dv_processing': None,
+            'corrs': 5, 'stretches': 3, 'n_stat': 1, 'dv_processing': {},
             'avail': True})
 
     @patch('seismic.monitor.dv.glob')
@@ -201,12 +201,12 @@ class TestReadDV(unittest.TestCase):
             'corr': 0, 'value': 1, 'value_type': 'b', 'sim_mat': 3,
             'second_axis': 4, 'method': 'xs', 'stats': CorrStats(),
             'corrs': None, 'stretches': None, 'n_stat': None,
-            'dv_processing': None, 'avail': True})
+            'dv_processing': {}, 'avail': True})
         self.assertDictEqual(dvout[1].__dict__, {
             'corr': 1, 'value': 2, 'value_type': '3', 'sim_mat': 4,
             'second_axis': 5, 'method': 'd', 'stats': CorrStats(),
             'corrs': None, 'stretches': None, 'n_stat': None,
-            'dv_processing': None, 'avail': True})
+            'dv_processing': {}, 'avail': True})
         self.assertEqual(len(dvout), 2)
 
     @patch('seismic.monitor.dv.glob')
@@ -240,7 +240,7 @@ class TestReadDV(unittest.TestCase):
             'corr': 0, 'value': 1, 'value_type': 'b', 'sim_mat': 3,
             'second_axis': 4, 'method': 'xs', 'stats': CorrStats(),
             'corrs': None, 'stretches': None, 'n_stat': None,
-            'dv_processing': None, 'avail': True})
+            'dv_processing': {}, 'avail': True})
         self.assertEqual(len(dvout), 1)
 
 

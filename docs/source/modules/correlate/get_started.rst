@@ -50,6 +50,8 @@ Setting the parameters
         # type: list of strings or string, wildcards allowed
         network : 'D0'
         station : ['BZG', 'ESO', 'KBG', 'KIR']
+        # For "component" only strings are allowed (no lists!)
+        component: 'Z'  # Use * or ? or None to allow all components
 
     #### parameters for correlation (emperical Green's function creation)
     co:
@@ -77,14 +79,14 @@ Setting the parameters
         # later steps
         sampling_rate : 25
         # Remove the instrument response, will take substantially more time
-        remove_response : True
+        remove_response : False
 
         # Method to combine different traces
         # Options are: 'betweenStations', 'betweenComponents', 'autoComponents', 'allSimpleCombinations', or 'allCombinations'
         combination_method : 'betweenStations'
     
         # If you want only specific combinations to be computed enter them here
-        # In the form [Net0-Net0.Stat0-Stat1]
+        # In the form [Net0-Net1.Stat0-Stat1] or [Net0-Net1.Stat0-Stat1.Cha0-Cha1]
         # This option will only be consider if combination_method == 'betweenStations'
         # Comment or set == None if not in use
         xcombinations : None
@@ -94,11 +96,6 @@ Setting the parameters
         # and return an obspy.Stream object.
         # available preimplemented functions are in seismic.correlate.preprocessing_stream
         preProcessing : [
-                        {'function':'seismic.correlate.preprocessing_stream.detrend_st',
-                        'args':{'type':'linear'}},
-                        {'function':'seismic.correlate.preprocessing_stream.cos_taper_st',
-                        'args':{'taper_len': 100, # seconds
-                                'lossless': True}}, # lossless tapering stitches additional data to trace, tapers, and removes the tapered ends after preprocessing
                         # This is intended as a "technical" bandpass filter to remove unphysical signals, i.e., frequencies you would not expect in the data
                         {'function':'seismic.correlate.preprocessing_stream.stream_filter',
                         'args':{'ftype':'bandpass',
@@ -135,9 +132,10 @@ Setting the parameters
         # parameters for correlation preprocessing
         # Standard functions reside in seismic.correlate.preprocessing_td and preprocessing_fd, respectively
         corr_args : {'TDpreProcessing':[
-                                        # detrend not recommended. Use preProcessing detrend_st instead (faster)
-                                        # {'function':'seismic.correlate.preprocessing_td.detrend',
-                                        # 'args':{'type':'linear'}},
+                                    {'function':'seismic.correlate.preprocessing_td.taper',
+                                        'args':{'type':'cosine_taper', 'p': 0.02}},
+                                        {'function':'seismic.correlate.preprocessing_td.detrend',
+                                        'args':{'type':'linear'}},
                                     {'function':'seismic.correlate.preprocessing_td.TDfilter',
                                     'args':{'type':'bandpass','freqmin':2,'freqmax':8}},
                                         #{'function':'seismic.correlate.preprocessing_td.mute',
@@ -198,6 +196,9 @@ Setting the parameters
         stretch_range : 0.03
         # number of stretching increments
         stretch_steps : 1001
+        # Return the similarity matrix for each dv/v estimate
+        # required for post processing. If False, saves some RAM and disk space
+        return_sim_mat : True
     
         #### Reference trace extraction
         #  win_inc : Length in days of each reference time window to be used for trace extraction
@@ -210,6 +211,7 @@ Setting the parameters
         # preprocessing on the correlation bulk or corr_stream before stretch estimation
         preprocessing: [
                         #{'function': 'pop_at_utcs', 'args': {'utcs': np.array([UTCDateTime()])},  # Used to remove correlations from certain times
+                        #{'function': 'select_time', 'args': {'start': (0, 0, 0), 'end': (23, 0, 0), exclude=False}, # include only certain time of day (h, minute, second)
                         {'function': 'smooth', 'args': {'wsize': 48, 'wtype': 'hanning', 'axis': 1}}
         ]
 
@@ -249,13 +251,13 @@ Setting the parameters
 
         # preprocessing on the correlation bulk before stretch estimation
         preprocessing: [
+                        #{'function': 'select_time', 'args': {'start': (0, 0, 0), 'end': (23, 0, 0), exclude=False}, # include only certain time of day (h, minute, second)
                         {'function': 'smooth', 'args': {'wsize': 4, 'wtype': 'hanning', 'axis': 1}}
         ]
 
         ### SAVING
         # save components separately or only their average?
         save_comps: False
-
 
 
 
@@ -300,8 +302,10 @@ Network Specific Parameters
         # type: list of strings or string, wildcards allowed
         network : 'D0'
         station : ['BZG', 'ESO', 'KBG', 'KIR']
+        # For "component" only strings are allowed (no lists!)
+        component: 'Z'  # Use * or ? or None to allow all components
 
-Here, we decide which data to use (i.e., which data the correlator will look for and read in). All parameters accept wildcards and can be strings or lists.
+Here, we decide which data to use (i.e., which data the correlator will look for and read in). All parameters accept wildcards. Network and Station can be strings or lists.
 
 .. note::
 

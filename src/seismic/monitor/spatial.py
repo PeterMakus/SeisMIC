@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 5th March 2024 02:50:57 pm
+Last Modified: Tuesday, 5th March 2024 03:03:01 pm
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -1064,8 +1064,7 @@ def align_dv_curves(
     else:
         shift = np.nansum(
             dv.value[ii-steps:ii+steps+1]*dv.corr[
-                ii-steps:ii+steps+1])/np.nansum(
-                dv.corr[ii-steps:ii+steps+1])
+                ii-steps:ii+steps+1])/np.nansum(dv.corr[ii-steps:ii+steps+1])
     dv.value -= shift-value
     dv.dv_processing['aligned'] = value
 
