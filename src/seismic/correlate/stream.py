@@ -10,7 +10,7 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Thursday, 6th June 2024 10:54:16 am
+Last Modified: Monday, 17th June 2024 02:56:58 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy

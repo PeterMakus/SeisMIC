@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Monday, 4th March 2024 11:44:40 am
+Last Modified: Monday, 17th June 2024 04:28:42 pm
 '''
 
 import fnmatch
@@ -33,6 +33,9 @@ from seismic.utils.raw_analysis import spct_series_welch
 SDS_FMTSTR = os.path.join(
     "{year}", "{network}", "{station}", "{channel}.{sds_type}",
     "{network}.{station}.{location}.{channel}.{sds_type}.{year}.{doy:03d}")
+SDS_FMTSTR_alldoy = os.path.join(
+    "{year}", "{network}", "{station}", "{channel}.{sds_type}",
+    "{network}.{station}.{location}.{channel}.{sds_type}.{year}.*")
 
 
 class Store_Client(object):
@@ -138,7 +141,8 @@ class Store_Client(object):
                 attach_response)
         return st
 
-    def get_available_stations(self, network: str = None) -> list:
+    def get_available_stations(
+            self, network: str = None) -> List[Tuple[str, str]]:
         """
         Returns a list of stations for which raw data is available.
         Very similar to the
@@ -158,6 +162,7 @@ class Store_Client(object):
             os.path.join(self.sds_root, '????', network, '*'))
         statlist = []
         for path in oslist:
+            # Check wheteher folder has the format of a year
             if not isinstance(eval(path.split(os.path.sep)[-3]), int):
                 continue
             # Add all network and station combinations to list
@@ -230,7 +235,7 @@ class Store_Client(object):
 
     def _translate_wildcards(
         self, network: str, station: str,
-            component: str = '?') -> List[List[str]]:
+            component: str = '?', location: str = '*') -> List[List[str]]:
         """
         Look up network and station names in database, so that wildcards
         can be estimated into number of stations.
@@ -239,20 +244,19 @@ class Store_Client(object):
         :type network: str
         :param station: station string, may contain wildcards
         :type station: str
-        :param componnt: component, i.e. Z, N, E or ? as wildcard
-        type componnt str
-        :return: _description_
-        :rtype: _type_
+        :param component: component, i.e. Z, N, E or ? as wildcard
+        :type component: str
+        :param location: location code
+        :type location: str, optional
+        :return: nested list with non-unique network, station, location,
+            and channel codes
+        :rtype: list
         """
-        dirlist = glob.glob(
-            os.path.join(
-                self.sds_root, '*', network, station, '??'+component+'.?'))
-        nets = [os.path.basename(
-            os.path.dirname(os.path.dirname(i))) for i in dirlist]
-        stats = [os.path.basename(os.path.dirname(i)) for i in dirlist]
-        chans = [os.path.basename(i).split('.')[0] for i in dirlist]
         # Create one nested list
-        return [[nets[i], stats[i], chans[i]] for i in range(len(dirlist))]
+        return [os.path.basename(i).split('.')[:4] for i in glob.iglob(
+            SDS_FMTSTR_alldoy.format(
+                network=network, station=station, location=location,
+                channel=f'??{component}', year='*', sds_type=self.sds_type))]
 
     def _load_remote(
         self, network: str, station: str, location: str, channel: str,
