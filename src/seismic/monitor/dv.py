@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Tuesday, 5th March 2024 01:59:30 pm
+Last Modified: Wednesday, 19th June 2024 04:07:10 pm
 '''
 
 from datetime import datetime
@@ -86,7 +86,7 @@ class DV(object):
         Print a prettier string.
         """
         code = f'{self.stats.network}.{self.stats.station}.'\
-            + self.stats.channel
+            + f'{self.stats.location}.{self.stats.channel}'
         out = f'{self.method} {self.value_type} velocity change estimate of '\
             + f'{code}.\nstarttdate: {min(self.stats.corr_start).ctime()}\n'\
             + f'enddate: {max(self.stats.corr_end).ctime()}\n\n'\

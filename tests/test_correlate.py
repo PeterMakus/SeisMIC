@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Monday, 17th June 2024 06:17:43 pm
+Last Modified: Wednesday, 19th June 2024 10:48:21 am
 '''
 from copy import deepcopy
 import unittest
@@ -457,7 +457,7 @@ class TestCorrrelator(unittest.TestCase):
         sc_mock.get_available_stations.return_value = [
             ['lala', 'lolo'], ['lala', 'lili']]
         sc_mock._translate_wildcards.return_value = [
-            ['lala', 'lolo', '00,' 'E'], ['lala', 'lili', '01', 'Z']]
+            ['lala', 'lolo', '00', 'E'], ['lala', 'lili', '01', 'Z']]
         sc_mock.inventory = self.inv
         sc_mock._load_local.return_value = self.st
         ppst_mock.return_value = self.st

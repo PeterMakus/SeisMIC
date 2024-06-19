@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Monday, 17th June 2024 02:17:54 pm
+Last Modified: Wednesday, 19th June 2024 03:13:18 pm
 '''
 from typing import List, Tuple
 import logging
@@ -555,9 +555,10 @@ def sort_combinations_alphabetically(
     :return: The sorted combinations
     :rtype: Tuple[str, str, str, str]
     """
-    sort = ['.'.join([net, sta, loc, cha]) for net, sta, loc, cha in zip(
-                netcomb.split('-'), stacomb.split('-'), loccomb.split('-'),
-                chacomb.split('-'))]
+    sort = [
+        '.'.join([net, sta, loc, cha]) for net, sta, loc, cha in zip(
+            netcomb.split('-'), stacomb.split('-'), loccomb.split('-'),
+            chacomb.split('-'))]
     sorted = sort.copy()
     sorted.sort()
     if sorted != sort:

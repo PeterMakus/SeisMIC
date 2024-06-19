@@ -10,7 +10,7 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Monday, 17th June 2024 02:56:58 pm
+Last Modified: Wednesday, 19th June 2024 04:06:21 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -945,9 +945,10 @@ class CorrStream(Stream):
 
         if channel is None or '*' in channel or '?' in channel:
             stats = convert_statlist_to_bulk_stats(
-                statlist, varying_channel=True)
+                statlist, varying_channel=True, varying_loc=False)
         else:
-            stats = convert_statlist_to_bulk_stats(statlist)
+            stats = convert_statlist_to_bulk_stats(
+                statlist, varying_loc=False)
         return CorrBulk(A, stats)
 
     def plot(
@@ -1691,6 +1692,10 @@ def convert_statlist_to_bulk_stats(
         'npts', 'sampling_rate', 'network', 'station', 'start_lag',
         'end_lag', 'stla', 'stlo', 'stel', 'evla', 'evlo', 'evel',
         'dist', 'az', 'baz']
+    if len(set([st['location'] for st in statlist])) == 1:
+        varying_loc = False
+    if len(set([st['channel'] for st in statlist])) == 1:
+        varying_channel = False
     if varying_loc:
         mutables += ['location']
     else:

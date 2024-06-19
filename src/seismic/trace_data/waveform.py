@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Monday, 17th June 2024 04:28:42 pm
+Last Modified: Wednesday, 19th June 2024 02:59:13 pm
 '''
 
 import fnmatch
@@ -253,10 +253,12 @@ class Store_Client(object):
         :rtype: list
         """
         # Create one nested list
-        return [os.path.basename(i).split('.')[:4] for i in glob.iglob(
-            SDS_FMTSTR_alldoy.format(
-                network=network, station=station, location=location,
-                channel=f'??{component}', year='*', sds_type=self.sds_type))]
+        path = os.path.join(self.sds_root,
+                            SDS_FMTSTR_alldoy.format(
+                                network=network, station=station,
+                                location=location, channel=f'??{component}',
+                                year='*', sds_type=self.sds_type))
+        return [os.path.basename(i).split('.')[:4] for i in glob.iglob(path)]
 
     def _load_remote(
         self, network: str, station: str, location: str, channel: str,
@@ -304,14 +306,12 @@ class Store_Client(object):
             len(st) == 0 or (
                 starttime < (st[0].stats.starttime-st[0].stats.delta) or (
                     endtime > st[-1].stats.endtime+st[-1].stats.delta))):
-            # print("Failed")
             return None
         if attach_response:
             try:
                 st.attach_response(self.inventory)
             except Exception:
                 pass
-        # print("Success")
         return st
 
     def read_inventory(self) -> Inventory:

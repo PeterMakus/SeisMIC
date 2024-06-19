@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 17th June 2024 06:20:27 pm
+Last Modified: Wednesday, 19th June 2024 03:39:46 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -307,14 +307,15 @@ class Correlator(object):
                 continue
             d = {}
             for outf in glob.glob(outfs):
-                # retrieve locationcodes
-                l0, l1 = outf.split('.')[2].split('-')
+                # retrieve location codes
+                l0, l1 = os.path.basename(outf).split('.')[2].split('-')
                 with CorrelationDataBase(
                     outf, corr_options=self.options, mode='r',
                         _force=self._allow_different_params) as cdb:
                     d.setdefault('%s-%s' % (l0, l1), {})
                     d[f'{l0}-{l1}'].update(
-                        cdb.get_available_starttimes(nc, sc, tag, channel))
+                        cdb.get_available_starttimes(
+                            nc, sc, tag, f'{l0}-{l1}', channel))
             s0, s1 = sc.split('-')
             n0, n1 = nc.split('-')
             # obtain location codes
@@ -507,7 +508,7 @@ class Correlator(object):
                 if stext is None or not len(stext):
                     # No data for this station to read
                     continue
-                st.extend(stext)
+                st = st.extend(stext)
 
             # Stream based preprocessing
             # Downsampling
@@ -553,7 +554,7 @@ class Correlator(object):
                 win = Stream()
                 for winp in winl:
                     win.extend(winp)
-                win.sort()
+                win = win.sort()
 
                 # Get correlation combinations
                 if self.rank == 0:
@@ -877,7 +878,7 @@ def calc_cross_combis(
 
     combis = []
     # sort alphabetically
-    st.sort()
+    st = st.sort()
     if method == 'betweenStations':
         for ii, tr in enumerate(st):
             for jj in range(ii+1, len(st)):
@@ -1350,7 +1351,7 @@ def preprocess_stream(
         return st
     # To deal with any nans/masks
     st = st.split()
-    st.sort(keys=['starttime'])
+    st = st.sort(keys=['starttime'])
 
     inv = store_client.inventory
     if remove_response:

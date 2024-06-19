@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Monday, 17th June 2024 05:07:41 pm
+Last Modified: Wednesday, 19th June 2024 02:48:32 pm
 '''
 import ast
 import fnmatch
@@ -284,12 +284,17 @@ omitted." % path, category=UserWarning)
         Returns a dictionary with channel codes as keys and available
         correlation starttimes as values.
 
+        ..note::
+            Wildcards are only allowed for channel.
+
         :param network: Network code (combined code, e.g., IU-YP)
         :type network: str
         :param station: Station code (combined)
         :type station: str
         :param tag: Tag
         :type tag: str
+        :param location: Combined Location code.
+        :type location: str
         :param channel: Channel code (combined), wildcards allowed,
             defaults to '*'
         :type channel: str, optional

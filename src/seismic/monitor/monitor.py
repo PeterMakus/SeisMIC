@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 17th June 2024 04:30:59 pm
+Last Modified: Wednesday, 19th June 2024 04:12:28 pm
 '''
 from copy import deepcopy
 import json
@@ -337,7 +337,7 @@ class Monitor(object):
         if self.rank == 0:
             plist = []
             for f, n, s in zip(self.infiles, self.netlist, self.statlist):
-                locs = os.path.basename(f.split('.'))[3]
+                locs = os.path.basename(f).split('.')[2]
                 with CorrelationDataBase(f, mode='r') as cdb:
                     ch = cdb.get_available_channels(
                         tag, n, s, locs)
@@ -496,7 +496,7 @@ class Monitor(object):
         if self.rank == 0:
             plist = []
             for f, n, s in zip(self.infiles, self.netlist, self.statlist):
-                locs = os.path.basename(f.split('.'))[3]
+                locs = os.path.basename(f).split('.')[2]
                 with CorrelationDataBase(f, mode='r') as cdb:
                     ch = cdb.get_available_channels(
                         tag, n, s, locs)
@@ -771,11 +771,12 @@ def corr_find_filter(
         correlation files.
     :rtype: Tuple[List[str], List[str], List[str]]
     """
+    comp = '??' + net['component'].capitalize()
     netlist = []
     statlist = []
     infiles = []
-    for f in glob(h5_FMTSTR.format(indir, '*', '*', '*', '*')):
-        matched = False
+    for f in glob(h5_FMTSTR.format(
+            dir=indir, network='*', station='*', location='*', channel='*')):
         f = os.path.basename(f)
         split = f.split('.')
 
@@ -793,9 +794,8 @@ def corr_find_filter(
                 if len(fnmatch.filter(nsplit, n)) > 0:
                     matchlen += 1
                     if matchlen == len(nsplit):
-                        matched = True
                         break
-            if not matched:
+            if matchlen < len(ssplit):
                 continue
         if isinstance(net['station'], str) and not fnmatch.filter(
                 ssplit, net['station']) == ssplit:
@@ -807,12 +807,11 @@ def corr_find_filter(
                 if len(fnmatch.filter(ssplit, n)) > 0:
                     matchlen += 1
                     if matchlen == len(ssplit):
-                        matched = True
                         break
-            if not matched:
+            if matchlen < len(ssplit):
                 continue
-        if isinstance(net['component'], str) and not fnmatch.filter(
-                ssplit, net['component']) == csplit:
+        if isinstance(comp, str) and not fnmatch.filter(
+                csplit, comp) == csplit:
             continue
 
         netlist.append(split[0])
@@ -1179,7 +1178,7 @@ def average_components_wfc(wfcs: List[WFC]) -> WFC:
             input (also from different stations). However, at the time,
             the function requires the input to be of the same shape
 
-    :type dvs: List[class:`~seismic.monitor.dv.DV`]
+    :type dvs: List[class:`~seismic.monitor.wfc.WFC`]
     :raises TypeError: for DVs that were computed with different methods
     :return: A single dv with an averaged similarity matrix
     :rtype: DV
