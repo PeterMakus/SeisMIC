@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Wednesday, 19th June 2024 02:59:13 pm
+Last Modified: Friday, 5th July 2024 01:05:09 pm
 '''
 
 import fnmatch
@@ -298,8 +298,11 @@ class Store_Client(object):
         Read data from local SDS structure.
         """
         # print("Loading locally ... ", end='')
-        st = self.lclient.get_waveforms(
-            network, station, location, channel, starttime, endtime)
+        try:
+            st = self.lclient.get_waveforms(
+                network, station, location, channel, starttime, endtime)
+        except OSError:
+            return None
         # Making sure that the order is correct for the next bit to work
         st.sort(['starttime'])
         if _check_times and (
