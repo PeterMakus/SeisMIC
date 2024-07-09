@@ -23,7 +23,7 @@ author = \
     'Peter Makus, Christoph Sens-Schönfelder, and the SeisMIC development Team'
 
 # The full version, including alpha/beta/rc tags
-release = '0.6.1'
+release = '0.6.2'
 
 # -- General configuration ---------------------------------------------------
 

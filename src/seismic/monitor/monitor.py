@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Wednesday, 19th June 2024 04:12:28 pm
+Last Modified: Tuesday, 9th July 2024 04:48:54 pm
 '''
 from copy import deepcopy
 import json
@@ -795,7 +795,7 @@ def corr_find_filter(
                     matchlen += 1
                     if matchlen == len(nsplit):
                         break
-            if matchlen < len(ssplit):
+            if matchlen < len(nsplit):
                 continue
         if isinstance(net['station'], str) and not fnmatch.filter(
                 ssplit, net['station']) == ssplit:
