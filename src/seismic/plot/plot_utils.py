@@ -59,7 +59,7 @@ def set_mpl_params():
     # Show dates in English format
     try:
         locale.setlocale(locale.LC_ALL, "en_GB.utf8")
-    except Exception:
+    except locale.Error:  # for MAC OS
         locale.setlocale(locale.LC_ALL, "en_GB.utf-8")
 
 

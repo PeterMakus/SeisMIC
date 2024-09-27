@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Friday, 5th July 2024 01:05:09 pm
+Last Modified: Friday, 27th September 2024 10:28:06 am
 '''
 
 import fnmatch
@@ -88,7 +88,46 @@ class Store_Client(object):
         maxlat: float or None = None, minlon: float or None = None,
         maxlon: float or None = None, network: str or None = None,
         station: str or None = None, location: str or None = None,
-            channel: str or None = None):
+        channel: str or None = None, channel_priorities: List[str] = None,
+            location_priorities: List[str] = None):
+        """
+        Download data using the obspy's MassDownloader. For all args
+        except starttime and endtime, None is interpreted as a wildcard.
+        Wildcards are generally allowed for all arguments except starttime
+        and endtime. Channel and location priorities are given in the form
+        of for example ['BH[ZNE]', 'HH[ZNE]'].
+        Priority list are not used if the channel or location is specified.
+
+        :param starttime: Starttime of the requested data
+        :type starttime: UTCDateTime
+        :param endtime: Endtime of the requested data
+        :type endtime: UTCDateTime
+        :param clients: List of clients to use for downloading data
+        :type clients: list or None, optional
+        :param minlat: Minimum latitude of the requested data
+        :type minlat: float or None, optional
+        :param maxlat: Maximum latitude of the requested data
+        :type maxlat: float or None, optional
+        :param minlon: Minimum longitude of the requested data
+        :type minlon: float or None, optional
+        :param maxlon: Maximum longitude of the requested data
+        :type maxlon: float or None, optional
+        :param network: Network code of the requested data
+        :type network: str or None, optional
+        :param station: Station code of the requested data
+        :type station: str or None, optional
+        :param location: Location code of the requested data
+        :type location: str or None, optional
+        :param channel: Channel code of the requested data
+        :type channel: str or None, optional
+        :param channel_priorities: List of channel priorities
+        :type channel_priorities: List[str], optional
+        :param location_priorities: List of location priorities
+        :type location_priorities: List[str], optional
+
+        ... seealso::
+            :func:`~obspy.clients.fdsn.mass_downloader.MassDownloader`
+        """
         # Initialise MassDownloader
 
         domain = RectangularDomain(
