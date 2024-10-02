@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Wednesday, 19th June 2024 02:48:32 pm
+Last Modified: Wednesday, 2nd October 2024 11:28:48 am
 '''
 import ast
 import fnmatch
@@ -256,11 +256,23 @@ omitted." % path, category=UserWarning)
         if isinstance(corr_start, UTCDateTime):
             corr_start = corr_start.format_fissures()
         else:
-            corr_start = '*'
+            try:
+                corr_start = UTCDateTime(corr_start).format_fissures()
+            except (ValueError, TypeError):
+                warnings.warn(
+                    'Correlation start is not a valid UTCDateTime object. '
+                    'Set to *')
+                corr_start = '*'
         if isinstance(corr_end, UTCDateTime):
             corr_end = corr_end.format_fissures()
         else:
-            corr_end = '*'
+            try:
+                corr_end = UTCDateTime(corr_end).format_fissures()
+            except (ValueError, TypeError):
+                warnings.warn(
+                    'Correlation end is not a valid UTCDateTime object. '
+                    'Set to *')
+                corr_end = '*'
         path = hierarchy.format(
             tag=tag, network=network, station=station, channel=channel,
             location=location,
