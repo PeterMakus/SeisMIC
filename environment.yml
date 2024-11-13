@@ -1,4 +1,4 @@
-name: seismic
+name: seismic-dev
 channels:
   - conda-forge
 dependencies:
@@ -12,10 +12,11 @@ dependencies:
   - prov
   - pytest
   - pyyaml
-  - python>=3.10
+  - python>=3.10, <3.12
   - scipy<=1.11.2
   - flake8
   - tqdm
+  - ipykernel
   - pip:
     - sphinx < 6.0
     - pydata-sphinx-theme
