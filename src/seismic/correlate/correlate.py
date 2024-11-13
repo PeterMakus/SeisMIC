@@ -40,7 +40,7 @@ class Correlator(object):
     Object to manage the actual Correlation (i.e., Green's function retrieval)
     for the database.
     """
-    def __init__(self, store_client: Store_Client, options: dict or str):
+    def __init__(self, store_client: Store_Client, options: dict | str):
         """
         Initiates the Correlator object. When executing
         :func:`~seismic.correlate.correlate.Correlator.pxcorr()`, it will
@@ -104,17 +104,18 @@ class Correlator(object):
 
         # Write the options dictionary to the log file
         if self.rank == 0:
-            opt_dump = deepcopy(options)
-            # json cannot write the UTCDateTime objects that might be in here
-            for step in opt_dump['co']['preProcessing']:
-                if 'stream_mask_at_utc' in step['function']:
-                    startsstr = [
-                        t.format_fissures() for t in step['args']['starts']]
-                    step['args']['starts'] = startsstr
-                    if 'ends' in step['args']:
-                        endsstr = [
-                            t.format_fissures() for t in step['args']['ends']]
-                        step['args']['ends'] = endsstr
+            opt_dump = mu.utcdatetime2str(options)
+            # opt_dump = deepcopy(options)
+            # # json cannot write the UTCDateTime objects that might be in here
+            # for step in opt_dump['co']['preProcessing']:
+            #     if 'stream_mask_at_utc' in step['function']:
+            #         startsstr = [
+            #             t.format_fissures() for t in step['args']['starts']]
+            #         step['args']['starts'] = startsstr
+            #         if 'ends' in step['args']:
+            #             endsstr = [
+            #                 t.format_fissures() for t in step['args']['ends']]
+            #             step['args']['ends'] = endsstr
             with open(os.path.join(
                     logdir, 'params%s.txt' % tstr), 'w') as file:
                 file.write(json.dumps(opt_dump, indent=1))

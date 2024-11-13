@@ -535,3 +535,27 @@ def interpolate_gaps_st(st: Stream, max_gap_len: int = -1) -> Stream:
     for tr in st:
         tr.data = interpolate_gaps(tr.data, max_gap_len)
     return st
+
+
+def utcdatetime2str(d):# -> str | list | dict | Any:
+    """
+    Replace UTCDateTime object by str-representation in any object,
+    notably dicts, lists, utcdatetimes.
+    """
+    #print("-"*20)
+    #print("Calling", d)
+    if isinstance(d, UTCDateTime):
+        #print("d is UTCDateTime")
+        return str(d)
+    elif isinstance(d, (list, tuple)):
+        #print("d is list")
+        #for i in range(len(d)):
+        #    d[i] = utcdatetime2str(d[i])
+        return [utcdatetime2str(i) for i in d]
+    elif isinstance(d, dict):
+        #print("d is dict")
+        #for k, v in d.items():
+        #    d[k] = utcdatetime2str(v)
+        return {k: utcdatetime2str(v) for k, v in d.items()}
+    else:
+        return d
