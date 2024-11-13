@@ -299,11 +299,11 @@ def heat_plot_corr_start(
         data[ii, :] = ctr.data
         y.append(ctr.stats['corr_start'].datetime)
         times = ctr.times()
-    ds = plt.pcolormesh(
+    ds = ax.pcolormesh(
         times, np.array(y), data, shading='auto', cmap=cmap, vmin=vmin,
         vmax=vmax)
     plt.colorbar(
-        ds, label='Correlation Coefficient', shrink=.6,
+        ds, ax=ax, label='Correlation Coefficient', shrink=.6,
         orientation='horizontal')
     ax.yaxis.set_major_locator(mpl.dates.AutoDateLocator())
     ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h %y'))
