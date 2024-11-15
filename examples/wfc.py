@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 17th July 2023 10:44:29 am
-Last Modified: Monday, 17th July 2023 01:02:36 pm
+Last Modified: Friday, 15th November 2024 12:35:06 pm
 '''
 
 import os
@@ -40,11 +40,6 @@ root = 'data'
 sc = Store_Client(client, root)
 
 # fbands to compute for
-# freq_min = 0.06*1.5**np.arange(15)
-# freq_min = [
-#     0.06, 0.09, 0.135, 0.25, 0.375, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 6, 8]
-# freq_max = [
-#     0.12, 0.18, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8, 10, 12, 12.49]
 freq_max = np.sort(np.round(12.49/1.5**np.arange(14), 2))
 freq_min = np.round(freq_max/2, 2)
 
