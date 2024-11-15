@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Friday, 20th October 2023 04:34:04 pm
+Last Modified: Wednesday, 2nd October 2024 11:28:48 am
 '''
 import ast
 import fnmatch
@@ -27,9 +27,12 @@ from obspy.core import Stats
 import h5py
 
 from seismic.correlate.stream import CorrStream, CorrTrace
+import seismic.utils.miic_utils as mu
 
-hierarchy = "/{tag}/{network}/{station}/{channel}/{corr_st}/{corr_et}"
-h5_FMTSTR = os.path.join("{dir}", "{network}.{station}.h5")
+hierarchy = '/{tag}/{network}/{station}/{location}/' \
+    + '{channel}/{corr_st}/{corr_et}'
+h5_FMTSTR = os.path.join(
+    "{dir}", "{network}.{station}.{location}.{channel}.h5")
 
 
 class DBHandler(h5py.File):
@@ -129,6 +132,7 @@ class DBHandler(h5py.File):
             path = hierarchy.format(
                 tag=tag,
                 network=st.network, station=st.station, channel=st.channel,
+                location=st.location,
                 corr_st=st.corr_start.format_fissures(),
                 corr_et=st.corr_end.format_fissures())
             try:
@@ -142,16 +146,18 @@ class DBHandler(h5py.File):
 omitted." % path, category=UserWarning)
 
     def remove_data(
-        self, network: str, station: str, channel: str, tag: str,
-            corr_start: UTCDateTime | str):
+        self, network: str, station: str, location: str, channel: str,
+            tag: str, corr_start: UTCDateTime | str):
         """
         Deletes the correlation from the file.
 
-        :param network: network string
+        :param network: network comb string
         :type network: str
-        :param station: station string
+        :param station: station comb string
         :type station: str
-        :param channel: channel string
+        :param location: location combination code
+        :type location: str
+        :param channel: channel comb string
         :type channel: str
         :param tag: tag
         :type tag: str
@@ -160,18 +166,15 @@ omitted." % path, category=UserWarning)
         :type corr_start: UTCDateTime | str
         :raises TypeError: if corr_start is not string or UTCDateTime
         """
-        if '*' in network+station+channel:
+        if '*' in network+station+channel+location:
             raise ValueError(
-                'Network, Station, and channel code may not contain wildcards.'
+                'Network, Station, location, and channel '
+                'code may not contain wildcards.'
             )
         # Make sure the request is structured correctly
-        sort = ['.'.join([net, stat, chan]) for net, stat, chan in zip(
-                network.split('-'), station.split('-'), channel.split('-'))]
-        sorted = sort.copy()
-        sorted.sort()
-        if sorted != sort:
-            network, station, channel = ['-'.join([a, b]) for a, b in zip(
-                sorted[0].split('.'), sorted[1].split('.'))]
+        network, station, location, channel \
+            = mu.sort_combinations_alphabetically(
+                network, station, location, channel)
 
         if isinstance(corr_start, UTCDateTime):
             corr_start = corr_start.format_fissures()
@@ -183,7 +186,7 @@ omitted." % path, category=UserWarning)
             )
         path = hierarchy.format(
             tag=tag, network=network, station=station, channel=channel,
-            corr_st=corr_start, corr_et='*')
+            location=location, corr_st=corr_start, corr_et='*')
         while path[-2:] == '/*':
             path = path[:-2]
         # Extremely ugly way of changing the path
@@ -198,9 +201,10 @@ omitted." % path, category=UserWarning)
         path = path.replace('?', '*')
         pattern = path.replace('/*', '*')
         for sst in self.get_available_starttimes(
-                network, station, tag, channel)[channel]:
+                network, station, tag, location, channel)[channel]:
             subpath = hierarchy.format(
                 tag=tag, network=network, station=station, channel=channel,
+                location=location,
                 corr_st=sst, corr_et='')[:-1]
             if fnmatch.fnmatch(subpath, pattern):
                 del self[subpath]
@@ -217,8 +221,8 @@ omitted." % path, category=UserWarning)
         return co
 
     def get_data(
-        self, network: str, station: str, channel: str, tag: str,
-        corr_start: UTCDateTime = None,
+        self, network: str, station: str, location: str, channel: str,
+        tag: str, corr_start: UTCDateTime = None,
             corr_end: UTCDateTime = None) -> CorrStream:
         """
         Returns a :class:`~seismic.correlate.correlate.CorrStream` holding
@@ -245,24 +249,33 @@ omitted." % path, category=UserWarning)
         :rtype: CorrStream
         """
         # Make sure the request is structured correctly
-        sort = ['.'.join([net, stat, chan]) for net, stat, chan in zip(
-                network.split('-'), station.split('-'), channel.split('-'))]
-        sorted = sort.copy()
-        sorted.sort()
-        if sorted != sort:
-            network, station, channel = ['-'.join([a, b]) for a, b in zip(
-                sorted[0].split('.'), sorted[1].split('.'))]
+        network, station, location, channel =\
+            mu.sort_combinations_alphabetically(
+                network, station, location, channel)
 
         if isinstance(corr_start, UTCDateTime):
             corr_start = corr_start.format_fissures()
         else:
-            corr_start = '*'
+            try:
+                corr_start = UTCDateTime(corr_start).format_fissures()
+            except (ValueError, TypeError):
+                warnings.warn(
+                    'Correlation start is not a valid UTCDateTime object. '
+                    'Set to *')
+                corr_start = '*'
         if isinstance(corr_end, UTCDateTime):
             corr_end = corr_end.format_fissures()
         else:
-            corr_end = '*'
+            try:
+                corr_end = UTCDateTime(corr_end).format_fissures()
+            except (ValueError, TypeError):
+                warnings.warn(
+                    'Correlation end is not a valid UTCDateTime object. '
+                    'Set to *')
+                corr_end = '*'
         path = hierarchy.format(
             tag=tag, network=network, station=station, channel=channel,
+            location=location,
             corr_st=corr_start, corr_et=corr_end)
         # Extremely ugly way of changing the path
         if '*' not in path and '?' not in path:
@@ -277,11 +290,14 @@ omitted." % path, category=UserWarning)
         return all_traces_recursive(self[path], CorrStream(), pattern)
 
     def get_available_starttimes(
-        self, network: str, station: str, tag: str,
+        self, network: str, station: str, tag: str, location: str,
             channel: str or list = '*') -> dict:
         """
         Returns a dictionary with channel codes as keys and available
         correlation starttimes as values.
+
+        ..note::
+            Wildcards are only allowed for channel.
 
         :param network: Network code (combined code, e.g., IU-YP)
         :type network: str
@@ -289,6 +305,8 @@ omitted." % path, category=UserWarning)
         :type station: str
         :param tag: Tag
         :type tag: str
+        :param location: Combined Location code.
+        :type location: str
         :param channel: Channel code (combined), wildcards allowed,
             defaults to '*'
         :type channel: str, optional
@@ -298,6 +316,7 @@ omitted." % path, category=UserWarning)
         """
         path = hierarchy.format(
             tag=tag, network=network, station=station, channel=channel,
+            location=location,
             corr_st='*', corr_et='*')
         out = {}
         if isinstance(channel, str):
@@ -316,7 +335,8 @@ omitted." % path, category=UserWarning)
         return out
 
     def get_available_channels(
-            self, tag: str, network: str, station: str) -> List[str]:
+        self, tag: str, network: str, station: str,
+            location: str) -> List[str]:
         """
         Returns a list of all available channels (i.e., their combination
         codes) in this file.
@@ -327,12 +347,14 @@ omitted." % path, category=UserWarning)
         :type network: str
         :param station: Network combination code in the form `stat0-stat1`
         :type station: str
+        :param location: Location combination code
+        :type location: str
         :return: A list of all channel combinations.
         :rtype: List[str]
         """
         path = hierarchy.format(
-            tag=tag, network=network, station=station, channel='*',
-            corr_st='*', corr_et='*')
+            tag=tag, network=network, station=station, location=location,
+            channel='*', corr_st='*', corr_et='*')
         path = path.split('*')[0]
         try:
             return list(self[path].keys())

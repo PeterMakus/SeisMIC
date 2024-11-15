@@ -9,7 +9,7 @@
 
 Created: Tuesday, 1st June 2021 10:42:03 am
 
-Last Modified: Friday, 20th October 2023 02:42:49 pm
+Last Modified: Monday, 17th June 2024 05:09:04 pm
 
 '''
 from copy import deepcopy
@@ -200,6 +200,7 @@ class TestDBHandler(unittest.TestCase):
         path = corr_hdf5.hierarchy.format(
             tag='subdivision',
             network=st.network, station=st.station, channel=st.channel,
+            location=st.location,
             corr_st=st.corr_start.format_fissures(),
             corr_et=st.corr_end.format_fissures())
         with warnings.catch_warnings(record=True) as w:
@@ -226,16 +227,19 @@ class TestDBHandler(unittest.TestCase):
         stat = 'AB-CD'
         ch = 'XX-XX'
         tag = 'rand'
+        loc = '00'
         corr_start = UTCDateTime(0)
         corr_end = UTCDateTime(100)
         exp_path = corr_hdf5.hierarchy.format(
             tag=tag, network=net, station=stat, channel=ch,
+            location=loc,
             corr_st=corr_start.format_fissures(),
             corr_et=corr_end.format_fissures())
         d = {exp_path: self.ctr.data}
         file_mock.side_effect = d.__getitem__
         self.assertTrue(np.all(self.dbh[exp_path] == d[exp_path]))
-        outdata = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
+        outdata = self.dbh.get_data(
+            net, stat, loc, ch, tag, corr_start, corr_end)
         self.assertEqual(outdata[0], self.ctr)
         file_mock.assert_called_with(exp_path)
 
@@ -247,16 +251,19 @@ class TestDBHandler(unittest.TestCase):
         net = 'CD-AB'
         stat = 'AB-CD'
         ch = 'XX-XX'
+        loc = '00-00'
         tag = 'rand'
         corr_start = UTCDateTime(0)
         corr_end = UTCDateTime(100)
         exp_path = corr_hdf5.hierarchy.format(
-            tag=tag, network='AB-CD', station='CD-AB', channel=ch,
+            tag=tag, network='AB-CD', station='CD-AB',
+            location=loc, channel=ch,
             corr_st=corr_start.format_fissures(),
             corr_et=corr_end.format_fissures())
         d = {exp_path: self.ctr.data}
         file_mock.side_effect = d.__getitem__
-        out = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
+        out = self.dbh.get_data(
+            net, stat, loc, ch, tag, corr_start, corr_end)
         file_mock.assert_called_with(exp_path)
         self.assertEqual(out[0], self.ctr)
 
@@ -267,20 +274,22 @@ class TestDBHandler(unittest.TestCase):
         net = 'AB-CD'
         stat = '*'
         ch = '*'
+        loc = '*'
         tag = 'rand'
         corr_start = UTCDateTime(0)
         corr_end = UTCDateTime(100)
         exp_path = corr_hdf5.hierarchy.format(
             tag=tag, network=net, station=stat, channel=ch,
+            location=loc,
             corr_st=corr_start.format_fissures(),
             corr_et=corr_end.format_fissures())
         d = {exp_path: self.ctr.data, '/rand/AB-CD/': self.ctr.data}
         file_mock.side_effect = d.__getitem__
 
-        _ = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
+        _ = self.dbh.get_data(net, stat, loc, ch, tag, corr_start, corr_end)
         file_mock.assert_called_with('/rand/AB-CD/')
         all_tr_recursive_mock.assert_called_with(
-            d['/rand/AB-CD/'], CorrStream(), '/rand/AB-CD**/%s/%s' % (
+            d['/rand/AB-CD/'], CorrStream(), '/rand/AB-CD***/%s/%s' % (
                 corr_start.format_fissures(), corr_end.format_fissures()))
 
     @patch('seismic.db.corr_hdf5.all_traces_recursive')
@@ -290,72 +299,76 @@ class TestDBHandler(unittest.TestCase):
         net = 'AB-CD'
         stat = '*'
         ch = '*'
+        loc = '*'
         tag = 'rand'
         corr_start = '*'
         corr_end = '*'
         exp_path = corr_hdf5.hierarchy.format(
-            tag=tag, network=net, station=stat, channel=ch,
+            tag=tag, network=net, station=stat, channel=ch, location=loc,
             corr_st=corr_start, corr_et=corr_end)
         exp_path = '/'.join(exp_path.split('/')[:-4])
         d = {exp_path: self.ctr.data, '/rand/AB-CD/': self.ctr.data}
         file_mock.side_effect = d.__getitem__
 
-        _ = self.dbh.get_data(net, stat, ch, tag, corr_start, corr_end)
+        _ = self.dbh.get_data(net, stat, ch, loc, tag, corr_start, corr_end)
         file_mock.assert_called_with('/rand/AB-CD/')
         all_tr_recursive_mock.assert_called_with(
-            d['/rand/AB-CD/'], CorrStream(), '/rand/AB-CD****')
+            d['/rand/AB-CD/'], CorrStream(), '/rand/AB-CD*****')
 
     @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_available_starttimes(self, file_mock):
         net = 'AB-CD'
         stat = 'XY-YZ'
         ch = 'HHZ'
+        loc = '00'
         tag = 'tag'
         d = {}
         starttimes = {
             UTCDateTime(0).format_fissures(): None,
             UTCDateTime(200).format_fissures(): None}
-        d['/'+'/'.join([tag, net, stat, ch])] = starttimes
+        d['/'+'/'.join([tag, net, stat, loc, ch])] = starttimes
         file_mock.side_effect = d.__getitem__
         exp_result = {ch: list(starttimes.keys())}
         self.assertEqual(
-            self.dbh.get_available_starttimes(net, stat, tag, ch),
+            self.dbh.get_available_starttimes(net, stat, tag, loc, ch),
             exp_result)
-        file_mock.assert_called_with('/'+'/'.join([tag, net, stat, ch]))
+        file_mock.assert_called_with('/'+'/'.join([tag, net, stat, loc, ch]))
 
     @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_available_starttimes_key_error(self, file_mock):
         net = 'AB-CD'
         stat = 'XY-YZ'
+        loc = '00'
         ch = 'HHZ'
         tag = 'tag'
         d = {}
         starttimes = {
             UTCDateTime(0).format_fissures(): None,
             UTCDateTime(200).format_fissures(): None}
-        d['/'+'/'.join([tag, net, stat, ch])] = starttimes
+        d['/'+'/'.join([tag, net, stat, loc, ch])] = starttimes
         file_mock.side_effect = d.__getitem__
         self.assertEqual(
-            self.dbh.get_available_starttimes(net, stat, tag, 'blub'),
+            self.dbh.get_available_starttimes(net, stat, tag, loc, 'blub'),
             {})
 
     @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_available_starttimes_wildcard(self, file_mock):
         net = 'AB-CD'
         stat = 'XY-YZ'
+        loc = '00'
         ch = 'HHZ'
         tag = 'tag'
         d = {}
         starttimes = {
             UTCDateTime(0).format_fissures(): None,
             UTCDateTime(200).format_fissures(): None}
-        d['/'+'/'.join([tag, net, stat])] = {}
-        d['/'+'/'.join([tag, net, stat])][ch] = starttimes
-        d['/'+'/'.join([tag, net, stat, ch])] = starttimes
+        d['/'+'/'.join([tag, net, stat, loc])] = {}
+        d['/'+'/'.join([tag, net, stat, loc])][ch] = starttimes
+        d['/'+'/'.join([tag, net, stat, loc, ch])] = starttimes
         file_mock.side_effect = d.__getitem__
         exp_result = {ch: list(starttimes)}
         self.assertEqual(
-            self.dbh.get_available_starttimes(net, stat, tag, '*'),
+            self.dbh.get_available_starttimes(net, stat, tag, loc, '*'),
             exp_result)
 
     @patch('seismic.db.corr_hdf5.DBHandler.get_corr_options')
@@ -416,37 +429,41 @@ class TestDBHandler(unittest.TestCase):
     def test_get_available_channels(self, gi_mock):
         net = 'mynet'
         stat = 'mystat'
+        loc = 'myloc'
         tag = 'bla'
-        path = '/%s/' % '/'.join([tag, net, stat])
+        path = '/%s/' % '/'.join([tag, net, stat, loc])
         d = {path: {'a': 0, 'b': 1, 'c': 2}}
         gi_mock.side_effect = d.__getitem__
         exp = ['a', 'b', 'c']
-        self.assertEqual(exp, self.dbh.get_available_channels(tag, net, stat))
+        self.assertEqual(exp, self.dbh.get_available_channels(
+            tag, net, stat, loc))
 
     @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_available_channels_none_available(self, gi_mock):
         net = 'mynet'
         stat = 'mystat'
+        loc = 'myloc'
         tag = 'bla'
         d = {}
         gi_mock.side_effect = d.__getitem__
-        self.assertEqual([], self.dbh.get_available_channels(tag, net, stat))
+        self.assertEqual([], self.dbh.get_available_channels(
+            tag, net, stat, loc))
 
     def test_remove_data_wildcard_network(self):
         with self.assertRaises(ValueError):
-            self.dbh.remove_data('*', 'x', 'x', 'x', 'x')
+            self.dbh.remove_data('*', 'x', 'x', 'x', 'x', 'x')
 
     def test_remove_data_wildcard_station(self):
         with self.assertRaises(ValueError):
-            self.dbh.remove_data('x', '*', 'x', 'x', 'x')
+            self.dbh.remove_data('x', '*', 'x', 'x', 'x', 'x')
 
     def test_remove_data_wildcard_channel(self):
         with self.assertRaises(ValueError):
-            self.dbh.remove_data('x', 'x', '*', 'x', 'x')
+            self.dbh.remove_data('x', 'x', 'x', '*', 'x', 'x')
 
     def test_remove_data_corrstart_wrong_type(self):
         with self.assertRaises(TypeError):
-            self.dbh.remove_data('x', 'x', 'x', 'x', 3)
+            self.dbh.remove_data('x', 'x', 'x', 'x', 'x', 3)
 
     @patch('seismic.db.corr_hdf5.h5py.File.__delitem__')
     def test_remove_data_no_wildcard_not_alphabetical(
@@ -455,14 +472,16 @@ class TestDBHandler(unittest.TestCase):
         stat = 'AB-CD'
         ch = 'XX-XX'
         tag = 'rand'
+        loc = '00-00'
         corr_start = UTCDateTime(0)
         exp_path = corr_hdf5.hierarchy.format(
-            tag=tag, network='AB-CD', station='CD-AB', channel=ch,
+            tag=tag, network='AB-CD', station='CD-AB', location=loc,
+            channel=ch,
             corr_st=corr_start.format_fissures(),
             corr_et='')[:-1]
         d = {exp_path: 'x'}
         file_mock.side_effect = d.__delitem__
-        self.dbh.remove_data(net, stat, ch, tag, corr_start)
+        self.dbh.remove_data(net, stat, loc, ch, tag, corr_start)
         file_mock.assert_called_with(exp_path)
         self.assertDictEqual(d, {})
 
@@ -472,15 +491,17 @@ class TestDBHandler(unittest.TestCase):
         net = 'AB-CD'
         stat = 'CD-AB'
         ch = 'XX-XX'
+        loc = '00-00'
         tag = 'rand'
         corr_start = UTCDateTime(0)
         exp_path = corr_hdf5.hierarchy.format(
             tag=tag, network='AB-CD', station='CD-AB', channel=ch,
+            location=loc,
             corr_st=corr_start.format_fissures(),
             corr_et='')[:-1]
         d = {exp_path: 'x'}
         file_mock.side_effect = d.__delitem__
-        self.dbh.remove_data(net, stat, ch, tag, corr_start)
+        self.dbh.remove_data(net, stat, loc, ch, tag, corr_start)
         file_mock.assert_called_with(exp_path)
         self.assertDictEqual(d, {})
 
@@ -490,20 +511,23 @@ class TestDBHandler(unittest.TestCase):
         net = 'AB-CD'
         stat = 'CD-AB'
         ch = 'XX-XX'
+        loc = '00-00'
         tag = 'rand'
         corr_start = UTCDateTime(0)
         exp_path = corr_hdf5.hierarchy.format(
             tag=tag, network='AB-CD', station='CD-AB', channel=ch,
+            location=loc,
             corr_st=corr_start.format_fissures(),
             corr_et='')[:-1]
         act_path = corr_hdf5.hierarchy.format(
             tag=tag, network='AB-CD', station='OT-AB', channel=ch,
+            location=loc,
             corr_st=corr_start.format_fissures(),
             corr_et='')[:-1]
         d = {act_path: 'x'}
         file_mock.side_effect = d.__delitem__
         with warnings.catch_warnings(record=True) as w:
-            self.dbh.remove_data(net, stat, ch, tag, corr_start)
+            self.dbh.remove_data(net, stat, loc, ch, tag, corr_start)
             file_mock.assert_called_with(exp_path)
             self.assertEqual(len(w), 1)
         self.assertDictEqual(d, {act_path: 'x'})
@@ -514,18 +538,21 @@ class TestDBHandler(unittest.TestCase):
         net = 'AB-CD'
         stat = 'CD-AB'
         ch = 'XX-XX'
+        loc = '00-00'
         tag = 'rand'
         corr_start = '*'
         exp_path = corr_hdf5.hierarchy.format(
             tag=tag, network='AB-CD', station='CD-AB', channel=ch,
+            location=loc,
             corr_st='*', corr_et='')[:-3]
         act_path = corr_hdf5.hierarchy.format(
             tag=tag, network='AB-CD', station='CD-AB', channel=ch,
+            location=loc,
             corr_st=UTCDateTime(0).format_fissures(),
             corr_et='bla')
         d = {act_path: 'x'}
         file_mock.side_effect = d.__delitem__
-        self.dbh.remove_data(net, stat, ch, tag, corr_start)
+        self.dbh.remove_data(net, stat, loc, ch, tag, corr_start)
         file_mock.assert_called_with(exp_path)
 
     @patch('seismic.db.corr_hdf5.h5py.File.__delitem__')
@@ -534,11 +561,13 @@ class TestDBHandler(unittest.TestCase):
         stat = 'CD-AB'
         ch = 'XX-XX'
         tag = 'rand'
+        loc = '00-00'
         # technically deletes the first 9 days of 1970
         corr_start = UTCDateTime(0).format_fissures()[:-14] + '*'
         act_paths = [
             corr_hdf5.hierarchy.format(
                 tag=tag, network=net, station=stat, channel=ch,
+                location=loc,
                 corr_st=(UTCDateTime(0) + x).format_fissures(),
                 corr_et='')[:-1] for x in np.arange(11)*86400]
         d = {x: 'x' for x in act_paths}
@@ -548,9 +577,9 @@ class TestDBHandler(unittest.TestCase):
             gas_mock.return_value = {ch: [
                 (UTCDateTime(0) + x).format_fissures()
                 for x in np.arange(11)*86400]}
-            self.dbh.remove_data(net, stat, ch, tag, corr_start)
+            self.dbh.remove_data(net, stat, loc, ch, tag, corr_start)
             gas_mock.assert_called_once_with(
-                net, stat, tag, ch)
+                net, stat, tag, loc, ch)
         for x in act_paths[:-2]:
             file_mock.assert_any_call(x)
         # the last two times do not fit the pattern

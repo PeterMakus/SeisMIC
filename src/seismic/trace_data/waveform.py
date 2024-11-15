@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Monday, 4th March 2024 11:44:40 am
+Last Modified: Friday, 27th September 2024 10:28:06 am
 '''
 
 import fnmatch
@@ -33,6 +33,9 @@ from seismic.utils.raw_analysis import spct_series_welch
 SDS_FMTSTR = os.path.join(
     "{year}", "{network}", "{station}", "{channel}.{sds_type}",
     "{network}.{station}.{location}.{channel}.{sds_type}.{year}.{doy:03d}")
+SDS_FMTSTR_alldoy = os.path.join(
+    "{year}", "{network}", "{station}", "{channel}.{sds_type}",
+    "{network}.{station}.{location}.{channel}.{sds_type}.{year}.*")
 
 
 class Store_Client(object):
@@ -85,7 +88,46 @@ class Store_Client(object):
         maxlat: float or None = None, minlon: float or None = None,
         maxlon: float or None = None, network: str or None = None,
         station: str or None = None, location: str or None = None,
-            channel: str or None = None):
+        channel: str or None = None, channel_priorities: List[str] = None,
+            location_priorities: List[str] = None):
+        """
+        Download data using the obspy's MassDownloader. For all args
+        except starttime and endtime, None is interpreted as a wildcard.
+        Wildcards are generally allowed for all arguments except starttime
+        and endtime. Channel and location priorities are given in the form
+        of for example ['BH[ZNE]', 'HH[ZNE]'].
+        Priority list are not used if the channel or location is specified.
+
+        :param starttime: Starttime of the requested data
+        :type starttime: UTCDateTime
+        :param endtime: Endtime of the requested data
+        :type endtime: UTCDateTime
+        :param clients: List of clients to use for downloading data
+        :type clients: list or None, optional
+        :param minlat: Minimum latitude of the requested data
+        :type minlat: float or None, optional
+        :param maxlat: Maximum latitude of the requested data
+        :type maxlat: float or None, optional
+        :param minlon: Minimum longitude of the requested data
+        :type minlon: float or None, optional
+        :param maxlon: Maximum longitude of the requested data
+        :type maxlon: float or None, optional
+        :param network: Network code of the requested data
+        :type network: str or None, optional
+        :param station: Station code of the requested data
+        :type station: str or None, optional
+        :param location: Location code of the requested data
+        :type location: str or None, optional
+        :param channel: Channel code of the requested data
+        :type channel: str or None, optional
+        :param channel_priorities: List of channel priorities
+        :type channel_priorities: List[str], optional
+        :param location_priorities: List of location priorities
+        :type location_priorities: List[str], optional
+
+        ... seealso::
+            :func:`~obspy.clients.fdsn.mass_downloader.MassDownloader`
+        """
         # Initialise MassDownloader
 
         domain = RectangularDomain(
@@ -138,7 +180,8 @@ class Store_Client(object):
                 attach_response)
         return st
 
-    def get_available_stations(self, network: str = None) -> list:
+    def get_available_stations(
+            self, network: str = None) -> List[Tuple[str, str]]:
         """
         Returns a list of stations for which raw data is available.
         Very similar to the
@@ -158,6 +201,7 @@ class Store_Client(object):
             os.path.join(self.sds_root, '????', network, '*'))
         statlist = []
         for path in oslist:
+            # Check wheteher folder has the format of a year
             if not isinstance(eval(path.split(os.path.sep)[-3]), int):
                 continue
             # Add all network and station combinations to list
@@ -230,7 +274,7 @@ class Store_Client(object):
 
     def _translate_wildcards(
         self, network: str, station: str,
-            component: str = '?') -> List[List[str]]:
+            component: str = '?', location: str = '*') -> List[List[str]]:
         """
         Look up network and station names in database, so that wildcards
         can be estimated into number of stations.
@@ -239,20 +283,21 @@ class Store_Client(object):
         :type network: str
         :param station: station string, may contain wildcards
         :type station: str
-        :param componnt: component, i.e. Z, N, E or ? as wildcard
-        type componnt str
-        :return: _description_
-        :rtype: _type_
+        :param component: component, i.e. Z, N, E or ? as wildcard
+        :type component: str
+        :param location: location code
+        :type location: str, optional
+        :return: nested list with non-unique network, station, location,
+            and channel codes
+        :rtype: list
         """
-        dirlist = glob.glob(
-            os.path.join(
-                self.sds_root, '*', network, station, '??'+component+'.?'))
-        nets = [os.path.basename(
-            os.path.dirname(os.path.dirname(i))) for i in dirlist]
-        stats = [os.path.basename(os.path.dirname(i)) for i in dirlist]
-        chans = [os.path.basename(i).split('.')[0] for i in dirlist]
         # Create one nested list
-        return [[nets[i], stats[i], chans[i]] for i in range(len(dirlist))]
+        path = os.path.join(self.sds_root,
+                            SDS_FMTSTR_alldoy.format(
+                                network=network, station=station,
+                                location=location, channel=f'??{component}',
+                                year='*', sds_type=self.sds_type))
+        return [os.path.basename(i).split('.')[:4] for i in glob.iglob(path)]
 
     def _load_remote(
         self, network: str, station: str, location: str, channel: str,
@@ -292,22 +337,23 @@ class Store_Client(object):
         Read data from local SDS structure.
         """
         # print("Loading locally ... ", end='')
-        st = self.lclient.get_waveforms(
-            network, station, location, channel, starttime, endtime)
+        try:
+            st = self.lclient.get_waveforms(
+                network, station, location, channel, starttime, endtime)
+        except OSError:
+            return None
         # Making sure that the order is correct for the next bit to work
         st.sort(['starttime'])
         if _check_times and (
             len(st) == 0 or (
                 starttime < (st[0].stats.starttime-st[0].stats.delta) or (
                     endtime > st[-1].stats.endtime+st[-1].stats.delta))):
-            # print("Failed")
             return None
         if attach_response:
             try:
                 st.attach_response(self.inventory)
             except Exception:
                 pass
-        # print("Success")
         return st
 
     def read_inventory(self) -> Inventory:

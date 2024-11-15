@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Tuesday, 26th September 2023 07:08:22 pm
+Last Modified: Monday, 17th June 2024 04:55:40 pm
 '''
 from copy import deepcopy
 import unittest
@@ -458,6 +458,44 @@ class TestInterpolateGapsSt(unittest.TestCase):
             np.testing.assert_array_equal(tr.data, np.zeros(5))
         for cal, tr in zip(ig_mock.call_args_list, st):
             np.testing.assert_array_equal(tr.data, cal[0][0])
+
+
+class TestSortCombinationsAlphabetically(unittest.TestCase):
+    def test_sort_combinations(self):
+        netcomb = "NET1-NET2"
+        stacomb = "STA2-STA1"
+        loccomb = "LOC1-LOC2"
+        chacomb = "CHA2-CHA1"
+        expected_netcomb = "NET1-NET2"
+        expected_stacomb = "STA2-STA1"
+        expected_loccomb = "LOC1-LOC2"
+        expected_chacomb = "CHA2-CHA1"
+
+        sorted_netcomb, sorted_stacomb, sorted_loccomb, sorted_chacomb = mu.sort_combinations_alphabetically(
+            netcomb, stacomb, loccomb, chacomb)
+
+        self.assertEqual(sorted_netcomb, expected_netcomb)
+        self.assertEqual(sorted_stacomb, expected_stacomb)
+        self.assertEqual(sorted_loccomb, expected_loccomb)
+        self.assertEqual(sorted_chacomb, expected_chacomb)
+
+    def test_sort_combinations2(self):
+        netcomb = "NET2-NET1"
+        stacomb = "STA2-STA1"
+        loccomb = "LOC1-LOC2"
+        chacomb = "CHA2-CHA1"
+        expected_netcomb = "NET1-NET2"
+        expected_stacomb = "STA1-STA2"
+        expected_loccomb = "LOC2-LOC1"
+        expected_chacomb = "CHA1-CHA2"
+
+        sorted_netcomb, sorted_stacomb, sorted_loccomb, sorted_chacomb = mu.sort_combinations_alphabetically(
+            netcomb, stacomb, loccomb, chacomb)
+
+        self.assertEqual(sorted_netcomb, expected_netcomb)
+        self.assertEqual(sorted_stacomb, expected_stacomb)
+        self.assertEqual(sorted_loccomb, expected_loccomb)
+        self.assertEqual(sorted_chacomb, expected_chacomb)
 
 
 if __name__ == "__main__":

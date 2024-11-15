@@ -53,7 +53,7 @@ def plot_fancy_dv(
     plt.grid(True, axis='y')
     try:
         locale.setlocale(locale.LC_ALL, "en_GB.utf8")
-    except Exception:
+    except locale.Error:  # for Mac
         locale.setlocale(locale.LC_ALL, "en_GB.utf-8")
     ax.xaxis.set_major_formatter(mdates.DateFormatter(dateformat))
     plt.xticks(rotation=25)

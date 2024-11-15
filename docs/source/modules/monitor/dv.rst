@@ -30,7 +30,7 @@ Load the object with :py:func:`seismic.monitor.dv.read_dv`. It only takes one ar
 
     from seismic.monitor.dv import read_dv
 
-    dv = read_dv('/path/to/my/dv/DV-net0-net1.stat0-stat1.ch0-ch1.npz')
+    dv = read_dv('/path/to/my/dv/DV-net0-net1.stat0-stat1.loc0-loc1.cha0-cha1.npz')
 
     # We can also print some information about them
     print(dv)

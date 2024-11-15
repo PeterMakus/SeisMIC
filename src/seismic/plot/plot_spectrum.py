@@ -10,7 +10,7 @@ Plotting specral time series.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 04:54:20 pm
-Last Modified: Monday, 21st August 2023 12:22:56 pm
+Last Modified: Wednesday, 7th August 2024 02:39:58 pm
 '''
 
 import os
@@ -67,7 +67,11 @@ def plot_spct_series(
     S = np.ma.masked_invalid(S)
 
     # Show dates in English format
-    locale.setlocale(locale.LC_ALL, "en_GB.utf8")
+    try:
+        locale.setlocale(locale.LC_ALL, "en_GB.utf8")
+    # for MAC-OS the name is slightly different -_-
+    except locale.Error:
+        locale.setlocale(locale.LC_ALL, "en_GB.UTF-8")
     # Create UTC time series
 
     set_mpl_params()

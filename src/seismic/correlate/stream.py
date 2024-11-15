@@ -10,7 +10,7 @@ Manage objects holding correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Monday, 4th March 2024 02:40:32 pm
+Last Modified: Wednesday, 19th June 2024 04:06:21 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -945,9 +945,10 @@ class CorrStream(Stream):
 
         if channel is None or '*' in channel or '?' in channel:
             stats = convert_statlist_to_bulk_stats(
-                statlist, varying_channel=True)
+                statlist, varying_channel=True, varying_loc=False)
         else:
-            stats = convert_statlist_to_bulk_stats(statlist)
+            stats = convert_statlist_to_bulk_stats(
+                statlist, varying_loc=False)
         return CorrBulk(A, stats)
 
     def plot(
@@ -1192,7 +1193,7 @@ class CorrStream(Stream):
     def stack(
         self, weight: str = 'by_length', starttime: UTCDateTime = None,
         endtime: UTCDateTime = None, stack_len: int | str = 0,
-            regard_location=True):
+            regard_location=True, norm_traces: bool = False):
         """
         Average the data of all traces in the given time windows.
         Will only stack data from the same network/channel/station combination.
@@ -1212,6 +1213,9 @@ class CorrStream(Stream):
         :param regard_location: Don't stack correlations with varying location
             code combinations, defaults to True.
         :type regard_location: bool, optional
+        :param norm_traces: norm each trace by its maximum before stacking.
+            Defaults to false
+        :type norm_traces: bool, optional
         :return: A stream holding the stacks.
         :rtype: :class`~seismic.correlate.stream.CorrStream`
         """
@@ -1219,7 +1223,8 @@ class CorrStream(Stream):
         # Seperate if there are different stations channel and or locations
         # involved
         if stack_len == 0:
-            return stack_st_by_group(self, regard_location, weight)
+            return stack_st_by_group(
+                self, regard_location, weight, norm_traces)
 
         # else
         self.sort(keys=['corr_start'])
@@ -1235,7 +1240,8 @@ class CorrStream(Stream):
         for st in self.slide(
                 stack_len, stack_len, include_partially_selected=True,
                 starttime=starttime, endtime=endtime):
-            outst.extend(stack_st_by_group(st, regard_location, weight))
+            outst.extend(stack_st_by_group(
+                st, regard_location, weight, norm_traces))
         return outst
 
     def _to_matrix(
@@ -1585,7 +1591,9 @@ def compare_tr_id(tr0: Trace, tr1: Trace, regard_loc: bool = True) -> bool:
             == Compare_Str_No_Loc.format(**tr1.stats)
 
 
-def stack_st_by_group(st: Stream, regard_loc: bool, weight: str) -> CorrStream:
+def stack_st_by_group(
+        st: Stream, regard_loc: bool, weight: str,
+        norm_traces: bool = False) -> CorrStream:
     """
     Stack all traces that belong to the same network, station, channel, and
     (optionally) location combination in the input stream.
@@ -1594,6 +1602,9 @@ def stack_st_by_group(st: Stream, regard_loc: bool, weight: str) -> CorrStream:
     :type st: Stream
     :param regard_loc: Seperate data with different location code
     :type regard_loc: bool
+    :param norm_traces: norm each trace by its maximum before stacking.
+            Defaults to false
+        :type norm_traces: bool, optional
     :return: :class:`~seismic.correlate.stream.CorrStream`
     :rtype: CorrStream
     """
@@ -1606,7 +1617,8 @@ def stack_st_by_group(st: Stream, regard_loc: bool, weight: str) -> CorrStream:
         stackdict.setdefault(key.format(**tr.stats), CorrStream()).append(tr)
     stackst = CorrStream()
     for k in stackdict:
-        stackst.append(stack_st(stackdict[k], weight))
+        stackst.append(stack_st(
+            stackdict[k], weight, norm=norm_traces))
     return stackst
 
 
@@ -1680,6 +1692,10 @@ def convert_statlist_to_bulk_stats(
         'npts', 'sampling_rate', 'network', 'station', 'start_lag',
         'end_lag', 'stla', 'stlo', 'stel', 'evla', 'evlo', 'evel',
         'dist', 'az', 'baz']
+    if len(set([st['location'] for st in statlist])) == 1:
+        varying_loc = False
+    if len(set([st['channel'] for st in statlist])) == 1:
+        varying_channel = False
     if varying_loc:
         mutables += ['location']
     else:

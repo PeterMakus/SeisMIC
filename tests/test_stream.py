@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Sunday, 29th October 2023 09:40:23 am
+Last Modified: Wednesday, 19th June 2024 04:24:46 pm
 '''
 
 import unittest
@@ -1027,8 +1027,10 @@ class TestCorrStream(unittest.TestCase):
             self.assertFalse(hasattr(tr, 'data'))
 
     @mock.patch('seismic.correlate.stream.convert_statlist_to_bulk_stats')
-    def test_create_corrbulk_vary_channel(self, cstbs_mock: mock.MagicMock):
+    def test_create_corrbulk_vary_channel(
+            self, cstbs_mock: mock.MagicMock):
         st = self.st.copy()
+        st[1].stats['channel'] = 'ABE'
         qustart = st[0].stats.corr_start + 1
         cstbs_mock.return_value = st[0].stats
         with mock.patch.object(st, 'select') as sct_mock:
@@ -1041,7 +1043,8 @@ class TestCorrStream(unittest.TestCase):
         select_return.select_corr_time.assert_called_once_with(
             qustart, st[0].stats.corr_end
         )
-        cstbs_mock.assert_called_with(mock.ANY, varying_channel=True)
+        cstbs_mock.assert_called_with(
+            mock.ANY, varying_channel=True, varying_loc=False)
         for ii, tr in enumerate(self.st):
             np.testing.assert_array_equal(tr.data, cb.data[ii])
         # Check in-place
@@ -1129,17 +1132,37 @@ class TestConvertStatlistToBulkStats(unittest.TestCase):
         with self.assertRaises(ValueError):
             _ = stream.convert_statlist_to_bulk_stats([self.stats, stats1])
 
-    def test_loc_mutable(self):
+    def test_loc_immutable(self):
         stats1 = self.stats.copy()
         stcomb = stream.convert_statlist_to_bulk_stats(
             [self.stats, stats1], False)
         self.assertIsInstance(stcomb['location'], str)
 
+    def test_loc_mutable_automatic_change(self):
+        stats1 = self.stats.copy()
+        stcomb = stream.convert_statlist_to_bulk_stats(
+            [self.stats, stats1], True)
+        self.assertIsInstance(stcomb['location'], str)
+
+    def test_loc_mutable(self):
+        stats1 = self.stats.copy()
+        stats1['location'] = 'bla'
+        stcomb = stream.convert_statlist_to_bulk_stats(
+            [self.stats, stats1], True)
+        self.assertIsInstance(stcomb['location'], list)
+
     def test_channel_mutable(self):
+        stats1 = self.stats.copy()
+        stats1['channel'] = 'HHE-HHZ'
+        stcomb = stream.convert_statlist_to_bulk_stats(
+            [self.stats, stats1], varying_channel=True)
+        self.assertIsInstance(stcomb['channel'], list)
+
+    def test_channel_mutable_automatic_change(self):
         stats1 = self.stats.copy()
         stcomb = stream.convert_statlist_to_bulk_stats(
             [self.stats, stats1], varying_channel=True)
-        self.assertIsInstance(stcomb['location'], list)
+        self.assertIsInstance(stcomb['channel'], str)
 
 
 if __name__ == "__main__":
