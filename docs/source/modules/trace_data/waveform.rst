@@ -115,7 +115,7 @@ from an FDSN server. In such cases, it is easy to use your own mseed data to "mi
 system structure.
 
 You will need daily mseed files for each component of the seismometer.
-If you need to convert/merge/split, you files we recommend using PyRocko or obspy.
+If you need to convert/merge/split, you files we recommend using PyRocko.
 
 Now you will have to sort your mseed files in the following way:
 
@@ -127,12 +127,21 @@ For example
 `path/to/project/mseed/2010/IU/HRV/BHZ.D/IU.HRV.00.BHZ.D.2010.001`
 is the mseed file corresponding to a waveform recording from station *IU.HRV* channel *BHZ* on January 1st 2010.
 
+When using PyRocko, you can use the following command to convert your data to the correct directory structure, daily length and format:
+
+.. code-block:: bash
+
+    $ squirrel jackseis --add /path/to/your/input/waveforms/ --out-sds-path myproject/mseed/ --out-format mseed
+
+    # use this command to open the help page and see other options
+    $ squirrel jackseis --help
+
 .. note::
     The mseed files do not have file endings.
 
 .. note::
     Files that do not correspond to this format won't be found by SeisMIC. Pay particular attention to
-    always saving the mseed files for days 1 to 99 with leading zeros!
+    always saving the mseed files for days 1 to 99 with leading zeros (i.e., day 1 has the file ending 001)!
 
 
 Station Inventories
