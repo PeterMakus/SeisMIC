@@ -105,7 +105,7 @@ There are a couple of functions to help you:
     * :meth:`~seismic.trace_data.waveform.Store_Client._get_times` returns the earliest and latest available
         starttimes for a certain station.
     * :meth:`~seismic.correlate.correlate.Store_Client_compute_spectrogram` can be used to examine the spectral content of the
-        data. Check out the `tutorial <../tutorials/tutorial>` for details on how to do that.
+        data. Check out the `tutorial <../tutorials/tutorial>`_ for details on how to do that.
 
 
 Feed in Data in a Different Way
@@ -115,7 +115,7 @@ from an FDSN server. In such cases, it is easy to use your own mseed data to "mi
 system structure.
 
 You will need daily mseed files for each component of the seismometer.
-If you need to convert/merge/split, you files we recommend using PyRocko.
+If you need to convert/merge/split, you files we recommend using `PyRocko <https://pyrocko.org/>`_.
 
 Now you will have to sort your mseed files in the following way:
 

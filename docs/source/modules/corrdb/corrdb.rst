@@ -24,11 +24,12 @@ correlations as shown in the earlier steps, they will be saved in one file *per 
 alter this setting in your *params.yaml*.
 
 **Example for one file per component-combination:**
-The file ``IU-TA.HRV-M58A.HHZ-HHZ`` holds the correlations of the two vertical components of the stations.
+The file ``IU-TA.HRV-M58A.00-01.HHZ-HHZ`` holds the correlations of the two vertical components of the stations
+(location *00* and *01*, respectively).
 
 **Example for one file per station-combination:**
-The file ``IU-TA.HRV-M58A`` holds the correlations of all components and locations of the two stations
-with each other, whereas the file ``IU-IU.HRV-HRV`` holds all autocorrelations and intercomponent correlations
+The file ``IU-TA.HRV-M58A.00-01`` holds the correlations of all components and locations of the two stations
+with each other, whereas the file ``IU-IU.HRV-HRV.00-00`` holds all autocorrelations and intercomponent correlations
 of the station ``IU.HRV``.
 
 .. note::
@@ -66,7 +67,7 @@ method:
 >>> from seismic.db.corr_hdf5 import CorrelationDataBase
 >>> with CorrelationDataBase('/path/to/myfile.h5', mode='r') as cdb:
 >>>     cst = cdb.get_data(
->>>         tag='subdivision', network='IU-IU', station='*', channel='??Z-??Z', corr_start=None, corr_end=None)
+>>>         tag='subdivision', network='IU-IU', station='*', channel='??Z-??Z', location='00-00', corr_start=None, corr_end=None)
 >>> # cst is a CorrStream object on that we can use our known methods
 >>> print(type(cst))
 <class 'seismic.correltea.stream.CorrStream'>
@@ -143,8 +144,8 @@ you will have to pay attention to a couple of particularities:
 If there had been any data in our :py:class:`~seismic.correlate.stream.CorrStream`, we could retrieve it as shown above.
 Network, station, and channel information are determined automatically from the :py:class:`~seismic.correlate.stream.CorrTrace` header.
 
-Why won't SeisMIC allow me to an old file again?
-################################################
+Why won't SeisMIC allow me to write into an old file again?
+###########################################################
 
 Sometimes when re-executing your correlation workflow, you might encounter a ``PermissionError``. This happens whenever you change your processing
 parameters in your *params.yaml* file under *corr*. Essentially, SeisMIC prevents you from mixing correlations that have been processed in different
