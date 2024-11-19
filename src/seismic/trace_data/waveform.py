@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Friday, 27th September 2024 10:28:06 am
+Last Modified: Tuesday, 19th November 2024 02:29:09 pm
 '''
 
 import fnmatch
@@ -31,9 +31,11 @@ from seismic.utils.raw_analysis import spct_series_welch
 
 
 SDS_FMTSTR = os.path.join(
+    'mseed',
     "{year}", "{network}", "{station}", "{channel}.{sds_type}",
     "{network}.{station}.{location}.{channel}.{sds_type}.{year}.{doy:03d}")
 SDS_FMTSTR_alldoy = os.path.join(
+    'mseed',
     "{year}", "{network}", "{station}", "{channel}.{sds_type}",
     "{network}.{station}.{location}.{channel}.{sds_type}.{year}.*")
 
@@ -64,7 +66,7 @@ class Store_Client(object):
         assert os.path.isdir(path), "{} is not a directory".format(path)
         self.fileborder_seconds = 30
         self.fileborder_samples = 5000
-        self.sds_root = os.path.join(path, 'mseed')
+        self.sds_root = path
         if not read_only:
             os.makedirs(self.sds_root, exist_ok=True)
         self.inv_dir = os.path.join(path, "inventory")

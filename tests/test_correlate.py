@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Wednesday, 19th June 2024 10:48:21 am
+Last Modified: Tuesday, 19th November 2024 02:54:23 pm
 '''
 from copy import deepcopy
 import unittest
@@ -641,9 +641,12 @@ class TestCalcCrossCombis(unittest.TestCase):
             self.st, {}, method='allSimpleCombinations')))
 
     def test_result_all_combis(self):
-        expected_len = self.st.count()**2
-        self.assertEqual(expected_len, len(correlate.calc_cross_combis(
-            self.st, {}, method='allCombinations')))
+        expected_len = sum([self.st.count()-n
+                            for n in range(0, self.st.count())])
+        with warnings.catch_warnings(record=True) as w:
+            self.assertEqual(expected_len, len(correlate.calc_cross_combis(
+                self.st, {}, method='allCombinations')))
+            self.assertEqual(len(w), 1)
 
     def test_unknown_method(self):
         with self.assertRaises(ValueError):
@@ -653,14 +656,14 @@ class TestCalcCrossCombis(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             self.assertEqual([], correlate.calc_cross_combis(
                 Stream(), {}, method='allCombinations'))
-            self.assertEqual(len(w), 1)
+            self.assertEqual(len(w), 2)
 
     @mock.patch('seismic.correlate.correlate._compare_existing_data')
     def test_existing_db(self, compare_mock):
         compare_mock.return_value = True
         for m in [
             'betweenStations', 'betweenComponents', 'autoComponents',
-                'allSimpleCombinations', 'allCombinations']:
+                'allSimpleCombinations']:
             with warnings.catch_warnings(record=True) as w:
                 self.assertEqual(0, len(correlate.calc_cross_combis(
                     self.st, {}, method=m)))
@@ -864,12 +867,13 @@ class TestComputeNetworkStationCombinations(unittest.TestCase):
             exp_result)
 
     def test_all_combis(self):
-        exp_result = (
-            ['A-A', 'A-A', 'A-A', 'A-A'], ['B-B', 'B-C', 'B-C', 'C-C'])
-        self.assertEqual(
-            correlate.compute_network_station_combinations(
-                self.nlist, self.slist, method='allCombinations'),
-            exp_result)
+        exp_result = (['A-A', 'A-A', 'A-A'], ['B-B', 'B-C', 'C-C'])
+        with warnings.catch_warnings(record=True) as w:
+            self.assertEqual(
+                correlate.compute_network_station_combinations(
+                    self.nlist, self.slist, method='allCombinations'),
+                exp_result)
+            self.assertEqual(len(w), 1)
 
     def test_rcombis(self):
         exp_result = (['A-A'], ['B-C'])

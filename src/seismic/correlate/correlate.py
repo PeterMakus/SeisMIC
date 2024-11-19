@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 19th June 2024 03:39:46 pm
+Last Modified: Tuesday, 19th November 2024 01:57:48 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -875,7 +875,11 @@ def calc_cross_combis(
         ``'allCombinations'``:
             All traces are combined in both orders ((0,1) and (1,0))
     """
-
+    # deprecate allCombinations
+    if method == 'allCombinations':
+        warn('Method "allCombinations" is deprecated. Using '
+             '"allSimpleCombinations" instead.', DeprecationWarning)
+        method = 'allSimpleCombinations'
     combis = []
     # sort alphabetically
     st = st.sort()
@@ -1261,6 +1265,12 @@ def compute_network_station_combinations(
         and the list of the correlation station code.
     :rtype: Tuple[list, list]
     """
+    if method == 'allCombinations':
+        warn(
+            'allCombinations is deprecated, '
+            'using allSimpleCombinations instead.',
+            DeprecationWarning)
+        method = 'allSimpleCombinations'
     netcombs = []
     statcombs = []
     if method == 'betweenStations':
