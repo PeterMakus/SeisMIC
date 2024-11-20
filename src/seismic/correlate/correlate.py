@@ -101,6 +101,9 @@ class Correlator(object):
         consoleHandler = logging.StreamHandler()
         consoleHandler.setFormatter(fmt)
         self.logger.addHandler(consoleHandler)
+        
+        self.logger.debug("ID of core {:01d} is {:d}".format(
+            self.rank, id(self.comm)))
 
         # Write the options dictionary to the log file
         if self.rank == 0:
@@ -492,7 +495,9 @@ class Correlator(object):
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
         ind = np.arange(len(self.avail_raw_data))[ind]
-
+        self.logger.debug("Core %d reading %s" % (
+                    self.rank, str(np.array(self.avail_raw_data)[ind])
+                ))
         # Loop over read increments
         for t in tqdm(loop_window):
             write_flag = True  # Write length is same as read length
@@ -502,6 +507,9 @@ class Correlator(object):
 
             # loop over queried stations
             for net, stat, loc, cha in np.array(self.avail_raw_data)[ind]:
+                self.logger.debug("Core %d reading %s, %s, %s" % (
+                    self.rank, net, stat, cha
+                ))
                 # Load data
                 stext = self.store_client._load_local(
                     net, stat, loc, cha, startt, endt, True, False)
@@ -510,7 +518,10 @@ class Correlator(object):
                     # No data for this station to read
                     continue
                 st = st.extend(stext)
-
+            
+            self.logger.info("Core %d processes %d traces. Ids are %s" % (
+                self.rank, len(st), str([tr.id for tr in st])
+            ))
             # Stream based preprocessing
             # Downsampling
             # 04/04/2023 Downsample before preprocessing for performance
@@ -635,8 +646,10 @@ class Correlator(object):
                         f'No new data for times {winstart}-{winend}')
                     continue
 
-                self.logger.debug('Working on correlation times %s-%s' % (
-                    str(win[0].stats.starttime), str(win[0].stats.endtime)))
+                self.logger.debug('Core %d working on correlation times %s-%s of %d traces with ids %s' % (
+                    self.rank,
+                    str(win[0].stats.starttime), str(win[0].stats.endtime),
+                    len(win), str([tr.id for tr in win])))
                 win = win.merge()
                 win = win.trim(winstart, winend, pad=True)
                 yield win, write_flag
@@ -653,7 +666,9 @@ class Correlator(object):
 
         # indices for traces to be worked on by each process
         ind = pmap == self.rank
-
+        self.logger.debug("Core %d working on indices %d-%d" % (
+            self.rank, ind[0], ind[-1]
+        ))
     ######################################
         corr_args = self.options['corr_args']
         # time domain pre-processing
