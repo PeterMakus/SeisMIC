@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 6th July 2021 09:18:14 am
-Last Modified: Tuesday, 31st January 2023 03:24:45 pm
+Last Modified: Wednesday, 19th June 2024 10:39:35 am
 '''
 
 import os
@@ -24,6 +24,7 @@ from obspy import UTCDateTime
 from seismic.monitor import monitor
 from seismic.monitor.dv import DV
 from seismic.correlate.stats import CorrStats
+from seismic.db.corr_hdf5 import h5_FMTSTR
 
 
 class TestMakeTimeList(unittest.TestCase):
@@ -65,27 +66,39 @@ class TestMakeTimeList(unittest.TestCase):
 
 class TestCorrFindFilter(unittest.TestCase):
     def setUp(self):
-        self.p = os.path.curdir + os.path.sep
+        self.p = os.path.curdir
         return super().setUp()
 
     @patch('seismic.monitor.monitor.glob')
     def test_no_match_str(self, glob_mock):
         glob_mock.return_value = [
-            '%sb-b.a-a.h5' % self.p, '%sa-a.b-b.h5' % self.p]
+            h5_FMTSTR.format(
+                dir=self.p, network='b-b', station='a-a', location='-',
+                channel='HHZ-HHZ'),
+            h5_FMTSTR.format(
+                dir=self.p, network='a-a', station='b-b', location='-',
+                channel='HHZ-HHZ')]
         net = {
             'network': 'AA',
-            'station': 'BB'
+            'station': 'BB',
+            'component': '*'
         }
-        for ii in monitor.corr_find_filter('.', net):
+        for ii in monitor.corr_find_filter(self.p, net):
             self.assertFalse(len(ii))
 
     @patch('seismic.monitor.monitor.glob')
     def test_no_match_list0(self, glob_mock):
         glob_mock.return_value = [
-            '%sb-b.a-a.h5' % self.p, '%sa-a.b-b.h5' % self.p]
+            h5_FMTSTR.format(
+                dir=self.p, network='b-b', station='a-a', location='-',
+                channel='HHZ-HHZ'),
+            h5_FMTSTR.format(
+                dir=self.p, network='a-a', station='b-b', location='-',
+                channel='HHZ-HHZ')]
         net = {
             'network': 'AA',
-            'station': ['AA', 'BB']
+            'station': ['AA', 'BB'],
+            'component': 'Z'
         }
         for ii in monitor.corr_find_filter('.', net):
             self.assertFalse(len(ii))
@@ -93,70 +106,143 @@ class TestCorrFindFilter(unittest.TestCase):
     @patch('seismic.monitor.monitor.glob')
     def test_no_match_list1(self, glob_mock):
         glob_mock.return_value = [
-            '%sb-b.a-a.h5' % self.p, '%sa-a.b-b.h5' % self.p]
+            h5_FMTSTR.format(
+                dir=self.p, network='b-b', station='a-a', location='-',
+                channel='HHZ-HHZ'),
+            h5_FMTSTR.format(
+                dir=self.p, network='a-a', station='b-b', location='-',
+                channel='HHZ-HHZ')]
         net = {
             'network': ['AA', 'BB'],
-            'station': ['AA', 'BB']
+            'station': ['AA', 'BB'],
+            'component': 'E'
         }
         for ii in monitor.corr_find_filter('.', net):
             self.assertFalse(len(ii))
 
     @patch('seismic.monitor.monitor.glob')
-    def test_match_wildcard0(self, glob_mock):
+    def test_no_match_list_comp(self, glob_mock):
         glob_mock.return_value = [
-            '%sb-b.a-a.h5' % self.p, '%sa-a.b-b.h5' % self.p]
+            h5_FMTSTR.format(
+                dir=self.p, network='b-b', station='a-a', location='-',
+                channel='HHZ-HHZ'),
+            h5_FMTSTR.format(
+                dir=self.p, network='a-a', station='b-b', location='-',
+                channel='HHZ-HHZ')]
+        net = {
+            'network': ['a', 'b'],
+            'station': ['b', 'a'],
+            'component': 'E'
+        }
+        for ii in monitor.corr_find_filter('.', net):
+            self.assertFalse(len(ii))
+
+    @patch('seismic.monitor.monitor.glob')
+    def test_match_wildcard0(
+            self, glob_mock: mock.MagicMock):
+        glob_mock.return_value = [
+            h5_FMTSTR.format(
+                dir=self.p, network='b-b', station='a-a', location='-',
+                channel='HHZ-HHZ'),
+            h5_FMTSTR.format(
+                dir=self.p, network='a-a', station='b-b', location='-',
+                channel='HHZ-HHZ')]
         net = {
             'network': '*',
-            'station': '*'
+            'station': '*',
+            'component': '*'
         }
-        n, s, i = monitor.corr_find_filter('.', net)
+        n, s, i = monitor.corr_find_filter(self.p, net)
+        glob_mock.assert_called_once_with(
+            h5_FMTSTR.format(
+                dir=self.p, network='*', station='*', location='*',
+                channel='*')
+        )
 
         self.assertListEqual(['b-b', 'a-a'], n)
         self.assertListEqual(['a-a', 'b-b'], s)
         self.assertListEqual(
-            ['%sb-b.a-a.h5' % self.p, '%sa-a.b-b.h5' % self.p], i)
+            [
+                h5_FMTSTR.format(
+                    dir=self.p, network='b-b', station='a-a', location='-',
+                    channel='HHZ-HHZ'),
+                h5_FMTSTR.format(
+                    dir=self.p, network='a-a', station='b-b', location='-',
+                    channel='HHZ-HHZ')], i)
 
     @patch('seismic.monitor.monitor.glob')
     def test_match_wildcard1(self, glob_mock):
         glob_mock.return_value = [
-            '%sb-b.a-a.h5' % self.p, '%sa-a.b-b.h5' % self.p]
+            h5_FMTSTR.format(
+                dir=self.p, network='b-b', station='a-a', location='0-0',
+                channel='HHZ-HHZ'),
+            h5_FMTSTR.format(
+                dir=self.p, network='a-a', station='b-b', location='0-0',
+                channel='HHZ-HHZ')]
         net = {
             'network': 'a',
-            'station': '*'
+            'station': '*',
+            'component': 'Z'
         }
-        n, s, i = monitor.corr_find_filter(os.path.curdir, net)
+        n, s, i = monitor.corr_find_filter(self.p, net)
         self.assertListEqual(['a-a'], n)
         self.assertListEqual(['b-b'], s)
-        self.assertListEqual(['%sa-a.b-b.h5' % self.p], i)
+        self.assertListEqual(
+            [
+                h5_FMTSTR.format(
+                    dir=self.p, network='a-a', station='b-b', location='0-0',
+                    channel='HHZ-HHZ')], i)
 
     @patch('seismic.monitor.monitor.glob')
     def test_match_list0(self, glob_mock):
         glob_mock.return_value = [
-            '%sb-b.a-a.h5' % self.p, '%sa-a.b-b.h5' % self.p]
+            h5_FMTSTR.format(
+                dir=self.p, network='b-b', station='a-a', location='-',
+                channel='HHZ-HHZ'),
+            h5_FMTSTR.format(
+                dir=self.p, network='a-a', station='b-b', location='0-0',
+                channel='HHZ-HHZ')]
         net = {
             'network': ['a', 'b'],
-            'station': ['a', 'b']
+            'station': ['a', 'b'],
+            'component': '*'
         }
         n, s, i = monitor.corr_find_filter(os.path.curdir, net)
 
         self.assertListEqual(['b-b', 'a-a'], n)
         self.assertListEqual(['a-a', 'b-b'], s)
         self.assertListEqual(
-            ['%sb-b.a-a.h5' % self.p, '%sa-a.b-b.h5' % self.p], i)
+            [
+                h5_FMTSTR.format(
+                    dir=self.p, network='b-b', station='a-a', location='-',
+                    channel='HHZ-HHZ'),
+                h5_FMTSTR.format(
+                    dir=self.p, network='a-a', station='b-b', location='0-0',
+                    channel='HHZ-HHZ')], i)
 
     @patch('seismic.monitor.monitor.glob')
     def test_match_list1(self, glob_mock):
         glob_mock.return_value = [
-            '%sb-b.a-a.h5' % self.p, '%sa-a.b-b.h5' % self.p]
+            h5_FMTSTR.format(
+                dir=self.p, network='b-b', station='a-a', location='0-0',
+                channel='HHE-HHZ'),
+            h5_FMTSTR.format(
+                dir=self.p, network='a-a', station='b-b', location='0-0',
+                channel='HHN-HHZ')]
         net = {
             'network': 'a',
-            'station': ['a', 'b']
+            'station': ['a', 'b'],
+            'component': '*'
         }
         n, s, i = monitor.corr_find_filter(os.path.curdir, net)
 
         self.assertListEqual(['a-a'], n)
         self.assertListEqual(['b-b'], s)
-        self.assertListEqual(['%sa-a.b-b.h5' % self.p], i)
+        self.assertListEqual(
+            [
+                h5_FMTSTR.format(
+                    dir=self.p, network='a-a', station='b-b', location='0-0',
+                    channel='HHN-HHZ')], i)
 
 
 class TestAverageDVbyCoords(unittest.TestCase):

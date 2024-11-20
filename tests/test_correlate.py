@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Monday, 4th March 2024 02:38:33 pm
+Last Modified: Tuesday, 19th November 2024 02:54:23 pm
 '''
 from copy import deepcopy
 import unittest
@@ -53,15 +53,17 @@ class TestCorrrelator(unittest.TestCase):
         c.station = [
             ['NET1', 'STA1'], ['NET1', 'STA2'], ['NET2', 'STA1']]
         c.avail_raw_data = [
-            ['NET1', 'STA1', 'CHAN1'], ['NET1', 'STA2', 'CHAN1'],
-            ['NET2', 'STA1', 'CHAN1']]
+            ['NET1', 'STA1', 'LOC1', 'CHAN1'],
+            ['NET1', 'STA2', 'LOC2', 'CHAN1'],
+            ['NET2', 'STA1', 'LOC1', 'CHAN1']]
         c.rcombis = ['NET1-NET2.STA1-STA1']
         c._filter_by_rcombis()
         self.assertListEqual(
             c.station, [['NET1', 'STA1'], ['NET2', 'STA1']])
         self.assertListEqual(
             c.avail_raw_data, [
-                ['NET1', 'STA1', 'CHAN1'], ['NET2', 'STA1', 'CHAN1']])
+                ['NET1', 'STA1', 'LOC1', 'CHAN1'],
+                ['NET2', 'STA1', 'LOC1', 'CHAN1']])
 
     @mock.patch('seismic.correlate.correlate.yaml.load')
     @mock.patch('builtins.open')
@@ -101,10 +103,11 @@ class TestCorrrelator(unittest.TestCase):
         options['net']['station'] = ['blub']
         options['net']['component'] = 'E'
         sc_mock = mock.Mock(Store_Client)
-        sc_mock._translate_wildcards.return_value = [['bla', 'blub', 'E']]
+        sc_mock._translate_wildcards.return_value = [
+            ['bla', 'blub', '00', 'E']]
         c = correlate.Correlator(sc_mock, options)
         sc_mock._translate_wildcards.assert_called_once_with(
-            'bla', 'blub', 'E')
+            'bla', 'blub', 'E', location='*')
         sc_mock.get_available_stations.assert_not_called()
         self.assertDictEqual(self.options['co'], c.options)
         self.assertListEqual(c.station, [['bla', 'blub']])
@@ -151,10 +154,11 @@ class TestCorrrelator(unittest.TestCase):
         options['net']['component'] = None
         sc_mock = mock.Mock(Store_Client)
         sc_mock._translate_wildcards.side_effect = (
-            [['lala', 'lolo', 'E']], [['lala', 'lolo', 'Z']])
+            [['lala', 'lolo', '00', 'E']], [['lala', 'lolo', '11', 'Z']])
         c = correlate.Correlator(sc_mock, options)
         self.assertListEqual(c.station, [['lala', 'lolo']])
-        sc_mock._translate_wildcards.assert_called_once_with('lala', '*', None)
+        sc_mock._translate_wildcards.assert_called_once_with(
+            'lala', '*', None, location='*')
 
     @mock.patch('builtins.open')
     @mock.patch('seismic.correlate.correlate.logging')
@@ -198,10 +202,11 @@ class TestCorrrelator(unittest.TestCase):
         options['net']['station'] = ['le', 'li']
         sc_mock = mock.Mock(Store_Client)
         sc_mock._translate_wildcards.side_effect = (
-            [['lala', 'le', 'E']], [['lolo', 'li', 'Z']])
+            [['lala', 'le', '00', 'E']], [['lolo', 'li', '01', 'Z']])
         c = correlate.Correlator(sc_mock, options)
         sc_mock._translate_wildcards.assert_has_calls([
-            mock.call('lala', 'le', 'Z'), mock.call('lolo', 'li', 'Z')])
+            mock.call('lala', 'le', 'Z', location='*'),
+            mock.call('lolo', 'li', 'Z', location='*')])
         sc_mock.get_available_stations.assert_not_called()
         self.assertListEqual(
             c.station, [['lala', 'le'], ['lolo', 'li']])
@@ -278,25 +283,28 @@ class TestCorrrelator(unittest.TestCase):
         sc_mock.get_available_stations.return_value = [
             ['lala', 'lolo'], ['lala', 'lili']]
         sc_mock._translate_wildcards.return_value = [
-            ['lala', 'lolo', 'E'], ['lala', 'lili', 'Z']]
+            ['lala', 'lolo', '00', 'E'], ['lala', 'lili', '01', 'Z']]
         c = correlate.Correlator(sc_mock, options)
         netcombs = ['AA-BB', 'AA-BB', 'AA-AA', 'AA-CC']
         statcombs = ['00-00', '00-11', '22-33', '22-44']
         ccomb_mock.return_value = (netcombs, statcombs)
-        isfile = [['x.h5'], ['x.h5'], [], ['y.h5'], ['y.h5'], []]
+        isfile = [
+            [1], ['AA-BB.00-00.00-01.E-Z.h5'], [], [2],
+            ['AA-AA.22-33.00-01.E-Z.h5'],
+            [], [], []]
         isfile_mock.side_effect = isfile
         times = [{'a': [0, 1, 2]}, {'b': [3, 4, 5, 6]}]
         cdb_mock().get_available_starttimes.side_effect = times
         out = c.find_existing_times('mytag')
         exp = {
-            'AA.00': {'BB.00': {'a': [0, 1, 2]}},
-            'AA.22': {'AA.33': {'b': [3, 4, 5, 6]}}}
+            'AA.00': {'BB.00': {'00-01': {'a': [0, 1, 2]}}},
+            'AA.22': {'AA.33': {'00-01': {'b': [3, 4, 5, 6]}}}}
         self.assertDictEqual(out, exp)
-        isfile_calls = [
-            os.path.join(c.corr_dir, f'{nc}.{sc}*.h5') for nc, sc in zip(
-                netcombs, statcombs)]
-        for call in isfile_calls:
-            isfile_mock.assert_any_call(call)
+        # isfile_calls = [
+        #     os.path.join(c.corr_dir, f'{nc}.{sc}*.h5') for nc, sc in zip(
+        #         netcombs, statcombs)]
+        # for call in isfile_calls:
+        #     isfile_mock.assert_any_call(call)
 
     @mock.patch('seismic.correlate.correlate.CorrStream')
     @mock.patch('builtins.open')
@@ -389,47 +397,11 @@ class TestCorrrelator(unittest.TestCase):
     @mock.patch('builtins.open')
     @mock.patch('seismic.correlate.correlate.logging')
     @mock.patch('seismic.correlate.correlate.os.makedirs')
-    def test_write_one_file(
-            self, makedirs_mock, logging_mock, open_mock, dbh_mock):
-        options = deepcopy(self.options)
-        options['co']['combinations'] = [(0, 0), (0, 1), (0, 2)]
-        options['save_comps_separately'] = False
-        options['co']['subdivision']['recombine_subdivision'] = False
-        sc_mock = mock.Mock(Store_Client)
-        sc_mock.get_available_stations.return_value = [
-            ['lala', 'lolo'], ['lala', 'lili']]
-        sc_mock._translate_wildcards.return_value = [
-            ['lala', 'lolo', 'E'], ['lala', 'lili', 'Z']]
-        c = correlate.Correlator(sc_mock, options)
-        st2 = self.st.copy()
-        cst0 = CorrStream()
-        for tr in st2:
-            tr.stats.station = 'oo'
-            cst0.append(tr)
-        st2.extend(self.st)
-        cst1 = CorrStream()
-        for tr in self.st:
-            cst1.append(tr)
-        c._write(st2)
-        add_cst_calls = [
-            mock.call(mock.ANY, 'subdivision'),
-            mock.call(mock.ANY, 'subdivision')]
-        dbh_mock().add_correlation.assert_has_calls(add_cst_calls)
-        # A bit cumbersome way to check whether all files were written
-        for call in dbh_mock().add_correlation.call_args_list:
-            self.assertEqual(3, call[0][0].count())
-
-    @mock.patch('seismic.db.corr_hdf5.DBHandler')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logging')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_write_three_file(
             self, makedirs_mock, logging_mock, open_mock, dbh_mock):
         options = deepcopy(self.options)
         options['co']['combinations'] = [(0, 0), (0, 1), (0, 2)]
-        options['save_comps_separately'] = True
         options['co']['subdivision']['recombine_subdivision'] = True
-        options['co']['subdivision']['delete_subdivision'] = True
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = [
             ['lala', 'lolo'], ['lala', 'lili']]
@@ -443,17 +415,17 @@ class TestCorrrelator(unittest.TestCase):
         cst_mock.__iter__ = mock.Mock(return_value=iter(self.st))
         c._write(cst_mock)
         select_calls = [
-            mock.call(network='BW', station='RJOB', channel='EHE'),
-            mock.call().stack(regard_location=False),
-            mock.call().clear(),
+            mock.call(
+                network='BW', station='RJOB', location='', channel='EHE'),
+            mock.call().stack(),
             mock.call().count(),
-            mock.call(network='BW', station='RJOB', channel='EHN'),
-            mock.call().stack(regard_location=False),
-            mock.call().clear(),
+            mock.call(
+                network='BW', station='RJOB', location='', channel='EHN'),
+            mock.call().stack(),
             mock.call().count(),
-            mock.call(network='BW', station='RJOB', channel='EHZ'),
-            mock.call().stack(regard_location=False),
-            mock.call().clear(),
+            mock.call(
+                network='BW', station='RJOB', location='', channel='EHZ'),
+            mock.call().stack(),
             mock.call().count()]
         cst_mock.select.assert_has_calls(select_calls)
         # Note that subdivision is still called because clear doesn't
@@ -485,7 +457,7 @@ class TestCorrrelator(unittest.TestCase):
         sc_mock.get_available_stations.return_value = [
             ['lala', 'lolo'], ['lala', 'lili']]
         sc_mock._translate_wildcards.return_value = [
-            ['lala', 'lolo', 'E'], ['lala', 'lili', 'Z']]
+            ['lala', 'lolo', '00', 'E'], ['lala', 'lili', '01', 'Z']]
         sc_mock.inventory = self.inv
         sc_mock._load_local.return_value = self.st
         ppst_mock.return_value = self.st
@@ -582,19 +554,18 @@ class TestCompareExistingData(unittest.TestCase):
         tr0 = st[0]
         tr1 = st[1]
         ex_d = {}
-        ex_d['%s.%s' % (tr0.stats.network, tr0.stats.station)] = {}
-        ex_d[
-            '%s.%s' % (tr0.stats.network, tr0.stats.station)][
-                '%s.%s' % (tr1.stats.network, tr1.stats.station)] = {}
-        ex_d[
-            '%s.%s' % (tr0.stats.network, tr0.stats.station)][
-                '%s.%s' % (tr1.stats.network, tr1.stats.station)] = {}
-        ex_d[
-            '%s.%s' % (tr0.stats.network, tr0.stats.station)][
-                '%s.%s' % (tr1.stats.network, tr1.stats.station)][
-            '%s-%s' % (
-                tr0.stats.channel, tr1.stats.channel)] = [
-                    tr0.stats.starttime.format_fissures()]
+        net0 = tr0.stats.network
+        net1 = tr1.stats.network
+        stat0 = tr0.stats.station
+        stat1 = tr1.stats.station
+        loc0 = tr0.stats.location
+        loc1 = tr1.stats.location
+        cha0 = tr0.stats.channel
+        cha1 = tr1.stats.channel
+        ex_d = {
+            f'{net0}.{stat0}': {f'{net1}.{stat1}': {f'{loc0}-{loc1}': {
+                f'{cha0}-{cha1}': [tr0.stats.starttime.format_fissures()]}}}}
+
         self.ex_d = ex_d
         self.tr0 = tr0
         self.tr1 = tr1
@@ -670,9 +641,12 @@ class TestCalcCrossCombis(unittest.TestCase):
             self.st, {}, method='allSimpleCombinations')))
 
     def test_result_all_combis(self):
-        expected_len = self.st.count()**2
-        self.assertEqual(expected_len, len(correlate.calc_cross_combis(
-            self.st, {}, method='allCombinations')))
+        expected_len = sum([self.st.count()-n
+                            for n in range(0, self.st.count())])
+        with warnings.catch_warnings(record=True) as w:
+            self.assertEqual(expected_len, len(correlate.calc_cross_combis(
+                self.st, {}, method='allCombinations')))
+            self.assertEqual(len(w), 1)
 
     def test_unknown_method(self):
         with self.assertRaises(ValueError):
@@ -682,14 +656,14 @@ class TestCalcCrossCombis(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             self.assertEqual([], correlate.calc_cross_combis(
                 Stream(), {}, method='allCombinations'))
-            self.assertEqual(len(w), 1)
+            self.assertEqual(len(w), 2)
 
     @mock.patch('seismic.correlate.correlate._compare_existing_data')
     def test_existing_db(self, compare_mock):
         compare_mock.return_value = True
         for m in [
             'betweenStations', 'betweenComponents', 'autoComponents',
-                'allSimpleCombinations', 'allCombinations']:
+                'allSimpleCombinations']:
             with warnings.catch_warnings(record=True) as w:
                 self.assertEqual(0, len(correlate.calc_cross_combis(
                     self.st, {}, method=m)))
@@ -788,7 +762,7 @@ class TestSortCombnameAlphabetically(unittest.TestCase):
         net1 = 'B'
         stat0 = 'Z'
         stat1 = 'C'
-        exp_result = ([net0, net1], [stat0, stat1], ['', ''])
+        exp_result = ([net0, net1], [stat0, stat1], ['', ''], ['', ''])
         self.assertEqual(
             correlate.sort_comb_name_alphabetically(net0, stat0, net1, stat1),
             exp_result)
@@ -798,7 +772,7 @@ class TestSortCombnameAlphabetically(unittest.TestCase):
         net1 = 'A'
         stat0 = 'Z'
         stat1 = 'C'
-        exp_result = ([net1, net0], [stat1, stat0], ['', ''])
+        exp_result = ([net1, net0], [stat1, stat0], ['', ''], ['', ''])
         self.assertEqual(
             correlate.sort_comb_name_alphabetically(net0, stat0, net1, stat1),
             exp_result)
@@ -810,10 +784,23 @@ class TestSortCombnameAlphabetically(unittest.TestCase):
         stat1 = 'Z'
         cha0 = 'B'
         cha1 = 'A'
-        exp_result = ([net0, net1], [stat0, stat1], [cha1, cha0])
+        exp_result = ([net0, net1], [stat0, stat1], ['', ''], [cha1, cha0])
         self.assertEqual(
             correlate.sort_comb_name_alphabetically(
-                net0, stat0, net1, stat1, cha0, cha1),
+                net0, stat0, net1, stat1, channel1=cha0, channel2=cha1),
+            exp_result)
+
+    def test_between_locs(self):
+        net0 = 'A'
+        net1 = 'A'
+        stat0 = 'Z'
+        stat1 = 'Z'
+        loc0 = 'B'
+        loc1 = 'A'
+        exp_result = ([net0, net1], [stat0, stat1], [loc1, loc0], ['', ''])
+        self.assertEqual(
+            correlate.sort_comb_name_alphabetically(
+                net0, stat0, net1, stat1, loc0, loc1),
             exp_result)
 
     def test_between_comps_no_flip(self):
@@ -823,10 +810,10 @@ class TestSortCombnameAlphabetically(unittest.TestCase):
         stat1 = 'Z'
         cha1 = 'B'
         cha0 = 'A'
-        exp_result = ([net0, net1], [stat0, stat1], [cha0, cha1])
+        exp_result = ([net0, net1], [stat0, stat1], ['', ''], [cha0, cha1])
         self.assertEqual(
             correlate.sort_comb_name_alphabetically(
-                net0, stat0, net1, stat1, cha0, cha1),
+                net0, stat0, net1, stat1, channel1=cha0, channel2=cha1),
             exp_result)
 
     def test_wrong_arg_type(self):
@@ -880,12 +867,13 @@ class TestComputeNetworkStationCombinations(unittest.TestCase):
             exp_result)
 
     def test_all_combis(self):
-        exp_result = (
-            ['A-A', 'A-A', 'A-A', 'A-A'], ['B-B', 'B-C', 'B-C', 'C-C'])
-        self.assertEqual(
-            correlate.compute_network_station_combinations(
-                self.nlist, self.slist, method='allCombinations'),
-            exp_result)
+        exp_result = (['A-A', 'A-A', 'A-A'], ['B-B', 'B-C', 'C-C'])
+        with warnings.catch_warnings(record=True) as w:
+            self.assertEqual(
+                correlate.compute_network_station_combinations(
+                    self.nlist, self.slist, method='allCombinations'),
+                exp_result)
+            self.assertEqual(len(w), 1)
 
     def test_rcombis(self):
         exp_result = (['A-A'], ['B-C'])

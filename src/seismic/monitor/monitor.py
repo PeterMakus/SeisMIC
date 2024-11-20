@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 29th September 2023 11:06:52 am
+Last Modified: Tuesday, 9th July 2024 04:48:54 pm
 '''
 from copy import deepcopy
 import json
@@ -25,7 +25,7 @@ import numpy as np
 from obspy import UTCDateTime
 from tqdm import tqdm
 
-from seismic.db.corr_hdf5 import CorrelationDataBase
+from seismic.db.corr_hdf5 import CorrelationDataBase, h5_FMTSTR
 from seismic.monitor.dv import DV, read_dv
 from seismic.monitor.wfc import WFC
 from seismic.utils.miic_utils import log_lvl
@@ -56,11 +56,6 @@ class Monitor(object):
         self.indir = os.path.join(
             options['proj_dir'], options['co']['subdir']
         )
-        try:
-            self.save_comps_separately = options['save_comps_separately']
-        except KeyError:
-            # If it's not specified it's probably an old params.yaml
-            self.save_comps_separately = False
 
         # init MPI
         self.comm = MPI.COMM_WORLD
@@ -161,7 +156,7 @@ class Monitor(object):
 
     def compute_velocity_change(
         self, corr_file: str, tag: str, network: str, station: str,
-            channel: str, ref_trcs: np.ndarray = None):
+            location: str, channel: str, ref_trcs: np.ndarray = None):
         """
         Computes the velocity change for a cross (or auto) correlation
         time-series. This process is executed "per station combination".
@@ -180,6 +175,8 @@ class Monitor(object):
         :type network: str
         :param station: Station Combination Code
         :type station: str
+        :param location: Location combination code
+        :type location: str
         :param channel: Channel combination code
         :type channel: str
         :param ref_trcs: Feed in on or several custom reference traces.
@@ -192,7 +189,7 @@ class Monitor(object):
             f' {channel}.')
         with CorrelationDataBase(corr_file, mode='r') as cdb:
             # get the corrstream containing all the corrdata for this combi
-            cst = cdb.get_data(network, station, channel, tag)
+            cst = cdb.get_data(network, station, location, channel, tag)
             lts = cdb.get_corr_options()['corr_args']['lengthToSave']
 
         tw_start = self.options['dv']['tw_start']
@@ -233,7 +230,8 @@ class Monitor(object):
                     f = cst.__getattribute__(func['function'])
                     cst = f(**func['args'])
         cb = cst.create_corr_bulk(
-            network=network, station=station, channel=channel, inplace=True)
+            network=network, station=station, channel=channel,
+            location=location, inplace=True)
 
         # for possible rest bits
         del cst
@@ -314,11 +312,10 @@ class Monitor(object):
                 dv = f(**func['args'])
 
         outf = os.path.join(
-            self.outdir, 'DV-%s.%s.%s' % (network, station, channel))
+            self.outdir, f'DV-{network}.{station}.{location}.{channel}')
         dv.save(outf)
         if self.options['dv']['plot_vel_change']:
-            fname = '%s_%s_%s' % (
-                dv.stats.network, dv.stats.station, dv.stats.channel)
+            fname = f'{network}_{station}_{location}_{channel}'
             savedir = os.path.join(
                 self.options['proj_dir'], self.options['fig_subdir'])
             dv.plot(
@@ -340,10 +337,11 @@ class Monitor(object):
         if self.rank == 0:
             plist = []
             for f, n, s in zip(self.infiles, self.netlist, self.statlist):
+                locs = os.path.basename(f).split('.')[2]
                 with CorrelationDataBase(f, mode='r') as cdb:
                     ch = cdb.get_available_channels(
-                        tag, n, s)
-                    plist.extend([f, n, s, c] for c in ch)
+                        tag, n, s, locs)
+                    plist.extend([f, n, s, locs, c] for c in ch)
         else:
             plist = None
         plist = self.comm.bcast(plist, root=0)
@@ -354,14 +352,14 @@ class Monitor(object):
 
         # Assign a task to each rank
         for ii in tqdm(ind):
-            corr_file, net, stat, cha = plist[ii]
+            corr_file, net, stat, loc, cha = plist[ii]
             try:
                 self.compute_velocity_change(
-                    corr_file, tag, net, stat, cha)
+                    corr_file, tag, net, stat, loc, cha)
             except KeyError:
                 self.logger.exception(
-                    f'No correlation data found for {net}.{stat}.{cha} with '
-                    + f'tag {tag} in file {corr_file}.'
+                    f'No correlation data found for {net}.{stat}.{loc}.{cha}'
+                    + f'with tag {tag} in file {corr_file}.'
                 )
             except Exception as e:
                 self.logger.exception(f'{e} for file {corr_file}.')
@@ -421,11 +419,14 @@ class Monitor(object):
                     infiles.remove(f)
                     continue
                 components = f.split('.')[-2].split('-')
-                stations = f.split('.')[-3].split('-')
+                locations = f.split('.')[-3].split('-')
+                stations = f.split('.')[-4].split('-')
                 if method.lower() == 'autocomponents':
                     # Remove those from combined channels
-                    if components[0] != components[1] \
-                            or stations[0] != stations[1]:
+                    if any(
+                            components[0] != components[1],
+                            locations[0] != locations[1],
+                            stations[0] != stations[1]):
                         infiles.remove(f)
                         continue
                 elif method.lower() in (
@@ -495,10 +496,11 @@ class Monitor(object):
         if self.rank == 0:
             plist = []
             for f, n, s in zip(self.infiles, self.netlist, self.statlist):
+                locs = os.path.basename(f).split('.')[2]
                 with CorrelationDataBase(f, mode='r') as cdb:
                     ch = cdb.get_available_channels(
-                        tag, n, s)
-                    plist.extend([f, n, s, c] for c in ch)
+                        tag, n, s, locs)
+                    plist.extend([f, n, s, locs, c] for c in ch)
         else:
             plist = None
         plist = self.comm.bcast(plist, root=0)
@@ -510,9 +512,9 @@ class Monitor(object):
         # Assign a task to each rank
         wfcl = []
         for ii in tqdm(ind):
-            corr_file, net, stat, cha = plist[ii]
+            corr_file, net, stat, loc, cha = plist[ii]
             for wfc in self.compute_waveform_coherence(
-                    corr_file, tag, net, stat, cha):
+                    corr_file, tag, net, stat, loc, cha):
                 try:
                     wfcl.append(wfc)
                 except Exception as e:
@@ -551,8 +553,9 @@ class Monitor(object):
         for wfc_avl in wfcl_sub:
             wfc = average_components_wfc(wfc_avl)
             # Write files
-            outf = os.path.join(outdir, 'WFC-%s.%s.%s.f%a-%a.tw%a-%a' % (
-                wfc.stats.network, wfc.stats.station, wfc.stats.channel,
+            outf = os.path.join(outdir, 'WFC-%s.%s.%s.%s.f%a-%a.tw%a-%a' % (
+                wfc.stats.network, wfc.stats.station, wfc.stats.location,
+                wfc.stats.channel,
                 wfc.wfc_processing['freq_min'],
                 wfc.wfc_processing['freq_max'],
                 wfc.wfc_processing['tw_start'],
@@ -560,7 +563,7 @@ class Monitor(object):
             wfc.save(outf)
 
     def compute_waveform_coherence(
-        self, corr_file: str, tag: str, network: str, station: str,
+        self, corr_file: str, tag: str, network: str, station: str, location,
             channel: str) -> WFC:
         """
         Computes the waveform coherence corresponding to one correlation (i.e.,
@@ -577,6 +580,8 @@ class Monitor(object):
         :type network: str
         :param station: Station combination code
         :type station: str
+        :param location: Location combination code
+        :type location: str
         :param channel: Channel combination code.
         :type channel: str
         :raises ValueError: For short correlations
@@ -591,7 +596,8 @@ class Monitor(object):
             corr_file, channel))
         with CorrelationDataBase(corr_file, mode='r') as cdb:
             # get the corrstream containing all the corrdata for this combi
-            cst = cdb.get_data(network, station, channel, tag)
+            cst = cdb.get_data(
+                network, station, location, channel, tag)
 
         if 'preprocessing' in self.options['wfc']:
             for func in self.options['wfc']['preprocessing']:
@@ -600,7 +606,9 @@ class Monitor(object):
                     f = cst.__getattribute__(func['function'])
                     cst = f(**func['args'])
 
-        cb = cst.create_corr_bulk(inplace=True)
+        cb = cst.create_corr_bulk(
+            network=network, station=station, channel=channel,
+            location=location, inplace=True)
         outdir = os.path.join(
             self.options['proj_dir'], self.options['wfc']['subdir'])
         if self.rank == 0:
@@ -763,39 +771,48 @@ def corr_find_filter(
         correlation files.
     :rtype: Tuple[List[str], List[str], List[str]]
     """
+    comp = '??' + net['component'].capitalize()
     netlist = []
     statlist = []
     infiles = []
-    for f in glob(os.path.join(indir, '*-*.*-*.h5')):
-        matched = False
+    for f in glob(h5_FMTSTR.format(
+            dir=indir, network='*', station='*', location='*', channel='*')):
         f = os.path.basename(f)
         split = f.split('.')
 
         # Find the files that should actually be processed
-        nsplit = split[0].split('-')
-        ssplit = split[1].split('-')
+        nsplit = list(set(split[0].split('-')))
+        ssplit = list(set(split[1].split('-')))
+        csplit = list(set(split[3].split('-')))
         if isinstance(net['network'], str) and not fnmatch.filter(
                 nsplit, net['network']) == nsplit:
             continue
         elif isinstance(net['network'], list):
             # account for the case of wildcards in the network list
+            matchlen = 0
             for n in net['network']:
-                if fnmatch.filter(nsplit, n) == nsplit:
-                    matched = True
-                    break
-            if not matched:
+                if len(fnmatch.filter(nsplit, n)) > 0:
+                    matchlen += 1
+                    if matchlen == len(nsplit):
+                        break
+            if matchlen < len(nsplit):
                 continue
         if isinstance(net['station'], str) and not fnmatch.filter(
                 ssplit, net['station']) == ssplit:
             continue
         elif isinstance(net['station'], list):
             # account for the case of wildcards in the station list
-            for s in net['station']:
-                if fnmatch.filter(ssplit, s) == ssplit:
-                    matched = True
-                    break
-            if not matched:
+            matchlen = 0
+            for n in net['station']:
+                if len(fnmatch.filter(ssplit, n)) > 0:
+                    matchlen += 1
+                    if matchlen == len(ssplit):
+                        break
+            if matchlen < len(ssplit):
                 continue
+        if isinstance(comp, str) and not fnmatch.filter(
+                csplit, comp) == csplit:
+            continue
 
         netlist.append(split[0])
         statlist.append(split[1])
@@ -1161,7 +1178,7 @@ def average_components_wfc(wfcs: List[WFC]) -> WFC:
             input (also from different stations). However, at the time,
             the function requires the input to be of the same shape
 
-    :type dvs: List[class:`~seismic.monitor.dv.DV`]
+    :type dvs: List[class:`~seismic.monitor.wfc.WFC`]
     :raises TypeError: for DVs that were computed with different methods
     :return: A single dv with an averaged similarity matrix
     :rtype: DV

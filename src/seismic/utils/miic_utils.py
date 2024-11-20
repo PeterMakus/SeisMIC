@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Wednesday, 6th December 2023 04:49:41 pm
+Last Modified: Wednesday, 19th June 2024 03:13:18 pm
 '''
 from typing import List, Tuple
 import logging
@@ -535,6 +535,36 @@ def interpolate_gaps_st(st: Stream, max_gap_len: int = -1) -> Stream:
     for tr in st:
         tr.data = interpolate_gaps(tr.data, max_gap_len)
     return st
+    
+    
+def sort_combinations_alphabetically(
+    netcomb: str, stacomb: str, loccomb: str, chacomb: str) -> Tuple[
+        str, str, str, str]:
+    """
+    Sort the combinations of network, station, location and channel
+    alphabetically to avoid ambiguities.
+
+    :param netcomb: Network combination
+    :type netcomb: str
+    :param stacomb: Station combination
+    :type stacomb: str
+    :param loccomb: Location combination
+    :type loccomb: str
+    :param chacomb: Channel combination
+    :type chacomb: str
+    :return: The sorted combinations
+    :rtype: Tuple[str, str, str, str]
+    """
+    sort = [
+        '.'.join([net, sta, loc, cha]) for net, sta, loc, cha in zip(
+            netcomb.split('-'), stacomb.split('-'), loccomb.split('-'),
+            chacomb.split('-'))]
+    sorted = sort.copy()
+    sorted.sort()
+    if sorted != sort:
+        netcomb, stacomb, loccomb, chacomb = ['-'.join([a, b]) for a, b in zip(
+            sorted[0].split('.'), sorted[1].split('.'))]
+    return netcomb, stacomb, loccomb, chacomb
 
 
 def utcdatetime2str(d):# -> str | list | dict | Any:

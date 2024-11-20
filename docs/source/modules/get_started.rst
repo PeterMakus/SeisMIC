@@ -10,7 +10,7 @@ Dependencies
 MPI
 ###
 
-If you plan to compute correlations using MPI (e.g., because you want to use several cores), you will have to install an MPI.
+Multi-core operations in SeisMIC are supported using MPI. Therefore, you will have to install an MPI.
 Most likely, your system will come with a preinstalled MPI. Else, we recommend `Open MPI <https://www.open-mpi.org/>`_
 (head there for installation instructions).
 
@@ -43,6 +43,11 @@ If you follow the instructions below, it should not be necessary to install depe
 
     We recommend using the precompiled version of mpi4py from conda-forge. This might differ on your system if you
     should experience problems with mpi4py, try a different precompiled version (for instance from PyPi).
+
+.. note::
+
+    Please make sure to install the same mpi version into your conda environment as you have installed on your system.
+    For example, if you have installed OpenMPI on your system, you should install OpenMPI in your conda environment as well.
 
 Via PyPi
 ++++++++

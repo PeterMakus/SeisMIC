@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 4th March 2024 02:27:00 pm
+Last Modified: Tuesday, 19th November 2024 01:57:48 pm
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -29,7 +29,7 @@ from tqdm import tqdm
 from seismic.correlate.stream import CorrTrace, CorrStream
 from seismic.correlate import preprocessing_td as pptd
 from seismic.correlate import preprocessing_stream as ppst
-from seismic.db.corr_hdf5 import CorrelationDataBase
+from seismic.db.corr_hdf5 import CorrelationDataBase, h5_FMTSTR
 from seismic.trace_data.waveform import Store_Client
 from seismic.utils.fetch_func_from_str import func_from_str
 from seismic.utils import miic_utils as mu
@@ -135,6 +135,7 @@ class Correlator(object):
         network = options['net']['network']
         station = options['net']['station']
         component = options['net']['component']
+        # location = options['net']['location']
 
         # Store_Client
         self.store_client = store_client
@@ -143,6 +144,8 @@ class Correlator(object):
             station = station[0]
         if isinstance(network, list) and len(network) == 1:
             network = network[0]
+        # if isinstance(location, list) and len(network) == 1:
+        #     network = network[0]
 
         if (
             network == '*'
@@ -188,7 +191,7 @@ class Correlator(object):
             for net, stat in station:
                 self.avail_raw_data.extend(
                     self.store_client._translate_wildcards(
-                        net, stat, component))
+                        net, stat, component, location='*'))
             # make sure this only contains unique combinations
             # with several cores it added entries several times, don't know
             # why?
@@ -231,7 +234,7 @@ class Correlator(object):
                 self.rcombis, f'*-{n}.*-{s}')]
         # same check for avail_raw_data
         self.avail_raw_data = [
-            [n, s, c] for n, s, c in self.avail_raw_data if
+            [n, s, loc, c] for n, s, loc, c in self.avail_raw_data if
             fnmatch.filter(self.rcombis, f'{n}-*.{s}-*') or fnmatch.filter(
                 self.rcombis, f'*-{n}.*-{s}')]
 
@@ -270,7 +273,8 @@ class Correlator(object):
                 'Either filter for specific cross correlations or a maximum '
                 + 'distance.')
 
-    def find_existing_times(self, tag: str, channel: str = '*') -> dict:
+    def find_existing_times(
+            self, tag: str, channel: str = '*') -> dict:
         """
         Returns the already existing starttimes in form of a dictionary (see
         below)
@@ -297,19 +301,26 @@ class Correlator(object):
             combis=self.rcombis)
         ex_dict = {}
         for nc, sc in zip(netcombs, statcombs):
-            outfs = os.path.join(
-                self.corr_dir, '%s.%s*.h5' % (nc, sc))
+            outfs = h5_FMTSTR.format(
+                dir=self.corr_dir, network=nc, station=sc, location='*',
+                channel='*')
             if not len(glob.glob(outfs)):
                 continue
             d = {}
             for outf in glob.glob(outfs):
+                # retrieve location codes
+                l0, l1 = os.path.basename(outf).split('.')[2].split('-')
                 with CorrelationDataBase(
                     outf, corr_options=self.options, mode='r',
                         _force=self._allow_different_params) as cdb:
-                    d.update(
-                        cdb.get_available_starttimes(nc, sc, tag, channel))
+                    d.setdefault('%s-%s' % (l0, l1), {})
+                    d[f'{l0}-{l1}'].update(
+                        cdb.get_available_starttimes(
+                            nc, sc, tag, f'{l0}-{l1}', channel))
             s0, s1 = sc.split('-')
             n0, n1 = nc.split('-')
+            # obtain location codes
+
             ex_dict.setdefault('%s.%s' % (n0, s0), {})
             ex_dict['%s.%s' % (n0, s0)]['%s.%s' % (n1, s1)] = d
         return ex_dict
@@ -410,37 +421,26 @@ class Correlator(object):
             return
 
         # Make sure that each core writes to a different file
-        if self.save_comps_separately:
-            codelist = list(set(
-                [f'{tr.stats.network}.{tr.stats.station}.{tr.stats.channel}'
-                 for tr in cst]))
-        else:
-            codelist = list(set(
-                [f'{tr.stats.network}.{tr.stats.station}' for tr in cst]))
+        filelist = list(set(h5_FMTSTR.format(
+            dir=self.corr_dir, network=tr.stats.network,
+            station=tr.stats.station, location=tr.stats.location,
+            channel=tr.stats.channel) for tr in cst))
         # Better if the same cores keep writing to the same files
-        codelist.sort()
+        filelist.sort()
         # Decide which process writes to which station
-        pmap = np.arange(len(codelist))*self.psize/len(codelist)
+        pmap = np.arange(len(filelist))*self.psize/len(filelist)
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
 
-        for code in np.array(codelist)[ind]:
-            if self.save_comps_separately:
-                net, stat, cha = code.split('.')
-                outf = os.path.join(self.corr_dir, f'{net}.{stat}.{cha}.h5')
-                cstselect = cst.select(
-                    network=net, station=stat, channel=cha)
-            else:
-                net, stat = code.split('.')
-                outf = os.path.join(self.corr_dir, f'{net}.{stat}.h5')
-                cstselect = cst.select(network=net, station=stat)
+        for outf in np.array(filelist)[ind]:
+            net, stat, loc, cha = os.path.basename(outf).split('.')[0:4]
+            cstselect = cst.select(
+                network=net, station=stat, location=loc, channel=cha)
             if self.options['subdivision']['recombine_subdivision']:
-                stack = cstselect.stack(regard_location=False)
+                stack = cstselect.stack()
                 stacktag = 'stack_%s' % str(self.options['read_len'])
             else:
                 stack = None
-            if self.options['subdivision']['delete_subdivision']:
-                cstselect.clear()
             with CorrelationDataBase(
                 outf, corr_options=self.options,
                     _force=self._allow_different_params) as cdb:
@@ -501,15 +501,15 @@ class Correlator(object):
             st = Stream()
 
             # loop over queried stations
-            for net, stat, cha in np.array(self.avail_raw_data)[ind]:
+            for net, stat, loc, cha in np.array(self.avail_raw_data)[ind]:
                 # Load data
                 stext = self.store_client._load_local(
-                    net, stat, '*', cha, startt, endt, True, False)
+                    net, stat, loc, cha, startt, endt, True, False)
                 mu.get_valid_traces(stext)
                 if stext is None or not len(stext):
                     # No data for this station to read
                     continue
-                st.extend(stext)
+                st = st.extend(stext)
 
             # Stream based preprocessing
             # Downsampling
@@ -555,7 +555,7 @@ class Correlator(object):
                 win = Stream()
                 for winp in winl:
                     win.extend(winp)
-                win.sort(keys=['network', 'station', 'channel'])
+                win = win.sort()
 
                 # Get correlation combinations
                 if self.rank == 0:
@@ -806,22 +806,22 @@ def _compare_existing_data(ex_corr: dict, tr0: Trace, tr1: Trace) -> bool:
     net1 = tr1.stats.network
     stat1 = tr1.stats.station
     cha1 = tr1.stats.channel
+    loc0 = tr0.stats.location
+    loc1 = tr1.stats.location
     # Probably faster than checking a huge dict twice
-    flip = ([net0, net1], [stat0, stat1], [cha0, cha1]) \
+    flip = ([net0, net1], [stat0, stat1], [loc0, loc1], [cha0, cha1]) \
         != sort_comb_name_alphabetically(
-        net0, stat0, net1, stat1, cha0, cha1)
+        net0, stat0, net1, stat1, loc0, loc1, cha0, cha1)
     corr_start = max(tr0.stats.starttime, tr1.stats.starttime)
     try:
         if flip:
             return corr_start.format_fissures() in ex_corr[
                 f'{net1}.{stat1}'][f'{net0}.{stat0}'][
-                '%s-%s' % (
-                    tr1.stats.channel, tr0.stats.channel)]
+                    f'{loc1}-{loc0}'][f'{cha1}-{cha0}']
         else:
             return corr_start.format_fissures() in ex_corr[
                 f'{net0}.{stat0}'][f'{net1}.{stat1}'][
-                '%s-%s' % (
-                    tr0.stats.channel, tr1.stats.channel)]
+                    f'{loc0}-{loc1}'][f'{cha0}-{cha1}']
     except KeyError:
         return False
 
@@ -876,10 +876,14 @@ def calc_cross_combis(
         ``'allCombinations'``:
             All traces are combined in both orders ((0,1) and (1,0))
     """
-
+    # deprecate allCombinations
+    if method == 'allCombinations':
+        warn('Method "allCombinations" is deprecated. Using '
+             '"allSimpleCombinations" instead.', DeprecationWarning)
+        method = 'allSimpleCombinations'
     combis = []
     # sort alphabetically
-    st.sort(keys=['network', 'station', 'channel'])
+    st = st.sort()
     if method == 'betweenStations':
         for ii, tr in enumerate(st):
             for jj in range(ii+1, len(st)):
@@ -1167,8 +1171,8 @@ def calc_cross_combis(
 
 def sort_comb_name_alphabetically(
     network1: str, station1: str, network2: str, station2: str,
-    channel1: Optional[str] = '',
-        channel2: Optional[str] = '') -> Tuple[
+    location1: Optional[str] = '', location2: Optional[str] = '',
+        channel1: Optional[str] = '', channel2: Optional[str] = '') -> Tuple[
         list, list]:
     """
     Returns the alphabetically sorted network and station codes from the two
@@ -1216,22 +1220,25 @@ def sort_comb_name_alphabetically(
     (['XN', 'XN'], ['NEP06', 'NEP07'])
     """
     if not all([isinstance(arg, str) for arg in [
-            network1, network2, station1, station2]]):
+            network1, network2, station1, station2, location2, location1,
+            channel1, channel2]]):
         raise TypeError('All arguments have to be strings.')
-    sort1 = network1 + station1 + channel1
-    sort2 = network2 + station2 + channel2
+    sort1 = network1 + station1 + location1 + channel1
+    sort2 = network2 + station2 + location2 + channel2
     sort = [sort1, sort2]
     sorted = sort.copy()
     sorted.sort()
     if sort == sorted:
         netcomb = [network1, network2]
         statcomb = [station1, station2]
+        loccomb = [location1, location2]
         chacomb = [channel1, channel2]
     else:
         netcomb = [network2, network1]
         statcomb = [station2, station1]
+        loccomb = [location2, location1]
         chacomb = [channel2, channel1]
-    return netcomb, statcomb, chacomb
+    return netcomb, statcomb, loccomb, chacomb
 
 
 def compute_network_station_combinations(
@@ -1259,6 +1266,12 @@ def compute_network_station_combinations(
         and the list of the correlation station code.
     :rtype: Tuple[list, list]
     """
+    if method == 'allCombinations':
+        warn(
+            'allCombinations is deprecated, '
+            'using allSimpleCombinations instead.',
+            DeprecationWarning)
+        method = 'allSimpleCombinations'
     netcombs = []
     statcombs = []
     if method == 'betweenStations':
@@ -1267,7 +1280,7 @@ def compute_network_station_combinations(
                 n2 = netlist[jj]
                 s2 = statlist[jj]
                 if n != n2 or s != s2:
-                    nc, sc, _ = sort_comb_name_alphabetically(n, s, n2, s2)
+                    nc, sc, _, _ = sort_comb_name_alphabetically(n, s, n2, s2)
                     # Check requested combinations
                     if (
                         combis is not None
@@ -1285,13 +1298,13 @@ def compute_network_station_combinations(
             for jj in range(ii, len(netlist)):
                 n2 = netlist[jj]
                 s2 = statlist[jj]
-                nc, sc, _ = sort_comb_name_alphabetically(n, s, n2, s2)
+                nc, sc, _,  _ = sort_comb_name_alphabetically(n, s, n2, s2)
                 netcombs.append('%s-%s' % (nc[0], nc[1]))
                 statcombs.append('%s-%s' % (sc[0], sc[1]))
     elif method == 'allCombinations':
         for n, s in zip(netlist, statlist):
             for n2, s2 in zip(netlist, statlist):
-                nc, sc, _ = sort_comb_name_alphabetically(n, s, n2, s2)
+                nc, sc, _,  _ = sort_comb_name_alphabetically(n, s, n2, s2)
                 netcombs.append('%s-%s' % (nc[0], nc[1]))
                 statcombs.append('%s-%s' % (sc[0], sc[1]))
     else:
@@ -1349,7 +1362,7 @@ def preprocess_stream(
         return st
     # To deal with any nans/masks
     st = st.split()
-    st.sort(keys=['starttime'])
+    st = st.sort(keys=['starttime'])
 
     inv = store_client.inventory
     if remove_response:
