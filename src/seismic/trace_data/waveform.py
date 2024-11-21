@@ -86,11 +86,11 @@ class Store_Client(object):
 
     def download_waveforms_mdl(
         self, starttime: UTCDateTime, endtime: UTCDateTime,
-        clients: list or None = None, minlat: float or None = None,
-        maxlat: float or None = None, minlon: float or None = None,
-        maxlon: float or None = None, network: str or None = None,
-        station: str or None = None, location: str or None = None,
-        channel: str or None = None, channel_priorities: List[str] = None,
+        clients: list | None = None, minlat: float | None = None,
+        maxlat: float | None = None, minlon: float | None = None,
+        maxlon: float | None = None, network: str | None = None,
+        station: str | None = None, location: str | None = None,
+        channel: str | None = None, channel_priorities: List[str] = None,
             location_priorities: List[str] = None):
         """
         Download data using the obspy's MassDownloader. For all args
@@ -217,7 +217,7 @@ class Store_Client(object):
     def _get_mseed_storage(
         self, network: str, station: str, location: str,
         channel: str, starttime: UTCDateTime,
-            endtime: UTCDateTime) -> bool or str:
+            endtime: UTCDateTime) -> bool | str:
 
         # Returning True means that neither the data nor the StationXML file
 
@@ -334,7 +334,7 @@ class Store_Client(object):
     def _load_local(
         self, network: str, station: str, location: str, channel: str,
         starttime: UTCDateTime, endtime: UTCDateTime, attach_response: bool,
-            _check_times: bool) -> Stream or None:
+            _check_times: bool) -> Stream | None:
         """
         Read data from local SDS structure.
         """

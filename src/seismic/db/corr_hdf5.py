@@ -102,7 +102,7 @@ class DBHandler(h5py.File):
         ds.attrs['co'] = sco
 
     def add_correlation(
-            self, data: CorrTrace or CorrStream, tag='subdivision'):
+            self, data: CorrTrace | CorrStream, tag='subdivision'):
         """
         Add correlation data to the hdf5 file. Can be accessed using the
         :func:`~seismic.db.corr_hdf5.DBHandler.get_data()` method.
@@ -298,7 +298,7 @@ omitted." % path, category=UserWarning)
 
     def get_available_starttimes(
         self, network: str, station: str, tag: str, location: str,
-            channel: str or list = '*') -> dict:
+            channel: str | list = '*') -> dict:
         """
         Returns a dictionary with channel codes as keys and available
         correlation starttimes as values.
@@ -447,7 +447,7 @@ class CorrelationDataBase(object):
             self.path, self.mode, self.compression, self.co, self.force)
         return self.db_handler
 
-    def __exit__(self, exc_type, exc_value, tb) -> None or bool:
+    def __exit__(self, exc_type, exc_value, tb) -> None | bool:
         self.db_handler._close()
         if exc_type is not None:
             return False

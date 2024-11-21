@@ -334,7 +334,7 @@ class CorrBulk(object):
         return outdata
 
     def extract_multi_trace(
-        self, win_inc: int or List[int], method: str = 'mean',
+        self, win_inc: int | List[int], method: str = 'mean',
             percentile: float = 50.) -> List[np.ndarray]:
         """
         Extract several representative traces from a correlation matrix.
