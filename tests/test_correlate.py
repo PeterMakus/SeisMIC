@@ -26,15 +26,17 @@ from seismic.correlate.stream import CorrStream
 from seismic.trace_data.waveform import Store_Client
 
 
+paramfile = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+            'params_example.yaml')
+
 class TestCorrrelator(unittest.TestCase):
     def setUp(self):
         self.inv = read_inventory()
         self.st = read()
         # using the example parameters has the nice side effect that
         # the parameter file is tested as well
-        self.param_example = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
-            'params_example.yaml')
+        self.param_example = paramfile
         with open(self.param_example) as file:
             self.options = yaml.load(file, Loader=yaml.FullLoader)
         self.options['co']['preprocess_subdiv'] = True

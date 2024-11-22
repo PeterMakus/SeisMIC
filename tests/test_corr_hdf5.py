@@ -17,6 +17,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 from unittest import mock
 import warnings
+import os
 
 from obspy import read, UTCDateTime
 from obspy.core import AttribDict
@@ -27,8 +28,11 @@ import yaml
 from seismic.db import corr_hdf5
 from seismic.correlate.stream import CorrStream, CorrTrace
 
+paramfile = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+            'params_example.yaml')
 
-with open('params_example.yaml') as file:
+with open(paramfile) as file:
     co = corr_hdf5.co_to_hdf5(
         yaml.load(file, Loader=yaml.FullLoader)['co'])
     co['corr_args']['combinations'] = []
