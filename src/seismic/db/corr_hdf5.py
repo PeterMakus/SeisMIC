@@ -132,7 +132,7 @@ class DBHandler(h5py.File):
         else:
             isequal = None
         print(tag, len(data), isequal, [tr.id for tr in data])
-        
+
         for tr in data:
             st = tr.stats
             path = hierarchy.format(

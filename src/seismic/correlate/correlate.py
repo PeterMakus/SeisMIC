@@ -497,8 +497,8 @@ class Correlator(object):
         ind = pmap == self.rank
         ind = np.arange(len(self.avail_raw_data))[ind]
         self.logger.debug("Core %d reading %s" % (
-                    self.rank, str(np.array(self.avail_raw_data)[ind])
-                ))
+            self.rank, str(np.array(self.avail_raw_data)[ind])
+        ))
         # Loop over read increments
         for t in tqdm(loop_window):
             write_flag = True  # Write length is same as read length
