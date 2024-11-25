@@ -4,18 +4,26 @@ UnitTests for the waveform module.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 15th March 2021 03:33:25 pm
-Last Modified: Tuesday, 19th November 2024 02:55:26 pm
+Last Modified: Monday, 25th November 2024 03:15:26 pm (J. Lehr)
 '''
 
 import unittest
 from unittest import mock
 import os
 import warnings
+import yaml
 
 import numpy as np
-from obspy import UTCDateTime
+from obspy import UTCDateTime, Inventory
 
 from seismic.trace_data import waveform
+
+
+paramfile = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+            'params_example.yaml')
+with open(paramfile, "r") as f:
+    config = yaml.load(f, Loader=yaml.FullLoader)
 
 
 class TestStoreClient(unittest.TestCase):
@@ -25,7 +33,7 @@ class TestStoreClient(unittest.TestCase):
         isdir_mock.return_value = True
         listdir_mock.return_value = False
         dir = os.path.join('%smy' % os.path.sep, 'random', 'dir')
-        self.outdir = dir
+        self.outdir = os.path.abspath(os.path.join(dir, waveform.DEFAULT_SDS))
         self.net = 'mynet'
         self.stat = 'mystat'
         self.sc = waveform.Store_Client('testclient', dir, read_only=True)
@@ -114,6 +122,29 @@ class TestStoreClient(unittest.TestCase):
     def test_no_available_data(self):
         with self.assertRaises(FileNotFoundError):
             self.sc.get_available_stations()
+
+
+
+class TestLocalStoreClient(TestStoreClient):
+    @mock.patch('seismic.trace_data.waveform.os.listdir')
+    @mock.patch('seismic.trace_data.waveform.os.path.isdir')
+    @mock.patch('seismic.trace_data.waveform.read_inventory')
+    # @mock.patch('seismic.trace_data.waveform.sds.os.path.isdir')
+    @mock.patch('obspy.clients.filesystem.sds.os.path.isdir')
+    # @mock.patch('seismic.trace_data.waveform.sds.Client')
+    def setUp(self, sds_exists_mock, read_inventory_mock, 
+              isdir_mock, listdir_mock, 
+              ):
+        isdir_mock.return_value = True
+        listdir_mock.return_value = False
+        read_inventory_mock.return_value = Inventory()
+        sds_exists_mock.return_value = True
+        self.outdir = config["sds_dir"]
+        self.net = 'mynet'
+        self.stat = 'mystat'
+        self.sc = waveform.Local_Store_Client(config)
+
+
 
 
 if __name__ == "__main__":

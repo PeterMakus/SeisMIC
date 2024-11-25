@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Tuesday, 19th November 2024 02:29:09 pm
+Last Modified: Monday, 25th November 2024 03:15:26 pm (J. Lehr)
 '''
 
 import fnmatch
@@ -22,23 +22,15 @@ import re
 import numpy as np
 from obspy.clients.fdsn import Client as rClient
 from obspy.clients.fdsn.header import FDSNNoDataException
-from obspy.clients.filesystem.sds import Client as lClient
+# from obspy.clients.filesystem.sds import Client as lClient
+from obspy.clients.filesystem import sds
 from obspy import read_inventory, UTCDateTime, read, Stream, Inventory
 from obspy.clients.fdsn.mass_downloader import RectangularDomain, \
     Restrictions, MassDownloader
 
 from seismic.utils.raw_analysis import spct_series_welch
 
-
-SDS_FMTSTR = os.path.join(
-    'mseed',
-    "{year}", "{network}", "{station}", "{channel}.{sds_type}",
-    "{network}.{station}.{location}.{channel}.{sds_type}.{year}.{doy:03d}")
-SDS_FMTSTR_alldoy = os.path.join(
-    'mseed',
-    "{year}", "{network}", "{station}", "{channel}.{sds_type}",
-    "{network}.{station}.{location}.{channel}.{sds_type}.{year}.*")
-
+DEFAULT_SDS = "./mseed"
 
 class Store_Client(object):
     """
@@ -50,7 +42,8 @@ class Store_Client(object):
     that is read.
     """
 
-    def __init__(self, Client: rClient, path: str, read_only: bool = False):
+    def __init__(self, Client: rClient, path: str, read_only: bool = False,
+                 sds_dir: str = DEFAULT_SDS):
         """
         Initialize the client
 
@@ -66,9 +59,11 @@ class Store_Client(object):
         assert os.path.isdir(path), "{} is not a directory".format(path)
         self.fileborder_seconds = 30
         self.fileborder_samples = 5000
-        self.sds_root = path
+        self.sds_root = get_abs_sds_path(path, sds_dir)
         if not read_only:
             os.makedirs(self.sds_root, exist_ok=True)
+        assert (os.path.isdir(self.sds_root), 
+                "{} is not a directory".format(self.sds_root))
         self.inv_dir = os.path.join(path, "inventory")
         if os.path.isdir(self.inv_dir) and os.listdir(self.inv_dir):
             self.inventory = self.read_inventory()
@@ -77,12 +72,13 @@ class Store_Client(object):
         if not read_only:
             os.makedirs(self.inv_dir, exist_ok=True)
         self.sds_type = "D"
-        self.lclient = lClient(
+        self.lclient = sds.Client(
             self.sds_root, sds_type=self.sds_type, format="MSEED",
             fileborder_seconds=self.fileborder_seconds,
             fileborder_samples=self.fileborder_samples)
         self.rclient = Client
         self.read_only = read_only
+        self.sds_fmtstr = self.lclient.FMTSTR
 
     def download_waveforms_mdl(
         self, starttime: UTCDateTime, endtime: UTCDateTime,
@@ -223,7 +219,7 @@ class Store_Client(object):
 
         # will be downloaded.
 
-        filename = SDS_FMTSTR.format(
+        filename = self.sds_fmtstr.format(
             network=network, station=station, location=location,
             channel=channel, year=starttime.year, doy=starttime.julday,
             sds_type=self.sds_type)
@@ -295,7 +291,8 @@ class Store_Client(object):
         """
         # Create one nested list
         path = os.path.join(self.sds_root,
-                            SDS_FMTSTR_alldoy.format(
+                            get_sdsfmtst_with_doy_as_wildcard(
+                                self.sds_fmtstr).format(
                                 network=network, station=station,
                                 location=location, channel=f'??{component}',
                                 year='*', sds_type=self.sds_type))
@@ -410,7 +407,7 @@ class Store_Client(object):
         """
         Write max 1 day long trace to SDS structure.
         """
-        filename = SDS_FMTSTR.format(
+        filename = self.sds_fmtstr.format(
             network=tr.stats.network, station=tr.stats.station,
             location=tr.stats.location, channel=tr.stats.channel,
             year=year, doy=julday, sds_type=self.sds_type)
@@ -516,6 +513,62 @@ class Store_Client(object):
             network, station, channel, starttime, endtime, read_increment)
         return spct_series_welch(
             data_gen, win_len, freq_max, remove_response=remove_response)
+
+
+class Local_Store_Client(Store_Client):
+    def __init__(self, config: dict):
+        
+        ## Create project dir
+        root = config["proj_dir"]
+        os.makedirs(root, exist_ok=True)        
+        
+        sds_root = get_abs_sds_path(root, config["sds_dir"])
+        assert (os.path.isdir(sds_root), 
+                "{} is not a directory".format(sds_root))
+        sdscl = sds.Client(sds_root)
+
+        fmt_str = config["sds_fmtstr"]
+        if fmt_str is None or fmt_str.lower() == "default":
+            fmt_str = sdscl.FMTSTR
+        # Could check if fmt_str has correct format
+        sdscl.FMTSTR = fmt_str
+        
+        super().__init__(sdscl, root, True, sds_root)
+        self.lclient = self.rclient
+        self.sds_root = self.rclient.sds_root
+        self.inv_dir = config["stationxml_file"]
+        self._set_inventory(config)
+        self.sds_fmtstr = self.lclient.FMTSTR
+
+
+    def _set_inventory(self, config):
+        _inv = read_inventory(config["stationxml_file"])
+        print("Channels in stationxml_file:", len(_inv.get_contents()["channels"]))
+        
+        _inv = _inv.select(starttime=UTCDateTime(config["co"]["read_start"]),
+                             endtime=UTCDateTime(config["co"]["read_end"]))
+        print("Channels in time range:", len(_inv.get_contents()["channels"]))
+        
+        inv = Inventory()
+        for n in config["net"]["network"]:
+            _inv_ = _inv.select(network=n)
+            print("Channels in netw", n, ":", 
+                  len(_inv_.get_contents()["channels"]))
+            for s in config["net"]["station"]:
+                inv += _inv_.select(station=s)
+        
+        print("Channels in selection:", len(inv.get_contents()["channels"]))
+        self.inventory = inv
+
+
+    def read_inventory(self):
+        return self.inventory
+
+    # def _load_remote(self, network: str, station: str, 
+    #                  location: str, channel: str, 
+    #                  starttime: UTCDateTime, endtime: UTCDateTime, 
+    #                  attach_response: bool) -> Stream:
+    #     raise RuntimeWarning("Local sds-client cannot download remote data.")
 
 
 class FS_Client(object):
@@ -875,3 +928,45 @@ def get_day_in_folder(
     if type == 'end':
         # +24*3600 because else it's the starttime of latest day
         return UTCDateTime(year=int(year), julday=int(julday[-1])) + 24*3600
+
+
+def get_sdsfmtst_with_doy_as_wildcard(
+        sds_fmtstr: str=sds.Client.FMTSTR) -> str:
+    """Replace doy placeholder in fmtstr by wildcard"""
+    return re.sub("\{doy.*\}", "*", sds_fmtstr)
+
+
+def get_abs_sds_path(proj_dir, sds_dir):
+    """
+    Get absolute path from two joined directories.
+
+    param proj_dir: Project root directory
+    type proj_dir: str
+    param sds_dir: path to sds root directory
+    type sds_dir: str
+
+    return: absolute path with expanded user variables from
+        `os.path.join(proj_dir, sds_dir)`
+    rtype: str 
+
+    Examples
+    ----------
+    SDS outside project directory
+    ```
+    proj_dir = "output"
+    sds_dir = "~/mysds"
+    print(get_abs_sds_path(proj_dir, sds_dir))
+    >>>> "/home/username/mysds"
+    ```
+
+    SDS relative to project directory
+    ```
+    proj_dir = "output"
+    sds_dir = "./mseed"
+    print(get_abs_sds_path(proj_dir, sds_dir))
+    >>>> "/home/username/path/to/output/mseed"
+    ```
+    """
+    return os.path.abspath(
+        os.path.join(os.path.expanduser(proj_dir), 
+                     os.path.expanduser(sds_dir)))

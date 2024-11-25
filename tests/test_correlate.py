@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Tuesday, 19th November 2024 02:54:23 pm
+Last Modified: Monday, 25th November 2024 03:15:26 pm (J. Lehr)
 '''
 from copy import deepcopy
 import unittest
@@ -18,13 +18,13 @@ import os
 import numpy as np
 from obspy import read, Stream, Trace, UTCDateTime
 from obspy.core import AttribDict
-from obspy.core.inventory.inventory import read_inventory
+from obspy.core.inventory.inventory import read_inventory, Inventory
 import yaml
 
 from seismic.correlate import correlate
 from seismic.correlate.stream import CorrStream
 from seismic.trace_data.waveform import Store_Client
-
+from seismic.trace_data import waveform
 
 paramfile = os.path.join(
             os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
@@ -78,6 +78,39 @@ class TestCorrrelator(unittest.TestCase):
         sc_mock.get_available_stations.return_value = []
         sc_mock._translate_wildcards.return_value = []
         c = correlate.Correlator(sc_mock, self.param_example)
+        self.assertDictEqual(self.options['co'], c.options)
+        mkdir_calls = [
+            mock.call(os.path.join(
+                self.options['proj_dir'], self.options['co']['subdir']),
+                exist_ok=True),
+            mock.call(os.path.join(
+                self.options['proj_dir'], self.options['log_subdir']),
+                exist_ok=True)]
+        makedirs_mock.assert_has_calls(mkdir_calls)
+        open_mock.assert_any_call(self.param_example)
+
+    @mock.patch('seismic.correlate.correlate.yaml.load')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    @mock.patch('seismic.trace_data.waveform.os.listdir')
+    @mock.patch('seismic.trace_data.waveform.os.path.isdir')
+    @mock.patch('seismic.trace_data.waveform.read_inventory')
+    @mock.patch('obspy.clients.filesystem.sds.os.path.isdir')
+    def test_init_without_storeclient(self, 
+            sds_exists_mock, read_inventory_mock,
+            isdir_mock, listdir_mock, 
+            makedirs_mock, logging_mock, open_mock, yaml_mock):
+        
+        yaml_mock.return_value = self.options
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = []
+        sc_mock._translate_wildcards.return_value = []
+        isdir_mock.return_value = True
+        listdir_mock.return_value = False
+        read_inventory_mock.return_value = Inventory()
+        sds_exists_mock.return_value = True
+        c = correlate.Correlator(None, self.param_example)
         self.assertDictEqual(self.options['co'], c.options)
         mkdir_calls = [
             mock.call(os.path.join(

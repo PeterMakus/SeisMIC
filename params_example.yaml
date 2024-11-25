@@ -8,6 +8,13 @@ log_subdir : 'log'
 log_level: 'WARNING'
 # folder for figures
 fig_subdir : 'figures'
+# Path to stationxml files if not downloaded
+stationxml_file : '/path/to/stations/*.xml'
+# sds root directory, default is "mseed"
+sds_dir : '/path/to/sds_root'
+# sds format string of waveform file names, 
+# change if your filenames deviate from standard pattern
+sds_fmtstr : '{year}/{network}/{station}/{channel}.{sds_type}/{network}.{station}.{location}.{channel}.{sds_type}.{year}.{doy:03d}'
 
 
 #### parameters that are network specific

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 19th November 2024 01:57:48 pm
+Last Modified: Monday, 25th November 2024 03:15:26 pm (J. Lehr)
 '''
 from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
@@ -30,7 +30,7 @@ from seismic.correlate.stream import CorrTrace, CorrStream
 from seismic.correlate import preprocessing_td as pptd
 from seismic.correlate import preprocessing_stream as ppst
 from seismic.db.corr_hdf5 import CorrelationDataBase, h5_FMTSTR
-from seismic.trace_data.waveform import Store_Client
+from seismic.trace_data.waveform import Store_Client, Local_Store_Client
 from seismic.utils.fetch_func_from_str import func_from_str
 from seismic.utils import miic_utils as mu
 
@@ -40,7 +40,7 @@ class Correlator(object):
     Object to manage the actual Correlation (i.e., Green's function retrieval)
     for the database.
     """
-    def __init__(self, store_client: Store_Client, options: dict | str):
+    def __init__(self, store_client: Store_Client | None, options: dict | str):
         """
         Initiates the Correlator object. When executing
         :func:`~seismic.correlate.correlate.Correlator.pxcorr()`, it will
@@ -141,6 +141,8 @@ class Correlator(object):
         # location = options['net']['location']
 
         # Store_Client
+        if store_client is None:
+            store_client = Local_Store_Client(options)
         self.store_client = store_client
 
         if isinstance(station, list) and len(station) == 1:
