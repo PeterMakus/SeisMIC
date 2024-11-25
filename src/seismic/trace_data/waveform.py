@@ -32,6 +32,7 @@ from seismic.utils.raw_analysis import spct_series_welch
 
 DEFAULT_SDS = "./mseed"
 
+
 class Store_Client(object):
     """
     Client for request and local storage of waveform data
@@ -62,8 +63,8 @@ class Store_Client(object):
         self.sds_root = get_abs_sds_path(path, sds_dir)
         if not read_only:
             os.makedirs(self.sds_root, exist_ok=True)
-        assert (os.path.isdir(self.sds_root), 
-                "{} is not a directory".format(self.sds_root))
+        assert os.path.isdir(self.sds_root), ("{} is not a directory").format(
+            self.sds_root)
         self.inv_dir = os.path.join(path, "inventory")
         if os.path.isdir(self.inv_dir) and os.listdir(self.inv_dir):
             self.inventory = self.read_inventory()
@@ -517,14 +518,13 @@ class Store_Client(object):
 
 class Local_Store_Client(Store_Client):
     def __init__(self, config: dict):
-        
-        ## Create project dir
+
+        # Create project dir
         root = config["proj_dir"]
-        os.makedirs(root, exist_ok=True)        
-        
+        os.makedirs(root, exist_ok=True)
         sds_root = get_abs_sds_path(root, config["sds_dir"])
-        assert (os.path.isdir(sds_root), 
-                "{} is not a directory".format(sds_root))
+        assert os.path.isdir(sds_root), "{} is not a directory".format(
+            sds_root)
         sdscl = sds.Client(sds_root)
 
         fmt_str = config["sds_fmtstr"]
@@ -532,7 +532,7 @@ class Local_Store_Client(Store_Client):
             fmt_str = sdscl.FMTSTR
         # Could check if fmt_str has correct format
         sdscl.FMTSTR = fmt_str
-        
+
         super().__init__(sdscl, root, True, sds_root)
         self.lclient = self.rclient
         self.sds_root = self.rclient.sds_root
@@ -540,33 +540,32 @@ class Local_Store_Client(Store_Client):
         self._set_inventory(config)
         self.sds_fmtstr = self.lclient.FMTSTR
 
-
     def _set_inventory(self, config):
         _inv = read_inventory(config["stationxml_file"])
-        print("Channels in stationxml_file:", len(_inv.get_contents()["channels"]))
-        
+        print("Channels in stationxml_file:",
+              len(_inv.get_contents()["channels"]))
+
         _inv = _inv.select(starttime=UTCDateTime(config["co"]["read_start"]),
-                             endtime=UTCDateTime(config["co"]["read_end"]))
+                           endtime=UTCDateTime(config["co"]["read_end"]))
         print("Channels in time range:", len(_inv.get_contents()["channels"]))
-        
+
         inv = Inventory()
         for n in config["net"]["network"]:
             _inv_ = _inv.select(network=n)
-            print("Channels in netw", n, ":", 
+            print("Channels in netw", n, ":",
                   len(_inv_.get_contents()["channels"]))
             for s in config["net"]["station"]:
                 inv += _inv_.select(station=s)
-        
+
         print("Channels in selection:", len(inv.get_contents()["channels"]))
         self.inventory = inv
-
 
     def read_inventory(self):
         return self.inventory
 
-    # def _load_remote(self, network: str, station: str, 
-    #                  location: str, channel: str, 
-    #                  starttime: UTCDateTime, endtime: UTCDateTime, 
+    # def _load_remote(self, network: str, station: str,
+    #                  location: str, channel: str,
+    #                  starttime: UTCDateTime, endtime: UTCDateTime,
     #                  attach_response: bool) -> Stream:
     #     raise RuntimeWarning("Local sds-client cannot download remote data.")
 
@@ -931,9 +930,9 @@ def get_day_in_folder(
 
 
 def get_sdsfmtst_with_doy_as_wildcard(
-        sds_fmtstr: str=sds.Client.FMTSTR) -> str:
+        sds_fmtstr: str = sds.Client.FMTSTR) -> str:
     """Replace doy placeholder in fmtstr by wildcard"""
-    return re.sub("\{doy.*\}", "*", sds_fmtstr)
+    return re.sub(r"\{doy.*\}", "*", sds_fmtstr)
 
 
 def get_abs_sds_path(proj_dir, sds_dir):
@@ -947,7 +946,7 @@ def get_abs_sds_path(proj_dir, sds_dir):
 
     return: absolute path with expanded user variables from
         `os.path.join(proj_dir, sds_dir)`
-    rtype: str 
+    rtype: str
 
     Examples
     ----------
@@ -968,5 +967,5 @@ def get_abs_sds_path(proj_dir, sds_dir):
     ```
     """
     return os.path.abspath(
-        os.path.join(os.path.expanduser(proj_dir), 
+        os.path.join(os.path.expanduser(proj_dir),
                      os.path.expanduser(sds_dir)))

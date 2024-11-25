@@ -124,7 +124,6 @@ class TestStoreClient(unittest.TestCase):
             self.sc.get_available_stations()
 
 
-
 class TestLocalStoreClient(TestStoreClient):
     @mock.patch('seismic.trace_data.waveform.os.listdir')
     @mock.patch('seismic.trace_data.waveform.os.path.isdir')
@@ -132,8 +131,8 @@ class TestLocalStoreClient(TestStoreClient):
     # @mock.patch('seismic.trace_data.waveform.sds.os.path.isdir')
     @mock.patch('obspy.clients.filesystem.sds.os.path.isdir')
     # @mock.patch('seismic.trace_data.waveform.sds.Client')
-    def setUp(self, sds_exists_mock, read_inventory_mock, 
-              isdir_mock, listdir_mock, 
+    def setUp(self, sds_exists_mock, read_inventory_mock,
+              isdir_mock, listdir_mock,
               ):
         isdir_mock.return_value = True
         listdir_mock.return_value = False
@@ -143,8 +142,6 @@ class TestLocalStoreClient(TestStoreClient):
         self.net = 'mynet'
         self.stat = 'mystat'
         self.sc = waveform.Local_Store_Client(config)
-
-
 
 
 if __name__ == "__main__":

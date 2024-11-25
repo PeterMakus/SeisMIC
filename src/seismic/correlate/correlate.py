@@ -10,7 +10,6 @@
 Created: Monday, 29th March 2021 07:58:18 am
 Last Modified: Monday, 25th November 2024 03:15:26 pm (J. Lehr)
 '''
-from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
 from warnings import warn
 import os
@@ -101,7 +100,7 @@ class Correlator(object):
         consoleHandler = logging.StreamHandler()
         consoleHandler.setFormatter(fmt)
         self.logger.addHandler(consoleHandler)
-        
+
         self.logger.debug("ID of core {:01d} is {:d}".format(
             self.rank, id(self.comm)))
 
@@ -116,8 +115,8 @@ class Correlator(object):
             #             t.format_fissures() for t in step['args']['starts']]
             #         step['args']['starts'] = startsstr
             #         if 'ends' in step['args']:
-            #             endsstr = [
-            #                 t.format_fissures() for t in step['args']['ends']]
+            #             endsstr = [t.format_fissures()
+            #                 for t in step['args']['ends']]
             #             step['args']['ends'] = endsstr
             with open(os.path.join(
                     logdir, 'params%s.txt' % tstr), 'w') as file:
@@ -520,7 +519,7 @@ class Correlator(object):
                     # No data for this station to read
                     continue
                 st = st.extend(stext)
-            
+
             self.logger.info("Core %d processes %d traces. Ids are %s" % (
                 self.rank, len(st), str([tr.id for tr in st])
             ))
@@ -648,7 +647,8 @@ class Correlator(object):
                         f'No new data for times {winstart}-{winend}')
                     continue
 
-                self.logger.debug('Core %d working on correlation times %s-%s of %d traces with ids %s' % (
+                self.logger.debug(('Core %d working on correlation'
+                                  + ' times %s-%s of %d traceswith ids %s') % (
                     self.rank,
                     str(win[0].stats.starttime), str(win[0].stats.endtime),
                     len(win), str([tr.id for tr in win])))

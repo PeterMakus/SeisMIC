@@ -24,11 +24,11 @@ import yaml
 from seismic.correlate import correlate
 from seismic.correlate.stream import CorrStream
 from seismic.trace_data.waveform import Store_Client
-from seismic.trace_data import waveform
 
 paramfile = os.path.join(
             os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
             'params_example.yaml')
+
 
 class TestCorrrelator(unittest.TestCase):
     def setUp(self):
@@ -45,8 +45,8 @@ class TestCorrrelator(unittest.TestCase):
     @mock.patch('builtins.open')
     @mock.patch('seismic.correlate.correlate.logging')
     @mock.patch('seismic.correlate.correlate.os.makedirs')
-    def test_filter_by_rcombis(
-        self, makedirs_mock, logging_mock, open_mock, yaml_mock):
+    def test_filter_by_rcombis(self, makedirs_mock, logging_mock,
+                               open_mock, yaml_mock):
         yaml_mock.return_value = self.options
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = []
@@ -97,11 +97,11 @@ class TestCorrrelator(unittest.TestCase):
     @mock.patch('seismic.trace_data.waveform.os.path.isdir')
     @mock.patch('seismic.trace_data.waveform.read_inventory')
     @mock.patch('obspy.clients.filesystem.sds.os.path.isdir')
-    def test_init_without_storeclient(self, 
-            sds_exists_mock, read_inventory_mock,
-            isdir_mock, listdir_mock, 
-            makedirs_mock, logging_mock, open_mock, yaml_mock):
-        
+    def test_init_without_storeclient(
+            self, sds_exists_mock, read_inventory_mock,
+            isdir_mock, listdir_mock, makedirs_mock,
+            logging_mock, open_mock, yaml_mock):
+
         yaml_mock.return_value = self.options
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = []
@@ -1053,7 +1053,6 @@ class TestGenCorrInc(unittest.TestCase):
 class TestCorrelatorFilterByRcombis(unittest.TestCase):
     def setUp(self):
         self.corr = correlate.Correlator(None, None)
-        
 
 
 if __name__ == "__main__":
