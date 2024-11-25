@@ -967,5 +967,5 @@ def get_abs_sds_path(proj_dir, sds_dir):
     ```
     """
     return os.path.abspath(
-        os.path.join(os.path.expanduser(proj_dir),
-                     os.path.expanduser(sds_dir)))
+        os.path.join(os.path.expanduser(os.fspath(proj_dir)),
+                     os.path.expanduser(os.fspath(sds_dir))))

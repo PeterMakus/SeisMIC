@@ -138,7 +138,8 @@ class TestLocalStoreClient(TestStoreClient):
         listdir_mock.return_value = False
         read_inventory_mock.return_value = Inventory()
         sds_exists_mock.return_value = True
-        self.outdir = config["sds_dir"]
+        self.outdir = os.path.abspath(os.path.expanduser(
+            os.fspath(config["sds_dir"])))
         self.net = 'mynet'
         self.stat = 'mystat'
         self.sc = waveform.Local_Store_Client(config)
