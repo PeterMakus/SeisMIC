@@ -8,9 +8,8 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 19th November 2024 01:57:48 pm
+Last Modified: Monday, 04th December 2024 03:07:26 pm (J. Lehr)
 '''
-from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
 from warnings import warn
 import os
@@ -30,7 +29,7 @@ from seismic.correlate.stream import CorrTrace, CorrStream
 from seismic.correlate import preprocessing_td as pptd
 from seismic.correlate import preprocessing_stream as ppst
 from seismic.db.corr_hdf5 import CorrelationDataBase, h5_FMTSTR
-from seismic.trace_data.waveform import Store_Client
+from seismic.trace_data.waveform import Store_Client, Local_Store_Client
 from seismic.utils.fetch_func_from_str import func_from_str
 from seismic.utils import miic_utils as mu
 
@@ -40,22 +39,21 @@ class Correlator(object):
     Object to manage the actual Correlation (i.e., Green's function retrieval)
     for the database.
     """
-    def __init__(self, store_client: Store_Client, options: dict or str):
+    def __init__(self, options: dict | str, store_client: Store_Client = None):
         """
         Initiates the Correlator object. When executing
         :func:`~seismic.correlate.correlate.Correlator.pxcorr()`, it will
         actually compute the correlations and save them in an hdf5 file that
         can be handled using
         :class:`~seismic.db.corr_hdf5.CorrelationDataBase`.
-        Data has to be preprocessed before calling this (i.e., the data already
-        has to be given in an ASDF format). Consult
-        :class:`~seismic.trace_data.preprocess.Preprocessor` for information on
-        how to proceed with this.
 
         :param options: Dictionary containing all options for the correlation.
             Can also be a path to a yaml file containing all the keys required
             in options.
         :type options: dict or str
+        :param store_client: Object that handles the data retrieval. If None,
+            a :class:`~seismic.trace_data.waveform.Local_Store_Client` will be
+            initiated. In this case all data has to be available locally.
         """
         if isinstance(options, str):
             with open(options) as file:
@@ -102,19 +100,23 @@ class Correlator(object):
         consoleHandler.setFormatter(fmt)
         self.logger.addHandler(consoleHandler)
 
+        self.logger.debug("ID of core {:01d} is {:d}".format(
+            self.rank, id(self.comm)))
+
         # Write the options dictionary to the log file
         if self.rank == 0:
-            opt_dump = deepcopy(options)
-            # json cannot write the UTCDateTime objects that might be in here
-            for step in opt_dump['co']['preProcessing']:
-                if 'stream_mask_at_utc' in step['function']:
-                    startsstr = [
-                        t.format_fissures() for t in step['args']['starts']]
-                    step['args']['starts'] = startsstr
-                    if 'ends' in step['args']:
-                        endsstr = [
-                            t.format_fissures() for t in step['args']['ends']]
-                        step['args']['ends'] = endsstr
+            opt_dump = mu.utcdatetime2str(options)
+            # opt_dump = deepcopy(options)
+            # # json cannot write the UTCDateTime objects that might be in here
+            # for step in opt_dump['co']['preProcessing']:
+            #     if 'stream_mask_at_utc' in step['function']:
+            #         startsstr = [
+            #             t.format_fissures() for t in step['args']['starts']]
+            #         step['args']['starts'] = startsstr
+            #         if 'ends' in step['args']:
+            #             endsstr = [t.format_fissures()
+            #                 for t in step['args']['ends']]
+            #             step['args']['ends'] = endsstr
             with open(os.path.join(
                     logdir, 'params%s.txt' % tstr), 'w') as file:
                 file.write(json.dumps(opt_dump, indent=1))
@@ -137,6 +139,8 @@ class Correlator(object):
         # location = options['net']['location']
 
         # Store_Client
+        if store_client is None:
+            store_client = Local_Store_Client(options)
         self.store_client = store_client
 
         if isinstance(station, list) and len(station) == 1:
@@ -491,7 +495,9 @@ class Correlator(object):
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
         ind = np.arange(len(self.avail_raw_data))[ind]
-
+        self.logger.debug("Core %d reading %s" % (
+            self.rank, str(np.array(self.avail_raw_data)[ind])
+        ))
         # Loop over read increments
         for t in tqdm(loop_window):
             write_flag = True  # Write length is same as read length
@@ -501,6 +507,9 @@ class Correlator(object):
 
             # loop over queried stations
             for net, stat, loc, cha in np.array(self.avail_raw_data)[ind]:
+                self.logger.debug("Core %d reading %s, %s, %s" % (
+                    self.rank, net, stat, cha
+                ))
                 # Load data
                 stext = self.store_client._load_local(
                     net, stat, loc, cha, startt, endt, True, False)
@@ -510,6 +519,9 @@ class Correlator(object):
                     continue
                 st = st.extend(stext)
 
+            self.logger.info("Core %d processes %d traces. Ids are %s" % (
+                self.rank, len(st), str([tr.id for tr in st])
+            ))
             # Stream based preprocessing
             # Downsampling
             # 04/04/2023 Downsample before preprocessing for performance
@@ -634,8 +646,11 @@ class Correlator(object):
                         f'No new data for times {winstart}-{winend}')
                     continue
 
-                self.logger.debug('Working on correlation times %s-%s' % (
-                    str(win[0].stats.starttime), str(win[0].stats.endtime)))
+                self.logger.debug(('Core %d working on correlation'
+                                  + ' times %s-%s of %d traceswith ids %s') % (
+                    self.rank,
+                    str(win[0].stats.starttime), str(win[0].stats.endtime),
+                    len(win), str([tr.id for tr in win])))
                 win = win.merge()
                 win = win.trim(winstart, winend, pad=True)
                 yield win, write_flag
@@ -652,7 +667,9 @@ class Correlator(object):
 
         # indices for traces to be worked on by each process
         ind = pmap == self.rank
-
+        self.logger.debug("Core %d working on indices %d-%d" % (
+            self.rank, ind[0], ind[-1]
+        ))
     ######################################
         corr_args = self.options['corr_args']
         # time domain pre-processing

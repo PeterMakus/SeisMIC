@@ -102,7 +102,7 @@ class DBHandler(h5py.File):
         ds.attrs['co'] = sco
 
     def add_correlation(
-            self, data: CorrTrace or CorrStream, tag='subdivision'):
+            self, data: CorrTrace | CorrStream, tag='subdivision'):
         """
         Add correlation data to the hdf5 file. Can be accessed using the
         :func:`~seismic.db.corr_hdf5.DBHandler.get_data()` method.
@@ -127,6 +127,12 @@ class DBHandler(h5py.File):
         if isinstance(data, CorrTrace):
             data = [data]
 
+        if len(data) == 2:
+            isequal = np.all(np.isclose(data[0].data, data[1].data))
+        else:
+            isequal = None
+        print(tag, len(data), isequal, [tr.id for tr in data])
+
         for tr in data:
             st = tr.stats
             path = hierarchy.format(
@@ -140,8 +146,9 @@ class DBHandler(h5py.File):
                     path, data=tr.data, compression=self.compression,
                     compression_opts=self.compression_opts)
                 convert_header_to_hdf5(ds, st)
+                print("Wrote", tag, tr.id, "to db.")
             except ValueError as e:
-                print(e)
+                print(tr.id, e)
                 warnings.warn("The dataset %s is already in file and will be \
 omitted." % path, category=UserWarning)
 
@@ -291,7 +298,7 @@ omitted." % path, category=UserWarning)
 
     def get_available_starttimes(
         self, network: str, station: str, tag: str, location: str,
-            channel: str or list = '*') -> dict:
+            channel: str | list = '*') -> dict:
         """
         Returns a dictionary with channel codes as keys and available
         correlation starttimes as values.
@@ -440,7 +447,7 @@ class CorrelationDataBase(object):
             self.path, self.mode, self.compression, self.co, self.force)
         return self.db_handler
 
-    def __exit__(self, exc_type, exc_value, tb) -> None or bool:
+    def __exit__(self, exc_type, exc_value, tb) -> None | bool:
         self.db_handler._close()
         if exc_type is not None:
             return False

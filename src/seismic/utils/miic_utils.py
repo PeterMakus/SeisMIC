@@ -127,8 +127,8 @@ def inv_calc_az_baz_dist(inv1: Inventory, inv2: Inventory) -> Tuple[
 
 
 def resample_or_decimate(
-    data: Trace or Stream, sampling_rate_new: int,
-        filter=True) -> Stream or Trace:
+    data: Trace | Stream, sampling_rate_new: int,
+        filter=True) -> Stream | Trace:
     """Decimates the data if the desired new sampling rate allows to do so.
     Else the signal will be interpolated (a lot slower).
 
@@ -294,7 +294,7 @@ def load_header_from_np_array(array_dict: dict) -> dict:
 
 
 def convert_utc_to_timestamp(
-        utcdt: UTCDateTime or List[UTCDateTime]) -> np.ndarray:
+        utcdt: UTCDateTime | List[UTCDateTime]) -> np.ndarray:
     """
     Converts :class:`obspy.core.utcdatetime.UTCDateTime` objects to floats.
 
@@ -565,3 +565,18 @@ def sort_combinations_alphabetically(
         netcomb, stacomb, loccomb, chacomb = ['-'.join([a, b]) for a, b in zip(
             sorted[0].split('.'), sorted[1].split('.'))]
     return netcomb, stacomb, loccomb, chacomb
+
+
+def utcdatetime2str(d: UTCDateTime | list | tuple | dict) -> str | list | dict:
+    """
+    Replace UTCDateTime object by str-representation in any object,
+    notably dicts, lists, utcdatetimes.
+    """
+    if isinstance(d, UTCDateTime):
+        return str(d)
+    elif isinstance(d, (list, tuple)):
+        return [utcdatetime2str(i) for i in d]
+    elif isinstance(d, dict):
+        return {k: utcdatetime2str(v) for k, v in d.items()}
+    else:
+        return d

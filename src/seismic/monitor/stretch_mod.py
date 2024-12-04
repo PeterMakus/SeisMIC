@@ -20,7 +20,7 @@ from seismic.monitor.trim import corr_mat_trim
 
 
 def time_windows_creation(
-        starting_list: list, t_width: List[int] or int) -> np.ndarray:
+        starting_list: list, t_width: List[int] | int) -> np.ndarray:
     """ Time windows creation.
 
     A matrix containing one time window for each row is created. The starting

@@ -25,7 +25,7 @@ from seismic.plot.plot_utils import set_mpl_params, remove_topright, remove_all
 
 
 def plot_ctr(
-    corr: Trace, tlim: list or tuple = None, ax: plt.Axes = None,
+    corr: Trace, tlim: list | tuple = None, ax: plt.Axes = None,
         outputdir: str = None, clean: bool = False) -> plt.Axes:
     set_mpl_params()
 
@@ -98,10 +98,10 @@ def plot_ctr(
 
 def plot_cst(
     cst: Stream, sort_by: str = 'corr_start',
-    timelimits: list or tuple or None = None,
-    ylimits: list or tuple or None = None, scalingfactor: float = 2.0,
+    timelimits: list | tuple | None = None,
+    ylimits: list | tuple | None = None, scalingfactor: float = 2.0,
     ax: plt.Axes = None, linewidth: float = 0.25,
-    outputfile: str or None = None, title: str or None = None,
+    outputfile: str | None = None, title: str | None = None,
     type: str = 'heatmap', cmap: str = 'seismic', vmin: float = None,
         vmax: float = None, **kwargs):
     """
@@ -299,11 +299,11 @@ def heat_plot_corr_start(
         data[ii, :] = ctr.data
         y.append(ctr.stats['corr_start'].datetime)
         times = ctr.times()
-    ds = plt.pcolormesh(
+    ds = ax.pcolormesh(
         times, np.array(y), data, shading='auto', cmap=cmap, vmin=vmin,
         vmax=vmax)
     plt.colorbar(
-        ds, label='Correlation Coefficient', shrink=.6,
+        ds, ax=ax, label='Correlation Coefficient', shrink=.6,
         orientation='horizontal')
     ax.yaxis.set_major_locator(mpl.dates.AutoDateLocator())
     ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%d %h %y'))

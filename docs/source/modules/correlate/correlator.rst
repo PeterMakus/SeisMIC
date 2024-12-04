@@ -17,10 +17,14 @@ The Correlator Object
 ---------------------
 
 The Object governing the actual computation is :py:class:`~seismic.correlate.correlate.Correlator`.
-It takes only two input arguments and the most important is the dictionary / yml file that we created in `the preceding step <./get_started.html#download-data>`_.
-The second input argument is the :py:class:`~seismic.trace_data.waveform.Store_Client` we used to `download <../trace_data/waveform.html#download-data>`_ our data.
+It takes only two input arguments and the most important is the dictionary / yml file that 
+we created in `the preceding step <./get_started.html#download-data>`_.
+The second input argument is the :py:class:`~seismic.trace_data.waveform.Store_Client` 
+we used to `download <../trace_data/waveform.html#download-data>`_ our data.
 
-As Computing Ambient Noise Correlations is computationally very expensive, **SeisMIC** can be used in conjuction with MPI (e.g., openMPI) to enable processing with several cores or on HPCs.
+As Computing Ambient Noise Correlations is computationally very expensive, 
+**SeisMIC** can be used in conjuction with MPI (e.g., openMPI) to enable processing 
+with several cores or on HPCs.
 
 A script to start your correlation could look like this:
 
@@ -43,18 +47,47 @@ A script to start your correlation could look like this:
     params = '/path/to/my/params.yaml'
     # You don't have to set this (could be None)
     client = Client('MYFDSN')
-    client.set_eida_token('/I/want/embargoed/data.txt)
+    client.set_eida_token('/I/want/embargoed/data.txt')
     # root is the same as proj_dir in params.yaml
     root = '/path/to/project/'
     sc = Store_Client(client, root)
 
-    c = Correlator(sc, options=params)
+    c = Correlator(options=params, store_client=sc)
     print('Correlator initiated')
     x = time()
     st = c.pxcorr()
     print('Correlation finished after', time()-x, 'seconds')
 
-This script can be iniated in bash using:
+
+If you did not download any data using **SeisMIC**, you can use the Correlator object
+without setting a :py:class:`~seismic.trace_data.waveform.Store_Client` object.
+In this case, the Correlator creates a :py:class:`~seismic.trace_data.waveform.Local_Store_Client` 
+object internally from `options`. The above script would then look like this:
+
+.. code-block:: python
+    :caption: mycorrelation_noclient.py
+    :linenos:
+
+    from time import time
+    import os
+    # This tells numpy to only use one thread
+    # As we use MPI this is necessary to avoid overascribing threads
+    os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
+    from seismic.correlate.correlate import Correlator
+
+    # Path to the paramter file we created in the step before
+    params = '/path/to/my/params.yaml'
+    
+    c = Correlator(options=params)
+    print('Correlator initiated')
+    x = time()
+    st = c.pxcorr()
+    print('Correlation finished after', time()-x, 'seconds')
+
+
+
+This script can be initiated in bash using:
 
 .. code-block:: bash
 
@@ -65,4 +98,4 @@ that you will want to use is :py:meth:`~seismic.correlate.correlate.Correlator.p
 
 .. note::
     On some MPI versions, the parameters are named differently. For example (`-n` could correspond to `-c`). When in doubt, refer to the help
-    or man page of your `mpirun` `mpiexec` command.
+    or man page of your `mpirun` or `mpiexec` command.
