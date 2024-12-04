@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 25th November 2024 03:15:26 pm (J. Lehr)
+Last Modified: Monday, 04th December 2024 03:07:26 pm (J. Lehr)
 '''
 from typing import Iterator, List, Tuple, Optional
 from warnings import warn
@@ -39,22 +39,21 @@ class Correlator(object):
     Object to manage the actual Correlation (i.e., Green's function retrieval)
     for the database.
     """
-    def __init__(self, store_client: Store_Client | None, options: dict | str):
+    def __init__(self, options: dict | str, store_client: Store_Client = None):
         """
         Initiates the Correlator object. When executing
         :func:`~seismic.correlate.correlate.Correlator.pxcorr()`, it will
         actually compute the correlations and save them in an hdf5 file that
         can be handled using
         :class:`~seismic.db.corr_hdf5.CorrelationDataBase`.
-        Data has to be preprocessed before calling this (i.e., the data already
-        has to be given in an ASDF format). Consult
-        :class:`~seismic.trace_data.preprocess.Preprocessor` for information on
-        how to proceed with this.
 
         :param options: Dictionary containing all options for the correlation.
             Can also be a path to a yaml file containing all the keys required
             in options.
         :type options: dict or str
+        :param store_client: Object that handles the data retrieval. If None,
+            a :class:`~seismic.trace_data.waveform.Local_Store_Client` will be
+            initiated. In this case all data has to be available locally.
         """
         if isinstance(options, str):
             with open(options) as file:

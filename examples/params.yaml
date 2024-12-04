@@ -8,6 +8,10 @@ log_subdir : 'log'
 log_level: 'WARNING'
 # folder for figures
 fig_subdir : 'figures'
+# Path to stationxml files if not downloaded
+stationxml_file : 'inventory/*.xml'
+# sds root directory, default is "mseed"
+sds_dir : 'mseed'
 
 
 #### parameters that are network specific
