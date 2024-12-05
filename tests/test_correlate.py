@@ -93,6 +93,20 @@ class TestCorrrelator(unittest.TestCase):
     @mock.patch('builtins.open')
     @mock.patch('seismic.correlate.correlate.logging')
     @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_deprecation_of_args(
+            self, makedirs_mock, logging_mock, open_mock, yaml_mock):
+        yaml_mock.return_value = self.options
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = []
+        sc_mock._translate_wildcards.return_value = []
+        # c = correlate.Correlator(sc_mock, self.param_example)
+        self.assertRaises(DeprecationWarning,
+                          correlate.Correlator, sc_mock, self.param_example)
+
+    @mock.patch('seismic.correlate.correlate.yaml.load')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logging')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
     @mock.patch('seismic.trace_data.waveform.os.listdir')
     @mock.patch('seismic.trace_data.waveform.os.path.isdir')
     @mock.patch('seismic.trace_data.waveform.read_inventory')
