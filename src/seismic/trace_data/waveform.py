@@ -22,7 +22,6 @@ import re
 import numpy as np
 from obspy.clients.fdsn import Client as rClient
 from obspy.clients.fdsn.header import FDSNNoDataException
-# from obspy.clients.filesystem.sds import Client as lClient
 from obspy.clients.filesystem import sds
 from obspy import read_inventory, UTCDateTime, read, Stream, Inventory
 from obspy.clients.fdsn.mass_downloader import RectangularDomain, \
@@ -30,7 +29,8 @@ from obspy.clients.fdsn.mass_downloader import RectangularDomain, \
 
 from seismic.utils.raw_analysis import spct_series_welch
 
-DEFAULT_SDS = "./mseed"
+DEFAULT_SDS = "mseed"
+DEFAULT_INVDIR = "inventory"
 
 
 class Store_Client(object):
@@ -42,7 +42,6 @@ class Store_Client(object):
     Inventory data is stored in the folder `inventory` and attached to data
     that is read.
     """
-
     def __init__(self, Client: rClient, path: str, read_only: bool = False,
                  sds_dir: str = DEFAULT_SDS):
         """
@@ -65,7 +64,7 @@ class Store_Client(object):
             os.makedirs(self.sds_root, exist_ok=True)
         assert os.path.isdir(self.sds_root), ("{} is not a directory").format(
             self.sds_root)
-        self.inv_dir = os.path.join(path, "inventory")
+        self.inv_dir = os.path.join(path, DEFAULT_INVDIR)
         if os.path.isdir(self.inv_dir) and os.listdir(self.inv_dir):
             self.inventory = self.read_inventory()
         else:
@@ -517,15 +516,50 @@ class Store_Client(object):
 
 
 class Local_Store_Client(Store_Client):
-    def __init__(self, config: dict):
+    """
+    Client to manage access to local data stored in an SDS-like structure.
 
+    In contrast to the regular Store_Client non-default names can be set for
+    paths to stationxml-files and sds-root directory. It does not provide
+    access to online data archives.
+
+    The client is initialized from a configuration dictionary that must contain
+    the following keys:
+    - proj_dir: path to the project directory
+    - co: dictionary with keys 'read_start' and 'read_end' for the time range
+    - net: dictionary with keys 'network' and 'station' for the selection
+
+    The following keys are accessed, if present:
+    - sds_dir: path to the sds root directory, defaults to 'mseed'
+    - stationxml_file: path to the stationxml file, defaults to
+        'inventory/*.xml'
+    - sds_fmtstr: format string for the sds structure, defaults to the sds
+    If not present, the default values are used.
+
+    Other keys are ignored. Thus, the configuration file for the entire
+    correlation setup can be used to initialize the client.
+    """
+    def __init__(self, config: dict):
+        """
+        param config: Configuration dictionary.
+        :type config: dict
+        """
         # Create project dir
         root = config["proj_dir"]
         os.makedirs(root, exist_ok=True)
+
+        # Set default values if params not set in config
+        if "sds_dir" not in config:
+            config["sds_dir"] = DEFAULT_SDS
+        if "stationxml_file" not in config:
+            config["stationxml_file"] = os.path.join(root, DEFAULT_INVDIR,
+                                                     "*.xml")
+        if "sds_fmtstr" not in config:
+            config["sds_fmtstr"] = None
         sds_root = get_abs_sds_path(root, config["sds_dir"])
         assert os.path.isdir(sds_root), "{} is not a directory".format(
             sds_root)
-        sdscl = sds.Client(sds_root)
+        sdscl = sds.Client(sds_root=sds_root)
 
         fmt_str = config["sds_fmtstr"]
         if fmt_str is None or fmt_str.lower() == "default":
@@ -533,41 +567,62 @@ class Local_Store_Client(Store_Client):
         # Could check if fmt_str has correct format
         sdscl.FMTSTR = fmt_str
 
+        self.sds_fmtstr = fmt_str
+        self.sds_root = sds_root
+
         super().__init__(sdscl, root, True, sds_root)
         self.lclient = self.rclient
-        self.sds_root = self.rclient.sds_root
-        self.inv_dir = config["stationxml_file"]
+
         self._set_inventory(config)
-        self.sds_fmtstr = self.lclient.FMTSTR
 
-    def _set_inventory(self, config):
-        _inv = read_inventory(config["stationxml_file"])
-        print("Channels in stationxml_file:",
-              len(_inv.get_contents()["channels"]))
+    def _set_inventory(self, config: dict):
+        """
+        Read inventory from file system based on parameters in config.
+        """
+        inv_all = read_inventory(config["stationxml_file"])
 
-        _inv = _inv.select(starttime=UTCDateTime(config["co"]["read_start"]),
-                           endtime=UTCDateTime(config["co"]["read_end"]))
-        print("Channels in time range:", len(_inv.get_contents()["channels"]))
+        inv_all = inv_all.select(
+            starttime=UTCDateTime(config["co"]["read_start"]),
+            endtime=UTCDateTime(config["co"]["read_end"]))
 
         inv = Inventory()
-        for n in config["net"]["network"]:
-            _inv_ = _inv.select(network=n)
-            print("Channels in netw", n, ":",
-                  len(_inv_.get_contents()["channels"]))
-            for s in config["net"]["station"]:
-                inv += _inv_.select(station=s)
+        networks = config["net"]["network"]
+        if isinstance(networks, str):
+            networks = [networks]
+        stations = config["net"]["station"]
+        if isinstance(stations, str):
+            stations = [stations]
 
-        print("Channels in selection:", len(inv.get_contents()["channels"]))
+        for n in networks:
+            inv_all_ = inv_all.select(network=n)
+            for s in stations:
+                inv += inv_all_.select(station=s)
+
         self.inventory = inv
 
     def read_inventory(self):
-        return self.inventory
+        """
+        Returns the inventory attribute if set, otherwise an empty inventory.
 
-    # def _load_remote(self, network: str, station: str,
-    #                  location: str, channel: str,
-    #                  starttime: UTCDateTime, endtime: UTCDateTime,
-    #                  attach_response: bool) -> Stream:
-    #     raise RuntimeWarning("Local sds-client cannot download remote data.")
+        It replaces the method of the parent class to mimick its behavior. The
+        method here does not actually read the inventory from the file system,
+        but returns the inventory object that was set during initialization
+        (or by calling :func:`~_set_inventory`).
+
+        :return: Inventory object
+        :rtype: Inventory
+        """
+        try:
+            return self.inventory
+        except AttributeError:
+            # Happens during super() and if default invdir is present but empty
+            return Inventory()
+        # return self.inventory
+
+    def download_waveforms_mdl(self, *args, **kwargs):
+        """Raises UserWarning that method is not implemented."""
+        raise UserWarning("Method not implemented for Local_Store_Client."
+                          + "Use Store_Client instead.")
 
 
 class FS_Client(object):
