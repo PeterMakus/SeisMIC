@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Monday, 9th December 2024 02:09:13 pm
+Last Modified: Monday, 9th December 2024 02:15:00 pm
 '''
 
 from copy import deepcopy
@@ -202,7 +202,9 @@ class DV(object):
                 Tuple[Tuple[int, int, float], Tuple[int, int, float]]] = None,
             limit_times_to_exclude: Optional[bool] = False):
         """
-        Smoothes the similarity matrix along the correlation time axis.
+        Computes new dv/v and coherence values based on a smoothed
+        version of the similarity matrix. The similarity matrix itself
+        remains unaltered, so that no information is lost.
 
         :param win_len: Length of the window in number of samples.
         :type win_len: int
@@ -210,11 +212,19 @@ class DV(object):
             coefficient below the chosen threshold. Defaults to None (i.e.,
             include all)
         :type exclude_corr_below: float
+        :param limit_times_to: Limit the data to certain times of the day
+            (e.g., (8, 0, 0), (16, 0, 0) for 8:00 to 16:00). Defaults to None
+            (i.e., include all).
+        :type limit_times_to: Tuple[Tuple[int, int, float],
+            Tuple[int, int, float]]
+        :param limit_times_to_exclude: Exclude the data points within the
+            chosen time frame. Defaults to False.
+        :type limit_times_to_exclude: bool
 
         :note::
 
-            This action is perfomed in-place and irreversible as the original
-            data are not accesible any more.
+            self.value and self.corr can always be repicked to obtain the
+            original (unsmoothed) values.
         """
         if exclude_corr_below is not None or limit_times_to is not None:
             # make sure that data is not overwritten
