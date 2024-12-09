@@ -8,10 +8,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Wednesday, 19th June 2024 04:07:10 pm
+Last Modified: Wednesday, 4th December 2024 04:13:33 pm
 '''
 
-from datetime import datetime
+from copy import deepcopy
+from datetime import datetime, time
 from glob import glob
 from typing import List, Tuple, Optional
 import warnings
@@ -195,7 +196,11 @@ class DV(object):
             dateformat=dateformat, ax=ax)
 
     def smooth_sim_mat(
-            self, win_len: int,  exclude_corr_below: Optional[float] = None):
+            self, win_len: int, 
+            exclude_corr_below: Optional[float] = None,
+            limit_times_to: Optional[
+                Tuple[Tuple[int, int, float], Tuple[int, int, float]]] = None,
+            limit_times_to_exclude: Optional[bool] = False):
         """
         Smoothes the similarity matrix along the correlation time axis.
 
@@ -211,14 +216,32 @@ class DV(object):
             This action is perfomed in-place and irreversible as the original
             data are not accesible any more.
         """
+        if exclude_corr_below is not None or limit_times_to is not None:
+            # make sure that data is not overwritten
+            sim_mat = deepcopy(self.sim_mat)
+        else:
+            sim_mat = self.sim_mat
         if exclude_corr_below is not None:
-            self.sim_mat[self.sim_mat < exclude_corr_below] = np.nan
-        self.sim_mat = mu.nan_moving_av(self.sim_mat, int(win_len/2), axis=0)
+            sim_mat[self.sim_mat < exclude_corr_below] = np.nan
+        if limit_times_to is not None:
+            start = time(*limit_times_to[0])
+            end = time(*limit_times_to[1])
+            corr_starts = np.array(
+                [st.time for st in self.stats.corr_start])
+            corr_ends = np.array(
+                [st.time for st in self.stats.corr_end])
+            mask = np.all(
+                (corr_starts >= start, corr_ends <= end), axis=0)
+            if limit_times_to_exclude:
+                mask = ~mask
+            sim_mat[~mask, :] = np.nan
+
+        sim_mat = mu.nan_moving_av(sim_mat, int(win_len/2), axis=0)
 
         # Compute the dependencies again
-        self.corr = np.nanmax(self.sim_mat, axis=1)
+        self.corr = np.nanmax(sim_mat, axis=1)
         self.value = self.second_axis[
-            np.argmax(np.nan_to_num(self.sim_mat), axis=1)]
+            np.argmax(np.nan_to_num(sim_mat), axis=1)]
         return self
 
 
