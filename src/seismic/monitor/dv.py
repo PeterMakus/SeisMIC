@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Wednesday, 4th December 2024 04:13:33 pm
+Last Modified: Monday, 9th December 2024 02:09:13 pm
 '''
 
 from copy import deepcopy
@@ -196,7 +196,7 @@ class DV(object):
             dateformat=dateformat, ax=ax)
 
     def smooth_sim_mat(
-            self, win_len: int, 
+            self, win_len: int,
             exclude_corr_below: Optional[float] = None,
             limit_times_to: Optional[
                 Tuple[Tuple[int, int, float], Tuple[int, int, float]]] = None,

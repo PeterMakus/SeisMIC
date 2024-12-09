@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 27th October 2021 12:58:15 pm
-Last Modified: Tuesday, 5th March 2024 03:01:56 pm
+Last Modified: Monday, 9th December 2024 02:07:22 pm
 '''
 
 import unittest
@@ -19,6 +19,7 @@ import warnings
 from zipfile import BadZipFile
 
 import numpy as np
+from obspy import UTCDateTime
 
 from seismic.monitor import dv
 from seismic.correlate.stats import CorrStats
@@ -30,15 +31,20 @@ class TestDV(unittest.TestCase):
         corr = np.max(sim_mat, axis=1)
         second_axis = np.random.random(50,)
         value = second_axis[np.argmax(sim_mat, axis=1)]
+        self.corr_starts = [
+            UTCDateTime(2021, 1, 1, 2*x, 0, 0) for x in range(10)]
+        self.corr_ends = [x+2 for x in self.corr_starts]
         self.dv = dv.DV(
-            corr, value, 'bla', sim_mat, second_axis, 'blub', {})
+            corr, value, 'bla', sim_mat, second_axis, 'blub',
+            CorrStats(
+                {'corr_start': self.corr_starts, 'corr_end': self.corr_ends}))
 
     @patch('seismic.monitor.dv.mu.save_header_to_np_array')
     @patch('seismic.monitor.dv.np.savez_compressed')
     def test_save(self, savez_mock, save_header_mock):
         save_header_mock.return_value = {}
         self.dv.save('/save/to/here')
-        save_header_mock.assert_called_once_with({})
+        save_header_mock.assert_called_once_with(self.dv.stats)
         savez_mock.assert_called_once_with(
             '/save/to/here',
             corr=self.dv.corr, value=self.dv.value, sim_mat=self.dv.sim_mat,
@@ -56,7 +62,7 @@ class TestDV(unittest.TestCase):
         self.dv.dv_processing = dict(
             freq_min=0, freq_max=1, tw_start=2, tw_len=3, sides='bla')
         self.dv.save('/save/to/here')
-        save_header_mock.assert_called_once_with({})
+        save_header_mock.assert_called_once_with(self.dv.stats)
         savez_mock.assert_called_once_with(
             '/save/to/here',
             corr=self.dv.corr, value=self.dv.value, sim_mat=self.dv.sim_mat,
@@ -77,7 +83,7 @@ class TestDV(unittest.TestCase):
         self.dv.dv_processing = dict(
             freq_min=0, freq_max=1, tw_start=2, tw_len=3)
         self.dv.save('/save/to/here')
-        save_header_mock.assert_called_once_with({})
+        save_header_mock.assert_called_once_with(self.dv.stats)
         savez_mock.assert_called_once_with(
             '/save/to/here',
             corr=self.dv.corr, value=self.dv.value, sim_mat=self.dv.sim_mat,
@@ -104,8 +110,21 @@ class TestDV(unittest.TestCase):
         dvc = deepcopy(self.dv)
         dvc.smooth_sim_mat(1, .5)
         ii = self.dv.sim_mat < .5
-        np.testing.assert_array_equal(dvc.sim_mat[ii], np.nan)
         np.testing.assert_allclose(dvc.sim_mat[~ii], self.dv.sim_mat[~ii])
+
+    def test_smooth_limit_times(self):
+        dvc = deepcopy(self.dv)
+        exp = deepcopy(self.dv.value[5])
+        dvc.smooth_sim_mat(10, limit_times_to=([9, 59, 0], [10, 5, 0]))
+        np.testing.assert_allclose(dvc.value, exp)
+    
+    def test_smooth_limit_times_exclude(self):
+        dvc = deepcopy(self.dv)
+        exp = np.nanmean(np.hstack((dvc.value[:4], dvc.value[6:])))
+        dvc.smooth_sim_mat(
+            10, limit_times_to=([9, 59, 0], [11, 5, 0]),
+            limit_times_to_exclude=True)
+        np.testing.assert_allclose(dvc.value, exp)
 
 
 class TestReadDV(unittest.TestCase):
