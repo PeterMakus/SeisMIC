@@ -127,11 +127,11 @@ class DBHandler(h5py.File):
         if isinstance(data, CorrTrace):
             data = [data]
 
-        if len(data) == 2:
-            isequal = np.all(np.isclose(data[0].data, data[1].data))
-        else:
-            isequal = None
-        print(tag, len(data), isequal, [tr.id for tr in data])
+        # if len(data) == 2:
+        #     isequal = np.all(np.isclose(data[0].data, data[1].data))
+        # else:
+        #     isequal = None
+        # print(tag, len(data), isequal, [tr.id for tr in data])
 
         for tr in data:
             st = tr.stats
@@ -146,7 +146,7 @@ class DBHandler(h5py.File):
                     path, data=tr.data, compression=self.compression,
                     compression_opts=self.compression_opts)
                 convert_header_to_hdf5(ds, st)
-                print("Wrote", tag, tr.id, "to db.")
+                # print("Wrote", tag, tr.id, "to db.")
             except ValueError as e:
                 print(tr.id, e)
                 warnings.warn("The dataset %s is already in file and will be \
