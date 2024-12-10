@@ -4,7 +4,7 @@ UnitTests for the waveform module.
 Author: Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 15th March 2021 03:33:25 pm
-Last Modified: Tuesday, 10th December 2024 04:10:33 pm
+Last Modified: Tuesday, 10th December 2024 04:26:09 pm
 '''
 
 import unittest
@@ -186,10 +186,10 @@ class TestLocalStoreClient(TestStoreClient):
 
                 sc = waveform.Local_Store_Client(test_config)
 
-                self.assertEqual(os.path.abspath(sc.sds_root),
+                self.assertEqual(sc.sds_root,
                                  os.path.join(
-                    os.path.abspath(test_config["proj_dir"]),
-                    os.path.abspath(test_config["sds_dir"])))
+                    test_config["proj_dir"],
+                    test_config["sds_dir"]))
                 self.assertIsInstance(sc.rclient, waveform.sds.Client)
                 self.assertIsInstance(sc.lclient, waveform.sds.Client)
                 mock_makedirs.assert_called_once_with(test_config["proj_dir"],
