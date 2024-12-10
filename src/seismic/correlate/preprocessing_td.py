@@ -10,7 +10,7 @@ Module that contains functions for preprocessing in the time domain
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:24:01 pm
-Last Modified: Thursday, 29th June 2023 11:15:56 am
+Last Modified: Wednesday, 27th November 2024 11:49:42 am
 '''
 from copy import deepcopy
 
@@ -133,9 +133,9 @@ def detrendqr(data: np.ndarray) -> np.ndarray:
     return data
 
 
-def demean(data: np.ndarray) -> np.ndarray:
+def demean(data: np.ndarray, args=None, params=None) -> np.ndarray:
     """
-    Demean data
+    Demean data.
 
     :param data: 1 or 2D array
     :type data: np.ndarray

@@ -27,6 +27,13 @@ with open(paramfile, "r") as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
 
 
+paramfile = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+            'params_example.yaml')
+with open(paramfile, "r") as f:
+    config = yaml.load(f, Loader=yaml.FullLoader)
+
+
 class TestStoreClient(unittest.TestCase):
     @mock.patch('seismic.trace_data.waveform.os.listdir')
     @mock.patch('seismic.trace_data.waveform.os.path.isdir')
