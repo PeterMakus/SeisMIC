@@ -16,8 +16,16 @@ from copy import deepcopy
 
 import numpy as np
 from obspy import UTCDateTime, Inventory, read_inventory
+
 from seismic.trace_data import waveform
 from seismic import trace_data
+
+
+paramfile = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+            'params_example.yaml')
+with open(paramfile, "r") as f:
+    config = yaml.load(f, Loader=yaml.FullLoader)
 
 
 paramfile = os.path.join(
