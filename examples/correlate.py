@@ -18,7 +18,7 @@ client = Client('GEOFON')
 root = 'data'
 sc = Store_Client(client, root)
 
-c = Correlator(options=params, store_client=sc)
+c = Correlator(options=params) #, store_client=sc)
 print('Correlator initiated')
 x = time()
 st = c.pxcorr()

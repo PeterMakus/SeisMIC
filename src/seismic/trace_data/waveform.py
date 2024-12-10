@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Monday, 25th November 2024 03:15:26 pm (J. Lehr)
+Last Modified: Tuesday, 10th December 2024 03:51:56 pm
 '''
 
 import fnmatch
@@ -552,8 +552,9 @@ class Local_Store_Client(Store_Client):
         if "sds_dir" not in config:
             config["sds_dir"] = DEFAULT_SDS
         if "stationxml_file" not in config:
-            config["stationxml_file"] = os.path.join(root, DEFAULT_INVDIR,
-                                                     "*.xml")
+            config["stationxml_file"] = os.path.join(DEFAULT_INVDIR,  "*.xml")
+        config["stationxml_file"] = get_abs_sds_path(
+            root, config["stationxml_file"])
         if "sds_fmtstr" not in config:
             config["sds_fmtstr"] = None
         sds_root = get_abs_sds_path(root, config["sds_dir"])
