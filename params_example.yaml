@@ -16,6 +16,18 @@ sds_dir : '/path/to/sds_root'
 # change if your filenames deviate from standard pattern
 sds_fmtstr : '{year}/{network}/{station}/{channel}.{sds_type}/{network}.{station}.{location}.{channel}.{sds_type}.{year}.{doy:03d}'
 
+#### parameters for the waveform database, if it was not downloaded
+#### Default values can be omitted
+#### Values without leading '/' are relative to proj_dir
+#### Values with leading '/' are absolute paths
+# Path to stationxml files, default is "inventory/*.xml"
+stationxml_file : '/path/to/stations/*.xml'
+# sds root directory, default is "mseed"
+sds_dir : '/path/to/sds_root'
+# sds format string of waveform file names, 
+# change if your filenames deviate from standard pattern
+sds_fmtstr : '{year}/{network}/{station}/{channel}.{sds_type}/{network}.{station}.{location}.{channel}.{sds_type}.{year}.{doy:03d}'
+
 
 #### parameters that are network specific
 net:

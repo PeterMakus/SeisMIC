@@ -58,6 +58,12 @@ class Correlator(object):
         if isinstance(options, str):
             with open(options) as file:
                 options = yaml.load(file, Loader=yaml.FullLoader)
+        elif isinstance(options, Store_Client):
+            raise DeprecationWarning(
+                "Order of arguments in Correlator has changed. "
+                + "The Store_Client has to be passed as the second argument. "
+                + "Can be None to init Local_Store_Client from options.")
+
         # init MPI
         self.comm = MPI.COMM_WORLD
         self.psize = self.comm.Get_size()
