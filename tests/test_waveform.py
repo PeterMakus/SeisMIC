@@ -152,8 +152,10 @@ class TestLocalStoreClient(TestStoreClient):
                 test_config = deepcopy(config)
                 sc = waveform.Local_Store_Client(test_config)
 
-                self.assertEqual(sc.sds_root, os.path.join(
-                    test_config["proj_dir"], test_config["sds_dir"]))
+                self.assertEqual(
+                    os.path.normpath(sc.sds_root), os.path.normpath(
+                        os.path.join(test_config["proj_dir"],
+                                     test_config["sds_dir"])))
                 self.assertIsInstance(sc.rclient, waveform.sds.Client)
                 self.assertIsInstance(sc.lclient, waveform.sds.Client)
                 mock_makedirs.assert_called_once_with(test_config["proj_dir"],
@@ -183,8 +185,10 @@ class TestLocalStoreClient(TestStoreClient):
 
                 sc = waveform.Local_Store_Client(test_config)
 
-                self.assertEqual(sc.sds_root, os.path.join(
-                    test_config["proj_dir"], test_config["sds_dir"]))
+                self.assertEqual(
+                    os.path.normpath(sc.sds_root), os.path.normpath(
+                        os.path.join(test_config["proj_dir"],
+                                     test_config["sds_dir"])))
                 self.assertIsInstance(sc.rclient, waveform.sds.Client)
                 self.assertIsInstance(sc.lclient, waveform.sds.Client)
                 mock_makedirs.assert_called_once_with(test_config["proj_dir"],
