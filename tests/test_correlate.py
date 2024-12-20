@@ -81,11 +81,12 @@ class TestCorrrelator(unittest.TestCase):
         self.assertDictEqual(self.options['co'], c.options)
         mkdir_calls = [
             mock.call(os.path.join(
-                self.options['proj_dir'], self.options['co']['subdir']),
+                self.options['proj_dir'], self.options['log_subdir']),
                 exist_ok=True),
             mock.call(os.path.join(
-                self.options['proj_dir'], self.options['log_subdir']),
-                exist_ok=True)]
+                self.options['proj_dir'], self.options['co']['subdir']),
+                exist_ok=True),
+            ]
         makedirs_mock.assert_has_calls(mkdir_calls)
         open_mock.assert_any_call(self.param_example)
 
@@ -128,8 +129,13 @@ class TestCorrrelator(unittest.TestCase):
         self.assertDictEqual(self.options['co'], c.options)
         mkdir_calls = [
             mock.call(os.path.join(
+                self.options['proj_dir'], self.options['log_subdir']),
+                exist_ok=True),
+            mock.call(os.path.join(
                 self.options['proj_dir'], self.options['co']['subdir']),
                 exist_ok=True),
+            mock.call(os.path.join(
+                self.options['proj_dir']), exist_ok=True),
             mock.call(os.path.join(
                 self.options['proj_dir'], self.options['log_subdir']),
                 exist_ok=True)]

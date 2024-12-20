@@ -35,9 +35,12 @@ with open(paramfile, "r") as f:
 
 
 class TestStoreClient(unittest.TestCase):
+    mock_logger = mock.create_autospec(waveform.logging.Logger)
+
+    @mock.patch.object(waveform.Store_Client, "set_logger")
     @mock.patch('seismic.trace_data.waveform.os.listdir')
     @mock.patch('seismic.trace_data.waveform.os.path.isdir')
-    def setUp(self, isdir_mock, listdir_mock):
+    def setUp(self, isdir_mock, listdir_mock, set_logger_mock):
         isdir_mock.return_value = True
         listdir_mock.return_value = False
         dir = os.path.join('%smy' % os.path.sep, 'random', 'dir')
@@ -45,6 +48,7 @@ class TestStoreClient(unittest.TestCase):
         self.net = 'mynet'
         self.stat = 'mystat'
         self.sc = waveform.Store_Client('testclient', dir, read_only=True)
+        self.sc.logger = self.mock_logger
 
     def test_not_in_db(self):
         with warnings.catch_warnings(record=True) as w:
@@ -133,12 +137,16 @@ class TestStoreClient(unittest.TestCase):
 
 
 class TestLocalStoreClient(TestStoreClient):
+    mock_logger = mock.create_autospec(waveform.logging.Logger)
+
     @mock.patch('seismic.trace_data.waveform.os.makedirs')
     @mock.patch('seismic.trace_data.waveform.os.path.isdir')
     @mock.patch('seismic.trace_data.waveform.os.listdir')
     @mock.patch.object(trace_data.waveform.Local_Store_Client,
                        "_set_inventory")
-    def test_init(self, mock_setinv,
+    @mock.patch.object(trace_data.waveform.Local_Store_Client,
+                       "set_logger")
+    def test_init(self, mock_setlog, mock_setinv,
                   mock_listdir, mock_isdir, mock_makedirs):
         mock_isdir.return_value = True
         mock_setinv.sife_effect = lambda x: x.__setattr__("inventory",
@@ -150,6 +158,10 @@ class TestLocalStoreClient(TestStoreClient):
                     m.reset_mock()
 
                 test_config = deepcopy(config)
+                mock_makedir_calls = [
+                    mock.call(test_config["proj_dir"], exist_ok=True),
+                    # mock.call(waveform.LOGDIR, exist_ok=True)
+                    ]
                 sc = waveform.Local_Store_Client(test_config)
 
                 self.assertEqual(
@@ -158,8 +170,7 @@ class TestLocalStoreClient(TestStoreClient):
                             test_config["proj_dir"], test_config["sds_dir"]))))
                 self.assertIsInstance(sc.rclient, waveform.sds.Client)
                 self.assertIsInstance(sc.lclient, waveform.sds.Client)
-                mock_makedirs.assert_called_once_with(test_config["proj_dir"],
-                                                      exist_ok=True)
+                mock_makedirs.assert_has_calls(mock_makedir_calls)
                 mock_setinv.assert_called_once()
                 self.assertTrue(hasattr(sc, "inventory"))
 
@@ -168,8 +179,11 @@ class TestLocalStoreClient(TestStoreClient):
     @mock.patch('seismic.trace_data.waveform.os.listdir')
     @mock.patch.object(trace_data.waveform.Local_Store_Client,
                        "_set_inventory")
+    @mock.patch.object(trace_data.waveform.Local_Store_Client,
+                       "set_logger")
     def test_init_without_default_paths(
-            self, mock_setinv, mock_listdir, mock_isdir, mock_makedirs):
+            self, mock_setlog, mock_setinv, mock_listdir, mock_isdir,
+            mock_makedirs):
         mock_isdir.return_value = True
         mock_setinv.sife_effect = lambda x: x.__setattr__("inventory",
                                                           Inventory())
@@ -182,6 +196,10 @@ class TestLocalStoreClient(TestStoreClient):
                 test_config = deepcopy(config)
                 for k in ["sds_dir", "stationxml_file", "sds_fmtstr"]:
                     test_config.pop(k)
+                mock_makedir_calls = [
+                    mock.call(test_config["proj_dir"], exist_ok=True),
+                    # mock.call(waveform.LOGDIR, exist_ok=True)
+                    ]
 
                 sc = waveform.Local_Store_Client(test_config)
 
@@ -191,8 +209,7 @@ class TestLocalStoreClient(TestStoreClient):
                             test_config["proj_dir"], test_config["sds_dir"]))))
                 self.assertIsInstance(sc.rclient, waveform.sds.Client)
                 self.assertIsInstance(sc.lclient, waveform.sds.Client)
-                mock_makedirs.assert_called_once_with(test_config["proj_dir"],
-                                                      exist_ok=True)
+                mock_makedirs.assert_has_calls(mock_makedir_calls)
                 mock_setinv.assert_called_once()
                 self.assertTrue(hasattr(sc, "inventory"))
                 self.assertTrue(all([
@@ -203,7 +220,9 @@ class TestLocalStoreClient(TestStoreClient):
     @mock.patch('seismic.trace_data.waveform.os.path.isdir')
     @mock.patch('seismic.trace_data.waveform.os.listdir')
     @mock.patch('seismic.trace_data.waveform.read_inventory')
-    def test__set_inventory(self, mock_readinv,
+    @mock.patch.object(trace_data.waveform.Local_Store_Client,
+                       "set_logger")
+    def test__set_inventory(self, mock_setlog, mock_readinv,
                             mock_listdir, mock_isdir, mock_makedirs):
         mock_readinv.return_value = read_inventory()
         mock_isdir.return_value = True
@@ -235,8 +254,11 @@ class TestLocalStoreClient(TestStoreClient):
     @mock.patch('seismic.trace_data.waveform.os.listdir')
     @mock.patch.object(trace_data.waveform.Local_Store_Client,
                        "_set_inventory")
+    @mock.patch.object(trace_data.waveform.Local_Store_Client,
+                       "set_logger")
     def test_read_inventory(
-            self, mock_setinv, mock_listdir, mock_isdir, mock_makedirs):
+            self, mock_setlog, mock_setinv, mock_listdir, mock_isdir,
+            mock_makedirs):
         mock_isdir.return_value = True
         mock_listdir.return_value = True
         sc = waveform.Local_Store_Client(deepcopy(config))

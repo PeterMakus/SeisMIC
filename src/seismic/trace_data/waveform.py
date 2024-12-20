@@ -18,6 +18,7 @@ import glob
 from typing import List, Tuple, Iterator
 import warnings
 import re
+import logging
 
 import numpy as np
 from obspy.clients.fdsn import Client as rClient
@@ -28,12 +29,19 @@ from obspy.clients.fdsn.mass_downloader import RectangularDomain, \
     Restrictions, MassDownloader
 
 from seismic.utils.raw_analysis import spct_series_welch
+from .. import logfactory
 
 DEFAULT_SDS = "mseed"
 DEFAULT_INVDIR = "inventory"
+LOGDIR = "log"
+DEFAULT_LOGPARAMS = dict(loglevel="WARNING", logdir=LOGDIR,
+                         filename_fmt=logfactory.FILENAME_FMT)
+
+parentlogger = logfactory.create_logger()
+module_logger = logging.getLogger(parentlogger.name+".waveform")
 
 
-class Store_Client(object):
+class Store_Client(logfactory.LoggingMPIBaseClass):
     """
     Client for request and local storage of waveform data
 
@@ -43,7 +51,8 @@ class Store_Client(object):
     that is read.
     """
     def __init__(self, Client: rClient, path: str, read_only: bool = False,
-                 sds_dir: str = DEFAULT_SDS):
+                 sds_dir: str = DEFAULT_SDS,
+                 logparams: dict = DEFAULT_LOGPARAMS):
         """
         Initialize the client
 
@@ -55,7 +64,13 @@ class Store_Client(object):
         :param path: path of the store's sds root directory
         :type read_only: Bool
         :param read_only: If True the local archive is not extended.
+        :param logparams: Variables passed to
+            :func:`~seismic.logfactory.LoggingMPIBaseClass.set_logger()`.
+            Keywords are "loglevel", "logdir" and filename_fmt.
+        :type logparams: dict [dict(loglevel="WARNING", logdir=LOGDIR,
+                         filename_fmt=logfactory.FILENAME_FMT)]
         """
+        super().__init__()
         assert os.path.isdir(path), "{} is not a directory".format(path)
         self.fileborder_seconds = 30
         self.fileborder_samples = 5000
@@ -79,6 +94,7 @@ class Store_Client(object):
         self.rclient = Client
         self.read_only = read_only
         self.sds_fmtstr = self.lclient.FMTSTR
+        self.set_logger(**logparams)
 
     def download_waveforms_mdl(
         self, starttime: UTCDateTime, endtime: UTCDateTime,
@@ -305,19 +321,19 @@ class Store_Client(object):
         """
         Load data from remote resouce
         """
-        print("Loading remotely.")
+        self.logger.info("Loading remotely.")
         try:
             st = self.rclient.get_waveforms(
                 network, station, location, channel, starttime, endtime)
         except FDSNNoDataException as e:
-            print(e)
+            self.logger.warning(e)
             return Stream()
         with warnings.catch_warnings():
             warnings.filterwarnings('error')
             try:
                 st.attach_response(self.inventory)
             except Warning:
-                print("Updating inventory.")
+                self.logger.warning("Updating inventory.")
                 ninv = self.rclient.get_stations(
                     network=network, station=station, channel=channel,
                     starttime=starttime, endtime=endtime, level='response')
@@ -381,7 +397,8 @@ class Store_Client(object):
         """
         inv = self.inventory.select(network=network, station=station)
         if not len(inv):
-            print('Station response not found ... loading from remote.')
+            self.logger.info(
+                'Station response not found ... loading from remote.')
             inv = self.rclient.get_stations(
                 network=network, station=station,
                 channel='*', level='response')
@@ -539,7 +556,7 @@ class Local_Store_Client(Store_Client):
     Other keys are ignored. Thus, the configuration file for the entire
     correlation setup can be used to initialize the client.
     """
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, logparams: dict = DEFAULT_LOGPARAMS):
         """
         param config: Configuration dictionary.
         :type config: dict
@@ -571,7 +588,7 @@ class Local_Store_Client(Store_Client):
         self.sds_fmtstr = fmt_str
         self.sds_root = sds_root
 
-        super().__init__(sdscl, root, True, sds_root)
+        super().__init__(sdscl, root, True, sds_root, logparams)
         self.lclient = self.rclient
 
         self._set_inventory(config)
@@ -751,8 +768,8 @@ def read_from_filesystem(
     # translate file structure string
     fpattern = _current_filepattern(ID, starttime, fs)
     if debug:
-        print('Searching for files matching: %s\n at time %s\n' %
-              (fpattern, starttime))
+        module_logger.debug('Searching for files matching: %s\n at time %s\n' %
+                            (fpattern, starttime))
     st = _read_filepattern(fpattern, starttime, endtime, trim, debug)
 
     # if trace starts too late have a look in the previous section
@@ -760,8 +777,8 @@ def read_from_filesystem(
             (st[0].stats.starttime-st[0].stats.delta).datetime > starttime):
         fpattern, _ = _adjacent_filepattern(ID, starttime, fs, -1)
         if debug:
-            print('Searching for files matching: %s\n at time %s\n' %
-                  (fpattern, starttime))
+            module_logger.debug('Searching for files matching: '
+                                + '%s\n at time %s\n' % (fpattern, starttime))
         st += _read_filepattern(fpattern, starttime, endtime, trim, debug)
         st.merge()
     thistime = starttime
@@ -769,8 +786,8 @@ def read_from_filesystem(
             thistime < endtime):
         fpattern, thistime = _adjacent_filepattern(ID, thistime, fs, 1)
         if debug:
-            print('Searching for files matching: %s\n at time %s\n' %
-                  (fpattern, thistime))
+            module_logger.debug('Searching for files matching: '
+                                + '%s\n at time %s\n' % (fpattern, thistime))
         if thistime == starttime:
             break
         st += _read_filepattern(fpattern, starttime, endtime, trim, debug)
@@ -778,10 +795,10 @@ def read_from_filesystem(
     if trim:
         st.trim(starttime=UTCDateTime(starttime), endtime=UTCDateTime(endtime))
     if debug:
-        print('Following IDs are in the stream: ')
+        module_logger.debug('Following IDs are in the stream: ')
         for tr in st:
-            print(tr.id)
-        print('Selecting %s' % ID)
+            module_logger.debug(tr.id)
+        module_logger.debug('Selecting %s' % ID)
     st = st.select(id=ID)
     return st
 
@@ -801,9 +818,9 @@ def _read_filepattern(
         endtimes.append(st[-1].stats.endtime.datetime)
     # now read the stream from the files that contain the period
     if debug:
-        print('Matching files:\n')
+        module_logger.debug('Matching files:\n')
         for (f, start, end) in zip(flist, starttimes, endtimes):
-            print('%s from %s to %s\n' % (f, start, end))
+            module_logger.debug('%s from %s to %s\n' % (f, start, end))
     st = Stream()
     for ind, fname in enumerate(flist):
         if (starttimes[ind] < endtime) and (endtimes[ind] > starttime):
@@ -816,7 +833,7 @@ def _read_filepattern(
     try:
         st.merge()
     except Exception:
-        print("Error merging traces for requested period!")
+        module_logger.warning("Error merging traces for requested period!")
         st = Stream()
     return st
 
