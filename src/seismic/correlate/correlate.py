@@ -82,8 +82,14 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             self.save_comps_separately = options['save_comps_separately']
         except KeyError:
             self.save_comps_separately = False
+
         logdir = os.path.join(self.proj_dir, options['log_subdir'])
         self.set_logger(options["log_level"], logdir)
+        warnlog = logging.getLogger('py.warnings')
+        warnlog.addHandler([h for h in self.logger.parent.handlers if
+                            isinstance(h, logging.FileHandler)][0])
+        self.logger.debug('Warn logger has handler: {}'.format(
+            warnlog.hasHandlers()))
 
         if self.rank == 0:
             os.makedirs(self.corr_dir, exist_ok=True)
