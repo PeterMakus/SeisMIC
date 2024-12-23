@@ -15,7 +15,7 @@ import json
 import logging
 import logging.handlers
 import os
-from typing import Generator, List, Tuple
+from typing import Generator, List, Tuple, Iterator
 import warnings
 import yaml
 import fnmatch
@@ -544,7 +544,7 @@ class Monitor(logfactory.LoggingMPIBaseClass):
 
     def compute_waveform_coherence(
         self, corr_file: str, tag: str, network: str, station: str, location,
-            channel: str) -> WFC:
+            channel: str) -> Iterator[WFC]:
         """
         Computes the waveform coherence corresponding to one correlation (i.e.,
         one single file).
