@@ -4,10 +4,10 @@ Module that contains functions for preprocessing on obspy streams
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-    EUROPEAN UNION PUBLIC LICENCE v. 1.2
-   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
+    `EUROPEAN UNION PUBLIC LICENCE v. 1.2
+    <https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12>`_
 :author:
-   Peter Makus (makus@gfz-potsdam.de)
+    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:47:00 pm
 Last Modified: Tuesday, 26th September 2023 05:42:28 pm
@@ -35,7 +35,7 @@ def cos_taper_st(
     :param lossless: Lossless tapering pads the trace's ends with a copy of
         the trace's data before tapering. Note that you will want to trim
         the trace later to remove this artificial ends.
-    type lossless: bool
+    :type lossless: bool
     :return: Tapered Stream
     :rtype: :class:`~obspy.core.stream.Stream`
 
@@ -70,7 +70,7 @@ def cos_taper(
     :param lossless: Lossless tapering pads the trace's ends with a copy of
         the trace's data before tapering. Note that you will want to trim
         the trace later to remove this artificial ends.
-    type lossless: bool
+    :type lossless: bool
     :return: Tapered Trace
     :rtype: Trace
 

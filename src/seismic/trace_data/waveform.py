@@ -2,10 +2,10 @@
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-    GNU Lesser General Public License, Version 3
-    (https://www.gnu.org/copyleft/lesser.html)
+    `GNU Lesser General Public License, Version 3
+    <https://www.gnu.org/copyleft/lesser.html>`_
 :author:
-   Peter Makus (makus@gfz-potsdam.de)
+    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
 Last Modified: Tuesday, 10th December 2024 03:51:56 pm
@@ -68,7 +68,7 @@ class Store_Client(logfactory.LoggingMPIBaseClass):
             :func:`~seismic.logfactory.LoggingMPIBaseClass.set_logger()`.
             Keywords are "loglevel", "logdir" and filename_fmt.
         :type logparams: dict [dict(loglevel="WARNING", logdir=LOGDIR,
-                         filename_fmt=logfactory.FILENAME_FMT)]
+            filename_fmt=logfactory.FILENAME_FMT)]
         """
         super().__init__()
         assert os.path.isdir(path), "{} is not a directory".format(path)
@@ -105,7 +105,9 @@ class Store_Client(logfactory.LoggingMPIBaseClass):
         channel: str | None = None, channel_priorities: List[str] = None,
             location_priorities: List[str] = None):
         """
-        Download data using the obspy's MassDownloader. For all args
+        Download data using the obspy's MassDownloader.
+
+        For all args
         except starttime and endtime, None is interpreted as a wildcard.
         Wildcards are generally allowed for all arguments except starttime
         and endtime. Channel and location priorities are given in the form
@@ -205,6 +207,7 @@ class Store_Client(logfactory.LoggingMPIBaseClass):
         :param network: Only return stations from this network.
             ``network==None`` is same as a wildcard. Defaults to None.
         :type network: str or None, optional
+
         :return: List of network and station codes in the form:
             `[[net0,stat0], [net1,stat1]]`.
         :rtype: list
@@ -257,6 +260,7 @@ class Store_Client(logfactory.LoggingMPIBaseClass):
         :type network: str
         :param station: station code
         :type station: str
+
         :return: (UTCDateTime, UTCDateTime)
         :rtype: tuple
         """
@@ -542,15 +546,17 @@ class Local_Store_Client(Store_Client):
 
     The client is initialized from a configuration dictionary that must contain
     the following keys:
-    - proj_dir: path to the project directory
-    - co: dictionary with keys 'read_start' and 'read_end' for the time range
-    - net: dictionary with keys 'network' and 'station' for the selection
+
+    * proj_dir: path to the project directory
+    * co: dictionary with keys 'read_start' and 'read_end' for the time range
+    * net: dictionary with keys 'network' and 'station' for the selection
 
     The following keys are accessed, if present:
-    - sds_dir: path to the sds root directory, defaults to 'mseed'
-    - stationxml_file: path to the stationxml file, defaults to
-        'inventory/*.xml'
-    - sds_fmtstr: format string for the sds structure, defaults to the sds
+
+    * sds_dir: path to the sds root directory, defaults to 'mseed'
+    * stationxml_file: path to stationxml file, defaults to `inventory/*.xml`
+    * sds_fmtstr: format string for the sds structure, defaults to the sds
+
     If not present, the default values are used.
 
     Other keys are ignored. Thus, the configuration file for the entire
@@ -712,7 +718,7 @@ def read_from_filesystem(
     one of the following:
 
     - %X as defined by datetime.strftime indicating an element of t
-        the time. e.g. %H
+      the time. e.g. %H
     - %NET: network name or %net for lower case network name
     - %STA: station name or %sta for lower case
     - %CHA: channel name or %cha for lower case
@@ -970,10 +976,12 @@ def get_day_in_folder(
     :type channel: str
     :param type: either ``start`` or ``end``
     :type type: str
-    :raises NotImplementedError: Unknown argument for type
-    :raises FileNotFoundError: No files in db
+
     :return: The earliest starttime or latest endtime in utc
     :rtype: UTCDateTime
+
+    :raises NotImplementedError: Unknown argument for type
+    :raises FileNotFoundError: No files in db
     """
     if type == 'start':
         i0 = 0
@@ -1017,27 +1025,29 @@ def get_abs_sds_path(proj_dir, sds_dir):
     param sds_dir: path to sds root directory
     type sds_dir: str
 
-    return: absolute path with expanded user variables from
+    :return: absolute path with expanded user variables from
         `os.path.join(proj_dir, sds_dir)`
-    rtype: str
+    :rtype: str
 
     Examples
     ----------
     SDS outside project directory
-    ```
-    proj_dir = "output"
-    sds_dir = "~/mysds"
-    print(get_abs_sds_path(proj_dir, sds_dir))
-    >>>> "/home/username/mysds"
-    ```
+
+    .. code-block:: python
+
+        proj_dir = "output"
+        sds_dir = "~/mysds"
+        print(get_abs_sds_path(proj_dir, sds_dir))
+        >>>> "/home/username/mysds"
 
     SDS relative to project directory
-    ```
-    proj_dir = "output"
-    sds_dir = "./mseed"
-    print(get_abs_sds_path(proj_dir, sds_dir))
-    >>>> "/home/username/path/to/output/mseed"
-    ```
+
+    .. code-block:: python
+
+        proj_dir = "output"
+        sds_dir = "./mseed"
+        print(get_abs_sds_path(proj_dir, sds_dir))
+        >>>> "/home/username/path/to/output/mseed"
     """
     return os.path.abspath(
         os.path.join(os.path.expanduser(os.fspath(proj_dir)),

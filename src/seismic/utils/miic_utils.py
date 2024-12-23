@@ -2,8 +2,8 @@
 :copyright:
    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-    EUROPEAN UNION PUBLIC LICENCE v. 1.2
-   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
+    `EUROPEAN UNION PUBLIC LICENCE v. 1.2
+    <https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12>`_
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
@@ -441,7 +441,7 @@ def nan_helper(y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         can be called to translate the first output to indices.
     :rtype: Tuple[np.ndarray, np.ndarray]
 
-    .. example::
+    :Example:
 
             >>> # linear interpolation of NaNs
             >>> nans, x = nan_helper(y)

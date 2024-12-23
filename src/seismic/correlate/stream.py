@@ -4,10 +4,10 @@ Manage objects holding correlations.
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-    EUROPEAN UNION PUBLIC LICENCE v. 1.2
-   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
+    `EUROPEAN UNION PUBLIC LICENCE v. 1.2
+    <https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12>`_
 :author:
-   Peter Makus (makus@gfz-potsdam.de)
+    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
 Last Modified: Wednesday, 19th June 2024 04:06:21 pm
@@ -1604,7 +1604,7 @@ def stack_st_by_group(
     :type regard_loc: bool
     :param norm_traces: norm each trace by its maximum before stacking.
             Defaults to false
-        :type norm_traces: bool, optional
+    :type norm_traces: bool, optional
     :return: :class:`~seismic.correlate.stream.CorrStream`
     :rtype: CorrStream
     """
