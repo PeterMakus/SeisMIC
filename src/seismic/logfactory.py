@@ -1,8 +1,19 @@
+'''
+:copyright:
+    The SeisMIC development team (makus@gfz-potsdam.de).
+:license:
+    `EUROPEAN UNION PUBLIC LICENCE v. 1.2
+    <https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12>`_
+:author:
+   Johanna Lehr (jlehr@gfz.de)
+
+Created: Friday, 20th December 2024 14:00:00 pm
+Last Modified: Monday, 23rd December 2024 11:34:00 pm
+'''
 import logging
 import os
 from datetime import datetime
 from mpi4py import MPI
-# import logging.handlers
 
 
 cformatter = logging.Formatter(
@@ -103,6 +114,25 @@ def remove_duplicate_handlers(logger):
 
 
 class LoggingMPIBaseClass():
+    """
+    Class for logging with MPI support.
+
+    This class is intended to be used as a base class for classes that need
+    a logger with MPI support. It provides a logger with default handlers which
+    log to a file and to the console.
+    The filename is created using the class name, the rank of the MPI process
+    and the current time. Each process has its own log file.
+
+    .. note:: For developers:
+        This class serves as base class for classes that need a logger, such as
+        :class:`seismic.correlate.correlate.Correlator` or
+        class:`seismic.monitor.Monitor`. It must be initialized early in the
+        __init__() function of the derived class. The logger is set up with the
+        function :func:`set_logger`. In the child classes it is recommened to
+        derive the arguments of :func:`set_logger` from the user parameters
+        dict (or yaml file), e.g. the log level and directory. The filename
+        format is currently fixed and not derived from the user parameters.
+    """
     def __init__(self):
         # init MPI
         self.comm = MPI.COMM_WORLD
