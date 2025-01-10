@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 04th December 2024 03:07:26 pm (J. Lehr)
+Last Modified: Friday, 10th January 2025 10:14:58 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from warnings import warn
@@ -554,7 +554,7 @@ class Correlator(object):
                     st = preprocess_stream(
                         st, self.store_client, startt, endt, tl,
                         **self.options)
-                except ValueError as e:
+                except Exception as e:
                     self.logger.error(
                         'Stream preprocessing failed for '
                         f'{st[0].stats.network}.{st[0].stats.station} and time'
@@ -623,7 +623,7 @@ class Correlator(object):
                         win = preprocess_stream(
                             win, self.store_client, winstart, winend,
                             tl, **self.options)
-                    except ValueError as e:
+                    except Exception as e:
                         if st.count():
                             self.logger.error(
                                 'Stream preprocessing failed for '
