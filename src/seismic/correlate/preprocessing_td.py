@@ -10,7 +10,7 @@ Module that contains functions for preprocessing in the time domain
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:24:01 pm
-Last Modified: Wednesday, 27th November 2024 11:49:42 am
+Last Modified: Friday, 10th January 2025 01:29:21 pm
 '''
 from copy import deepcopy
 
@@ -324,7 +324,7 @@ def taper(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     if args['type'] == 'cosine_taper':
         func = osignal.invsim.cosine_taper
     else:
-        func = getattr(signal, args['type'])
+        func = getattr(signal.windows, args['type'])
     args = deepcopy(args)
     args.pop('type')
     tap = func(A.shape[1], **args)
