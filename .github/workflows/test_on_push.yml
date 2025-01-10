@@ -14,7 +14,7 @@ jobs:
         with:
           activate-environment: seismic
           environment-file: environment.yml
-          python-version: '3.10'
+          python-version: '3.12'
           auto-activate-base: false
       - shell: bash -l {0}
         run: |
