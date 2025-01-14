@@ -8,10 +8,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Tuesday, 10th December 2024 03:51:56 pm
+Last Modified: Tuesday, 14th January 2025 02:00:04 pm
 '''
 
 import fnmatch
+import logging
 import os
 import datetime
 import glob
@@ -20,6 +21,7 @@ import warnings
 import re
 
 import numpy as np
+import obspy
 from obspy.clients.fdsn import Client as rClient
 from obspy.clients.fdsn.header import FDSNNoDataException
 from obspy.clients.filesystem import sds
@@ -340,6 +342,9 @@ class Store_Client(object):
             st = self.lclient.get_waveforms(
                 network, station, location, channel, starttime, endtime)
         except OSError:
+            return None
+        except obspy.io.mseed.internalMSEEDError as e:
+            logging.warning(str(e))
             return None
         # Making sure that the order is correct for the next bit to work
         st.sort(['starttime'])
