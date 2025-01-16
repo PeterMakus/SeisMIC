@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Tuesday, 14th January 2025 02:00:04 pm
+Last Modified: Thursday, 16th January 2025 04:35:52 pm
 '''
 
 import fnmatch
@@ -343,7 +343,7 @@ class Store_Client(object):
                 network, station, location, channel, starttime, endtime)
         except OSError:
             return None
-        except obspy.io.mseed.internalMSEEDError as e:
+        except obspy.io.mseed.InternalMSEEDError as e:
             logging.warning(str(e))
             return None
         # Making sure that the order is correct for the next bit to work
