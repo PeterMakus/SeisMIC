@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 10th January 2025 10:14:58 am
+Last Modified: Thursday, 23rd January 2025 10:04:25 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from warnings import warn
@@ -519,7 +519,11 @@ class Correlator(object):
                 # Load data
                 stext = self.store_client._load_local(
                     net, stat, loc, cha, startt, endt, True, False)
-                mu.get_valid_traces(stext)
+                try:
+                    mu.get_valid_traces(stext)
+                except TypeError:
+                    # stext is None
+                    continue
                 if stext is None or not len(stext):
                     # No data for this station to read
                     continue
