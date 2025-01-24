@@ -6,7 +6,6 @@ jobs:
     strategy:
         matrix:
             os: ["ubuntu-latest", "windows-latest"]
-            PYTHON: '3.12'
     env:
       PYTHON: '3.12'
     steps:
