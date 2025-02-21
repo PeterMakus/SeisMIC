@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 23rd January 2025 10:04:25 am
+Last Modified: Friday, 21st February 2025 02:34:32 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from warnings import warn
@@ -532,6 +532,11 @@ class Correlator(object):
             self.logger.info("Core %d processes %d traces. Ids are %s" % (
                 self.rank, len(st), str([tr.id for tr in st])
             ))
+
+            # The stream has to be tapered ebfore decimating!
+            # (Filter operation), added a taper here on 2025/02/21
+            st = ppst.detrend_st(st, 'linear')
+            st = mu.cos_taper_st(st, tl, False, False)
             # Stream based preprocessing
             # Downsampling
             # 04/04/2023 Downsample before preprocessing for performance
