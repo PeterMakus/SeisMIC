@@ -90,7 +90,7 @@ class TestCorrrelator(unittest.TestCase):
                 exist_ok=True),
             ]
         makedirs_mock.assert_has_calls(mkdir_calls)
-        open_mock.assert_any_call(self.param_example)
+        open_mock.assert_has_calls([mock.call(file=self.param_example)])
 
     @mock.patch('seismic.correlate.correlate.yaml.load')
     @mock.patch('builtins.open')
@@ -142,7 +142,7 @@ class TestCorrrelator(unittest.TestCase):
                 self.options['proj_dir'], self.options['log_subdir']),
                 exist_ok=True)]
         makedirs_mock.assert_has_calls(mkdir_calls)
-        open_mock.assert_any_call(self.param_example)
+        open_mock.assert_has_calls([mock.call(file=self.param_example)])
 
     @mock.patch('builtins.open')
     @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
