@@ -8,7 +8,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Thursday, 16th January 2025 04:35:52 pm
+Last Modified: Tuesday, 25th Febuary 2025 03:25:00 pm
 '''
 
 import fnmatch
@@ -19,7 +19,6 @@ import glob
 from typing import List, Tuple, Iterator
 import warnings
 import re
-import logging
 
 import numpy as np
 import obspy
