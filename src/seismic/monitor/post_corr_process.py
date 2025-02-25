@@ -9,7 +9,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Wednesday, 4th October 2023 09:29:49 am
+Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)
 '''
 
 from typing import List, Tuple, Optional
@@ -28,6 +28,11 @@ from seismic.monitor.stretch_mod import multi_ref_vchange_and_align, \
 from seismic.correlate.stats import CorrStats
 from seismic.monitor.dv import DV
 from seismic.monitor.trim import corr_mat_trim
+from .. import logfactory
+import logging
+
+parentlogger = logfactory.create_logger()
+module_logger = logging.getLogger(parentlogger.name+".post_corr_process")
 
 
 def corr_mat_clip(A: np.ndarray, thres: float, axis: int) -> np.ndarray:
@@ -422,10 +427,12 @@ def corr_mat_normalize(
 
     # check range
     if start and start < 0:
-        print('Error: starttime before beginning of trace. Data not changed.')
+        module_logger.warning(
+            'Error: starttime before beginning of trace. Data not changed.')
         return data
     if end and end >= stats['npts']:
-        print('Error: endtime after end of trace. Data not changed.')
+        module_logger.warning(
+            'Error: endtime after end of trace. Data not changed.')
         return data
 
     # calculate normalization factors
@@ -463,13 +470,15 @@ def corr_mat_mirror(data: np.ndarray, stats: CorrStats) -> Tuple[
     zero_sample = -(stats['start_lag']*stats['sampling_rate'])
 
     if zero_sample <= 0:
-        print('No data present for mirroring: starttime > zerotime.')
+        module_logger.debug(
+            'No data present for mirroring: starttime > zerotime.')
         return data, stats
     if stats['end_lag'] <= 0:
-        print('No data present for mirroring: endtime < zerotime.')
+        module_logger.debug(
+            'No data present for mirroring: endtime < zerotime.')
         return data, stats
     if np.fmod(zero_sample, 1) != 0:
-        print('need to shift for mirroring')
+        module_logger.debug('need to shift for mirroring')
         return 0
 
     # estimate size of mirrored array

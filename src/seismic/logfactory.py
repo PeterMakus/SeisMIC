@@ -8,7 +8,7 @@
    Johanna Lehr (jlehr@gfz.de)
 
 Created: Friday, 20th December 2024 14:00:00 pm
-Last Modified: Monday, 23rd December 2024 11:34:00 pm
+Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm
 '''
 import logging
 import os
@@ -38,7 +38,7 @@ def create_logger() -> logging.Logger:
         if __package__ is None and __name__ != "__main__":
             loggername = __name__.split('.')[0]
         elif __package__ == "":
-            loggername = "ll"
+            loggername = "seismic"
         else:
             loggername = __package__
     except UnboundLocalError:

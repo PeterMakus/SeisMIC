@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Monday, 04th December 2024 03:07:26 pm (J. Lehr)
+Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)
 '''
 from typing import Iterator, List, Tuple, Optional
 from warnings import warn
@@ -64,7 +64,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             initiated. In this case all data has to be available locally.
         """
         if isinstance(options, str):
-            with open(options) as file:
+            with open(file=options) as file:
                 options = yaml.load(file, Loader=yaml.FullLoader)
         elif isinstance(options, Store_Client):
             raise DeprecationWarning(
@@ -1381,7 +1381,8 @@ def preprocess_stream(
         try:
             st.remove_response(taper=False, inventory=inv)
         except ValueError:
-            print('Station response not found ... loading from remote.')
+            module_logger.warning('Station response not found ... loading'
+                                  + ' from remote.')
             # missing station response
             ninv = store_client.rclient.get_stations(
                 network=st[0].stats.network, station=st[0].stats.station,
@@ -1394,8 +1395,10 @@ def preprocess_stream(
     if inv:
         try:
             mu.correct_polarity(st, inv)
-        except Exception as e:
-            print(e)
+        except Exception:
+            module_logger.error(
+                "Exception while checking polarity of inventory ...",
+                exc_info=True)
 
     mu.discard_short_traces(st, subdivision['corr_len']/20)
 

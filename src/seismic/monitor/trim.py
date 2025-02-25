@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th November 2022 05:15:30 pm
-Last Modified: Monday, 16th January 2023 11:14:37 am
+Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)
 '''
 
 from typing import Tuple
@@ -16,6 +16,12 @@ from typing import Tuple
 import numpy as np
 
 from seismic.correlate.stats import CorrStats
+
+from .. import logfactory
+import logging
+
+parentlogger = logfactory.create_logger()
+module_logger = logging.getLogger(parentlogger.name + '.trim')
 
 
 def corr_mat_trim(
@@ -47,10 +53,12 @@ def corr_mat_trim(
 
     # check range
     if start < 0:
-        print('Error: starttime before beginning of trace. Data not changed')
+        module_logger.warning(
+            'Error: starttime before beginning of trace. Data not changed')
         return data, stats
     if end >= stats['npts']:
-        print('Error: endtime after end of trace. Data not changed')
+        module_logger.warning(
+            'Error: endtime after end of trace. Data not changed')
         return data, stats
 
     # select requested part from matrix
