@@ -10,7 +10,7 @@ Manage objects holding correlations.
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Wednesday, 19th June 2024 04:06:21 pm
+Last Modified: Friday, 10th January 2025 01:32:08 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from copy import deepcopy
@@ -425,7 +425,8 @@ class CorrBulk(object):
         :rtype: DV
         """
         warnings.warn(
-            'This function is deprecated. Use measure_shift instead.',
+            'This function is deprecated. Use measure_shift instead.'
+            ' This function will be removed in version 0.7.x',
             DeprecationWarning)
         if ref_trc is None:
             ref_trc = self.ref_trc

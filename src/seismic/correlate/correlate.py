@@ -509,7 +509,11 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 # Load data
                 stext = self.store_client._load_local(
                     net, stat, loc, cha, startt, endt, True, False)
-                mu.get_valid_traces(stext)
+                try:
+                    mu.get_valid_traces(stext)
+                except TypeError:
+                    # stext is None
+                    continue
                 if stext is None or not len(stext):
                     # No data for this station to read
                     continue
@@ -518,6 +522,11 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             self.logger.info("Core %d processes %d traces. Ids are %s" % (
                 self.rank, len(st), str([tr.id for tr in st])
             ))
+
+            # The stream has to be tapered ebfore decimating!
+            # (Filter operation), added a taper here on 2025/02/21
+            st = ppst.detrend_st(st, 'linear')
+            st = mu.cos_taper_st(st, tl, False, False)
             # Stream based preprocessing
             # Downsampling
             # 04/04/2023 Downsample before preprocessing for performance
@@ -544,7 +553,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                     st = preprocess_stream(
                         st, self.store_client, startt, endt, tl,
                         **self.options)
-                except ValueError as e:
+                except Exception as e:
                     self.logger.error(
                         'Stream preprocessing failed for '
                         f'{st[0].stats.network}.{st[0].stats.station} and time'
@@ -613,7 +622,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                         win = preprocess_stream(
                             win, self.store_client, winstart, winend,
                             tl, **self.options)
-                    except ValueError as e:
+                    except Exception as e:
                         if st.count():
                             self.logger.error(
                                 'Stream preprocessing failed for '
