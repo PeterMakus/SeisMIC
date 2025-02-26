@@ -598,7 +598,7 @@ Let’s try and combine the two last plots
 
 
 
-.. image:: tutorial_files/tutorial_22_1.png
+.. image:: tutorial_files/tutorial_22_0.png
 
 
 3. Waveform Coherence
@@ -711,7 +711,7 @@ while.
 
 
 
-.. image:: tutorial_files/tutorial_25_1.png
+.. image:: tutorial_files/tutorial_25_0.png
 
 
 4. Monitoring

@@ -224,3 +224,12 @@ Analysing raw waveform data.
 .. automodule:: seismic.utils.raw_analysis
     :members:
     :show-inheritance:
+
+seismic.logfactory
+++++++++++++++++++
+Logging across the package
+
+.. automodule:: seismic.logfactory
+   :members:
+   :undoc-members:
+   :show-inheritance:

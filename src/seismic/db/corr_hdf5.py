@@ -4,13 +4,13 @@ Manages the file format and class for correlations.
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-    EUROPEAN UNION PUBLIC LICENCE v. 1.2
-   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
+    `EUROPEAN UNION PUBLIC LICENCE v. 1.2
+    <https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12>`_
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Wednesday, 2nd October 2024 11:28:48 am
+Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)
 '''
 import ast
 import fnmatch
@@ -140,8 +140,7 @@ class DBHandler(h5py.File):
                     path, data=tr.data, compression=self.compression,
                     compression_opts=self.compression_opts)
                 convert_header_to_hdf5(ds, st)
-            except ValueError as e:
-                print(tr.id, e)
+            except ValueError:
                 warnings.warn("The dataset %s is already in file and will be \
 omitted." % path, category=UserWarning)
 

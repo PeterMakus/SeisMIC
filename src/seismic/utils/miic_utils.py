@@ -2,13 +2,13 @@
 :copyright:
    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-    EUROPEAN UNION PUBLIC LICENCE v. 1.2
-   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
+    `EUROPEAN UNION PUBLIC LICENCE v. 1.2
+    <https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12>`_
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Wednesday, 19th June 2024 03:13:18 pm
+Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)
 '''
 from typing import List, Tuple
 import logging
@@ -20,6 +20,11 @@ from obspy import Inventory, Stream, Trace, UTCDateTime
 from obspy.core import Stats, AttribDict
 
 from seismic.correlate.preprocessing_stream import cos_taper_st
+
+from .. import logfactory
+
+parentlogger = logfactory.create_logger()
+module_logger = logging.getLogger(parentlogger.name+".miic_utils")
 
 
 log_lvl = {
@@ -61,8 +66,8 @@ def trace_calc_az_baz_dist(stats1: Stats, stats2: Stats) -> Tuple[
     try:
         from obspy.geodetics import gps2dist_azimuth
     except ImportError:
-        print("Missed obspy funciton gps2dist_azimuth")
-        print("Update obspy.")
+        module_logger.critical(
+            "Missing obspy function gps2dist_azimuth.\nUpdate obspy.")
         return
 
     dist, az, baz = gps2dist_azimuth(
@@ -115,8 +120,8 @@ def inv_calc_az_baz_dist(inv1: Inventory, inv2: Inventory) -> Tuple[
     try:
         from obspy.geodetics import gps2dist_azimuth
     except ImportError:
-        print("Missing obspy funciton gps2dist_azimuth")
-        print("Update obspy.")
+        module_logger.critical(
+            "Missing obspy function gps2dist_azimuth.\nUpdate obspy.")
         return
 
     dist, az, baz = gps2dist_azimuth(
@@ -441,7 +446,7 @@ def nan_helper(y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         can be called to translate the first output to indices.
     :rtype: Tuple[np.ndarray, np.ndarray]
 
-    .. example::
+    :Example:
 
             >>> # linear interpolation of NaNs
             >>> nans, x = nan_helper(y)

@@ -2,13 +2,13 @@
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-    GNU Lesser General Public License, Version 3
-    (https://www.gnu.org/copyleft/lesser.html)
+    `GNU Lesser General Public License, Version 3
+    <https://www.gnu.org/copyleft/lesser.html>`_
 :author:
-   Peter Makus (makus@gfz-potsdam.de)
+    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Thursday, 16th January 2025 04:35:52 pm
+Last Modified: Tuesday, 25th Febuary 2025 03:25:00 pm
 '''
 
 import fnmatch
@@ -30,12 +30,19 @@ from obspy.clients.fdsn.mass_downloader import RectangularDomain, \
     Restrictions, MassDownloader
 
 from seismic.utils.raw_analysis import spct_series_welch
+from .. import logfactory
 
 DEFAULT_SDS = "mseed"
 DEFAULT_INVDIR = "inventory"
+LOGDIR = "log"
+DEFAULT_LOGPARAMS = dict(loglevel="WARNING", logdir=LOGDIR,
+                         filename_fmt=logfactory.FILENAME_FMT)
+
+parentlogger = logfactory.create_logger()
+module_logger = logging.getLogger(parentlogger.name+".waveform")
 
 
-class Store_Client(object):
+class Store_Client(logfactory.LoggingMPIBaseClass):
     """
     Client for request and local storage of waveform data
 
@@ -45,7 +52,8 @@ class Store_Client(object):
     that is read.
     """
     def __init__(self, Client: rClient, path: str, read_only: bool = False,
-                 sds_dir: str = DEFAULT_SDS):
+                 sds_dir: str = DEFAULT_SDS,
+                 logparams: dict = DEFAULT_LOGPARAMS):
         """
         Initialize the client
 
@@ -57,7 +65,13 @@ class Store_Client(object):
         :param path: path of the store's sds root directory
         :type read_only: Bool
         :param read_only: If True the local archive is not extended.
+        :param logparams: Variables passed to
+            :func:`~seismic.logfactory.LoggingMPIBaseClass.set_logger()`.
+            Keywords are "loglevel", "logdir" and filename_fmt.
+        :type logparams: dict [dict(loglevel="WARNING", logdir=LOGDIR,
+            filename_fmt=logfactory.FILENAME_FMT)]
         """
+        super().__init__()
         assert os.path.isdir(path), "{} is not a directory".format(path)
         self.fileborder_seconds = 30
         self.fileborder_samples = 5000
@@ -81,6 +95,7 @@ class Store_Client(object):
         self.rclient = Client
         self.read_only = read_only
         self.sds_fmtstr = self.lclient.FMTSTR
+        self.set_logger(**logparams)
 
     def download_waveforms_mdl(
         self, starttime: UTCDateTime, endtime: UTCDateTime,
@@ -91,7 +106,9 @@ class Store_Client(object):
         channel: str | None = None, channel_priorities: List[str] = None,
             location_priorities: List[str] = None):
         """
-        Download data using the obspy's MassDownloader. For all args
+        Download data using the obspy's MassDownloader.
+
+        For all args
         except starttime and endtime, None is interpreted as a wildcard.
         Wildcards are generally allowed for all arguments except starttime
         and endtime. Channel and location priorities are given in the form
@@ -191,6 +208,7 @@ class Store_Client(object):
         :param network: Only return stations from this network.
             ``network==None`` is same as a wildcard. Defaults to None.
         :type network: str or None, optional
+
         :return: List of network and station codes in the form:
             `[[net0,stat0], [net1,stat1]]`.
         :rtype: list
@@ -243,6 +261,7 @@ class Store_Client(object):
         :type network: str
         :param station: station code
         :type station: str
+
         :return: (UTCDateTime, UTCDateTime)
         :rtype: tuple
         """
@@ -307,19 +326,19 @@ class Store_Client(object):
         """
         Load data from remote resouce
         """
-        print("Loading remotely.")
+        self.logger.info("Loading remotely.")
         try:
             st = self.rclient.get_waveforms(
                 network, station, location, channel, starttime, endtime)
         except FDSNNoDataException as e:
-            print(e)
+            self.logger.warning(e)
             return Stream()
         with warnings.catch_warnings():
             warnings.filterwarnings('error')
             try:
                 st.attach_response(self.inventory)
             except Warning:
-                print("Updating inventory.")
+                self.logger.warning("Updating inventory.")
                 ninv = self.rclient.get_stations(
                     network=network, station=station, channel=channel,
                     starttime=starttime, endtime=endtime, level='response')
@@ -386,7 +405,8 @@ class Store_Client(object):
         """
         inv = self.inventory.select(network=network, station=station)
         if not len(inv):
-            print('Station response not found ... loading from remote.')
+            self.logger.info(
+                'Station response not found ... loading from remote.')
             inv = self.rclient.get_stations(
                 network=network, station=station,
                 channel='*', level='response')
@@ -530,21 +550,23 @@ class Local_Store_Client(Store_Client):
 
     The client is initialized from a configuration dictionary that must contain
     the following keys:
-    - proj_dir: path to the project directory
-    - co: dictionary with keys 'read_start' and 'read_end' for the time range
-    - net: dictionary with keys 'network' and 'station' for the selection
+
+    * proj_dir: path to the project directory
+    * co: dictionary with keys 'read_start' and 'read_end' for the time range
+    * net: dictionary with keys 'network' and 'station' for the selection
 
     The following keys are accessed, if present:
-    - sds_dir: path to the sds root directory, defaults to 'mseed'
-    - stationxml_file: path to the stationxml file, defaults to
-        'inventory/*.xml'
-    - sds_fmtstr: format string for the sds structure, defaults to the sds
+
+    * sds_dir: path to the sds root directory, defaults to 'mseed'
+    * stationxml_file: path to stationxml file, defaults to `inventory/*.xml`
+    * sds_fmtstr: format string for the sds structure, defaults to the sds
+
     If not present, the default values are used.
 
     Other keys are ignored. Thus, the configuration file for the entire
     correlation setup can be used to initialize the client.
     """
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, logparams: dict = DEFAULT_LOGPARAMS):
         """
         param config: Configuration dictionary.
         :type config: dict
@@ -576,7 +598,7 @@ class Local_Store_Client(Store_Client):
         self.sds_fmtstr = fmt_str
         self.sds_root = sds_root
 
-        super().__init__(sdscl, root, True, sds_root)
+        super().__init__(sdscl, root, True, sds_root, logparams)
         self.lclient = self.rclient
 
         self._set_inventory(config)
@@ -700,7 +722,7 @@ def read_from_filesystem(
     one of the following:
 
     - %X as defined by datetime.strftime indicating an element of t
-        the time. e.g. %H
+      the time. e.g. %H
     - %NET: network name or %net for lower case network name
     - %STA: station name or %sta for lower case
     - %CHA: channel name or %cha for lower case
@@ -756,8 +778,8 @@ def read_from_filesystem(
     # translate file structure string
     fpattern = _current_filepattern(ID, starttime, fs)
     if debug:
-        print('Searching for files matching: %s\n at time %s\n' %
-              (fpattern, starttime))
+        module_logger.debug('Searching for files matching: %s\n at time %s\n' %
+                            (fpattern, starttime))
     st = _read_filepattern(fpattern, starttime, endtime, trim, debug)
 
     # if trace starts too late have a look in the previous section
@@ -765,8 +787,8 @@ def read_from_filesystem(
             (st[0].stats.starttime-st[0].stats.delta).datetime > starttime):
         fpattern, _ = _adjacent_filepattern(ID, starttime, fs, -1)
         if debug:
-            print('Searching for files matching: %s\n at time %s\n' %
-                  (fpattern, starttime))
+            module_logger.debug('Searching for files matching: '
+                                + '%s\n at time %s\n' % (fpattern, starttime))
         st += _read_filepattern(fpattern, starttime, endtime, trim, debug)
         st.merge()
     thistime = starttime
@@ -774,8 +796,8 @@ def read_from_filesystem(
             thistime < endtime):
         fpattern, thistime = _adjacent_filepattern(ID, thistime, fs, 1)
         if debug:
-            print('Searching for files matching: %s\n at time %s\n' %
-                  (fpattern, thistime))
+            module_logger.debug('Searching for files matching: '
+                                + '%s\n at time %s\n' % (fpattern, thistime))
         if thistime == starttime:
             break
         st += _read_filepattern(fpattern, starttime, endtime, trim, debug)
@@ -783,10 +805,10 @@ def read_from_filesystem(
     if trim:
         st.trim(starttime=UTCDateTime(starttime), endtime=UTCDateTime(endtime))
     if debug:
-        print('Following IDs are in the stream: ')
+        module_logger.debug('Following IDs are in the stream: ')
         for tr in st:
-            print(tr.id)
-        print('Selecting %s' % ID)
+            module_logger.debug(tr.id)
+        module_logger.debug('Selecting %s' % ID)
     st = st.select(id=ID)
     return st
 
@@ -806,9 +828,9 @@ def _read_filepattern(
         endtimes.append(st[-1].stats.endtime.datetime)
     # now read the stream from the files that contain the period
     if debug:
-        print('Matching files:\n')
+        module_logger.debug('Matching files:\n')
         for (f, start, end) in zip(flist, starttimes, endtimes):
-            print('%s from %s to %s\n' % (f, start, end))
+            module_logger.debug('%s from %s to %s\n' % (f, start, end))
     st = Stream()
     for ind, fname in enumerate(flist):
         if (starttimes[ind] < endtime) and (endtimes[ind] > starttime):
@@ -821,7 +843,7 @@ def _read_filepattern(
     try:
         st.merge()
     except Exception:
-        print("Error merging traces for requested period!")
+        module_logger.warning("Error merging traces for requested period!")
         st = Stream()
     return st
 
@@ -958,10 +980,12 @@ def get_day_in_folder(
     :type channel: str
     :param type: either ``start`` or ``end``
     :type type: str
-    :raises NotImplementedError: Unknown argument for type
-    :raises FileNotFoundError: No files in db
+
     :return: The earliest starttime or latest endtime in utc
     :rtype: UTCDateTime
+
+    :raises NotImplementedError: Unknown argument for type
+    :raises FileNotFoundError: No files in db
     """
     if type == 'start':
         i0 = 0
@@ -1005,27 +1029,29 @@ def get_abs_sds_path(proj_dir, sds_dir):
     param sds_dir: path to sds root directory
     type sds_dir: str
 
-    return: absolute path with expanded user variables from
+    :return: absolute path with expanded user variables from
         `os.path.join(proj_dir, sds_dir)`
-    rtype: str
+    :rtype: str
 
     Examples
     ----------
     SDS outside project directory
-    ```
-    proj_dir = "output"
-    sds_dir = "~/mysds"
-    print(get_abs_sds_path(proj_dir, sds_dir))
-    >>>> "/home/username/mysds"
-    ```
+
+    .. code-block:: python
+
+        proj_dir = "output"
+        sds_dir = "~/mysds"
+        print(get_abs_sds_path(proj_dir, sds_dir))
+        >>>> "/home/username/mysds"
 
     SDS relative to project directory
-    ```
-    proj_dir = "output"
-    sds_dir = "./mseed"
-    print(get_abs_sds_path(proj_dir, sds_dir))
-    >>>> "/home/username/path/to/output/mseed"
-    ```
+
+    .. code-block:: python
+
+        proj_dir = "output"
+        sds_dir = "./mseed"
+        print(get_abs_sds_path(proj_dir, sds_dir))
+        >>>> "/home/username/path/to/output/mseed"
     """
     return os.path.abspath(
         os.path.join(os.path.expanduser(os.fspath(proj_dir)),

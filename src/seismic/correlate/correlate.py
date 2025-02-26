@@ -2,13 +2,13 @@
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-    EUROPEAN UNION PUBLIC LICENCE v. 1.2
-   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
+    `EUROPEAN UNION PUBLIC LICENCE v. 1.2
+    <https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12>`_
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 21st February 2025 02:34:32 pm
+Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)
 '''
 from typing import Iterator, List, Tuple, Optional
 from warnings import warn
@@ -32,9 +32,17 @@ from seismic.db.corr_hdf5 import CorrelationDataBase, h5_FMTSTR
 from seismic.trace_data.waveform import Store_Client, Local_Store_Client
 from seismic.utils.fetch_func_from_str import func_from_str
 from seismic.utils import miic_utils as mu
+from .. import logfactory
+
+LOGDIR = "log"
+DEFAULT_LOGPARAMS = dict(loglevel="WARNING", logdir=LOGDIR,
+                         filename_fmt=logfactory.FILENAME_FMT)
+
+parentlogger = logfactory.create_logger()
+module_logger = logging.getLogger(parentlogger.name+".waveform")
 
 
-class Correlator(object):
+class Correlator(logfactory.LoggingMPIBaseClass):
     """
     Object to manage the actual Correlation (i.e., Green's function retrieval)
     for the database.
@@ -56,7 +64,7 @@ class Correlator(object):
             initiated. In this case all data has to be available locally.
         """
         if isinstance(options, str):
-            with open(options) as file:
+            with open(file=options) as file:
                 options = yaml.load(file, Loader=yaml.FullLoader)
         elif isinstance(options, Store_Client):
             raise DeprecationWarning(
@@ -64,10 +72,9 @@ class Correlator(object):
                 + "The Store_Client has to be passed as the second argument. "
                 + "Can be None to init Local_Store_Client from options.")
 
-        # init MPI
-        self.comm = MPI.COMM_WORLD
-        self.psize = self.comm.Get_size()
-        self.rank = self.comm.Get_rank()
+        # init MPI, logging
+        super().__init__()
+
         # directories
         self.proj_dir = options['proj_dir']
         self.corr_dir = os.path.join(self.proj_dir, options['co']['subdir'])
@@ -75,39 +82,17 @@ class Correlator(object):
             self.save_comps_separately = options['save_comps_separately']
         except KeyError:
             self.save_comps_separately = False
+
         logdir = os.path.join(self.proj_dir, options['log_subdir'])
+        self.set_logger(options["log_level"], logdir)
+        warnlog = logging.getLogger('py.warnings')
+        warnlog.addHandler([h for h in self.logger.parent.handlers if
+                            isinstance(h, logging.FileHandler)][0])
+        self.logger.debug('Warn logger has handler: {}'.format(
+            warnlog.hasHandlers()))
+
         if self.rank == 0:
             os.makedirs(self.corr_dir, exist_ok=True)
-            os.makedirs(logdir, exist_ok=True)
-
-        # Logging - rank dependent
-        if self.rank == 0:
-            tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H:%M')
-        else:
-            tstr = None
-        tstr = self.comm.bcast(tstr, root=0)
-
-        rankstr = str(self.rank).zfill(3)
-
-        loglvl = mu.log_lvl[options['log_level'].upper()]
-        self.logger = logging.getLogger("seismic.Correlator%s" % rankstr)
-        self.logger.setLevel(loglvl)
-        logging.captureWarnings(True)
-        warnlog = logging.getLogger('py.warnings')
-        fh = logging.FileHandler(os.path.join(logdir, 'correlate%srank%s' % (
-            tstr, rankstr)))
-        fh.setLevel(loglvl)
-        self.logger.addHandler(fh)
-        warnlog.addHandler(fh)
-        fmt = logging.Formatter(
-            fmt='%(asctime)s - %(levelname)s - %(message)s')
-        fh.setFormatter(fmt)
-        consoleHandler = logging.StreamHandler()
-        consoleHandler.setFormatter(fmt)
-        self.logger.addHandler(consoleHandler)
-
-        self.logger.debug("ID of core {:01d} is {:d}".format(
-            self.rank, id(self.comm)))
 
         # Write the options dictionary to the log file
         if self.rank == 0:
@@ -123,6 +108,7 @@ class Correlator(object):
             #             endsstr = [t.format_fissures()
             #                 for t in step['args']['ends']]
             #             step['args']['ends'] = endsstr
+            tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H:%M')
             with open(os.path.join(
                     logdir, 'params%s.txt' % tstr), 'w') as file:
                 file.write(json.dumps(opt_dump, indent=1))
@@ -146,7 +132,11 @@ class Correlator(object):
 
         # Store_Client
         if store_client is None:
-            store_client = Local_Store_Client(options)
+            store_client = Local_Store_Client(
+                options,
+                logparams=dict(loglevel=options["log_level"],
+                               logdir=logdir,
+                               filename_fmt=logfactory.FILENAME_FMT))
         self.store_client = store_client
 
         if isinstance(station, list) and len(station) == 1:
@@ -1400,7 +1390,8 @@ def preprocess_stream(
         try:
             st.remove_response(taper=False, inventory=inv)
         except ValueError:
-            print('Station response not found ... loading from remote.')
+            module_logger.warning('Station response not found ... loading'
+                                  + ' from remote.')
             # missing station response
             ninv = store_client.rclient.get_stations(
                 network=st[0].stats.network, station=st[0].stats.station,
@@ -1413,8 +1404,10 @@ def preprocess_stream(
     if inv:
         try:
             mu.correct_polarity(st, inv)
-        except Exception as e:
-            print(e)
+        except Exception:
+            module_logger.error(
+                "Exception while checking polarity of inventory ...",
+                exc_info=True)
 
     mu.discard_short_traces(st, subdivision['corr_len']/20)
 
