@@ -186,9 +186,12 @@ dv:
     #  win_inc : Length in days of each reference time window to be used for trace extraction
     # If == 0, only one trace will be extracted
     # If > 0, mutliple reference traces will be used for the dv calculation
+    # Time windows is to select specific times for the reference traces.
+    # The format is a list of tuples with the start and end time of each window
+    # win_inc and time_windows cannot be used together
     # Can also be a list if the length of the windows should vary
     # See seismic.correlate.stream.CorrBulk.extract_multi_trace for details on arguments
-    dt_ref : {'win_inc' : 0, 'method': 'mean', 'percentile': 50}
+    dt_ref : {'win_inc' : 0, 'method': 'mean', 'percentile': 50, time_windows: None}
 
     # preprocessing on the correlation bulk or corr_stream before stretch estimation
     preprocessing: [
@@ -227,9 +230,12 @@ wfc:
     #  win_inc : Length in days of each reference time window to be used for trace extraction
     # If == 0, only one trace will be extracted
     # If > 0, mutliple reference traces will be used for the dv calculation
+    # Time windows is to select specific times for the reference traces.
+    # The format is a list of tuples with the start and end time of each window
+    # win_inc and time_windows cannot be used together
     # Can also be a list if the length of the windows should vary
     # See seismic.correlate.stream.CorrBulk.extract_multi_trace for details on arguments
-    dt_ref : {'win_inc' : 0, 'method': 'mean', 'percentile': 50}
+    dt_ref : {'win_inc' : 0, 'method': 'mean', 'percentile': 50, time_windows: None}
 
     # preprocessing on the correlation bulk before stretch estimation
     preprocessing: [
