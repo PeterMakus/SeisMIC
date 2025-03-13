@@ -10,7 +10,7 @@ Module that contains functions for preprocessing in the time domain
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:24:01 pm
-Last Modified: Friday, 10th January 2025 01:29:21 pm
+Last Modified: 2025-03-13 14:12:06 (J. Lehr)
 '''
 from copy import deepcopy
 
@@ -21,6 +21,12 @@ from scipy.signal import detrend as sp_detrend
 import obspy.signal as osignal
 
 from seismic.utils.fetch_func_from_str import func_from_str
+
+import logging
+from .. import logfactory
+
+parentlogger = logfactory.create_logger()
+module_logger = logging.getLogger(parentlogger.name+".preprocessing_fd")
 
 
 def clip(A: np.ndarray, args: dict, params: dict) -> np.ndarray:

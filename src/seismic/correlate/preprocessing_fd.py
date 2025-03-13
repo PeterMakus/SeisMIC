@@ -11,13 +11,18 @@ Module containing functions for preprocessing in the frequency domain
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:40:11 pm
-Last Modified: Wednesday, 28th June 2023 02:00:00 pm
+Last Modified: 2025-03-13 14:11:41 (J. Lehr)
 '''
 from copy import deepcopy
 import logging
 
 import numpy as np
 import obspy.signal as osignal
+
+from .. import logfactory
+
+parentlogger = logfactory.create_logger()
+module_logger = logging.getLogger(parentlogger.name+".preprocessing_fd")
 
 
 def FDfilter(B: np.ndarray, args: dict, params: dict) -> np.ndarray:
