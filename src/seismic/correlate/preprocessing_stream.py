@@ -22,7 +22,7 @@ import logging
 from .. import logfactory
 
 parentlogger = logfactory.create_logger()
-module_logger = logging.getLogger(parentlogger.name+".preprocessing_fd")
+module_logger = logging.getLogger(parentlogger.name+".preprocessing_stream")
 
 
 def cos_taper_st(

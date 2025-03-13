@@ -26,7 +26,7 @@ import logging
 from .. import logfactory
 
 parentlogger = logfactory.create_logger()
-module_logger = logging.getLogger(parentlogger.name+".preprocessing_fd")
+module_logger = logging.getLogger(parentlogger.name+".preprocessing_td")
 
 
 def clip(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
