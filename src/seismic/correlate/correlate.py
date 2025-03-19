@@ -689,6 +689,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         np.nan_to_num(A, copy=False)
 
         for proc in corr_args['TDpreProcessing']:
+            self.logger.debug('Running %s' % proc['function'])
             func = func_from_str(proc['function'])
             A[ind, :] = func(A[ind, :], proc['args'], params)
 
@@ -717,6 +718,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             # The big advantage of this rather lengthy code is that we can also
             # import any function that has been defined anywhere else (i.e,
             # not only within the miic framework)
+            self.logger.debug('Running %s' % proc['function'])
             func = func_from_str(proc['function'])
             B[ind, :] = func(B[ind, :], proc['args'], params)
 

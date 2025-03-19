@@ -103,6 +103,7 @@ def spectralWhitening(B: np.ndarray, args: dict, params) -> np.ndarray:
     :rtype: numpy.ndarray
     :return: whitened spectal data
     """
+    module_logger.debug("Spectral whitening: shape of matrix: %s", B.shape)
     absB = np.absolute(B)
     if 'joint_norm' in list(args.keys()):
         if args['joint_norm']:
