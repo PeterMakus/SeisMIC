@@ -88,8 +88,10 @@ class TestSpectralWhitening(unittest.TestCase):
                                      axis=1), k, axis=0)
             expected = np.true_divide(self.A, norm)
             expected[:, 0] = 0.j
-            self.assertTrue(np.allclose(
-                expected, ppfd.spectralWhitening(self.A, args, {})))
+
+            with self.subTest(args=args):
+                self.assertTrue(np.allclose(
+                    expected, ppfd.spectralWhitening(self.A, args, {})))
 
     def test_joint_norm_invalid(self):
         """

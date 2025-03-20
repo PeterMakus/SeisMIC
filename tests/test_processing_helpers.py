@@ -28,8 +28,9 @@ class TestGetJointNorm(unittest.TestCase):
         B = np.copy(self.B)
         expected = self.B
         for args in ARGS:
-            ph.get_joint_norm(B, args)
-            self.assertTrue(np.allclose(expected, B))
+            with self.subTest(args=args):
+                ph.get_joint_norm(B, args)
+                self.assertTrue(np.allclose(expected, B))
 
     def test_jointnorm(self):
         for v in [2, 3, True]:
@@ -41,9 +42,10 @@ class TestGetJointNorm(unittest.TestCase):
             B = np.copy(self.B)
             expected = np.repeat(np.mean(B.reshape(-1, k, self.B.shape[1]),
                                  axis=1), k, axis=0)
-            ph.get_joint_norm(B, args)
-            self.assertTrue(np.allclose(
-                expected, B))
+            with self.subTest(args=args):
+                ph.get_joint_norm(B, args)
+                self.assertTrue(np.allclose(
+                    expected, B))
 
     def test_joint_norm_invalid(self):
         with self.assertRaises(ValueError):
