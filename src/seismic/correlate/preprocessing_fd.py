@@ -86,11 +86,16 @@ def spectralWhitening(B: np.ndarray, args: dict, params) -> np.ndarray:
     """
     Spectal whitening of Fourier-transformed date
 
-    Normalize the amplitude spectrum of the complex spectra in `B`. The
-    `args` dictionary may contain the keyword `joint_norm`. If its value is
-    True the normalization of sets of three traces are normalized jointly by
-    the mean of their amplitude spectra. This is useful for later rotation of
-    correlated traces in the ZNE system into the ZRT system.
+    Normalize the amplitude spectrum of the complex spectra in `B` by its
+    absolute mean. The
+    `args` dictionary may contain the keyword `joint_norm`. Its values can be
+    one of 1, 2, or 3 or True/False.
+    A value of 1 is equivalent to False and means no normalization is applied.
+    A value of 2 or 3 means that 2 or 3 consecutive rows of the matrix are
+    normalized jointly by the mean of their amplitude spectra. If set to
+    `True`, we assume 3. This is useful for later rotation of
+    correlated traces in the ZNE system into the ZRT system. Normalization
+    over 2 is useful if only NE components are available.
 
     :type B: numpy.ndarray
     :param B: Fourier transformed time series data with frequency oriented\\
@@ -102,16 +107,33 @@ def spectralWhitening(B: np.ndarray, args: dict, params) -> np.ndarray:
 
     :rtype: numpy.ndarray
     :return: whitened spectal data
+
+    Warning
+    -------
+    The function normalizes pairs/triplets of rows. It has no way of knowing
+    if that is a sensible thing to do. It is up to the user to ensure that the
+    components of one station are next to each other and that there are always
+    pairs/triplets present.
     """
     module_logger.debug("Spectral whitening: shape of matrix: %s", B.shape)
     absB = np.absolute(B)
     if 'joint_norm' in list(args.keys()):
-        if args['joint_norm']:
-            assert B.shape[0] % 3 == 0, "for joint normalization the number\
-                      of traces needs to the multiple of 3: %d" % B.shape[1]
-            for ii in np.arange(0, B.shape[0], 3):
-                absB[ii:ii+3, :] = np.tile(
-                    np.atleast_2d(np.mean(absB[ii:ii+3, :], axis=0)), [3, 1])
+        if args['joint_norm'] is True:
+            args['joint_norm'] = 3
+
+        if args['joint_norm'] in [2, 3]:
+            k = args['joint_norm']
+            assert B.shape[0] % k == 0, "For joint normalization with %d the "\
+                "number of traces needs to the multiple of it, but is %d" % (
+                    k, B.shape[0])
+            for ii in np.arange(0, B.shape[0], k):
+                absB[ii:ii+k, :] = np.tile(
+                    np.atleast_2d(np.mean(absB[ii:ii+k, :], axis=0)), [k, 1])
+        elif args['joint_norm'] == 1 or args['joint_norm'] is False:
+            pass
+        else:
+            raise ValueError(
+                "joint_norm must be int of 1, 2, 3 or False/True(==3 )")
     with np.errstate(invalid='raise'):
         try:
             B = np.true_divide(B, absB)

@@ -49,16 +49,23 @@ class TestFDSignBitNormalisation(unittest.TestCase):
 
 class TestSpectralWhitening(unittest.TestCase):
     def setUp(self):
-        dim = (np.random.randint(200, 766), np.random.randint(2, 44))
-        self.A = np.random.random(dim) + np.random.random(dim) * 1j
+        rng = np.random.default_rng(42)
+        A = (rng.normal(size=600) + rng.normal(size=600)*1j)
+        self.A = np.reshape(A, (6, 100))
 
-    def test_result(self):
+    def test_nonorm(self):
         # Again so straightforward that I wonder whether it makes sense
         # to test this
         expected = self.A/abs(self.A)
         expected[:, 0] = 0.j
         self.assertTrue(np.allclose(
             expected, ppfd.spectralWhitening(self.A, {}, {})))
+        self.assertTrue(np.allclose(
+            expected, ppfd.spectralWhitening(
+                self.A, {"joint_norm": False}, {})))
+        self.assertTrue(np.allclose(
+            expected, ppfd.spectralWhitening(
+                self.A, {"joint_norm": 1}, {})))
 
     def test_joint_norm_not_possible(self):
         with self.assertRaises(AssertionError):
@@ -66,14 +73,27 @@ class TestSpectralWhitening(unittest.TestCase):
                 np.ones((5, 5)), {'joint_norm': True}, {})
 
     def test_joint_norm(self):
-        A = np.tile(np.random.random(55,) + np.random.random(55,)*1j, (3, 1))
-        A -= .5
-        expected = A/abs(A)
-        expected[:, 0] = 0.j
-        out = ppfd.spectralWhitening(
-            A, {'joint_norm': True}, {})
-        self.assertTrue(np.allclose(
-            expected, out))
+        for v in [2, 3, True]:
+            args = {"joint_norm": v}
+            if v is True:
+                k = 3
+            else:
+                k = args["joint_norm"]
+            absA = np.abs(self.A)
+            norm = np.repeat(np.mean(absA.reshape(-1, k, self.A.shape[1]),
+                                     axis=1), k, axis=0)
+            expected = np.true_divide(self.A, norm)
+            expected[:, 0] = 0.j
+            self.assertTrue(np.allclose(
+                expected, ppfd.spectralWhitening(self.A, args, {})))
+
+    def test_joint_norm_invalid(self):
+        with self.assertRaises(ValueError):
+            ppfd.spectralWhitening(
+                self.A, {"joint_norm": 4}, {})
+        with self.assertRaises(ValueError):
+            ppfd.spectralWhitening(
+                self.A, {"joint_norm": "a"}, {})
 
     def test_empty_array(self):
         A = np.array([])
