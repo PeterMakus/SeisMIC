@@ -68,6 +68,10 @@ class TestSpectralWhitening(unittest.TestCase):
                 self.A, {"joint_norm": 1}, {})))
 
     def test_joint_norm_not_possible(self):
+        """
+        Probably not necessary since tested with
+        utils.processing_helpers.get_joint_norm
+        """
         with self.assertRaises(AssertionError):
             ppfd.spectralWhitening(
                 np.ones((5, 5)), {'joint_norm': True}, {})
@@ -88,6 +92,10 @@ class TestSpectralWhitening(unittest.TestCase):
                 expected, ppfd.spectralWhitening(self.A, args, {})))
 
     def test_joint_norm_invalid(self):
+        """
+        Probably not necessary since tested with
+        utils.processing_helpers.get_joint_norm
+        """
         with self.assertRaises(ValueError):
             ppfd.spectralWhitening(
                 self.A, {"joint_norm": 4}, {})

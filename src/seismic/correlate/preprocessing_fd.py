@@ -19,6 +19,7 @@ import logging
 import numpy as np
 import obspy.signal as osignal
 
+from ..utils import processing_helpers as ph
 from .. import logfactory
 
 parentlogger = logfactory.create_logger()
@@ -117,23 +118,7 @@ def spectralWhitening(B: np.ndarray, args: dict, params) -> np.ndarray:
     """
     module_logger.debug("Spectral whitening: shape of matrix: %s", B.shape)
     absB = np.absolute(B)
-    if 'joint_norm' in list(args.keys()):
-        if args['joint_norm'] is True:
-            args['joint_norm'] = 3
-
-        if args['joint_norm'] in [2, 3]:
-            k = args['joint_norm']
-            assert B.shape[0] % k == 0, "For joint normalization with %d the "\
-                "number of traces needs to the multiple of it, but is %d" % (
-                    k, B.shape[0])
-            for ii in np.arange(0, B.shape[0], k):
-                absB[ii:ii+k, :] = np.tile(
-                    np.atleast_2d(np.mean(absB[ii:ii+k, :], axis=0)), [k, 1])
-        elif args['joint_norm'] == 1 or args['joint_norm'] is False:
-            pass
-        else:
-            raise ValueError(
-                "joint_norm must be int of 1, 2, 3 or False/True(==3 )")
+    ph.get_joint_norm(absB, args)
     with np.errstate(invalid='raise'):
         try:
             B = np.true_divide(B, absB)
