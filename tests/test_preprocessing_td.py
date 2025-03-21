@@ -257,6 +257,22 @@ class TestNormalizeStd(unittest.TestCase):
         res = pptd.normalizeStandardDeviation(A.copy(), {}, {})
         self.assertTrue(np.all(res == A))
 
+    def test_result_jointnorm(self):
+        rng = np.random.default_rng(42)
+        A = rng.normal(size=6000).reshape(6, 1000)
+        norm = np.std(A, axis=1)
+        ARGS = [{"joint_norm": False},
+                {"joint_norm": True},
+                {"joint_norm": 2},
+                ]
+        for args in ARGS:
+            _norm = np.copy(norm)
+            ph.get_joint_norm(_norm[:, None], args)
+            expected = (A.T / _norm).T
+            with self.subTest(args=args):
+                self.assertTrue(np.allclose(
+                    expected, pptd.normalizeStandardDeviation(A, args, {})))
+
 
 class TestFDSignBitNormalisation(unittest.TestCase):
     # Not much to test here

@@ -260,12 +260,18 @@ def normalizeStandardDeviation(
     Divide the time series by their standard deviation
 
     Divide the amplitudes of each trace by its standard deviation.
+    If `joint_norm` in `args` is set to 2 or 3, the arithmetic mean of the
+    standard deviation is computed over 2 or 3 consecutive rows in the array,
+    respectively. If set to True, we assume 3 traces. This is useful for later
+    rotation of correlated traces in the ZNE system into the ZRT system.
+    Normalization over 2 is useful if only NE components are available.
+    If not given or set to 1 or False no joint normalization is applied.
 
     :type A: numpy.ndarray
     :param A: time series data with time oriented along the first \\
         dimension (columns)
     :type args: dictionary
-    :param args: not used here
+    :param args: `joint_norm` can be 1, 2, 3 or True/False
     :type params: dictionary
     :param params: not used here
 
@@ -273,6 +279,7 @@ def normalizeStandardDeviation(
     :return: normalized time series data
     """
     std = np.std(A, axis=-1)
+    ph.get_joint_norm(std[:, None], args)
     # avoid creating nans or Zerodivisionerror
     std[np.where(std == 0)] = 1
     A = (A.T/std).T
