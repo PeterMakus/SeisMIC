@@ -19,6 +19,7 @@ from scipy.fftpack import next_fast_len
 from scipy.signal.windows import gaussian
 
 from seismic.correlate import preprocessing_td as pptd
+from seismic.utils import processing_helpers as ph
 
 
 class TestClip(unittest.TestCase):
@@ -291,6 +292,9 @@ class TestTDNormalisation(unittest.TestCase):
     def setUp(self):
         self.params = {}
         self.params['sampling_rate'] = 25
+        rng = np.random.default_rng(42)
+        A = rng.normal(size=6000)
+        self.A = np.reshape(A, (6, 1000))
 
     def test_win_length_error(self):
         args = {}
@@ -320,6 +324,32 @@ class TestTDNormalisation(unittest.TestCase):
         np.testing.assert_array_less(res, 1)
         np.testing.assert_allclose(res, 1, atol=1)
         tdf_mock.assert_called_once_with(A, 'blub', self.params)
+
+    def test_result(self):
+        ARGS = [{"windowLength": 25, "filter": {}, "joint_norm": False},
+                {"windowLength": 25, "filter": {}, "joint_norm": True},
+                {"windowLength": 25, "filter": {}, "joint_norm": 2},
+                ]
+        for args in ARGS:
+            norm = np.copy(self.A)**2
+            # smoothing of envelope in both directions to avoid a shift
+            window = (
+                np.ones(int(np.ceil(args['windowLength'] *
+                                    self.params['sampling_rate']))) /
+                np.ceil(args['windowLength'] * self.params['sampling_rate']))
+            for ind in range(norm.shape[0]):
+                norm[ind, :] = np.convolve(norm[ind], window, mode='same')
+                norm[ind, :] = np.convolve(norm[ind, ::-1], window,
+                                           mode='same')[::-1]
+            norm += np.max(norm, axis=1)[:, None]*1e-6
+
+            ph.get_joint_norm(norm, args)
+            expected = self.A / np.sqrt(norm)
+
+            with self.subTest(args=args):
+                # TDnormalization works in-place so use copy of A!
+                res = pptd.TDnormalization(np.copy(self.A), args, self.params)
+                self.assertTrue(np.allclose(expected, res))
 
 
 class TestTDFilter(unittest.TestCase):
