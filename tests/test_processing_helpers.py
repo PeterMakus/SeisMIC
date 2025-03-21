@@ -59,3 +59,39 @@ class TestGetJointNorm(unittest.TestCase):
         with self.assertRaises(AssertionError):
             ph.get_joint_norm(
                 np.ones((5, 5)), {'joint_norm': True})
+
+
+class TestSmoothRows(unittest.TestCase):
+    def setUp(self):
+        rng = np.random.default_rng(seed=42)
+        B = rng.normal(size=600)
+        self.B = B.reshape(6, 100)
+        self.params = {"sampling_rate": 25}
+
+    def test_windowLength(self):
+        with self.assertRaises(ValueError):
+            ph.smooth_rows(self.B, {"windowLength": 0}, self.params)
+
+    def test_windowLength_too_large(self):
+        with self.assertRaises(ValueError):
+            ph.smooth_rows(self.B, {"windowLength": 100}, self.params)
+
+    def test_smoothing(self):
+        args = {"windowLength": 5/25}
+        B = np.copy(self.B)
+        win = np.ones(int(np.ceil(args['windowLength'] *
+                                  self.params['sampling_rate']))
+                      ) / np.ceil(args['windowLength'] *
+                                  self.params['sampling_rate'])
+        for ind in range(B.shape[0]):
+            B[ind, :] = np.convolve(B[ind], win, mode='same')
+            B[ind, :] = np.convolve(B[ind, ::-1], win, mode='same')[::-1]
+        expected = B
+        self.assertTrue(np.allclose(
+            expected, ph.smooth_rows(self.B, args, self.params)))
+
+    def test_no_smoothing(self):
+        args = {"windowLength": 1/25}
+        expected = np.copy(self.B)
+        self.assertTrue(np.allclose(
+            expected, ph.smooth_rows(self.B, args, self.params)))

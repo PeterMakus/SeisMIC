@@ -392,6 +392,7 @@ def TDnormalization(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     :rtype: numpy.ndarray
     :return: normalized time series data
     """
+
     if args['windowLength'] <= 0:
         raise ValueError('Window Length has to be greater than 0.')
     # filter if args['filter']
@@ -406,24 +407,16 @@ def TDnormalization(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     # simple calculation of envelope
     B = B**2
 
-    # smoothing of envelope in both directions to avoid a shift
-    window = (
-        np.ones(int(np.ceil(args['windowLength'] * params['sampling_rate'])))
-        / np.ceil(args['windowLength']*params['sampling_rate']))
-    if len(B.shape) == 1:
-        B = np.convolve(B, window, mode='same')
-        B = np.convolve(B[::-1], window, mode='same')[::-1]
-        # damping factor
-        B += np.max(B)*1e-6
-    else:
-        for ind in range(B.shape[0]):
-            B[ind, :] = np.convolve(B[ind], window, mode='same')
-            B[ind, :] = np.convolve(B[ind, ::-1], window, mode='same')[::-1]
-            # damping factor
-            B[ind, :] += np.max(B[ind, :])*1e-6
-
     # jointly normalize envelope if requested
     ph.get_joint_norm(B, args)
+
+    # smooth envelope (returns 2d array)
+    B = ph.smooth_rows(B, args, params)
+
+    # damp the envelope
+    B += np.max(B, axis=1)[:, None]*1e-6
+
+    B = np.squeeze(B)
 
     # normalization
     A /= np.sqrt(B)
