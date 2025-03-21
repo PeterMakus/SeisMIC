@@ -342,24 +342,16 @@ class TestTDNormalisation(unittest.TestCase):
         tdf_mock.assert_called_once_with(A, 'blub', self.params)
 
     def test_result(self):
-        ARGS = [{"windowLength": 25, "filter": {}, "joint_norm": False},
-                {"windowLength": 25, "filter": {}, "joint_norm": True},
-                {"windowLength": 25, "filter": {}, "joint_norm": 2},
+        ARGS = [{"windowLength": 5/25, "filter": {}, "joint_norm": False},
+                {"windowLength": 5/25, "filter": {}, "joint_norm": True},
+                {"windowLength": 5/25, "filter": {}, "joint_norm": 2},
                 ]
         for args in ARGS:
             norm = np.copy(self.A)**2
-            # smoothing of envelope in both directions to avoid a shift
-            window = (
-                np.ones(int(np.ceil(args['windowLength'] *
-                                    self.params['sampling_rate']))) /
-                np.ceil(args['windowLength'] * self.params['sampling_rate']))
-            for ind in range(norm.shape[0]):
-                norm[ind, :] = np.convolve(norm[ind], window, mode='same')
-                norm[ind, :] = np.convolve(norm[ind, ::-1], window,
-                                           mode='same')[::-1]
+            ph.get_joint_norm(norm, args)
+            norm = ph.smooth_rows(norm, args, self.params)
             norm += np.max(norm, axis=1)[:, None]*1e-6
 
-            ph.get_joint_norm(norm, args)
             expected = self.A / np.sqrt(norm)
 
             with self.subTest(args=args):
