@@ -29,6 +29,9 @@ from .. import logfactory
 parentlogger = logfactory.create_logger()
 module_logger = logging.getLogger(parentlogger.name+".preprocessing_td")
 
+functions_accepting_jointnorm = [
+    'normalizeStandardDeviation', 'TDnormalization']
+
 
 def clip(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """

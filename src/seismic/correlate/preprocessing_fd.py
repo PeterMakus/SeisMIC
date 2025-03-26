@@ -26,6 +26,9 @@ parentlogger = logfactory.create_logger()
 module_logger = logging.getLogger(parentlogger.name+".preprocessing_fd")
 
 
+functions_acception_jointnorm = ['spectralWhitening']
+
+
 def FDfilter(B: np.ndarray, args: dict, params: dict) -> np.ndarray:
     """
     Filter Fourier-transformed data

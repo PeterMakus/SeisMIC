@@ -27,6 +27,7 @@ from tqdm import tqdm
 
 from seismic.correlate.stream import CorrTrace, CorrStream
 from seismic.correlate import preprocessing_td as pptd
+from seismic.correlate import preprocessing_td as ppfd
 from seismic.correlate import preprocessing_stream as ppst
 from seismic.db.corr_hdf5 import CorrelationDataBase, h5_FMTSTR
 from seismic.trace_data.waveform import Store_Client, Local_Store_Client
@@ -40,6 +41,12 @@ DEFAULT_LOGPARAMS = dict(loglevel="WARNING", logdir=LOGDIR,
 
 parentlogger = logfactory.create_logger()
 module_logger = logging.getLogger(parentlogger.name+".waveform")
+
+# This is probably the most ugly way to check if the function accepts the
+# joint_norm argument. But it works.
+functions_acception_joint_norm = [
+    f for m in [pptd, ppfd]for f in m.functions_accepting_jointnorm]
+fsdn_component_ids = set(list("ENZ123ABCUVW"))
 
 
 class Correlator(logfactory.LoggingMPIBaseClass):
@@ -218,6 +225,60 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 'allow_different_params']
         else:
             self._allow_different_params = False
+
+        self._set_joint_norm_arg()
+
+    def _set_joint_norm_arg(self):
+        """
+        Set the joint_norm argument processing functions.
+        """
+        if self.rank == 0:
+            self.logger.debug('Setting joint_norm argument.')
+            joint_norm = self.options["joint_norm"]
+
+            err_msg = (
+                'joint_norm has to be either True or False or int 1 or 3.')
+
+            # Check if user input is valid
+            if not isinstance(joint_norm, (bool, int)):
+                raise ValueError(err_msg)
+            elif joint_norm not in [0, 1, 3]:
+                raise ValueError(err_msg)
+
+            if joint_norm == 1:
+                joint_norm = False
+            elif joint_norm is True:
+                joint_norm = 3
+
+            # Sanity checks if joint_norm makes sense to use given codes.
+            # We do not check if there are actually 3 traces always available
+            # for each station.
+            if joint_norm == 3:
+                unique_components = set([
+                    item[-1][-1] for item in self.avail_raw_data])
+                if len(unique_components) < 3:
+                    raise ValueError(
+                        "Expecting at least 3 unique components if "
+                        + "joint_norm is set to 3. Only the following "
+                        + "components are available: %s" % str(
+                            unique_components))
+                elif not unique_components.issubset(fsdn_component_ids):
+                    raise ValueError(
+                        "Expecting only components from the set %s. " % (
+                            str(fsdn_component_ids))
+                        + "The following components are available: %s" % (
+                            str(unique_components)))
+
+            self.options["joint_norm"] = joint_norm
+
+            for proc, funcs in self.options["corr_args"].items():
+                if proc not in ["TDpreProcessing", "FDpreProcessing"]:
+                    continue
+                for func in funcs:
+                    if func["function"] in functions_acception_joint_norm:
+                        func["args"]["joint_norm"] = joint_norm
+
+        self.options = self.comm.bcast(self.options, root=0)
 
     def _filter_by_rcombis(self):
         """
