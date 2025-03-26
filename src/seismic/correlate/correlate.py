@@ -45,7 +45,8 @@ module_logger = logging.getLogger(parentlogger.name+".waveform")
 # This is probably the most ugly way to check if the function accepts the
 # joint_norm argument. But it works.
 functions_acception_joint_norm = [
-    f for m in [pptd, ppfd]for f in m.functions_accepting_jointnorm]
+    ".".join([m.__name__, f.__name__]) for m in [pptd, ppfd]
+    for f in m.functions_accepting_jointnorm]
 fsdn_component_ids = set(list("ENZ123ABCUVW"))
 
 
@@ -270,15 +271,20 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                             str(unique_components)))
 
             self.options["joint_norm"] = joint_norm
-
+            print(self.options["joint_norm"])
             for proc, funcs in self.options["corr_args"].items():
                 if proc not in ["TDpreProcessing", "FDpreProcessing"]:
+                    print(proc, "not a processing function")
                     continue
                 for func in funcs:
+                    print(func["function"], "is proc function")
                     if func["function"] in functions_acception_joint_norm:
+                        print(func, "accepts joint_norm")
                         func["args"]["joint_norm"] = joint_norm
 
         self.options = self.comm.bcast(self.options, root=0)
+        self.logger.debug(
+            'joint_norm set to %s' % str(self.options["joint_norm"]))
 
     def _filter_by_rcombis(self):
         """
@@ -580,7 +586,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                     continue
                 st = st.extend(stext)
 
-            self.logger.info("Core %d processes %d traces. Ids are %s" % (
+            self.logger.info("Core %d pre-processes %d traces. Ids are %s" % (
                 self.rank, len(st), str([tr.id for tr in st])
             ))
 
@@ -718,6 +724,11 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                     str(win[0].stats.starttime), str(win[0].stats.endtime),
                     len(win), str([tr.id for tr in win])))
                 win = win.merge()
+
+                if self.options["joint_norm"] == 3:
+                    self.logger.debug('Checking if 3 channels are available.')
+                    check_for_missing_channels(win, self.avail_raw_data)
+
                 win = win.trim(winstart, winend, pad=True)
                 yield win, write_flag
                 write_flag = False
@@ -1534,3 +1545,36 @@ def generate_corr_inc(
         for _ in range(int(np.ceil(
                 read_len/subdivision['corr_inc']))):
             yield win
+
+
+def check_for_missing_channels(st: Stream, avail_channels: list):
+    """
+    Check if single channels are missing in the stream and add them as 0s.
+
+    If entire stations are missing, they are not added.
+
+    :param st: Stream to be checked
+    :type st: Stream
+    :param avail_channels: List of available channels, each element in
+        the form [network, station, location, channel]
+    :type avail_channels: list
+    """
+    unique_nslc = set([tr.id for tr in st])
+    nsl_in_st = [tr.id.rpartition(".")[0] for tr in st]
+    avail_nslc = set([".".join(item) for item in avail_channels])
+
+    missing_id_in_st = avail_nslc.difference(unique_nslc)
+
+    for nslc in missing_id_in_st:
+        nsl = nslc.rpartition(".")[0]
+        if nsl not in nsl_in_st:
+            module_logger.debug("Station %s is missing in stream." % nsl
+                                + " Not adding missing channel %s." % nslc)
+            continue
+        module_logger.debug("Adding missing channel %s." % nslc)
+        ind = nsl_in_st.index(nsl)
+        trins = st[ind].copy()
+        trins.id = nslc
+        trins.data = np.zeros_like(trins.data)
+        st.insert(ind, trins)
+    st.sort()
