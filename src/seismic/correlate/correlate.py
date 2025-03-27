@@ -27,7 +27,7 @@ from tqdm import tqdm
 
 from seismic.correlate.stream import CorrTrace, CorrStream
 from seismic.correlate import preprocessing_td as pptd
-from seismic.correlate import preprocessing_td as ppfd
+from seismic.correlate import preprocessing_fd as ppfd
 from seismic.correlate import preprocessing_stream as ppst
 from seismic.db.corr_hdf5 import CorrelationDataBase, h5_FMTSTR
 from seismic.trace_data.waveform import Store_Client, Local_Store_Client
@@ -44,7 +44,7 @@ module_logger = logging.getLogger(parentlogger.name+".waveform")
 
 # This is probably the most ugly way to check if the function accepts the
 # joint_norm argument. But it works.
-functions_acception_joint_norm = [
+functions_accepting_joint_norm = [
     ".".join([m.__name__, f.__name__]) for m in [pptd, ppfd]
     for f in m.functions_accepting_jointnorm]
 fsdn_component_ids = set(list("ENZ123ABCUVW"))
@@ -267,7 +267,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 if proc not in ["TDpreProcessing", "FDpreProcessing"]:
                     continue
                 for func in funcs:
-                    if func["function"] in functions_acception_joint_norm:
+                    if func["function"] in functions_accepting_joint_norm:
                         func["args"]["joint_norm"] = joint_norm
 
         self.options = self.comm.bcast(self.options, root=0)

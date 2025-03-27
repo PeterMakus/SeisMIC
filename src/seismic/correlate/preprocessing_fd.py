@@ -133,4 +133,4 @@ def spectralWhitening(B: np.ndarray, args: dict, params) -> np.ndarray:
     return B
 
 
-functions_acception_jointnorm = [spectralWhitening]
+functions_accepting_jointnorm = [spectralWhitening]
