@@ -132,12 +132,6 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         else:
             self.rcombis = None
 
-        # find the available data
-        network = options['net']['network']
-        station = options['net']['station']
-        component = options['net']['component']
-        # location = options['net']['location']
-
         # Store_Client
         if store_client is None:
             store_client = Local_Store_Client(
@@ -146,6 +140,34 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                                logdir=logdir,
                                filename_fmt=logfactory.FILENAME_FMT))
         self.store_client = store_client
+
+        self._find_available_data(options)
+
+        self.sampling_rate = self.options['sampling_rate']
+        if 'allow_different_params' in self.options:
+            self._allow_different_params = self.options[
+                'allow_different_params']
+        else:
+            self._allow_different_params = False
+
+        self._set_joint_norm_arg()
+
+    def _find_available_data(self, options):
+        """
+        Find the available data for the requested stations and networks.
+
+        Will also filter the stations by the requested cross-correlations.
+        It is mostly a wrapper to expand the wildcards in the station list.
+
+        :param options: The options dictionary
+        :type options: dict
+        """
+        assert hasattr(self, 'store_client'), (
+            'Store_Client has to be set before calling _find_available_data.')
+        network = options['net']['network']
+        station = options['net']['station']
+        component = options['net']['component']
+        # location = options['net']['location']
 
         if isinstance(station, list) and len(station) == 1:
             station = station[0]
@@ -170,7 +192,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             if self.rank == 0:
                 station = []
                 for net in network:
-                    station.extend(store_client.get_available_stations(net))
+                    station.extend(self.store_client.get_available_stations(
+                        net))
             else:
                 station = None
             station = self.comm.bcast(station, root=0)
@@ -219,15 +242,6 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         self.logger.debug(
             'Fetching data from the following stations:\n%a' % [
                 f'{n}.{s}' for n, s in self.station])
-
-        self.sampling_rate = self.options['sampling_rate']
-        if 'allow_different_params' in self.options:
-            self._allow_different_params = self.options[
-                'allow_different_params']
-        else:
-            self._allow_different_params = False
-
-        self._set_joint_norm_arg()
 
     def _set_joint_norm_arg(self):
         """
