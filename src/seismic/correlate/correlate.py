@@ -237,30 +237,22 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             self.logger.debug('Setting joint_norm argument.')
             joint_norm = self.options["joint_norm"]
 
-            err_msg = (
-                'joint_norm has to be either True or False or int 1 or 3.')
-
             # Check if user input is valid
-            if not isinstance(joint_norm, (bool, int)):
+            err_msg = (
+                'joint_norm has to be either True or False.')
+            if not isinstance(joint_norm, (bool)):
                 raise ValueError(err_msg)
-            elif joint_norm not in [0, 1, 3]:
-                raise ValueError(err_msg)
-
-            if joint_norm == 1:
-                joint_norm = False
-            elif joint_norm is True:
-                joint_norm = 3
 
             # Sanity checks if joint_norm makes sense to use given codes.
             # We do not check if there are actually 3 traces always available
             # for each station.
-            if joint_norm == 3:
+            if joint_norm:
                 unique_components = set([
                     item[-1][-1] for item in self.avail_raw_data])
                 if len(unique_components) < 3:
                     raise ValueError(
                         "Expecting at least 3 unique components if "
-                        + "joint_norm is set to 3. Only the following "
+                        + "joint_norm is True. Only the following "
                         + "components are available: %s" % str(
                             unique_components))
                 elif not unique_components.issubset(fsdn_component_ids):
@@ -271,19 +263,15 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                             str(unique_components)))
 
             self.options["joint_norm"] = joint_norm
-            print(self.options["joint_norm"])
             for proc, funcs in self.options["corr_args"].items():
                 if proc not in ["TDpreProcessing", "FDpreProcessing"]:
-                    print(proc, "not a processing function")
                     continue
                 for func in funcs:
-                    print(func["function"], "is proc function")
                     if func["function"] in functions_acception_joint_norm:
-                        print(func, "accepts joint_norm")
                         func["args"]["joint_norm"] = joint_norm
 
         self.options = self.comm.bcast(self.options, root=0)
-        self.logger.debug(
+        self.logger.info(
             'joint_norm set to %s' % str(self.options["joint_norm"]))
 
     def _filter_by_rcombis(self):
@@ -725,7 +713,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                     len(win), str([tr.id for tr in win])))
                 win = win.merge()
 
-                if self.options["joint_norm"] == 3:
+                if self.options["joint_norm"]:
                     self.logger.debug('Checking if 3 channels are available.')
                     check_for_missing_channels(win, self.avail_raw_data)
 
@@ -871,17 +859,18 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         """
         Get indices for matrix rows to be processed by each core.
         """
-        if self.options["joint_norm"] is False:
-            ntrc = A.shape[0]
-            pmap = np.arange(ntrc)*self.psize // ntrc
-            ind = pmap == self.rank
-        elif self.options["joint_norm"] == 3:
+        if self.options["joint_norm"]:
             # For joint normalization, we need to make sure that the same
             # station is processed by the same core
             nsta = A.shape[0] / 3
             pmap = np.arange(nsta)*self.psize // nsta
             pmap = np.repeat(pmap, 3)
             ind = pmap == self.rank
+        else:
+            ntrc = A.shape[0]
+            pmap = np.arange(ntrc)*self.psize // ntrc
+            ind = pmap == self.rank
+
         return ind
 
 
