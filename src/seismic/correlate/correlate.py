@@ -734,20 +734,14 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 write_flag = False
 
     def _pxcorr_matrix(self, A: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        ntrc = A.shape[0]
         # time domain processing
         # map of traces on processes
-        ntrc = A.shape[0]
-        pmap = np.arange(ntrc)*self.psize/ntrc
-        # This step was not in the original but is necessary for it to work?
-        # maybe a difference in an old python/np version?
-        pmap = pmap.astype(np.int32)
-
-        # indices for traces to be worked on by each process
-        ind = pmap == self.rank
-        self.logger.debug("Core %d working on indices %d-%d" % (
-            self.rank, ind[0], ind[-1]
+        ind = self._get_row_index_per_core(A)
+        self.logger.debug("Core {:d} working on indices {:d}-{:d}".format(
+            self.rank, *list(np.where(ind)[0][[0, -1]])
         ))
-    ######################################
+        ######################################
         corr_args = self.options['corr_args']
         # time domain pre-processing
         params = {}
@@ -872,6 +866,23 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             MPI.IN_PLACE, [startlags, MPI.FLOAT], op=MPI.SUM)
 
         return (C, startlags)
+
+    def _get_row_index_per_core(self, A: np.ndarray) -> np.ndarray:
+        """
+        Get indices for matrix rows to be processed by each core.
+        """
+        if self.options["joint_norm"] is False:
+            ntrc = A.shape[0]
+            pmap = np.arange(ntrc)*self.psize // ntrc
+            ind = pmap == self.rank
+        elif self.options["joint_norm"] == 3:
+            # For joint normalization, we need to make sure that the same
+            # station is processed by the same core
+            nsta = A.shape[0] / 3
+            pmap = np.arange(nsta)*self.psize // nsta
+            pmap = np.repeat(pmap, 3)
+            ind = pmap == self.rank
+        return ind
 
 
 def st_to_np_array(st: Stream, npts: int) -> Tuple[np.ndarray, Stream]:
