@@ -792,9 +792,14 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         # time domain processing
         # map of traces on processes
         ind = self._get_row_index_per_core(A)
-        self.logger.debug("Core {:d} working on indices {:d}-{:d}".format(
-            self.rank, *list(np.where(ind)[0][[0, -1]])
-        ))
+        try:
+            self.logger.debug("Core {:d} working on indices {:d}-{:d}".format(
+                self.rank, *list(np.where(ind)[0][[0, -1]])
+            ))
+        except IndexError:
+            self.logger.debug("Core {:d} working on no indices".format(
+                self.rank
+            ))
         ######################################
         corr_args = self.options['corr_args']
         # time domain pre-processing
