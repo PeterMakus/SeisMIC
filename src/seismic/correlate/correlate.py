@@ -122,6 +122,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 file.write(json.dumps(opt_dump, indent=1))
 
         self.options = options['co']
+        self._set_joint_norm_arg()
 
         # requested combis?
         if 'xcombinations' in self.options:
@@ -150,7 +151,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         else:
             self._allow_different_params = False
 
-        self._set_joint_norm_arg()
+        self._check_joint_norm()
 
     def _find_available_data(self, options):
         """
@@ -245,9 +246,12 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
     def _set_joint_norm_arg(self):
         """
-        Set the joint_norm argument processing functions.
+        Set the joint_norm argument in processing functions.
         """
         if self.rank == 0:
+            assert hasattr(self, 'options'), \
+                ("Options have to be set before calling"
+                 + " `_set_joint_norm_arg`.")
             self.logger.debug('Setting joint_norm argument.')
             joint_norm = self.options["joint_norm"]
 
@@ -256,25 +260,6 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 'joint_norm has to be either True or False.')
             if not isinstance(joint_norm, (bool)):
                 raise ValueError(err_msg)
-
-            # Sanity checks if joint_norm makes sense to use given codes.
-            # We do not check if there are actually 3 traces always available
-            # for each station.
-            if joint_norm:
-                unique_components = set([
-                    item[-1][-1] for item in self.avail_raw_data])
-                if len(unique_components) < 3:
-                    raise ValueError(
-                        "Expecting at least 3 unique components if "
-                        + "joint_norm is True. Only the following "
-                        + "components are available: %s" % str(
-                            unique_components))
-                elif not unique_components.issubset(fsdn_component_ids):
-                    raise ValueError(
-                        "Expecting only components from the set %s. " % (
-                            str(fsdn_component_ids))
-                        + "The following components are available: %s" % (
-                            str(unique_components)))
 
             self.options["joint_norm"] = joint_norm
             for proc, funcs in self.options["corr_args"].items():
@@ -287,6 +272,73 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         self.options = self.comm.bcast(self.options, root=0)
         self.logger.info(
             'joint_norm set to %s' % str(self.options["joint_norm"]))
+
+    def _check_joint_norm(self):
+        """
+        Run sanity checks if `joint_norm` is True.
+
+        The following checks are performed:
+        - at least 3 unique components are available
+        - only components from the set `fsdn_component_ids` are available
+        - each station must in principle have 3 components
+
+        Checks are performed on `self.avail_raw_data`. Thus information
+        is based on structure of sds and not on the actual data. If single
+        days or time gaps are missing, this will not be detected here, but
+        is handled later in `pxcorr` and its submethods.
+        """
+        self.logger.debug('Checking if data is fit for joint_norm.')
+        if self.rank == 0:
+            assert hasattr(self, 'options'), \
+                ("Options have to be set before calling"
+                 + " `_check_joint_norm`.")
+            assert hasattr(self, 'avail_raw_data'), \
+                ("avail_raw_data has to be set before calling"
+                 + " `_check_joint_norm`.")
+
+            # Sanity checks if joint_norm makes sense to use given codes.
+            # We do not check if there are actually 3 traces always available
+            # for each station.
+            if not self.options["joint_norm"]:
+                return
+
+            unique_components = set([
+                item[-1][-1] for item in self.avail_raw_data])
+            if len(unique_components) < 3:
+                raise ValueError(
+                    "Expecting at least 3 unique components if "
+                    + "joint_norm is True. Only the following "
+                    + "components are available: %s" % str(
+                        unique_components))
+            elif not unique_components.issubset(fsdn_component_ids):
+                raise ValueError(
+                    "Expecting only components from the set %s. " % (
+                        str(fsdn_component_ids))
+                    + "The following components are available: %s" % (
+                        str(unique_components)))
+
+            # Check if the first two subitems in the items of avail_raw_data
+            # are the same for every three items
+            i = 0
+            popped = []
+            while i < len(self.avail_raw_data):
+                if (self.avail_raw_data[i][:-1]
+                        == self.avail_raw_data[i+1][:-1]
+                        == self.avail_raw_data[i+2][:-1]):
+                    i = i+3
+                else:
+                    popped.append(self.avail_raw_data.pop(i))
+
+            if popped:
+                self.logger.warning(
+                    'The following stations have less than 3 components: %s'
+                    % str(popped) + ' They will be removed.')
+                self.station = np.unique(np.array([
+                    [d[0], d[1]] for d in self.avail_raw_data]),
+                    axis=0).tolist()
+        self.avail_raw_data = self.comm.bcast(
+            self.avail_raw_data, root=0)
+        self.station = self.comm.bcast(self.station, root=0)
 
     def _filter_by_rcombis(self):
         """
