@@ -248,6 +248,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         """
         Set the joint_norm argument in processing functions.
         """
+        print("HELLO")
         if self.rank == 0:
             assert hasattr(self, 'options'), \
                 ("Options have to be set before calling"
@@ -261,7 +262,6 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             if not isinstance(joint_norm, (bool)):
                 raise ValueError(err_msg)
 
-            self.options["joint_norm"] = joint_norm
             for proc, funcs in self.options["corr_args"].items():
                 if proc not in ["TDpreProcessing", "FDpreProcessing"]:
                     continue
@@ -321,7 +321,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             # are the same for every three items
             i = 0
             popped = []
-            while i < len(self.avail_raw_data):
+            while i < len(self.avail_raw_data)-2:
                 if (self.avail_raw_data[i][:-1]
                         == self.avail_raw_data[i+1][:-1]
                         == self.avail_raw_data[i+2][:-1]):
@@ -329,13 +329,19 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 else:
                     popped.append(self.avail_raw_data.pop(i))
 
+            # Pop remaining items if less than 3
+            while len(self.avail_raw_data) > i:
+                popped.append(self.avail_raw_data.pop(-1))
+
             if popped:
                 self.logger.warning(
                     'The following stations have less than 3 components: %s'
                     % str(popped) + ' They will be removed.')
-                self.station = np.unique(np.array([
-                    [d[0], d[1]] for d in self.avail_raw_data]),
-                    axis=0).tolist()
+
+            self.station = np.unique(np.array([
+                [d[0], d[1]] for d in self.avail_raw_data]),
+                axis=0).tolist()
+
         self.avail_raw_data = self.comm.bcast(
             self.avail_raw_data, root=0)
         self.station = self.comm.bcast(self.station, root=0)
