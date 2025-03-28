@@ -536,13 +536,16 @@ class TestCorrrelator(unittest.TestCase):
             self.assertAlmostEqual(
                 win[0].stats.endtime-win[0].stats.starttime, 5, 1)
 
+    @mock.patch.object(correlate.Correlator,
+                       "_get_row_index_per_core")
     @mock.patch('seismic.correlate.correlate.pptd.zeroPadding')
     @mock.patch('seismic.correlate.correlate.func_from_str')
     @mock.patch('builtins.open')
     @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
     @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_pxcorr_matrix(
-            self, makedirs_mock, logging_mock, open_mock, ffs_mock, zp_mock):
+            self, makedirs_mock, logging_mock, open_mock, ffs_mock, zp_mock,
+            ri_mock):
         options = deepcopy(self.options)
         options['co']['combinations'] = [(0, 0), (0, 1), (0, 2)]
         sc_mock = mock.Mock(Store_Client)
@@ -564,12 +567,14 @@ class TestCorrrelator(unittest.TestCase):
         # 13 is the fft size
         shape = (25, 101)
         ftshape = (25, 51)
+        ri_mock.return_value = np.ones(shape[0], dtype=bool)
         return_func = mock.MagicMock(side_effect=[
             np.ones(shape, dtype=np.float32),
             np.ones(ftshape, dtype=np.float32)])
         ffs_mock.return_value = return_func
         zp_mock.return_value = np.ones(shape)*2
         C, startlags = c._pxcorr_matrix(np.zeros(shape))
+        ri_mock.assert_called_once()
         ffs_mock.assert_any_call('FDPP')
         ffs_mock.assert_any_call('TDPP')
         # This is the same as asserthascalls, but it can also check np arrays
@@ -715,6 +720,59 @@ class TestCorrrelator(unittest.TestCase):
 
                 self.assertListEqual(c.station, avail_stations_new)
                 self.assertListEqual(c.avail_raw_data, avail_raw_data_new)
+
+    @mock.patch.object(correlate.Correlator, '__init__')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_get_row_index_per_core_jointnorm_False(
+            self, makedirs_mock, logging_mock, open_mock, mock_init):
+        mock_init.return_value = None
+        co_options = deepcopy(self.options["co"])
+        co_options['joint_norm'] = False
+
+        c = correlate.Correlator()
+        c.options = co_options
+        c.psize = 3
+
+        A = np.empty((10, 10))
+
+        for rank in range(c.psize):
+            with self.subTest(rank=rank):
+                c.rank = rank
+                ind = c._get_row_index_per_core(A)
+                ind_true = (np.arange(A.shape[0])*c.psize // A.shape[0]
+                            == rank)
+                self.assertTrue(np.all(ind == ind_true))
+
+    @mock.patch.object(correlate.Correlator, '__init__')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_get_row_index_per_core_jointnorm_True(
+            self, makedirs_mock, logging_mock, open_mock, mock_init):
+        mock_init.return_value = None
+        co_options = deepcopy(self.options["co"])
+        co_options['joint_norm'] = True
+
+        c = correlate.Correlator()
+        c.options = co_options
+        c.psize = 3
+
+        A = np.empty((10, 10))
+        c.rank = 0
+        self.assertRaises(
+            ValueError, c._get_row_index_per_core, A)
+
+        A = np.empty((12, 10))
+        for rank in range(c.psize):
+            with self.subTest(rank=rank):
+                c.rank = rank
+                ind = c._get_row_index_per_core(A)
+                ind_true = (np.arange(A.shape[0]/3)*c.psize
+                            // (A.shape[0]/3)).repeat(3) == rank
+                self.assertTrue(np.all(ind == ind_true))
+                self.assertTrue(A[ind].shape[0] % 3 == 0)
 
 
 class TestStToNpArray(unittest.TestCase):

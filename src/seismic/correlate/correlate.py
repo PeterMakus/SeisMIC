@@ -248,7 +248,6 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         """
         Set the joint_norm argument in processing functions.
         """
-        print("HELLO")
         if self.rank == 0:
             assert hasattr(self, 'options'), \
                 ("Options have to be set before calling"
@@ -935,10 +934,26 @@ class Correlator(logfactory.LoggingMPIBaseClass):
     def _get_row_index_per_core(self, A: np.ndarray) -> np.ndarray:
         """
         Get indices for matrix rows to be processed by each core.
+
+        If joint_norm is set to True, the same station has to be processed by
+        the same core. We assume that three consecutive rows in the matrix
+        belong to the same station. Thus, we make sure that number of rows
+        in submatrix is divisible by 3.
+
+        :param A: Input matrix
+        :type A: np.ndarray
+        :return: Indices for each core
+        :rtype: np.ndarray
+        :note: The function is called in the _pxcorr_matrix function.
         """
         if self.options["joint_norm"]:
             # For joint normalization, we need to make sure that the same
             # station is processed by the same core
+            if A.shape[0] % 3 != 0:
+                raise ValueError(
+                    'Matrix size is not divisible by 3. Joint normalization '
+                    + 'is not possible.')
+
             nsta = A.shape[0] / 3
             pmap = np.arange(nsta)*self.psize // nsta
             pmap = np.repeat(pmap, 3)
