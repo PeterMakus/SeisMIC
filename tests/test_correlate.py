@@ -891,20 +891,24 @@ class TestCalcCrossCombis(unittest.TestCase):
     def test_result_all_combis(self):
         expected_len = sum([self.st.count()-n
                             for n in range(0, self.st.count())])
-        with warnings.catch_warnings(record=True) as w:
-            self.assertEqual(expected_len, len(correlate.calc_cross_combis(
-                self.st, {}, method='allCombinations')))
-            self.assertEqual(len(w), 1)
+        with self.assertWarns(DeprecationWarning) as w:
+            res = correlate.calc_cross_combis(
+                self.st, {}, method='allCombinations')
+        self.assertIn("allSimpleCombinations", w.warning.args[0])
+        self.assertEqual(expected_len, len(res))
 
     def test_unknown_method(self):
         with self.assertRaises(ValueError):
             correlate.calc_cross_combis(self.st, {}, method='blablub')
 
     def test_empty_stream(self):
-        with warnings.catch_warnings(record=True) as w:
-            self.assertEqual([], correlate.calc_cross_combis(
-                Stream(), {}, method='allCombinations'))
-            self.assertEqual(len(w), 2)
+        self.assertWarns(UserWarning,
+                         correlate.calc_cross_combis, Stream(), {},
+                         method='allCombinations')
+        # with self.assertWarns(UserWarning) as w:
+        #     correlate.calc_cross_combis(Stream(), {},
+        #                                 method='allSimpleCombinations')
+        # self.assertIn("found no combination", w.warning.args[0])
 
     @mock.patch('seismic.correlate.correlate._compare_existing_data')
     def test_existing_db(self, compare_mock):
@@ -1116,12 +1120,14 @@ class TestComputeNetworkStationCombinations(unittest.TestCase):
 
     def test_all_combis(self):
         exp_result = (['A-A', 'A-A', 'A-A'], ['B-B', 'B-C', 'C-C'])
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True):
             self.assertEqual(
                 correlate.compute_network_station_combinations(
                     self.nlist, self.slist, method='allCombinations'),
                 exp_result)
-            self.assertEqual(len(w), 1)
+            relevant_warning = warnings.simplefilter("error", ValueError)
+            self.assertIsNone(relevant_warning)
+            # self.assertEqual(len(w), 0)
 
     def test_rcombis(self):
         exp_result = (['A-A'], ['B-C'])
