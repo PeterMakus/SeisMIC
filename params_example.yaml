@@ -113,6 +113,7 @@ co:
 
     # parameters for correlation preprocessing
     # Standard functions reside in seismic.correlate.preprocessing_td and preprocessing_fd, respectively
+    joint_norm: False
     corr_args : {'TDpreProcessing':[
                                   {'function':'seismic.correlate.preprocessing_td.taper',
                                     'args':{'type':'cosine_taper', 'p': 0.02}},
@@ -134,7 +135,7 @@ co:
                   # Standard functions reside in seismic.correlate.preprocessing_fd
                  'FDpreProcessing':[
                                     {'function':'seismic.correlate.preprocessing_fd.spectralWhitening',
-                                     'args':{'joint_norm':False}},
+                                     'args':{}},
                                     {'function':'seismic.correlate.preprocessing_fd.FDfilter',
                                      'args':{'flimit':[0.01,0.02,9,10]}}
                                     #  {'function':seismic.correlate.preprocessing_fd.FDsignBitNormalization,
