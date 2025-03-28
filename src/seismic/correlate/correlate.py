@@ -470,7 +470,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                         + 'a station inventory.')
                 logging.warning(e)
                 warnings.warn(
-                    'No Station Inventory found. Proceeding without.')
+                    'No Station Inventory found. Proceeding without.',
+                    UserWarning)
                 inv = None
         else:
             inv = None
@@ -1121,7 +1122,8 @@ def calc_cross_combis(
                          "'betweenComponents', 'autoComponents', "
                          "'allSimpleCombinations' or 'allCombinations').")
     if not len(combis):
-        warn('Method %s found no combinations.' % method)
+        warn('Method %s found no combinations.' % method,
+             UserWarning)
     return combis
 
 
