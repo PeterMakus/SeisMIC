@@ -31,6 +31,9 @@ paramfile = os.path.join(
             'params_example.yaml')
 
 
+@mock.patch('builtins.open')
+@mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
+@mock.patch('seismic.correlate.correlate.os.makedirs')
 class TestCorrrelator(unittest.TestCase):
     mock_logger = mock.create_autospec(correlate.logging.Logger)
 
@@ -45,11 +48,8 @@ class TestCorrrelator(unittest.TestCase):
         self.options['co']['preprocess_subdiv'] = True
 
     @mock.patch('seismic.correlate.correlate.yaml.load')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
-    def test_filter_by_rcombis(self, makedirs_mock, logging_mock,
-                               open_mock, yaml_mock):
+    def test_filter_by_rcombis(self, yaml_mock, makedirs_mock, logging_mock,
+                               open_mock):
         yaml_mock.return_value = self.options
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = []
@@ -71,11 +71,8 @@ class TestCorrrelator(unittest.TestCase):
                 ['NET2', 'STA1', 'LOC1', 'CHAN1']])
 
     @mock.patch('seismic.correlate.correlate.yaml.load')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_init_options_from_yaml(
-            self, makedirs_mock, logging_mock, open_mock, yaml_mock):
+            self, yaml_mock, makedirs_mock, logging_mock, open_mock):
         yaml_mock.return_value = self.options
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = []
@@ -94,11 +91,8 @@ class TestCorrrelator(unittest.TestCase):
         open_mock.assert_has_calls([mock.call(file=self.param_example)])
 
     @mock.patch('seismic.correlate.correlate.yaml.load')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_deprecation_of_args(
-            self, makedirs_mock, logging_mock, open_mock, yaml_mock):
+            self, yaml_mock, makedirs_mock, logging_mock, open_mock):
         yaml_mock.return_value = self.options
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = []
@@ -108,17 +102,14 @@ class TestCorrrelator(unittest.TestCase):
                           correlate.Correlator, sc_mock, self.param_example)
 
     @mock.patch('seismic.correlate.correlate.yaml.load')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     @mock.patch('seismic.trace_data.waveform.os.listdir')
     @mock.patch('seismic.trace_data.waveform.os.path.isdir')
     @mock.patch('seismic.trace_data.waveform.read_inventory')
     @mock.patch('obspy.clients.filesystem.sds.os.path.isdir')
     def test_init_without_storeclient(
             self, sds_exists_mock, read_inventory_mock,
-            isdir_mock, listdir_mock, makedirs_mock,
-            logging_mock, open_mock, yaml_mock):
+            isdir_mock, listdir_mock, yaml_mock, makedirs_mock,
+            logging_mock, open_mock):
 
         yaml_mock.return_value = self.options
         sc_mock = mock.Mock(Store_Client)
@@ -145,9 +136,6 @@ class TestCorrrelator(unittest.TestCase):
         makedirs_mock.assert_has_calls(mkdir_calls)
         open_mock.assert_has_calls([mock.call(file=self.param_example)])
 
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_stat_net_str(
             self, makedirs_mock, logging_mock, open_mock):
         # Test the change of UTCDateTime object
@@ -173,9 +161,6 @@ class TestCorrrelator(unittest.TestCase):
         # self.assertDictEqual(self.options['co'], c.options)
         self.assertListEqual(c.station, [['bla', 'blub']])
 
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_net_wc_stat_str(
             self, makedirs_mock, logging_mock, open_mock):
         # Test the change of UTCDateTime object
@@ -191,9 +176,6 @@ class TestCorrrelator(unittest.TestCase):
         with self.assertRaises(ValueError):
             correlate.Correlator(options, sc_mock)
 
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_net_wc(
             self, makedirs_mock, logging_mock, open_mock):
         options = deepcopy(self.options)
@@ -204,9 +186,6 @@ class TestCorrrelator(unittest.TestCase):
         c = correlate.Correlator(options, sc_mock)
         self.assertListEqual(c.station, [['lala', 'lolo']])
 
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_stat_wc(
             self, makedirs_mock, logging_mock, open_mock):
         options = deepcopy(self.options)
@@ -221,9 +200,6 @@ class TestCorrrelator(unittest.TestCase):
         sc_mock._translate_wildcards.assert_called_once_with(
             'lala', '*', None, location='*')
 
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_stat_wc_net_list(
             self, makedirs_mock, logging_mock, open_mock):
         options = deepcopy(self.options)
@@ -240,9 +216,6 @@ class TestCorrrelator(unittest.TestCase):
         calls = [mock.call('lala'), mock.call('lolo')]
         sc_mock.get_available_stations.assert_has_calls(calls)
 
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_list_len_diff(
             self, makedirs_mock, logging_mock, open_mock):
         options = deepcopy(self.options)
@@ -253,9 +226,6 @@ class TestCorrrelator(unittest.TestCase):
         with self.assertRaises(ValueError):
             correlate.Correlator(options, sc_mock)
 
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_stat_net_list(
             self, makedirs_mock, logging_mock, open_mock):
         options = deepcopy(self.options)
@@ -272,9 +242,6 @@ class TestCorrrelator(unittest.TestCase):
         self.assertListEqual(
             c.station, [['lala', 'le'], ['lolo', 'li']])
 
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_other_wrong(
             self, makedirs_mock, logging_mock, open_mock):
         options = deepcopy(self.options)
@@ -286,11 +253,8 @@ class TestCorrrelator(unittest.TestCase):
             correlate.Correlator(options, sc_mock)
 
     @mock.patch('seismic.correlate.correlate.mu.filter_stat_dist')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_find_interstat_dis(
-            self, makedirs_mock, logging_mock, open_mock, statd_mock):
+            self, statd_mock, makedirs_mock, logging_mock, open_mock):
         options = deepcopy(self.options)
         options['net']['network'] = '*'
         options['net']['station'] = '*'
@@ -313,9 +277,6 @@ class TestCorrrelator(unittest.TestCase):
                 'lala-lala.lili-lolo',
                 'lala-lala.lili-lili', 'lala-lala.lolo-lolo'})
 
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_find_interstat_dis_wrong_method(
             self, makedirs_mock, logging_mock, open_mock):
         options = deepcopy(self.options)
@@ -333,12 +294,9 @@ class TestCorrrelator(unittest.TestCase):
     @mock.patch('seismic.correlate.correlate.glob.glob')
     @mock.patch(
         'seismic.correlate.correlate.compute_network_station_combinations')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_find_existing_times(
-        self, makedirs_mock, logging_mock, open_mock, ccomb_mock, isfile_mock,
-            cdb_mock):
+        self, ccomb_mock, isfile_mock,
+            cdb_mock, makedirs_mock, logging_mock, open_mock):
         options = deepcopy(self.options)
         sc_mock = mock.Mock(Store_Client)
         sc_mock.get_available_stations.return_value = [
@@ -368,10 +326,7 @@ class TestCorrrelator(unittest.TestCase):
         #     isfile_mock.assert_any_call(call)
 
     @mock.patch('seismic.correlate.correlate.CorrStream')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
-    def test_pxcorr(self, makedirs_mock, logging_mock, open_mock, cst_mock):
+    def test_pxcorr(self, cst_mock, makedirs_mock, logging_mock, open_mock):
         options = deepcopy(self.options)
         options['co']['subdivision']['recombine_subdivision'] = True
         options['co']['subdivision']['delete_subdivision'] = True
@@ -398,10 +353,7 @@ class TestCorrrelator(unittest.TestCase):
         cst_mock().extend.assert_called_once()
 
     @mock.patch('seismic.correlate.correlate.CorrStream')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
-    def test_pxcorr2(self, makedirs_mock, logging_mock, open_mock, cst_mock):
+    def test_pxcorr2(self, cst_mock, makedirs_mock, logging_mock, open_mock):
         options = deepcopy(self.options)
         options['co']['subdivision']['recombine_subdivision'] = False
         options['co']['subdivision']['delete_subdivision'] = False
@@ -430,11 +382,8 @@ class TestCorrrelator(unittest.TestCase):
         cst_mock().extend.assert_called_once()
 
     @mock.patch('seismic.correlate.correlate.st_to_np_array')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_pxcorr_inner(
-            self, makedirs_mock, logging_mock, open_mock, st_a_mock):
+            self, st_a_mock, makedirs_mock, logging_mock, open_mock):
         options = deepcopy(self.options)
         options['co']['combinations'] = [(0, 0), (0, 1), (0, 2)]
         sc_mock = mock.Mock(Store_Client)
@@ -455,11 +404,8 @@ class TestCorrrelator(unittest.TestCase):
         self.assertEqual(cst.count(), 3)
 
     @mock.patch('seismic.db.corr_hdf5.DBHandler')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_write_three_file(
-            self, makedirs_mock, logging_mock, open_mock, dbh_mock):
+            self, dbh_mock, makedirs_mock, logging_mock, open_mock):
         options = deepcopy(self.options)
         options['co']['combinations'] = [(0, 0), (0, 1), (0, 2)]
         options['co']['subdivision']['recombine_subdivision'] = True
@@ -504,12 +450,9 @@ class TestCorrrelator(unittest.TestCase):
     @mock.patch('seismic.correlate.correlate.calc_cross_combis')
     @mock.patch('seismic.correlate.correlate.preprocess_stream')
     @mock.patch('seismic.correlate.correlate.mu.get_valid_traces')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_generate(
-        self, makedirs_mock, logging_mock, open_mock, gvt_mock,
-            ppst_mock, ccc_mock, rod_mock):
+        self, gvt_mock, ppst_mock, ccc_mock, rod_mock,
+            makedirs_mock, logging_mock, open_mock):
         options = deepcopy(self.options)
         options['co']['subdivision']['corr_inc'] = 5
         options['co']['subdivision']['corr_len'] = 5
@@ -540,12 +483,9 @@ class TestCorrrelator(unittest.TestCase):
                        "_get_row_index_per_core")
     @mock.patch('seismic.correlate.correlate.pptd.zeroPadding')
     @mock.patch('seismic.correlate.correlate.func_from_str')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_pxcorr_matrix(
-            self, makedirs_mock, logging_mock, open_mock, ffs_mock, zp_mock,
-            ri_mock):
+            self, ffs_mock, zp_mock, ri_mock,
+            makedirs_mock, logging_mock, open_mock):
         options = deepcopy(self.options)
         options['co']['combinations'] = [(0, 0), (0, 1), (0, 2)]
         sc_mock = mock.Mock(Store_Client)
@@ -593,11 +533,8 @@ class TestCorrrelator(unittest.TestCase):
         np.testing.assert_array_almost_equal(C, expC, decimal=2)
 
     @mock.patch.object(correlate.Correlator, '__init__')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
-    def test_set_joint_norm_args(self, makedirs_mock, logging_mock, open_mock,
-                                 mock_init):
+    def test_set_joint_norm_args(self, mock_init, makedirs_mock, logging_mock,
+                                 open_mock):
         mock_init.return_value = None
         options = deepcopy(self.options)
         co_options_new = deepcopy(self.options["co"])
@@ -618,11 +555,8 @@ class TestCorrrelator(unittest.TestCase):
         self.assertDictEqual(c.options, co_options_new)
 
     @mock.patch.object(correlate.Correlator, '__init__')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_check_joint_norm_atleast3comps(
-            self, makedirs_mock, logging_mock, open_mock, mock_init):
+            self, mock_init, makedirs_mock, logging_mock, open_mock):
         mock_init.return_value = None
         joint_norm = True
         co_options = deepcopy(self.options["co"])
@@ -649,11 +583,8 @@ class TestCorrrelator(unittest.TestCase):
         self.assertRaises(ValueError, c._check_joint_norm)
 
     @mock.patch.object(correlate.Correlator, '__init__')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_check_joint_norm_fdsncomps(
-            self, makedirs_mock, logging_mock, open_mock, mock_init):
+            self, mock_init, makedirs_mock, logging_mock, open_mock):
         mock_init.return_value = None
         joint_norm = True
         co_options = deepcopy(self.options["co"])
@@ -681,11 +612,8 @@ class TestCorrrelator(unittest.TestCase):
         self.assertRaises(ValueError, c._check_joint_norm)
 
     @mock.patch.object(correlate.Correlator, '__init__')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_check_joint_norm_pop2cstations(
-            self, makedirs_mock, logging_mock, open_mock, mock_init):
+            self, mock_init, makedirs_mock, logging_mock, open_mock):
         mock_init.return_value = None
         joint_norm = True
         co_options = deepcopy(self.options["co"])
@@ -722,11 +650,8 @@ class TestCorrrelator(unittest.TestCase):
                 self.assertListEqual(c.avail_raw_data, avail_raw_data_new)
 
     @mock.patch.object(correlate.Correlator, '__init__')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_get_row_index_per_core_jointnorm_False(
-            self, makedirs_mock, logging_mock, open_mock, mock_init):
+            self, mock_init, makedirs_mock, logging_mock, open_mock):
         mock_init.return_value = None
         co_options = deepcopy(self.options["co"])
         co_options['joint_norm'] = False
@@ -746,11 +671,8 @@ class TestCorrrelator(unittest.TestCase):
                 self.assertTrue(np.all(ind == ind_true))
 
     @mock.patch.object(correlate.Correlator, '__init__')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_get_row_index_per_core_jointnorm_True(
-            self, makedirs_mock, logging_mock, open_mock, mock_init):
+            self, mock_init, makedirs_mock, logging_mock, open_mock):
         mock_init.return_value = None
         co_options = deepcopy(self.options["co"])
         co_options['joint_norm'] = True
