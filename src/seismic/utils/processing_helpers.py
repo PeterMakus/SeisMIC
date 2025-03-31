@@ -36,7 +36,6 @@ def get_joint_norm(B, args: dict) -> None:
             args['joint_norm'] = 3
 
         if args['joint_norm'] in [2, 3]:
-            print("Joint normalization")
             k = args['joint_norm']
             assert B.shape[0] % k == 0, "For joint normalization with %d the "\
                 "number of traces needs to the multiple of it, but is %d" % (

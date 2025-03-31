@@ -55,7 +55,6 @@ def cos_taper_st(
         try:
             st[ii] = cos_taper(st[ii], taper_len, taper_at_masked, lossless)
         except ValueError as e:
-            print("Warning")
             warn('%s, corresponding trace not tapered.' % e,
                  UserWarning)
     return st
