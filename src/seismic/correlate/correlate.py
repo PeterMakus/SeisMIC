@@ -253,7 +253,14 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 ("Options have to be set before calling"
                  + " `_set_joint_norm_arg`.")
             self.logger.debug('Setting joint_norm argument.')
-            joint_norm = self.options["joint_norm"]
+
+            try:
+                joint_norm = self.options["joint_norm"]
+            except KeyError:
+                warn("Keywork joint_norm not found in options['co']. "
+                     + "Assuming False.", UserWarning)
+                joint_norm = False
+                self.options["joint_norm"] = joint_norm
 
             # Check if user input is valid
             err_msg = (
@@ -286,20 +293,20 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         days or time gaps are missing, this will not be detected here, but
         is handled later in `pxcorr` and its submethods.
         """
+        assert hasattr(self, 'options'), \
+            ("Options have to be set before calling"
+                + " `_check_joint_norm`.")
+        assert hasattr(self, 'avail_raw_data'), \
+            ("avail_raw_data has to be set before calling"
+                + " `_check_joint_norm`.")
+
+        # Sanity checks if joint_norm makes sense to use given codes.
+        # We do not check if there are actually 3 traces always available
+        # for each station.
+        if not self.options["joint_norm"]:
+            return
         self.logger.debug('Checking if data is fit for joint_norm.')
         if self.rank == 0:
-            assert hasattr(self, 'options'), \
-                ("Options have to be set before calling"
-                 + " `_check_joint_norm`.")
-            assert hasattr(self, 'avail_raw_data'), \
-                ("avail_raw_data has to be set before calling"
-                 + " `_check_joint_norm`.")
-
-            # Sanity checks if joint_norm makes sense to use given codes.
-            # We do not check if there are actually 3 traces always available
-            # for each station.
-            if not self.options["joint_norm"]:
-                return
 
             unique_components = set([
                 item[-1][-1] for item in self.avail_raw_data])
@@ -1557,6 +1564,8 @@ def preprocess_stream(
     if remove_response:
         try:
             st.remove_response(taper=False, inventory=inv)
+            module_logger.debug(
+                'Removed instrument response from stream ...')
         except ValueError:
             module_logger.warning('Station response not found ... loading'
                                   + ' from remote.')
@@ -1581,6 +1590,9 @@ def preprocess_stream(
 
     if preProcessing:
         for procStep in preProcessing:
+            module_logger.debug(
+                'Applying preprocessing function %s with args %s' %
+                (procStep['function'], procStep['args']))
             if 'detrend_st' in procStep['function'] \
                     or 'cos_taper_st' in procStep['function']:
                 warnings.warn(
