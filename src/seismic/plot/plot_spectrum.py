@@ -10,7 +10,7 @@ Plotting specral time series.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 04:54:20 pm
-Last Modified: Tuesday, 1st April 2025 10:05:44 am
+Last Modified: Tuesday, 1st April 2025 10:10:25 am
 '''
 
 import os
@@ -58,10 +58,22 @@ def plot_spct_series(
     :param fmt: Format to save figure, defaults to 'pdf'
     :type fmt: str, optional
     :param flim: Limit Frequency axis and Normalisation to the values
-        in the given window
-    :type flim: Tuple[int, int]
+        in the given window. Can be a tuple of floats or a single float.
+        If a single float is given, a 2D plot is created.
+    :type flim: Tuple[int, int] | float, optional
     :param tlim: Limit time axis to the values in the given window
-    :type tlim: Tuple[datetime, datetime]
+    :type tlim: Tuple[datetime, datetime], optional
+    :param cmap: Colormap to use, defaults to 'batlow'
+    :type cmap: str, optional
+    :param vmin: Minimum value for color normalization, defaults to None
+    :type vmin: float, optional
+    :param vmax: Maximum value for color normalization, defaults to None
+    :type vmax: float, optional
+    :param log_scale: Use logarithmic scale for the color map,
+        defaults to False
+    :type log_scale: bool, optional
+    :return: The axis object of the plot.
+    :rtype: plt.Axes
     """
     # Mask nans
     S = np.ma.masked_invalid(S)
