@@ -516,6 +516,11 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             npts.append(tr.stats['npts'])
         npts = np.max(np.array(npts))
 
+        self.logger.info("Processing & correlating %d traces" % len(st)
+                         + " in time window %s-%s" % (
+                             str(min(starttime)),
+                             str(min(starttime)
+                                 + self.options["subdivision"]["corr_len"])))
         A, st = st_to_np_array(st, npts)
         self.options.update(
             {'starttime': starttime,
@@ -653,8 +658,9 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                     continue
                 st = st.extend(stext)
 
-            self.logger.info("Core %d pre-processes %d traces. Ids are %s" % (
+            self.logger.info("Core %d pre-processes %d traces with IDs %s" % (
                 self.rank, len(st), str([tr.id for tr in st])
+                + "from %s-%s" % (str(startt), str(endt))
             ))
 
             # The stream has to be tapered ebfore decimating!
@@ -805,6 +811,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         # time domain processing
         # map of traces on processes
         ind = self._get_row_index_per_core(A)
+        self.logger.info(
+            'Core %d processing %d matrix rows' % (self.rank, np.sum(ind)))
         try:
             self.logger.debug("Core {:d} working on indices {:d}-{:d}".format(
                 self.rank, *list(np.where(ind)[0][[0, -1]])
@@ -878,6 +886,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         ind = pmap == self.rank
         ind = np.arange(csize)[ind]
         startlags = np.zeros(csize, dtype=np.float32)
+        self.logger.info(
+            'Core %d correlating %d matrix rows' % (self.rank, ind.size))
         for ii in ind:
             # offset of starttimes in samples(just remove fractions of samples)
             offset = (
