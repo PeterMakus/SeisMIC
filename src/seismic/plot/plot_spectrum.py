@@ -10,7 +10,7 @@ Plotting specral time series.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 04:54:20 pm
-Last Modified: Tuesday, 1st April 2025 10:12:48 am
+Last Modified: Tuesday, 1st April 2025 10:16:36 am
 '''
 
 import os
@@ -195,6 +195,8 @@ def _plot_spct_series_1d(
     plt.ylabel('Amplitude')
     plt.legend()
     plt.grid(True)
+    # y-axis in log scale
+    plt.yscale('log')
     ax = plt.gca()
     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
     ax.xaxis.set_major_formatter(
