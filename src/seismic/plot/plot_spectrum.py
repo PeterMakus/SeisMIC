@@ -10,7 +10,7 @@ Plotting specral time series.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 04:54:20 pm
-Last Modified: Tuesday, 1st April 2025 10:10:25 am
+Last Modified: Tuesday, 1st April 2025 10:12:48 am
 '''
 
 import os
@@ -90,7 +90,7 @@ def plot_spct_series(
 
     if log_scale:
         plt.yscale('log')
-    if isinstance(flim, (list, tuple)):
+    if isinstance(flim, (float, int)):
         # Call 1D plotting function
         return _plot_spct_series_1d(S, f, t, flim, tlim)
     elif flim is not None:
