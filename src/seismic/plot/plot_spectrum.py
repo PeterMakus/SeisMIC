@@ -10,7 +10,7 @@ Plotting specral time series.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 04:54:20 pm
-Last Modified: Wednesday, 7th August 2024 02:39:58 pm
+Last Modified: Tuesday, 1st April 2025 10:05:44 am
 '''
 
 import os
@@ -33,7 +33,7 @@ batlow = os.path.join(
 
 def plot_spct_series(
     S: np.ndarray, f: np.ndarray, t: np.ndarray, norm: str = None,
-    norm_method: str = None, flim: Tuple[int, int] = None,
+    norm_method: str = None, flim: Tuple[float, float] | float = None,
     tlim: Tuple[datetime, datetime] = None, cmap: str = 'batlow', vmin=None,
         vmax=None, log_scale: bool = False) -> plt.Axes:
     """
@@ -78,8 +78,10 @@ def plot_spct_series(
 
     if log_scale:
         plt.yscale('log')
-
-    if flim is not None:
+    if isinstance(flim, (list, tuple)):
+        # Call 1D plotting function
+        return _plot_spct_series_1d(S, f, t, flim, tlim)
+    elif flim is not None:
         plt.ylim(flim)
         ii = np.argmin(abs(f-flim[0]))
         jj = np.argmin(abs(f-flim[1])) + 1
@@ -132,6 +134,55 @@ def plot_spct_series(
         pcm, label='Energy (normalised)', orientation='horizontal', shrink=.6,
         pad=.25)
     plt.ylabel(r'$f$ [Hz]')
+    ax = plt.gca()
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    ax.xaxis.set_major_formatter(
+        mdates.AutoDateFormatter(ax.get_axes_locator()))
+    plt.xticks(rotation=35)
+    return ax
+
+
+def _plot_spct_series_1d(
+    S: np.ndarray, f: np.ndarray, t: np.ndarray,
+        freq: float, tlim: Tuple[datetime, datetime] = None) -> plt.Axes:
+    """
+    Plots a 1D spectral series for a specific frequency.
+
+    :param S: A spectral series with dim=2.
+    :type S: np.ndarray
+    :param f: Vector containing frequencies (Hz)
+    :type f: np.ndarray
+    :param t: Vector containing times as UTCDateTimes
+    :type t: np.ndarray
+    :param freq: Specific frequency to plot
+    :type freq: float
+    :param tlim: Limit time axis to the values in the given window
+    :type tlim: Tuple[datetime, datetime], optional
+    """
+    # Find the index of the closest frequency
+    freq_idx = np.argmin(abs(f - freq))
+
+    # Extract the spectral series for the specific frequency
+    S_1d = S[freq_idx, :]
+
+    # Convert times to datetime
+    t = np.array([UTCDateTime(tt).datetime for tt in t])
+
+    # Apply time limits if provided
+    if tlim is not None:
+        plt.xlim(tlim)
+        ii = np.argmin(abs(t - tlim[0]))
+        jj = np.argmin(abs(t - tlim[1]))
+        t = t[ii:jj]
+        S_1d = S_1d[ii:jj]
+
+    set_mpl_params()
+
+    # Plot the 1D spectral series
+    plt.plot(t, S_1d, label=f'{freq:.2f} Hz')
+    plt.ylabel('Amplitude')
+    plt.legend()
+    plt.grid(True)
     ax = plt.gca()
     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
     ax.xaxis.set_major_formatter(
