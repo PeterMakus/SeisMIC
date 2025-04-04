@@ -312,3 +312,30 @@ def trace_mask_at_utc(
     # Mask the array
     tr.data = np.ma.array(tr.data, mask=mask, hard_mask=True, fill_value=0)
     # Hard mask saves RAM as the data will essentially be discarded
+
+
+def cut_start_end(st: Stream, sec_after_start: float | int,
+                  sec_before_end: float | int) -> Stream:
+    """
+    Cut the start and end off of a Stream.
+
+    :param st: Input Stream
+    :type st: Stream
+    :param sec_after_start: Start time in seconds from the beginning
+        of the trace
+    :type sec_after_start: float
+    :param sec_before_end: End time in seconds before the end of the trace
+    :type sec_before_end: float
+    :return: Cut Stream
+    :rtype: Stream
+
+    .. note::
+        This action is performed in place. If you want to keep the
+        original data use :func:`~obspy.core.stream.Stream.copy`.
+    """
+    if isinstance(st, Trace):
+        st = Stream([st])
+    for tr in st:
+        tr.trim(tr.stats.starttime + sec_after_start,
+                tr.stats.endtime - sec_before_end)
+    return st
