@@ -8,7 +8,7 @@
    Johanna Lehr (jlehr@gfz.de)
 
 Created: Friday, 20th December 2024 14:00:00 pm
-Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm
+Last Modified: Friday, 11th April 2025 03:25:38 pm
 '''
 import logging
 import os
@@ -24,7 +24,7 @@ HANDLERNAME_FILE = "default-file"
 HANDLERNAME_CONSOLE = "default-console"
 DEFAULT_HANDLERNAMES = [HANDLERNAME_CONSOLE, HANDLERNAME_FILE]
 LOGDIR = "log"
-LOG_TSTRFMT = '%Y-%m-%d-%H:%M:%S'
+LOG_TSTRFMT = '%Y-%m-%d-%H-%M-%S'
 RANK_STRFMT = "{rank:03d}"  # "%03d"
 FILENAME_FMT = "{classname}-r"+RANK_STRFMT+"_{exectimestr}.log"
 

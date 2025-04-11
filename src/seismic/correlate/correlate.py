@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)
+Last Modified: Friday, 11th April 2025 03:06:22 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from warnings import warn
@@ -97,18 +97,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         # Write the options dictionary to the log file
         if self.rank == 0:
             opt_dump = mu.utcdatetime2str(options)
-            # opt_dump = deepcopy(options)
-            # # json cannot write the UTCDateTime objects that might be in here
-            # for step in opt_dump['co']['preProcessing']:
-            #     if 'stream_mask_at_utc' in step['function']:
-            #         startsstr = [
-            #             t.format_fissures() for t in step['args']['starts']]
-            #         step['args']['starts'] = startsstr
-            #         if 'ends' in step['args']:
-            #             endsstr = [t.format_fissures()
-            #                 for t in step['args']['ends']]
-            #             step['args']['ends'] = endsstr
-            tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H:%M')
+
+            tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H-%M')
             with open(os.path.join(
                     logdir, 'params%s.txt' % tstr), 'w') as file:
                 file.write(json.dumps(opt_dump, indent=1))
@@ -143,8 +133,6 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             station = station[0]
         if isinstance(network, list) and len(network) == 1:
             network = network[0]
-        # if isinstance(location, list) and len(network) == 1:
-        #     network = network[0]
 
         if (
             network == '*'
@@ -205,6 +193,13 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             self.avail_raw_data, root=0)
         self.station = np.unique(np.array([
             [d[0], d[1]] for d in self.avail_raw_data]), axis=0).tolist()
+        # if no data is available, raise an error
+        if not len(self.station):
+            raise FileNotFoundError(
+                f'No data available in {self.store_client.sds_root}.\n'
+                f'I was looking for network and station {station} and '
+                f'the component {component}.\nAll these parameters can be '
+                'adjusted in your params.yaml.')
         # if only certain combis are requested, remove stations not within
         # these
         self._filter_by_rcombis()

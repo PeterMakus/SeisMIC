@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Monday, 04th December 2024 03:07:26 pm (J. Lehr)
+Last Modified: Friday, 11th April 2025 03:20:28 pm
 '''
 from copy import deepcopy
 import unittest
@@ -23,7 +23,7 @@ import yaml
 
 from seismic.correlate import correlate
 from seismic.correlate.stream import CorrStream
-from seismic.trace_data.waveform import Store_Client
+from seismic.trace_data.waveform import Local_Store_Client, Store_Client
 
 paramfile = os.path.join(
             os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
@@ -51,8 +51,13 @@ class TestCorrrelator(unittest.TestCase):
                                open_mock, yaml_mock):
         yaml_mock.return_value = self.options
         sc_mock = mock.Mock(Store_Client)
-        sc_mock.get_available_stations.return_value = []
-        sc_mock._translate_wildcards.return_value = []
+        sc_mock.get_available_stations.return_value = [
+            ['NET1', 'STA1', 'LOC1', 'CHAN1'],
+            ['NET1', 'STA2', 'LOC2', 'CHAN1'],
+            ['NET2', 'STA1', 'LOC1', 'CHAN1']]
+        sc_mock._translate_wildcards.return_value = [
+            ['NET1', 'STA1'], ['NET1', 'STA2'], ['NET2', 'STA1']]
+        sc_mock.sds_root = mock.PropertyMock(return_value='foo')
         c = correlate.Correlator(self.param_example, sc_mock)
         c.station = [
             ['NET1', 'STA1'], ['NET1', 'STA2'], ['NET2', 'STA1']]
@@ -77,10 +82,12 @@ class TestCorrrelator(unittest.TestCase):
             self, makedirs_mock, logging_mock, open_mock, yaml_mock):
         yaml_mock.return_value = self.options
         sc_mock = mock.Mock(Store_Client)
+        sc_mock.sds_root = mock.PropertyMock(return_value='foo')
         sc_mock.get_available_stations.return_value = []
         sc_mock._translate_wildcards.return_value = []
-        c = correlate.Correlator(self.param_example, sc_mock)
-        self.assertDictEqual(self.options['co'], c.options)
+        with self.assertRaises(FileNotFoundError):
+            correlate.Correlator(
+                self.param_example, sc_mock)
         mkdir_calls = [
             mock.call(os.path.join(
                 self.options['proj_dir'], self.options['log_subdir']),
@@ -118,16 +125,20 @@ class TestCorrrelator(unittest.TestCase):
             self, sds_exists_mock, read_inventory_mock,
             isdir_mock, listdir_mock, makedirs_mock,
             logging_mock, open_mock, yaml_mock):
-
         yaml_mock.return_value = self.options
-        sc_mock = mock.Mock(Store_Client)
-        sc_mock.get_available_stations.return_value = []
-        sc_mock._translate_wildcards.return_value = []
         isdir_mock.return_value = True
         listdir_mock.return_value = False
         read_inventory_mock.return_value = Inventory()
         sds_exists_mock.return_value = True
-        c = correlate.Correlator(self.param_example)
+
+        local_store_mock = mock.Mock(
+            spec=correlate.Local_Store_Client, sds_root='x',
+            _translate_wildcards=mock.MagicMock(return_value=[
+                ['NET1', 'NET2'],
+                ['STA1', 'STA2']]))
+        with mock.patch.object(
+                correlate, 'Local_Store_Client', return_value=local_store_mock):
+            c = correlate.Correlator(self.param_example)
         self.assertDictEqual(self.options['co'], c.options)
         mkdir_calls = [
             mock.call(os.path.join(
@@ -135,11 +146,6 @@ class TestCorrrelator(unittest.TestCase):
                 exist_ok=True),
             mock.call(os.path.join(
                 self.options['proj_dir'], self.options['co']['subdir']),
-                exist_ok=True),
-            mock.call(os.path.join(
-                self.options['proj_dir']), exist_ok=True),
-            mock.call(os.path.join(
-                self.options['proj_dir'], self.options['log_subdir']),
                 exist_ok=True)]
         makedirs_mock.assert_has_calls(mkdir_calls)
         open_mock.assert_has_calls([mock.call(file=self.param_example)])

@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 9th July 2024 04:48:54 pm
+Last Modified: Friday, 11th April 2025 03:23:36 pm
 '''
 from copy import deepcopy
 import json
@@ -77,8 +77,7 @@ class Monitor(logfactory.LoggingMPIBaseClass):
 
         # Write the options dictionary to the log file
         if self.rank == 0:
-            tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H:%M')
-            tstr = tstr.replace(':', '-')
+            tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H-%M')
             opt_dump = deepcopy(options)
             # json cannot write the UTCDateTime objects that might be in here
             for step in opt_dump['co']['preProcessing']:
