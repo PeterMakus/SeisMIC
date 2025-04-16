@@ -8,7 +8,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Tuesday, 25th Febuary 2025 03:25:00 pm
+Last Modified: Wednesday, 16th April 2025 04:36:15 pm
 '''
 
 import fnmatch
@@ -315,7 +315,7 @@ class Store_Client(logfactory.LoggingMPIBaseClass):
                             get_sdsfmtst_with_doy_as_wildcard(
                                 self.sds_fmtstr).format(
                                 network=network, station=station,
-                                location=location, channel=f'??{component}',
+                                location=location, channel=f'*{component}',
                                 year='*', sds_type=self.sds_type))
         return [os.path.basename(i).split('.')[:4] for i in glob.iglob(path)]
 
