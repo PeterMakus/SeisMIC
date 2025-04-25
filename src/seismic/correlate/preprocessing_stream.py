@@ -337,5 +337,6 @@ def cut_start_end(st: Stream, sec_after_start: float | int,
         st = Stream([st])
     for tr in st:
         tr.trim(tr.stats.starttime + sec_after_start,
-                tr.stats.endtime - sec_before_end)
+                tr.stats.endtime - sec_before_end,
+                pad=True)
     return st
