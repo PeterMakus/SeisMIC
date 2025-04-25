@@ -629,12 +629,12 @@ class TestCorrrelator(unittest.TestCase):
                 avail_raw_data.pop(popi)
                 avail_stations = np.unique(
                     [item[:2] for item in avail_raw_data], axis=0).tolist()
-                icut = popi - popi % 3
-                avail_raw_data_new = [avail_raw_data[i] for i
-                                      in range(len(avail_raw_data))
-                                      if i not in range(icut, icut+2)]
-                avail_stations_new = np.unique(
-                    [item[:2] for item in avail_raw_data_new], axis=0).tolist()
+                # icut = popi - popi % 3
+                # avail_raw_data_new = [avail_raw_data[i] for i
+                #                       in range(len(avail_raw_data))
+                #                       if i not in range(icut, icut+2)]
+                # avail_stations_new = np.unique([item[:2] for item in
+                #   avail_raw_data_new], axis=0).tolist()
 
                 c = correlate.Correlator()
 
@@ -644,10 +644,8 @@ class TestCorrrelator(unittest.TestCase):
                 c.comm = MPI.COMM_WORLD
                 c.rank = c.comm.Get_rank()
                 c.options = co_options
-                c._check_joint_norm()
-
-                self.assertListEqual(c.station, avail_stations_new)
-                self.assertListEqual(c.avail_raw_data, avail_raw_data_new)
+                self.assertRaises(ValueError,
+                                  c._check_joint_norm)
 
     @mock.patch.object(correlate.Correlator, '__init__')
     def test_get_row_index_per_core_jointnorm_False(

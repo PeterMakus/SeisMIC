@@ -340,9 +340,10 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 popped.append(self.avail_raw_data.pop(-1))
 
             if popped:
-                self.logger.warning(
-                    'The following stations have less than 3 components: %s'
-                    % str(popped) + ' They will be removed.')
+                raise ValueError(
+                    "Expecting 3-component stations if `joint_norm` is True. "
+                    + "The following stations have less than 3 components: %s"
+                    % str(popped))
 
             self.station = np.unique(np.array([
                 [d[0], d[1]] for d in self.avail_raw_data]),
