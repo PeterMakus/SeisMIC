@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Friday, 11th April 2025 03:06:22 pm
+Last Modified: Thursday, 3rd July 2025 10:48:22 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from warnings import warn
@@ -1400,8 +1400,10 @@ def preprocess_stream(
         try:
             mu.correct_polarity(st, inv)
         except Exception:
+            msg = "Polarity correction failed"
+            msg += ", data will be used without polarity check..."
             module_logger.error(
-                "Exception while checking polarity of inventory ...",
+                msg,
                 exc_info=True)
 
     mu.discard_short_traces(st, subdivision['corr_len']/20)
