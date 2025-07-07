@@ -10,7 +10,7 @@ Plotting specral time series.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Wednesday, 21st June 2023 04:54:20 pm
-Last Modified: Tuesday, 1st April 2025 10:16:36 am
+Last Modified: Monday, 7th July 2025 11:43:50 am
 '''
 
 import os
@@ -50,7 +50,7 @@ def plot_spct_series(
     :type norm: str, optional
     :param norm_method: Normation method to use.
         Either 'linalg' (i.e., length of vector),
-        'mean', or 'median'.
+        'mean', 'max', or 'median'.
     :param title: Plot title, defaults to None
     :type title: str, optional
     :param outfile: location to save the plot to, defaults to None
@@ -118,18 +118,22 @@ def plot_spct_series(
         if norm_method == 'linalg':
             S = np.divide(S, np.linalg.norm(S, axis=1)[:, np.newaxis])
         elif norm_method == 'mean':
-            S = np.divide(S, np.mean(S, axis=1)[:, np.newaxis])
+            S = np.divide(S, np.nanmean(S, axis=1)[:, np.newaxis])
         elif norm_method == 'median':
-            S = np.divide(S, np.median(S, axis=1)[:, np.newaxis])
+            S = np.divide(S, np.nanmedian(S, axis=1)[:, np.newaxis])
+        elif norm_method == 'max':
+            S = np.divide(S, np.nanmax(S, axis=1)[:, np.newaxis])
         else:
             raise ValueError('Normalisation method %s unkown.' % norm_method)
     elif norm == 't':
         if norm_method == 'linalg':
             S = np.divide(S, np.linalg.norm(S, axis=0))
         elif norm_method == 'mean':
-            S = np.divide(S, np.mean(S, axis=0))
+            S = np.divide(S, np.nanmean(S, axis=0))
         elif norm_method == 'median':
-            S = np.divide(S, np.median(S, axis=0))
+            S = np.divide(S, np.nanmedian(S, axis=0))
+        elif norm_method == 'max':
+            S = np.divide(S, np.nanmax(S, axis=0))
         else:
             raise ValueError('Normalisation method %s unkown.' % norm_method)
     else:
