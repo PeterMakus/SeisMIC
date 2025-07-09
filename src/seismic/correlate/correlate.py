@@ -1118,6 +1118,11 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             )
             startlags[ii] = -sampleToSave / self.sampling_rate - roffset
 
+        self.logger.info(
+            "Core %d finished correlation for %d combinations."
+            % (self.rank, len(ind))
+        )
+
         ######################################
         # time domain postProcessing
 
@@ -1128,7 +1133,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
         self.comm.Allreduce(MPI.IN_PLACE, [C, MPI.FLOAT], op=MPI.SUM)
         self.comm.Allreduce(MPI.IN_PLACE, [startlags, MPI.FLOAT], op=MPI.SUM)
-        self.logger.info("Core %d finished correlation." % self.rank)
+        self.logger.info("Core %d shared results between cores." % self.rank)
         return (C, startlags)
 
     def _get_row_index_per_core(self, A: np.ndarray) -> np.ndarray:
