@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Friday, 11th April 2025 03:23:36 pm
+Last Modified: Monday, 4th August 2025 11:19:10 am
 '''
 from copy import deepcopy
 import json
@@ -80,15 +80,20 @@ class Monitor(logfactory.LoggingMPIBaseClass):
             tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H-%M')
             opt_dump = deepcopy(options)
             # json cannot write the UTCDateTime objects that might be in here
-            for step in opt_dump['co']['preProcessing']:
-                if 'stream_mask_at_utc' in step['function']:
-                    startsstr = [
-                        t.format_fissures() for t in step['args']['starts']]
-                    step['args']['starts'] = startsstr
-                    if 'ends' in step['args']:
-                        endsstr = [
-                            t.format_fissures() for t in step['args']['ends']]
-                        step['args']['ends'] = endsstr
+            try: 
+                for step in opt_dump['co']['preProcessing']:
+                    if 'stream_mask_at_utc' in step['function']:
+                        startsstr = [
+                            t.format_fissures() for t in step['args']['starts']]
+                        step['args']['starts'] = startsstr
+                        if 'ends' in step['args']:
+                            endsstr = [
+                                t.format_fissures() for t in step[
+                                    'args']['ends']]
+                            step['args']['ends'] = endsstr
+            except KeyError:
+                # no preProcessing in co
+                pass
             with open(os.path.join(
                     logdir, 'params%s.txt' % tstr), 'w') as file:
                 file.write(json.dumps(opt_dump, indent=1))
