@@ -6,7 +6,7 @@
 [![codecov](https://codecov.io/gh/PeterMakus/SeisMIC/branch/main/graph/badge.svg?token=DYVHODB6LN)](https://codecov.io/gh/PeterMakus/SeisMIC)
 [![DOI](https://img.shields.io/badge/DOI-10.26443/seismica.v3i1.1099-blue)](https://doi.org/10.26443/seismica.v3i1.1099)
 [![PyPI](https://img.shields.io/pypi/v/seismic)](https://pypi.org/project/seismic/)
-[![Python 3.10](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/release/python-3100/)
+[![Python 3.11](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/release/python-3110/)
 
 ## Monitoring Velocity Changes using Ambient Seismic Noise
 SeisMIC (**Seismological Monitoring using Interferometric Concepts**) is a python software that emerged from the miic library. **SeisMIC** provides functionality to apply some concepts of seismic interferometry to different data of elastic waves. Its main use case is the monitoring of temporal changes in a mediums Green's Function (i.e., monitoring of temporal velocity changes).

@@ -1,13 +1,13 @@
 '''
 :copyright:
 :license:
-    EUROPEAN UNION PUBLIC LICENCE v. 1.2
-   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
+    `EUROPEAN UNION PUBLIC LICENCE v. 1.2
+    <https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12>`_
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 31st May 2021 01:50:04 pm
-Last Modified: Wednesday, 19th June 2024 04:24:46 pm
+Last Modified: Wednesday, 26th February 2025 04:33:29 pm
 '''
 
 import unittest
@@ -228,6 +228,44 @@ class TestCorrBulk(unittest.TestCase):
             'filter; freqs: (1, 2), order: 17', cb.stats.processing_bulk)
 
     @mock.patch('seismic.correlate.stream.pcp.corr_mat_extract_trace')
+    def test_extract_trace_time_window(self, extract_mock):
+        extract_mock.return_value = np.zeros((25,))
+        cb = self.cb.copy()
+        starttime = cb.stats.corr_start[0]
+        endtime = cb.stats.corr_end[-1]
+        method = 'mean'
+        out = cb.extract_trace_time_window(starttime, endtime, method)
+        extract_mock.assert_called_once_with(mock.ANY, cb.stats, method)
+        np.testing.assert_array_equal(
+            extract_mock.call_args[0][0], self.cb.data[:, :])
+        np.testing.assert_array_equal(out, np.zeros((25,)))
+        np.testing.assert_array_equal(cb.ref_trc, np.zeros((25,)))
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_extract_trace')
+    def test_extract_trace_time_window_partial_indices(self, extract_mock):
+        extract_mock.return_value = np.zeros((25,))
+        cb = self.cb.copy()
+        starttime = self.cb.stats.corr_start[0] - 5
+        endtime = self.cb.stats.corr_start[0] - 1
+        method = 'mean'
+        out = cb.extract_trace_time_window(starttime, endtime, method)
+        extract_mock.assert_called_once_with(mock.ANY, cb.stats, method)
+        np.testing.assert_array_equal(out, np.zeros((25,)))
+        np.testing.assert_array_equal(cb.ref_trc, np.zeros((25,)))
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_extract_trace')
+    def test_extract_trace_time_window_different_method(self, extract_mock):
+        extract_mock.return_value = np.zeros((25,))
+        cb = self.cb.copy()
+        starttime = UTCDateTime(0)
+        endtime = UTCDateTime(3600)
+        method = 'median'
+        out = cb.extract_trace_time_window(starttime, endtime, method)
+        extract_mock.assert_called_once_with(mock.ANY, cb.stats, method)
+        np.testing.assert_array_equal(out, np.zeros((25,)))
+        np.testing.assert_array_equal(cb.ref_trc, np.zeros((25,)))
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_extract_trace')
     def test_extract_trace(self, extract_mock):
         extract_mock.return_value = np.zeros((25,))
         cb = self.cb.copy()
@@ -238,12 +276,59 @@ class TestCorrBulk(unittest.TestCase):
         np.testing.assert_array_equal(out, np.zeros((25,)))
         np.testing.assert_array_equal(cb.ref_trc, np.zeros((25,)))
 
-    def test_extract_multi_trace_single(self):
-        with mock.patch.object(self.cb, 'extract_trace') as extract_mock:
-            extract_mock.return_value = 'test'
-            t = self.cb.extract_multi_trace(0, 'bla', 25)
-            extract_mock.assert_called_once_with('bla', 25)
-        self.assertEqual(t, 'test')
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_extract_trace')
+    def test_extract_multi_trace_single(self, extract_mock):
+        extract_mock.return_value = np.zeros((25,))
+        cb = self.cb.copy()
+        rtrcs = cb.extract_multi_trace(0, 'bla', 25)
+        extract_mock.assert_called_once_with(mock.ANY, cb.stats, 'bla', 25)
+        np.testing.assert_array_equal(rtrcs, np.zeros((25,)))
+        np.testing.assert_array_equal(cb.ref_trc, np.zeros((25,)))
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_extract_trace')
+    def test_extract_multi_trace_win_inc_int(self, extract_mock):
+        extract_mock.return_value = np.zeros((25,))
+        wi = 1  # day
+        rtrcs = self.cb.extract_multi_trace(wi, 'bla', 25)
+        self.assertEqual(len(rtrcs), 3)
+        np.testing.assert_array_equal(np.zeros((3, 25)), rtrcs)
+        calls = [mock.call(mock.ANY, self.cb.stats, 'bla', 25)]*3
+        extract_mock.assert_has_calls(calls)
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_extract_trace')
+    def test_extract_multi_trace_win_inc_vect(self, extract_mock):
+        extract_mock.return_value = np.zeros((25,))
+        wi = [0.5, 0.5, 1, 0.5, 0.5]  # day
+        rtrcs = self.cb.extract_multi_trace(wi, 'bla', 25)
+        self.assertEqual(len(rtrcs), 5)
+        np.testing.assert_array_equal(np.zeros((5, 25)), rtrcs)
+        calls = [mock.call(mock.ANY, self.cb.stats, 'bla', 25)]*5
+        extract_mock.assert_has_calls(calls)
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_extract_trace')
+    def test_extract_multi_trace_with_time_windows(self, extract_mock):
+        extract_mock.return_value = np.zeros((25,))
+        time_windows = [(UTCDateTime(0), UTCDateTime(3600)), (UTCDateTime(3600), UTCDateTime(7200))]
+        rtrcs = self.cb.extract_multi_trace(0, 'bla', percentile=25, time_windows=time_windows)
+        self.assertEqual(len(rtrcs), 2)
+        np.testing.assert_array_equal(np.zeros((2, 25)), rtrcs)
+        
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_extract_trace')
+    def test_extract_multi_trace_with_empty_time_windows(self, extract_mock):
+        extract_mock.return_value = np.zeros((25,))
+        time_windows = []
+        with mock.patch.object(
+                self.cb, 'extract_trace_time_window') as et_mock:
+            self.cb.extract_multi_trace(0, 'bla', 25, time_windows=time_windows)
+            et_mock.assert_not_called()
+
+    @mock.patch('seismic.correlate.stream.pcp.corr_mat_extract_trace')
+    def test_extract_multi_trace_with_invalid_time_windows(self, extract_mock):
+        extract_mock.return_value = np.zeros((25,))
+        time_windows = [(UTCDateTime(7200), UTCDateTime(3600))]
+        with self.assertRaises(ValueError):
+            self.cb.extract_multi_trace(0, 'bla', 25, time_windows=time_windows)
+        extract_mock.assert_not_called()
 
     @mock.patch('seismic.correlate.stream.pcp.corr_mat_extract_trace')
     def test_extract_multi_trace_win_inc_int(self, extract_mock):

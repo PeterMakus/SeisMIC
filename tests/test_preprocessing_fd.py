@@ -2,8 +2,8 @@
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-    EUROPEAN UNION PUBLIC LICENCE v. 1.2
-   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
+    `EUROPEAN UNION PUBLIC LICENCE v. 1.2
+    <https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12>`_
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 

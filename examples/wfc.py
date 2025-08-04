@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 17th July 2023 10:44:29 am
-Last Modified: Friday, 15th November 2024 12:35:06 pm
+Last Modified: Friday, 10th January 2025 01:41:13 pm
 '''
 
 import os
@@ -63,7 +63,7 @@ for fmin, fmax in zip(freq_min[:-1:2], freq_max[1::2]):
                 fmin/2,
                 fmin, fmax,
                 1.5*fmax if fmax < 8.25 else 12.49]}}]
-    c = Correlator(sc, options=deepcopy(params))
+    c = Correlator(options=deepcopy(params), store_client=sc)
     st = c.pxcorr()
 
 # Compute waveform coherence

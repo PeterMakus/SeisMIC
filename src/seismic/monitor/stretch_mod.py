@@ -1,13 +1,13 @@
 '''
 :copyright:
 :license:
-    EUROPEAN UNION PUBLIC LICENCE v. 1.2
-   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
+    `EUROPEAN UNION PUBLIC LICENCE v. 1.2
+    <https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12>`_
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Friday, 29th September 2023 10:59:17 am
+Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)
 '''
 from typing import List, Tuple, Optional
 from copy import deepcopy
@@ -18,9 +18,14 @@ from scipy.interpolate import UnivariateSpline, interp1d
 from seismic.correlate.stats import CorrStats
 from seismic.monitor.trim import corr_mat_trim
 
+import logging
+from .. import logfactory
+parentlogger = logfactory.create_logger()
+module_logger = logging.getLogger(parentlogger.name+".stretch_mod")
+
 
 def time_windows_creation(
-        starting_list: list, t_width: List[int] or int) -> np.ndarray:
+        starting_list: list, t_width: List[int] | int) -> np.ndarray:
     """ Time windows creation.
 
     A matrix containing one time window for each row is created. The starting
@@ -852,7 +857,8 @@ def estimate_reftr_shifts_from_dt_corr(
         return ret_dict
 
     else:
-        print("For a single reference trace use the appropriate function")
+        module_logger.warning(
+            "For a single reference trace use the appropriate function")
         return None
 
 
@@ -930,7 +936,7 @@ def multi_ref_vchange_and_align(
         ref_trs = np.nan_to_num(ref_trs)
 
     if tw is not None and len(tw) > 1:
-        print(
+        module_logger.info(
             "The multi-reference vchange evaluation cannot handle multiple "
             "time windows. Only the first time-window will be used")
         tw = tw[0]

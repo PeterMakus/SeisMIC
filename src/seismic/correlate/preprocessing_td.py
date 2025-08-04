@@ -4,13 +4,13 @@ Module that contains functions for preprocessing in the time domain
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-    EUROPEAN UNION PUBLIC LICENCE v. 1.2
-   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
+    `EUROPEAN UNION PUBLIC LICENCE v. 1.2
+    <https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12>`_
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:24:01 pm
-Last Modified: Thursday, 29th June 2023 11:15:56 am
+Last Modified: Friday, 10th January 2025 01:29:21 pm
 '''
 from copy import deepcopy
 
@@ -133,9 +133,9 @@ def detrendqr(data: np.ndarray) -> np.ndarray:
     return data
 
 
-def demean(data: np.ndarray) -> np.ndarray:
+def demean(data: np.ndarray, args=None, params=None) -> np.ndarray:
     """
-    Demean data
+    Demean data.
 
     :param data: 1 or 2D array
     :type data: np.ndarray
@@ -324,7 +324,7 @@ def taper(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     if args['type'] == 'cosine_taper':
         func = osignal.invsim.cosine_taper
     else:
-        func = getattr(signal, args['type'])
+        func = getattr(signal.windows, args['type'])
     args = deepcopy(args)
     args.pop('type')
     tap = func(A.shape[1], **args)

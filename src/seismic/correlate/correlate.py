@@ -2,15 +2,14 @@
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-    EUROPEAN UNION PUBLIC LICENCE v. 1.2
-   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
+    `EUROPEAN UNION PUBLIC LICENCE v. 1.2
+    <https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12>`_
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 19th June 2024 03:39:46 pm
+Last Modified: Thursday, 3rd July 2025 10:48:22 am
 '''
-from copy import deepcopy
 from typing import Iterator, List, Tuple, Optional
 from warnings import warn
 import os
@@ -30,40 +29,52 @@ from seismic.correlate.stream import CorrTrace, CorrStream
 from seismic.correlate import preprocessing_td as pptd
 from seismic.correlate import preprocessing_stream as ppst
 from seismic.db.corr_hdf5 import CorrelationDataBase, h5_FMTSTR
-from seismic.trace_data.waveform import Store_Client
+from seismic.trace_data.waveform import Store_Client, Local_Store_Client
 from seismic.utils.fetch_func_from_str import func_from_str
 from seismic.utils import miic_utils as mu
+from .. import logfactory
+
+LOGDIR = "log"
+DEFAULT_LOGPARAMS = dict(loglevel="WARNING", logdir=LOGDIR,
+                         filename_fmt=logfactory.FILENAME_FMT)
+
+parentlogger = logfactory.create_logger()
+module_logger = logging.getLogger(parentlogger.name+".waveform")
 
 
-class Correlator(object):
+class Correlator(logfactory.LoggingMPIBaseClass):
     """
     Object to manage the actual Correlation (i.e., Green's function retrieval)
     for the database.
     """
-    def __init__(self, store_client: Store_Client, options: dict or str):
+    def __init__(self, options: dict | str, store_client: Store_Client = None):
         """
         Initiates the Correlator object. When executing
         :func:`~seismic.correlate.correlate.Correlator.pxcorr()`, it will
         actually compute the correlations and save them in an hdf5 file that
         can be handled using
         :class:`~seismic.db.corr_hdf5.CorrelationDataBase`.
-        Data has to be preprocessed before calling this (i.e., the data already
-        has to be given in an ASDF format). Consult
-        :class:`~seismic.trace_data.preprocess.Preprocessor` for information on
-        how to proceed with this.
 
         :param options: Dictionary containing all options for the correlation.
             Can also be a path to a yaml file containing all the keys required
             in options.
         :type options: dict or str
+        :param store_client: Object that handles the data retrieval. If None,
+            a :class:`~seismic.trace_data.waveform.Local_Store_Client` will be
+            initiated. In this case all data has to be available locally.
         """
         if isinstance(options, str):
-            with open(options) as file:
+            with open(file=options) as file:
                 options = yaml.load(file, Loader=yaml.FullLoader)
-        # init MPI
-        self.comm = MPI.COMM_WORLD
-        self.psize = self.comm.Get_size()
-        self.rank = self.comm.Get_rank()
+        elif isinstance(options, Store_Client):
+            raise DeprecationWarning(
+                "Order of arguments in Correlator has changed. "
+                + "The Store_Client has to be passed as the second argument. "
+                + "Can be None to init Local_Store_Client from options.")
+
+        # init MPI, logging
+        super().__init__()
+
         # directories
         self.proj_dir = options['proj_dir']
         self.corr_dir = os.path.join(self.proj_dir, options['co']['subdir'])
@@ -71,50 +82,23 @@ class Correlator(object):
             self.save_comps_separately = options['save_comps_separately']
         except KeyError:
             self.save_comps_separately = False
+
         logdir = os.path.join(self.proj_dir, options['log_subdir'])
+        self.set_logger(options["log_level"], logdir)
+        warnlog = logging.getLogger('py.warnings')
+        warnlog.addHandler([h for h in self.logger.parent.handlers if
+                            isinstance(h, logging.FileHandler)][0])
+        self.logger.debug('Warn logger has handler: {}'.format(
+            warnlog.hasHandlers()))
+
         if self.rank == 0:
             os.makedirs(self.corr_dir, exist_ok=True)
-            os.makedirs(logdir, exist_ok=True)
-
-        # Logging - rank dependent
-        if self.rank == 0:
-            tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H:%M')
-        else:
-            tstr = None
-        tstr = self.comm.bcast(tstr, root=0)
-
-        rankstr = str(self.rank).zfill(3)
-
-        loglvl = mu.log_lvl[options['log_level'].upper()]
-        self.logger = logging.getLogger("seismic.Correlator%s" % rankstr)
-        self.logger.setLevel(loglvl)
-        logging.captureWarnings(True)
-        warnlog = logging.getLogger('py.warnings')
-        fh = logging.FileHandler(os.path.join(logdir, 'correlate%srank%s' % (
-            tstr, rankstr)))
-        fh.setLevel(loglvl)
-        self.logger.addHandler(fh)
-        warnlog.addHandler(fh)
-        fmt = logging.Formatter(
-            fmt='%(asctime)s - %(levelname)s - %(message)s')
-        fh.setFormatter(fmt)
-        consoleHandler = logging.StreamHandler()
-        consoleHandler.setFormatter(fmt)
-        self.logger.addHandler(consoleHandler)
 
         # Write the options dictionary to the log file
         if self.rank == 0:
-            opt_dump = deepcopy(options)
-            # json cannot write the UTCDateTime objects that might be in here
-            for step in opt_dump['co']['preProcessing']:
-                if 'stream_mask_at_utc' in step['function']:
-                    startsstr = [
-                        t.format_fissures() for t in step['args']['starts']]
-                    step['args']['starts'] = startsstr
-                    if 'ends' in step['args']:
-                        endsstr = [
-                            t.format_fissures() for t in step['args']['ends']]
-                        step['args']['ends'] = endsstr
+            opt_dump = mu.utcdatetime2str(options)
+
+            tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H-%M')
             with open(os.path.join(
                     logdir, 'params%s.txt' % tstr), 'w') as file:
                 file.write(json.dumps(opt_dump, indent=1))
@@ -137,14 +121,18 @@ class Correlator(object):
         # location = options['net']['location']
 
         # Store_Client
+        if store_client is None:
+            store_client = Local_Store_Client(
+                options,
+                logparams=dict(loglevel=options["log_level"],
+                               logdir=logdir,
+                               filename_fmt=logfactory.FILENAME_FMT))
         self.store_client = store_client
 
         if isinstance(station, list) and len(station) == 1:
             station = station[0]
         if isinstance(network, list) and len(network) == 1:
             network = network[0]
-        # if isinstance(location, list) and len(network) == 1:
-        #     network = network[0]
 
         if (
             network == '*'
@@ -205,6 +193,13 @@ class Correlator(object):
             self.avail_raw_data, root=0)
         self.station = np.unique(np.array([
             [d[0], d[1]] for d in self.avail_raw_data]), axis=0).tolist()
+        # if no data is available, raise an error
+        if not len(self.station):
+            raise FileNotFoundError(
+                f'No data available in {self.store_client.sds_root}.\n'
+                f'I was looking for network and station {station} and '
+                f'the component {component}.\nAll these parameters can be '
+                'adjusted in your params.yaml.')
         # if only certain combis are requested, remove stations not within
         # these
         self._filter_by_rcombis()
@@ -491,7 +486,9 @@ class Correlator(object):
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
         ind = np.arange(len(self.avail_raw_data))[ind]
-
+        self.logger.debug("Core %d reading %s" % (
+            self.rank, str(np.array(self.avail_raw_data)[ind])
+        ))
         # Loop over read increments
         for t in tqdm(loop_window):
             write_flag = True  # Write length is same as read length
@@ -501,15 +498,30 @@ class Correlator(object):
 
             # loop over queried stations
             for net, stat, loc, cha in np.array(self.avail_raw_data)[ind]:
+                self.logger.debug("Core %d reading %s, %s, %s" % (
+                    self.rank, net, stat, cha
+                ))
                 # Load data
                 stext = self.store_client._load_local(
                     net, stat, loc, cha, startt, endt, True, False)
-                mu.get_valid_traces(stext)
+                try:
+                    mu.get_valid_traces(stext)
+                except TypeError:
+                    # stext is None
+                    continue
                 if stext is None or not len(stext):
                     # No data for this station to read
                     continue
                 st = st.extend(stext)
 
+            self.logger.info("Core %d processes %d traces. Ids are %s" % (
+                self.rank, len(st), str([tr.id for tr in st])
+            ))
+
+            # The stream has to be tapered ebfore decimating!
+            # (Filter operation), added a taper here on 2025/02/21
+            st = ppst.detrend_st(st, 'linear')
+            st = mu.cos_taper_st(st, tl, False, False)
             # Stream based preprocessing
             # Downsampling
             # 04/04/2023 Downsample before preprocessing for performance
@@ -536,7 +548,7 @@ class Correlator(object):
                     st = preprocess_stream(
                         st, self.store_client, startt, endt, tl,
                         **self.options)
-                except ValueError as e:
+                except Exception as e:
                     self.logger.error(
                         'Stream preprocessing failed for '
                         f'{st[0].stats.network}.{st[0].stats.station} and time'
@@ -605,7 +617,7 @@ class Correlator(object):
                         win = preprocess_stream(
                             win, self.store_client, winstart, winend,
                             tl, **self.options)
-                    except ValueError as e:
+                    except Exception as e:
                         if st.count():
                             self.logger.error(
                                 'Stream preprocessing failed for '
@@ -634,8 +646,11 @@ class Correlator(object):
                         f'No new data for times {winstart}-{winend}')
                     continue
 
-                self.logger.debug('Working on correlation times %s-%s' % (
-                    str(win[0].stats.starttime), str(win[0].stats.endtime)))
+                self.logger.debug(('Core %d working on correlation'
+                                  + ' times %s-%s of %d traceswith ids %s') % (
+                    self.rank,
+                    str(win[0].stats.starttime), str(win[0].stats.endtime),
+                    len(win), str([tr.id for tr in win])))
                 win = win.merge()
                 win = win.trim(winstart, winend, pad=True)
                 yield win, write_flag
@@ -652,7 +667,9 @@ class Correlator(object):
 
         # indices for traces to be worked on by each process
         ind = pmap == self.rank
-
+        self.logger.debug("Core %d working on indices %d-%d" % (
+            self.rank, ind[0], ind[-1]
+        ))
     ######################################
         corr_args = self.options['corr_args']
         # time domain pre-processing
@@ -875,7 +892,11 @@ def calc_cross_combis(
         ``'allCombinations'``:
             All traces are combined in both orders ((0,1) and (1,0))
     """
-
+    # deprecate allCombinations
+    if method == 'allCombinations':
+        warn('Method "allCombinations" is deprecated. Using '
+             '"allSimpleCombinations" instead.', DeprecationWarning)
+        method = 'allSimpleCombinations'
     combis = []
     # sort alphabetically
     st = st.sort()
@@ -1261,6 +1282,12 @@ def compute_network_station_combinations(
         and the list of the correlation station code.
     :rtype: Tuple[list, list]
     """
+    if method == 'allCombinations':
+        warn(
+            'allCombinations is deprecated, '
+            'using allSimpleCombinations instead.',
+            DeprecationWarning)
+        method = 'allSimpleCombinations'
     netcombs = []
     statcombs = []
     if method == 'betweenStations':
@@ -1358,7 +1385,8 @@ def preprocess_stream(
         try:
             st.remove_response(taper=False, inventory=inv)
         except ValueError:
-            print('Station response not found ... loading from remote.')
+            module_logger.warning('Station response not found ... loading'
+                                  + ' from remote.')
             # missing station response
             ninv = store_client.rclient.get_stations(
                 network=st[0].stats.network, station=st[0].stats.station,
@@ -1371,8 +1399,12 @@ def preprocess_stream(
     if inv:
         try:
             mu.correct_polarity(st, inv)
-        except Exception as e:
-            print(e)
+        except Exception:
+            msg = "Polarity correction failed"
+            msg += ", data will be used without polarity check..."
+            module_logger.error(
+                msg,
+                exc_info=True)
 
     mu.discard_short_traces(st, subdivision['corr_len']/20)
 

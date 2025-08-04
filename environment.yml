@@ -2,20 +2,21 @@ name: seismic
 channels:
   - conda-forge
 dependencies:
-  - geographiclib==2.0
-  - h5py==3.9.0
-  - matplotlib<=3.7.2
-  - mpi4py<=3.1.4
-  - numpy<=1.25.2
-  - obspy<=1.4.0, >=1.3.1
+  - geographiclib>=2.0
+  - h5py <=3.12.1
+  - matplotlib  <=3.8.4
+  - mpi4py<=4.0.1
+  - numpy <=1.26.4
+  - obspy <=1.4.1, >=1.3.1
   - pip
   - prov
   - pytest
   - pyyaml
-  - python>=3.10
-  - scipy<=1.11.2
+  - python>=3.10, <3.13
+  - scipy  <=1.15.0
   - flake8
   - tqdm
+  - ipykernel
   - pip:
     - sphinx < 6.0
     - pydata-sphinx-theme

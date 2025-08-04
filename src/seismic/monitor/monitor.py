@@ -2,25 +2,25 @@
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
-    EUROPEAN UNION PUBLIC LICENCE v. 1.2
-   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
+    `EUROPEAN UNION PUBLIC LICENCE v. 1.2
+    <https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12>`_
 :author:
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 9th July 2024 04:48:54 pm
+Last Modified: Monday, 4th August 2025 11:30:40 am
 '''
 from copy import deepcopy
 import json
 import logging
+import logging.handlers
 import os
-from typing import Generator, List, Tuple
+from typing import Generator, List, Tuple, Iterator
 import warnings
 import yaml
 import fnmatch
 from glob import glob
 
-from mpi4py import MPI
 import numpy as np
 from obspy import UTCDateTime
 from tqdm import tqdm
@@ -28,10 +28,13 @@ from tqdm import tqdm
 from seismic.db.corr_hdf5 import CorrelationDataBase, h5_FMTSTR
 from seismic.monitor.dv import DV, read_dv
 from seismic.monitor.wfc import WFC
-from seismic.utils.miic_utils import log_lvl
+from .. import logfactory
+
+parentlogger = logfactory.create_logger()
+module_logger = logging.getLogger(parentlogger.name+".monitor")
 
 
-class Monitor(object):
+class Monitor(logfactory.LoggingMPIBaseClass):
     def __init__(self, options: dict | str):
         """
         Object that handles the computation of seismic velocity changes.
@@ -56,60 +59,42 @@ class Monitor(object):
         self.indir = os.path.join(
             options['proj_dir'], options['co']['subdir']
         )
+        logdir = os.path.join(self.proj_dir, options['log_subdir'])
+        loglvl = self.options['log_level']
 
-        # init MPI
-        self.comm = MPI.COMM_WORLD
-        self.psize = self.comm.Get_size()
-        self.rank = self.comm.Get_rank()
+        # init MPI, logging
+        super().__init__()
+        self.set_logger(loglvl, logdir)
+        warnlog = logging.getLogger('py.warnings')
+        warnlog.addHandler([h for h in self.logger.parent.handlers if
+                            isinstance(h, logging.FileHandler)][0])
+        self.logger.debug('Warn logger has handler: {}'.format(
+            warnlog.hasHandlers()))
 
         # directories:
-        logdir = os.path.join(self.proj_dir, options['log_subdir'])
         if self.rank == 0:
             os.makedirs(self.outdir, exist_ok=True)
-            os.makedirs(logdir, exist_ok=True)
-
-        # Logging - rank dependent
-        loglvl = log_lvl[self.options['log_level']]
-
-        if self.rank == 0:
-            tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H:%M')
-        else:
-            tstr = None
-        tstr = self.comm.bcast(tstr, root=0)
-        # replace colon in tstr
-        tstr = tstr.replace(':', '-')
-        self.logger = logging.getLogger(
-            "seismic.monitor.Monitor%s" % str(self.rank).zfill(3))
-        self.logger.setLevel(loglvl)
-
-        # also catch the warnings
-        logging.captureWarnings(True)
-        warnlog = logging.getLogger('py.warnings')
-        fh = logging.FileHandler(os.path.join(
-            logdir, f'monitor{tstr}rank{str(self.rank).zfill(3)}'))
-        fh.setLevel(loglvl)
-        self.logger.addHandler(fh)
-        warnlog.addHandler(fh)
-        fmt = logging.Formatter(
-            fmt='%(asctime)s - %(levelname)s - %(message)s')
-        fh.setFormatter(fmt)
-        consoleHandler = logging.StreamHandler()
-        consoleHandler.setFormatter(fmt)
-        self.logger.addHandler(consoleHandler)
 
         # Write the options dictionary to the log file
         if self.rank == 0:
+            tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H-%M')
             opt_dump = deepcopy(options)
             # json cannot write the UTCDateTime objects that might be in here
-            for step in opt_dump['co']['preProcessing']:
-                if 'stream_mask_at_utc' in step['function']:
-                    startsstr = [
-                        t.format_fissures() for t in step['args']['starts']]
-                    step['args']['starts'] = startsstr
-                    if 'ends' in step['args']:
-                        endsstr = [
-                            t.format_fissures() for t in step['args']['ends']]
-                        step['args']['ends'] = endsstr
+            try:
+                for step in opt_dump['co']['preProcessing']:
+                    if 'stream_mask_at_utc' in step['function']:
+                        startsstr = [
+                            t.format_fissures() for t in step[
+                                'args']['starts']]
+                        step['args']['starts'] = startsstr
+                        if 'ends' in step['args']:
+                            endsstr = [
+                                t.format_fissures() for t in step[
+                                    'args']['ends']]
+                            step['args']['ends'] = endsstr
+            except KeyError:
+                # no preProcessing in co
+                pass
             with open(os.path.join(
                     logdir, 'params%s.txt' % tstr), 'w') as file:
                 file.write(json.dumps(opt_dump, indent=1))
@@ -564,7 +549,7 @@ class Monitor(object):
 
     def compute_waveform_coherence(
         self, corr_file: str, tag: str, network: str, station: str, location,
-            channel: str) -> WFC:
+            channel: str) -> Iterator[WFC]:
         """
         Computes the waveform coherence corresponding to one correlation (i.e.,
         one single file).
