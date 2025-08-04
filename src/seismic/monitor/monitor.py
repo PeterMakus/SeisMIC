@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 4th August 2025 11:19:10 am
+Last Modified: Monday, 4th August 2025 11:30:40 am
 '''
 from copy import deepcopy
 import json
@@ -80,11 +80,12 @@ class Monitor(logfactory.LoggingMPIBaseClass):
             tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H-%M')
             opt_dump = deepcopy(options)
             # json cannot write the UTCDateTime objects that might be in here
-            try: 
+            try:
                 for step in opt_dump['co']['preProcessing']:
                     if 'stream_mask_at_utc' in step['function']:
                         startsstr = [
-                            t.format_fissures() for t in step['args']['starts']]
+                            t.format_fissures() for t in step[
+                                'args']['starts']]
                         step['args']['starts'] = startsstr
                         if 'ends' in step['args']:
                             endsstr = [
