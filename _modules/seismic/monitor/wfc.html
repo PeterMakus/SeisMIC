@@ -465,8 +465,8 @@ document.write(`
 <span class="sd">:copyright:</span>
 <span class="sd">   The SeisMIC development team (makus@gfz-potsdam.de).</span>
 <span class="sd">:license:</span>
-<span class="sd">    EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
-<span class="sd">   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)</span>
+<span class="sd">    `EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
+<span class="sd">    &lt;https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12&gt;`_</span>
 <span class="sd">:author:</span>
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
@@ -485,7 +485,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="WFC"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.wfc.WFC">[docs]</a><span class="k">class</span> <span class="nc">WFC</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Object to hold the properties of a waveform coherency for a single</span>
 <span class="sd">    frequency and lapse time window.</span>
 
@@ -494,7 +494,7 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">wfc_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">wfc_processing</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialise WFC object.</span>
 
 <span class="sd">        :param wfc_dict: Dictionary holding the correlation values for</span>
@@ -517,7 +517,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">wfc_processing</span> <span class="o">=</span> <span class="n">wfc_processing</span>
 
 <div class="viewcode-block" id="WFC.compute_average"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.wfc.WFC.compute_average">[docs]</a>    <span class="k">def</span> <span class="nf">compute_average</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes the average of the waveform coherency over the time axis.</span>
 
 <span class="sd">        :param average_reftrcs: Average over all reference traces. Defaults to</span>
@@ -529,7 +529,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">([</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">av</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span></div>
 
 <div class="viewcode-block" id="WFC.save"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.wfc.WFC.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Saves the object to an npz file.</span>
 
 <span class="sd">        :param path: Path to save to.</span>
@@ -541,7 +541,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="WFCBulk"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.wfc.WFCBulk">[docs]</a><span class="k">class</span> <span class="nc">WFCBulk</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Object to hold the waveform coherency for one station and subsequently plot</span>
 <span class="sd">    it against frequency and lapse time window.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -580,7 +580,7 @@ document.write(`
 <div class="viewcode-block" id="WFCBulk.plot"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.wfc.WFCBulk.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
             <span class="n">cmap</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;viridis&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a plot of the waveform coherency against frequency and lapse</span>
 <span class="sd">        time window.</span>
 
@@ -595,7 +595,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="read_wfc"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.wfc.read_wfc">[docs]</a><span class="k">def</span> <span class="nf">read_wfc</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WFC</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Read a :class:`~seismic.monitor.wfc.WFC` object saved as *npz*.</span>
 <span class="sd">    Returns a list if wildcards are used</span>
 
@@ -672,7 +672,7 @@ document.write(`
 
   <p class="copyright">
     
-      © Copyright 2023, The SeisMIC development team..
+      © Copyright 2025, The SeisMIC development team..
       <br/>
     
   </p>

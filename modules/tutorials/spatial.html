@@ -494,45 +494,45 @@ to re-obtain a velocity change model that is already known to us.</p>
 <p>We use the class <code class="docutils literal notranslate"><span class="pre">seismic.monitor.spatial.DVGrid</span></code> to initialise an
 empty grid, for which we compute the sensitivity kernels, the forward
 model, and the inverse model.</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from seismic.monitor.spatial import DVGrid
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">seismic.monitor.spatial</span> <span class="kn">import</span> <span class="n">DVGrid</span>
 
-# For convenience, we define the map at the equator
-lat0 = lon0 = 0  # lower left corner
+<span class="c1"># For convenience, we define the map at the equator</span>
+<span class="n">lat0</span> <span class="o">=</span> <span class="n">lon0</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># lower left corner</span>
 
-# Y- and X-extent in km
-y = x = 40
-res = 1  # resolution in km
-vel = 3  # wave velocity km/s
-mf_path = 30  # mean free path in km, dependent on the geology
-dt = 0.05  # Sampling interval to compute the sensitivity kernels
-# dt should be larger than res/vel. If not, the kernels will be aliased.
-# Small dt makes a smoother kernel, but the computation takes longer.
+<span class="c1"># Y- and X-extent in km</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">40</span>
+<span class="n">res</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># resolution in km</span>
+<span class="n">vel</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># wave velocity km/s</span>
+<span class="n">mf_path</span> <span class="o">=</span> <span class="mi">30</span>  <span class="c1"># mean free path in km, dependent on the geology</span>
+<span class="n">dt</span> <span class="o">=</span> <span class="mf">0.05</span>  <span class="c1"># Sampling interval to compute the sensitivity kernels</span>
+<span class="c1"># dt should be larger than res/vel. If not, the kernels will be aliased.</span>
+<span class="c1"># Small dt makes a smoother kernel, but the computation takes longer.</span>
 
-# Initialise the grid
-dvg = DVGrid(lat0, lon0, res, x, y, dt, vel, mf_path)
+<span class="c1"># Initialise the grid</span>
+<span class="n">dvg</span> <span class="o">=</span> <span class="n">DVGrid</span><span class="p">(</span><span class="n">lat0</span><span class="p">,</span> <span class="n">lon0</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">vel</span><span class="p">,</span> <span class="n">mf_path</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
 <section id="create-a-synthetic-velocity-grid">
 <h2>Create a synthetic velocity grid<a class="headerlink" href="#create-a-synthetic-velocity-grid" title="Permalink to this heading">#</a></h2>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import numpy as np
-from matplotlib import pyplot as plt
-from obspy import UTCDateTime
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">UTCDateTime</span>
 
-from seismic.plot.plot_utils import set_mpl_params
+<span class="kn">from</span> <span class="nn">seismic.plot.plot_utils</span> <span class="kn">import</span> <span class="n">set_mpl_params</span>
 
-chkb = np.zeros_like(dvg.xgrid)
-for ii, yy in enumerate(np.arange(y/res+1)):
-    chkb[ii, :] = np.sin(
-        2*np.pi*np.arange(x/res+1)/(x/res)) + np.cos(2*np.pi*yy/(y/res))
-chkb /= 100
+<span class="n">chkb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">dvg</span><span class="o">.</span><span class="n">xgrid</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">yy</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">y</span><span class="o">/</span><span class="n">res</span><span class="o">+</span><span class="mi">1</span><span class="p">)):</span>
+    <span class="n">chkb</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span>
+        <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">x</span><span class="o">/</span><span class="n">res</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">x</span><span class="o">/</span><span class="n">res</span><span class="p">))</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">yy</span><span class="o">/</span><span class="p">(</span><span class="n">y</span><span class="o">/</span><span class="n">res</span><span class="p">))</span>
+<span class="n">chkb</span> <span class="o">/=</span> <span class="mi">100</span>
 
-# Plot the synthetic checkerboard
-set_mpl_params()
-plt.figure(figsize=(5, 5))
-plt.imshow(chkb*100, cmap=&#39;seismic_r&#39;)
-plt.colorbar(label=&#39;Velocity perturbation (%)&#39;)
-plt.title(&#39;Synthetic Velocity-Change Model&#39;)
+<span class="c1"># Plot the synthetic checkerboard</span>
+<span class="n">set_mpl_params</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">chkb</span><span class="o">*</span><span class="mi">100</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;seismic_r&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;Velocity perturbation (%)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Synthetic Velocity-Change Model&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Text</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s1">&#39;Synthetic Velocity-Change Model&#39;</span><span class="p">)</span>
@@ -548,73 +548,73 @@ between each station pair (i.e., now we will look at
 “cross-correlations”).</p>
 <p>Feel free to change the number of stations <code class="docutils literal notranslate"><span class="pre">nsta</span></code> to see by how much
 we can increase the accuracy of our inversion result.</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from seismic.monitor.dv import DV
-from seismic.correlate.stats import CorrStats
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">seismic.monitor.dv</span> <span class="kn">import</span> <span class="n">DV</span>
+<span class="kn">from</span> <span class="nn">seismic.correlate.stats</span> <span class="kn">import</span> <span class="n">CorrStats</span>
 
-### parameters ###
-#  #### You can play with these parameters to see how it affects the result
-nsta = 2  # number of stations, increases computation time
+<span class="c1">### parameters ###</span>
+<span class="c1">#  #### You can play with these parameters to see how it affects the result</span>
+<span class="n">nsta</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># number of stations, increases computation time</span>
 
-# lapse time parameters in s
-# don&#39;t set these to small (have to contain the ballistic wave arriving
-# with the velocity of the medium)
-tw_start = 10
-tw_len = 17
+<span class="c1"># lapse time parameters in s</span>
+<span class="c1"># don&#39;t set these to small (have to contain the ballistic wave arriving</span>
+<span class="c1"># with the velocity of the medium)</span>
+<span class="n">tw_start</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">tw_len</span> <span class="o">=</span> <span class="mi">17</span>
 
-# frequency band
-freq_min = .5
-freq_max = 1.5
+<span class="c1"># frequency band</span>
+<span class="n">freq_min</span> <span class="o">=</span> <span class="mf">.5</span>
+<span class="n">freq_max</span> <span class="o">=</span> <span class="mf">1.5</span>
 
-# Should the lapse time window be split up into several subwindows
-# Note that this could increase the spatial sensitivity. But obviously
-# also increases the computation time
-n_split = 1  # if n_split &gt; 1, tw_len has to be divided by n_split
+<span class="c1"># Should the lapse time window be split up into several subwindows</span>
+<span class="c1"># Note that this could increase the spatial sensitivity. But obviously</span>
+<span class="c1"># also increases the computation time</span>
+<span class="n">n_split</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># if n_split &gt; 1, tw_len has to be divided by n_split</span>
 
-use_auto_correlations = True  # use auto correlations
-use_cross_correlations = True  # use cross correlations
+<span class="n">use_auto_correlations</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># use auto correlations</span>
+<span class="n">use_cross_correlations</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># use cross correlations</span>
 
-#  #### end of parameters ####
+<span class="c1">#  #### end of parameters ####</span>
 
 
-# #### actual code ####
-# distribute stations randomly
-np.random.seed(1234)
-sta_x = np.random.random(nsta)*x
-sta_y = np.random.random(nsta)*y
+<span class="c1"># #### actual code ####</span>
+<span class="c1"># distribute stations randomly</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1234</span><span class="p">)</span>
+<span class="n">sta_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">nsta</span><span class="p">)</span><span class="o">*</span><span class="n">x</span>
+<span class="n">sta_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">nsta</span><span class="p">)</span><span class="o">*</span><span class="n">y</span>
 
-# convert into lat/lon not 100% but good enough as close to equator
-sta_lon = sta_x/111.19492664455873
-sta_lat = sta_y/111.19492664455873
+<span class="c1"># convert into lat/lon not 100% but good enough as close to equator</span>
+<span class="n">sta_lon</span> <span class="o">=</span> <span class="n">sta_x</span><span class="o">/</span><span class="mf">111.19492664455873</span>
+<span class="n">sta_lat</span> <span class="o">=</span> <span class="n">sta_y</span><span class="o">/</span><span class="mf">111.19492664455873</span>
 
-dvs = []
-tw_len = tw_len//n_split
-for slat0, slon0 in zip(sta_lat, sta_lon):
-    for slat1, slon1 in zip(sta_lat, sta_lon):
-        if slat0 == slat1 and slon0 == slon1 and not use_auto_correlations:
-            # we don&#39;t want auto correlations
-            continue
-        if any(
-            [slat0 != slat1, slon0 != slon1])\
-                and not use_cross_correlations:
-            # we don&#39;t want cross correlations
-            continue
+<span class="n">dvs</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">tw_len</span> <span class="o">=</span> <span class="n">tw_len</span><span class="o">//</span><span class="n">n_split</span>
+<span class="k">for</span> <span class="n">slat0</span><span class="p">,</span> <span class="n">slon0</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sta_lat</span><span class="p">,</span> <span class="n">sta_lon</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">slat1</span><span class="p">,</span> <span class="n">slon1</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sta_lat</span><span class="p">,</span> <span class="n">sta_lon</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">slat0</span> <span class="o">==</span> <span class="n">slat1</span> <span class="ow">and</span> <span class="n">slon0</span> <span class="o">==</span> <span class="n">slon1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">use_auto_correlations</span><span class="p">:</span>
+            <span class="c1"># we don&#39;t want auto correlations</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">slat0</span> <span class="o">!=</span> <span class="n">slat1</span><span class="p">,</span> <span class="n">slon0</span> <span class="o">!=</span> <span class="n">slon1</span><span class="p">])</span>\
+                <span class="ow">and</span> <span class="ow">not</span> <span class="n">use_cross_correlations</span><span class="p">:</span>
+            <span class="c1"># we don&#39;t want cross correlations</span>
+            <span class="k">continue</span>
 
-        # create dv.stats
-        cst = CorrStats(
-            {
-                &#39;stla&#39;: slat0, &#39;stlo&#39;: slon0, &#39;evla&#39;: slat1, &#39;evlo&#39;: slon1,
-                &#39;corr_start&#39;: np.array(
-                    [UTCDateTime(ii*3600) for ii in np.arange(35)]),
-                &#39;corr_end&#39;: np.array(
-                    [UTCDateTime((ii+1)*3600) for ii in np.arange(35)])})
-        for ii in range(n_split):
-            dv = DV(
-                .9*np.ones((35, )), np.ones((35, )), &#39;stretch&#39;, None,
-                None, &#39;modelled&#39;, cst,
-                dv_processing={
-                    &#39;tw_start&#39;: tw_start + ii*tw_len, &#39;tw_len&#39;: tw_len,
-                    &#39;freq_min&#39;: freq_min, &#39;freq_max&#39;: freq_max})
-            dvs.append(dv)
+        <span class="c1"># create dv.stats</span>
+        <span class="n">cst</span> <span class="o">=</span> <span class="n">CorrStats</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s1">&#39;stla&#39;</span><span class="p">:</span> <span class="n">slat0</span><span class="p">,</span> <span class="s1">&#39;stlo&#39;</span><span class="p">:</span> <span class="n">slon0</span><span class="p">,</span> <span class="s1">&#39;evla&#39;</span><span class="p">:</span> <span class="n">slat1</span><span class="p">,</span> <span class="s1">&#39;evlo&#39;</span><span class="p">:</span> <span class="n">slon1</span><span class="p">,</span>
+                <span class="s1">&#39;corr_start&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">ii</span><span class="o">*</span><span class="mi">3600</span><span class="p">)</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">35</span><span class="p">)]),</span>
+                <span class="s1">&#39;corr_end&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">UTCDateTime</span><span class="p">((</span><span class="n">ii</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="mi">3600</span><span class="p">)</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">35</span><span class="p">)])})</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_split</span><span class="p">):</span>
+            <span class="n">dv</span> <span class="o">=</span> <span class="n">DV</span><span class="p">(</span>
+                <span class="mf">.9</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">35</span><span class="p">,</span> <span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">35</span><span class="p">,</span> <span class="p">)),</span> <span class="s1">&#39;stretch&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;modelled&#39;</span><span class="p">,</span> <span class="n">cst</span><span class="p">,</span>
+                <span class="n">dv_processing</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s1">&#39;tw_start&#39;</span><span class="p">:</span> <span class="n">tw_start</span> <span class="o">+</span> <span class="n">ii</span><span class="o">*</span><span class="n">tw_len</span><span class="p">,</span> <span class="s1">&#39;tw_len&#39;</span><span class="p">:</span> <span class="n">tw_len</span><span class="p">,</span>
+                    <span class="s1">&#39;freq_min&#39;</span><span class="p">:</span> <span class="n">freq_min</span><span class="p">,</span> <span class="s1">&#39;freq_max&#39;</span><span class="p">:</span> <span class="n">freq_max</span><span class="p">})</span>
+            <span class="n">dvs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dv</span><span class="p">)</span>
 </pre></div>
 </div>
 <section id="forward-modelling">
@@ -623,8 +623,8 @@ for slat0, slon0 in zip(sta_lat, sta_lon):
 This will compute and cache the sensitivity kernels, so if you add more
 stations to the list afterwards, only new sensitivity kernels will be
 computed. All the parameters will be extracted from the <code class="docutils literal notranslate"><span class="pre">DV</span></code> objects.</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fwd_model = dvg.forward_model(
-    chkb, dvs=dvs, utc=dvs[0].stats.corr_start[5])
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fwd_model</span> <span class="o">=</span> <span class="n">dvg</span><span class="o">.</span><span class="n">forward_model</span><span class="p">(</span>
+    <span class="n">chkb</span><span class="p">,</span> <span class="n">dvs</span><span class="o">=</span><span class="n">dvs</span><span class="p">,</span> <span class="n">utc</span><span class="o">=</span><span class="n">dvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">[</span><span class="mi">5</span><span class="p">])</span>
 </pre></div>
 </div>
 </section>
@@ -632,28 +632,28 @@ computed. All the parameters will be extracted from the <code class="docutils li
 <h3>add random noise<a class="headerlink" href="#add-random-noise" title="Permalink to this heading">#</a></h3>
 <p>add random noise to the forward model. You can play with the amplitude
 here</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># set standard deviation of the noise from zero
-noise_amp = 1e-3
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># set standard deviation of the noise from zero</span>
+<span class="n">noise_amp</span> <span class="o">=</span> <span class="mf">1e-3</span>
 
-# add random noise
-# assign values. Technicall we should only set the value at index 5
-# but it doesn&#39;t really matter so much
-gen = np.random.Generator(np.random.PCG64(1234))
-for dv, fwd_val in zip(dvs, fwd_model):
-    dv.value[:] = fwd_val
-    dv.value += gen.normal(size=len(dv.value), scale=noise_amp)
+<span class="c1"># add random noise</span>
+<span class="c1"># assign values. Technicall we should only set the value at index 5</span>
+<span class="c1"># but it doesn&#39;t really matter so much</span>
+<span class="n">gen</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PCG64</span><span class="p">(</span><span class="mi">1234</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">dv</span><span class="p">,</span> <span class="n">fwd_val</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">dvs</span><span class="p">,</span> <span class="n">fwd_model</span><span class="p">):</span>
+    <span class="n">dv</span><span class="o">.</span><span class="n">value</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">fwd_val</span>
+    <span class="n">dv</span><span class="o">.</span><span class="n">value</span> <span class="o">+=</span> <span class="n">gen</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">scale</span><span class="o">=</span><span class="n">noise_amp</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
 <section id="plot-a-sensitivity-kernel">
 <h3>plot a sensitivity kernel<a class="headerlink" href="#plot-a-sensitivity-kernel" title="Permalink to this heading">#</a></h3>
 <p>Let’s have a look at one of the kernels</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fig, ax = plt.subplots(subplot_kw={&quot;projection&quot;: &quot;3d&quot;}, figsize=(12, 9))
-surf = ax.plot_surface(dvg.xgrid, dvg.ygrid, np.reshape(list(dvg.skernels.values())[-2], dvg.xgrid.shape), linewidth=0, antialiased=True, cmap=&#39;viridis&#39;)
-plt.colorbar(surf);
-plt.xlabel(&#39;x (km)&#39;)
-plt.ylabel(&#39;y (km)&#39;)
-plt.title(&#39;An arbitrary sensitivity kernel&#39;)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">subplot_kw</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;projection&quot;</span><span class="p">:</span> <span class="s2">&quot;3d&quot;</span><span class="p">},</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">9</span><span class="p">))</span>
+<span class="n">surf</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot_surface</span><span class="p">(</span><span class="n">dvg</span><span class="o">.</span><span class="n">xgrid</span><span class="p">,</span> <span class="n">dvg</span><span class="o">.</span><span class="n">ygrid</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">dvg</span><span class="o">.</span><span class="n">skernels</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">dvg</span><span class="o">.</span><span class="n">xgrid</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">antialiased</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">surf</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;x (km)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;y (km)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;An arbitrary sensitivity kernel&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Text</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.92</span><span class="p">,</span> <span class="s1">&#39;An arbitrary sensitivity kernel&#39;</span><span class="p">)</span>
@@ -669,17 +669,17 @@ parameters are the <code class="docutils literal notranslate"><span class="pre">
 output to avoid sparsities. And <code class="docutils literal notranslate"><span class="pre">std_model</span></code>, which sets the allowed
 standard deviation of the output model (i.e., limits the search radius
 around a starting model=0). See Obermann et a., 2013 for details.</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># smoothing parameters
-corr_len = 3  # correlation length in km
-std_model = 0.05  # standard deviation of the model
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># smoothing parameters</span>
+<span class="n">corr_len</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># correlation length in km</span>
+<span class="n">std_model</span> <span class="o">=</span> <span class="mf">0.05</span>  <span class="c1"># standard deviation of the model</span>
 
-inverse_model = dvg.compute_dv_grid(
-    dvs, dvs[0].stats.corr_start[5], scaling_factor=res, corr_len=corr_len,
-    std_model=std_model)
+<span class="n">inverse_model</span> <span class="o">=</span> <span class="n">dvg</span><span class="o">.</span><span class="n">compute_dv_grid</span><span class="p">(</span>
+    <span class="n">dvs</span><span class="p">,</span> <span class="n">dvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">scaling_factor</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">corr_len</span><span class="o">=</span><span class="n">corr_len</span><span class="p">,</span>
+    <span class="n">std_model</span><span class="o">=</span><span class="n">std_model</span><span class="p">)</span>
 
-# Let&#39;s have a first look at the result
-dvg.plot()
-plt.title(&#39;Inversion result&#39;);
+<span class="c1"># Let&#39;s have a first look at the result</span>
+<span class="n">dvg</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Inversion result&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
 <img alt="../../_images/spatial_14_0.png" src="../../_images/spatial_14_0.png" />
@@ -691,27 +691,27 @@ also using several time windows and both auto and cross-correlations
 will make an impact. However, it is important to choose the correct
 damping parameters. usually, these are determined via an L-curve
 criterion.</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>set_mpl_params()
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">set_mpl_params</span><span class="p">()</span>
 
-plt.figure(figsize=(10, 6))
-ax1 = plt.subplot(1, 2, 1)
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
-dvg.plot(ax=ax1)
-ax2 = plt.subplot(1, 2, 2, sharey=ax1)
+<span class="n">dvg</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax1</span><span class="p">)</span>
+<span class="n">ax2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="n">ax1</span><span class="p">)</span>
 
-# norm = mpl.colors.TwoSlopeNorm(vcenter=0)
-map2 = ax2.imshow(
-    -np.flipud(chkb)*100, cmap=&#39;seismic_r&#39;,
-    extent=[dvg.xaxis.min(), dvg.xaxis.max(), dvg.yaxis.min(), dvg.yaxis.max()]);
-plt.scatter(dvg.statx, dvg.staty, s=30, c=&#39;k&#39;, edgecolors=&#39;white&#39;, marker=&#39;v&#39;)
-plt.xlabel(&#39;Easting [km]&#39;)
-plt.ylabel(&#39;Northing [km]&#39;)
-plt.colorbar(map2, orientation=&#39;horizontal&#39;, label=r&#39;$\frac{dv}{v}$ [%]&#39;)
+<span class="c1"># norm = mpl.colors.TwoSlopeNorm(vcenter=0)</span>
+<span class="n">map2</span> <span class="o">=</span> <span class="n">ax2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span>
+    <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="n">chkb</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;seismic_r&#39;</span><span class="p">,</span>
+    <span class="n">extent</span><span class="o">=</span><span class="p">[</span><span class="n">dvg</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">dvg</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">dvg</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">dvg</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">max</span><span class="p">()]);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">dvg</span><span class="o">.</span><span class="n">statx</span><span class="p">,</span> <span class="n">dvg</span><span class="o">.</span><span class="n">staty</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;v&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Easting [km]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Northing [km]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">map2</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;$\frac</span><span class="si">{dv}{v}</span><span class="s1">$ [%]&#39;</span><span class="p">)</span>
 
-ax1.set_title(&#39;Inversion result&#39;);
-ax2.set_title(&#39;Synthetic Velocity-Change Model&#39;);
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Inversion result&#39;</span><span class="p">);</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Synthetic Velocity-Change Model&#39;</span><span class="p">);</span>
 
-plt.suptitle(&#39;Comparison of the inversion result with the synthetic model&#39;);
+<span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Comparison of the inversion result with the synthetic model&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
 <img alt="../../_images/spatial_16_0.png" src="../../_images/spatial_16_0.png" />
@@ -828,7 +828,7 @@ page</a></p>
 
   <p class="copyright">
     
-      © Copyright 2023, The SeisMIC development team..
+      © Copyright 2025, The SeisMIC development team..
       <br/>
     
   </p>

@@ -497,9 +497,13 @@ graph LR
     </pre><section id="the-correlator-object">
 <h1>The Correlator Object<a class="headerlink" href="#the-correlator-object" title="Permalink to this heading">#</a></h1>
 <p>The Object governing the actual computation is <a class="reference internal" href="../API/API.html#seismic.correlate.correlate.Correlator" title="seismic.correlate.correlate.Correlator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Correlator</span></code></a>.
-It takes only two input arguments and the most important is the dictionary / yml file that we created in <a class="reference external" href="./get_started.html#download-data">the preceding step</a>.
-The second input argument is the <a class="reference internal" href="../API/API.html#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> we used to <a class="reference external" href="../trace_data/waveform.html#download-data">download</a> our data.</p>
-<p>As Computing Ambient Noise Correlations is computationally very expensive, <strong>SeisMIC</strong> can be used in conjuction with MPI (e.g., openMPI) to enable processing with several cores or on HPCs.</p>
+It takes only two input arguments and the most important is the dictionary / yml file that
+we created in <a class="reference external" href="./get_started.html#download-data">the preceding step</a>.
+The second input argument is the <a class="reference internal" href="../API/API.html#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a>
+we used to <a class="reference external" href="../trace_data/waveform.html#download-data">download</a> our data.</p>
+<p>As Computing Ambient Noise Correlations is computationally very expensive,
+<strong>SeisMIC</strong> can be used in conjuction with MPI (e.g., openMPI) to enable processing
+with several cores or on HPCs.</p>
 <p>A script to start your correlation could look like this:</p>
 <div class="literal-block-wrapper docutils container" id="id1">
 <div class="code-block-caption"><span class="caption-text">mycorrelation.py</span><a class="headerlink" href="#id1" title="Permalink to this code">#</a></div>
@@ -518,12 +522,12 @@ The second input argument is the <a class="reference internal" href="../API/API.
 <span class="linenos">13</span><span class="n">params</span> <span class="o">=</span> <span class="s1">&#39;/path/to/my/params.yaml&#39;</span>
 <span class="linenos">14</span><span class="c1"># You don&#39;t have to set this (could be None)</span>
 <span class="linenos">15</span><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="s1">&#39;MYFDSN&#39;</span><span class="p">)</span>
-<span class="linenos">16</span><span class="n">client</span><span class="o">.</span><span class="n">set_eida_token</span><span class="p">(</span><span class="s1">&#39;/I/want/embargoed/data.txt)</span>
+<span class="linenos">16</span><span class="n">client</span><span class="o">.</span><span class="n">set_eida_token</span><span class="p">(</span><span class="s1">&#39;/I/want/embargoed/data.txt&#39;</span><span class="p">)</span>
 <span class="linenos">17</span><span class="c1"># root is the same as proj_dir in params.yaml</span>
 <span class="linenos">18</span><span class="n">root</span> <span class="o">=</span> <span class="s1">&#39;/path/to/project/&#39;</span>
 <span class="linenos">19</span><span class="n">sc</span> <span class="o">=</span> <span class="n">Store_Client</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
 <span class="linenos">20</span>
-<span class="linenos">21</span><span class="n">c</span> <span class="o">=</span> <span class="n">Correlator</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+<span class="linenos">21</span><span class="n">c</span> <span class="o">=</span> <span class="n">Correlator</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">store_client</span><span class="o">=</span><span class="n">sc</span><span class="p">)</span>
 <span class="linenos">22</span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Correlator initiated&#39;</span><span class="p">)</span>
 <span class="linenos">23</span><span class="n">x</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
 <span class="linenos">24</span><span class="n">st</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">pxcorr</span><span class="p">()</span>
@@ -531,8 +535,33 @@ The second input argument is the <a class="reference internal" href="../API/API.
 </pre></div>
 </div>
 </div>
-<p>This script can be iniated in bash using:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>-n<span class="w"> </span><span class="nv">$number_cores</span><span class="w"> </span>python<span class="w"> </span>mycorrelation.py
+<p>If you did not download any data using <strong>SeisMIC</strong>, you can use the Correlator object
+without setting a <a class="reference internal" href="../API/API.html#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a> object.
+In this case, the Correlator creates a <a class="reference internal" href="../API/API.html#seismic.trace_data.waveform.Local_Store_Client" title="seismic.trace_data.waveform.Local_Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Local_Store_Client</span></code></a>
+object internally from <cite>options</cite>. The above script would then look like this:</p>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">mycorrelation_noclient.py</span><a class="headerlink" href="#id2" title="Permalink to this code">#</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
+<span class="linenos"> 2</span><span class="kn">import</span> <span class="nn">os</span>
+<span class="linenos"> 3</span><span class="c1"># This tells numpy to only use one thread</span>
+<span class="linenos"> 4</span><span class="c1"># As we use MPI this is necessary to avoid overascribing threads</span>
+<span class="linenos"> 5</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;OPENBLAS_NUM_THREADS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span><span class="kn">from</span> <span class="nn">seismic.correlate.correlate</span> <span class="kn">import</span> <span class="n">Correlator</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="c1"># Path to the paramter file we created in the step before</span>
+<span class="linenos">10</span><span class="n">params</span> <span class="o">=</span> <span class="s1">&#39;/path/to/my/params.yaml&#39;</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="n">c</span> <span class="o">=</span> <span class="n">Correlator</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+<span class="linenos">13</span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Correlator initiated&#39;</span><span class="p">)</span>
+<span class="linenos">14</span><span class="n">x</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+<span class="linenos">15</span><span class="n">st</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">pxcorr</span><span class="p">()</span>
+<span class="linenos">16</span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Correlation finished after&#39;</span><span class="p">,</span> <span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">x</span><span class="p">,</span> <span class="s1">&#39;seconds&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>This script can be initiated in bash using:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun -n <span class="nv">$number_cores</span> python mycorrelation.py
 </pre></div>
 </div>
 <p>where <code class="docutils literal notranslate"><span class="pre">$number_cores</span></code> is the number of cores you want to initialise. The only method of <a class="reference internal" href="../API/API.html#seismic.correlate.correlate.Correlator" title="seismic.correlate.correlate.Correlator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Correlator</span></code></a>
@@ -540,7 +569,7 @@ that you will want to use is <a class="reference internal" href="../API/API.html
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>On some MPI versions, the parameters are named differently. For example (<cite>-n</cite> could correspond to <cite>-c</cite>). When in doubt, refer to the help
-or man page of your <cite>mpirun</cite> <cite>mpiexec</cite> command.</p>
+or man page of your <cite>mpirun</cite> or <cite>mpiexec</cite> command.</p>
 </div>
 </section>
 
@@ -616,7 +645,7 @@ or man page of your <cite>mpirun</cite> <cite>mpiexec</cite> command.</p>
 
   <p class="copyright">
     
-      © Copyright 2023, The SeisMIC development team..
+      © Copyright 2025, The SeisMIC development team..
       <br/>
     
   </p>

@@ -516,10 +516,10 @@ For example, if you have installed OpenMPI on your system, you should install Op
 <p>In general, we recommend using virtual environments (like conda or mamba).
 You can install SeisMIC from PyPi simply by executing the following commands:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install mpi4py, we recommend using the precompiled version from conda-forge</span>
-conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>mpi4py
+conda install -c conda-forge mpi4py
 
 <span class="c1"># Install SeisMIC</span>
-pip<span class="w"> </span>install<span class="w"> </span>seismic
+pip install seismic
 </pre></div>
 </div>
 <div class="admonition note">
@@ -533,28 +533,28 @@ You can also use this version if you want to explore the latest goodies.</p>
 <p>You can download the latest version of SeisMIC from <a class="reference external" href="https://github.com/PeterMakus/SeisMIC">GitHub</a>.</p>
 <p>After downloading just run the following commands <strong>in the repository’s folder</strong>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Download via wget or web-browser</span>
-wget<span class="w"> </span>https://github.com/PeterMakus/SeisMIC/archive/refs/heads/main.zip
+wget https://github.com/PeterMakus/SeisMIC/archive/refs/heads/main.zip
 
 <span class="c1"># For developers download the dev branch</span>
-wget<span class="w"> </span>https://github.com/PeterMakus/SeisMIC/archive/refs/heads/dev.zip
+wget https://github.com/PeterMakus/SeisMIC/archive/refs/heads/dev.zip
 
 <span class="c1"># unzip the package</span>
-unzip<span class="w"> </span>main.zip<span class="w">  </span><span class="c1"># or dev.zip</span>
+unzip main.zip  <span class="c1"># or dev.zip</span>
 
 <span class="c1"># Change directory to the same directory that this repo is in (i.e., same directory as setup.py)</span>
-<span class="nb">cd</span><span class="w"> </span><span class="nv">$PathToThisRepo</span>$
+<span class="nb">cd</span> <span class="nv">$PathToThisRepo</span>$
 
 <span class="c1"># Create the conda environment and install dependencies</span>
-conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>environment.yml
+conda env create -f environment.yml
 
 <span class="c1"># Activate the conda environment</span>
-conda<span class="w"> </span>activate<span class="w"> </span>seismic
+conda activate seismic
 
 <span class="c1"># Install your package</span>
-pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+pip install -e .
 
 <span class="c1"># optional: run the tests to see if your installation was successful</span>
-pytest<span class="w"> </span>tests
+pytest tests
 </pre></div>
 </div>
 <div class="admonition note">
@@ -668,7 +668,7 @@ a web version of those tutorials, you can find it at <a class="reference externa
 
   <p class="copyright">
     
-      © Copyright 2023, The SeisMIC development team..
+      © Copyright 2025, The SeisMIC development team..
       <br/>
     
   </p>

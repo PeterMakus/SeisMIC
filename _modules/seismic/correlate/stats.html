@@ -465,8 +465,8 @@ document.write(`
 <span class="sd">:copyright:</span>
 <span class="sd">    The SeisMIC development team (makus@gfz-potsdam.de).</span>
 <span class="sd">:license:</span>
-<span class="sd">    EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
-<span class="sd">   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)</span>
+<span class="sd">    `EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
+<span class="sd">    &lt;https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12&gt;`_</span>
 <span class="sd">:author:</span>
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
@@ -478,7 +478,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="CorrStats"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.stats.CorrStats">[docs]</a><span class="k">class</span> <span class="nc">CorrStats</span><span class="p">(</span><span class="n">AttribDict</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    From Obspy, but with the difference that some items can be lists and that</span>
 <span class="sd">    corr_start and corr_end are introduced, some other differences only for</span>
 <span class="sd">    correlations.</span>
@@ -637,12 +637,12 @@ document.write(`
     <span class="p">}</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="p">{}):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">CorrStats</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_keys</span><span class="p">:</span>
             <span class="c1"># ensure correct data type</span>
@@ -694,7 +694,7 @@ document.write(`
     <span class="fm">__setattr__</span> <span class="o">=</span> <span class="fm">__setitem__</span>
 
     <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;component&#39;</span><span class="p">:</span>
             <span class="n">ch</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">CorrStats</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="s1">&#39;channel&#39;</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
@@ -709,7 +709,7 @@ document.write(`
             <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">CorrStats</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return better readable string representation of Stats object.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">priorized_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;network&#39;</span><span class="p">,</span> <span class="s1">&#39;station&#39;</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">,</span> <span class="s1">&#39;channel&#39;</span><span class="p">,</span>
@@ -760,7 +760,7 @@ document.write(`
 
   <p class="copyright">
     
-      © Copyright 2023, The SeisMIC development team..
+      © Copyright 2025, The SeisMIC development team..
       <br/>
     
   </p>

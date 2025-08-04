@@ -497,33 +497,33 @@ from FDSN servers.</p>
 <p>To download the data, we will use the
 <code class="docutils literal notranslate"><span class="pre">`seismic.trace_data.waveform.Store_Client</span></code> &lt;<a class="reference external" href="https://petermakus.github.io/SeisMIC/modules/API.html#seismic.trace_data.waveform.Store_Client">https://petermakus.github.io/SeisMIC/modules/API.html#seismic.trace_data.waveform.Store_Client</a>&gt;`__
 class and its method <code class="docutils literal notranslate"><span class="pre">download_waveforms_mdl()</span></code>.</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import os
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 
-from obspy.clients.fdsn import Client
-from obspy import UTCDateTime
+<span class="kn">from</span> <span class="nn">obspy.clients.fdsn</span> <span class="kn">import</span> <span class="n">Client</span>
+<span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">UTCDateTime</span>
 
-from seismic.trace_data.waveform import Store_Client
+<span class="kn">from</span> <span class="nn">seismic.trace_data.waveform</span> <span class="kn">import</span> <span class="n">Store_Client</span>
 
-# Get notebook path for future reference of the database:
-try: ipynb_path
-except NameError: ipynb_path = os.getcwd()
+<span class="c1"># Get notebook path for future reference of the database:</span>
+<span class="k">try</span><span class="p">:</span> <span class="n">ipynb_path</span>
+<span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span> <span class="n">ipynb_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
 
-os.chdir(ipynb_path)
+<span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">ipynb_path</span><span class="p">)</span>
 
-root = os.path.join(ipynb_path, &#39;data&#39;)
-os.makedirs(root, exist_ok=True)
+<span class="n">root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ipynb_path</span><span class="p">,</span> <span class="s1">&#39;data&#39;</span><span class="p">)</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-starttime = UTCDateTime(2016, 1, 25)
-endtime = UTCDateTime(2016, 2, 5)
-network = &#39;X9&#39;
-station = &#39;IR1&#39;
+<span class="n">starttime</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="mi">2016</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">25</span><span class="p">)</span>
+<span class="n">endtime</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="mi">2016</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">network</span> <span class="o">=</span> <span class="s1">&#39;X9&#39;</span>
+<span class="n">station</span> <span class="o">=</span> <span class="s1">&#39;IR1&#39;</span>
 
 
-c = Client(&#39;GEOFON&#39;)
-sc = Store_Client(c, root, read_only=False)
-sc.download_waveforms_mdl(
-    starttime, endtime, clients=[c], network=network,
-    station=station, location=&#39;*&#39;, channel=&#39;HHE&#39;)
+<span class="n">c</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="s1">&#39;GEOFON&#39;</span><span class="p">)</span>
+<span class="n">sc</span> <span class="o">=</span> <span class="n">Store_Client</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="n">read_only</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">sc</span><span class="o">.</span><span class="n">download_waveforms_mdl</span><span class="p">(</span>
+    <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span> <span class="n">clients</span><span class="o">=</span><span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="n">network</span><span class="o">=</span><span class="n">network</span><span class="p">,</span>
+    <span class="n">station</span><span class="o">=</span><span class="n">station</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="s1">&#39;HHE&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">24</span> <span class="mi">10</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">29</span><span class="p">,</span><span class="mi">755</span><span class="p">]</span> <span class="o">-</span> <span class="n">obspy</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">fdsn</span><span class="o">.</span><span class="n">mass_downloader</span> <span class="o">-</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">Initializing</span> <span class="n">FDSN</span> <span class="n">client</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">geofon</span><span class="o">.</span><span class="n">gfz</span><span class="o">-</span><span class="n">potsdam</span><span class="o">.</span><span class="n">de</span><span class="o">.</span>
@@ -562,7 +562,7 @@ sc.download_waveforms_mdl(
 expects a list of clients as input. 2. All arguments accept wildcards</p>
 <p>If everything worked fine. This should have created a folder called
 <code class="docutils literal notranslate"><span class="pre">data/mseed</span></code> and <code class="docutils literal notranslate"><span class="pre">data/inventory</span></code>. Let’s check</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>os.listdir(&#39;./data/&#39;)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="s1">&#39;./data/&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s1">&#39;inventory&#39;</span><span class="p">,</span> <span class="s1">&#39;mseed&#39;</span><span class="p">]</span>
@@ -573,12 +573,12 @@ expects a list of clients as input. 2. All arguments accept wildcards</p>
 <p>A good first step to evaluate how the noise looks in the different
 frequency bands is by plotting a spectral series. SeisMIC possesses an
 efficient implentation using Welch windows.</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from seismic.plot.plot_spectrum import plot_spct_series
-from matplotlib import pyplot as plt
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">seismic.plot.plot_spectrum</span> <span class="kn">import</span> <span class="n">plot_spct_series</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 
-f, t, S = sc.compute_spectrogram(&#39;X9&#39;, &#39;IR1&#39;, &#39;HHE&#39;, starttime, endtime, 7200, freq_max=12.5)
-fig = plt.figure(figsize=(9, 7))
-plot_spct_series(S, f, t, log_scale=True)
+<span class="n">f</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">S</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">compute_spectrogram</span><span class="p">(</span><span class="s1">&#39;X9&#39;</span><span class="p">,</span> <span class="s1">&#39;IR1&#39;</span><span class="p">,</span> <span class="s1">&#39;HHE&#39;</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span> <span class="mi">7200</span><span class="p">,</span> <span class="n">freq_max</span><span class="o">=</span><span class="mf">12.5</span><span class="p">)</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">7</span><span class="p">))</span>
+<span class="n">plot_spct_series</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">log_scale</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">Axes</span><span class="p">:</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;$f$ [Hz]&#39;</span><span class="o">&gt;</span>
@@ -596,7 +596,7 @@ compute ambient noise correlations.</p>
 <p>Parameters are provided as a <code class="docutils literal notranslate"><span class="pre">yaml</span></code> file or a <code class="docutils literal notranslate"><span class="pre">dict</span></code> object. This
 tutorial comes with an yaml file to process the data. Let’s have a short
 look at it using bash.</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!cat params.yaml
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>cat params.yaml
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#### Project wide parameters</span>
@@ -824,7 +824,7 @@ look at it using bash.</p>
 <p>To start the computation of the correlation we will use
 <code class="docutils literal notranslate"><span class="pre">`MPI</span></code> &lt;<a class="reference external" href="https://mpi4py.readthedocs.io/">https://mpi4py.readthedocs.io/</a>&gt;`__ and a simple python script,
 which could look like this:</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!cat correlate.py
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>cat correlate.py
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
@@ -862,10 +862,10 @@ which could look like this:</p>
 <p>Jupyter notebook limits the output, so if you wish to see the complete
 output, you might prefer actually executing these commands in a
 terminal.</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import os
-# This gives number of threads, usually twice as many as physical cores
-ncpus = os.cpu_count()//2
-!mpirun -n $ncpus python correlate.py
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="c1"># This gives number of threads, usually twice as many as physical cores</span>
+<span class="n">ncpus</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span><span class="o">//</span><span class="mi">2</span>
+<span class="o">!</span>mpirun -n <span class="nv">$ncpus</span> python correlate.py
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Correlator initiated
@@ -894,11 +894,11 @@ Correlation finished after 20.276748657226562 seconds
 <code class="docutils literal notranslate"><span class="pre">`CorrelationDataBase</span></code> &lt;<a class="reference external" href="https://petermakus.github.io/SeisMIC/modules/API.html#seismic.db.corr_hdf5.CorrelationDataBase">https://petermakus.github.io/SeisMIC/modules/API.html#seismic.db.corr_hdf5.CorrelationDataBase</a>&gt;`__
 object. All correlations are saved in the folder <code class="docutils literal notranslate"><span class="pre">data/corr</span></code> as
 defined in our params.yaml file.</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from seismic.db.corr_hdf5 import CorrelationDataBase
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">seismic.db.corr_hdf5</span> <span class="kn">import</span> <span class="n">CorrelationDataBase</span>
 
-with CorrelationDataBase(f&#39;data/corr/{network}-{network}.{station}-{station}.HHE-HHE.h5&#39;, mode=&#39;r&#39;) as cdb:
-    # find the available labels
-    print(list(cdb.keys()))
+<span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;data/corr/</span><span class="si">{</span><span class="n">network</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s1">.HHE-HHE.h5&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
+    <span class="c1"># find the available labels</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">cdb</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s1">&#39;co&#39;</span><span class="p">,</span> <span class="s1">&#39;stack_86398&#39;</span><span class="p">,</span> <span class="s1">&#39;subdivision&#39;</span><span class="p">]</span>
@@ -908,17 +908,17 @@ with CorrelationDataBase(f&#39;data/corr/{network}-{network}.{station}-{station}
 of corr_len and <code class="docutils literal notranslate"><span class="pre">stack_*stacklen*</span></code> for the stack (with <em>stacklen</em>
 being the length of the stack in seconds).</p>
 <p><strong>SeisMIC</strong> uses some sort of “combined seed codes” structured as above.</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>with CorrelationDataBase(f&#39;data/corr/{network}-{network}.{station}-{station}.HHE-HHE.h5&#39;, mode=&#39;r&#39;) as cdb:
-    # find the available labels
-    print(cdb.get_available_channels(
-        tag=&#39;stack_86398&#39;, network=f&#39;{network}-{network}&#39;, station=f&#39;{station}-{station}&#39;))
-    print(cdb.get_available_starttimes(
-        tag=&#39;subdivision&#39;, network=f&#39;{network}-{network}&#39;, station=f&#39;{station}-{station}&#39;, channel=&#39;*&#39;))
-    cst = cdb.get_data(f&#39;{network}-{network}&#39;, f&#39;{station}-{station}&#39;, &#39;HHE-HHE&#39;, &#39;subdivision&#39;)
-print(type(cst))
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">CorrelationDataBase</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;data/corr/</span><span class="si">{</span><span class="n">network</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s1">.HHE-HHE.h5&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cdb</span><span class="p">:</span>
+    <span class="c1"># find the available labels</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">cdb</span><span class="o">.</span><span class="n">get_available_channels</span><span class="p">(</span>
+        <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;stack_86398&#39;</span><span class="p">,</span> <span class="n">network</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">network</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">network</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">cdb</span><span class="o">.</span><span class="n">get_available_starttimes</span><span class="p">(</span>
+        <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;subdivision&#39;</span><span class="p">,</span> <span class="n">network</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">network</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">network</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">))</span>
+    <span class="n">cst</span> <span class="o">=</span> <span class="n">cdb</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">network</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">network</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;HHE-HHE&#39;</span><span class="p">,</span> <span class="s1">&#39;subdivision&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">cst</span><span class="p">))</span>
 
-# filter frequencies, so we can see something
-cst = cst.filter(&#39;bandpass&#39;, freqmin=2, freqmax=4)
+<span class="c1"># filter frequencies, so we can see something</span>
+<span class="n">cst</span> <span class="o">=</span> <span class="n">cst</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="s1">&#39;bandpass&#39;</span><span class="p">,</span> <span class="n">freqmin</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">freqmax</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[&#39;HHE-HHE&#39;]
@@ -930,15 +930,15 @@ cst = cst.filter(&#39;bandpass&#39;, freqmin=2, freqmax=4)
 <code class="docutils literal notranslate"><span class="pre">`CorrStream</span></code> &lt;<a class="reference external" href="https://petermakus.github.io/SeisMIC/modules/API.html#seismic.correlate.stream.CorrStream">https://petermakus.github.io/SeisMIC/modules/API.html#seismic.correlate.stream.CorrStream</a>&gt;`__
 - an obspy based object to handle correlations. We can plot those in a
 section plot for example by time:</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from matplotlib import pyplot as plt
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 
-plt.figure(figsize=(8, 10))
-ax0 = plt.subplot(2, 1, 1)
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">ax0</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
-cst.plot(timelimits=[-20, 20], cmap=&#39;seismic&#39;, vmin=-0.5, vmax=0.5, ax=ax0)
-ax0.set_title(f&#39;Autocorrelation {network}.{station}.HHE&#39;)
-ax1 = plt.subplot(2, 1, 2)
-cst.plot(scalingfactor=3, timelimits=[0, 20], type=&#39;section&#39;, ax=ax1)
+<span class="n">cst</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">timelimits</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;seismic&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax0</span><span class="p">)</span>
+<span class="n">ax0</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Autocorrelation </span><span class="si">{</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s1">.HHE&#39;</span><span class="p">)</span>
+<span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">cst</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">scalingfactor</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">timelimits</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;section&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax1</span><span class="p">)</span>
 </pre></div>
 </div>
 <pre class="literal-block">&lt;Axes: xlabel='$\tau$ [s]'&gt;</pre>
@@ -949,8 +949,8 @@ earthquake. We will try to quantify the velocity change in the
 following.</p>
 <p>We can also look at a single correlations or at a stack of correlations.
 SeisMIC can stack correlation with <code class="docutils literal notranslate"><span class="pre">CorrStream.stack</span></code>:</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>corrstack = cst.stack()[0]
-corrstack.plot(tlim=[-20,20])
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">corrstack</span> <span class="o">=</span> <span class="n">cst</span><span class="o">.</span><span class="n">stack</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">corrstack</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">tlim</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span><span class="mi">20</span><span class="p">])</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">Axes</span><span class="p">:</span> <span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Lag Time [s]&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Correlation&#39;</span><span class="o">&gt;</span>
@@ -959,25 +959,25 @@ corrstack.plot(tlim=[-20,20])
 <img alt="../../_images/tutorial_20_1.png" src="../../_images/tutorial_20_1.png" />
 <section id="lets-try-and-combine-the-two-last-plots">
 <h3>Let’s try and combine the two last plots<a class="headerlink" href="#lets-try-and-combine-the-two-last-plots" title="Permalink to this heading">#</a></h3>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure(figsize=(8, 10))
-ax0 = plt.subplot(2, 1, 1)
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">ax0</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
-cst.plot(timelimits=[-20, 20], cmap=&#39;seismic&#39;, vmin=-0.5, vmax=0.5, ax=ax0)
-ax0.set_title(f&#39;(a)&#39;)
-ax0.plot(
-    corrstack.times(),
-    [UTCDateTime(i).datetime for i in corrstack.data*3e5 +  UTCDateTime(2016, 1, 31).timestamp],
-    color=&#39;k&#39;, zorder=100, linewidth=1.1)
+<span class="n">cst</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">timelimits</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;seismic&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax0</span><span class="p">)</span>
+<span class="n">ax0</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;(a)&#39;</span><span class="p">)</span>
+<span class="n">ax0</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">corrstack</span><span class="o">.</span><span class="n">times</span><span class="p">(),</span>
+    <span class="p">[</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">datetime</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">corrstack</span><span class="o">.</span><span class="n">data</span><span class="o">*</span><span class="mf">3e5</span> <span class="o">+</span>  <span class="n">UTCDateTime</span><span class="p">(</span><span class="mi">2016</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">31</span><span class="p">)</span><span class="o">.</span><span class="n">timestamp</span><span class="p">],</span>
+    <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.1</span><span class="p">)</span>
 
-ax1 = plt.subplot(2, 1, 2)
-cst.plot(scalingfactor=3, timelimits=[0, 20], type=&#39;section&#39;, ax=ax1)
-ax1.set_title(f&#39;(b)&#39;)
+<span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">cst</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">scalingfactor</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">timelimits</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;section&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax1</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;(b)&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Text</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s1">&#39;(b)&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="modules/tutorials/tutorial_files/tutorial_22_1.png" src="modules/tutorials/tutorial_files/tutorial_22_1.png" />
+<img alt="../../_images/tutorial_22_0.png" src="../../_images/tutorial_22_0.png" />
 </section>
 </section>
 <section id="waveform-coherence">
@@ -990,7 +990,7 @@ average them for one station and given frequency and lapse time bands.</p>
 <p>For this step, we will have to compute a few more noise correlations
 over various frequency bands. That’s why the next cell will take a
 while.</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!python wfc.py
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>python wfc.py
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>2023-08-24 10:54:53,301 - WARNING - No existing data found.
@@ -1065,17 +1065,17 @@ Automatically setting preprocess_subdiv to False to optimise performance.
 100%|█████████████████████████████████████████████| 1/1 [00:00&lt;00:00,  1.07it/s]
 </pre></div>
 </div>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from seismic.monitor.wfc import WFCBulk
-from seismic.monitor.wfc import read_wfc
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">seismic.monitor.wfc</span> <span class="kn">import</span> <span class="n">WFCBulk</span>
+<span class="kn">from</span> <span class="nn">seismic.monitor.wfc</span> <span class="kn">import</span> <span class="n">read_wfc</span>
 
-wfcs = read_wfc(&#39;data/wfc/WFC-X9-X9.IR1-IR1.av.*.npz&#39;)
-WFCBulk(wfcs).plot(log=True, cmap=&#39;batlow&#39;)
+<span class="n">wfcs</span> <span class="o">=</span> <span class="n">read_wfc</span><span class="p">(</span><span class="s1">&#39;data/wfc/WFC-X9-X9.IR1-IR1.av.*.npz&#39;</span><span class="p">)</span>
+<span class="n">WFCBulk</span><span class="p">(</span><span class="n">wfcs</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;batlow&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">Axes</span><span class="p">:</span> <span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Central Lag Time [s]&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Centre Frequency [Hz]&#39;</span><span class="o">&gt;</span>
 </pre></div>
 </div>
-<img alt="modules/tutorials/tutorial_files/tutorial_25_1.png" src="modules/tutorials/tutorial_files/tutorial_25_1.png" />
+<img alt="../../_images/tutorial_25_0.png" src="../../_images/tutorial_25_0.png" />
 </section>
 <section id="monitoring">
 <h2>4. Monitoring<a class="headerlink" href="#monitoring" title="Permalink to this heading">#</a></h2>
@@ -1086,7 +1086,7 @@ You can find the corresponding parameters in the <code class="docutils literal n
 <code class="docutils literal notranslate"><span class="pre">params.yaml</span></code> file.</p>
 <p>Similarly to the Correlation we can start the monitoring via a simple
 script:</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!cat monitor.py
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>cat monitor.py
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
@@ -1101,16 +1101,16 @@ script:</p>
 <span class="n">m</span><span class="o">.</span><span class="n">compute_velocity_change_bulk</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>try: ipynb_path
-except NameError: ipynb_path = os.getcwd()
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span> <span class="n">ipynb_path</span>
+<span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span> <span class="n">ipynb_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
 
-os.chdir(ipynb_path)
+<span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">ipynb_path</span><span class="p">)</span>
 
-# multi-core is not necessarily useful for this example
-# because the jobs are split into N jobs, where N is the number of
-# component combinations (in our case N==1)
-ncpus = os.cpu_count()//2
-!mpirun -n $ncpus python ./monitor.py
+<span class="c1"># multi-core is not necessarily useful for this example</span>
+<span class="c1"># because the jobs are split into N jobs, where N is the number of</span>
+<span class="c1"># component combinations (in our case N==1)</span>
+<span class="n">ncpus</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span><span class="o">//</span><span class="mi">2</span>
+<span class="o">!</span>mpirun -n <span class="nv">$ncpus</span> python ./monitor.py
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>0it [00:00, ?it/s]
@@ -1126,12 +1126,12 @@ saving to X9-X9_IR1-IR1_HHE-HHE
 <h3>Make a first plot to get an idea of <em>dv/v</em><a class="headerlink" href="#make-a-first-plot-to-get-an-idea-of-dv-v" title="Permalink to this heading">#</a></h3>
 <p>We can use SeisMIC’s inbuilt plotting function for that. The velocity
 changes will in general be shown in decimal values.</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from seismic.monitor.dv import read_dv
-dv = read_dv(f&#39;data/vel_change/DV-{network}-{network}.{station}-{station}.HHE-HHE.npz&#39;)
-dv.plot(ylim=(-0.01,0.01))
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">seismic.monitor.dv</span> <span class="kn">import</span> <span class="n">read_dv</span>
+<span class="n">dv</span> <span class="o">=</span> <span class="n">read_dv</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;data/vel_change/DV-</span><span class="si">{</span><span class="n">network</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">station</span><span class="si">}</span><span class="s1">.HHE-HHE.npz&#39;</span><span class="p">)</span>
+<span class="n">dv</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ylim</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">0.01</span><span class="p">,</span><span class="mf">0.01</span><span class="p">))</span>
 
-# We can print some information about the dv object
-print(dv)
+<span class="c1"># We can print some information about the dv object</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">dv</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../../_images/tutorial_30_0.png" src="../../_images/tutorial_30_0.png" />
@@ -1153,20 +1153,20 @@ retrieve a very high resolution estimate of <em>dv/v</em>.</p>
 on, but maybe it is not necessarily something you would want to put into
 a publication. Here is a code that makes the plot look like in the above
 mentioned publication</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from obspy import UTCDateTime
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">UTCDateTime</span>
 
-from seismic.plot.plot_utils import set_mpl_params
+<span class="kn">from</span> <span class="nn">seismic.plot.plot_utils</span> <span class="kn">import</span> <span class="n">set_mpl_params</span>
 
-set_mpl_params()
+<span class="n">set_mpl_params</span><span class="p">()</span>
 
-# Origin Time of the Zhupanov earthquake
-otime = UTCDateTime(2016, 1, 30, 3, 25).datetime
+<span class="c1"># Origin Time of the Zhupanov earthquake</span>
+<span class="n">otime</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="mi">2016</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">25</span><span class="p">)</span><span class="o">.</span><span class="n">datetime</span>
 
-fig, ax = dv.plot(style=&#39;publication&#39;, return_ax=True, ylim=(-.75,.75),
-                  dateformat=&#39;%d %b&#39;)
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">dv</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="s1">&#39;publication&#39;</span><span class="p">,</span> <span class="n">return_ax</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ylim</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">.75</span><span class="p">,</span><span class="mf">.75</span><span class="p">),</span>
+                  <span class="n">dateformat</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%d</span><span class="s1"> %b&#39;</span><span class="p">)</span>
 
-plt.axvline(otime, linestyle=&#39;dashed&#39;, c=&#39;r&#39;, label=&#39;M7.2&#39;)
-plt.legend()
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">otime</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;dashed&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;M7.2&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">legend</span><span class="o">.</span><span class="n">Legend</span> <span class="n">at</span> <span class="mh">0x7f6293a57730</span><span class="o">&gt;</span>
@@ -1364,7 +1364,7 @@ page</a></p>
 
   <p class="copyright">
     
-      © Copyright 2023, The SeisMIC development team..
+      © Copyright 2025, The SeisMIC development team..
       <br/>
     
   </p>

@@ -465,13 +465,13 @@ document.write(`
 <span class="sd">:copyright:</span>
 <span class="sd">   The SeisMIC development team (makus@gfz-potsdam.de).</span>
 <span class="sd">:license:</span>
-<span class="sd">    EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
-<span class="sd">   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)</span>
+<span class="sd">    `EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
+<span class="sd">    &lt;https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12&gt;`_</span>
 <span class="sd">:author:</span>
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 15th November 2022 05:15:30 pm</span>
-<span class="sd">Last Modified: Monday, 16th January 2023 11:14:37 am</span>
+<span class="sd">Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
@@ -480,11 +480,17 @@ document.write(`
 
 <span class="kn">from</span> <span class="nn">seismic.correlate.stats</span> <span class="kn">import</span> <span class="n">CorrStats</span>
 
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">logfactory</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="n">parentlogger</span> <span class="o">=</span> <span class="n">logfactory</span><span class="o">.</span><span class="n">create_logger</span><span class="p">()</span>
+<span class="n">module_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">parentlogger</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;.trim&#39;</span><span class="p">)</span>
+
 
 <div class="viewcode-block" id="corr_mat_trim"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.trim.corr_mat_trim">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_trim</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">endtime</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Trim the correlation matrix to a given period.</span>
+    <span class="sd">&quot;&quot;&quot; Trim the correlation matrix to a given period.</span>
 
 <span class="sd">    Trim the correlation matrix `corr_mat` to the period from `starttime` to</span>
 <span class="sd">    `endtime` given in seconds from the zero position, so both can be</span>
@@ -510,10 +516,12 @@ document.write(`
 
     <span class="c1"># check range</span>
     <span class="k">if</span> <span class="n">start</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Error: starttime before beginning of trace. Data not changed&#39;</span><span class="p">)</span>
+        <span class="n">module_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s1">&#39;Error: starttime before beginning of trace. Data not changed&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">stats</span>
     <span class="k">if</span> <span class="n">end</span> <span class="o">&gt;=</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;npts&#39;</span><span class="p">]:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Error: endtime after end of trace. Data not changed&#39;</span><span class="p">)</span>
+        <span class="n">module_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s1">&#39;Error: endtime after end of trace. Data not changed&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">stats</span>
 
     <span class="c1"># select requested part from matrix</span>
@@ -570,7 +578,7 @@ document.write(`
 
   <p class="copyright">
     
-      © Copyright 2023, The SeisMIC development team..
+      © Copyright 2025, The SeisMIC development team..
       <br/>
     
   </p>

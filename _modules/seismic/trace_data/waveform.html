@@ -465,16 +465,17 @@ document.write(`
 <span class="sd">:copyright:</span>
 <span class="sd">    The SeisMIC development team (makus@gfz-potsdam.de).</span>
 <span class="sd">:license:</span>
-<span class="sd">    GNU Lesser General Public License, Version 3</span>
-<span class="sd">    (https://www.gnu.org/copyleft/lesser.html)</span>
+<span class="sd">    `GNU Lesser General Public License, Version 3</span>
+<span class="sd">    &lt;https://www.gnu.org/copyleft/lesser.html&gt;`_</span>
 <span class="sd">:author:</span>
-<span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
+<span class="sd">    Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Thursday, 18th February 2021 02:30:02 pm</span>
-<span class="sd">Last Modified: Friday, 27th September 2024 10:28:06 am</span>
+<span class="sd">Last Modified: Wednesday, 16th April 2025 04:36:15 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">import</span> <span class="nn">fnmatch</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">glob</span>
@@ -483,26 +484,29 @@ document.write(`
 <span class="kn">import</span> <span class="nn">re</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">obspy</span>
 <span class="kn">from</span> <span class="nn">obspy.clients.fdsn</span> <span class="kn">import</span> <span class="n">Client</span> <span class="k">as</span> <span class="n">rClient</span>
 <span class="kn">from</span> <span class="nn">obspy.clients.fdsn.header</span> <span class="kn">import</span> <span class="n">FDSNNoDataException</span>
-<span class="kn">from</span> <span class="nn">obspy.clients.filesystem.sds</span> <span class="kn">import</span> <span class="n">Client</span> <span class="k">as</span> <span class="n">lClient</span>
+<span class="kn">from</span> <span class="nn">obspy.clients.filesystem</span> <span class="kn">import</span> <span class="n">sds</span>
 <span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">read_inventory</span><span class="p">,</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">read</span><span class="p">,</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">Inventory</span>
 <span class="kn">from</span> <span class="nn">obspy.clients.fdsn.mass_downloader</span> <span class="kn">import</span> <span class="n">RectangularDomain</span><span class="p">,</span> \
     <span class="n">Restrictions</span><span class="p">,</span> <span class="n">MassDownloader</span>
 
 <span class="kn">from</span> <span class="nn">seismic.utils.raw_analysis</span> <span class="kn">import</span> <span class="n">spct_series_welch</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">logfactory</span>
+
+<span class="n">DEFAULT_SDS</span> <span class="o">=</span> <span class="s2">&quot;mseed&quot;</span>
+<span class="n">DEFAULT_INVDIR</span> <span class="o">=</span> <span class="s2">&quot;inventory&quot;</span>
+<span class="n">LOGDIR</span> <span class="o">=</span> <span class="s2">&quot;log&quot;</span>
+<span class="n">DEFAULT_LOGPARAMS</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">loglevel</span><span class="o">=</span><span class="s2">&quot;WARNING&quot;</span><span class="p">,</span> <span class="n">logdir</span><span class="o">=</span><span class="n">LOGDIR</span><span class="p">,</span>
+                         <span class="n">filename_fmt</span><span class="o">=</span><span class="n">logfactory</span><span class="o">.</span><span class="n">FILENAME_FMT</span><span class="p">)</span>
+
+<span class="n">parentlogger</span> <span class="o">=</span> <span class="n">logfactory</span><span class="o">.</span><span class="n">create_logger</span><span class="p">()</span>
+<span class="n">module_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">parentlogger</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s2">&quot;.waveform&quot;</span><span class="p">)</span>
 
 
-<span class="n">SDS_FMTSTR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-    <span class="s2">&quot;</span><span class="si">{year}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{network}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{station}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{channel}</span><span class="s2">.</span><span class="si">{sds_type}</span><span class="s2">&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;</span><span class="si">{network}</span><span class="s2">.</span><span class="si">{station}</span><span class="s2">.</span><span class="si">{location}</span><span class="s2">.</span><span class="si">{channel}</span><span class="s2">.</span><span class="si">{sds_type}</span><span class="s2">.</span><span class="si">{year}</span><span class="s2">.</span><span class="si">{doy:03d}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="n">SDS_FMTSTR_alldoy</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-    <span class="s2">&quot;</span><span class="si">{year}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{network}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{station}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{channel}</span><span class="s2">.</span><span class="si">{sds_type}</span><span class="s2">&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;</span><span class="si">{network}</span><span class="s2">.</span><span class="si">{station}</span><span class="s2">.</span><span class="si">{location}</span><span class="s2">.</span><span class="si">{channel}</span><span class="s2">.</span><span class="si">{sds_type}</span><span class="s2">.</span><span class="si">{year}</span><span class="s2">.*&quot;</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="Store_Client"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.Store_Client">[docs]</a><span class="k">class</span> <span class="nc">Store_Client</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="Store_Client"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.Store_Client">[docs]</a><span class="k">class</span> <span class="nc">Store_Client</span><span class="p">(</span><span class="n">logfactory</span><span class="o">.</span><span class="n">LoggingMPIBaseClass</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Client for request and local storage of waveform data</span>
 
 <span class="sd">    Request client that stores downloaded data for later local retrieval.</span>
@@ -510,9 +514,10 @@ document.write(`
 <span class="sd">    Inventory data is stored in the folder `inventory` and attached to data</span>
 <span class="sd">    that is read.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Client</span><span class="p">:</span> <span class="n">rClient</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Client</span><span class="p">:</span> <span class="n">rClient</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">read_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">sds_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_SDS</span><span class="p">,</span>
+                 <span class="n">logparams</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">DEFAULT_LOGPARAMS</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize the client</span>
 
 <span class="sd">        :type Client: obspy request client that supports the &#39;get_waveform&#39;</span>
@@ -523,14 +528,22 @@ document.write(`
 <span class="sd">        :param path: path of the store&#39;s sds root directory</span>
 <span class="sd">        :type read_only: Bool</span>
 <span class="sd">        :param read_only: If True the local archive is not extended.</span>
+<span class="sd">        :param logparams: Variables passed to</span>
+<span class="sd">            :func:`~seismic.logfactory.LoggingMPIBaseClass.set_logger()`.</span>
+<span class="sd">            Keywords are &quot;loglevel&quot;, &quot;logdir&quot; and filename_fmt.</span>
+<span class="sd">        :type logparams: dict [dict(loglevel=&quot;WARNING&quot;, logdir=LOGDIR,</span>
+<span class="sd">            filename_fmt=logfactory.FILENAME_FMT)]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> is not a directory&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fileborder_seconds</span> <span class="o">=</span> <span class="mi">30</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fileborder_samples</span> <span class="o">=</span> <span class="mi">5000</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sds_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;mseed&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sds_root</span> <span class="o">=</span> <span class="n">get_abs_sds_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sds_dir</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">read_only</span><span class="p">:</span>
             <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sds_root</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">inv_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;inventory&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sds_root</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> is not a directory&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sds_root</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inv_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">DEFAULT_INVDIR</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inv_dir</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inv_dir</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_inventory</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
@@ -538,23 +551,27 @@ document.write(`
         <span class="k">if</span> <span class="ow">not</span> <span class="n">read_only</span><span class="p">:</span>
             <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inv_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sds_type</span> <span class="o">=</span> <span class="s2">&quot;D&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lclient</span> <span class="o">=</span> <span class="n">lClient</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lclient</span> <span class="o">=</span> <span class="n">sds</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sds_root</span><span class="p">,</span> <span class="n">sds_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sds_type</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;MSEED&quot;</span><span class="p">,</span>
             <span class="n">fileborder_seconds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fileborder_seconds</span><span class="p">,</span>
             <span class="n">fileborder_samples</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fileborder_samples</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rclient</span> <span class="o">=</span> <span class="n">Client</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">read_only</span> <span class="o">=</span> <span class="n">read_only</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sds_fmtstr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lclient</span><span class="o">.</span><span class="n">FMTSTR</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_logger</span><span class="p">(</span><span class="o">**</span><span class="n">logparams</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Store_Client.download_waveforms_mdl"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.Store_Client.download_waveforms_mdl">[docs]</a>    <span class="k">def</span> <span class="nf">download_waveforms_mdl</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
-        <span class="n">clients</span><span class="p">:</span> <span class="nb">list</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">minlat</span><span class="p">:</span> <span class="nb">float</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">maxlat</span><span class="p">:</span> <span class="nb">float</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">minlon</span><span class="p">:</span> <span class="nb">float</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">maxlon</span><span class="p">:</span> <span class="nb">float</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">station</span><span class="p">:</span> <span class="nb">str</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="nb">str</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span> <span class="ow">or</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">channel_priorities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">clients</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">minlat</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">maxlat</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">minlon</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">maxlon</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">station</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">channel_priorities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">location_priorities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Download data using the obspy&#39;s MassDownloader. For all args</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Download data using the obspy&#39;s MassDownloader.</span>
+
+<span class="sd">        For all args</span>
 <span class="sd">        except starttime and endtime, None is interpreted as a wildcard.</span>
 <span class="sd">        Wildcards are generally allowed for all arguments except starttime</span>
 <span class="sd">        and endtime. Channel and location priorities are given in the form</span>
@@ -645,7 +662,7 @@ document.write(`
 
 <div class="viewcode-block" id="Store_Client.get_available_stations"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.Store_Client.get_available_stations">[docs]</a>    <span class="k">def</span> <span class="nf">get_available_stations</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a list of stations for which raw data is available.</span>
 <span class="sd">        Very similar to the</span>
 <span class="sd">        :func:`~obspy.clients.filesystem.sds.get_all_stations()` method with</span>
@@ -654,6 +671,7 @@ document.write(`
 <span class="sd">        :param network: Only return stations from this network.</span>
 <span class="sd">            ``network==None`` is same as a wildcard. Defaults to None.</span>
 <span class="sd">        :type network: str or None, optional</span>
+
 <span class="sd">        :return: List of network and station codes in the form:</span>
 <span class="sd">            `[[net0,stat0], [net1,stat1]]`.</span>
 <span class="sd">        :rtype: list</span>
@@ -678,13 +696,13 @@ document.write(`
     <span class="k">def</span> <span class="nf">_get_mseed_storage</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
-            <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span> <span class="o">|</span> <span class="nb">str</span><span class="p">:</span>
 
         <span class="c1"># Returning True means that neither the data nor the StationXML file</span>
 
         <span class="c1"># will be downloaded.</span>
 
-        <span class="n">filename</span> <span class="o">=</span> <span class="n">SDS_FMTSTR</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sds_fmtstr</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
             <span class="n">network</span><span class="o">=</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">station</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="n">location</span><span class="p">,</span>
             <span class="n">channel</span><span class="o">=</span><span class="n">channel</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="n">starttime</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="n">doy</span><span class="o">=</span><span class="n">starttime</span><span class="o">.</span><span class="n">julday</span><span class="p">,</span>
             <span class="n">sds_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sds_type</span><span class="p">)</span>
@@ -699,13 +717,14 @@ document.write(`
 
     <span class="k">def</span> <span class="nf">_get_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
             <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">UTCDateTime</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return earliest and latest available time for a certain station.</span>
 
 <span class="sd">        :param network: network code</span>
 <span class="sd">        :type network: str</span>
 <span class="sd">        :param station: station code</span>
 <span class="sd">        :type station: str</span>
+
 <span class="sd">        :return: (UTCDateTime, UTCDateTime)</span>
 <span class="sd">        :rtype: tuple</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -738,7 +757,7 @@ document.write(`
     <span class="k">def</span> <span class="nf">_translate_wildcards</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
             <span class="n">component</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;?&#39;</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Look up network and station names in database, so that wildcards</span>
 <span class="sd">        can be estimated into number of stations.</span>
 
@@ -756,9 +775,10 @@ document.write(`
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Create one nested list</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sds_root</span><span class="p">,</span>
-                            <span class="n">SDS_FMTSTR_alldoy</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                            <span class="n">get_sdsfmtst_with_doy_as_wildcard</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">sds_fmtstr</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                                 <span class="n">network</span><span class="o">=</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">station</span><span class="p">,</span>
-                                <span class="n">location</span><span class="o">=</span><span class="n">location</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;??</span><span class="si">{</span><span class="n">component</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                                <span class="n">location</span><span class="o">=</span><span class="n">location</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;*</span><span class="si">{</span><span class="n">component</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
                                 <span class="n">year</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">sds_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sds_type</span><span class="p">))</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[:</span><span class="mi">4</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">iglob</span><span class="p">(</span><span class="n">path</span><span class="p">)]</span>
 
@@ -766,22 +786,22 @@ document.write(`
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
             <span class="n">attach_response</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load data from remote resouce</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading remotely.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Loading remotely.&quot;</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rclient</span><span class="o">.</span><span class="n">get_waveforms</span><span class="p">(</span>
                 <span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">FDSNNoDataException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">Stream</span><span class="p">()</span>
         <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;error&#39;</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">st</span><span class="o">.</span><span class="n">attach_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inventory</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Warning</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Updating inventory.&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Updating inventory.&quot;</span><span class="p">)</span>
                 <span class="n">ninv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rclient</span><span class="o">.</span><span class="n">get_stations</span><span class="p">(</span>
                     <span class="n">network</span><span class="o">=</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">station</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="n">channel</span><span class="p">,</span>
                     <span class="n">starttime</span><span class="o">=</span><span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="o">=</span><span class="n">endtime</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;response&#39;</span><span class="p">)</span>
@@ -795,8 +815,8 @@ document.write(`
     <span class="k">def</span> <span class="nf">_load_local</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">attach_response</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
-            <span class="n">_check_times</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+            <span class="n">_check_times</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Read data from local SDS structure.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># print(&quot;Loading locally ... &quot;, end=&#39;&#39;)</span>
@@ -804,6 +824,9 @@ document.write(`
             <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lclient</span><span class="o">.</span><span class="n">get_waveforms</span><span class="p">(</span>
                 <span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">except</span> <span class="n">obspy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">mseed</span><span class="o">.</span><span class="n">InternalMSEEDError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="c1"># Making sure that the order is correct for the next bit to work</span>
         <span class="n">st</span><span class="o">.</span><span class="n">sort</span><span class="p">([</span><span class="s1">&#39;starttime&#39;</span><span class="p">])</span>
@@ -820,7 +843,7 @@ document.write(`
         <span class="k">return</span> <span class="n">st</span>
 
 <div class="viewcode-block" id="Store_Client.read_inventory"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.Store_Client.read_inventory">[docs]</a>    <span class="k">def</span> <span class="nf">read_inventory</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Reads an up-to-date version of the corresponding Station Inventory.</span>
 
 <span class="sd">        :return: Station Inventory</span>
@@ -831,7 +854,7 @@ document.write(`
 
 <div class="viewcode-block" id="Store_Client.select_inventory_or_load_remote"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.Store_Client.select_inventory_or_load_remote">[docs]</a>    <span class="k">def</span> <span class="nf">select_inventory_or_load_remote</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Checks whether the response for the provided station is in</span>
 <span class="sd">        self.inventory if not the response will be fetched from remote.</span>
 
@@ -845,7 +868,8 @@ document.write(`
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">inv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">network</span><span class="o">=</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">station</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">inv</span><span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Station response not found ... loading from remote.&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s1">&#39;Station response not found ... loading from remote.&#39;</span><span class="p">)</span>
             <span class="n">inv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rclient</span><span class="o">.</span><span class="n">get_stations</span><span class="p">(</span>
                 <span class="n">network</span><span class="o">=</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">station</span><span class="p">,</span>
                 <span class="n">channel</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;response&#39;</span><span class="p">)</span>
@@ -853,7 +877,7 @@ document.write(`
         <span class="k">return</span> <span class="n">inv</span></div>
 
     <span class="k">def</span> <span class="nf">_write_local_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">st</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Write stream to local SDS structure.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># write the data</span>
@@ -868,10 +892,10 @@ document.write(`
                 <span class="n">starttime</span> <span class="o">=</span> <span class="n">endtime</span>
 
     <span class="k">def</span> <span class="nf">_sds_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tr</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">julday</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Write max 1 day long trace to SDS structure.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">filename</span> <span class="o">=</span> <span class="n">SDS_FMTSTR</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sds_fmtstr</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
             <span class="n">network</span><span class="o">=</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="o">=</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="p">,</span>
             <span class="n">location</span><span class="o">=</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span>
             <span class="n">year</span><span class="o">=</span><span class="n">year</span><span class="p">,</span> <span class="n">doy</span><span class="o">=</span><span class="n">julday</span><span class="p">,</span> <span class="n">sds_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sds_type</span><span class="p">)</span>
@@ -887,7 +911,7 @@ document.write(`
         <span class="n">rst</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;MSEED&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_write_inventory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ninv</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;write the inventory information&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;write the inventory information&quot;&quot;&quot;</span>
         <span class="c1"># Save inventory by station name, like this no old information</span>
         <span class="c1"># can be deleted</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -901,7 +925,7 @@ document.write(`
     <span class="k">def</span> <span class="nf">_generate_time_windows</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span>
             <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">increment</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">86400</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Stream</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generates time windows with the requested increment from the requested</span>
 <span class="sd">        station.</span>
 
@@ -936,7 +960,7 @@ document.write(`
         <span class="n">read_increment</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">86400</span><span class="p">,</span>
         <span class="n">remove_response</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
             <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes a time series of spectrograms for the requested station and</span>
 <span class="sd">        channel.</span>
 
@@ -979,12 +1003,125 @@ document.write(`
             <span class="n">data_gen</span><span class="p">,</span> <span class="n">win_len</span><span class="p">,</span> <span class="n">freq_max</span><span class="p">,</span> <span class="n">remove_response</span><span class="o">=</span><span class="n">remove_response</span><span class="p">)</span></div></div>
 
 
+<div class="viewcode-block" id="Local_Store_Client"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.Local_Store_Client">[docs]</a><span class="k">class</span> <span class="nc">Local_Store_Client</span><span class="p">(</span><span class="n">Store_Client</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Client to manage access to local data stored in an SDS-like structure.</span>
+
+<span class="sd">    In contrast to the regular Store_Client non-default names can be set for</span>
+<span class="sd">    paths to stationxml-files and sds-root directory. It does not provide</span>
+<span class="sd">    access to online data archives.</span>
+
+<span class="sd">    The client is initialized from a configuration dictionary that must contain</span>
+<span class="sd">    the following keys:</span>
+
+<span class="sd">    * proj_dir: path to the project directory</span>
+<span class="sd">    * co: dictionary with keys &#39;read_start&#39; and &#39;read_end&#39; for the time range</span>
+<span class="sd">    * net: dictionary with keys &#39;network&#39; and &#39;station&#39; for the selection</span>
+
+<span class="sd">    The following keys are accessed, if present:</span>
+
+<span class="sd">    * sds_dir: path to the sds root directory, defaults to &#39;mseed&#39;</span>
+<span class="sd">    * stationxml_file: path to stationxml file, defaults to `inventory/*.xml`</span>
+<span class="sd">    * sds_fmtstr: format string for the sds structure, defaults to the sds</span>
+
+<span class="sd">    If not present, the default values are used.</span>
+
+<span class="sd">    Other keys are ignored. Thus, the configuration file for the entire</span>
+<span class="sd">    correlation setup can be used to initialize the client.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">logparams</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">DEFAULT_LOGPARAMS</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        param config: Configuration dictionary.</span>
+<span class="sd">        :type config: dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Create project dir</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;proj_dir&quot;</span><span class="p">]</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Set default values if params not set in config</span>
+        <span class="k">if</span> <span class="s2">&quot;sds_dir&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+            <span class="n">config</span><span class="p">[</span><span class="s2">&quot;sds_dir&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_SDS</span>
+        <span class="k">if</span> <span class="s2">&quot;stationxml_file&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+            <span class="n">config</span><span class="p">[</span><span class="s2">&quot;stationxml_file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DEFAULT_INVDIR</span><span class="p">,</span>  <span class="s2">&quot;*.xml&quot;</span><span class="p">)</span>
+        <span class="n">config</span><span class="p">[</span><span class="s2">&quot;stationxml_file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_abs_sds_path</span><span class="p">(</span>
+            <span class="n">root</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;stationxml_file&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="s2">&quot;sds_fmtstr&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+            <span class="n">config</span><span class="p">[</span><span class="s2">&quot;sds_fmtstr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">sds_root</span> <span class="o">=</span> <span class="n">get_abs_sds_path</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;sds_dir&quot;</span><span class="p">])</span>
+        <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">sds_root</span><span class="p">),</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> is not a directory&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">sds_root</span><span class="p">)</span>
+        <span class="n">sdscl</span> <span class="o">=</span> <span class="n">sds</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="n">sds_root</span><span class="o">=</span><span class="n">sds_root</span><span class="p">)</span>
+
+        <span class="n">fmt_str</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;sds_fmtstr&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">fmt_str</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">fmt_str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;default&quot;</span><span class="p">:</span>
+            <span class="n">fmt_str</span> <span class="o">=</span> <span class="n">sdscl</span><span class="o">.</span><span class="n">FMTSTR</span>
+        <span class="c1"># Could check if fmt_str has correct format</span>
+        <span class="n">sdscl</span><span class="o">.</span><span class="n">FMTSTR</span> <span class="o">=</span> <span class="n">fmt_str</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sds_fmtstr</span> <span class="o">=</span> <span class="n">fmt_str</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sds_root</span> <span class="o">=</span> <span class="n">sds_root</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">sdscl</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">sds_root</span><span class="p">,</span> <span class="n">logparams</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lclient</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rclient</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_inventory</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_inventory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read inventory from file system based on parameters in config.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">inv_all</span> <span class="o">=</span> <span class="n">read_inventory</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;stationxml_file&quot;</span><span class="p">])</span>
+
+        <span class="n">inv_all</span> <span class="o">=</span> <span class="n">inv_all</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+            <span class="n">starttime</span><span class="o">=</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;co&quot;</span><span class="p">][</span><span class="s2">&quot;read_start&quot;</span><span class="p">]),</span>
+            <span class="n">endtime</span><span class="o">=</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;co&quot;</span><span class="p">][</span><span class="s2">&quot;read_end&quot;</span><span class="p">]))</span>
+
+        <span class="n">inv</span> <span class="o">=</span> <span class="n">Inventory</span><span class="p">()</span>
+        <span class="n">networks</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;net&quot;</span><span class="p">][</span><span class="s2">&quot;network&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">networks</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">networks</span> <span class="o">=</span> <span class="p">[</span><span class="n">networks</span><span class="p">]</span>
+        <span class="n">stations</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;net&quot;</span><span class="p">][</span><span class="s2">&quot;station&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stations</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">stations</span> <span class="o">=</span> <span class="p">[</span><span class="n">stations</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">networks</span><span class="p">:</span>
+            <span class="n">inv_all_</span> <span class="o">=</span> <span class="n">inv_all</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">network</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">stations</span><span class="p">:</span>
+                <span class="n">inv</span> <span class="o">+=</span> <span class="n">inv_all_</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">station</span><span class="o">=</span><span class="n">s</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span> <span class="o">=</span> <span class="n">inv</span>
+
+<div class="viewcode-block" id="Local_Store_Client.read_inventory"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.Local_Store_Client.read_inventory">[docs]</a>    <span class="k">def</span> <span class="nf">read_inventory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the inventory attribute if set, otherwise an empty inventory.</span>
+
+<span class="sd">        It replaces the method of the parent class to mimick its behavior. The</span>
+<span class="sd">        method here does not actually read the inventory from the file system,</span>
+<span class="sd">        but returns the inventory object that was set during initialization</span>
+<span class="sd">        (or by calling :func:`~_set_inventory`).</span>
+
+<span class="sd">        :return: Inventory object</span>
+<span class="sd">        :rtype: Inventory</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="c1"># Happens during super() and if default invdir is present but empty</span>
+            <span class="k">return</span> <span class="n">Inventory</span><span class="p">()</span></div>
+        <span class="c1"># return self.inventory</span>
+
+<div class="viewcode-block" id="Local_Store_Client.download_waveforms_mdl"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.Local_Store_Client.download_waveforms_mdl">[docs]</a>    <span class="k">def</span> <span class="nf">download_waveforms_mdl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Raises UserWarning that method is not implemented.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">UserWarning</span><span class="p">(</span><span class="s2">&quot;Method not implemented for Local_Store_Client.&quot;</span>
+                          <span class="o">+</span> <span class="s2">&quot;Use Store_Client instead.&quot;</span><span class="p">)</span></div></div>
+
+
 <div class="viewcode-block" id="FS_Client"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.FS_Client">[docs]</a><span class="k">class</span> <span class="nc">FS_Client</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Request Client for reading MSEED files from file system</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="s1">&#39;SDS_archive&#39;</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize the client</span>
 
 <span class="sd">        Refer to :class:`read_from_filesystem` for documentation</span>
@@ -995,7 +1132,7 @@ document.write(`
         <span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">starttime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">trim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
             <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Read data from the local file system.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">ID</span> <span class="o">=</span> <span class="n">network</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span><span class="n">station</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span><span class="n">location</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span><span class="n">channel</span>
@@ -1015,7 +1152,7 @@ document.write(`
     <span class="n">ID</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span>
     <span class="n">fs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;SDS_archive&#39;</span><span class="p">,</span> <span class="n">trim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Read data from a filesystem</span>
 
 <span class="sd">    Function to read miniSEED data from a given file structure by specifying</span>
@@ -1048,7 +1185,7 @@ document.write(`
 <span class="sd">    one of the following:</span>
 
 <span class="sd">    - %X as defined by datetime.strftime indicating an element of t</span>
-<span class="sd">        the time. e.g. %H</span>
+<span class="sd">      the time. e.g. %H</span>
 <span class="sd">    - %NET: network name or %net for lower case network name</span>
 <span class="sd">    - %STA: station name or %sta for lower case</span>
 <span class="sd">    - %CHA: channel name or %cha for lower case</span>
@@ -1104,8 +1241,8 @@ document.write(`
     <span class="c1"># translate file structure string</span>
     <span class="n">fpattern</span> <span class="o">=</span> <span class="n">_current_filepattern</span><span class="p">(</span><span class="n">ID</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">fs</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Searching for files matching: </span><span class="si">%s</span><span class="se">\n</span><span class="s1"> at time </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span>
-              <span class="p">(</span><span class="n">fpattern</span><span class="p">,</span> <span class="n">starttime</span><span class="p">))</span>
+        <span class="n">module_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Searching for files matching: </span><span class="si">%s</span><span class="se">\n</span><span class="s1"> at time </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span>
+                            <span class="p">(</span><span class="n">fpattern</span><span class="p">,</span> <span class="n">starttime</span><span class="p">))</span>
     <span class="n">st</span> <span class="o">=</span> <span class="n">_read_filepattern</span><span class="p">(</span><span class="n">fpattern</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span> <span class="n">trim</span><span class="p">,</span> <span class="n">debug</span><span class="p">)</span>
 
     <span class="c1"># if trace starts too late have a look in the previous section</span>
@@ -1113,8 +1250,8 @@ document.write(`
             <span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="o">-</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">delta</span><span class="p">)</span><span class="o">.</span><span class="n">datetime</span> <span class="o">&gt;</span> <span class="n">starttime</span><span class="p">):</span>
         <span class="n">fpattern</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_adjacent_filepattern</span><span class="p">(</span><span class="n">ID</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Searching for files matching: </span><span class="si">%s</span><span class="se">\n</span><span class="s1"> at time </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span>
-                  <span class="p">(</span><span class="n">fpattern</span><span class="p">,</span> <span class="n">starttime</span><span class="p">))</span>
+            <span class="n">module_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Searching for files matching: &#39;</span>
+                                <span class="o">+</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="se">\n</span><span class="s1"> at time </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">fpattern</span><span class="p">,</span> <span class="n">starttime</span><span class="p">))</span>
         <span class="n">st</span> <span class="o">+=</span> <span class="n">_read_filepattern</span><span class="p">(</span><span class="n">fpattern</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span> <span class="n">trim</span><span class="p">,</span> <span class="n">debug</span><span class="p">)</span>
         <span class="n">st</span><span class="o">.</span><span class="n">merge</span><span class="p">()</span>
     <span class="n">thistime</span> <span class="o">=</span> <span class="n">starttime</span>
@@ -1122,8 +1259,8 @@ document.write(`
             <span class="n">thistime</span> <span class="o">&lt;</span> <span class="n">endtime</span><span class="p">):</span>
         <span class="n">fpattern</span><span class="p">,</span> <span class="n">thistime</span> <span class="o">=</span> <span class="n">_adjacent_filepattern</span><span class="p">(</span><span class="n">ID</span><span class="p">,</span> <span class="n">thistime</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Searching for files matching: </span><span class="si">%s</span><span class="se">\n</span><span class="s1"> at time </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span>
-                  <span class="p">(</span><span class="n">fpattern</span><span class="p">,</span> <span class="n">thistime</span><span class="p">))</span>
+            <span class="n">module_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Searching for files matching: &#39;</span>
+                                <span class="o">+</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="se">\n</span><span class="s1"> at time </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">fpattern</span><span class="p">,</span> <span class="n">thistime</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">thistime</span> <span class="o">==</span> <span class="n">starttime</span><span class="p">:</span>
             <span class="k">break</span>
         <span class="n">st</span> <span class="o">+=</span> <span class="n">_read_filepattern</span><span class="p">(</span><span class="n">fpattern</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span> <span class="n">trim</span><span class="p">,</span> <span class="n">debug</span><span class="p">)</span>
@@ -1131,10 +1268,10 @@ document.write(`
     <span class="k">if</span> <span class="n">trim</span><span class="p">:</span>
         <span class="n">st</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">starttime</span><span class="o">=</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">starttime</span><span class="p">),</span> <span class="n">endtime</span><span class="o">=</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">endtime</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Following IDs are in the stream: &#39;</span><span class="p">)</span>
+        <span class="n">module_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Following IDs are in the stream: &#39;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Selecting </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">ID</span><span class="p">)</span>
+            <span class="n">module_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="n">module_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Selecting </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">ID</span><span class="p">)</span>
     <span class="n">st</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">ID</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">st</span></div>
 
@@ -1142,7 +1279,7 @@ document.write(`
 <span class="k">def</span> <span class="nf">_read_filepattern</span><span class="p">(</span>
     <span class="n">fpattern</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span>
         <span class="n">trim</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a stream from files whose names match a given pattern.</span>
+    <span class="sd">&quot;&quot;&quot;Read a stream from files whose names match a given pattern.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">flist</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">fpattern</span><span class="p">)</span>
     <span class="n">starttimes</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1154,9 +1291,9 @@ document.write(`
         <span class="n">endtimes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">endtime</span><span class="o">.</span><span class="n">datetime</span><span class="p">)</span>
     <span class="c1"># now read the stream from the files that contain the period</span>
     <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Matching files:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">module_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Matching files:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="k">for</span> <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">flist</span><span class="p">,</span> <span class="n">starttimes</span><span class="p">,</span> <span class="n">endtimes</span><span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> from </span><span class="si">%s</span><span class="s1"> to </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">))</span>
+            <span class="n">module_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> from </span><span class="si">%s</span><span class="s1"> to </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">))</span>
     <span class="n">st</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">fname</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">flist</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">starttimes</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">endtime</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">endtimes</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">starttime</span><span class="p">):</span>
@@ -1169,7 +1306,7 @@ document.write(`
     <span class="k">try</span><span class="p">:</span>
         <span class="n">st</span><span class="o">.</span><span class="n">merge</span><span class="p">()</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error merging traces for requested period!&quot;</span><span class="p">)</span>
+        <span class="n">module_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Error merging traces for requested period!&quot;</span><span class="p">)</span>
         <span class="n">st</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">st</span>
 
@@ -1177,7 +1314,7 @@ document.write(`
 <span class="k">def</span> <span class="nf">_adjacent_filepattern</span><span class="p">(</span>
     <span class="n">ID</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">inc</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the file name that contains the data sequence prior to the one</span>
+    <span class="sd">&quot;&quot;&quot;Return the file name that contains the data sequence prior to the one</span>
 <span class="sd">    that contains the given time for a given file structure and ID.</span>
 
 <span class="sd">    :param inc: either 1 for following of -1 for previous period</span>
@@ -1240,7 +1377,7 @@ document.write(`
 
 <span class="k">def</span> <span class="nf">_current_filepattern</span><span class="p">(</span>
         <span class="n">ID</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the file name that contains the data sequence that contains</span>
+    <span class="sd">&quot;&quot;&quot;Return the file name that contains the data sequence that contains</span>
 <span class="sd">    the given time for a given file structure and ID.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">fname</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
@@ -1255,7 +1392,7 @@ document.write(`
 
 
 <span class="k">def</span> <span class="nf">_fs_translate</span><span class="p">(</span><span class="n">part</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ID</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Translate part of the file structure descriptor.</span>
+    <span class="sd">&quot;&quot;&quot;Translate part of the file structure descriptor.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">IDlist</span> <span class="o">=</span> <span class="n">ID</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;(&#39;</span> <span class="ow">in</span> <span class="n">part</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s1">&#39;)&#39;</span> <span class="ow">in</span> <span class="n">part</span><span class="p">):</span>
@@ -1289,7 +1426,7 @@ document.write(`
 <div class="viewcode-block" id="get_day_in_folder"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.get_day_in_folder">[docs]</a><span class="k">def</span> <span class="nf">get_day_in_folder</span><span class="p">(</span>
     <span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dirlist</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">UTCDateTime</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Assuming that mseed files are by day (i.e., one file per day), this</span>
 <span class="sd">    function will return the earliest or the latest day available (depending</span>
 <span class="sd">    upon the argument passed as ``type``).</span>
@@ -1306,10 +1443,12 @@ document.write(`
 <span class="sd">    :type channel: str</span>
 <span class="sd">    :param type: either ``start`` or ``end``</span>
 <span class="sd">    :type type: str</span>
-<span class="sd">    :raises NotImplementedError: Unknown argument for type</span>
-<span class="sd">    :raises FileNotFoundError: No files in db</span>
+
 <span class="sd">    :return: The earliest starttime or latest endtime in utc</span>
 <span class="sd">    :rtype: UTCDateTime</span>
+
+<span class="sd">    :raises NotImplementedError: Unknown argument for type</span>
+<span class="sd">    :raises FileNotFoundError: No files in db</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;start&#39;</span><span class="p">:</span>
         <span class="n">i0</span> <span class="o">=</span> <span class="mi">0</span>
@@ -1336,6 +1475,50 @@ document.write(`
     <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;end&#39;</span><span class="p">:</span>
         <span class="c1"># +24*3600 because else it&#39;s the starttime of latest day</span>
         <span class="k">return</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">year</span><span class="p">),</span> <span class="n">julday</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">julday</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span> <span class="o">+</span> <span class="mi">24</span><span class="o">*</span><span class="mi">3600</span></div>
+
+
+<div class="viewcode-block" id="get_sdsfmtst_with_doy_as_wildcard"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.get_sdsfmtst_with_doy_as_wildcard">[docs]</a><span class="k">def</span> <span class="nf">get_sdsfmtst_with_doy_as_wildcard</span><span class="p">(</span>
+        <span class="n">sds_fmtstr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">sds</span><span class="o">.</span><span class="n">Client</span><span class="o">.</span><span class="n">FMTSTR</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Replace doy placeholder in fmtstr by wildcard&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\{doy.*\}&quot;</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="n">sds_fmtstr</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_abs_sds_path"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.trace_data.waveform.get_abs_sds_path">[docs]</a><span class="k">def</span> <span class="nf">get_abs_sds_path</span><span class="p">(</span><span class="n">proj_dir</span><span class="p">,</span> <span class="n">sds_dir</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get absolute path from two joined directories.</span>
+
+<span class="sd">    param proj_dir: Project root directory</span>
+<span class="sd">    type proj_dir: str</span>
+<span class="sd">    param sds_dir: path to sds root directory</span>
+<span class="sd">    type sds_dir: str</span>
+
+<span class="sd">    :return: absolute path with expanded user variables from</span>
+<span class="sd">        `os.path.join(proj_dir, sds_dir)`</span>
+<span class="sd">    :rtype: str</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    ----------</span>
+<span class="sd">    SDS outside project directory</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        proj_dir = &quot;output&quot;</span>
+<span class="sd">        sds_dir = &quot;~/mysds&quot;</span>
+<span class="sd">        print(get_abs_sds_path(proj_dir, sds_dir))</span>
+<span class="sd">        &gt;&gt;&gt;&gt; &quot;/home/username/mysds&quot;</span>
+
+<span class="sd">    SDS relative to project directory</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        proj_dir = &quot;output&quot;</span>
+<span class="sd">        sds_dir = &quot;./mseed&quot;</span>
+<span class="sd">        print(get_abs_sds_path(proj_dir, sds_dir))</span>
+<span class="sd">        &gt;&gt;&gt;&gt; &quot;/home/username/path/to/output/mseed&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">fspath</span><span class="p">(</span><span class="n">proj_dir</span><span class="p">)),</span>
+                     <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">fspath</span><span class="p">(</span><span class="n">sds_dir</span><span class="p">))))</span></div>
 </pre></div>
 
                 </article>
@@ -1377,7 +1560,7 @@ document.write(`
 
   <p class="copyright">
     
-      © Copyright 2023, The SeisMIC development team..
+      © Copyright 2025, The SeisMIC development team..
       <br/>
     
   </p>

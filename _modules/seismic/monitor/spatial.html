@@ -470,8 +470,8 @@ document.write(`
 <span class="sd">:copyright:</span>
 <span class="sd">   The SeisMIC development team (makus@gfz-potsdam.de).</span>
 <span class="sd">:license:</span>
-<span class="sd">    EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
-<span class="sd">   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)</span>
+<span class="sd">    `EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
+<span class="sd">    &lt;https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12&gt;`_</span>
 <span class="sd">:author:</span>
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
@@ -495,7 +495,7 @@ document.write(`
 <div class="viewcode-block" id="probability"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.spatial.probability">[docs]</a><span class="k">def</span> <span class="nf">probability</span><span class="p">(</span>
     <span class="n">dist</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="n">vel</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">mf_path</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the probability for a wave with the given properties to pass</span>
 <span class="sd">    through a point at distance `dist`. Following the diffusion law.</span>
 
@@ -542,7 +542,7 @@ document.write(`
 
 <div class="viewcode-block" id="compute_grid_dist"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.spatial.compute_grid_dist">[docs]</a><span class="k">def</span> <span class="nf">compute_grid_dist</span><span class="p">(</span>
         <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">y0</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the distance of each point on the grid x, y to x0, y0.</span>
 <span class="sd">    (2D)</span>
 
@@ -565,7 +565,7 @@ document.write(`
 <div class="viewcode-block" id="sensitivity_kernel"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.spatial.sensitivity_kernel">[docs]</a><span class="k">def</span> <span class="nf">sensitivity_kernel</span><span class="p">(</span>
     <span class="n">s1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">s2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>  <span class="n">vel</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">mf_path</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Computes a 2D surface-wave sensitivity kernel for an</span>
 <span class="sd">    ambient noise cross-correlation between two station ``s1`` and ``s2``.</span>
 <span class="sd">    The computation is based on a time-dependendent solution of the Boltzmann</span>
@@ -635,7 +635,7 @@ document.write(`
 <div class="viewcode-block" id="data_variance"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.spatial.data_variance">[docs]</a><span class="k">def</span> <span class="nf">data_variance</span><span class="p">(</span>
     <span class="n">corr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="n">bandwidth</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tw</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
         <span class="n">freq_c</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the variance of the velocity change data based on the coherence</span>
 <span class="sd">    value between stretched reference trace and correlation function.</span>
 
@@ -674,7 +674,7 @@ document.write(`
 <div class="viewcode-block" id="compute_cm"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.spatial.compute_cm">[docs]</a><span class="k">def</span> <span class="nf">compute_cm</span><span class="p">(</span>
     <span class="n">scaling_factor</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">corr_len</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">std_model</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">dist</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Computes the model variance for the dv/v grid.</span>
 
 <span class="sd">    (see Obermann et. al. 2013)</span>
@@ -707,7 +707,7 @@ document.write(`
     <span class="n">lat</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="n">lon</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">lat0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">lon0</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convert geographic coordinates to Northing and Easting for a local grid.</span>
 
 <span class="sd">    .. seealso::</span>
@@ -737,13 +737,13 @@ document.write(`
 
 
 <div class="viewcode-block" id="DVGrid"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.spatial.DVGrid">[docs]</a><span class="k">class</span> <span class="nc">DVGrid</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Object to handle spatially gridded DV objects.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">lat0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">lon0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">res</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
             <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">vel</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">mf_path</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialises the grid to compute dv/v on. The grid will be in</span>
 <span class="sd">        Cartesian coordinates with the lower left boarder (lon0, lat0)</span>
 <span class="sd">        as reference point.</span>
@@ -795,7 +795,7 @@ document.write(`
         <span class="n">stat0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">stat1</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Solves the forward problem associated to the grid computation.</span>
 <span class="sd">        I.e., computes the velocity changes theoretically measured at each</span>
 <span class="sd">        station for a given dv/v grid.</span>
@@ -855,7 +855,7 @@ document.write(`
         <span class="n">freq0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">freq1</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">compute_resolution</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
             <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform a linear least-squares inversion of station specific velocity</span>
 <span class="sd">        changes (dv/v) at time ``t``.</span>
 
@@ -949,7 +949,7 @@ document.write(`
         <span class="n">tw</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">freq0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">freq1</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">.2</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Performs a truncated singular value decomposition (TSVD) to invert</span>
 <span class="sd">        for the dv/v grid. The advantage of this approach is that no</span>
 <span class="sd">        a-priori information and no subjective damping parameter has to be</span>
@@ -1037,7 +1037,7 @@ document.write(`
         <span class="n">tw</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">freq0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">freq1</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute the model resolution of the dv/v model.</span>
 
 <span class="sd">        .. seealso::</span>
@@ -1111,7 +1111,7 @@ document.write(`
         <span class="n">tw</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">freq0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">freq1</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes the posterior covariance matrix of the dv/v model.</span>
 
 <span class="sd">        :param dvs: The :class:``~seismic.monitor.dv.DV`` objects to use.</span>
@@ -1170,7 +1170,7 @@ document.write(`
     <span class="k">def</span> <span class="nf">_compute_posterior_covariance</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">skernels</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">cm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
             <span class="n">cd</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute the posterior covariance matrix.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">skernels</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">cd</span><span class="p">)),</span> <span class="n">skernels</span><span class="p">)</span>
@@ -1179,7 +1179,7 @@ document.write(`
     <span class="k">def</span> <span class="nf">_compute_resolution</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">skernels</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
             <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The actual computation of the model resolution.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">skernels</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
@@ -1190,7 +1190,7 @@ document.write(`
         <span class="bp">self</span><span class="p">,</span> <span class="n">dvs</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">DV</span><span class="p">],</span> <span class="n">utc</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
             <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
             <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Extract the reqired infos from a iterator over dv.</span>
 
 <span class="sd">        :param dvs: station-specific dvs to be used for the inversion</span>
@@ -1249,7 +1249,7 @@ document.write(`
         <span class="k">return</span> <span class="n">vals</span><span class="p">,</span> <span class="n">corrs</span><span class="p">,</span> <span class="n">slat0</span><span class="p">,</span> <span class="n">slon0</span><span class="p">,</span> <span class="n">slat1</span><span class="p">,</span> <span class="n">slon1</span><span class="p">,</span> <span class="n">tw</span><span class="p">,</span> <span class="n">freq0</span><span class="p">,</span> <span class="n">freq1</span>
 
     <span class="k">def</span> <span class="nf">_add_stations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lats</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">lons</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add Coordinates of the stations to self (coordinates are converted</span>
 <span class="sd">        from geographic coordinates to northing and easting).</span>
 
@@ -1285,7 +1285,7 @@ document.write(`
     <span class="k">def</span> <span class="nf">_compute_cd</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">skernels</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">freq0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">freq1</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
             <span class="n">tw</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">corrs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute the Variance of the data (in matrix form).</span>
 
 <span class="sd">        :param skernels: Sensitivity kernel matrix</span>
@@ -1306,7 +1306,7 @@ document.write(`
             <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">corrs</span><span class="p">),</span> <span class="n">freq1</span><span class="o">-</span><span class="n">freq0</span><span class="p">,</span> <span class="n">tw</span><span class="p">,</span> <span class="p">(</span><span class="n">freq1</span><span class="o">+</span><span class="n">freq0</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
 
     <span class="k">def</span> <span class="nf">_compute_dist_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes the distance from each cell to one another.</span>
 
 <span class="sd">        :return: 2D matrix holding distances between cells i and j.</span>
@@ -1322,7 +1322,7 @@ document.write(`
     <span class="k">def</span> <span class="nf">_find_coord</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">lat</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
             <span class="n">lon</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Finds a coordinate given in lat, lon on the Cartesian grid and</span>
 <span class="sd">        return its index</span>
 
@@ -1361,7 +1361,7 @@ document.write(`
     <span class="k">def</span> <span class="nf">_compute_sensitivity_kernels</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">slat0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">slon0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">slat1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
             <span class="n">slon1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes the sensitivity kernels of the station combinations station0</span>
 <span class="sd">        and station1.</span>
 
@@ -1415,7 +1415,7 @@ document.write(`
         <span class="bp">self</span><span class="p">,</span> <span class="n">plot_stations</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">cmap</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;seismic_r&#39;</span><span class="p">,</span>
         <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">mpl</span><span class="o">.</span><span class="n">axis</span><span class="o">.</span><span class="n">Axis</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mpl</span><span class="o">.</span><span class="n">axis</span><span class="o">.</span><span class="n">Axis</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Simple heatplot of the dv/v grid in Cartesian coordinates.</span>
 
 <span class="sd">        :param plot_stations: plot station coordinates, defaults to True</span>
@@ -1450,7 +1450,7 @@ document.write(`
 <div class="viewcode-block" id="DVGrid.align_dvs_to_grid"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.spatial.DVGrid.align_dvs_to_grid">[docs]</a>    <span class="k">def</span> <span class="nf">align_dvs_to_grid</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">dvs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DV</span><span class="p">],</span> <span class="n">utc</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
             <span class="n">corr_thres</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">DV</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Align dv/v curves to the forward model at a given time.</span>
 
 <span class="sd">        :param dvs: List of dv/v objects to align</span>
@@ -1495,7 +1495,7 @@ document.write(`
 
 <div class="viewcode-block" id="align_dv_curves"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.spatial.align_dv_curves">[docs]</a><span class="k">def</span> <span class="nf">align_dv_curves</span><span class="p">(</span>
         <span class="n">dv</span><span class="p">:</span> <span class="n">DV</span><span class="p">,</span> <span class="n">utc</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Align a dv/v curve to a given value at a given time.</span>
 
 <span class="sd">    :param dv: dv/v object to align</span>
@@ -1533,7 +1533,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="dv_starts"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.spatial.dv_starts">[docs]</a><span class="k">def</span> <span class="nf">dv_starts</span><span class="p">(</span><span class="n">dv</span><span class="p">:</span> <span class="n">DV</span><span class="p">,</span> <span class="n">utc</span><span class="p">:</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">corr_thres</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check if a dv/v curve is available at a given time and if it has a</span>
 <span class="sd">    correlation value above a given threshold.</span>
 
@@ -1596,7 +1596,7 @@ document.write(`
 
   <p class="copyright">
     
-      © Copyright 2023, The SeisMIC development team..
+      © Copyright 2025, The SeisMIC development team..
       <br/>
     
   </p>

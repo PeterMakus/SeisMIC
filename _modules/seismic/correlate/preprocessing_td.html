@@ -467,13 +467,13 @@ document.write(`
 <span class="sd">:copyright:</span>
 <span class="sd">    The SeisMIC development team (makus@gfz-potsdam.de).</span>
 <span class="sd">:license:</span>
-<span class="sd">    EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
-<span class="sd">   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)</span>
+<span class="sd">    `EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
+<span class="sd">    &lt;https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12&gt;`_</span>
 <span class="sd">:author:</span>
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 20th July 2021 03:24:01 pm</span>
-<span class="sd">Last Modified: Thursday, 29th June 2023 11:15:56 am</span>
+<span class="sd">Last Modified: Friday, 10th January 2025 01:29:21 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 
@@ -487,7 +487,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="clip"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.preprocessing_td.clip">[docs]</a><span class="k">def</span> <span class="nf">clip</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Clip time series data at a multiple of the standard deviation</span>
 
 <span class="sd">    Set amplitudes exeeding a certain threshold to this threshold.</span>
@@ -517,7 +517,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="detrend"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.preprocessing_td.detrend">[docs]</a><span class="k">def</span> <span class="nf">detrend</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Detrend wrapper. Can call scipy.signal.detrend or a faster custom function.</span>
 
 <span class="sd">    :param A: 1 or 2D array</span>
@@ -547,7 +547,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="detrend_scipy"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.preprocessing_td.detrend_scipy">[docs]</a><span class="k">def</span> <span class="nf">detrend_scipy</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Remove trend from data</span>
 
 <span class="sd">    .. seealso:: :func:`scipy.signal.detrend` for input arguments</span>
@@ -566,7 +566,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="detrendqr"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.preprocessing_td.detrendqr">[docs]</a><span class="k">def</span> <span class="nf">detrendqr</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Remove trend from data using QR decomposition. Faster than</span>
 <span class="sd">    scipy.signal.detrend. Shamelessly adapted from</span>
 <span class="sd">    NoisePy</span>
@@ -596,9 +596,9 @@ document.write(`
     <span class="k">return</span> <span class="n">data</span></div>
 
 
-<div class="viewcode-block" id="demean"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.preprocessing_td.demean">[docs]</a><span class="k">def</span> <span class="nf">demean</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Demean data</span>
+<div class="viewcode-block" id="demean"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.preprocessing_td.demean">[docs]</a><span class="k">def</span> <span class="nf">demean</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Demean data.</span>
 
 <span class="sd">    :param data: 1 or 2D array</span>
 <span class="sd">    :type data: np.ndarray</span>
@@ -609,7 +609,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="mute"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.preprocessing_td.mute">[docs]</a><span class="k">def</span> <span class="nf">mute</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Mute parts of data that exceed a threshold</span>
 
 <span class="sd">    To completely surpress the effect of data with high amplitudes e.g. after</span>
@@ -712,7 +712,7 @@ document.write(`
 
 <div class="viewcode-block" id="normalizeStandardDeviation"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.preprocessing_td.normalizeStandardDeviation">[docs]</a><span class="k">def</span> <span class="nf">normalizeStandardDeviation</span><span class="p">(</span>
         <span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Divide the time series by their standard deviation</span>
 
 <span class="sd">    Divide the amplitudes of each trace by its standard deviation.</span>
@@ -737,7 +737,7 @@ document.write(`
 
 <div class="viewcode-block" id="signBitNormalization"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.preprocessing_td.signBitNormalization">[docs]</a><span class="k">def</span> <span class="nf">signBitNormalization</span><span class="p">(</span>
         <span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    One bit normalization of time series data</span>
 
 <span class="sd">    Return the sign of the samples (-1, 0, 1).</span>
@@ -757,7 +757,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="taper"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.preprocessing_td.taper">[docs]</a><span class="k">def</span> <span class="nf">taper</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Taper to the time series data</span>
 
 <span class="sd">    Apply a simple taper to the time series data.</span>
@@ -787,7 +787,7 @@ document.write(`
     <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;cosine_taper&#39;</span><span class="p">:</span>
         <span class="n">func</span> <span class="o">=</span> <span class="n">osignal</span><span class="o">.</span><span class="n">invsim</span><span class="o">.</span><span class="n">cosine_taper</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">])</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">windows</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">])</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
     <span class="n">args</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span>
     <span class="n">tap</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span>
@@ -796,7 +796,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="TDnormalization"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.preprocessing_td.TDnormalization">[docs]</a><span class="k">def</span> <span class="nf">TDnormalization</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Amplitude dependent time domain normalization</span>
 
 <span class="sd">    Calculate the envelope of the filtered trace, smooth it in a window of</span>
@@ -861,7 +861,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="TDfilter"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.preprocessing_td.TDfilter">[docs]</a><span class="k">def</span> <span class="nf">TDfilter</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Filter time series data</span>
 
 <span class="sd">    Filter in time domain. Types of filters are defined by `obspy.signal`.</span>
@@ -895,7 +895,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="zeroPadding"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.correlate.preprocessing_td.zeroPadding">[docs]</a><span class="k">def</span> <span class="nf">zeroPadding</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Append zeros to the traces</span>
 
 <span class="sd">    Pad traces with zeros to increase the speed of the Fourier transforms and</span>
@@ -994,7 +994,7 @@ document.write(`
 
   <p class="copyright">
     
-      © Copyright 2023, The SeisMIC development team..
+      © Copyright 2025, The SeisMIC development team..
       <br/>
     
   </p>

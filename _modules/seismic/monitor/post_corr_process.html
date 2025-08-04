@@ -465,14 +465,14 @@ document.write(`
 <span class="sd">:copyright:</span>
 <span class="sd">    The SeisMIC development team (makus@gfz-potsdam.de).</span>
 <span class="sd">:license:</span>
-<span class="sd">    EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
-<span class="sd">   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)</span>
+<span class="sd">    `EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
+<span class="sd">    &lt;https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12&gt;`_</span>
 <span class="sd">:author:</span>
 <span class="sd">    Christoph Sens-Schönefelder</span>
 <span class="sd">    Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 14th June 2021 08:50:57 am</span>
-<span class="sd">Last Modified: Wednesday, 4th October 2023 09:29:49 am</span>
+<span class="sd">Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span>
@@ -491,10 +491,15 @@ document.write(`
 <span class="kn">from</span> <span class="nn">seismic.correlate.stats</span> <span class="kn">import</span> <span class="n">CorrStats</span>
 <span class="kn">from</span> <span class="nn">seismic.monitor.dv</span> <span class="kn">import</span> <span class="n">DV</span>
 <span class="kn">from</span> <span class="nn">seismic.monitor.trim</span> <span class="kn">import</span> <span class="n">corr_mat_trim</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">logfactory</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="n">parentlogger</span> <span class="o">=</span> <span class="n">logfactory</span><span class="o">.</span><span class="n">create_logger</span><span class="p">()</span>
+<span class="n">module_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">parentlogger</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s2">&quot;.post_corr_process&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="corr_mat_clip"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_clip">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_clip</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">thres</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Clip the Input Matrix upper and lower bounds to a multiple of its</span>
 <span class="sd">    standard deviation. `thres` determines the factor and `axis` the axis</span>
 <span class="sd">    the std should be computed over</span>
@@ -521,7 +526,7 @@ document.write(`
 <span class="k">def</span> <span class="nf">_smooth</span><span class="p">(</span>
     <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">window_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
         <span class="n">window</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;hanning&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Smooth the data using a window with requested size.</span>
+    <span class="sd">&quot;&quot;&quot; Smooth the data using a window with requested size.</span>
 
 <span class="sd">    This method is based on the convolution of a scaled window with the signal.</span>
 <span class="sd">    The signal is prepared by introducing reflected copies of the signal</span>
@@ -583,7 +588,7 @@ document.write(`
 <div class="viewcode-block" id="corr_mat_smooth"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_smooth">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_smooth</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">wsize</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">wtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;flat&#39;</span><span class="p">,</span>
         <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Smoothing of a correlation matrix.</span>
+    <span class="sd">&quot;&quot;&quot; Smoothing of a correlation matrix.</span>
 
 <span class="sd">    Smoothes the correlation matrix with a given window function of the given</span>
 <span class="sd">    width along the given axis. This method is based on the convolution of a</span>
@@ -634,7 +639,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="unicode_to_string"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.unicode_to_string">[docs]</a><span class="k">def</span> <span class="nf">unicode_to_string</span><span class="p">(</span><span class="nb">input</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert all unicode strings to utf-8 strings</span>
+    <span class="sd">&quot;&quot;&quot;Convert all unicode strings to utf-8 strings</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{</span>
@@ -651,7 +656,7 @@ document.write(`
 <div class="viewcode-block" id="corr_mat_filter"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_filter">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_filter</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">freqs</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
         <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Filter a correlation matrix.</span>
+    <span class="sd">&quot;&quot;&quot; Filter a correlation matrix.</span>
 
 <span class="sd">    Filters the correlation matrix corr_mat in the frequency band specified in</span>
 <span class="sd">    freqs using a zero phase filter of twice the order given in order.</span>
@@ -689,7 +694,7 @@ document.write(`
 <div class="viewcode-block" id="corr_mat_resample"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_resample">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_resample</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">start_times</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">],</span>
         <span class="n">end_times</span><span class="o">=</span><span class="p">[])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Function to create correlation matrices with constant sampling</span>
+    <span class="sd">&quot;&quot;&quot; Function to create correlation matrices with constant sampling</span>
 
 <span class="sd">    When created with recombine_corr_data the correlation matrix contains all</span>
 <span class="sd">    available correlation streams but homogeneous sampling is not guaranteed</span>
@@ -768,7 +773,7 @@ document.write(`
 
 <span class="c1"># Probably not necessary</span>
 <div class="viewcode-block" id="corr_mat_correct_decay"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_correct_decay">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_correct_decay</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Correct for the amplitude decay in a correlation matrix.</span>
 
 <span class="sd">    Due to attenuation and geometrical spreading the amplitude of the</span>
@@ -816,7 +821,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="corr_mat_envelope"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_envelope">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_envelope</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Calculate the envelope of a correlation matrix.</span>
+    <span class="sd">&quot;&quot;&quot; Calculate the envelope of a correlation matrix.</span>
 
 <span class="sd">    The corrlation data of the correlation matrix are replaced by their</span>
 <span class="sd">    Hilbert envelopes.</span>
@@ -841,7 +846,7 @@ document.write(`
 <div class="viewcode-block" id="corr_mat_normalize"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_normalize">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_normalize</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">starttime</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">endtime</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;energy&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Correct amplitude variations with time in a correlation matrix.</span>
+    <span class="sd">&quot;&quot;&quot; Correct amplitude variations with time in a correlation matrix.</span>
 
 <span class="sd">    Measure the maximum of the absolute value of the correlation matrix in</span>
 <span class="sd">    a specified lapse time window and normalize the correlation traces by</span>
@@ -885,10 +890,12 @@ document.write(`
 
     <span class="c1"># check range</span>
     <span class="k">if</span> <span class="n">start</span> <span class="ow">and</span> <span class="n">start</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Error: starttime before beginning of trace. Data not changed.&#39;</span><span class="p">)</span>
+        <span class="n">module_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s1">&#39;Error: starttime before beginning of trace. Data not changed.&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span>
     <span class="k">if</span> <span class="n">end</span> <span class="ow">and</span> <span class="n">end</span> <span class="o">&gt;=</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;npts&#39;</span><span class="p">]:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Error: endtime after end of trace. Data not changed.&#39;</span><span class="p">)</span>
+        <span class="n">module_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s1">&#39;Error: endtime after end of trace. Data not changed.&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span>
 
     <span class="c1"># calculate normalization factors</span>
@@ -911,7 +918,7 @@ document.write(`
 
 <div class="viewcode-block" id="corr_mat_mirror"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_mirror">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_mirror</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Average the causal and acausal parts of a correlation matrix.</span>
 
 <span class="sd">    :param data: A matrix holding correlation data</span>
@@ -926,13 +933,15 @@ document.write(`
     <span class="n">zero_sample</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;start_lag&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">])</span>
 
     <span class="k">if</span> <span class="n">zero_sample</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;No data present for mirroring: starttime &gt; zerotime.&#39;</span><span class="p">)</span>
+        <span class="n">module_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s1">&#39;No data present for mirroring: starttime &gt; zerotime.&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">stats</span>
     <span class="k">if</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;end_lag&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;No data present for mirroring: endtime &lt; zerotime.&#39;</span><span class="p">)</span>
+        <span class="n">module_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s1">&#39;No data present for mirroring: endtime &lt; zerotime.&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">stats</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">fmod</span><span class="p">(</span><span class="n">zero_sample</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;need to shift for mirroring&#39;</span><span class="p">)</span>
+        <span class="n">module_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;need to shift for mirroring&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="mi">0</span>
 
     <span class="c1"># estimate size of mirrored array</span>
@@ -964,7 +973,7 @@ document.write(`
 
 <div class="viewcode-block" id="corr_mat_taper"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_taper">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_taper</span><span class="p">(</span>
         <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Taper a correlation matrix.</span>
+    <span class="sd">&quot;&quot;&quot; Taper a correlation matrix.</span>
 
 <span class="sd">    Apply a taper to all traces in the correlation matrix.</span>
 
@@ -996,7 +1005,7 @@ document.write(`
 <div class="viewcode-block" id="corr_mat_taper_center"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_taper_center">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_taper_center</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">slope_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Taper the central part of a correlation matrix.</span>
 
 <span class="sd">    Due to electromagnetic cross-talk, signal processing or other effects the</span>
@@ -1055,7 +1064,7 @@ document.write(`
 <div class="viewcode-block" id="corr_mat_resample_time"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_resample_time">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_resample_time</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Resample the lapse time axis of a correlation matrix. The correlations are</span>
 <span class="sd">    automatically filtered with a highpass filter of 0.4*sampling frequency to</span>
 <span class="sd">    avoid aliasing.</span>
@@ -1110,7 +1119,7 @@ document.write(`
 <div class="viewcode-block" id="corr_mat_decimate"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_decimate">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_decimate</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">factor</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Downsample a correlation matrix by an integer sample. A low-pass filter</span>
 <span class="sd">    is applied before decimating.</span>
 
@@ -1151,7 +1160,7 @@ document.write(`
 <div class="viewcode-block" id="corr_mat_resample_or_decimate"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_resample_or_decimate">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_resample_or_decimate</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Downsample a correlation matrix. Decides automatically whether to decimate</span>
 <span class="sd">    or downsampled depneding on the target frequency. A low-pass filter</span>
 <span class="sd">    is applied to avoid aliasing.</span>
@@ -1180,7 +1189,7 @@ document.write(`
 <div class="viewcode-block" id="corr_mat_extract_trace"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.corr_mat_extract_trace">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_extract_trace</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span>
         <span class="n">percentile</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">50.</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Extract a representative trace from a correlation matrix.</span>
+    <span class="sd">&quot;&quot;&quot; Extract a representative trace from a correlation matrix.</span>
 
 <span class="sd">    Extract a correlation trace from the that best represents the correlation</span>
 <span class="sd">    matrix. ``Method`` decides about method to extract the trace. The following</span>
@@ -1264,7 +1273,7 @@ document.write(`
     <span class="n">return_sim_mat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">ref_tr_trim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">ref_tr_stats</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CorrStats</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Time stretch estimate through stretch and comparison.</span>
+    <span class="sd">&quot;&quot;&quot; Time stretch estimate through stretch and comparison.</span>
 
 <span class="sd">    This function estimates stretching of the time axis of traces as it can</span>
 <span class="sd">    occur if the propagation velocity changes.</span>
@@ -1368,7 +1377,7 @@ document.write(`
     <span class="n">tw</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shift_range</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">shift_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">101</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span>
         <span class="n">return_sim_mat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Time shift estimate through shifting and comparison.</span>
+    <span class="sd">&quot;&quot;&quot; Time shift estimate through shifting and comparison.</span>
 
 <span class="sd">    This function estimates shifting of the time axis of traces as it can</span>
 <span class="sd">    occur if the clocks of digitizers drift.</span>
@@ -1496,7 +1505,7 @@ document.write(`
     <span class="n">tw</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shift_range</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">shift_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">101</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span>
         <span class="n">return_sim_mat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">DV</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Time shift estimate through shifting and comparison.</span>
+    <span class="sd">&quot;&quot;&quot; Time shift estimate through shifting and comparison.</span>
 
 <span class="sd">    This function estimates shifting of the time axis of traces as it can</span>
 <span class="sd">    occur if the clocks of digitizers drift.</span>
@@ -1668,7 +1677,7 @@ document.write(`
 <div class="viewcode-block" id="apply_shift"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.apply_shift">[docs]</a><span class="k">def</span> <span class="nf">apply_shift</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">shifts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Apply a shift to a correlation matrix.</span>
+    <span class="sd">&quot;&quot;&quot; Apply a shift to a correlation matrix.</span>
 
 <span class="sd">    This function applies a shift given in seconds to each trace in the matrix.</span>
 
@@ -1692,7 +1701,7 @@ document.write(`
 <div class="viewcode-block" id="apply_stretch"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.post_corr_process.apply_stretch">[docs]</a><span class="k">def</span> <span class="nf">apply_stretch</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">stretches</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">CorrStats</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Apply a stretches to a correlation matrix.</span>
+    <span class="sd">&quot;&quot;&quot; Apply a stretches to a correlation matrix.</span>
 
 <span class="sd">    This function applies a stretch given in relative units to each trace</span>
 <span class="sd">    in the matrix.</span>
@@ -1756,7 +1765,7 @@ document.write(`
 
   <p class="copyright">
     
-      © Copyright 2023, The SeisMIC development team..
+      © Copyright 2025, The SeisMIC development team..
       <br/>
     
   </p>

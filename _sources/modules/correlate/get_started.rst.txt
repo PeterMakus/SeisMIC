@@ -42,6 +42,14 @@ Setting the parameters
     log_level: 'WARNING'
     # folder for figures
     fig_subdir : 'figures'
+    # Path to stationxml files, default is "inventory/*.xml"
+    stationxml_file : 'inventory/*.xml'
+    # sds root directory, default is "mseed"
+    sds_dir : 'mseed'
+    # sds format string of waveform file names, 
+    # change if your filenames deviate from standard pattern
+    sds_fmtstr : '{year}/{network}/{station}/{channel}.{sds_type}/{network}.{station}.{location}.{channel}.{sds_type}.{year}.{doy:03d}'
+
 
 
     #### parameters that are network specific
@@ -284,11 +292,36 @@ Project Wide Parameters
     log_level: 'WARNING'
     # folder for figures
     fig_subdir : 'figures'
+    # Path to stationxml files, default is "inventory/*.xml"
+    stationxml_file : 'inventory/*.xml'
+    # sds root directory, default is "mseed"
+    sds_dir : 'mseed'
+    # sds format string of waveform file names, 
+    # change if your filenames deviate from standard SDS pattern
+    sds_fmtstr : '{year}/{network}/{station}/{channel}.{sds_type}/{network}.{station}.{location}.{channel}.{sds_type}.{year}.{doy:03d}'
+
 
 Those are parameters that govern the logging and the file-structure. ``proj_dir`` is the root directory, we have chosen when initialising our 
 :py:class:`~seismic.trace_data.waveform.Store_Client` as shown `here <../trace_data/waveform.html#download-data>`_ .
 ``fig_dir`` and ``log_dir`` are just subdirectories for figures and logs, respectively, and the log level decides how much will actually be logged.
 In most cases, *WARNING* is the appropriate choice - everything below will start spitting out a lot of information.
+``stationxml_file`` is the path to the stationxml files, and ``sds_dir`` is the directory where the mseed files are stored.
+``sds_fmtstr`` is the format string for the mseed files. The default is the standard for 
+`SeisComP Data Structure (SDS) <https://www.seiscomp.de/seiscomp3/doc/applications/slarchive/SDS.html>`_.
+Leave these parameters to the default values if you used SeisMIC to download the data.
+However, if you want to use your own local data base, you will have to adjust these parameters 
+accordingly. Wildcards are permitted.
+
+The `sds_fmtstr` defines the naming pattern of the mseed files. The following placeholders (everything
+in {}) can be used:
+`year`, `network`, `station`, `channel`, `location`, `sds_type`, `doy`.
+The standard pattern for SeisComP3 is:
+ 
+.. code-block:: yaml
+
+    sds_fmtstr : '{year}/{network}/{station}/{channel}.{sds_type}/{network}.{station}.{location}.{channel}.{sds_type}.{year}.{doy:03d}'
+
+
 
 Network Specific Parameters
 ===========================

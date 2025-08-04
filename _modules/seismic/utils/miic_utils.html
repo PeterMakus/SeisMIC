@@ -465,13 +465,13 @@ document.write(`
 <span class="sd">:copyright:</span>
 <span class="sd">   The SeisMIC development team (makus@gfz-potsdam.de).</span>
 <span class="sd">:license:</span>
-<span class="sd">    EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
-<span class="sd">   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)</span>
+<span class="sd">    `EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
+<span class="sd">    &lt;https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12&gt;`_</span>
 <span class="sd">:author:</span>
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Monday, 29th March 2021 12:54:05 pm</span>
-<span class="sd">Last Modified: Wednesday, 19th June 2024 03:13:18 pm</span>
+<span class="sd">Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -484,6 +484,11 @@ document.write(`
 
 <span class="kn">from</span> <span class="nn">seismic.correlate.preprocessing_stream</span> <span class="kn">import</span> <span class="n">cos_taper_st</span>
 
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">logfactory</span>
+
+<span class="n">parentlogger</span> <span class="o">=</span> <span class="n">logfactory</span><span class="o">.</span><span class="n">create_logger</span><span class="p">()</span>
+<span class="n">module_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">parentlogger</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s2">&quot;.miic_utils&quot;</span><span class="p">)</span>
+
 
 <span class="n">log_lvl</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s1">&#39;DEBUG&#39;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
@@ -495,7 +500,7 @@ document.write(`
 
 <div class="viewcode-block" id="trace_calc_az_baz_dist"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.trace_calc_az_baz_dist">[docs]</a><span class="k">def</span> <span class="nf">trace_calc_az_baz_dist</span><span class="p">(</span><span class="n">stats1</span><span class="p">:</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">stats2</span><span class="p">:</span> <span class="n">Stats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return azimuth, back azimhut and distance between tr1 and tr2</span>
 <span class="sd">    This funtions calculates the azimut, back azimut and distance between tr1</span>
 <span class="sd">    and tr2 if both have geo information in their stats dictonary.</span>
@@ -524,8 +529,8 @@ document.write(`
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span> <span class="nn">obspy.geodetics</span> <span class="kn">import</span> <span class="n">gps2dist_azimuth</span>
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Missed obspy funciton gps2dist_azimuth&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Update obspy.&quot;</span><span class="p">)</span>
+        <span class="n">module_logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span>
+            <span class="s2">&quot;Missing obspy function gps2dist_azimuth.</span><span class="se">\n</span><span class="s2">Update obspy.&quot;</span><span class="p">)</span>
         <span class="k">return</span>
 
     <span class="n">dist</span><span class="p">,</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span> <span class="o">=</span> <span class="n">gps2dist_azimuth</span><span class="p">(</span>
@@ -535,7 +540,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="filter_stat_dist"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.filter_stat_dist">[docs]</a><span class="k">def</span> <span class="nf">filter_stat_dist</span><span class="p">(</span><span class="n">inv1</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">,</span> <span class="n">inv2</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">,</span> <span class="n">thres</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Very simple function to check whether to stations are closer than thres</span>
 <span class="sd">    to each other.</span>
 
@@ -553,7 +558,7 @@ document.write(`
 
 <div class="viewcode-block" id="inv_calc_az_baz_dist"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.inv_calc_az_baz_dist">[docs]</a><span class="k">def</span> <span class="nf">inv_calc_az_baz_dist</span><span class="p">(</span><span class="n">inv1</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">,</span> <span class="n">inv2</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Return azimuth, back azimuth and distance between stat1 and stat2</span>
+    <span class="sd">&quot;&quot;&quot; Return azimuth, back azimuth and distance between stat1 and stat2</span>
 
 
 <span class="sd">    :type tr1: :class:`~obspy.core.inventory.Inventory`</span>
@@ -578,8 +583,8 @@ document.write(`
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span> <span class="nn">obspy.geodetics</span> <span class="kn">import</span> <span class="n">gps2dist_azimuth</span>
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Missing obspy funciton gps2dist_azimuth&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Update obspy.&quot;</span><span class="p">)</span>
+        <span class="n">module_logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span>
+            <span class="s2">&quot;Missing obspy function gps2dist_azimuth.</span><span class="se">\n</span><span class="s2">Update obspy.&quot;</span><span class="p">)</span>
         <span class="k">return</span>
 
     <span class="n">dist</span><span class="p">,</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span> <span class="o">=</span> <span class="n">gps2dist_azimuth</span><span class="p">(</span>
@@ -590,9 +595,9 @@ document.write(`
 
 
 <div class="viewcode-block" id="resample_or_decimate"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.resample_or_decimate">[docs]</a><span class="k">def</span> <span class="nf">resample_or_decimate</span><span class="p">(</span>
-    <span class="n">data</span><span class="p">:</span> <span class="n">Trace</span> <span class="ow">or</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">sampling_rate_new</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span> <span class="ow">or</span> <span class="n">Trace</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decimates the data if the desired new sampling rate allows to do so.</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">Trace</span> <span class="o">|</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">sampling_rate_new</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span> <span class="o">|</span> <span class="n">Trace</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Decimates the data if the desired new sampling rate allows to do so.</span>
 <span class="sd">    Else the signal will be interpolated (a lot slower).</span>
 
 <span class="sd">    :param data: Stream to be resampled.</span>
@@ -648,7 +653,7 @@ document.write(`
 
 <div class="viewcode-block" id="trim_stream_delta"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.trim_stream_delta">[docs]</a><span class="k">def</span> <span class="nf">trim_stream_delta</span><span class="p">(</span>
         <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Cut all traces to starttime+start and endtime-end. *args* and *kwargs* will</span>
 <span class="sd">    be passed to :func:`~obspy.Stream.trim`</span>
 
@@ -675,7 +680,7 @@ document.write(`
 
 <div class="viewcode-block" id="trim_trace_delta"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.trim_trace_delta">[docs]</a><span class="k">def</span> <span class="nf">trim_trace_delta</span><span class="p">(</span>
         <span class="n">tr</span><span class="p">:</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Trace</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Cut all traces to starttime+start and endtime-end. *args* and *kwargs* will</span>
 <span class="sd">    be passed to :func:`~obspy.Trace.trim`.</span>
 
@@ -712,7 +717,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="save_header_to_np_array"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.save_header_to_np_array">[docs]</a><span class="k">def</span> <span class="nf">save_header_to_np_array</span><span class="p">(</span><span class="n">stats</span><span class="p">:</span> <span class="n">Stats</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Converts an obspy header to a format that allows it to be saved in an</span>
 <span class="sd">    npz file (i.e., several gzipped npy files)</span>
 
@@ -732,7 +737,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="load_header_from_np_array"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.load_header_from_np_array">[docs]</a><span class="k">def</span> <span class="nf">load_header_from_np_array</span><span class="p">(</span><span class="n">array_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Takes the *dictionary-like* return-value of `np.load` and converts the</span>
 <span class="sd">    corresponding keywords into an obspy header.</span>
 
@@ -757,8 +762,8 @@ document.write(`
 
 
 <div class="viewcode-block" id="convert_utc_to_timestamp"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.convert_utc_to_timestamp">[docs]</a><span class="k">def</span> <span class="nf">convert_utc_to_timestamp</span><span class="p">(</span>
-        <span class="n">utcdt</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="ow">or</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="n">utcdt</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">|</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Converts :class:`obspy.core.utcdatetime.UTCDateTime` objects to floats.</span>
 
 <span class="sd">    :param utcdt: The input times, either a list of utcdatetimes or one</span>
@@ -774,7 +779,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="convert_timestamp_to_utcdt"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.convert_timestamp_to_utcdt">[docs]</a><span class="k">def</span> <span class="nf">convert_timestamp_to_utcdt</span><span class="p">(</span><span class="n">timestamp</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">UTCDateTime</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Converts a numpy array holding timestamps (i.e., floats) to a list of</span>
 <span class="sd">    UTCDateTime objects</span>
 
@@ -792,7 +797,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="get_valid_traces"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.get_valid_traces">[docs]</a><span class="k">def</span> <span class="nf">get_valid_traces</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return only valid traces of a stream.</span>
+    <span class="sd">&quot;&quot;&quot;Return only valid traces of a stream.</span>
 
 <span class="sd">    Remove traces that are 100% masked from a stream. This happens when</span>
 <span class="sd">    a masked trace is trimmed within a gap. The function works in place.</span>
@@ -809,7 +814,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="discard_short_traces"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.discard_short_traces">[docs]</a><span class="k">def</span> <span class="nf">discard_short_traces</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Discard all traces from stream that are shorter than length.</span>
 
 <span class="sd">    :param st: inputer obspy Stream</span>
@@ -828,7 +833,7 @@ document.write(`
 
 <div class="viewcode-block" id="nan_moving_av"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.nan_moving_av">[docs]</a><span class="k">def</span> <span class="nf">nan_moving_av</span><span class="p">(</span>
         <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">win_half_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Returns a filtered version of data, disregarding the nans.</span>
 <span class="sd">    Moving mean window length is win_half_len*2+1.</span>
 
@@ -855,7 +860,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="stream_require_dtype"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.stream_require_dtype">[docs]</a><span class="k">def</span> <span class="nf">stream_require_dtype</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Often it might make sense to change the data type of seismic data before</span>
 <span class="sd">    saving or broadcasting (e.g., to save memory). This function allows</span>
 <span class="sd">    to do so</span>
@@ -874,7 +879,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="correct_polarity"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.correct_polarity">[docs]</a><span class="k">def</span> <span class="nf">correct_polarity</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">inv</span><span class="p">:</span> <span class="n">Inventory</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Sometimes the polarity of a seismometer&#39;s vertical component is reversed.</span>
 <span class="sd">    This simple functions flips the polarity if this should be the case.</span>
 
@@ -895,7 +900,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="nan_helper"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.nan_helper">[docs]</a><span class="k">def</span> <span class="nf">nan_helper</span><span class="p">(</span><span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper to handle indices and logical indices of NaNs.</span>
+    <span class="sd">&quot;&quot;&quot;Helper to handle indices and logical indices of NaNs.</span>
 
 <span class="sd">    :param y: numpy array with possible NaNs</span>
 <span class="sd">    :type y: 1d np.ndarray</span>
@@ -904,7 +909,7 @@ document.write(`
 <span class="sd">        can be called to translate the first output to indices.</span>
 <span class="sd">    :rtype: Tuple[np.ndarray, np.ndarray]</span>
 
-<span class="sd">    .. example::</span>
+<span class="sd">    :Example:</span>
 
 <span class="sd">            &gt;&gt;&gt; # linear interpolation of NaNs</span>
 <span class="sd">            &gt;&gt;&gt; nans, x = nan_helper(y)</span>
@@ -916,7 +921,7 @@ document.write(`
 <div class="viewcode-block" id="gap_handler"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.gap_handler">[docs]</a><span class="k">def</span> <span class="nf">gap_handler</span><span class="p">(</span>
     <span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">max_interpolation_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
         <span class="n">retain_len</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">taper_len</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This function tries to interpolate gaps in a stream. If the gaps are too</span>
 <span class="sd">    large and the data snippets too short, the data will be discarded.</span>
 <span class="sd">    Around remaining gaps, the trace will be tapered.</span>
@@ -949,7 +954,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="interpolate_gaps"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.interpolate_gaps">[docs]</a><span class="k">def</span> <span class="nf">interpolate_gaps</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">max_gap_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    perform a linear interpolation where A is filled with nans.</span>
 
 <span class="sd">    :param A: np.ndarray, containing nans</span>
@@ -985,7 +990,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="interpolate_gaps_st"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.interpolate_gaps_st">[docs]</a><span class="k">def</span> <span class="nf">interpolate_gaps_st</span><span class="p">(</span><span class="n">st</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">max_gap_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stream</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    perform a linear interpolation where A is filled with nans.</span>
 
 <span class="sd">    :param st: Stream containing nans</span>
@@ -1003,7 +1008,7 @@ document.write(`
 <div class="viewcode-block" id="sort_combinations_alphabetically"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.sort_combinations_alphabetically">[docs]</a><span class="k">def</span> <span class="nf">sort_combinations_alphabetically</span><span class="p">(</span>
     <span class="n">netcomb</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">stacomb</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">loccomb</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">chacomb</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Sort the combinations of network, station, location and channel</span>
 <span class="sd">    alphabetically to avoid ambiguities.</span>
 
@@ -1028,6 +1033,21 @@ document.write(`
         <span class="n">netcomb</span><span class="p">,</span> <span class="n">stacomb</span><span class="p">,</span> <span class="n">loccomb</span><span class="p">,</span> <span class="n">chacomb</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;-&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">])</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
             <span class="nb">sorted</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">),</span> <span class="nb">sorted</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">))]</span>
     <span class="k">return</span> <span class="n">netcomb</span><span class="p">,</span> <span class="n">stacomb</span><span class="p">,</span> <span class="n">loccomb</span><span class="p">,</span> <span class="n">chacomb</span></div>
+
+
+<div class="viewcode-block" id="utcdatetime2str"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.utils.miic_utils.utcdatetime2str">[docs]</a><span class="k">def</span> <span class="nf">utcdatetime2str</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="n">UTCDateTime</span> <span class="o">|</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">tuple</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Replace UTCDateTime object by str-representation in any object,</span>
+<span class="sd">    notably dicts, lists, utcdatetimes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">UTCDateTime</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">utcdatetime2str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">d</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">utcdatetime2str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">d</span></div>
 </pre></div>
 
                 </article>
@@ -1069,7 +1089,7 @@ document.write(`
 
   <p class="copyright">
     
-      © Copyright 2023, The SeisMIC development team..
+      © Copyright 2025, The SeisMIC development team..
       <br/>
     
   </p>

@@ -464,13 +464,13 @@ document.write(`
 <span></span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">:copyright:</span>
 <span class="sd">:license:</span>
-<span class="sd">    EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
-<span class="sd">   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)</span>
+<span class="sd">    `EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
+<span class="sd">    &lt;https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12&gt;`_</span>
 <span class="sd">:author:</span>
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 15th June 2021 03:42:14 pm</span>
-<span class="sd">Last Modified: Friday, 29th September 2023 10:59:17 am</span>
+<span class="sd">Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
@@ -481,10 +481,15 @@ document.write(`
 <span class="kn">from</span> <span class="nn">seismic.correlate.stats</span> <span class="kn">import</span> <span class="n">CorrStats</span>
 <span class="kn">from</span> <span class="nn">seismic.monitor.trim</span> <span class="kn">import</span> <span class="n">corr_mat_trim</span>
 
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">logfactory</span>
+<span class="n">parentlogger</span> <span class="o">=</span> <span class="n">logfactory</span><span class="o">.</span><span class="n">create_logger</span><span class="p">()</span>
+<span class="n">module_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">parentlogger</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s2">&quot;.stretch_mod&quot;</span><span class="p">)</span>
+
 
 <div class="viewcode-block" id="time_windows_creation"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.stretch_mod.time_windows_creation">[docs]</a><span class="k">def</span> <span class="nf">time_windows_creation</span><span class="p">(</span>
-        <span class="n">starting_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">t_width</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="ow">or</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Time windows creation.</span>
+        <span class="n">starting_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">t_width</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Time windows creation.</span>
 
 <span class="sd">    A matrix containing one time window for each row is created. The starting</span>
 <span class="sd">    samples of each one of them are passed in the ``starting_list`` parameter.</span>
@@ -531,7 +536,7 @@ document.write(`
 <div class="viewcode-block" id="compute_wfc"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.stretch_mod.compute_wfc">[docs]</a><span class="k">def</span> <span class="nf">compute_wfc</span><span class="p">(</span>
     <span class="n">mat</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">tw</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">refcorr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">remove_nans</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Computes the waveform coherency (**WFC**) between the given reference</span>
 <span class="sd">    correlation and correlationmatrix.</span>
 
@@ -611,7 +616,7 @@ document.write(`
 <div class="viewcode-block" id="wfc_multi_reftr"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.stretch_mod.wfc_multi_reftr">[docs]</a><span class="k">def</span> <span class="nf">wfc_multi_reftr</span><span class="p">(</span>
     <span class="n">corr_data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">ref_trs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">tw</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">remove_nans</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Computes the waveform coherency (**WFC**) between the given reference</span>
 <span class="sd">    correlation(s) and correlation matrix.</span>
 <span class="sd">    If several references are given, it will loop over these</span>
@@ -667,7 +672,7 @@ document.write(`
     <span class="n">mat</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">tw</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">strrefmat</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">strvec</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">sides</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">remove_nans</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Velocity change estimate through stretching and comparison.</span>
+    <span class="sd">&quot;&quot;&quot; Velocity change estimate through stretching and comparison.</span>
 
 <span class="sd">    Velocity changes are estimated comparing each correlation function stored</span>
 <span class="sd">    in the ``mat`` matrix (one for each row) with ``strrefmat.shape[0]``</span>
@@ -810,7 +815,7 @@ document.write(`
     <span class="n">remove_nans</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">ref_tr_trim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">ref_tr_stats</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Time stretch estimate through stretch and comparison.</span>
+    <span class="sd">&quot;&quot;&quot; Time stretch estimate through stretch and comparison.</span>
 
 <span class="sd">    This function estimates stretching of the time axis of traces as it can</span>
 <span class="sd">    occur if the propagation velocity changes.</span>
@@ -957,7 +962,7 @@ document.write(`
     <span class="n">remove_nans</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">ref_tr_trim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">ref_tr_stats</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Velocity change estimate with single or multiple reference traces.</span>
+    <span class="sd">&quot;&quot;&quot; Velocity change estimate with single or multiple reference traces.</span>
 
 <span class="sd">    This function estimates the velocity change corresponding to each row of</span>
 <span class="sd">    the ``corr_data`` matrix respect to the reference trace/s passed in</span>
@@ -1057,7 +1062,7 @@ document.write(`
 <div class="viewcode-block" id="est_shift_from_dt_corr"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.stretch_mod.est_shift_from_dt_corr">[docs]</a><span class="k">def</span> <span class="nf">est_shift_from_dt_corr</span><span class="p">(</span>
     <span class="n">dt1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">dt2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">corr1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">corr2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Estimation of a baseline shift between velocity-change measurements</span>
+    <span class="sd">&quot;&quot;&quot; Estimation of a baseline shift between velocity-change measurements</span>
 <span class="sd">    preformed with different references.</span>
 
 <span class="sd">    The use of different reference traces obtaind from different reference</span>
@@ -1139,7 +1144,7 @@ document.write(`
 
 
 <span class="k">def</span> <span class="nf">_create_G</span><span class="p">(</span><span class="n">n_ref</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Create the G matrix for the multi-trace alignment</span>
+    <span class="sd">&quot;&quot;&quot; Create the G matrix for the multi-trace alignment</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">G</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1161,7 +1166,7 @@ document.write(`
 
 <div class="viewcode-block" id="estimate_reftr_shifts_from_dt_corr"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.stretch_mod.estimate_reftr_shifts_from_dt_corr">[docs]</a><span class="k">def</span> <span class="nf">estimate_reftr_shifts_from_dt_corr</span><span class="p">(</span>
         <span class="n">multi_ref_panel</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Combine velocity-change measurements of the same data performed with</span>
+    <span class="sd">&quot;&quot;&quot; Combine velocity-change measurements of the same data performed with</span>
 <span class="sd">    different references to a single curve.</span>
 
 <span class="sd">    For a set of velocity-change measurements performed with different</span>
@@ -1315,7 +1320,8 @@ document.write(`
         <span class="k">return</span> <span class="n">ret_dict</span>
 
     <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;For a single reference trace use the appropriate function&quot;</span><span class="p">)</span>
+        <span class="n">module_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;For a single reference trace use the appropriate function&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
 
@@ -1326,7 +1332,7 @@ document.write(`
     <span class="n">remove_nans</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">ref_tr_trim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">ref_tr_stats</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Multi-reference dv estimate and alignment</span>
+    <span class="sd">&quot;&quot;&quot; Multi-reference dv estimate and alignment</span>
 
 <span class="sd">    :type corr_data: :class:`~numpy.ndarray`</span>
 <span class="sd">    :param corr_data: 2d ndarray containing the correlation functions.</span>
@@ -1393,7 +1399,7 @@ document.write(`
         <span class="n">ref_trs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">ref_trs</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">tw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">tw</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span>
+        <span class="n">module_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">&quot;The multi-reference vchange evaluation cannot handle multiple &quot;</span>
             <span class="s2">&quot;time windows. Only the first time-window will be used&quot;</span><span class="p">)</span>
         <span class="n">tw</span> <span class="o">=</span> <span class="n">tw</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -1420,7 +1426,7 @@ document.write(`
     <span class="n">tw</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shift_range</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">shift_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">single_sided</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">return_sim_mat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">remove_nans</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Time shift estimate through shifting and comparison.</span>
+    <span class="sd">&quot;&quot;&quot; Time shift estimate through shifting and comparison.</span>
 
 <span class="sd">    This function is intended to estimate shift of traces as they can occur</span>
 <span class="sd">    in noise cross-correlation in case of drifting clocks.</span>
@@ -1569,7 +1575,7 @@ document.write(`
 <div class="viewcode-block" id="time_shift_apply"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.stretch_mod.time_shift_apply">[docs]</a><span class="k">def</span> <span class="nf">time_shift_apply</span><span class="p">(</span>
     <span class="n">corr_data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">single_sided</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Correct for clock drifts that are given in shifts.</span>
 
 <span class="sd">    :param corr_data: Matrix with one correlation trace per row</span>
@@ -1623,7 +1629,7 @@ document.write(`
 <div class="viewcode-block" id="time_stretch_apply"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.stretch_mod.time_stretch_apply">[docs]</a><span class="k">def</span> <span class="nf">time_stretch_apply</span><span class="p">(</span>
     <span class="n">corr_data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stretch</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">single_sided</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Apply time axis stretch to traces.</span>
+    <span class="sd">&quot;&quot;&quot; Apply time axis stretch to traces.</span>
 
 <span class="sd">    Stretch the time axis of traces e.g. to compensate a velocity shift in the</span>
 <span class="sd">    propagation medium.</span>
@@ -1686,7 +1692,7 @@ document.write(`
 <div class="viewcode-block" id="create_shifted_ref_mat"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.stretch_mod.create_shifted_ref_mat">[docs]</a><span class="k">def</span> <span class="nf">create_shifted_ref_mat</span><span class="p">(</span>
     <span class="n">ref_trc</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span>
         <span class="n">shifts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create a matrix of shifted versions of a reference trace.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_trc</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">ref_trc</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> \
@@ -1708,7 +1714,7 @@ document.write(`
 <div class="viewcode-block" id="compare_with_modified_reference"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.stretch_mod.compare_with_modified_reference">[docs]</a><span class="k">def</span> <span class="nf">compare_with_modified_reference</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">ref_mat</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">indices</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compare a correlation matrix with a modified references.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># create mask for time window</span>
@@ -1772,7 +1778,7 @@ document.write(`
 
   <p class="copyright">
     
-      © Copyright 2023, The SeisMIC development team..
+      © Copyright 2025, The SeisMIC development team..
       <br/>
     
   </p>

@@ -465,16 +465,17 @@ document.write(`
 <span class="sd">:copyright:</span>
 <span class="sd">   The SeisMIC development team (makus@gfz-potsdam.de).</span>
 <span class="sd">:license:</span>
-<span class="sd">    EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
-<span class="sd">   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)</span>
+<span class="sd">    `EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
+<span class="sd">    &lt;https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12&gt;`_</span>
 <span class="sd">:author:</span>
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Tuesday, 15th June 2021 04:12:18 pm</span>
-<span class="sd">Last Modified: Wednesday, 19th June 2024 04:07:10 pm</span>
+<span class="sd">Last Modified: Monday, 9th December 2024 02:15:00 pm</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">time</span>
 <span class="kn">from</span> <span class="nn">glob</span> <span class="kn">import</span> <span class="n">glob</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
@@ -489,7 +490,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="DV"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.dv.DV">[docs]</a><span class="k">class</span> <span class="nc">DV</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A simple object to save velocity changes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -498,7 +499,7 @@ document.write(`
         <span class="n">stats</span><span class="p">:</span> <span class="n">CorrStats</span><span class="p">,</span> <span class="n">stretches</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">corrs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">n_stat</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">dv_processing</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Creates an object designed to hold and process velocity changes.</span>
 
 <span class="sd">        :param corr: Array with maximum Correlation coefficients.</span>
@@ -545,7 +546,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">avail</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">corr</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Print a prettier string.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">code</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="si">}</span><span class="s1">.&#39;</span>\
@@ -561,7 +562,7 @@ document.write(`
         <span class="k">return</span> <span class="n">out</span>
 
 <div class="viewcode-block" id="DV.save"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.dv.DV.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Saves the dv object to a compressed numpy binary format. The DV can</span>
 <span class="sd">        later be read using :func:`~seismic.monitor.dv.read_dv`.</span>
 
@@ -603,7 +604,7 @@ document.write(`
         <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">return_ax</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;technical&#39;</span><span class="p">,</span>
         <span class="n">dateformat</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1"> %b %y&#39;</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
             <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Plots the dv object into a *multi-panel-view* of `similarity matrix`</span>
 <span class="sd">        `dv-value`, and `correlation coefficient`.</span>
 
@@ -658,9 +659,15 @@ document.write(`
             <span class="n">dateformat</span><span class="o">=</span><span class="n">dateformat</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DV.smooth_sim_mat"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.dv.DV.smooth_sim_mat">[docs]</a>    <span class="k">def</span> <span class="nf">smooth_sim_mat</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">win_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>  <span class="n">exclude_corr_below</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Smoothes the similarity matrix along the correlation time axis.</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">win_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+            <span class="n">exclude_corr_below</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">limit_times_to</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+                <span class="n">Tuple</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">limit_times_to_exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes new dv/v and coherence values based on a smoothed</span>
+<span class="sd">        version of the similarity matrix. The similarity matrix itself</span>
+<span class="sd">        remains unaltered, so that no information is lost.</span>
 
 <span class="sd">        :param win_len: Length of the window in number of samples.</span>
 <span class="sd">        :type win_len: int</span>
@@ -668,25 +675,51 @@ document.write(`
 <span class="sd">            coefficient below the chosen threshold. Defaults to None (i.e.,</span>
 <span class="sd">            include all)</span>
 <span class="sd">        :type exclude_corr_below: float</span>
+<span class="sd">        :param limit_times_to: Limit the data to certain times of the day</span>
+<span class="sd">            (e.g., (8, 0, 0), (16, 0, 0) for 8:00 to 16:00). Defaults to None</span>
+<span class="sd">            (i.e., include all).</span>
+<span class="sd">        :type limit_times_to: Tuple[Tuple[int, int, float],</span>
+<span class="sd">            Tuple[int, int, float]]</span>
+<span class="sd">        :param limit_times_to_exclude: Exclude the data points within the</span>
+<span class="sd">            chosen time frame. Defaults to False.</span>
+<span class="sd">        :type limit_times_to_exclude: bool</span>
 
 <span class="sd">        :note::</span>
 
-<span class="sd">            This action is perfomed in-place and irreversible as the original</span>
-<span class="sd">            data are not accesible any more.</span>
+<span class="sd">            self.value and self.corr can always be repicked to obtain the</span>
+<span class="sd">            original (unsmoothed) values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">exclude_corr_below</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">limit_times_to</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># make sure that data is not overwritten</span>
+            <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sim_mat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span>
         <span class="k">if</span> <span class="n">exclude_corr_below</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span> <span class="o">&lt;</span> <span class="n">exclude_corr_below</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">nan_moving_av</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">win_len</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">sim_mat</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span> <span class="o">&lt;</span> <span class="n">exclude_corr_below</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="k">if</span> <span class="n">limit_times_to</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="p">(</span><span class="o">*</span><span class="n">limit_times_to</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="p">(</span><span class="o">*</span><span class="n">limit_times_to</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">corr_starts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">st</span><span class="o">.</span><span class="n">time</span> <span class="k">for</span> <span class="n">st</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_start</span><span class="p">])</span>
+            <span class="n">corr_ends</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">st</span><span class="o">.</span><span class="n">time</span> <span class="k">for</span> <span class="n">st</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">corr_end</span><span class="p">])</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">corr_starts</span> <span class="o">&gt;=</span> <span class="n">start</span><span class="p">,</span> <span class="n">corr_ends</span> <span class="o">&lt;=</span> <span class="n">end</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">limit_times_to_exclude</span><span class="p">:</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">mask</span>
+            <span class="n">sim_mat</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">nan_moving_av</span><span class="p">(</span><span class="n">sim_mat</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">win_len</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
         <span class="c1"># Compute the dependencies again</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">sim_mat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">second_axis</span><span class="p">[</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_mat</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">sim_mat</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
         <span class="k">return</span> <span class="bp">self</span></div></div>
 
 
 <div class="viewcode-block" id="read_dv"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.dv.read_dv">[docs]</a><span class="k">def</span> <span class="nf">read_dv</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Reads a saved velocity change object from an **.npz** file.</span>
 
 <span class="sd">    :param path: Path to file, wildcards allowed</span>
@@ -771,7 +804,7 @@ document.write(`
 
   <p class="copyright">
     
-      © Copyright 2023, The SeisMIC development team..
+      © Copyright 2025, The SeisMIC development team..
       <br/>
     
   </p>

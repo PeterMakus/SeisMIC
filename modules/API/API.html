@@ -481,19 +481,18 @@ document.write(`
 <dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
 </dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><p>GNU Lesser General Public License, Version 3
-(<a class="reference external" href="https://www.gnu.org/copyleft/lesser.html">https://www.gnu.org/copyleft/lesser.html</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://www.gnu.org/copyleft/lesser.html">GNU Lesser General Public License, Version 3</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
 </dd>
 </dl>
 <p>Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Friday, 27th September 2024 10:28:06 am</p>
+Last Modified: Wednesday, 16th April 2025 04:36:15 pm</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="seismic.trace_data.waveform.Store_Client">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seismic.trace_data.waveform.</span></span><span class="sig-name descname"><span class="pre">Store_Client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_only</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/trace_data/waveform.html#Store_Client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.trace_data.waveform.Store_Client" title="Permalink to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seismic.trace_data.waveform.</span></span><span class="sig-name descname"><span class="pre">Store_Client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_only</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sds_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mseed'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logparams</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{'filename_fmt':</span> <span class="pre">'{classname}-r{rank:03d}_{exectimestr}.log',</span> <span class="pre">'logdir':</span> <span class="pre">'log',</span> <span class="pre">'loglevel':</span> <span class="pre">'WARNING'}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/trace_data/waveform.html#Store_Client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.trace_data.waveform.Store_Client" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#seismic.logfactory.LoggingMPIBaseClass" title="seismic.logfactory.LoggingMPIBaseClass"><code class="xref py py-class docutils literal notranslate"><span class="pre">LoggingMPIBaseClass</span></code></a></p>
 <p>Client for request and local storage of waveform data</p>
 <p>Request client that stores downloaded data for later local retrieval.
 When reading stored data the client reads from the local copy of the data.
@@ -508,13 +507,18 @@ method</em>) – obspy request client that supports the ‘get_waveform’
 method</p></li>
 <li><p><strong>path</strong> (<em>str</em>) – path of the store’s sds root directory</p></li>
 <li><p><strong>read_only</strong> (<em>Bool</em>) – If True the local archive is not extended.</p></li>
+<li><p><strong>logparams</strong> (<em>dict</em><em> [</em><em>dict</em><em>(</em><em>loglevel=&quot;WARNING&quot;</em><em>, </em><em>logdir=LOGDIR</em><em>,
+</em><em>filename_fmt=logfactory.FILENAME_FMT</em><em>)</em><em>]</em>) – Variables passed to
+<a class="reference internal" href="#seismic.logfactory.LoggingMPIBaseClass.set_logger" title="seismic.logfactory.LoggingMPIBaseClass.set_logger"><code class="xref py py-func docutils literal notranslate"><span class="pre">set_logger()</span></code></a>.
+Keywords are “loglevel”, “logdir” and filename_fmt.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="seismic.trace_data.waveform.Store_Client.download_waveforms_mdl">
-<span class="sig-name descname"><span class="pre">download_waveforms_mdl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">starttime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UTCDateTime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endtime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UTCDateTime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clients</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minlat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxlat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minlon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxlon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">network</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_priorities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location_priorities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/trace_data/waveform.html#Store_Client.download_waveforms_mdl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.trace_data.waveform.Store_Client.download_waveforms_mdl" title="Permalink to this definition">#</a></dt>
-<dd><p>Download data using the obspy’s MassDownloader. For all args
+<span class="sig-name descname"><span class="pre">download_waveforms_mdl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">starttime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UTCDateTime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endtime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UTCDateTime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clients</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minlat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxlat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minlon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxlon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">network</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_priorities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location_priorities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/trace_data/waveform.html#Store_Client.download_waveforms_mdl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.trace_data.waveform.Store_Client.download_waveforms_mdl" title="Permalink to this definition">#</a></dt>
+<dd><p>Download data using the obspy’s MassDownloader.</p>
+<p>For all args
 except starttime and endtime, None is interpreted as a wildcard.
 Wildcards are generally allowed for all arguments except starttime
 and endtime. Channel and location priorities are given in the form
@@ -648,6 +652,58 @@ defaults to 86400</p></li>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="seismic.trace_data.waveform.Local_Store_Client">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seismic.trace_data.waveform.</span></span><span class="sig-name descname"><span class="pre">Local_Store_Client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logparams</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{'filename_fmt':</span> <span class="pre">'{classname}-r{rank:03d}_{exectimestr}.log',</span> <span class="pre">'logdir':</span> <span class="pre">'log',</span> <span class="pre">'loglevel':</span> <span class="pre">'WARNING'}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/trace_data/waveform.html#Local_Store_Client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.trace_data.waveform.Local_Store_Client" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Store_Client</span></code></a></p>
+<p>Client to manage access to local data stored in an SDS-like structure.</p>
+<p>In contrast to the regular Store_Client non-default names can be set for
+paths to stationxml-files and sds-root directory. It does not provide
+access to online data archives.</p>
+<p>The client is initialized from a configuration dictionary that must contain
+the following keys:</p>
+<ul class="simple">
+<li><p>proj_dir: path to the project directory</p></li>
+<li><p>co: dictionary with keys ‘read_start’ and ‘read_end’ for the time range</p></li>
+<li><p>net: dictionary with keys ‘network’ and ‘station’ for the selection</p></li>
+</ul>
+<p>The following keys are accessed, if present:</p>
+<ul class="simple">
+<li><p>sds_dir: path to the sds root directory, defaults to ‘mseed’</p></li>
+<li><p>stationxml_file: path to stationxml file, defaults to <cite>inventory/*.xml</cite></p></li>
+<li><p>sds_fmtstr: format string for the sds structure, defaults to the sds</p></li>
+</ul>
+<p>If not present, the default values are used.</p>
+<p>Other keys are ignored. Thus, the configuration file for the entire
+correlation setup can be used to initialize the client.</p>
+<p>param config: Configuration dictionary.
+:type config: dict</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="seismic.trace_data.waveform.Local_Store_Client.read_inventory">
+<span class="sig-name descname"><span class="pre">read_inventory</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/trace_data/waveform.html#Local_Store_Client.read_inventory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.trace_data.waveform.Local_Store_Client.read_inventory" title="Permalink to this definition">#</a></dt>
+<dd><p>Returns the inventory attribute if set, otherwise an empty inventory.</p>
+<p>It replaces the method of the parent class to mimick its behavior. The
+method here does not actually read the inventory from the file system,
+but returns the inventory object that was set during initialization
+(or by calling <code class="xref py py-func docutils literal notranslate"><span class="pre">_set_inventory()</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Inventory object</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Inventory</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="seismic.trace_data.waveform.Local_Store_Client.download_waveforms_mdl">
+<span class="sig-name descname"><span class="pre">download_waveforms_mdl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/trace_data/waveform.html#Local_Store_Client.download_waveforms_mdl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.trace_data.waveform.Local_Store_Client.download_waveforms_mdl" title="Permalink to this definition">#</a></dt>
+<dd><p>Raises UserWarning that method is not implemented.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="seismic.trace_data.waveform.FS_Client">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seismic.trace_data.waveform.</span></span><span class="sig-name descname"><span class="pre">FS_Client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'SDS_archive'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/trace_data/waveform.html#FS_Client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.trace_data.waveform.FS_Client" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
@@ -695,11 +751,8 @@ directory structure. The first element is a string indicating the
 base_directory. The following elements can be strings to indicate
 one of the following:</p>
 <ul class="simple">
-<li><dl class="simple">
-<dt>%X as defined by datetime.strftime indicating an element of t</dt><dd><p>the time. e.g. %H</p>
-</dd>
-</dl>
-</li>
+<li><p>%X as defined by datetime.strftime indicating an element of t
+the time. e.g. %H</p></li>
 <li><p>%NET: network name or %net for lower case network name</p></li>
 <li><p>%STA: station name or %sta for lower case</p></li>
 <li><p>%CHA: channel name or %cha for lower case</p></li>
@@ -753,19 +806,59 @@ upon the argument passed as <code class="docutils literal notranslate"><span cla
 <li><p><strong>type</strong> (<em>str</em>) – either <code class="docutils literal notranslate"><span class="pre">start</span></code> or <code class="docutils literal notranslate"><span class="pre">end</span></code></p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The earliest starttime or latest endtime in utc</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>UTCDateTime</p>
+</dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
 <li><p><strong>NotImplementedError</strong> – Unknown argument for type</p></li>
 <li><p><strong>FileNotFoundError</strong> – No files in db</p></li>
 </ul>
 </dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seismic.trace_data.waveform.get_sdsfmtst_with_doy_as_wildcard">
+<span class="sig-prename descclassname"><span class="pre">seismic.trace_data.waveform.</span></span><span class="sig-name descname"><span class="pre">get_sdsfmtst_with_doy_as_wildcard</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sds_fmtstr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'{year}/{network}/{station}/{channel}.{sds_type}/{network}.{station}.{location}.{channel}.{sds_type}.{year}.{doy:03d}'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/seismic/trace_data/waveform.html#get_sdsfmtst_with_doy_as_wildcard"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.trace_data.waveform.get_sdsfmtst_with_doy_as_wildcard" title="Permalink to this definition">#</a></dt>
+<dd><p>Replace doy placeholder in fmtstr by wildcard</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seismic.trace_data.waveform.get_abs_sds_path">
+<span class="sig-prename descclassname"><span class="pre">seismic.trace_data.waveform.</span></span><span class="sig-name descname"><span class="pre">get_abs_sds_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proj_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sds_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/trace_data/waveform.html#get_abs_sds_path"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.trace_data.waveform.get_abs_sds_path" title="Permalink to this definition">#</a></dt>
+<dd><p>Get absolute path from two joined directories.</p>
+<p>param proj_dir: Project root directory
+type proj_dir: str
+param sds_dir: path to sds root directory
+type sds_dir: str</p>
+<dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The earliest starttime or latest endtime in utc</p>
+<dd class="field-odd"><p>absolute path with expanded user variables from
+<cite>os.path.join(proj_dir, sds_dir)</cite></p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>UTCDateTime</p>
+<dd class="field-even"><p>str</p>
 </dd>
 </dl>
+<p class="rubric">Examples</p>
+<p>SDS outside project directory</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">proj_dir</span> <span class="o">=</span> <span class="s2">&quot;output&quot;</span>
+<span class="n">sds_dir</span> <span class="o">=</span> <span class="s2">&quot;~/mysds&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">get_abs_sds_path</span><span class="p">(</span><span class="n">proj_dir</span><span class="p">,</span> <span class="n">sds_dir</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;&gt;</span> <span class="s2">&quot;/home/username/mysds&quot;</span>
+</pre></div>
+</div>
+<p>SDS relative to project directory</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">proj_dir</span> <span class="o">=</span> <span class="s2">&quot;output&quot;</span>
+<span class="n">sds_dir</span> <span class="o">=</span> <span class="s2">&quot;./mseed&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">get_abs_sds_path</span><span class="p">(</span><span class="n">proj_dir</span><span class="p">,</span> <span class="n">sds_dir</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;&gt;</span> <span class="s2">&quot;/home/username/path/to/output/mseed&quot;</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </section>
@@ -775,42 +868,40 @@ upon the argument passed as <code class="docutils literal notranslate"><span cla
 <section id="seismic-correlate-correlate">
 <h3>seismic.correlate.correlate<a class="headerlink" href="#seismic-correlate-correlate" title="Permalink to this heading">#</a></h3>
 <p>Module to compute correlations</p>
-<span class="target" id="module-seismic.correlate.correlate"></span><dl class="field-list">
+<span class="target" id="module-seismic.correlate.correlate"></span><dl class="field-list simple">
 <dt class="field-odd">copyright<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
 </dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><blockquote>
-<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
-</div></blockquote>
-<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
 </dd>
 </dl>
 <p>Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 19th June 2024 03:39:46 pm</p>
+Last Modified: Thursday, 3rd July 2025 10:48:22 am</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="seismic.correlate.correlate.Correlator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seismic.correlate.correlate.</span></span><span class="sig-name descname"><span class="pre">Correlator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">store_client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><span class="pre">Store_Client</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/correlate/correlate.html#Correlator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.correlate.Correlator" title="Permalink to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seismic.correlate.correlate.</span></span><span class="sig-name descname"><span class="pre">Correlator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">store_client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#seismic.trace_data.waveform.Store_Client" title="seismic.trace_data.waveform.Store_Client"><span class="pre">Store_Client</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/correlate/correlate.html#Correlator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.correlate.Correlator" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#seismic.logfactory.LoggingMPIBaseClass" title="seismic.logfactory.LoggingMPIBaseClass"><code class="xref py py-class docutils literal notranslate"><span class="pre">LoggingMPIBaseClass</span></code></a></p>
 <p>Object to manage the actual Correlation (i.e., Green’s function retrieval)
 for the database.</p>
 <p>Initiates the Correlator object. When executing
 <a class="reference internal" href="#seismic.correlate.correlate.Correlator.pxcorr" title="seismic.correlate.correlate.Correlator.pxcorr"><code class="xref py py-func docutils literal notranslate"><span class="pre">pxcorr()</span></code></a>, it will
 actually compute the correlations and save them in an hdf5 file that
 can be handled using
-<a class="reference internal" href="#seismic.db.corr_hdf5.CorrelationDataBase" title="seismic.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a>.
-Data has to be preprocessed before calling this (i.e., the data already
-has to be given in an ASDF format). Consult
-<code class="xref py py-class docutils literal notranslate"><span class="pre">Preprocessor</span></code> for information on
-how to proceed with this.</p>
+<a class="reference internal" href="#seismic.db.corr_hdf5.CorrelationDataBase" title="seismic.db.corr_hdf5.CorrelationDataBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CorrelationDataBase</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>options</strong> (<em>dict</em><em> or </em><em>str</em>) – Dictionary containing all options for the correlation.
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>options</strong> (<em>dict</em><em> or </em><em>str</em>) – Dictionary containing all options for the correlation.
 Can also be a path to a yaml file containing all the keys required
-in options.</p>
+in options.</p></li>
+<li><p><strong>store_client</strong> – Object that handles the data retrieval. If None,
+a <a class="reference internal" href="#seismic.trace_data.waveform.Local_Store_Client" title="seismic.trace_data.waveform.Local_Store_Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Local_Store_Client</span></code></a> will be
+initiated. In this case all data has to be available locally.</p></li>
+</ul>
 </dd>
 </dl>
 <dl class="py method">
@@ -1067,22 +1158,19 @@ correlation length and increment.</p></li>
 <h3>seismic.correlate.stream<a class="headerlink" href="#seismic-correlate-stream" title="Permalink to this heading">#</a></h3>
 <p>Module to handle and access correlations as pythonic objects</p>
 <span class="target" id="module-seismic.correlate.stream"></span><p>Manage objects holding correlations.</p>
-<dl class="field-list">
+<dl class="field-list simple">
 <dt class="field-odd">copyright<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
 </dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><blockquote>
-<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
-</div></blockquote>
-<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
 </dd>
 </dl>
 <p>Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Wednesday, 19th June 2024 04:06:21 pm</p>
+Last Modified: Wednesday, 26th February 2025 04:40:39 pm</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="seismic.correlate.stream.CorrBulk">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seismic.correlate.stream.</span></span><span class="sig-name descname"><span class="pre">CorrBulk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#seismic.correlate.stats.CorrStats" title="seismic.correlate.stats.CorrStats"><span class="pre">CorrStats</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">statlist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#seismic.correlate.stats.CorrStats" title="seismic.correlate.stats.CorrStats"><span class="pre">CorrStats</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/correlate/stream.html#CorrBulk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.stream.CorrBulk" title="Permalink to this definition">#</a></dt>
@@ -1338,8 +1426,33 @@ traces with correlation (with mean trace) above the median.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="seismic.correlate.stream.CorrBulk.extract_trace_time_window">
+<span class="sig-name descname"><span class="pre">extract_trace_time_window</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">starttime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UTCDateTime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endtime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UTCDateTime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/seismic/correlate/stream.html#CorrBulk.extract_trace_time_window"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.stream.CorrBulk.extract_trace_time_window" title="Permalink to this definition">#</a></dt>
+<dd><p>Extract a reference trace from the correlation matrix within the given
+time window.</p>
+<p>For details see,
+<a class="reference internal" href="#seismic.correlate.stream.CorrBulk.extract_trace" title="seismic.correlate.stream.CorrBulk.extract_trace"><code class="xref py py-meth docutils literal notranslate"><span class="pre">extract_trace()</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>starttime</strong> (<em>UTCDateTime</em>) – Beginning of time window to be extracted</p></li>
+<li><p><strong>endtime</strong> (<em>UTCDateTime</em>) – End of time window to be extracted</p></li>
+<li><p><strong>method</strong> (<em>str</em>) – method to extract the trace. Options are ‘mean’,
+‘median’, ‘norm_mean’, ‘similarity_percentile’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The reference trace</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="seismic.correlate.stream.CorrBulk.extract_multi_trace">
-<span class="sig-name descname"><span class="pre">extract_multi_trace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">win_inc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percentile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/seismic/correlate/stream.html#CorrBulk.extract_multi_trace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.stream.CorrBulk.extract_multi_trace" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">extract_multi_trace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">win_inc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percentile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_windows</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">UTCDateTime</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">UTCDateTime</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/seismic/correlate/stream.html#CorrBulk.extract_multi_trace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.stream.CorrBulk.extract_multi_trace" title="Permalink to this definition">#</a></dt>
 <dd><p>Extract several representative traces from a correlation matrix.
 (one per time window <cite>win_inc</cite> with the length = 2*win_inc). That is,
 the reference will be extracted with half increment overlap in each
@@ -2145,16 +2258,8 @@ optionally, location. Useful for stacking</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>st</strong> (<em>Stream</em>) – input Stream</p></li>
 <li><p><strong>regard_loc</strong> (<em>bool</em>) – Seperate data with different location code</p></li>
-<li><p><strong>norm_traces</strong> – <dl class="simple">
-<dt>norm each trace by its maximum before stacking.</dt><dd><p>Defaults to false</p>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">type norm_traces<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bool, optional</p>
-</dd>
-</dl>
-</p></li>
+<li><p><strong>norm_traces</strong> (<em>bool</em><em>, </em><em>optional</em>) – norm each trace by its maximum before stacking.
+Defaults to false</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2220,15 +2325,12 @@ defaults to False.</p></li>
 <section id="seismic-correlate-stats">
 <h3>seismic.correlate.stats<a class="headerlink" href="#seismic-correlate-stats" title="Permalink to this heading">#</a></h3>
 <p>Managing headers</p>
-<span class="target" id="module-seismic.correlate.stats"></span><dl class="field-list">
+<span class="target" id="module-seismic.correlate.stats"></span><dl class="field-list simple">
 <dt class="field-odd">copyright<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
 </dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><blockquote>
-<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
-</div></blockquote>
-<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
@@ -2387,15 +2489,12 @@ i.e. the last character of the <code class="docutils literal notranslate"><span 
 <h3>seismic.correlate.preprocessing_stream<a class="headerlink" href="#seismic-correlate-preprocessing-stream" title="Permalink to this heading">#</a></h3>
 <p>Preprocessing functions that are executed on Obspy Streams</p>
 <span class="target" id="module-seismic.correlate.preprocessing_stream"></span><p>Module that contains functions for preprocessing on obspy streams</p>
-<dl class="field-list">
+<dl class="field-list simple">
 <dt class="field-odd">copyright<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
 </dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><blockquote>
-<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
-</div></blockquote>
-<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
@@ -2414,15 +2513,18 @@ Last Modified: Tuesday, 26th September 2023 05:42:28 pm</p>
 <li><p><strong>taper_len</strong> (<em>float</em>) – Length of the taper per side</p></li>
 <li><p><strong>taper_at_masked</strong> (<em>bool</em>) – applies a split to each trace and merges again
 afterwards</p></li>
-<li><p><strong>lossless</strong> – Lossless tapering pads the trace’s ends with a copy of
+<li><p><strong>lossless</strong> (<em>bool</em>) – Lossless tapering pads the trace’s ends with a copy of
 the trace’s data before tapering. Note that you will want to trim
 the trace later to remove this artificial ends.</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tapered Stream</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Stream</span></code></p>
+</dd>
 </dl>
-<p>type lossless: bool
-:return: Tapered Stream
-:rtype: <code class="xref py py-class docutils literal notranslate"><span class="pre">Stream</span></code></p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This action is performed in place. If you want to keep the
@@ -2442,15 +2544,18 @@ original data use <code class="xref py py-func docutils literal notranslate"><sp
 <li><p><strong>taper_at_masked</strong> (<em>bool</em>) – applies a split to each trace and merges again
 afterwards. Lossless tapering is not supporting if the trace contains
 masked values in the middle of the trace</p></li>
-<li><p><strong>lossless</strong> – Lossless tapering pads the trace’s ends with a copy of
+<li><p><strong>lossless</strong> (<em>bool</em>) – Lossless tapering pads the trace’s ends with a copy of
 the trace’s data before tapering. Note that you will want to trim
 the trace later to remove this artificial ends.</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tapered Trace</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Trace</p>
+</dd>
 </dl>
-<p>type lossless: bool
-:return: Tapered Trace
-:rtype: Trace</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This action is performed in place. If you want to keep the
@@ -2581,22 +2686,19 @@ If you should desire to do so use.
 <h3>seismic.correlate.preprocessing_td<a class="headerlink" href="#seismic-correlate-preprocessing-td" title="Permalink to this heading">#</a></h3>
 <p>Preprocessing functions that are executed in Time Domain</p>
 <span class="target" id="module-seismic.correlate.preprocessing_td"></span><p>Module that contains functions for preprocessing in the time domain</p>
-<dl class="field-list">
+<dl class="field-list simple">
 <dt class="field-odd">copyright<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
 </dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><blockquote>
-<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
-</div></blockquote>
-<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
 </dd>
 </dl>
 <p>Created: Tuesday, 20th July 2021 03:24:01 pm
-Last Modified: Thursday, 29th June 2023 11:15:56 am</p>
+Last Modified: Friday, 10th January 2025 01:29:21 pm</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seismic.correlate.preprocessing_td.clip">
 <span class="sig-prename descclassname"><span class="pre">seismic.correlate.preprocessing_td.</span></span><span class="sig-name descname"><span class="pre">clip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/seismic/correlate/preprocessing_td.html#clip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.preprocessing_td.clip" title="Permalink to this definition">#</a></dt>
@@ -2689,8 +2791,8 @@ NoisePy</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="seismic.correlate.preprocessing_td.demean">
-<span class="sig-prename descclassname"><span class="pre">seismic.correlate.preprocessing_td.</span></span><span class="sig-name descname"><span class="pre">demean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/seismic/correlate/preprocessing_td.html#demean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.preprocessing_td.demean" title="Permalink to this definition">#</a></dt>
-<dd><p>Demean data</p>
+<span class="sig-prename descclassname"><span class="pre">seismic.correlate.preprocessing_td.</span></span><span class="sig-name descname"><span class="pre">demean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/seismic/correlate/preprocessing_td.html#demean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.correlate.preprocessing_td.demean" title="Permalink to this definition">#</a></dt>
+<dd><p>Demean data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>data</strong> (<em>np.ndarray</em>) – 1 or 2D array</p>
@@ -2974,15 +3076,12 @@ the padded part is just long enough to avoid wrap around</p>
 <h3>seismic.correlate.preprocessing_fd<a class="headerlink" href="#seismic-correlate-preprocessing-fd" title="Permalink to this heading">#</a></h3>
 <p>Preprocessing functions that are executed in Frequency Domain</p>
 <span class="target" id="module-seismic.correlate.preprocessing_fd"></span><p>Module containing functions for preprocessing in the frequency domain</p>
-<dl class="field-list">
+<dl class="field-list simple">
 <dt class="field-odd">copyright<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
 </dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><blockquote>
-<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
-</div></blockquote>
-<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
@@ -3076,22 +3175,19 @@ correlated traces in the ZNE system into the ZRT system.</p>
 <h3>seismic.db.corr_hdf5<a class="headerlink" href="#seismic-db-corr-hdf5" title="Permalink to this heading">#</a></h3>
 <p>Save your Correlations in h5 format.</p>
 <span class="target" id="module-seismic.db.corr_hdf5"></span><p>Manages the file format and class for correlations.</p>
-<dl class="field-list">
+<dl class="field-list simple">
 <dt class="field-odd">copyright<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
 </dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><blockquote>
-<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
-</div></blockquote>
-<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
 </dd>
 </dl>
 <p>Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Wednesday, 2nd October 2024 11:28:48 am</p>
+Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="seismic.db.corr_hdf5.DBHandler">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seismic.db.corr_hdf5.</span></span><span class="sig-name descname"><span class="pre">DBHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compression</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">co</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/db/corr_hdf5.html#DBHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.db.corr_hdf5.DBHandler" title="Permalink to this definition">#</a></dt>
@@ -3107,7 +3203,7 @@ functions in addition to functions that are particularly useful for noise
 correlations.</p>
 <p>Create a new file object.</p>
 <p>See the h5py user guide for a detailed explanation of the options.</p>
-<dl>
+<dl class="simple">
 <dt>name</dt><dd><p>Name of the file on disk, or file-like object.  Note: for files
 created with the ‘core’ driver, HDF5 still requires this be
 non-empty.</p>
@@ -3130,8 +3226,8 @@ file (mode w, w- or x).</p>
 </dd>
 <dt>swmr</dt><dd><p>Open the file in SWMR read mode. Only used when mode = ‘r’.</p>
 </dd>
-<dt>rdcc_nbytes</dt><dd><p>Total size of the dataset chunk cache in bytes. The default size
-is 1024**2 (1 MiB) per dataset. Applies to all datasets unless individually changed.</p>
+<dt>rdcc_nbytes</dt><dd><p>Total size of the raw data chunk cache in bytes. The default size
+is 1024**2 (1 MB) per dataset.</p>
 </dd>
 <dt>rdcc_w0</dt><dd><p>The chunk preemption policy for all datasets.  This must be
 between 0 and 1 inclusive and indicates the weighting according to
@@ -3143,7 +3239,7 @@ means fully read or written chunks are always preempted before
 other chunks.  If your application only reads or writes data once,
 this can be safely set to 1.  Otherwise, this should be set lower
 depending on how often you re-read or re-write the same data.  The
-default value is 0.75. Applies to all datasets unless individually changed.</p>
+default value is 0.75.</p>
 </dd>
 <dt>rdcc_nslots</dt><dd><p>The number of chunk slots in the raw data chunk cache for this
 file. Increasing this value reduces the number of cache collisions,
@@ -3152,7 +3248,7 @@ strategy, this value should ideally be a prime number. As a rule of
 thumb, this value should be at least 10 times the number of chunks
 that can fit in rdcc_nbytes bytes. For maximum performance, this
 value should be set approximately 100 times that number of
-chunks. The default value is 521. Applies to all datasets unless individually changed.</p>
+chunks. The default value is 521.</p>
 </dd>
 <dt>track_order</dt><dd><p>Track dataset/group/attribute creation order under root group
 if True. If None use global default h5.get_config().track_order.</p>
@@ -3189,19 +3285,14 @@ page_buf_size is set. Default value is zero.</p>
 allowing pages containing raw data to be evicted. Applicable only if
 page_buf_size is set. Default value is zero.</p>
 </dd>
-<dt>locking</dt><dd><p>The file locking behavior. Defined as:</p>
-<ul class="simple">
-<li><p>False (or “false”) –  Disable file locking</p></li>
-<li><p>True (or “true”)   –  Enable file locking</p></li>
-<li><p>“best-effort”      –  Enable file locking but ignore some errors</p></li>
-<li><p>None               –  Use HDF5 defaults</p></li>
-</ul>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>The HDF5_USE_FILE_LOCKING environment variable can override
-this parameter.</p>
-</div>
-<p>Only available with HDF5 &gt;= 1.12.1 or 1.10.x &gt;= 1.10.7.</p>
+<dt>locking</dt><dd><p>The file locking behavior. Defined as:
+False (or “false”)  Disable file locking
+True (or “true”)    Enable file locking
+“best-effort”       Enable file locking but ignore some errors
+None                Use HDF5 defaults
+Warning: The HDF5_USE_FILE_LOCKING environment variable can override
+this parameter.
+Only available with HDF5 &gt;= 1.12.1 or 1.10.x &gt;= 1.10.7.</p>
 </dd>
 <dt>alignment_threshold</dt><dd><p>Together with <code class="docutils literal notranslate"><span class="pre">alignment_interval</span></code>, this property ensures that
 any file object greater than or equal in size to the alignement
@@ -3213,9 +3304,6 @@ multiple of alignment interval.</p>
 details, see
 <a class="reference external" href="https://portal.hdfgroup.org/display/HDF5/H5P_SET_ALIGNMENT">https://portal.hdfgroup.org/display/HDF5/H5P_SET_ALIGNMENT</a></p>
 </dd>
-<dt>meta_block_size</dt><dd><p>Set the current minimum size, in bytes, of new metadata block allocations.
-See <a class="reference external" href="https://portal.hdfgroup.org/display/HDF5/H5P_SET_META_BLOCK_SIZE">https://portal.hdfgroup.org/display/HDF5/H5P_SET_META_BLOCK_SIZE</a></p>
-</dd>
 <dt>Additional keywords</dt><dd><p>Passed on to the selected file driver.</p>
 </dd>
 </dl>
@@ -3226,7 +3314,7 @@ See <a class="reference external" href="https://portal.hdfgroup.org/display/HDF5
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seismic.db.corr_hdf5.DBHandler.add_correlation">
-<span class="sig-name descname"><span class="pre">add_correlation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#seismic.correlate.stream.CorrTrace" title="seismic.correlate.stream.CorrTrace"><span class="pre">CorrTrace</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'subdivision'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/db/corr_hdf5.html#DBHandler.add_correlation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.db.corr_hdf5.DBHandler.add_correlation" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">add_correlation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#seismic.correlate.stream.CorrTrace" title="seismic.correlate.stream.CorrTrace"><span class="pre">seismic.correlate.stream.CorrTrace</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#seismic.correlate.stream.CorrStream" title="seismic.correlate.stream.CorrStream"><span class="pre">seismic.correlate.stream.CorrStream</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'subdivision'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/db/corr_hdf5.html#DBHandler.add_correlation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.db.corr_hdf5.DBHandler.add_correlation" title="Permalink to this definition">#</a></dt>
 <dd><p>Add correlation data to the hdf5 file. Can be accessed using the
 <a class="reference internal" href="#seismic.db.corr_hdf5.DBHandler.get_data" title="seismic.db.corr_hdf5.DBHandler.get_data"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_data()</span></code></a> method.</p>
 <dl class="field-list simple">
@@ -3308,7 +3396,7 @@ all the requested data.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seismic.db.corr_hdf5.DBHandler.get_available_starttimes">
-<span class="sig-name descname"><span class="pre">get_available_starttimes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">network</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'*'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../_modules/seismic/db/corr_hdf5.html#DBHandler.get_available_starttimes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.db.corr_hdf5.DBHandler.get_available_starttimes" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">get_available_starttimes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">network</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'*'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../_modules/seismic/db/corr_hdf5.html#DBHandler.get_available_starttimes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.db.corr_hdf5.DBHandler.get_available_starttimes" title="Permalink to this definition">#</a></dt>
 <dd><p>Returns a dictionary with channel codes as keys and available
 correlation starttimes as values.</p>
 <dl class="simple">
@@ -3483,26 +3571,23 @@ hdf5 dataset.</p>
 <section id="seismic-monitor-monitor">
 <h3>seismic.monitor.monitor<a class="headerlink" href="#seismic-monitor-monitor" title="Permalink to this heading">#</a></h3>
 <p>Compute seismic velocity changes</p>
-<span class="target" id="module-seismic.monitor.monitor"></span><dl class="field-list">
+<span class="target" id="module-seismic.monitor.monitor"></span><dl class="field-list simple">
 <dt class="field-odd">copyright<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
 </dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><blockquote>
-<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
-</div></blockquote>
-<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
 </dd>
 </dl>
 <p>Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Tuesday, 9th July 2024 04:48:54 pm</p>
+Last Modified: Monday, 4th August 2025 11:30:40 am</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="seismic.monitor.monitor.Monitor">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seismic.monitor.monitor.</span></span><span class="sig-name descname"><span class="pre">Monitor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/monitor/monitor.html#Monitor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.monitor.Monitor" title="Permalink to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#seismic.logfactory.LoggingMPIBaseClass" title="seismic.logfactory.LoggingMPIBaseClass"><code class="xref py py-class docutils literal notranslate"><span class="pre">LoggingMPIBaseClass</span></code></a></p>
 <p>Object that handles the computation of seismic velocity changes.
 This will access correlations that have been computed previously with
 the <a class="reference internal" href="#seismic.correlate.correlate.Correlator" title="seismic.correlate.correlate.Correlator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Correlator</span></code></a> class.</p>
@@ -3592,7 +3677,7 @@ be computed.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seismic.monitor.monitor.Monitor.compute_waveform_coherence">
-<span class="sig-name descname"><span class="pre">compute_waveform_coherence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">corr_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">network</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#seismic.monitor.wfc.WFC" title="seismic.monitor.wfc.WFC"><span class="pre">WFC</span></a></span></span><a class="reference internal" href="../../_modules/seismic/monitor/monitor.html#Monitor.compute_waveform_coherence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.monitor.Monitor.compute_waveform_coherence" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">compute_waveform_coherence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">corr_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">network</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#seismic.monitor.wfc.WFC" title="seismic.monitor.wfc.WFC"><span class="pre">WFC</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/seismic/monitor/monitor.html#Monitor.compute_waveform_coherence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.monitor.Monitor.compute_waveform_coherence" title="Permalink to this definition">#</a></dt>
 <dd><p>Computes the waveform coherence corresponding to one correlation (i.e.,
 one single file).</p>
 <p>The waveform coherence can be used as a measure of stability of
@@ -3872,22 +3957,19 @@ the function requires the input to be of the same shape</p>
 <section id="seismic-monitor-dv">
 <h3>seismic.monitor.dv<a class="headerlink" href="#seismic-monitor-dv" title="Permalink to this heading">#</a></h3>
 <p>Module to handle velocity change objects.</p>
-<span class="target" id="module-seismic.monitor.dv"></span><dl class="field-list">
+<span class="target" id="module-seismic.monitor.dv"></span><dl class="field-list simple">
 <dt class="field-odd">copyright<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
 </dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><blockquote>
-<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
-</div></blockquote>
-<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
 </dd>
 </dl>
 <p>Created: Tuesday, 15th June 2021 04:12:18 pm
-Last Modified: Wednesday, 19th June 2024 04:07:10 pm</p>
+Last Modified: Monday, 9th December 2024 02:15:00 pm</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="seismic.monitor.dv.DV">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seismic.monitor.dv.</span></span><span class="sig-name descname"><span class="pre">DV</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">corr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_mat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#seismic.correlate.stats.CorrStats" title="seismic.correlate.stats.CorrStats"><span class="pre">CorrStats</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">stretches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corrs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_stat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dv_processing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/monitor/dv.html#DV"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.dv.DV" title="Permalink to this definition">#</a></dt>
@@ -3973,8 +4055,10 @@ informative).</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="seismic.monitor.dv.DV.smooth_sim_mat">
-<span class="sig-name descname"><span class="pre">smooth_sim_mat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">win_len</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_corr_below</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/monitor/dv.html#DV.smooth_sim_mat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.dv.DV.smooth_sim_mat" title="Permalink to this definition">#</a></dt>
-<dd><p>Smoothes the similarity matrix along the correlation time axis.</p>
+<span class="sig-name descname"><span class="pre">smooth_sim_mat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">win_len</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_corr_below</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit_times_to</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit_times_to_exclude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/monitor/dv.html#DV.smooth_sim_mat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.dv.DV.smooth_sim_mat" title="Permalink to this definition">#</a></dt>
+<dd><p>Computes new dv/v and coherence values based on a smoothed
+version of the similarity matrix. The similarity matrix itself
+remains unaltered, so that no information is lost.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -3982,11 +4066,17 @@ informative).</p></li>
 <li><p><strong>exclude_corr_below</strong> (<em>float</em>) – Exclude data points with a correlation
 coefficient below the chosen threshold. Defaults to None (i.e.,
 include all)</p></li>
+<li><p><strong>limit_times_to</strong> (<em>Tuple</em><em>[</em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>, </em><em>float</em><em>]</em><em>,
+</em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – Limit the data to certain times of the day
+(e.g., (8, 0, 0), (16, 0, 0) for 8:00 to 16:00). Defaults to None
+(i.e., include all).</p></li>
+<li><p><strong>limit_times_to_exclude</strong> (<em>bool</em>) – Exclude the data points within the
+chosen time frame. Defaults to False.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Note:<span class="colon">:</span></dt>
-<dd class="field-even"><p>This action is perfomed in-place and irreversible as the original
-data are not accesible any more.</p>
+<dd class="field-even"><p>self.value and self.corr can always be repicked to obtain the
+original (unsmoothed) values.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -4018,15 +4108,12 @@ data are not accesible any more.</p>
 <span class="target" id="module-seismic.monitor.spatial"></span><p>Spatial imaging by means of a Boltzmann-equation-based sensitivity kernel
 (see Obermann et al., 2013 and Paasschens, 1997)</p>
 <p>Implementation here is just for the 2D case</p>
-<dl class="field-list">
+<dl class="field-list simple">
 <dt class="field-odd">copyright<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
 </dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><blockquote>
-<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
-</div></blockquote>
-<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
@@ -4595,15 +4682,12 @@ value above the threshold</p>
 <section id="seismic-monitor-wfc">
 <h3>seismic.monitor.wfc<a class="headerlink" href="#seismic-monitor-wfc" title="Permalink to this heading">#</a></h3>
 <p>Module to analyse the waveform coherence.</p>
-<span class="target" id="module-seismic.monitor.wfc"></span><dl class="field-list">
+<span class="target" id="module-seismic.monitor.wfc"></span><dl class="field-list simple">
 <dt class="field-odd">copyright<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
 </dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><blockquote>
-<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
-</div></blockquote>
-<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
@@ -4703,15 +4787,12 @@ Returns a list if wildcards are used</p>
 <section id="seismic-monitor-post-corr-process">
 <h3>seismic.monitor.post_corr_process<a class="headerlink" href="#seismic-monitor-post-corr-process" title="Permalink to this heading">#</a></h3>
 <p>Holds the postprocessing functions for CorrBulks.</p>
-<span class="target" id="module-seismic.monitor.post_corr_process"></span><dl class="field-list">
+<span class="target" id="module-seismic.monitor.post_corr_process"></span><dl class="field-list simple">
 <dt class="field-odd">copyright<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
 </dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><blockquote>
-<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
-</div></blockquote>
-<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Christoph Sens-Schönefelder
@@ -4719,7 +4800,7 @@ Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-
 </dd>
 </dl>
 <p>Created: Monday, 14th June 2021 08:50:57 am
-Last Modified: Wednesday, 4th October 2023 09:29:49 am</p>
+Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seismic.monitor.post_corr_process.corr_mat_clip">
 <span class="sig-prename descclassname"><span class="pre">seismic.monitor.post_corr_process.</span></span><span class="sig-name descname"><span class="pre">corr_mat_clip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thres</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/seismic/monitor/post_corr_process.html#corr_mat_clip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.post_corr_process.corr_mat_clip" title="Permalink to this definition">#</a></dt>
@@ -5354,24 +5435,21 @@ along rows and number of traces is <code class="docutils literal notranslate"><s
 <section id="seismic-monitor-stretch-mod">
 <h3>seismic.monitor.stretch_mod<a class="headerlink" href="#seismic-monitor-stretch-mod" title="Permalink to this heading">#</a></h3>
 <p>Holds functions for the velocity estimation via stretching.</p>
-<span class="target" id="module-seismic.monitor.stretch_mod"></span><dl class="field-list">
+<span class="target" id="module-seismic.monitor.stretch_mod"></span><dl class="field-list simple">
 <dt class="field-odd">copyright<span class="colon">:</span></dt>
 <dd class="field-odd"><p></p></dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><blockquote>
-<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
-</div></blockquote>
-<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
 </dd>
 </dl>
 <p>Created: Tuesday, 15th June 2021 03:42:14 pm
-Last Modified: Friday, 29th September 2023 10:59:17 am</p>
+Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seismic.monitor.stretch_mod.time_windows_creation">
-<span class="sig-prename descclassname"><span class="pre">seismic.monitor.stretch_mod.</span></span><span class="sig-name descname"><span class="pre">time_windows_creation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">starting_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/seismic/monitor/stretch_mod.html#time_windows_creation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.stretch_mod.time_windows_creation" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">seismic.monitor.stretch_mod.</span></span><span class="sig-name descname"><span class="pre">time_windows_creation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">starting_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/seismic/monitor/stretch_mod.html#time_windows_creation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.stretch_mod.time_windows_creation" title="Permalink to this definition">#</a></dt>
 <dd><p>Time windows creation.</p>
 <p>A matrix containing one time window for each row is created. The starting
 samples of each one of them are passed in the <code class="docutils literal notranslate"><span class="pre">starting_list</span></code> parameter.
@@ -5931,22 +6009,19 @@ containing the stretches relative units.</p></li>
 <section id="seismic-monitor-trim">
 <h3>seismic.monitor.trim<a class="headerlink" href="#seismic-monitor-trim" title="Permalink to this heading">#</a></h3>
 <p>Trim correlation matrices.</p>
-<span class="target" id="module-seismic.monitor.trim"></span><dl class="field-list">
+<span class="target" id="module-seismic.monitor.trim"></span><dl class="field-list simple">
 <dt class="field-odd">copyright<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
 </dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><blockquote>
-<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
-</div></blockquote>
-<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
 </dd>
 </dl>
 <p>Created: Tuesday, 15th November 2022 05:15:30 pm
-Last Modified: Monday, 16th January 2023 11:14:37 am</p>
+Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seismic.monitor.trim.corr_mat_trim">
 <span class="sig-prename descclassname"><span class="pre">seismic.monitor.trim.</span></span><span class="sig-name descname"><span class="pre">corr_mat_trim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#seismic.correlate.stats.CorrStats" title="seismic.correlate.stats.CorrStats"><span class="pre">CorrStats</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">starttime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endtime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#seismic.correlate.stats.CorrStats" title="seismic.correlate.stats.CorrStats"><span class="pre">CorrStats</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/seismic/monitor/trim.html#corr_mat_trim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.monitor.trim.corr_mat_trim" title="Permalink to this definition">#</a></dt>
@@ -5996,12 +6071,12 @@ Hence, this parameter describes a lag!</p></li>
 Last Modified: Monday, 4th March 2024 02:42:42 pm</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seismic.plot.plot_correlation.plot_ctr">
-<span class="sig-prename descclassname"><span class="pre">seismic.plot.plot_correlation.</span></span><span class="sig-name descname"><span class="pre">plot_ctr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">corr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Trace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tlim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Axes</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Axes</span></span></span><a class="reference internal" href="../../_modules/seismic/plot/plot_correlation.html#plot_ctr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.plot.plot_correlation.plot_ctr" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">seismic.plot.plot_correlation.</span></span><span class="sig-name descname"><span class="pre">plot_ctr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">corr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Trace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tlim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Axes</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Axes</span></span></span><a class="reference internal" href="../../_modules/seismic/plot/plot_correlation.html#plot_ctr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.plot.plot_correlation.plot_ctr" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="seismic.plot.plot_correlation.plot_cst">
-<span class="sig-prename descclassname"><span class="pre">seismic.plot.plot_correlation.</span></span><span class="sig-name descname"><span class="pre">plot_cst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_by</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'corr_start'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timelimits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylimits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scalingfactor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Axes</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linewidth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputfile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'heatmap'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'seismic'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/plot/plot_correlation.html#plot_cst"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.plot.plot_correlation.plot_cst" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">seismic.plot.plot_correlation.</span></span><span class="sig-name descname"><span class="pre">plot_cst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_by</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'corr_start'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timelimits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylimits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scalingfactor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Axes</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linewidth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputfile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'heatmap'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'seismic'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/plot/plot_correlation.html#plot_cst"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.plot.plot_correlation.plot_cst" title="Permalink to this definition">#</a></dt>
 <dd><p>Creates a section or heat plot of all correlations in this stream.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -6208,15 +6283,12 @@ Defaults to None.</p></li>
 <section id="seismic-plot-plot-utils">
 <h3>seismic.plot.plot_utils<a class="headerlink" href="#seismic-plot-plot-utils" title="Permalink to this heading">#</a></h3>
 <p>Useful little plotting functions</p>
-<span class="target" id="module-seismic.plot.plot_utils"></span><dl class="field-list">
+<span class="target" id="module-seismic.plot.plot_utils"></span><dl class="field-list simple">
 <dt class="field-odd">copyright<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
 </dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><blockquote>
-<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
-</div></blockquote>
-<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
@@ -6259,10 +6331,10 @@ Last Modified: Monday, 4th March 2024 02:43:54 pm</p>
 </dd>
 </dl>
 <p>Created: Wednesday, 21st June 2023 04:54:20 pm
-Last Modified: Wednesday, 7th August 2024 02:39:58 pm</p>
+Last Modified: Monday, 7th July 2025 11:43:50 am</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seismic.plot.plot_spectrum.plot_spct_series">
-<span class="sig-prename descclassname"><span class="pre">seismic.plot.plot_spectrum.</span></span><span class="sig-name descname"><span class="pre">plot_spct_series</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">S</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tlim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">datetime</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">datetime</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'batlow'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Axes</span></span></span><a class="reference internal" href="../../_modules/seismic/plot/plot_spectrum.html#plot_spct_series"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.plot.plot_spectrum.plot_spct_series" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">seismic.plot.plot_spectrum.</span></span><span class="sig-name descname"><span class="pre">plot_spct_series</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">S</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tlim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">datetime</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">datetime</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'batlow'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Axes</span></span></span><a class="reference internal" href="../../_modules/seismic/plot/plot_spectrum.html#plot_spct_series"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.plot.plot_spectrum.plot_spct_series" title="Permalink to this definition">#</a></dt>
 <dd><p>Plots a spectral series.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -6274,14 +6346,26 @@ Last Modified: Wednesday, 7th August 2024 02:39:58 pm</p>
 norm=’t’ or on the frequency axis with norm=’f’, defaults to None.</p></li>
 <li><p><strong>norm_method</strong> – Normation method to use.
 Either ‘linalg’ (i.e., length of vector),
-‘mean’, or ‘median’.</p></li>
+‘mean’, ‘max’, or ‘median’.</p></li>
 <li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – Plot title, defaults to None</p></li>
 <li><p><strong>outfile</strong> (<em>str</em><em>, </em><em>optional</em>) – location to save the plot to, defaults to None</p></li>
 <li><p><strong>fmt</strong> (<em>str</em><em>, </em><em>optional</em>) – Format to save figure, defaults to ‘pdf’</p></li>
-<li><p><strong>flim</strong> (<em>Tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em>) – Limit Frequency axis and Normalisation to the values
-in the given window</p></li>
-<li><p><strong>tlim</strong> (<em>Tuple</em><em>[</em><em>datetime</em><em>, </em><em>datetime</em><em>]</em>) – Limit time axis to the values in the given window</p></li>
+<li><p><strong>flim</strong> (<em>Tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>] </em><em>| </em><em>float</em><em>, </em><em>optional</em>) – Limit Frequency axis and Normalisation to the values
+in the given window. Can be a tuple of floats or a single float.
+If a single float is given, a 2D plot is created.</p></li>
+<li><p><strong>tlim</strong> (<em>Tuple</em><em>[</em><em>datetime</em><em>, </em><em>datetime</em><em>]</em><em>, </em><em>optional</em>) – Limit time axis to the values in the given window</p></li>
+<li><p><strong>cmap</strong> (<em>str</em><em>, </em><em>optional</em>) – Colormap to use, defaults to ‘batlow’</p></li>
+<li><p><strong>vmin</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum value for color normalization, defaults to None</p></li>
+<li><p><strong>vmax</strong> (<em>float</em><em>, </em><em>optional</em>) – Maximum value for color normalization, defaults to None</p></li>
+<li><p><strong>log_scale</strong> (<em>bool</em><em>, </em><em>optional</em>) – Use logarithmic scale for the color map,
+defaults to False</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The axis object of the plot.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>plt.Axes</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6290,18 +6374,13 @@ in the given window</p></li>
 <section id="seismic-plot-plot-wfc">
 <h3>seismic.plot.plot_wfc<a class="headerlink" href="#seismic-plot-plot-wfc" title="Permalink to this heading">#</a></h3>
 <p>Plot the waveform coherence</p>
-<span class="target" id="module-seismic.plot.plot_wfc"></span><dl class="field-list">
+<span class="target" id="module-seismic.plot.plot_wfc"></span><dl class="field-list simple">
 <dt class="field-odd">copyright<span class="colon">:</span></dt>
-<dd class="field-odd"><blockquote>
-<div><p>Module to plot waveform coherencies.</p>
-</div></blockquote>
-<p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
+<dd class="field-odd"><p>Module to plot waveform coherencies.
+The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
 </dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><blockquote>
-<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
-</div></blockquote>
-<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
@@ -6406,15 +6485,12 @@ object.</p>
 <section id="seismic-utils-fetch-func-from-str">
 <h3>seismic.utils.fetch_func_from_str<a class="headerlink" href="#seismic-utils-fetch-func-from-str" title="Permalink to this heading">#</a></h3>
 <p>Import and Return a function</p>
-<span class="target" id="module-seismic.utils.fetch_func_from_str"></span><dl class="field-list">
+<span class="target" id="module-seismic.utils.fetch_func_from_str"></span><dl class="field-list simple">
 <dt class="field-odd">copyright<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
 </dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><blockquote>
-<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
-</div></blockquote>
-<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
@@ -6445,22 +6521,19 @@ function can be located in any module.</p>
 <section id="seismic-utils-miic-utils">
 <h3>seismic.utils.miic_utils<a class="headerlink" href="#seismic-utils-miic-utils" title="Permalink to this heading">#</a></h3>
 <p>Set of smaller functions.</p>
-<span class="target" id="module-seismic.utils.miic_utils"></span><dl class="field-list">
+<span class="target" id="module-seismic.utils.miic_utils"></span><dl class="field-list simple">
 <dt class="field-odd">copyright<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
 </dd>
 <dt class="field-even">license<span class="colon">:</span></dt>
-<dd class="field-even"><blockquote>
-<div><p>EUROPEAN UNION PUBLIC LICENCE v. 1.2</p>
-</div></blockquote>
-<p>(<a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12</a>)</p>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
 </dd>
 <dt class="field-odd">author<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Peter Makus (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
 </dd>
 </dl>
 <p>Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Wednesday, 19th June 2024 03:13:18 pm</p>
+Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="seismic.utils.miic_utils.trace_calc_az_baz_dist">
 <span class="sig-prename descclassname"><span class="pre">seismic.utils.miic_utils.</span></span><span class="sig-name descname"><span class="pre">trace_calc_az_baz_dist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stats1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Stats</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Stats</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/seismic/utils/miic_utils.html#trace_calc_az_baz_dist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.utils.miic_utils.trace_calc_az_baz_dist" title="Permalink to this definition">#</a></dt>
@@ -6553,7 +6626,7 @@ to each other.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="seismic.utils.miic_utils.resample_or_decimate">
-<span class="sig-prename descclassname"><span class="pre">seismic.utils.miic_utils.</span></span><span class="sig-name descname"><span class="pre">resample_or_decimate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Trace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_rate_new</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Stream</span></span></span><a class="reference internal" href="../../_modules/seismic/utils/miic_utils.html#resample_or_decimate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.utils.miic_utils.resample_or_decimate" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">seismic.utils.miic_utils.</span></span><span class="sig-name descname"><span class="pre">resample_or_decimate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">obspy.core.trace.Trace</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">obspy.core.stream.Stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_rate_new</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">obspy.core.stream.Stream</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">obspy.core.trace.Trace</span></span></span><a class="reference internal" href="../../_modules/seismic/utils/miic_utils.html#resample_or_decimate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.utils.miic_utils.resample_or_decimate" title="Permalink to this definition">#</a></dt>
 <dd><p>Decimates the data if the desired new sampling rate allows to do so.
 Else the signal will be interpolated (a lot slower).</p>
 <dl class="field-list simple">
@@ -6667,7 +6740,7 @@ corresponding keywords into an obspy header.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="seismic.utils.miic_utils.convert_utc_to_timestamp">
-<span class="sig-prename descclassname"><span class="pre">seismic.utils.miic_utils.</span></span><span class="sig-name descname"><span class="pre">convert_utc_to_timestamp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">utcdt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UTCDateTime</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/seismic/utils/miic_utils.html#convert_utc_to_timestamp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.utils.miic_utils.convert_utc_to_timestamp" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">seismic.utils.miic_utils.</span></span><span class="sig-name descname"><span class="pre">convert_utc_to_timestamp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">utcdt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">UTCDateTime</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">UTCDateTime</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/seismic/utils/miic_utils.html#convert_utc_to_timestamp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.utils.miic_utils.convert_utc_to_timestamp" title="Permalink to this definition">#</a></dt>
 <dd><p>Converts <code class="xref py py-class docutils literal notranslate"><span class="pre">obspy.core.utcdatetime.UTCDateTime</span></code> objects to floats.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -6803,7 +6876,7 @@ This simple functions flips the polarity if this should be the case.</p>
 <dt class="sig sig-object py" id="seismic.utils.miic_utils.nan_helper">
 <span class="sig-prename descclassname"><span class="pre">seismic.utils.miic_utils.</span></span><span class="sig-name descname"><span class="pre">nan_helper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/seismic/utils/miic_utils.html#nan_helper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.utils.miic_utils.nan_helper" title="Permalink to this definition">#</a></dt>
 <dd><p>Helper to handle indices and logical indices of NaNs.</p>
-<dl class="field-list simple">
+<dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>y</strong> (<em>1d np.ndarray</em>) – numpy array with possible NaNs</p>
 </dd>
@@ -6814,6 +6887,13 @@ can be called to translate the first output to indices.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Tuple[np.ndarray, np.ndarray]</p>
+</dd>
+<dt class="field-even">Example<span class="colon">:</span></dt>
+<dd class="field-even"><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># linear interpolation of NaNs</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">nans</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">nan_helper</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span><span class="p">[</span><span class="n">nans</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">x</span><span class="p">(</span><span class="n">nans</span><span class="p">),</span> <span class="n">x</span><span class="p">(</span><span class="o">~</span><span class="n">nans</span><span class="p">),</span> <span class="n">y</span><span class="p">[</span><span class="o">~</span><span class="n">nans</span><span class="p">])</span>
+</pre></div>
+</div>
 </dd>
 </dl>
 </dd></dl>
@@ -6907,6 +6987,13 @@ alphabetically to avoid ambiguities.</p>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="seismic.utils.miic_utils.utcdatetime2str">
+<span class="sig-prename descclassname"><span class="pre">seismic.utils.miic_utils.</span></span><span class="sig-name descname"><span class="pre">utcdatetime2str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">obspy.core.utcdatetime.UTCDateTime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span></span></span><a class="reference internal" href="../../_modules/seismic/utils/miic_utils.html#utcdatetime2str"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.utils.miic_utils.utcdatetime2str" title="Permalink to this definition">#</a></dt>
+<dd><p>Replace UTCDateTime object by str-representation in any object,
+notably dicts, lists, utcdatetimes.</p>
+</dd></dl>
+
 </section>
 <section id="seismic-utils-raw-analysis">
 <h3>seismic.utils.raw_analysis<a class="headerlink" href="#seismic-utils-raw-analysis" title="Permalink to this heading">#</a></h3>
@@ -6972,6 +7059,105 @@ series. Does the following steps:
 </dd></dl>
 
 </section>
+<section id="seismic-logfactory">
+<h3>seismic.logfactory<a class="headerlink" href="#seismic-logfactory" title="Permalink to this heading">#</a></h3>
+<p>Logging across the package</p>
+<span class="target" id="module-seismic.logfactory"></span><dl class="field-list simple">
+<dt class="field-odd">copyright<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The SeisMIC development team (<a class="reference external" href="mailto:makus&#37;&#52;&#48;gfz-potsdam&#46;de">makus<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>).</p>
+</dd>
+<dt class="field-even">license<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12">EUROPEAN UNION PUBLIC LICENCE v. 1.2</a></p>
+</dd>
+<dt class="field-odd">author<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Johanna Lehr (<a class="reference external" href="mailto:jlehr&#37;&#52;&#48;gfz&#46;de">jlehr<span>&#64;</span>gfz<span>&#46;</span>de</a>)</p>
+</dd>
+</dl>
+<p>Created: Friday, 20th December 2024 14:00:00 pm
+Last Modified: Friday, 11th April 2025 03:25:38 pm</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="seismic.logfactory.create_logger">
+<span class="sig-prename descclassname"><span class="pre">seismic.logfactory.</span></span><span class="sig-name descname"><span class="pre">create_logger</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Logger</span></span></span><a class="reference internal" href="../../_modules/seismic/logfactory.html#create_logger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.logfactory.create_logger" title="Permalink to this definition">#</a></dt>
+<dd><p>Set logger for the package.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seismic.logfactory.set_consoleHandler">
+<span class="sig-prename descclassname"><span class="pre">seismic.logfactory.</span></span><span class="sig-name descname"><span class="pre">set_consoleHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loglevel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DEBUG'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlername</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'console'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/logfactory.html#set_consoleHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.logfactory.set_consoleHandler" title="Permalink to this definition">#</a></dt>
+<dd><p>Add StreamHandler (stdout) using our our formatter.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seismic.logfactory.set_fileHandler">
+<span class="sig-prename descclassname"><span class="pre">seismic.logfactory.</span></span><span class="sig-name descname"><span class="pre">set_fileHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loglevel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DEBUG'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlername</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'file'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/logfactory.html#set_fileHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.logfactory.set_fileHandler" title="Permalink to this definition">#</a></dt>
+<dd><p>Add FileHandler using our formatter.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seismic.logfactory.get_handlers_by_name">
+<span class="sig-prename descclassname"><span class="pre">seismic.logfactory.</span></span><span class="sig-name descname"><span class="pre">get_handlers_by_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logger</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../_modules/seismic/logfactory.html#get_handlers_by_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.logfactory.get_handlers_by_name" title="Permalink to this definition">#</a></dt>
+<dd><p>Returns dictionary with handler names as keys and list of handlers as
+values.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seismic.logfactory.get_duplicate_handlers">
+<span class="sig-prename descclassname"><span class="pre">seismic.logfactory.</span></span><span class="sig-name descname"><span class="pre">get_duplicate_handlers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logger</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../_modules/seismic/logfactory.html#get_duplicate_handlers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.logfactory.get_duplicate_handlers" title="Permalink to this definition">#</a></dt>
+<dd><p>Returns dictionary with handler names as keys and list of handlers as
+values if there are more than one handler with the same name.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="seismic.logfactory.remove_duplicate_handlers">
+<span class="sig-prename descclassname"><span class="pre">seismic.logfactory.</span></span><span class="sig-name descname"><span class="pre">remove_duplicate_handlers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logger</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/logfactory.html#remove_duplicate_handlers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.logfactory.remove_duplicate_handlers" title="Permalink to this definition">#</a></dt>
+<dd><p>Remove all but the first handler with the same name.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="seismic.logfactory.LoggingMPIBaseClass">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">seismic.logfactory.</span></span><span class="sig-name descname"><span class="pre">LoggingMPIBaseClass</span></span><a class="reference internal" href="../../_modules/seismic/logfactory.html#LoggingMPIBaseClass"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.logfactory.LoggingMPIBaseClass" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class for logging with MPI support.</p>
+<p>This class is intended to be used as a base class for classes that need
+a logger with MPI support. It provides a logger with default handlers which
+log to a file and to the console.
+The filename is created using the class name, the rank of the MPI process
+and the current time. Each process has its own log file.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For developers:
+This class serves as base class for classes that need a logger, such as
+<a class="reference internal" href="#seismic.correlate.correlate.Correlator" title="seismic.correlate.correlate.Correlator"><code class="xref py py-class docutils literal notranslate"><span class="pre">seismic.correlate.correlate.Correlator</span></code></a> or
+class:<cite>seismic.monitor.Monitor</cite>. It must be initialized early in the
+__init__() function of the derived class. The logger is set up with the
+function <a class="reference internal" href="#seismic.logfactory.LoggingMPIBaseClass.set_logger" title="seismic.logfactory.LoggingMPIBaseClass.set_logger"><code class="xref py py-func docutils literal notranslate"><span class="pre">set_logger()</span></code></a>. In the child classes it is recommened to
+derive the arguments of <a class="reference internal" href="#seismic.logfactory.LoggingMPIBaseClass.set_logger" title="seismic.logfactory.LoggingMPIBaseClass.set_logger"><code class="xref py py-func docutils literal notranslate"><span class="pre">set_logger()</span></code></a> from the user parameters
+dict (or yaml file), e.g. the log level and directory. The filename
+format is currently fixed and not derived from the user parameters.</p>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="seismic.logfactory.LoggingMPIBaseClass.set_logger">
+<span class="sig-name descname"><span class="pre">set_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loglevel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DEBUG'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logdir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'log'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename_fmt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'{classname}-r{rank:03d}_{exectimestr}.log'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/seismic/logfactory.html#LoggingMPIBaseClass.set_logger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#seismic.logfactory.LoggingMPIBaseClass.set_logger" title="Permalink to this definition">#</a></dt>
+<dd><p>Set logger including default handlers.</p>
+<p><strong>Only function to be executed after initialization!</strong></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>loglevel</strong> (<em>str</em><em> [</em><em>&quot;WARNING&quot;</em><em>, </em><em>&quot;INFO&quot;</em><em>, </em><em>&quot;DEBUG&quot;</em><em>]</em>) – Level of verbosity of log messages. See <code class="xref py py-mod docutils literal notranslate"><span class="pre">logging</span></code>
+for details.</p></li>
+<li><p><strong>logdir</strong> (<em>str</em>) – directory of the log files.</p></li>
+<li><p><strong>filename_fmt</strong> (<em>str</em>) – string using ‘format()’, containing variables
+<cite>rank</cite>, <cite>classname</cite> and <cite>exectimestr</cite>. <cite>rank</cite> must be a digit
+format.
+Default is “{classname}-r”+{rank:03d}+”_{exectimestr}.log”</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
 </section>
 </section>
 
@@ -7032,12 +7218,19 @@ series. Does the following steps:
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.trace_data.waveform.Store_Client.compute_spectrogram"><code class="docutils literal notranslate"><span class="pre">Store_Client.compute_spectrogram()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.trace_data.waveform.Local_Store_Client"><code class="docutils literal notranslate"><span class="pre">Local_Store_Client</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.trace_data.waveform.Local_Store_Client.read_inventory"><code class="docutils literal notranslate"><span class="pre">Local_Store_Client.read_inventory()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.trace_data.waveform.Local_Store_Client.download_waveforms_mdl"><code class="docutils literal notranslate"><span class="pre">Local_Store_Client.download_waveforms_mdl()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.trace_data.waveform.FS_Client"><code class="docutils literal notranslate"><span class="pre">FS_Client</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.trace_data.waveform.FS_Client.get_waveforms"><code class="docutils literal notranslate"><span class="pre">FS_Client.get_waveforms()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.trace_data.waveform.read_from_filesystem"><code class="docutils literal notranslate"><span class="pre">read_from_filesystem()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.trace_data.waveform.get_day_in_folder"><code class="docutils literal notranslate"><span class="pre">get_day_in_folder()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.trace_data.waveform.get_sdsfmtst_with_doy_as_wildcard"><code class="docutils literal notranslate"><span class="pre">get_sdsfmtst_with_doy_as_wildcard()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.trace_data.waveform.get_abs_sds_path"><code class="docutils literal notranslate"><span class="pre">get_abs_sds_path()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -7072,6 +7265,7 @@ series. Does the following steps:
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.correlate.stream.CorrBulk.envelope"><code class="docutils literal notranslate"><span class="pre">CorrBulk.envelope()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.correlate.stream.CorrBulk.filter"><code class="docutils literal notranslate"><span class="pre">CorrBulk.filter()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.correlate.stream.CorrBulk.extract_trace"><code class="docutils literal notranslate"><span class="pre">CorrBulk.extract_trace()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.correlate.stream.CorrBulk.extract_trace_time_window"><code class="docutils literal notranslate"><span class="pre">CorrBulk.extract_trace_time_window()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.correlate.stream.CorrBulk.extract_multi_trace"><code class="docutils literal notranslate"><span class="pre">CorrBulk.extract_multi_trace()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.correlate.stream.CorrBulk.find_clock_shift"><code class="docutils literal notranslate"><span class="pre">CorrBulk.find_clock_shift()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.correlate.stream.CorrBulk.measure_shift"><code class="docutils literal notranslate"><span class="pre">CorrBulk.measure_shift()</span></code></a></li>
@@ -7357,11 +7551,25 @@ series. Does the following steps:
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.utils.miic_utils.interpolate_gaps"><code class="docutils literal notranslate"><span class="pre">interpolate_gaps()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.utils.miic_utils.interpolate_gaps_st"><code class="docutils literal notranslate"><span class="pre">interpolate_gaps_st()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.utils.miic_utils.sort_combinations_alphabetically"><code class="docutils literal notranslate"><span class="pre">sort_combinations_alphabetically()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.utils.miic_utils.utcdatetime2str"><code class="docutils literal notranslate"><span class="pre">utcdatetime2str()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic-utils-raw-analysis">seismic.utils.raw_analysis</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.utils.raw_analysis.spct_series_welch"><code class="docutils literal notranslate"><span class="pre">spct_series_welch()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.utils.raw_analysis.preprocess"><code class="docutils literal notranslate"><span class="pre">preprocess()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic-logfactory">seismic.logfactory</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.logfactory.create_logger"><code class="docutils literal notranslate"><span class="pre">create_logger()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.logfactory.set_consoleHandler"><code class="docutils literal notranslate"><span class="pre">set_consoleHandler()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.logfactory.set_fileHandler"><code class="docutils literal notranslate"><span class="pre">set_fileHandler()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.logfactory.get_handlers_by_name"><code class="docutils literal notranslate"><span class="pre">get_handlers_by_name()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.logfactory.get_duplicate_handlers"><code class="docutils literal notranslate"><span class="pre">get_duplicate_handlers()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.logfactory.remove_duplicate_handlers"><code class="docutils literal notranslate"><span class="pre">remove_duplicate_handlers()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.logfactory.LoggingMPIBaseClass"><code class="docutils literal notranslate"><span class="pre">LoggingMPIBaseClass</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#seismic.logfactory.LoggingMPIBaseClass.set_logger"><code class="docutils literal notranslate"><span class="pre">LoggingMPIBaseClass.set_logger()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -7403,7 +7611,7 @@ series. Does the following steps:
 
   <p class="copyright">
     
-      © Copyright 2023, The SeisMIC development team..
+      © Copyright 2025, The SeisMIC development team..
       <br/>
     
   </p>

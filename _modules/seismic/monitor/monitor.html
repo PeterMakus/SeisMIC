@@ -465,25 +465,25 @@ document.write(`
 <span class="sd">:copyright:</span>
 <span class="sd">    The SeisMIC development team (makus@gfz-potsdam.de).</span>
 <span class="sd">:license:</span>
-<span class="sd">    EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
-<span class="sd">   (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)</span>
+<span class="sd">    `EUROPEAN UNION PUBLIC LICENCE v. 1.2</span>
+<span class="sd">    &lt;https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12&gt;`_</span>
 <span class="sd">:author:</span>
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Thursday, 3rd June 2021 04:15:57 pm</span>
-<span class="sd">Last Modified: Tuesday, 9th July 2024 04:48:54 pm</span>
+<span class="sd">Last Modified: Monday, 4th August 2025 11:30:40 am</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">logging.handlers</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Iterator</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">import</span> <span class="nn">yaml</span>
 <span class="kn">import</span> <span class="nn">fnmatch</span>
 <span class="kn">from</span> <span class="nn">glob</span> <span class="kn">import</span> <span class="n">glob</span>
 
-<span class="kn">from</span> <span class="nn">mpi4py</span> <span class="kn">import</span> <span class="n">MPI</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">UTCDateTime</span>
 <span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
@@ -491,12 +491,15 @@ document.write(`
 <span class="kn">from</span> <span class="nn">seismic.db.corr_hdf5</span> <span class="kn">import</span> <span class="n">CorrelationDataBase</span><span class="p">,</span> <span class="n">h5_FMTSTR</span>
 <span class="kn">from</span> <span class="nn">seismic.monitor.dv</span> <span class="kn">import</span> <span class="n">DV</span><span class="p">,</span> <span class="n">read_dv</span>
 <span class="kn">from</span> <span class="nn">seismic.monitor.wfc</span> <span class="kn">import</span> <span class="n">WFC</span>
-<span class="kn">from</span> <span class="nn">seismic.utils.miic_utils</span> <span class="kn">import</span> <span class="n">log_lvl</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">logfactory</span>
+
+<span class="n">parentlogger</span> <span class="o">=</span> <span class="n">logfactory</span><span class="o">.</span><span class="n">create_logger</span><span class="p">()</span>
+<span class="n">module_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">parentlogger</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s2">&quot;.monitor&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="Monitor"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.Monitor">[docs]</a><span class="k">class</span> <span class="nc">Monitor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="Monitor"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.Monitor">[docs]</a><span class="k">class</span> <span class="nc">Monitor</span><span class="p">(</span><span class="n">logfactory</span><span class="o">.</span><span class="n">LoggingMPIBaseClass</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Object that handles the computation of seismic velocity changes.</span>
 <span class="sd">        This will access correlations that have been computed previously with</span>
 <span class="sd">        the :class:`~seismic.correlate.correlate.Correlator` class.</span>
@@ -519,60 +522,42 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">indir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
             <span class="n">options</span><span class="p">[</span><span class="s1">&#39;proj_dir&#39;</span><span class="p">],</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;co&#39;</span><span class="p">][</span><span class="s1">&#39;subdir&#39;</span><span class="p">]</span>
         <span class="p">)</span>
+        <span class="n">logdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proj_dir</span><span class="p">,</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;log_subdir&#39;</span><span class="p">])</span>
+        <span class="n">loglvl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;log_level&#39;</span><span class="p">]</span>
 
-        <span class="c1"># init MPI</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">comm</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">psize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">Get_size</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">()</span>
+        <span class="c1"># init MPI, logging</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_logger</span><span class="p">(</span><span class="n">loglvl</span><span class="p">,</span> <span class="n">logdir</span><span class="p">)</span>
+        <span class="n">warnlog</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;py.warnings&#39;</span><span class="p">)</span>
+        <span class="n">warnlog</span><span class="o">.</span><span class="n">addHandler</span><span class="p">([</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">handlers</span> <span class="k">if</span>
+                            <span class="nb">isinstance</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">)][</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Warn logger has handler: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">warnlog</span><span class="o">.</span><span class="n">hasHandlers</span><span class="p">()))</span>
 
         <span class="c1"># directories:</span>
-        <span class="n">logdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proj_dir</span><span class="p">,</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;log_subdir&#39;</span><span class="p">])</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outdir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">logdir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-        <span class="c1"># Logging - rank dependent</span>
-        <span class="n">loglvl</span> <span class="o">=</span> <span class="n">log_lvl</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;log_level&#39;</span><span class="p">]]</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">tstr</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">-%H:%M&#39;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">tstr</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">tstr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">tstr</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="c1"># replace colon in tstr</span>
-        <span class="n">tstr</span> <span class="o">=</span> <span class="n">tstr</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span>
-            <span class="s2">&quot;seismic.monitor.Monitor</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">loglvl</span><span class="p">)</span>
-
-        <span class="c1"># also catch the warnings</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">captureWarnings</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">warnlog</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;py.warnings&#39;</span><span class="p">)</span>
-        <span class="n">fh</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-            <span class="n">logdir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;monitor</span><span class="si">{</span><span class="n">tstr</span><span class="si">}</span><span class="s1">rank</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
-        <span class="n">fh</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">loglvl</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
-        <span class="n">warnlog</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
-        <span class="n">fmt</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span>
-            <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> - </span><span class="si">%(levelname)s</span><span class="s1"> - </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
-        <span class="n">fh</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
-        <span class="n">consoleHandler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">()</span>
-        <span class="n">consoleHandler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">consoleHandler</span><span class="p">)</span>
 
         <span class="c1"># Write the options dictionary to the log file</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">tstr</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">-%H-%M&#39;</span><span class="p">)</span>
             <span class="n">opt_dump</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
             <span class="c1"># json cannot write the UTCDateTime objects that might be in here</span>
-            <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">opt_dump</span><span class="p">[</span><span class="s1">&#39;co&#39;</span><span class="p">][</span><span class="s1">&#39;preProcessing&#39;</span><span class="p">]:</span>
-                <span class="k">if</span> <span class="s1">&#39;stream_mask_at_utc&#39;</span> <span class="ow">in</span> <span class="n">step</span><span class="p">[</span><span class="s1">&#39;function&#39;</span><span class="p">]:</span>
-                    <span class="n">startsstr</span> <span class="o">=</span> <span class="p">[</span>
-                        <span class="n">t</span><span class="o">.</span><span class="n">format_fissures</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">step</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">][</span><span class="s1">&#39;starts&#39;</span><span class="p">]]</span>
-                    <span class="n">step</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">][</span><span class="s1">&#39;starts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">startsstr</span>
-                    <span class="k">if</span> <span class="s1">&#39;ends&#39;</span> <span class="ow">in</span> <span class="n">step</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">]:</span>
-                        <span class="n">endsstr</span> <span class="o">=</span> <span class="p">[</span>
-                            <span class="n">t</span><span class="o">.</span><span class="n">format_fissures</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">step</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">][</span><span class="s1">&#39;ends&#39;</span><span class="p">]]</span>
-                        <span class="n">step</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">][</span><span class="s1">&#39;ends&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endsstr</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">opt_dump</span><span class="p">[</span><span class="s1">&#39;co&#39;</span><span class="p">][</span><span class="s1">&#39;preProcessing&#39;</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="s1">&#39;stream_mask_at_utc&#39;</span> <span class="ow">in</span> <span class="n">step</span><span class="p">[</span><span class="s1">&#39;function&#39;</span><span class="p">]:</span>
+                        <span class="n">startsstr</span> <span class="o">=</span> <span class="p">[</span>
+                            <span class="n">t</span><span class="o">.</span><span class="n">format_fissures</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">step</span><span class="p">[</span>
+                                <span class="s1">&#39;args&#39;</span><span class="p">][</span><span class="s1">&#39;starts&#39;</span><span class="p">]]</span>
+                        <span class="n">step</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">][</span><span class="s1">&#39;starts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">startsstr</span>
+                        <span class="k">if</span> <span class="s1">&#39;ends&#39;</span> <span class="ow">in</span> <span class="n">step</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">]:</span>
+                            <span class="n">endsstr</span> <span class="o">=</span> <span class="p">[</span>
+                                <span class="n">t</span><span class="o">.</span><span class="n">format_fissures</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">step</span><span class="p">[</span>
+                                    <span class="s1">&#39;args&#39;</span><span class="p">][</span><span class="s1">&#39;ends&#39;</span><span class="p">]]</span>
+                            <span class="n">step</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">][</span><span class="s1">&#39;ends&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">endsstr</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="c1"># no preProcessing in co</span>
+                <span class="k">pass</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
                     <span class="n">logdir</span><span class="p">,</span> <span class="s1">&#39;params</span><span class="si">%s</span><span class="s1">.txt&#39;</span> <span class="o">%</span> <span class="n">tstr</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
                 <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">opt_dump</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
@@ -582,7 +567,7 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">_find_available_corrs</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_starttimes_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns numpy array of starttimes and endtimes, for which each data</span>
 <span class="sd">        point of velocity change should be computed.</span>
 
@@ -599,7 +584,7 @@ document.write(`
         <span class="k">return</span> <span class="n">starttimes</span><span class="p">,</span> <span class="n">endtimes</span>
 
     <span class="k">def</span> <span class="nf">_find_available_corrs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        1. Finds the files of available correlations.</span>
 <span class="sd">        2. Out of those files, it will extract the ones that are requested.</span>
 
@@ -620,7 +605,7 @@ document.write(`
 <div class="viewcode-block" id="Monitor.compute_velocity_change"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.Monitor.compute_velocity_change">[docs]</a>    <span class="k">def</span> <span class="nf">compute_velocity_change</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">corr_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
             <span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ref_trcs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes the velocity change for a cross (or auto) correlation</span>
 <span class="sd">        time-series. This process is executed &quot;per station combination&quot;.</span>
 <span class="sd">        Meaning, several processes of this method can be started via MPI</span>
@@ -786,7 +771,7 @@ document.write(`
                 <span class="n">normalize_simmat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sim_mat_Clim</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="Monitor.compute_velocity_change_bulk"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.Monitor.compute_velocity_change_bulk">[docs]</a>    <span class="k">def</span> <span class="nf">compute_velocity_change_bulk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute the velocity change for all correlations using MPI.</span>
 <span class="sd">        The parameters for the correlation defined in the *yaml* file will be</span>
 <span class="sd">        used.</span>
@@ -828,7 +813,7 @@ document.write(`
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1"> for file </span><span class="si">{</span><span class="n">corr_file</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Monitor.compute_components_average"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.Monitor.compute_components_average">[docs]</a>    <span class="k">def</span> <span class="nf">compute_components_average</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;AutoComponents&#39;</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Averages the Similarity matrix of different velocity changes in</span>
 <span class="sd">        the whole dv folder. Based upon those values, new dvs and correlations</span>
 <span class="sd">        are computed.</span>
@@ -943,7 +928,7 @@ document.write(`
                     <span class="n">normalize_simmat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sim_mat_Clim</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="Monitor.compute_waveform_coherence_bulk"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.Monitor.compute_waveform_coherence_bulk">[docs]</a>    <span class="k">def</span> <span class="nf">compute_waveform_coherence_bulk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute the WFC for all specified (params file) correlations using MPI.</span>
 <span class="sd">        The parameters for the correlation defined in the *yaml* file will be</span>
 <span class="sd">        used.</span>
@@ -1027,8 +1012,8 @@ document.write(`
 
 <div class="viewcode-block" id="Monitor.compute_waveform_coherence"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.Monitor.compute_waveform_coherence">[docs]</a>    <span class="k">def</span> <span class="nf">compute_waveform_coherence</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">corr_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span>
-            <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WFC</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+            <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">WFC</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes the waveform coherence corresponding to one correlation (i.e.,</span>
 <span class="sd">        one single file).</span>
 
@@ -1183,7 +1168,7 @@ document.write(`
 <div class="viewcode-block" id="make_time_list"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.make_time_list">[docs]</a><span class="k">def</span> <span class="nf">make_time_list</span><span class="p">(</span>
     <span class="n">start_date</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">end_date</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">date_inc</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">win_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Returns numpy array of starttimes and endtimes, for which each data point</span>
 <span class="sd">    of velocity change should be computed.</span>
 
@@ -1221,7 +1206,7 @@ document.write(`
 <div class="viewcode-block" id="corr_find_filter"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.corr_find_filter">[docs]</a><span class="k">def</span> <span class="nf">corr_find_filter</span><span class="p">(</span>
     <span class="n">indir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">net</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
         <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    1. Finds the files of available correlations.</span>
 <span class="sd">    2. Out of those files, it will extract the ones that are requested.</span>
 
@@ -1286,7 +1271,7 @@ document.write(`
 <div class="viewcode-block" id="correct_dv_shift"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.correct_dv_shift">[docs]</a><span class="k">def</span> <span class="nf">correct_dv_shift</span><span class="p">(</span>
     <span class="n">dv0</span><span class="p">:</span> <span class="n">DV</span><span class="p">,</span> <span class="n">dv1</span><span class="p">:</span> <span class="n">DV</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span>
         <span class="n">n_overlap</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">DV</span><span class="p">,</span> <span class="n">DV</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Shift dv0 with respect to dv1, so that the same times will have the same</span>
 <span class="sd">    value.</span>
 
@@ -1369,7 +1354,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="correct_time_shift_several"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.correct_time_shift_several">[docs]</a><span class="k">def</span> <span class="nf">correct_time_shift_several</span><span class="p">(</span><span class="n">dvs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DV</span><span class="p">],</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n_overlap</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Suppose you have a number of dv/v time series from the same location,</span>
 <span class="sd">    but station codes changed several times. To stitch these together,</span>
 <span class="sd">    this code will iteratively shift each progressive time-series to the</span>
@@ -1418,7 +1403,7 @@ document.write(`
 
 <div class="viewcode-block" id="average_components_mem_save"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.average_components_mem_save">[docs]</a><span class="k">def</span> <span class="nf">average_components_mem_save</span><span class="p">(</span>
         <span class="n">dvs</span><span class="p">:</span> <span class="n">Generator</span><span class="p">[</span><span class="n">DV</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">save_scatter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Averages the Similariy matrix of the DV objects. Based on those,</span>
 <span class="sd">    it computes a new dv value and a new correlation value. Less memory intense</span>
 <span class="sd">    but slower than :func:`average_components`. Should be used if you run</span>
@@ -1501,7 +1486,7 @@ document.write(`
     <span class="n">dvs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DV</span><span class="p">],</span> <span class="n">save_scatter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">correct_shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">correct_shift_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span>
         <span class="n">correct_shift_overlap</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Averages the Similariy matrix of the DV objects. Based on those,</span>
 <span class="sd">    it computes a new dv value and a new correlation value.</span>
 
@@ -1581,7 +1566,7 @@ document.write(`
 <div class="viewcode-block" id="average_dvs_by_coords"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.average_dvs_by_coords">[docs]</a><span class="k">def</span> <span class="nf">average_dvs_by_coords</span><span class="p">(</span>
     <span class="n">dvs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DV</span><span class="p">],</span> <span class="n">lat</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">lon</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
         <span class="n">el</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">1e6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">),</span> <span class="n">return_std</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DV</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Averages the Similariy matrix of the DV objects if they are inside of the</span>
 <span class="sd">    queried coordionates. Based on those,</span>
 <span class="sd">    it computes a new dv value and a new correlation value.</span>
@@ -1632,7 +1617,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="average_components_wfc"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.monitor.monitor.average_components_wfc">[docs]</a><span class="k">def</span> <span class="nf">average_components_wfc</span><span class="p">(</span><span class="n">wfcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">WFC</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">WFC</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Averages the Similariy matrix of the three DV objects. Based on those,</span>
 <span class="sd">    it computes a new dv value and a new correlation value.</span>
 
@@ -1698,7 +1683,7 @@ document.write(`
 
   <p class="copyright">
     
-      © Copyright 2023, The SeisMIC development team..
+      © Copyright 2025, The SeisMIC development team..
       <br/>
     
   </p>

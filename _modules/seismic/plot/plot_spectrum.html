@@ -473,7 +473,7 @@ document.write(`
 <span class="sd">   Peter Makus (makus@gfz-potsdam.de)</span>
 
 <span class="sd">Created: Wednesday, 21st June 2023 04:54:20 pm</span>
-<span class="sd">Last Modified: Wednesday, 7th August 2024 02:39:58 pm</span>
+<span class="sd">Last Modified: Monday, 7th July 2025 11:43:50 am</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">import</span> <span class="nn">os</span>
@@ -496,10 +496,10 @@ document.write(`
 
 <div class="viewcode-block" id="plot_spct_series"><a class="viewcode-back" href="../../../modules/API/API.html#seismic.plot.plot_spectrum.plot_spct_series">[docs]</a><span class="k">def</span> <span class="nf">plot_spct_series</span><span class="p">(</span>
     <span class="n">S</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">norm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">norm_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">flim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">norm_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">flim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">tlim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">cmap</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;batlow&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">vmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_scale</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Plots a spectral series.</span>
 
 <span class="sd">    :param S: A spectral series with dim=2.</span>
@@ -513,7 +513,7 @@ document.write(`
 <span class="sd">    :type norm: str, optional</span>
 <span class="sd">    :param norm_method: Normation method to use.</span>
 <span class="sd">        Either &#39;linalg&#39; (i.e., length of vector),</span>
-<span class="sd">        &#39;mean&#39;, or &#39;median&#39;.</span>
+<span class="sd">        &#39;mean&#39;, &#39;max&#39;, or &#39;median&#39;.</span>
 <span class="sd">    :param title: Plot title, defaults to None</span>
 <span class="sd">    :type title: str, optional</span>
 <span class="sd">    :param outfile: location to save the plot to, defaults to None</span>
@@ -521,10 +521,22 @@ document.write(`
 <span class="sd">    :param fmt: Format to save figure, defaults to &#39;pdf&#39;</span>
 <span class="sd">    :type fmt: str, optional</span>
 <span class="sd">    :param flim: Limit Frequency axis and Normalisation to the values</span>
-<span class="sd">        in the given window</span>
-<span class="sd">    :type flim: Tuple[int, int]</span>
+<span class="sd">        in the given window. Can be a tuple of floats or a single float.</span>
+<span class="sd">        If a single float is given, a 2D plot is created.</span>
+<span class="sd">    :type flim: Tuple[int, int] | float, optional</span>
 <span class="sd">    :param tlim: Limit time axis to the values in the given window</span>
-<span class="sd">    :type tlim: Tuple[datetime, datetime]</span>
+<span class="sd">    :type tlim: Tuple[datetime, datetime], optional</span>
+<span class="sd">    :param cmap: Colormap to use, defaults to &#39;batlow&#39;</span>
+<span class="sd">    :type cmap: str, optional</span>
+<span class="sd">    :param vmin: Minimum value for color normalization, defaults to None</span>
+<span class="sd">    :type vmin: float, optional</span>
+<span class="sd">    :param vmax: Maximum value for color normalization, defaults to None</span>
+<span class="sd">    :type vmax: float, optional</span>
+<span class="sd">    :param log_scale: Use logarithmic scale for the color map,</span>
+<span class="sd">        defaults to False</span>
+<span class="sd">    :type log_scale: bool, optional</span>
+<span class="sd">    :return: The axis object of the plot.</span>
+<span class="sd">    :rtype: plt.Axes</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Mask nans</span>
     <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_invalid</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
@@ -541,8 +553,10 @@ document.write(`
 
     <span class="k">if</span> <span class="n">log_scale</span><span class="p">:</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">flim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">flim</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
+        <span class="c1"># Call 1D plotting function</span>
+        <span class="k">return</span> <span class="n">_plot_spct_series_1d</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">flim</span><span class="p">,</span> <span class="n">tlim</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">flim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="n">flim</span><span class="p">)</span>
         <span class="n">ii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">f</span><span class="o">-</span><span class="n">flim</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
         <span class="n">jj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">f</span><span class="o">-</span><span class="n">flim</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span> <span class="o">+</span> <span class="mi">1</span>
@@ -567,18 +581,22 @@ document.write(`
         <span class="k">if</span> <span class="n">norm_method</span> <span class="o">==</span> <span class="s1">&#39;linalg&#39;</span><span class="p">:</span>
             <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span>
         <span class="k">elif</span> <span class="n">norm_method</span> <span class="o">==</span> <span class="s1">&#39;mean&#39;</span><span class="p">:</span>
-            <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span>
+            <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span>
         <span class="k">elif</span> <span class="n">norm_method</span> <span class="o">==</span> <span class="s1">&#39;median&#39;</span><span class="p">:</span>
-            <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span>
+            <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">norm_method</span> <span class="o">==</span> <span class="s1">&#39;max&#39;</span><span class="p">:</span>
+            <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Normalisation method </span><span class="si">%s</span><span class="s1"> unkown.&#39;</span> <span class="o">%</span> <span class="n">norm_method</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s1">&#39;t&#39;</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">norm_method</span> <span class="o">==</span> <span class="s1">&#39;linalg&#39;</span><span class="p">:</span>
             <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
         <span class="k">elif</span> <span class="n">norm_method</span> <span class="o">==</span> <span class="s1">&#39;mean&#39;</span><span class="p">:</span>
-            <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+            <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
         <span class="k">elif</span> <span class="n">norm_method</span> <span class="o">==</span> <span class="s1">&#39;median&#39;</span><span class="p">:</span>
-            <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+            <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">norm_method</span> <span class="o">==</span> <span class="s1">&#39;max&#39;</span><span class="p">:</span>
+            <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Normalisation method </span><span class="si">%s</span><span class="s1"> unkown.&#39;</span> <span class="o">%</span> <span class="n">norm_method</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -601,6 +619,57 @@ document.write(`
         <span class="n">mdates</span><span class="o">.</span><span class="n">AutoDateFormatter</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">get_axes_locator</span><span class="p">()))</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">rotation</span><span class="o">=</span><span class="mi">35</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ax</span></div>
+
+
+<span class="k">def</span> <span class="nf">_plot_spct_series_1d</span><span class="p">(</span>
+    <span class="n">S</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">freq</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tlim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plots a 1D spectral series for a specific frequency.</span>
+
+<span class="sd">    :param S: A spectral series with dim=2.</span>
+<span class="sd">    :type S: np.ndarray</span>
+<span class="sd">    :param f: Vector containing frequencies (Hz)</span>
+<span class="sd">    :type f: np.ndarray</span>
+<span class="sd">    :param t: Vector containing times as UTCDateTimes</span>
+<span class="sd">    :type t: np.ndarray</span>
+<span class="sd">    :param freq: Specific frequency to plot</span>
+<span class="sd">    :type freq: float</span>
+<span class="sd">    :param tlim: Limit time axis to the values in the given window</span>
+<span class="sd">    :type tlim: Tuple[datetime, datetime], optional</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Find the index of the closest frequency</span>
+    <span class="n">freq_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">f</span> <span class="o">-</span> <span class="n">freq</span><span class="p">))</span>
+
+    <span class="c1"># Extract the spectral series for the specific frequency</span>
+    <span class="n">S_1d</span> <span class="o">=</span> <span class="n">S</span><span class="p">[</span><span class="n">freq_idx</span><span class="p">,</span> <span class="p">:]</span>
+
+    <span class="c1"># Convert times to datetime</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">tt</span><span class="p">)</span><span class="o">.</span><span class="n">datetime</span> <span class="k">for</span> <span class="n">tt</span> <span class="ow">in</span> <span class="n">t</span><span class="p">])</span>
+
+    <span class="c1"># Apply time limits if provided</span>
+    <span class="k">if</span> <span class="n">tlim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="n">tlim</span><span class="p">)</span>
+        <span class="n">ii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="n">tlim</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">jj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="n">tlim</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">ii</span><span class="p">:</span><span class="n">jj</span><span class="p">]</span>
+        <span class="n">S_1d</span> <span class="o">=</span> <span class="n">S_1d</span><span class="p">[</span><span class="n">ii</span><span class="p">:</span><span class="n">jj</span><span class="p">]</span>
+
+    <span class="n">set_mpl_params</span><span class="p">()</span>
+
+    <span class="c1"># Plot the 1D spectral series</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">S_1d</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">freq</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> Hz&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Amplitude&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># y-axis in log scale</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">mdates</span><span class="o">.</span><span class="n">AutoDateLocator</span><span class="p">())</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span>
+        <span class="n">mdates</span><span class="o">.</span><span class="n">AutoDateFormatter</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">get_axes_locator</span><span class="p">()))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">rotation</span><span class="o">=</span><span class="mi">35</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ax</span>
 </pre></div>
 
                 </article>
@@ -642,7 +711,7 @@ document.write(`
 
   <p class="copyright">
     
-      © Copyright 2023, The SeisMIC development team..
+      © Copyright 2025, The SeisMIC development team..
       <br/>
     
   </p>
