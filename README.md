@@ -1,6 +1,6 @@
 <img src="https://github.com/PeterMakus/SeisMIC/raw/main/docs/source/figures/seismic_logo_small.png" alt="SeisMIC logo" width="600"/>
 
-[![Build Status](https://github.com/PeterMakus/SeisMIC/actions/workflows/pytest.yml/badge.svg)](https://github.com/PeterMakus/SeisMIC/actions/workflows/pytest.yml?branch=main)
+[![Build Status](https://github.com/PeterMakus/SeisMIC/actions/workflows/pytest.yaml/badge.svg)](https://github.com/PeterMakus/SeisMIC/actions/workflows/pytest.yaml?branch=main)
 [![Documentation Status](https://github.com/PeterMakus/SeisMIC/actions/workflows/deploy_gh_pages.yml/badge.svg)](https://github.com/PeterMakus/SeisMIC/actions/workflows/deploy_gh_pages.yml)
 [![License: EUPL v1.2](https://img.shields.io/badge/license-EUPL--1.2-blue)](https://joinup.ec.europa.eu/collection/eupl/introduction-eupl-licence)
 [![codecov](https://codecov.io/gh/PeterMakus/SeisMIC/branch/main/graph/badge.svg?token=DYVHODB6LN)](https://codecov.io/gh/PeterMakus/SeisMIC)
