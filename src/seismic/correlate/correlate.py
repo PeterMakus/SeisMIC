@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 3rd July 2025 10:48:22 am
+Last Modified: Tuesday, 2nd September 2025 04:53:56 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from warnings import warn
@@ -717,7 +717,11 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
         ######################################
         # collect results
-        self.comm.Allreduce(MPI.IN_PLACE, [B, MPI.FLOAT], op=MPI.SUM)
+        # ensure B is complex64 and contiguous
+        B = np.ascontiguousarray(
+            B, dtype=np.complex64)
+        # perform complex reduction
+        self.comm.Allreduce(MPI.IN_PLACE, [B, MPI.COMPLEX], op=MPI.SUM)
 
         ######################################
         # correlation
