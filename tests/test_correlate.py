@@ -7,9 +7,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Friday, 11th April 2025 03:20:28 pm
+Last Modified: Wednesday, 17th September 2025 03:43:55 pm
 '''
 from copy import deepcopy
+from math import e
 import unittest
 import warnings
 from unittest import mock
@@ -668,11 +669,12 @@ class TestCalcCrossCombis(unittest.TestCase):
         for station, network in zip(stat, net):
             for ch in channels:
                 stats = AttribDict(
-                    network=network, station=station, channel=ch)
+                    network=network, station=station, channel=ch,
+                    location='')
                 self.st.append(Trace(header=stats))
         self.N_stat = len(stat)
         self.N_chan = len(channels)
-
+    
     def test_result_betw_stations(self):
         # easiest probably to check the length
         # in this cas \Sum_1^N (N-n)*M^2 where N is the number of stations
@@ -683,19 +685,56 @@ class TestCalcCrossCombis(unittest.TestCase):
         self.assertEqual(expected_len, len(correlate.calc_cross_combis(
             self.st, {}, method='betweenStations')))
 
+    def test_result_betw_stations_varying_locs(self):
+        # change location codes assign a different location code
+        # to each trace with a different station
+        st = self.st.copy()
+        for ii, tr in enumerate(st):
+            tr.stats.station= 'SAME'
+            tr.stats.location = f'{ii//self.N_chan:02d}'
+        expected_len = sum([(self.N_stat-n)*self.N_chan**2
+                            for n in range(1, self.N_stat)])
+
+        self.assertEqual(expected_len, len(correlate.calc_cross_combis(
+            st, {}, method='betweenStations')))
+
     def test_result_betw_components(self):
         # easiest probably to check the length
         # Here, we are looking for the same station but different component
         expected_len = sum([(self.N_chan-n)*self.N_stat
                             for n in range(1, self.N_chan)])
-
         self.assertEqual(expected_len, len(correlate.calc_cross_combis(
             self.st, {}, method='betweenComponents')))
+
+    def test_result_betw_components_varying_locs(self):
+        st = self.st.copy()
+        # copy the last three traces and assign a different location code
+        for ii, tr in enumerate(st[-3:]):
+            tr_new = tr.copy()
+            tr_new.stats.location = '00'
+            st.append(tr_new)
+        # should add three more combinations
+        expected_len = sum([(self.N_chan-n)*self.N_stat
+                            for n in range(1, self.N_chan)]) + 3
+        self.assertEqual(expected_len, len(correlate.calc_cross_combis(
+            st, {}, method='betweenComponents')))
 
     def test_result_auto_components(self):
         expected_len = self.st.count()
         self.assertEqual(expected_len, len(correlate.calc_cross_combis(
             self.st, {}, method='autoComponents')))
+
+    def test_result_auto_components_varying_locs(self):
+        st = self.st.copy()
+        # copy the last three traces and assign a different location code
+        for ii, tr in enumerate(st[-3:]):
+            tr_new = tr.copy()
+            tr_new.stats.location = '00'
+            st.append(tr_new)
+        # should add three more combinations
+        expected_len = st.count()
+        self.assertEqual(expected_len, len(correlate.calc_cross_combis(
+            st, {}, method='autoComponents')))
 
     def test_result_all_simple(self):
         expected_len = sum([self.st.count()-n

@@ -24,7 +24,7 @@ author = \
     ' and the SeisMIC development Team'
 
 # The full version, including alpha/beta/rc tags
-release = '0.6.20'
+release = '0.6.21'
 
 # -- General configuration ---------------------------------------------------
 

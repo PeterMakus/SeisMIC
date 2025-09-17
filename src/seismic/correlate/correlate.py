@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Tuesday, 2nd September 2025 04:53:56 pm
+Last Modified: Wednesday, 17th September 2025 03:16:47 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from warnings import warn
@@ -912,7 +912,9 @@ def calc_cross_combis(
                 n2 = tr1.stats.network
                 s = tr.stats.station
                 s2 = tr1.stats.station
-                if n != n2 or s != s2:
+                loc = tr.stats.location
+                loc2 = tr1.stats.location
+                if n != n2 or s != s2 or loc != loc2:
                     # check first whether this combi is in dict
                     if _compare_existing_data(ex_corr, tr, tr1):
                         continue
@@ -924,10 +926,15 @@ def calc_cross_combis(
         for ii, tr in enumerate(st):
             for jj in range(ii+1, len(st)):
                 tr1 = st[jj]
-                if ((tr.stats['network'] == tr1.stats['network'])
-                    and (tr.stats['station'] == tr1.stats['station'])
-                    and (
-                        tr.stats['channel'][-1] != tr1.stats['channel'][-1])):
+                n = tr.stats.network
+                n2 = tr1.stats.network
+                s = tr.stats.station
+                s2 = tr1.stats.station
+                loc = tr.stats.location
+                loc2 = tr1.stats.location
+                c = tr.stats.component
+                c2 = tr1.stats.component
+                if ((n == n2) and (s == s2) and (c != c2) and (loc == loc2)):
                     if _compare_existing_data(ex_corr, tr, tr1):
                         continue
                     combis.append((ii, jj))
