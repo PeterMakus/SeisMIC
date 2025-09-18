@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 17th September 2025 03:16:47 pm
+Last Modified: Thursday, 18th September 2025 03:58:27 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from warnings import warn
@@ -118,7 +118,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         network = options['net']['network']
         station = options['net']['station']
         component = options['net']['component']
-        # location = options['net']['location']
+        self.req_comps = component
 
         # Store_Client
         if store_client is None:
@@ -286,8 +286,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         >>> out_dict = my_correlator.find_existing_times('mytag', 'BHZ-BHH')
         >>> print(out_dict)
         {'NET0.STAT0': {
-            'NET1.STAT1': {'BHZ-BHH': [%list of starttimes] ,
-            'NET2.STAT2': {'BHZ-BHH':[%list of starttimes]}}}
+            'NET1.STAT1': {'LOC0-LOC1': {'BHZ-BHH': [%list of starttimes]}} ,
+            'NET2.STAT2': {'LOC0-LOC0': {'BHZ-BHH':[%list of starttimes]}}}
         """
         netlist, statlist = list(zip(*self.station))
         netcombs, statcombs = compute_network_station_combinations(
@@ -295,15 +295,28 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             combis=self.rcombis)
         ex_dict = {}
         for nc, sc in zip(netcombs, statcombs):
-            outfs = h5_FMTSTR.format(
+            outfs = glob.glob(h5_FMTSTR.format(
                 dir=self.corr_dir, network=nc, station=sc, location='*',
-                channel='*')
-            if not len(glob.glob(outfs)):
+                channel=channel))
+            print(outfs)
+            if not len(outfs):
                 continue
             d = {}
-            for outf in glob.glob(outfs):
+            for outf in outfs:
                 # retrieve location codes
                 l0, l1 = os.path.basename(outf).split('.')[2].split('-')
+                cha0, cha1 = os.path.basename(outf).split('.')[3].split('-')
+                print(l0, l1, cha0, cha1)
+                if self.options['combination_method'] in (
+                        'autoComponents', 'betweenComponents') and l0 != l1:
+                    # skip this file, as it is not an autocorrelation
+                    continue
+                if self.options['combination_method'] == 'betweenComponents' \
+                        and cha0 == cha1:
+                    continue
+                if self.options['combination_method'] == 'autoComponents' \
+                        and cha0 != cha1:
+                    continue
                 with CorrelationDataBase(
                     outf, corr_options=self.options, mode='r',
                         _force=self._allow_different_params) as cdb:
@@ -455,7 +468,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         """
         if self.rank == 0:
             # find already available times
-            self.ex_dict = self.find_existing_times('subdivision')
+            self.ex_dict = self.find_existing_times(
+                'subdivision', channel=f'*{self.req_comps}-*{self.req_comps}')
             self.logger.info('Already existing data: %s' % str(self.ex_dict))
         else:
             self.ex_dict = None
@@ -882,8 +896,8 @@ def calc_cross_combis(
     :type rcombis: List[str] strings are in form net0-net1.stat0-stat1
 
         ``'betweenStations'``:
-            Traces are combined if either their station or
-            their network names are different.
+            Traces are combined if either their station, network, or
+            location codes differ.
         ``'betweenComponents'``:
             Traces are combined if their components (last
             letter of channel name) names are different and their station and

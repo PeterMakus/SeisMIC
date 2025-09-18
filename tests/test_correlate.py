@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Wednesday, 17th September 2025 03:43:55 pm
+Last Modified: Thursday, 18th September 2025 04:04:43 pm
 '''
 from copy import deepcopy
 from math import e
@@ -24,7 +24,7 @@ import yaml
 
 from seismic.correlate import correlate
 from seismic.correlate.stream import CorrStream
-from seismic.trace_data.waveform import Local_Store_Client, Store_Client
+from seismic.trace_data.waveform import Store_Client
 
 paramfile = os.path.join(
             os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
@@ -353,9 +353,8 @@ class TestCorrrelator(unittest.TestCase):
         statcombs = ['00-00', '00-11', '22-33', '22-44']
         ccomb_mock.return_value = (netcombs, statcombs)
         isfile = [
-            [1], ['AA-BB.00-00.00-01.E-Z.h5'], [], [2],
-            ['AA-AA.22-33.00-01.E-Z.h5'],
-            [], [], []]
+            ['AA-BB.00-00.00-01.E-Z.h5'], [],
+            ['AA-AA.22-33.00-01.E-Z.h5'], [], []]
         isfile_mock.side_effect = isfile
         times = [{'a': [0, 1, 2]}, {'b': [3, 4, 5, 6]}]
         cdb_mock().get_available_starttimes.side_effect = times
@@ -364,11 +363,78 @@ class TestCorrrelator(unittest.TestCase):
             'AA.00': {'BB.00': {'00-01': {'a': [0, 1, 2]}}},
             'AA.22': {'AA.33': {'00-01': {'b': [3, 4, 5, 6]}}}}
         self.assertDictEqual(out, exp)
-        # isfile_calls = [
-        #     os.path.join(c.corr_dir, f'{nc}.{sc}*.h5') for nc, sc in zip(
-        #         netcombs, statcombs)]
-        # for call in isfile_calls:
-        #     isfile_mock.assert_any_call(call)
+
+    @mock.patch('seismic.db.corr_hdf5.DBHandler')
+    @mock.patch('seismic.correlate.correlate.glob.glob')
+    @mock.patch(
+        'seismic.correlate.correlate.compute_network_station_combinations')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_find_existing_times_autocorr(
+        self, makedirs_mock, logging_mock, open_mock, ccomb_mock, isfile_mock,
+            cdb_mock):
+        options = deepcopy(self.options)
+        options['net']['component'] = '*'
+        options['co']['combination_method'] = 'autoComponents'
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [
+            ['lala', 'lolo'], ['lala', 'lili']]
+        sc_mock._translate_wildcards.return_value = [
+            ['lala', 'lolo', '00', 'E'], ['lala', 'lili', '01', 'Z']]
+        c = correlate.Correlator(options, sc_mock)
+        netcombs = ['AA-AA']
+        statcombs = ['00-00']
+        ccomb_mock.return_value = (netcombs, statcombs)
+        isfile = [
+            ['AA-AA.00-00.00-00.E-E.h5', 'AA-AA.00-00.00-00.N-N.h5',
+            'AA-AA.00-00.00-01.E-E.h5', 'AA-AA.00-00.00-01.N-N.h5',
+            'AA-AA.00-00.00-00.E-Z.h5', 'AA-AA.00-00.00-00.N-Z.h5']]
+        # 3rd and 4th should be skipped
+        isfile_mock.side_effect = isfile
+        times = [
+            {'E-E': [0, 1, 2]}, {'N-N': [3, 4, 5, 6]}, {'c': [7, 8]}, {}]
+        cdb_mock().get_available_starttimes.side_effect = times
+        out = c.find_existing_times('mytag')
+        exp = {
+            'AA.00': {'AA.00': {'00-00': {'E-E': [0, 1, 2], 'N-N': [3, 4, 5, 6]}}}}
+        self.assertDictEqual(out, exp)
+
+    @mock.patch('seismic.db.corr_hdf5.DBHandler')
+    @mock.patch('seismic.correlate.correlate.glob.glob')
+    @mock.patch(
+        'seismic.correlate.correlate.compute_network_station_combinations')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_find_existing_times_betweencomps(
+        self, makedirs_mock, logging_mock, open_mock, ccomb_mock, isfile_mock,
+            cdb_mock):
+        options = deepcopy(self.options)
+        options['net']['component'] = '*'
+        options['co']['combination_method'] = 'betweenComponents'
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [
+            ['lala', 'lolo'], ['lala', 'lili']]
+        sc_mock._translate_wildcards.return_value = [
+            ['lala', 'lolo', '00', 'E'], ['lala', 'lili', '01', 'Z']]
+        c = correlate.Correlator(options, sc_mock)
+        netcombs = ['AA-AA']
+        statcombs = ['00-00']
+        ccomb_mock.return_value = (netcombs, statcombs)
+        isfile = [[
+            'AA-AA.00-00.00-00.E-E.h5', 'AA-AA.00-00.00-00.N-N.h5',
+            'AA-AA.00-00.00-01.E-E.h5', 'AA-AA.00-00.00-01.N-N.h5',
+            'AA-AA.00-00.00-00.E-Z.h5', 'AA-AA.00-00.00-00.N-Z.h5']]
+        # 3rd and 4th should be skipped
+        isfile_mock.side_effect = isfile
+        times = [
+            {'E-Z': [0, 1, 2]}, {'N-Z': [3, 4, 5, 6]}, {'c': [7, 8]}, {}]
+        cdb_mock().get_available_starttimes.side_effect = times
+        out = c.find_existing_times('mytag')
+        exp = {
+            'AA.00': {'AA.00': {'00-00': {'E-Z': [0, 1, 2], 'N-Z': [3, 4, 5, 6]}}}}
+        self.assertDictEqual(out, exp)    
 
     @mock.patch('seismic.correlate.correlate.CorrStream')
     @mock.patch('builtins.open')
