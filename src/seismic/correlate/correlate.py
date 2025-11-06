@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 6th November 2025 04:41:13 pm
+Last Modified: Thursday, 6th November 2025 05:05:07 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from warnings import warn
@@ -623,7 +623,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                         self.logger.info(
                             f'No new data for times {winstart}-{winend}')
                         continue
-                
+
                 # Stream based preprocessing
                 if self.options['preprocess_subdiv']:
                     try:
@@ -837,12 +837,12 @@ def _compare_existing_data(ex_corr: dict, tr0: Trace, tr1: Trace) -> bool:
     stat0 = tr0.stats.station
     loc0 = tr0.stats.location
     cha0 = tr0.stats.channel
-    
+
     net1 = tr1.stats.network
     stat1 = tr1.stats.station
     loc1 = tr1.stats.location
     cha1 = tr1.stats.channel
-    
+
     # Probably faster than checking a huge dict twice
     flip = ([net0, net1], [stat0, stat1], [loc0, loc1], [cha0, cha1]) \
         != sort_comb_name_alphabetically(
