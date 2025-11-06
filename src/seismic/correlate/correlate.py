@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 18th September 2025 03:58:27 pm
+Last Modified: Thursday, 6th November 2025 04:41:13 pm
 '''
 from typing import Iterator, List, Tuple, Optional
 from warnings import warn
@@ -298,7 +298,6 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             outfs = glob.glob(h5_FMTSTR.format(
                 dir=self.corr_dir, network=nc, station=sc, location='*',
                 channel=channel))
-            print(outfs)
             if not len(outfs):
                 continue
             d = {}
@@ -306,7 +305,6 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 # retrieve location codes
                 l0, l1 = os.path.basename(outf).split('.')[2].split('-')
                 cha0, cha1 = os.path.basename(outf).split('.')[3].split('-')
-                print(l0, l1, cha0, cha1)
                 if self.options['combination_method'] in (
                         'autoComponents', 'betweenComponents') and l0 != l1:
                     # skip this file, as it is not an autocorrelation
@@ -592,12 +590,12 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                     self.options['combinations'] = None
                 self.options['combinations'] = self.comm.bcast(
                     self.options['combinations'], root=0)
-
                 if not len(self.options['combinations']):
                     # no new combinations for this time period
                     self.logger.info(
                         f'No new data for times {winstart}-{winend}')
                     continue
+
                 # Remove traces that won't be accessed at all
                 win_indices = np.arange(len(win))
                 combindices = np.unique(
@@ -625,6 +623,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                         self.logger.info(
                             f'No new data for times {winstart}-{winend}')
                         continue
+                
                 # Stream based preprocessing
                 if self.options['preprocess_subdiv']:
                     try:
@@ -660,8 +659,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                         f'No new data for times {winstart}-{winend}')
                     continue
 
-                self.logger.debug(('Core %d working on correlation'
-                                  + ' times %s-%s of %d traceswith ids %s') % (
+                self.logger.debug(('Core %d working on correlation '
+                                  + 'times %s-%s of %d traces with ids %s') % (
                     self.rank,
                     str(win[0].stats.starttime), str(win[0].stats.endtime),
                     len(win), str([tr.id for tr in win])))
@@ -836,12 +835,14 @@ def _compare_existing_data(ex_corr: dict, tr0: Trace, tr1: Trace) -> bool:
     # The actual starttime for the header is the later one of the two
     net0 = tr0.stats.network
     stat0 = tr0.stats.station
+    loc0 = tr0.stats.location
     cha0 = tr0.stats.channel
+    
     net1 = tr1.stats.network
     stat1 = tr1.stats.station
-    cha1 = tr1.stats.channel
-    loc0 = tr0.stats.location
     loc1 = tr1.stats.location
+    cha1 = tr1.stats.channel
+    
     # Probably faster than checking a huge dict twice
     flip = ([net0, net1], [stat0, stat1], [loc0, loc1], [cha0, cha1]) \
         != sort_comb_name_alphabetically(
