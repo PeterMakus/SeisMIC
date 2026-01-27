@@ -787,7 +787,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                     f"{st[0].stats.network}.{st[0].stats.station} and time"
                     f" {t}.\nThe Original Error Message was {e}."
                 )
-                continue
+                st = Stream()
             # The actual data in the mseeds was changed from int to float64
             # now,
             # Save some space by changing it back to 32 bit (most of the
@@ -807,7 +807,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                         f"{st[0].stats.network}.{st[0].stats.station} and time"
                         f" {t}.\nThe Original Error Message was {e}."
                     )
-                    continue
+                    st = Stream()
 
             # Slice the stream in correlation length
             # -> Loop over correlation increments
