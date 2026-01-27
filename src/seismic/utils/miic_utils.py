@@ -155,8 +155,9 @@ def resample_or_decimate(
                 try:
                     tr = resample_or_decimate(tr, sampling_rate_new, filter)
                 except ValueError:
+                    data.remove(tr)
                     warnings.warn(
-                        f'Trace {tr} not downsampled. Sampling rate is lower'
+                        f'Trace {tr} removed. Sampling rate is lower'
                         + ' than requested sampling rate.')
             return data
     elif isinstance(data, Trace):
