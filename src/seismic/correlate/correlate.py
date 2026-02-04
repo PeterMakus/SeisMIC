@@ -680,6 +680,28 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                     )
                     cdb.add_correlation(stack, stacktag)
 
+    def _recalulate_combinations(self, win):
+        """
+        Recalculate the combinations for the given time window.
+
+        :param win: The time window to calculate the combinations for
+        :type win: :class:`~obspy.Stream`
+        """
+        if self.rank == 0:
+            self.logger.info("Calculating combinations...")
+            self.options["combinations"] = calc_cross_combis(
+                win,
+                self.ex_dict,
+                self.options["combination_method"],
+                rcombis=self.rcombis,
+            )
+        else:
+            self.logger.info("Core %d waiting for combinations..." % self.rank)
+            self.options["combinations"] = None
+        self.options["combinations"] = self.comm.bcast(
+            self.options["combinations"], root=0
+        )
+
     def _generate_data(self) -> Iterator[Tuple[Stream, bool]]:
         """
         Returns an Iterator that loops over each start and end time with the
@@ -830,22 +852,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 win = win.sort()
 
                 # Get correlation combinations
-                if self.rank == 0:
-                    self.logger.info("Calculating combinations...")
-                    self.options["combinations"] = calc_cross_combis(
-                        win,
-                        self.ex_dict,
-                        self.options["combination_method"],
-                        rcombis=self.rcombis,
-                    )
-                else:
-                    self.logger.info(
-                        "Core %d waiting for combinations..." % self.rank
-                    )
-                    self.options["combinations"] = None
-                self.options["combinations"] = self.comm.bcast(
-                    self.options["combinations"], root=0
-                )
+                self._recalulate_combinations(win)
 
                 if not len(self.options["combinations"]):
                     # no new combinations for this time period
@@ -868,22 +875,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                     del win[popi]
                 if len(popindices):
                     # now we have to recompute the combinations
-                    if self.rank == 0:
-                        self.logger.info("Recalculating combinations...")
-                        self.options["combinations"] = calc_cross_combis(
-                            win,
-                            self.ex_dict,
-                            self.options["combination_method"],
-                            rcombis=self.rcombis,
-                        )
-                    else:
-                        self.logger.info(
-                            "Core %d waiting for combinations..." % self.rank
-                        )
-                        self.options["combinations"] = None
-                    self.options["combinations"] = self.comm.bcast(
-                        self.options["combinations"], root=0
-                    )
+                    self._recalulate_combinations(win)
 
                     if not len(self.options["combinations"]):
                         # no new combinations for this time period
@@ -922,22 +914,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                                 f"{t}.\nThe Original Error Message was {e}."
                             )
                         continue
-                    if self.rank == 0:
-                        self.logger.info("Recalculating combinations...")
-                        self.options["combinations"] = calc_cross_combis(
-                            win,
-                            self.ex_dict,
-                            self.options["combination_method"],
-                            rcombis=self.rcombis,
-                        )
-                    else:
-                        self.logger.info(
-                            "Core %d waiting for combinations..." % self.rank
-                        )
-                        self.options["combinations"] = None
-                    self.options["combinations"] = self.comm.bcast(
-                        self.options["combinations"], root=0
-                    )
+                    self._recalulate_combinations(win)
 
                 if not len(win):
                     # no new combinations for this time period
