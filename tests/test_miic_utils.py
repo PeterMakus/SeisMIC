@@ -1,4 +1,4 @@
-'''
+"""
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
@@ -9,7 +9,8 @@
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
 Last Modified: Monday, 17th June 2024 04:55:40 pm
-'''
+"""
+
 from copy import deepcopy
 import unittest
 import math as mathematics
@@ -36,18 +37,17 @@ class TestBazCalc(unittest.TestCase):
         self.longitude1 = 15
         self.latitude2 = 12
         self.longitude2 = -2
-        stat = Station('BLA', self.latitude1, self.longitude1, 0)
-        net = Network('T1', stations=[stat])
+        stat = Station("BLA", self.latitude1, self.longitude1, 0)
+        net = Network("T1", stations=[stat])
         self.inv1 = Inventory(networks=[net])
-        stat = Station('BLU', self.latitude2, self.longitude2, 0)
-        net = Network('T1', stations=[stat])
+        stat = Station("BLU", self.latitude2, self.longitude2, 0)
+        net = Network("T1", stations=[stat])
         self.inv2 = Inventory(networks=[net])
         self.dist, self.az, self.baz = gps2dist_azimuth(
-            self.latitude1, self.longitude1, self.latitude2, self.longitude2)
-        self.st1 = AttribDict(
-            {'stla': self.latitude1, 'stlo': self.longitude1})
-        self.st2 = AttribDict(
-            {'stla': self.latitude2, 'stlo': self.longitude2})
+            self.latitude1, self.longitude1, self.latitude2, self.longitude2
+        )
+        self.st1 = AttribDict({"stla": self.latitude1, "stlo": self.longitude1})
+        self.st2 = AttribDict({"stla": self.latitude2, "stlo": self.longitude2})
 
     def test_result_inv(self):
         az, baz, dist = mu.inv_calc_az_baz_dist(self.inv1, self.inv2)
@@ -67,39 +67,45 @@ class TestBazCalc(unittest.TestCase):
 
 
 class TestFilterStat_Dist(unittest.TestCase):
-    @mock.patch('seismic.utils.miic_utils.inv_calc_az_baz_dist')
+    @mock.patch("seismic.utils.miic_utils.inv_calc_az_baz_dist")
     def test_result_True(self, calc_dist_mock: mock.MagicMock):
         dist = np.random.randint(100, 1e6)  # in m
         calc_dist_mock.return_value = (
-            np.random.randint(0, 360), np.random.randint(0, 360), dist)
+            np.random.randint(0, 360),
+            np.random.randint(0, 360),
+            dist,
+        )
         queried_dist = dist + np.random.randint(10, 1000)
-        self.assertTrue(mu.filter_stat_dist('bla', 'blub', queried_dist))
+        self.assertTrue(mu.filter_stat_dist("bla", "blub", queried_dist))
 
-    @mock.patch('seismic.utils.miic_utils.inv_calc_az_baz_dist')
+    @mock.patch("seismic.utils.miic_utils.inv_calc_az_baz_dist")
     def test_result_False(self, calc_dist_mock: mock.MagicMock):
         dist = np.random.randint(100, 1e6)  # in m
         calc_dist_mock.return_value = (
-            np.random.randint(0, 360), np.random.randint(0, 360), dist)
+            np.random.randint(0, 360),
+            np.random.randint(0, 360),
+            dist,
+        )
         queried_dist = dist - np.random.randint(10, 1000)
-        self.assertFalse(mu.filter_stat_dist('bla', 'blub', queried_dist))
+        self.assertFalse(mu.filter_stat_dist("bla", "blub", queried_dist))
 
 
 class TestResampleOrDecimate(unittest.TestCase):
     def test_decimate(self):
         st = read()
-        freq_new = st[0].stats.sampling_rate//4
+        freq_new = st[0].stats.sampling_rate // 4
         st_filt = mu.resample_or_decimate(st, freq_new)
         self.assertEqual(st_filt[0].stats.sampling_rate, freq_new)
-        self.assertIn('decimate', st_filt[0].stats.processing[-1])
-        self.assertIn('filter', st_filt[0].stats.processing[-2])
+        self.assertIn("decimate", st_filt[0].stats.processing[-1])
+        self.assertIn("filter", st_filt[0].stats.processing[-2])
 
     def test_resample(self):
         st = read()
-        freq_new = st[0].stats.sampling_rate/2.5
+        freq_new = st[0].stats.sampling_rate / 2.5
         st_filt = mu.resample_or_decimate(st, freq_new, filter=False)
         self.assertEqual(st_filt[0].stats.sampling_rate, freq_new)
-        self.assertIn('resample', st_filt[0].stats.processing[-1])
-        self.assertIn('no_filter=True', st_filt[0].stats.processing[-1])
+        self.assertIn("resample", st_filt[0].stats.processing[-1])
+        self.assertIn("no_filter=True", st_filt[0].stats.processing[-1])
 
     def test_filter_w_high_factor(self):
         # Here we filter 10% lower than Nyquist
@@ -107,15 +113,17 @@ class TestResampleOrDecimate(unittest.TestCase):
         freq_new = 1
         st_filt = mu.resample_or_decimate(st, freq_new)
         self.assertEqual(st_filt[0].stats.sampling_rate, freq_new)
-        self.assertIn('decimate', st_filt[0].stats.processing[-1])
-        self.assertIn('filter', st_filt[0].stats.processing[-2])
+        self.assertIn("decimate", st_filt[0].stats.processing[-1])
+        self.assertIn("filter", st_filt[0].stats.processing[-2])
         self.assertIn(
             "filter(options={'freq': 0.45, 'maxorder': 12}:"
-            + ":type='lowpass_cheby_2')", st_filt[0].stats.processing[-2])
+            + ":type='lowpass_cheby_2')",
+            st_filt[0].stats.processing[-2],
+        )
 
     def test_new_freq_higher_than_native(self):
         st = read()
-        freq_new = st[0].stats.sampling_rate+5
+        freq_new = st[0].stats.sampling_rate + 5
         with self.assertRaises(ValueError):
             _ = mu.resample_or_decimate(st, freq_new, filter=False)
 
@@ -126,9 +134,9 @@ class TestResampleOrDecimate(unittest.TestCase):
         freq_new = st[0].stats.sampling_rate
         with self.assertWarns(UserWarning):
             st_out = mu.resample_or_decimate(st, freq_new, filter=False)
-        self.assertEqual(st_out[2].stats.sampling_rate, freq_new)
+        self.assertEqual(len(st_out), 2)
         self.assertEqual(st_out[0].stats.sampling_rate, freq_new)
-        self.assertEqual(st_out[1].stats.sampling_rate, freq_new/2)
+        self.assertEqual(st_out[1].stats.sampling_rate, freq_new)
 
 
 class TestTrimTraceDelta(unittest.TestCase):
@@ -138,8 +146,8 @@ class TestTrimTraceDelta(unittest.TestCase):
     def test_times(self):
         delta = np.random.randint(1, 10)
         tr = mu.trim_trace_delta(self.tr.copy(), delta, delta)
-        self.assertEqual(tr.stats.starttime, self.tr.stats.starttime+delta)
-        self.assertEqual(tr.stats.endtime, self.tr.stats.endtime-delta)
+        self.assertEqual(tr.stats.starttime, self.tr.stats.starttime + delta)
+        self.assertEqual(tr.stats.endtime, self.tr.stats.endtime - delta)
 
     def test_delta_0(self):
         tr = mu.trim_trace_delta(self.tr.copy(), 0, 0)
@@ -154,12 +162,15 @@ class TestTrimTraceDelta(unittest.TestCase):
 
 class TestHeaderToNPArray(unittest.TestCase):
     def test_result(self):
-        st = Stats({
-            'starttime': UTCDateTime(0),
-            'endtime': UTCDateTime(10),
-            'corr_start': UTCDateTime(0),
-            'corr_end': UTCDateTime(10),
-            'other': 'blub'})
+        st = Stats(
+            {
+                "starttime": UTCDateTime(0),
+                "endtime": UTCDateTime(10),
+                "corr_start": UTCDateTime(0),
+                "corr_end": UTCDateTime(10),
+                "other": "blub",
+            }
+        )
         exp = dict(st)
         for key in exp:
             if isinstance(exp[key], UTCDateTime):
@@ -170,12 +181,15 @@ class TestHeaderToNPArray(unittest.TestCase):
         self.assertDictEqual(d, exp)
 
     def test_list(self):
-        st = CorrStats({
-            'starttime': [UTCDateTime(ii) for ii in range(10)],
-            'endtime': [UTCDateTime(ii+10) for ii in range(10)],
-            'corr_start': [UTCDateTime(ii) for ii in range(10)],
-            'corr_end': [UTCDateTime(ii+10) for ii in range(10)],
-            'other': 'blub'})
+        st = CorrStats(
+            {
+                "starttime": [UTCDateTime(ii) for ii in range(10)],
+                "endtime": [UTCDateTime(ii + 10) for ii in range(10)],
+                "corr_start": [UTCDateTime(ii) for ii in range(10)],
+                "corr_end": [UTCDateTime(ii + 10) for ii in range(10)],
+                "other": "blub",
+            }
+        )
         exp = dict(st)
         for key in exp:
             if isinstance(exp[key], list):
@@ -190,12 +204,15 @@ class TestHeaderToNPArray(unittest.TestCase):
 
 class TestLoadHeaderFromNPArray(unittest.TestCase):
     def setUp(self):
-        self.st = Stats({
-            'starttime': UTCDateTime(0),
-            'endtime': UTCDateTime(10),
-            'corr_start': UTCDateTime(0),
-            'corr_end': UTCDateTime(10),
-            'other': 'blub'})
+        self.st = Stats(
+            {
+                "starttime": UTCDateTime(0),
+                "endtime": UTCDateTime(10),
+                "corr_start": UTCDateTime(0),
+                "corr_end": UTCDateTime(10),
+                "other": "blub",
+            }
+        )
 
     def test_integral(self):
         d = mu.save_header_to_np_array(self.st)
@@ -203,12 +220,15 @@ class TestLoadHeaderFromNPArray(unittest.TestCase):
         self.assertDictEqual(st, dict(self.st))
 
     def test_list(self):
-        st = CorrStats({
-            'starttime': [UTCDateTime(ii) for ii in range(10)],
-            'endtime': [UTCDateTime(ii+10) for ii in range(10)],
-            'corr_start': [UTCDateTime(ii) for ii in range(10)],
-            'corr_end': [UTCDateTime(ii+10) for ii in range(10)],
-            'other': 'blub'})
+        st = CorrStats(
+            {
+                "starttime": [UTCDateTime(ii) for ii in range(10)],
+                "endtime": [UTCDateTime(ii + 10) for ii in range(10)],
+                "corr_start": [UTCDateTime(ii) for ii in range(10)],
+                "corr_end": [UTCDateTime(ii + 10) for ii in range(10)],
+                "other": "blub",
+            }
+        )
         d = mu.save_header_to_np_array(st)
         st2 = mu.load_header_from_np_array(d)
         self.assertDictEqual(st2, dict(st))
@@ -218,28 +238,24 @@ class ConvertUTCToTimeStamp(unittest.TestCase):
     def test_single(self):
         inp = UTCDateTime(0)
         exp = np.zeros(1)
-        self.assertTrue(np.all(
-            exp == mu.convert_utc_to_timestamp(inp)))
+        self.assertTrue(np.all(exp == mu.convert_utc_to_timestamp(inp)))
 
     def test_list(self):
         inp = [UTCDateTime(ii) for ii in range(10)]
         exp = np.arange(0, 10)
-        self.assertTrue(np.all(
-            exp == mu.convert_utc_to_timestamp(inp)))
+        self.assertTrue(np.all(exp == mu.convert_utc_to_timestamp(inp)))
 
 
 class ConvertTimeStampToUTCDT(unittest.TestCase):
     def test_single(self):
         exp = UTCDateTime(0)
         inp = np.zeros(1)
-        self.assertTrue(np.all(
-            exp == mu.convert_timestamp_to_utcdt(inp)))
+        self.assertTrue(np.all(exp == mu.convert_timestamp_to_utcdt(inp)))
 
     def test_list(self):
         exp = [UTCDateTime(ii) for ii in range(10)]
         inp = np.arange(0, 10)
-        self.assertTrue(np.all(
-            exp == mu.convert_timestamp_to_utcdt(inp)))
+        self.assertTrue(np.all(exp == mu.convert_timestamp_to_utcdt(inp)))
 
 
 class TestGetValidTraces(unittest.TestCase):
@@ -273,7 +289,7 @@ class TestDiscardShortTraces(unittest.TestCase):
 class TestNanMovingAv(unittest.TestCase):
     def setUp(self) -> None:
         self.data = np.random.random((500,))
-        self.exp = convolve1d(self.data, np.ones(101))/101
+        self.exp = convolve1d(self.data, np.ones(101)) / 101
 
     def test_result(self):
         out = mu.nan_moving_av(self.data, 50)
@@ -295,10 +311,11 @@ class TestNanMovingAv(unittest.TestCase):
     def test_axis2(self):
         data = np.random.random((25, 25, 25))
         for ax in [0, 1, 2]:
-            exp = convolve1d(data, np.ones(11), axis=ax)/11
+            exp = convolve1d(data, np.ones(11), axis=ax) / 11
             out = mu.nan_moving_av(data, 5, axis=ax)
             np.testing.assert_allclose(
-                exp.swapaxes(0, ax)[5:-5], out.swapaxes(0, ax)[5:-5])
+                exp.swapaxes(0, ax)[5:-5], out.swapaxes(0, ax)[5:-5]
+            )
             # Let's ignore the edge effects for now
 
 
@@ -313,14 +330,14 @@ class TestStreamRequireDtype(unittest.TestCase):
 class TestFunctionFromString(unittest.TestCase):
     def test_not_existent(self):
         with self.assertRaises(ModuleNotFoundError):
-            func_from_str('this.module.does.not.exist')
+            func_from_str("this.module.does.not.exist")
 
     def test_not_an_attrib(self):
         with self.assertRaises(AttributeError):
-            func_from_str('math.nonsensefunct')
+            func_from_str("math.nonsensefunct")
 
     def test_result(self):
-        funct = func_from_str('math.sqrt')
+        funct = func_from_str("math.sqrt")
         self.assertEqual(funct, mathematics.sqrt)
 
 
@@ -330,33 +347,29 @@ class TestCorrectPolarity(unittest.TestCase):
         self.inv = mock.MagicMock()
 
     def test_flip(self):
-        self.inv.get_orientation.return_value = {
-            'dip': 90,
-            'aximuth': 0
-        }
+        self.inv.get_orientation.return_value = {"dip": 90, "aximuth": 0}
         st_correct = self.st.copy()
         mu.correct_polarity(st_correct, self.inv)
         self.inv.get_orientation.assert_called_with(
             st_correct.select(component="Z")[0].id,
-            datetime=st_correct.select(component="Z")[0].stats.starttime)
+            datetime=st_correct.select(component="Z")[0].stats.starttime,
+        )
         np.testing.assert_array_equal(
             st_correct.select(component="Z")[0].data,
-            -1 * self.st.select(component="Z")[0].data
+            -1 * self.st.select(component="Z")[0].data,
         )
 
     def test_no_flip(self):
-        self.inv.get_orientation.return_value = {
-            'dip': -90,
-            'aximuth': 0
-        }
+        self.inv.get_orientation.return_value = {"dip": -90, "aximuth": 0}
         st_correct = self.st.copy()
         mu.correct_polarity(st_correct, self.inv)
         self.inv.get_orientation.assert_called_with(
             st_correct.select(component="Z")[0].id,
-            datetime=st_correct.select(component="Z")[0].stats.starttime)
+            datetime=st_correct.select(component="Z")[0].stats.starttime,
+        )
         np.testing.assert_array_equal(
             st_correct.select(component="Z")[0].data,
-            self.st.select(component="Z")[0].data
+            self.st.select(component="Z")[0].data,
         )
 
 
@@ -368,9 +381,7 @@ class TestNanHelper(unittest.TestCase):
         nans, x = mu.nan_helper(y)
         np.testing.assert_array_equal(True, nans[nans])
         np.testing.assert_array_equal(False, ~nans[nans])
-        np.testing.assert_array_equal(
-            x(nans), [3, 11, 12]
-        )
+        np.testing.assert_array_equal(x(nans), [3, 11, 12])
         np.testing.assert_array_equal(
             x(~nans), np.hstack((np.arange(3), np.arange(4, 11), [13, 14]))
         )
@@ -379,29 +390,27 @@ class TestNanHelper(unittest.TestCase):
         y = np.arange(15)
         nans, x = mu.nan_helper(y)
         np.testing.assert_array_equal(False, nans)
-        np.testing.assert_array_equal(
-            x(nans), []
-        )
+        np.testing.assert_array_equal(x(nans), [])
 
 
 class TestGapHandler(unittest.TestCase):
-    @mock.patch('seismic.utils.miic_utils.interpolate_gaps_st')
-    @mock.patch('seismic.utils.miic_utils.cos_taper_st')
+    @mock.patch("seismic.utils.miic_utils.interpolate_gaps_st")
+    @mock.patch("seismic.utils.miic_utils.cos_taper_st")
     def test_nothing_to_do(
-            self, ct_mock: mock.MagicMock, igst_mock: mock.MagicMock):
+        self, ct_mock: mock.MagicMock, igst_mock: mock.MagicMock
+    ):
         st = read()
         ct_mock.return_value = st
         igst_mock.return_value = st
         with mock.patch.multiple(
-            st, merge=mock.MagicMock(return_value=st),
+            st,
+            merge=mock.MagicMock(return_value=st),
             split=mock.MagicMock(return_value=st),
         ):
             out = mu.gap_handler(st, 20, 100, 15)
             ct_mock.assert_called_once_with(st, 15, False, False)
             igst_mock.assert_called_once_with(st, max_gap_len=20)
-            st.merge.assert_has_calls(
-                [mock.call(method=-1), mock.call()]
-            )
+            st.merge.assert_has_calls([mock.call(method=-1), mock.call()])
             self.assertEqual(out, st)
 
 
@@ -416,8 +425,7 @@ class TestInterpolateGaps(unittest.TestCase):
         x[38:43] = np.nan
         with warnings.catch_warnings(record=True) as w:
             out = mu.interpolate_gaps(deepcopy(x), max_gap_len=4)
-            np.testing.assert_array_equal(
-                x, out)
+            np.testing.assert_array_equal(x, out)
             self.assertNotEqual(len(w), 0)
         self.assertTrue(np.ma.is_masked(out))
 
@@ -428,10 +436,8 @@ class TestInterpolateGaps(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             out = mu.interpolate_gaps(deepcopy(x), max_gap_len=7)
             self.assertNotEqual(len(w), 0)
-        np.testing.assert_array_equal(
-            True, np.isnan(out[5:35]))
-        np.testing.assert_array_equal(
-            False, np.isnan(out[35:]))
+        np.testing.assert_array_equal(True, np.isnan(out[5:35]))
+        np.testing.assert_array_equal(False, np.isnan(out[35:]))
         self.assertTrue(np.ma.is_masked(out))
 
     def test_interpolate_all(self):
@@ -441,13 +447,12 @@ class TestInterpolateGaps(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             out = mu.interpolate_gaps(deepcopy(x), max_gap_len=-1)
             self.assertEqual(len(w), 0)
-        np.testing.assert_array_equal(
-            False, np.isnan(out))
+        np.testing.assert_array_equal(False, np.isnan(out))
         self.assertFalse(np.ma.is_masked(out))
 
 
 class TestInterpolateGapsSt(unittest.TestCase):
-    @mock.patch('seismic.utils.miic_utils.interpolate_gaps')
+    @mock.patch("seismic.utils.miic_utils.interpolate_gaps")
     def test_result(self, ig_mock: mock.MagicMock):
         st = read()
         ig_mock.return_value = np.zeros(5)
@@ -471,8 +476,11 @@ class TestSortCombinationsAlphabetically(unittest.TestCase):
         expected_loccomb = "LOC1-LOC2"
         expected_chacomb = "CHA2-CHA1"
 
-        sorted_netcomb, sorted_stacomb, sorted_loccomb, sorted_chacomb = mu.sort_combinations_alphabetically(
-            netcomb, stacomb, loccomb, chacomb)
+        sorted_netcomb, sorted_stacomb, sorted_loccomb, sorted_chacomb = (
+            mu.sort_combinations_alphabetically(
+                netcomb, stacomb, loccomb, chacomb
+            )
+        )
 
         self.assertEqual(sorted_netcomb, expected_netcomb)
         self.assertEqual(sorted_stacomb, expected_stacomb)
@@ -489,8 +497,11 @@ class TestSortCombinationsAlphabetically(unittest.TestCase):
         expected_loccomb = "LOC2-LOC1"
         expected_chacomb = "CHA1-CHA2"
 
-        sorted_netcomb, sorted_stacomb, sorted_loccomb, sorted_chacomb = mu.sort_combinations_alphabetically(
-            netcomb, stacomb, loccomb, chacomb)
+        sorted_netcomb, sorted_stacomb, sorted_loccomb, sorted_chacomb = (
+            mu.sort_combinations_alphabetically(
+                netcomb, stacomb, loccomb, chacomb
+            )
+        )
 
         self.assertEqual(sorted_netcomb, expected_netcomb)
         self.assertEqual(sorted_stacomb, expected_stacomb)
