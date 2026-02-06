@@ -829,6 +829,34 @@ class TestCorrrelator(unittest.TestCase):
                 self.assertTrue(np.all(ind == ind_true))
                 self.assertTrue(A[ind].shape[0] % 3 == 0)
 
+    @mock.patch("seismic.correlate.correlate.calc_cross_combis")
+    @mock.patch("seismic.correlate.correlate.yaml.load")
+    def test_recalculate_combinations(
+        self,
+        yaml_mock,
+        mock_calc_cross_combis,
+        makedirs_mock,
+        logging_mock,
+        open_mock,
+    ):
+        yaml_mock.return_value = self.options
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = []
+        sc_mock._translate_wildcards.return_value = []
+        combis = [(0, 1), (0, 2)]
+        mock_calc_cross_combis.return_value = combis
+
+        c = correlate.Correlator(self.param_example, sc_mock)
+        c.ex_dict = {}
+
+        c._recalulate_combinations(Stream())
+        if c.rank == 0:
+            mock_calc_cross_combis.assert_called_once()
+        else:
+            mock_calc_cross_combis.assert_not_called()
+        self.assertIn("combinations", c.options)
+        self.assertListEqual(c.options["combinations"], combis)
+
 
 class TestStToNpArray(unittest.TestCase):
     def setUp(self):
