@@ -1,4 +1,4 @@
-'''
+"""
 :copyright:
    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
@@ -9,7 +9,8 @@
 
 Created: Monday, 29th March 2021 12:54:05 pm
 Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)
-'''
+"""
+
 from typing import List, Tuple
 import logging
 import re
@@ -24,19 +25,21 @@ from seismic.correlate.preprocessing_stream import cos_taper_st
 from .. import logfactory
 
 parentlogger = logfactory.create_logger()
-module_logger = logging.getLogger(parentlogger.name+".miic_utils")
+module_logger = logging.getLogger(parentlogger.name + ".miic_utils")
 
 
 log_lvl = {
-    'DEBUG': logging.DEBUG,
-    'INFO': logging.INFO,
-    'WARNING': logging.WARNING,
-    'CRITICAL': logging.CRITICAL,
-    'ERROR': logging.ERROR}
+    "DEBUG": logging.DEBUG,
+    "INFO": logging.INFO,
+    "WARNING": logging.WARNING,
+    "CRITICAL": logging.CRITICAL,
+    "ERROR": logging.ERROR,
+}
 
 
-def trace_calc_az_baz_dist(stats1: Stats, stats2: Stats) -> Tuple[
-        float, float, float]:
+def trace_calc_az_baz_dist(
+    stats1: Stats, stats2: Stats
+) -> Tuple[float, float, float]:
     """
     Return azimuth, back azimhut and distance between tr1 and tr2
     This funtions calculates the azimut, back azimut and distance between tr1
@@ -67,11 +70,13 @@ def trace_calc_az_baz_dist(stats1: Stats, stats2: Stats) -> Tuple[
         from obspy.geodetics import gps2dist_azimuth
     except ImportError:
         module_logger.critical(
-            "Missing obspy function gps2dist_azimuth.\nUpdate obspy.")
+            "Missing obspy function gps2dist_azimuth.\nUpdate obspy."
+        )
         return
 
     dist, az, baz = gps2dist_azimuth(
-        stats1['stla'], stats1['stlo'], stats2['stla'], stats2['stlo'])
+        stats1["stla"], stats1["stlo"], stats2["stla"], stats2["stlo"]
+    )
 
     return az, baz, dist
 
@@ -93,9 +98,10 @@ def filter_stat_dist(inv1: Inventory, inv2: Inventory, thres: float) -> bool:
     return inv_calc_az_baz_dist(inv1, inv2)[-1] <= thres
 
 
-def inv_calc_az_baz_dist(inv1: Inventory, inv2: Inventory) -> Tuple[
-        float, float, float]:
-    """ Return azimuth, back azimuth and distance between stat1 and stat2
+def inv_calc_az_baz_dist(
+    inv1: Inventory, inv2: Inventory
+) -> Tuple[float, float, float]:
+    """Return azimuth, back azimuth and distance between stat1 and stat2
 
 
     :type tr1: :class:`~obspy.core.inventory.Inventory`
@@ -121,19 +127,23 @@ def inv_calc_az_baz_dist(inv1: Inventory, inv2: Inventory) -> Tuple[
         from obspy.geodetics import gps2dist_azimuth
     except ImportError:
         module_logger.critical(
-            "Missing obspy function gps2dist_azimuth.\nUpdate obspy.")
+            "Missing obspy function gps2dist_azimuth.\nUpdate obspy."
+        )
         return
 
     dist, az, baz = gps2dist_azimuth(
-        inv1[0][0].latitude, inv1[0][0].longitude, inv2[0][0].latitude,
-        inv2[0][0].longitude)
+        inv1[0][0].latitude,
+        inv1[0][0].longitude,
+        inv2[0][0].latitude,
+        inv2[0][0].longitude,
+    )
 
     return az, baz, dist
 
 
 def resample_or_decimate(
-    data: Trace | Stream, sampling_rate_new: int,
-        filter=True) -> Stream | Trace:
+    data: Trace | Stream, sampling_rate_new: int, filter=True
+) -> Stream | Trace:
     """Decimates the data if the desired new sampling rate allows to do so.
     Else the signal will be interpolated (a lot slower).
 
@@ -157,40 +167,44 @@ def resample_or_decimate(
                 except ValueError:
                     data.remove(tr)
                     warnings.warn(
-                        f'Trace {tr} removed. Sampling rate is lower'
-                        + ' than requested sampling rate.')
+                        f"Trace {tr} removed. Sampling rate is lower"
+                        + " than requested sampling rate."
+                    )
             return data
     elif isinstance(data, Trace):
         sr = data.stats.sampling_rate
     else:
-        raise TypeError('Data has to be an obspy Stream or Trace.')
+        raise TypeError("Data has to be an obspy Stream or Trace.")
 
     srn = sampling_rate_new
     if srn > sr:
-        raise ValueError('New sampling rate greater than old. This function \
-            is only intended for downsampling.')
+        raise ValueError(
+            "New sampling rate greater than old. This function \
+            is only intended for downsampling."
+        )
     elif srn == sr:
         return data
 
     # Chosen this filter design as it's exactly the same as
     # obspy.Stream.decimate uses
     # Decimation factor
-    factor = float(sr)/float(srn)
+    factor = float(sr) / float(srn)
     if filter and factor <= 16:
         freq = sr * 0.5 / factor
-        data.filter('lowpass_cheby_2', freq=freq, maxorder=12)
+        data.filter("lowpass_cheby_2", freq=freq, maxorder=12)
     elif filter:
         # Use a different filter
         freq = sr * 0.45 / factor
-        data.filter('lowpass_cheby_2', freq=freq, maxorder=12)
-    if sr/srn == sr//srn:
-        return data.decimate(int(sr//srn), no_filter=True)
+        data.filter("lowpass_cheby_2", freq=freq, maxorder=12)
+    if sr / srn == sr // srn:
+        return data.decimate(int(sr // srn), no_filter=True)
     else:
         return data.resample(srn)
 
 
 def trim_stream_delta(
-        st: Stream, start: float, end: float, *args, **kwargs) -> Stream:
+    st: Stream, start: float, end: float, *args, **kwargs
+) -> Stream:
     """
     Cut all traces to starttime+start and endtime-end. *args* and *kwargs* will
     be passed to :func:`~obspy.Stream.trim`
@@ -217,7 +231,8 @@ def trim_stream_delta(
 
 
 def trim_trace_delta(
-        tr: Trace, start: float, end: float, *args, **kwargs) -> Trace:
+    tr: Trace, start: float, end: float, *args, **kwargs
+) -> Trace:
     """
     Cut all traces to starttime+start and endtime-end. *args* and *kwargs* will
     be passed to :func:`~obspy.Trace.trim`.
@@ -239,19 +254,44 @@ def trim_trace_delta(
 
     """
     return tr.trim(
-        starttime=tr.stats.starttime+start, endtime=tr.stats.endtime-end,
-        *args, **kwargs)
+        starttime=tr.stats.starttime + start,
+        endtime=tr.stats.endtime - end,
+        *args,
+        **kwargs,
+    )
 
 
 # Time keys
-t_keys = ['starttime', 'endtime', 'corr_start', 'corr_end']
+t_keys = ["starttime", "endtime", "corr_start", "corr_end"]
 # No stats, keys that are not in stats but attributes of the respective objects
 no_stats = [
-    'corr', 'value', 'sim_mat', 'second_axis', 'method_array', 'vt_array',
-    'data', 'tw_len', 'tw_start', 'freq_min', 'freq_max', 'aligned', 'subdir',
-    'plot_vel_change', 'start_date', 'end_date', 'win_len', 'date_inc',
-    'sides', 'compute_tt', 'rayleigh_wave_velocity', 'stretch_range',
-    'stretch_steps', 'dt_ref', 'preprocessing', 'postprocessing']
+    "corr",
+    "value",
+    "sim_mat",
+    "second_axis",
+    "method_array",
+    "vt_array",
+    "data",
+    "tw_len",
+    "tw_start",
+    "freq_min",
+    "freq_max",
+    "aligned",
+    "subdir",
+    "plot_vel_change",
+    "start_date",
+    "end_date",
+    "win_len",
+    "date_inc",
+    "sides",
+    "compute_tt",
+    "rayleigh_wave_velocity",
+    "stretch_range",
+    "stretch_steps",
+    "dt_ref",
+    "preprocessing",
+    "postprocessing",
+]
 
 
 def save_header_to_np_array(stats: Stats) -> dict:
@@ -286,7 +326,7 @@ def load_header_from_np_array(array_dict: dict) -> dict:
     """
     d = {}
     for k in array_dict:
-        if k in no_stats or re.match('reftr', k):
+        if k in no_stats or re.match("reftr", k):
             continue
         elif k in t_keys:
             d[k] = convert_timestamp_to_utcdt(array_dict[k])
@@ -294,13 +334,13 @@ def load_header_from_np_array(array_dict: dict) -> dict:
             try:
                 d[k] = array_dict[k][0]
             except IndexError:
-                warnings.warn(
-                    f'Key {k} could not be loaded into the header.')
+                warnings.warn(f"Key {k} could not be loaded into the header.")
     return d
 
 
 def convert_utc_to_timestamp(
-        utcdt: UTCDateTime | List[UTCDateTime]) -> np.ndarray:
+    utcdt: UTCDateTime | List[UTCDateTime],
+) -> np.ndarray:
     """
     Converts :class:`obspy.core.utcdatetime.UTCDateTime` objects to floats.
 
@@ -355,22 +395,26 @@ def discard_short_traces(st: Stream, length: float):
     """
     Discard all traces from stream that are shorter than length.
 
-    :param st: inputer obspy Stream
+    :param st: input obspy Stream
     :type st: Stream
-    :param length: Maxixmum Length that should be discarded (in seconds).
+    :param length: Maximum Length that should be discarded (in seconds).
     :type length: float
 
     .. note:: Action is performed in place.
     """
-    for tr in st:
-        if tr.stats.npts/tr.stats.sampling_rate <= length:
-            st.remove(tr)
-            logging.debug(f'Discarding short Trace {tr}.')
+    inds = []
+    for ind, tr in enumerate(st):
+        if tr.stats.npts / tr.stats.sampling_rate <= length:
+            inds.append(ind)
+    for ind in inds[-1::-1]:
+        logging.debug(f"Discarding short Trace {st[ind]}.")
+        st.pop(ind)
     return
 
 
 def nan_moving_av(
-        data: np.ndarray, win_half_len: int, axis: int = -1) -> np.ndarray:
+    data: np.ndarray, win_half_len: int, axis: int = -1
+) -> np.ndarray:
     """
     Returns a filtered version of data, disregarding the nans.
     Moving mean window length is win_half_len*2+1.
@@ -393,7 +437,8 @@ def nan_moving_av(
             start = 0
         # weighted average
         data_smooth[ii] = np.nanmean(
-            dataswap[start:ii+win_half_len+1], axis=0)
+            dataswap[start : ii + win_half_len + 1], axis=0
+        )
     return data_smooth.swapaxes(0, axis)
 
 
@@ -429,10 +474,9 @@ def correct_polarity(st: Stream, inv: Inventory):
     :param inv: Inventory holding the orientation information.
     :type inv: Inventory
     """
-    st_z = st.select(component='Z')
+    st_z = st.select(component="Z")
     for tr in st_z:
-        dip = inv.get_orientation(
-            tr.id, datetime=tr.stats.starttime)['dip']
+        dip = inv.get_orientation(tr.id, datetime=tr.stats.starttime)["dip"]
         if dip > 0:
             tr.data *= -1
 
@@ -457,8 +501,11 @@ def nan_helper(y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
 
 
 def gap_handler(
-    st: Stream, max_interpolation_length: int = 10,
-        retain_len: float = 0, taper_len: float = 10) -> Stream:
+    st: Stream,
+    max_interpolation_length: int = 10,
+    retain_len: float = 0,
+    taper_len: float = 10,
+) -> Stream:
     """
     This function tries to interpolate gaps in a stream. If the gaps are too
     large and the data snippets too short, the data will be discarded.
@@ -507,8 +554,7 @@ def interpolate_gaps(A: np.ndarray, max_gap_len: int = -1) -> np.ndarray:
         return A
     mask = np.ma.getmask(A)
 
-    maskconc = np.concatenate((
-        [mask[0]], mask[:-1] != mask[1:], [True]))
+    maskconc = np.concatenate(([mask[0]], mask[:-1] != mask[1:], [True]))
     maskstart = np.where(np.all([maskconc[:-1], mask], axis=0))[0]
     masklen = np.diff(np.where(maskconc)[0])[::2]
 
@@ -518,12 +564,15 @@ def interpolate_gaps(A: np.ndarray, max_gap_len: int = -1) -> np.ndarray:
     x = np.arange(len(A))
     for mstart, ml in zip(maskstart, masklen):
         if ml > max_gap_len:
-            warnings.warn(
-                'Gap too large. Not interpolating.', UserWarning)
+            warnings.warn("Gap too large. Not interpolating.", UserWarning)
             continue
-        A[mstart:mstart+ml] = np.interp(
-            np.arange(mstart, mstart+ml), x[~mask],
-            A[~mask], left=np.nan, right=np.nan)
+        A[mstart : mstart + ml] = np.interp(
+            np.arange(mstart, mstart + ml),
+            x[~mask],
+            A[~mask],
+            left=np.nan,
+            right=np.nan,
+        )
     return np.ma.masked_invalid(A)
 
 
@@ -544,8 +593,8 @@ def interpolate_gaps_st(st: Stream, max_gap_len: int = -1) -> Stream:
 
 
 def sort_combinations_alphabetically(
-    netcomb: str, stacomb: str, loccomb: str, chacomb: str) -> Tuple[
-        str, str, str, str]:
+    netcomb: str, stacomb: str, loccomb: str, chacomb: str
+) -> Tuple[str, str, str, str]:
     """
     Sort the combinations of network, station, location and channel
     alphabetically to avoid ambiguities.
@@ -562,14 +611,21 @@ def sort_combinations_alphabetically(
     :rtype: Tuple[str, str, str, str]
     """
     sort = [
-        '.'.join([net, sta, loc, cha]) for net, sta, loc, cha in zip(
-            netcomb.split('-'), stacomb.split('-'), loccomb.split('-'),
-            chacomb.split('-'))]
+        ".".join([net, sta, loc, cha])
+        for net, sta, loc, cha in zip(
+            netcomb.split("-"),
+            stacomb.split("-"),
+            loccomb.split("-"),
+            chacomb.split("-"),
+        )
+    ]
     sorted = sort.copy()
     sorted.sort()
     if sorted != sort:
-        netcomb, stacomb, loccomb, chacomb = ['-'.join([a, b]) for a, b in zip(
-            sorted[0].split('.'), sorted[1].split('.'))]
+        netcomb, stacomb, loccomb, chacomb = [
+            "-".join([a, b])
+            for a, b in zip(sorted[0].split("."), sorted[1].split("."))
+        ]
     return netcomb, stacomb, loccomb, chacomb
 
 
