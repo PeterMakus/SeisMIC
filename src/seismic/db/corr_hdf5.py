@@ -10,7 +10,7 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)
+Last Modified: Thursday, 12th February 2026 04:33:36 pm
 '''
 import ast
 import fnmatch
@@ -19,6 +19,7 @@ import re
 from typing import List
 import warnings
 from copy import deepcopy
+import json
 
 import numpy as np
 # from numpy.core.fromnumeric import compress
@@ -211,10 +212,10 @@ omitted." % path, category=UserWarning)
     def get_corr_options(self) -> dict:
         try:
             sco = str(self['co'].attrs['co'])
+
             # Run once more through co_to_hdf5 to account for
             # correlations that have been computed with older versions
-
-            co = co_to_hdf5(ast.literal_eval(sco))
+            co = co_to_hdf5(mu.literal_eval_with_numpy_scalars(sco))
         except KeyError:
             raise KeyError('No correlation options in file')
         return co

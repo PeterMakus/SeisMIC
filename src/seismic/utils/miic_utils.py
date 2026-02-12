@@ -15,6 +15,7 @@ from typing import List, Tuple
 import logging
 import re
 import warnings
+import ast
 
 import numpy as np
 from obspy import Inventory, Stream, Trace, UTCDateTime
@@ -642,3 +643,16 @@ def utcdatetime2str(d: UTCDateTime | list | tuple | dict) -> str | list | dict:
         return {k: utcdatetime2str(v) for k, v in d.items()}
     else:
         return d
+
+
+_np_scalar_call = re.compile(
+    r"""\bnp\.(?:float16|float32|float64|float128|int8|int16|int32|int64|uint8|uint16|uint32|uint64)\(\s*([-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s*\)"""
+)
+
+
+def literal_eval_with_numpy_scalars(s: str):
+    # Replace np.float64(0.03) -> 0.03, np.int64(5) -> 5, etc.
+    s2 = _np_scalar_call.sub(r"\1", s)
+
+    # Now it should be a true Python literal
+    return ast.literal_eval(s2)
