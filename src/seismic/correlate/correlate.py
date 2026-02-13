@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)
+Last Modified: 2026-02-13 14:12:33 (J. Lehr)
 """
 
 from typing import Iterator, List, Tuple, Optional
@@ -112,6 +112,28 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             "Warn logger has handler: {}".format(warnlog.hasHandlers())
         )
 
+        # DEPRECATION: preprocess_subdiv option
+        # Phase 1 (current): Warn when True, override to False
+        # Phase 2 (v0.6.0): Warn always, option ignored
+        # Phase 3 (v1.0.0): Remove option and code branches entirely
+        if "preprocess_subdiv" in options["co"]:
+            if options["co"]["preprocess_subdiv"]:
+                warn(
+                    "The parameter 'preprocess_subdiv' is deprecated and "
+                    "will be removed in version 1.0.0. It is now always "
+                    "treated as False. Using preprocess_subdiv=True may "
+                    "lead to unexpected behavior or deadlocks in MPI "
+                    "execution. Please remove this option from your "
+                    "configuration.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+            # Always set to False for safety
+            options["co"]["preprocess_subdiv"] = False
+        else:
+            # Default to False if not specified
+            options["co"]["preprocess_subdiv"] = False
+
         if self.rank == 0:
             os.makedirs(self.corr_dir, exist_ok=True)
 
@@ -130,7 +152,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             #                 for t in step['args']['ends']]
             #             step['args']['ends'] = endsstr
             tstr = UTCDateTime.now().strftime("%Y-%m-%d-%H:%M")
-            with open(os.path.join(logdir, "params%s.txt" % tstr), "w") as file:
+            with open(os.path.join(logdir, "params%s.txt" % tstr),
+                      "w") as file:
                 file.write(json.dumps(opt_dump, indent=1))
 
         self.options = options["co"]
@@ -432,7 +455,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         if self.rcombis is None:
             self.rcombis = []
             for ii, (n0, s0) in enumerate(self.station):
-                inv0 = self.store_client.select_inventory_or_load_remote(n0, s0)
+                inv0 = self.store_client.select_inventory_or_load_remote(
+                    n0, s0)
                 for n1, s1 in self.station[ii:]:
                     inv1 = self.store_client.select_inventory_or_load_remote(
                         n1, s1
@@ -550,7 +574,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
         # write the remaining data
         if cst.count():
-            self.logger.info("Writing %d remaining correlations." % cst.count())
+            self.logger.info(
+                "Writing %d remaining correlations." % cst.count())
             self._write(cst)
             cst.clear()
 
@@ -648,7 +673,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         pmap = np.arange(len(filelist)) * self.psize / len(filelist)
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
-        self.logger.info("Core %d writing to %d files." % (self.rank, len(ind)))
+        self.logger.info(
+            "Core %d writing to %d files." % (self.rank, len(ind)))
 
         for outf in np.array(filelist)[ind]:
             net, stat, loc, cha = os.path.basename(outf).split(".")[0:4]
@@ -721,6 +747,9 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
         self.ex_dict = self.comm.bcast(self.ex_dict, root=0)
 
+        # DEPRECATED: This check is no longer needed as
+        # preprocess_subdiv is always False
+        # TODO: Remove in version 1.0.0
         if not self.ex_dict and self.options["preprocess_subdiv"]:
             self.options["preprocess_subdiv"] = False
             if self.rank == 0:
@@ -786,7 +815,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                     continue
                 st = st.extend(stext)
 
-            self.logger.info("Core %d loaded %d traces." % (self.rank, len(st)))
+            self.logger.info(
+                "Core %d loaded %d traces." % (self.rank, len(st)))
             self.logger.debug("IDs: %s" % str([tr.id for tr in st]))
 
             # The stream has to be tapered ebfore decimating!
@@ -816,25 +846,32 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             # digitizers work at 24 bit anyways)
             mu.stream_require_dtype(st, np.float32)
 
+            # DEPRECATED: preprocess_subdiv is always False now
+            # TODO: Remove this if-check in version 1.0.0 and always
+            # preprocess here
             if not self.options["preprocess_subdiv"]:
                 try:
                     self.logger.debug("Preprocessing read_len stream...")
                     st = preprocess_stream(
-                        st, self.store_client, startt, endt, tl, **self.options
+                        st, self.store_client, startt, endt,
+                        tl, **self.options
                     )
-                    self.logger.debug("Finished preprocessing read_len stream.")
+                    self.logger.debug(
+                        "Finished preprocessing read_len stream.")
                 except Exception as e:
                     self.logger.error(
                         "Stream preprocessing failed for "
-                        f"{st[0].stats.network}.{st[0].stats.station} and time"
-                        f" {t}.\nThe Original Error Message was {e}."
+                        f"time {t} and stream {st}.\n"
+                        f"The Original Error Message was {e}."
                     )
                     st = Stream()
 
             # Slice the stream in correlation length
             # -> Loop over correlation increments
-            for ii, win in enumerate(generate_corr_inc(st, **self.options)):
-                winstart = startt + ii * self.options["subdivision"]["corr_inc"]
+            for ii, win in enumerate(
+                    generate_corr_inc(st, **self.options)):
+                winstart = startt + ii * self.options[
+                    "subdivision"]["corr_inc"]
                 winend = winstart + self.options["subdivision"]["corr_len"]
 
                 self.logger.info(
@@ -862,7 +899,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                     continue
                 # Remove traces that won't be accessed at all
                 win_indices = np.arange(len(win))
-                combindices = np.unique(np.hstack(self.options["combinations"]))
+                combindices = np.unique(
+                    np.hstack(tup=self.options["combinations"]))
                 popindices = np.flip(np.setdiff1d(win_indices, combindices))
                 self.logger.info(
                     "Core %d found %d traces not in combinations. Removing..."
@@ -883,7 +921,9 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                             f"No new data for times {winstart}-{winend}"
                         )
                         continue
-                # Stream based preprocessing
+                # DEPRECATED: This entire block can be removed in version 1.0.0
+                # since preprocess_subdiv is always False
+                # TODO: Remove in version 1.0.0
                 if self.options["preprocess_subdiv"]:
                     self.logger.debug("Core %d preprocessing corr_len stream")
                     try:
@@ -943,6 +983,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                         winend.strftime(TSTR_FMT),
                     )
                 )
+
                 yield win, write_flag
                 write_flag = False
 
@@ -1041,7 +1082,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             # offset of starttimes in samples(just remove fractions of samples)
             offset = (
                 self.options["starttime"][self.options["combinations"][ii][0]]
-                - self.options["starttime"][self.options["combinations"][ii][1]]
+                - self.options[
+                    "starttime"][self.options["combinations"][ii][1]]
             )
             if corr_args["center_correlation"]:
                 roffset = 0.0
