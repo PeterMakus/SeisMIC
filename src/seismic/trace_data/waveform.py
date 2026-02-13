@@ -8,7 +8,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Tuesday, 25th Febuary 2025 03:25:00 pm
+Last Modified: Friday, 13th February 2026 04:05:39 pm
 '''
 
 import fnmatch
@@ -178,7 +178,10 @@ class Store_Client(logfactory.LoggingMPIBaseClass):
             domain, restrictions, mseed_storage=self._get_mseed_storage,
             stationxml_storage=self.inv_dir)
         # update inventory
-        self.read_inventory()
+        try:
+            self.read_inventory()
+        except Exception:
+            warnings.warn('No Inventory files found.')
 
     def get_waveforms(
         self, network: str, station: str, location: str, channel: str,
