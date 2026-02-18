@@ -8,9 +8,12 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Monday, 17th June 2024 04:55:40 pm
+Last Modified: Wednesday, 18th February 2026 09:59:42 am
 '''
 from copy import deepcopy
+from datetime import datetime, timezone
+import json
+from pathlib import Path
 import unittest
 import math as mathematics
 from unittest import mock
@@ -496,6 +499,97 @@ class TestSortCombinationsAlphabetically(unittest.TestCase):
         self.assertEqual(sorted_stacomb, expected_stacomb)
         self.assertEqual(sorted_loccomb, expected_loccomb)
         self.assertEqual(sorted_chacomb, expected_chacomb)
+
+
+def json_default(o):
+    if isinstance(o, np.generic):
+        return o.item()
+    if isinstance(o, np.ndarray):
+        return o.tolist()
+    if isinstance(o, Path):
+        return str(o)
+    if isinstance(o, datetime):
+        return o.isoformat()
+    if isinstance(o, UTCDateTime):
+        return str(o)
+    raise TypeError(f"{type(o)} not serializable")
+# ----------------------------------------------------------------------
+
+
+class TestJsonDefault(unittest.TestCase):
+    def _roundtrip(self, obj, **dump_kwargs):
+        """Dump using json_default and load back."""
+        s = json.dumps(obj, default=json_default, **dump_kwargs)
+        return json.loads(s)
+
+    def test_numpy_scalar_converted(self):
+        out = self._roundtrip({"i": np.int64(7), "f": np.float64(0.03), "b": np.bool_(True)})
+        self.assertEqual(out["i"], 7)
+        self.assertIsInstance(out["i"], int)
+        self.assertAlmostEqual(out["f"], 0.03, places=12)
+        self.assertIsInstance(out["f"], float)
+        self.assertIs(out["b"], True)
+        self.assertIsInstance(out["b"], bool)
+
+    def test_numpy_array_converted(self):
+        out = self._roundtrip({"a": np.array([[1, 2], [3, 4]], dtype=np.int64)})
+        self.assertEqual(out["a"], [[1, 2], [3, 4]])
+
+    def test_path_converted(self):
+        out = self._roundtrip({"p": Path("some/dir/file.txt")})
+        self.assertEqual(out["p"], "some/dir/file.txt")
+
+    def test_datetime_converted_isoformat(self):
+        dt = datetime(2026, 2, 18, 12, 34, 56, tzinfo=timezone.utc)
+        out = self._roundtrip({"t": dt})
+        self.assertEqual(out["t"], dt.isoformat())
+
+    def test_utcdatetime_converted(self):
+        t = UTCDateTime("2026-02-18T12:34:56")
+        out = self._roundtrip({"t": t})
+        self.assertEqual(out["t"], str(t))
+
+    def test_recursive_handling_via_json(self):
+        # json itself is the recursive walker; json_default is applied at leaves.
+        sco = {
+            "level1": [
+                {"x": np.float64(0.1), "p": Path("a/b")},
+                (np.int64(2), UTCDateTime("2026-02-18T00:00:00")),
+            ],
+            "level2": {
+                "dt": datetime(2026, 2, 18, 0, 0, 0),
+                "arr": np.array([1, 2, 3], dtype=np.int64),
+            },
+        }
+        out = self._roundtrip(sco)
+
+        self.assertAlmostEqual(out["level1"][0]["x"], 0.1, places=12)
+        self.assertEqual(out["level1"][0]["p"], "a/b")
+
+        # tuple becomes list after JSON roundtrip
+        self.assertIsInstance(out["level1"][1], list)
+        self.assertEqual(out["level1"][1][0], 2)
+        self.assertEqual(out["level1"][1][1], "2026-02-18T00:00:00.000000Z")
+
+        self.assertEqual(out["level2"]["dt"], datetime(2026, 2, 18, 0, 0, 0).isoformat())
+        self.assertEqual(out["level2"]["arr"], [1, 2, 3])
+
+    def test_unknown_type_raises_typeerror(self):
+        class NotSerializable:
+            pass
+
+        with self.assertRaises(TypeError):
+            json.dumps({"x": NotSerializable()}, default=json_default)
+
+    def test_allow_nan_strict_raises_valueerror(self):
+        # NaN/Inf aren't valid JSON; Python can allow them unless allow_nan=False.
+        with self.assertRaises(ValueError):
+            json.dumps({"x": np.float64(np.nan)}, default=json_default, allow_nan=False)
+
+    def test_allow_nan_default_roundtrips(self):
+        out = self._roundtrip({"x": np.float64(np.nan), "y": np.float64(np.inf)})
+        self.assertTrue(mathematics.isnan(out["x"]))
+        self.assertTrue(mathematics.isinf(out["y"]))
 
 
 if __name__ == "__main__":

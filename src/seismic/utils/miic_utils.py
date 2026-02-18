@@ -8,12 +8,15 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)
+Last Modified: Wednesday, 18th February 2026 09:53:54 am
 '''
 from typing import List, Tuple
 import logging
 import re
 import warnings
+import json
+from pathlib import Path
+from datetime import datetime
 
 import numpy as np
 from obspy import Inventory, Stream, Trace, UTCDateTime
@@ -572,16 +575,36 @@ def sort_combinations_alphabetically(
     return netcomb, stacomb, loccomb, chacomb
 
 
-def utcdatetime2str(d: UTCDateTime | list | tuple | dict) -> str | list | dict:
+def json_default(o):
     """
-    Replace UTCDateTime object by str-representation in any object,
-    notably dicts, lists, utcdatetimes.
+    Default function for json.dumps to convert objects that are not natively
+    serializable to a serializable format. This is used to save the options
+    dictionary to a json file.
+
+    Works recursively.
+
+    .. example::
+
+        >>> import json
+        >>> from obspy import UTCDateTime
+        >>> d = {'time': UTCDateTime.now()}
+        >>> json.dumps(d, default=json_default)
+        >>> sco2 = json.loads(s)   # now a dict with native Python types
+
+    :param o: Dictionary
+    :type o: dict
+    :raises TypeError: Not serializable
+    :return: The converted object
+    :rtype: object
     """
-    if isinstance(d, UTCDateTime):
-        return str(d)
-    elif isinstance(d, (list, tuple)):
-        return [utcdatetime2str(i) for i in d]
-    elif isinstance(d, dict):
-        return {k: utcdatetime2str(v) for k, v in d.items()}
-    else:
-        return d
+    if isinstance(o, np.generic):
+        return o.item()
+    if isinstance(o, np.ndarray):
+        return o.tolist()
+    if isinstance(o, Path):
+        return str(o)
+    if isinstance(o, datetime):
+        return o.isoformat()
+    if isinstance(o, UTCDateTime):
+        return str(o)
+    raise TypeError(f"{type(o)} not serializable")

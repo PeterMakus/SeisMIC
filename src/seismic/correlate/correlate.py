@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 07:58:18 am
-Last Modified: Thursday, 6th November 2025 05:05:07 pm
+Last Modified: Wednesday, 18th February 2026 09:51:40 am
 '''
 from typing import Iterator, List, Tuple, Optional
 from warnings import warn
@@ -96,12 +96,11 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
         # Write the options dictionary to the log file
         if self.rank == 0:
-            opt_dump = mu.utcdatetime2str(options)
-
             tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H-%M')
             with open(os.path.join(
                     logdir, 'params%s.txt' % tstr), 'w') as file:
-                file.write(json.dumps(opt_dump, indent=1))
+                file.write(
+                    json.dumps(options, indent=1, default=mu.json_default))
 
         self.options = options['co']
 
