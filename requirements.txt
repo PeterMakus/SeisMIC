@@ -12,9 +12,10 @@ obspy==1.4.2
 pip
 prov
 pyyaml
-scipy <=1.15.0
+scipy >=1.7
 flake8
 tqdm
+setuptools<70
 
 # Other requirements for tests and docs
 flake8

@@ -13,10 +13,11 @@ dependencies:
   - pytest
   - pyyaml
   - python>=3.10, <3.13
-  - scipy  <=1.15.0
+  - scipy  >=1.7
   - flake8
   - tqdm
   - ipykernel
+  - setuptools<70
   - pip:
     - sphinx < 6.0
     - pydata-sphinx-theme
