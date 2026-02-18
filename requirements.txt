@@ -4,7 +4,7 @@
 
 geographiclib
 h5py <=3.12.1
-matplotlib <=3.8.4
+matplotlib
 mpi4py<=4.0.1
 openmpi <=5.0.7
 numpy>2, <=2.3.5
