@@ -384,10 +384,14 @@ def get_valid_traces(st: Stream):
     :param st: stream to work on
 
     """
-    for tr in st:
+    inds = []
+    for ind, tr in enumerate(st):
         if isinstance(tr.data, np.ma.MaskedArray):
             if tr.data.mask.all():
-                st.remove(tr)
+                inds.append(ind)
+    for ind in inds[-1::-1]:
+        module_logger.debug(f"Discarding short Trace {st[ind]}.")
+        st.pop(ind)
     return
 
 
