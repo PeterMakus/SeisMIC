@@ -441,7 +441,7 @@ def nan_moving_av(
             start = 0
         # weighted average
         data_smooth[ii] = np.nanmean(
-            dataswap[start : ii + win_half_len + 1], axis=0
+            dataswap[start: ii + win_half_len + 1], axis=0
         )
     return data_smooth.swapaxes(0, axis)
 
@@ -570,7 +570,7 @@ def interpolate_gaps(A: np.ndarray, max_gap_len: int = -1) -> np.ndarray:
         if ml > max_gap_len:
             warnings.warn("Gap too large. Not interpolating.", UserWarning)
             continue
-        A[mstart : mstart + ml] = np.interp(
+        A[mstart: mstart + ml] = np.interp(
             np.arange(mstart, mstart + ml),
             x[~mask],
             A[~mask],
