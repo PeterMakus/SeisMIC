@@ -1,4 +1,4 @@
-"""
+'''
 :copyright:
     The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Wednesday, 18th February 2026 09:59:42 am
+Last Modified: Thursday, 26th February 2026 11:00:37 am
 '''
 from copy import deepcopy
 from datetime import datetime, timezone
