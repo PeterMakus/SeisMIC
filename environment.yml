@@ -2,12 +2,12 @@ name: seismic
 channels:
   - conda-forge
 dependencies:
-  - geographiclib==2.0
+  - geographiclib=2.0
   - h5py <=3.12.1
   - matplotlib
   - mpi4py<=4.0.1
   - numpy>2, <=2.3.5
-  - obspy==1.4.2
+  - obspy=1.4.2
   - pip
   - prov
   - pytest
