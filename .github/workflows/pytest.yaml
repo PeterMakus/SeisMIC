@@ -49,6 +49,12 @@ jobs:
         python-version: ${{ matrix.PYTHON }}
         auto-activate-base: false
         use-only-tar-bz2: true
+    # annoying fix for missing fortran (find gfortran that was used to compile numpy)
+    - name: Fix NumPy libgfortran (Linux only)
+      if: runner.os == 'Linux'
+      shell: bash -l {0}
+      run: |
+        conda install -n seismic -c conda-forge numpy --yes
 
     # To keep Conda activated you have to use 'shell: bash -l {0}' line
     # To specifiy the shell
