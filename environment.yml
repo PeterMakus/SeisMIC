@@ -22,5 +22,5 @@ dependencies:
     - pydata-sphinx-theme
     - sphinx-copybutton
     - sphinxcontrib-mermaid
-    - obspy=1.4.2
+    - obspy==1.4.2
     - -e .
