@@ -197,6 +197,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         network = options["net"]["network"]
         station = options["net"]["station"]
         component = options["net"]["component"]
+        self.req_comps = component
         # location = options['net']['location']
 
         if isinstance(station, list) and len(station) == 1:

@@ -10,16 +10,14 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Thursday, 12th February 2026 04:33:36 pm
+Last Modified: Thursday, 26th February 2026 12:19:41 pm
 '''
-import ast
 import fnmatch
 import os
 import re
 from typing import List
 import warnings
 from copy import deepcopy
-import json
 
 import numpy as np
 # from numpy.core.fromnumeric import compress
@@ -534,6 +532,7 @@ def read_hdf5_header(dataset: h5py.Dataset) -> Stats:
 
 
 def co_to_hdf5(co: dict) -> dict:
+    assert isinstance(co, dict)
     coc = deepcopy(co)
     remk = [
         'subdir', 'read_start', 'read_end', 'read_len', 'read_inc',

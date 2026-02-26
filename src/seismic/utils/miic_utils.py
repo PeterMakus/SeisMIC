@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Thursday, 26th February 2026 10:59:50 am
+Last Modified: Thursday, 26th February 2026 12:20:56 pm
 '''
 from typing import List, Tuple
 import logging
@@ -16,6 +16,7 @@ import re
 import warnings
 from pathlib import Path
 from datetime import datetime
+import ast
 
 import numpy as np
 from obspy import Inventory, Stream, Trace, UTCDateTime
@@ -667,3 +668,24 @@ def json_default(o):
     if isinstance(o, UTCDateTime):
         return str(o)
     raise TypeError(f"{type(o)} not serializable")
+
+
+_np_scalar_call = re.compile(
+    (
+        r"\bnp\."
+        r"(?:float16|float32|float64|float128|"
+        r"int8|int16|int32|int64|"
+        r"uint8|uint16|uint32|uint64)"
+        r"\(\s*"
+        r"([-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)"
+        r"\s*\)"
+    )
+)
+
+
+def literal_eval_with_numpy_scalars(s: str):
+    # Replace np.float64(0.03) -> 0.03, np.int64(5) -> 5, etc.
+    s2 = _np_scalar_call.sub(r"\1", s)
+
+    # Now it should be a true Python literal
+    return ast.literal_eval(s2)

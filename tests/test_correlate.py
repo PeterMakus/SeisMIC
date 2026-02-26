@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Thursday, 26th February 2026 10:59:30 am
+Last Modified: Thursday, 26th February 2026 12:18:44 pm
 '''
 
 from copy import deepcopy
@@ -147,7 +147,11 @@ class TestCorrrelator(unittest.TestCase):
         listdir_mock.return_value = False
         read_inventory_mock.return_value = Inventory()
         sds_exists_mock.return_value = True
-        c = correlate.Correlator(self.param_example)
+        with mock.patch(
+                'seismic.trace_data.waveform.Store_Client._translate_wildcards') as tw:
+            tw.return_value = [
+                ['D0', 'BZG', 'a', 'c'], ['D0', 'BZG', 'a', 'c2']]
+            c = correlate.Correlator(self.param_example)
         self.assertDictEqual(self.options["co"], c.options)
         mkdir_calls = [
             mock.call(
@@ -374,10 +378,8 @@ class TestCorrrelator(unittest.TestCase):
         statcombs = ["00-00", "00-11", "22-33", "22-44"]
         ccomb_mock.return_value = (netcombs, statcombs)
         isfile = [
-            [1],
             ["AA-BB.00-00.00-01.E-Z.h5"],
             [],
-            [2],
             ["AA-AA.22-33.00-01.E-Z.h5"],
             [],
             [],
@@ -397,12 +399,9 @@ class TestCorrrelator(unittest.TestCase):
     @mock.patch('seismic.correlate.correlate.glob.glob')
     @mock.patch(
         'seismic.correlate.correlate.compute_network_station_combinations')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_find_existing_times_autocorr(
-        self, makedirs_mock, logging_mock, open_mock, ccomb_mock, isfile_mock,
-            cdb_mock):
+        self, ccomb_mock, isfile_mock,
+            cdb_mock, makedirs_mock, logging_mock, open_mock):
         options = deepcopy(self.options)
         options['net']['component'] = '*'
         options['co']['combination_method'] = 'autoComponents'
@@ -433,12 +432,9 @@ class TestCorrrelator(unittest.TestCase):
     @mock.patch('seismic.correlate.correlate.glob.glob')
     @mock.patch(
         'seismic.correlate.correlate.compute_network_station_combinations')
-    @mock.patch('builtins.open')
-    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
-    @mock.patch('seismic.correlate.correlate.os.makedirs')
     def test_find_existing_times_betweencomps(
-        self, makedirs_mock, logging_mock, open_mock, ccomb_mock, isfile_mock,
-            cdb_mock):
+        self, ccomb_mock, isfile_mock,
+            cdb_mock, makedirs_mock, logging_mock, open_mock):
         options = deepcopy(self.options)
         options['net']['component'] = '*'
         options['co']['combination_method'] = 'betweenComponents'
@@ -913,11 +909,12 @@ class TestCorrrelator(unittest.TestCase):
     ):
         yaml_mock.return_value = self.options
         sc_mock = mock.Mock(Store_Client)
+        sc_mock.sds_root = 'root'
         sc_mock.get_available_stations.return_value = []
-        sc_mock._translate_wildcards.return_value = []
+        sc_mock._translate_wildcards.return_value = [
+                ['D0', 'BZG', 'a', 'c'], ['D0', 'BZG', 'a', 'c2']]
         combis = [(0, 1), (0, 2)]
         mock_calc_cross_combis.return_value = combis
-
         c = correlate.Correlator(self.param_example, sc_mock)
         c.ex_dict = {}
 

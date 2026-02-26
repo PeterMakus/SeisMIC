@@ -9,7 +9,7 @@
 
 Created: Tuesday, 1st June 2021 10:42:03 am
 
-Last Modified: Monday, 17th June 2024 05:09:04 pm
+Last Modified: Thursday, 26th February 2026 11:29:53 am
 
 '''
 from copy import deepcopy
@@ -384,7 +384,7 @@ class TestDBHandler(unittest.TestCase):
         oco['sampling_rate'] = 100000
         gco_mock.return_value = oco
         with self.assertRaises(PermissionError):
-            corr_hdf5.DBHandler('a', 'a', 'gzip9', co, False)
+            corr_hdf5.DBHandler('a', 'a', 'gzip9', deepcopy(co), False)
 
     @patch('seismic.db.corr_hdf5.DBHandler.get_corr_options')
     @patch('seismic.db.corr_hdf5.h5py.File.__init__')
@@ -395,7 +395,7 @@ class TestDBHandler(unittest.TestCase):
         oco['nlub'] = 100000
         gco_mock.return_value = oco
         with self.assertRaises(PermissionError):
-            corr_hdf5.DBHandler('a', 'a', 'gzip9', co, False)
+            corr_hdf5.DBHandler('a', 'a', 'gzip9', deepcopy(co), False)
 
     @patch('seismic.db.corr_hdf5.DBHandler.get_corr_options')
     @patch('seismic.db.corr_hdf5.h5py.File.__init__')
@@ -405,13 +405,13 @@ class TestDBHandler(unittest.TestCase):
         oco = deepcopy(co)
         oco['nlub'] = 100000
         gco_mock.return_value = oco
-        corr_hdf5.DBHandler('a', 'a', 'gzip9', co, True)
+        corr_hdf5.DBHandler('a', 'a', 'gzip9', deepcopy(co), True)
 
     @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_corr_options(self, gi_mock):
-        d = {'co': AttribDict(attrs={'co': str(corr_hdf5.co_to_hdf5(co))})}
+        d = {'co': AttribDict(attrs={'co': str(corr_hdf5.co_to_hdf5(deepcopy(co)))})}
         gi_mock.side_effect = d.__getitem__
-        self.assertEqual(corr_hdf5.co_to_hdf5(co), self.dbh.get_corr_options())
+        self.assertEqual(corr_hdf5.co_to_hdf5(deepcopy(co)), self.dbh.get_corr_options())
 
     @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_corr_options_no_data(self, gi_mock):
@@ -426,8 +426,11 @@ class TestDBHandler(unittest.TestCase):
         d = {'co': AttribDict(attrs={})}
         gi_mock.side_effect = d.__getitem__
         cd_mock.return_value = d['co']
-        self.dbh.add_corr_options(co)
-        self.assertEqual(corr_hdf5.co_to_hdf5(co), self.dbh.get_corr_options())
+        self.dbh.add_corr_options(deepcopy(co))
+        assert isinstance(co, dict)
+        self.assertEqual(
+            corr_hdf5.co_to_hdf5(co),
+            self.dbh.get_corr_options())
 
     @patch('seismic.db.corr_hdf5.h5py.File.__getitem__')
     def test_get_available_channels(self, gi_mock):
