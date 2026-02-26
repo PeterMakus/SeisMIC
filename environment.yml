@@ -7,7 +7,6 @@ dependencies:
   - matplotlib
   - mpi4py<=4.0.1
   - numpy>2, <=2.3.5
-  - obspy=1.4.2
   - pip
   - prov
   - pytest
@@ -23,4 +22,5 @@ dependencies:
     - pydata-sphinx-theme
     - sphinx-copybutton
     - sphinxcontrib-mermaid
+    - obspy=1.4.2
     - -e .
