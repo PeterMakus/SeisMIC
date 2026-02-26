@@ -2,6 +2,7 @@
 # note that this file contains requirements for automatic deployments
 # Broader requirements are specified in the environment.yml
 
+setuptools<70
 geographiclib
 h5py <=3.12.1
 matplotlib
@@ -15,9 +16,6 @@ pyyaml
 scipy >=1.7
 flake8
 tqdm
-setuptools<70
-libgfortran
-libgfortran-ng
 
 # Other requirements for tests and docs
 flake8
