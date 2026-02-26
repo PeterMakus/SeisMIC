@@ -12,8 +12,8 @@ jobs:
       with:
         fetch-depth: ‘2’
     - name: Install libgfortran
-     shell: bash -l {0}
-     run: |
+      shell: bash -l {0}
+      run: |
         sudo apt-get update
         sudo apt-get install -y gfortran
     # Cache Conda environment installattion
