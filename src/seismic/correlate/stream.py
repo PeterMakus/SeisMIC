@@ -10,9 +10,9 @@ Manage objects holding correlations.
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Friday, 10th January 2025 01:32:08 pm
+Last Modified: Wednesday, 26th February 2025 04:40:39 pm
 '''
-from typing import Iterator, List, Tuple, Optional
+from typing import Iterator, List, Tuple, Optional, Union
 from copy import deepcopy
 import warnings
 from matplotlib import pyplot as plt
@@ -333,9 +333,42 @@ class CorrBulk(object):
         self.ref_trc = outdata
         return outdata
 
+    def extract_trace_time_window(
+        self, starttime: UTCDateTime, endtime: UTCDateTime,
+            method: str) -> np.ndarray:
+        """
+        Extract a reference trace from the correlation matrix within the given
+        time window.
+
+        For details see,
+        :meth:`~seismic.correlate.stream.CorrBulk.extract_trace`
+
+        :param starttime: Beginning of time window to be extracted
+        :type starttime: UTCDateTime
+        :param endtime: End of time window to be extracted
+        :type endtime: UTCDateTime
+        :param method: method to extract the trace. Options are 'mean',
+            'median', 'norm_mean', 'similarity_percentile'
+        :type method: str
+        :return: The reference trace
+        :rtype: np.ndarray
+        """
+        ii = self._find_slice_index(
+            starttime, endtime, True)
+        if len(ii) == 0:
+            raise ValueError(
+                'No data in time window. No ref_trace can be extracted.')
+        outdata = pcp.corr_mat_extract_trace(
+            self.data[ii, :], self.stats, method)
+        self.ref_trc = outdata
+        return outdata
+
     def extract_multi_trace(
         self, win_inc: int | List[int], method: str = 'mean',
-            percentile: float = 50.) -> List[np.ndarray]:
+        percentile: float = 50.,
+        time_windows: Optional[
+            List[Tuple[Union[UTCDateTime, str],
+                       Union[UTCDateTime, str]]]] = None) -> List[np.ndarray]:
         """
         Extract several representative traces from a correlation matrix.
         (one per time window `win_inc` with the length = 2*win_inc). That is,
@@ -371,11 +404,25 @@ class CorrBulk(object):
         ..note:: the extracted traces will also be saved in self.ref_trc
         """
         ref_trcs = []
+        if time_windows is not None and len(time_windows) == 0:
+            time_windows = None
+        if win_inc != 0 and time_windows is not None:
+            raise ValueError(
+                'win_inc and time_windows cannot be set at the same time.')
         if isinstance(win_inc, list):
             win_inc = np.array(win_inc)
-        elif win_inc == 0:
+        elif win_inc == 0 and time_windows is None:
             return self.extract_trace(method, percentile)
-
+        if time_windows is not None:
+            for tw in time_windows:
+                if isinstance(tw[0], str):
+                    tw = (UTCDateTime(tw[0]), UTCDateTime(tw[1]))
+                ref_trcs.append(self.extract_trace_time_window(
+                    tw[0], tw[1], method))
+            ref_trcs = np.array(ref_trcs)
+            self.ref_trc = ref_trcs
+            return ref_trcs
+        # if win_inc
         inc_s = win_inc*24*3600
         start = min(self.stats.corr_start)
         if isinstance(inc_s, np.ndarray):

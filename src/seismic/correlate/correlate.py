@@ -139,22 +139,11 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
         # Write the options dictionary to the log file
         if self.rank == 0:
-            opt_dump = mu.utcdatetime2str(options)
-            # opt_dump = deepcopy(options)
-            # # json cannot write the UTCDateTime objects that might be in here
-            # for step in opt_dump['co']['preProcessing']:
-            #     if 'stream_mask_at_utc' in step['function']:
-            #         startsstr = [
-            #             t.format_fissures() for t in step['args']['starts']]
-            #         step['args']['starts'] = startsstr
-            #         if 'ends' in step['args']:
-            #             endsstr = [t.format_fissures()
-            #                 for t in step['args']['ends']]
-            #             step['args']['ends'] = endsstr
-            tstr = UTCDateTime.now().strftime("%Y-%m-%d-%H:%M")
-            with open(os.path.join(logdir, "params%s.txt" % tstr),
-                      "w") as file:
-                file.write(json.dumps(opt_dump, indent=1))
+            tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H-%M')
+            with open(os.path.join(
+                    logdir, 'params%s.txt' % tstr), 'w') as file:
+                file.write(
+                    json.dumps(options, indent=1, default=mu.json_default))
 
         self.options = options["co"]
         self._set_joint_norm_arg()
@@ -214,8 +203,6 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             station = station[0]
         if isinstance(network, list) and len(network) == 1:
             network = network[0]
-        # if isinstance(location, list) and len(network) == 1:
-        #     network = network[0]
 
         if network == "*" and isinstance(station, str) and "*" not in station:
             raise ValueError(
@@ -278,10 +265,17 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             ).tolist()
         else:
             self.avail_raw_data = None
-        self.avail_raw_data = self.comm.bcast(self.avail_raw_data, root=0)
-        self.station = np.unique(
-            np.array([[d[0], d[1]] for d in self.avail_raw_data]), axis=0
-        ).tolist()
+        self.avail_raw_data = self.comm.bcast(
+            self.avail_raw_data, root=0)
+        self.station = np.unique(np.array([
+            [d[0], d[1]] for d in self.avail_raw_data]), axis=0).tolist()
+        # if no data is available, raise an error
+        if not len(self.station):
+            raise FileNotFoundError(
+                f'No data available in {self.store_client.sds_root}.\n'
+                f'I was looking for network and station {station} and '
+                f'the component {component}.\nAll these parameters can be '
+                'adjusted in your params.yaml.')
         # if only certain combis are requested, remove stations not within
         # these
         self._filter_by_rcombis()
@@ -487,8 +481,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         >>> out_dict = my_correlator.find_existing_times('mytag', 'BHZ-BHH')
         >>> print(out_dict)
         {'NET0.STAT0': {
-            'NET1.STAT1': {'BHZ-BHH': [%list of starttimes] ,
-            'NET2.STAT2': {'BHZ-BHH':[%list of starttimes]}}}
+            'NET1.STAT1': {'LOC0-LOC1': {'BHZ-BHH': [%list of starttimes]}} ,
+            'NET2.STAT2': {'LOC0-LOC0': {'BHZ-BHH':[%list of starttimes]}}}
         """
         netlist, statlist = list(zip(*self.station))
         netcombs, statcombs = compute_network_station_combinations(
@@ -499,19 +493,26 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         )
         ex_dict = {}
         for nc, sc in zip(netcombs, statcombs):
-            outfs = h5_FMTSTR.format(
-                dir=self.corr_dir,
-                network=nc,
-                station=sc,
-                location="*",
-                channel="*",
-            )
-            if not len(glob.glob(outfs)):
+            outfs = glob.glob(h5_FMTSTR.format(
+                dir=self.corr_dir, network=nc, station=sc, location='*',
+                channel=channel))
+            if not len(outfs):
                 continue
             d = {}
-            for outf in glob.glob(outfs):
+            for outf in outfs:
                 # retrieve location codes
-                l0, l1 = os.path.basename(outf).split(".")[2].split("-")
+                l0, l1 = os.path.basename(outf).split('.')[2].split('-')
+                cha0, cha1 = os.path.basename(outf).split('.')[3].split('-')
+                if self.options['combination_method'] in (
+                        'autoComponents', 'betweenComponents') and l0 != l1:
+                    # skip this file, as it is not an autocorrelation
+                    continue
+                if self.options['combination_method'] == 'betweenComponents' \
+                        and cha0 == cha1:
+                    continue
+                if self.options['combination_method'] == 'autoComponents' \
+                        and cha0 != cha1:
+                    continue
                 with CorrelationDataBase(
                     outf,
                     corr_options=self.options,
@@ -740,8 +741,9 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         """
         if self.rank == 0:
             # find already available times
-            self.ex_dict = self.find_existing_times("subdivision")
-            self.logger.info("Already existing data: %s" % str(self.ex_dict))
+            self.ex_dict = self.find_existing_times(
+                'subdivision', channel=f'*{self.req_comps}-*{self.req_comps}')
+            self.logger.info('Already existing data: %s' % str(self.ex_dict))
         else:
             self.ex_dict = None
 
@@ -897,6 +899,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                         f"No new data for times {winstart}-{winend}"
                     )
                     continue
+
                 # Remove traces that won't be accessed at all
                 win_indices = np.arange(len(win))
                 combindices = np.unique(
@@ -1058,7 +1061,11 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
         ######################################
         # collect results
-        self.comm.Allreduce(MPI.IN_PLACE, [B, MPI.FLOAT], op=MPI.SUM)
+        # ensure B is complex64 and contiguous
+        B = np.ascontiguousarray(
+            B, dtype=np.complex64)
+        # perform complex reduction
+        self.comm.Allreduce(MPI.IN_PLACE, [B, MPI.COMPLEX], op=MPI.SUM)
 
         ######################################
         # correlation
@@ -1215,12 +1222,14 @@ def _compare_existing_data(ex_corr: dict, tr0: Trace, tr1: Trace) -> bool:
     # The actual starttime for the header is the later one of the two
     net0 = tr0.stats.network
     stat0 = tr0.stats.station
+    loc0 = tr0.stats.location
     cha0 = tr0.stats.channel
+
     net1 = tr1.stats.network
     stat1 = tr1.stats.station
-    cha1 = tr1.stats.channel
-    loc0 = tr0.stats.location
     loc1 = tr1.stats.location
+    cha1 = tr1.stats.channel
+
     # Probably faster than checking a huge dict twice
     flip = (
         [net0, net1],
@@ -1290,8 +1299,8 @@ def calc_cross_combis(
     :type rcombis: List[str] strings are in form net0-net1.stat0-stat1
 
         ``'betweenStations'``:
-            Traces are combined if either their station or
-            their network names are different.
+            Traces are combined if either their station, network, or
+            location codes differ.
         ``'betweenComponents'``:
             Traces are combined if their components (last
             letter of channel name) names are different and their station and
@@ -1323,7 +1332,9 @@ def calc_cross_combis(
                 n2 = tr1.stats.network
                 s = tr.stats.station
                 s2 = tr1.stats.station
-                if n != n2 or s != s2:
+                loc = tr.stats.location
+                loc2 = tr1.stats.location
+                if n != n2 or s != s2 or loc != loc2:
                     # check first whether this combi is in dict
                     if _compare_existing_data(ex_corr, tr, tr1):
                         continue
@@ -1336,11 +1347,15 @@ def calc_cross_combis(
         for ii, tr in enumerate(st):
             for jj in range(ii + 1, len(st)):
                 tr1 = st[jj]
-                if (
-                    (tr.stats["network"] == tr1.stats["network"])
-                    and (tr.stats["station"] == tr1.stats["station"])
-                    and (tr.stats["channel"][-1] != tr1.stats["channel"][-1])
-                ):
+                n = tr.stats.network
+                n2 = tr1.stats.network
+                s = tr.stats.station
+                s2 = tr1.stats.station
+                loc = tr.stats.location
+                loc2 = tr1.stats.location
+                c = tr.stats.component
+                c2 = tr1.stats.component
+                if ((n == n2) and (s == s2) and (c != c2) and (loc == loc2)):
                     if _compare_existing_data(ex_corr, tr, tr1):
                         continue
                     combis.append((ii, jj))
@@ -1851,10 +1866,11 @@ def preprocess_stream(
         try:
             mu.correct_polarity(st, inv)
         except Exception:
+            msg = "Polarity correction failed"
+            msg += ", data will be used without polarity check..."
             module_logger.error(
-                "Exception while checking polarity of inventory ...",
-                exc_info=True,
-            )
+                msg,
+                exc_info=True)
 
     mu.discard_short_traces(st, subdivision["corr_len"] / 20)
 

@@ -318,7 +318,7 @@ class Store_Client(logfactory.LoggingMPIBaseClass):
                             get_sdsfmtst_with_doy_as_wildcard(
                                 self.sds_fmtstr).format(
                                 network=network, station=station,
-                                location=location, channel=f'??{component}',
+                                location=location, channel=f'*{component}',
                                 year='*', sds_type=self.sds_type))
         return [os.path.basename(i).split('.')[:4] for i in glob.iglob(path)]
 

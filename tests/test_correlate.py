@@ -7,10 +7,10 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Monday, 04th December 2024 03:07:26 pm (J. Lehr)
-"""
-
+Last Modified: Thursday, 18th September 2025 04:04:43 pm
+'''
 from copy import deepcopy
+from math import e
 import unittest
 import warnings
 from unittest import mock
@@ -55,8 +55,13 @@ class TestCorrrelator(unittest.TestCase):
     ):
         yaml_mock.return_value = self.options
         sc_mock = mock.Mock(Store_Client)
-        sc_mock.get_available_stations.return_value = []
-        sc_mock._translate_wildcards.return_value = []
+        sc_mock.get_available_stations.return_value = [
+            ['NET1', 'STA1', 'LOC1', 'CHAN1'],
+            ['NET1', 'STA2', 'LOC2', 'CHAN1'],
+            ['NET2', 'STA1', 'LOC1', 'CHAN1']]
+        sc_mock._translate_wildcards.return_value = [
+            ['NET1', 'STA1'], ['NET1', 'STA2'], ['NET2', 'STA1']]
+        sc_mock.sds_root = mock.PropertyMock(return_value='foo')
         c = correlate.Correlator(self.param_example, sc_mock)
         c.station = [["NET1", "STA1"], ["NET1", "STA2"], ["NET2", "STA1"]]
         c.avail_raw_data = [
@@ -81,10 +86,12 @@ class TestCorrrelator(unittest.TestCase):
     ):
         yaml_mock.return_value = self.options
         sc_mock = mock.Mock(Store_Client)
+        sc_mock.sds_root = mock.PropertyMock(return_value='foo')
         sc_mock.get_available_stations.return_value = []
         sc_mock._translate_wildcards.return_value = []
-        c = correlate.Correlator(self.param_example, sc_mock)
-        self.assertDictEqual(self.options["co"], c.options)
+        with self.assertRaises(FileNotFoundError):
+            correlate.Correlator(
+                self.param_example, sc_mock)
         mkdir_calls = [
             mock.call(
                 os.path.join(
@@ -135,9 +142,6 @@ class TestCorrrelator(unittest.TestCase):
         open_mock,
     ):
         yaml_mock.return_value = self.options
-        sc_mock = mock.Mock(Store_Client)
-        sc_mock.get_available_stations.return_value = []
-        sc_mock._translate_wildcards.return_value = []
         isdir_mock.return_value = True
         listdir_mock.return_value = False
         read_inventory_mock.return_value = Inventory()
@@ -387,11 +391,78 @@ class TestCorrrelator(unittest.TestCase):
             "AA.22": {"AA.33": {"00-01": {"b": [3, 4, 5, 6]}}},
         }
         self.assertDictEqual(out, exp)
-        # isfile_calls = [
-        #     os.path.join(c.corr_dir, f'{nc}.{sc}*.h5') for nc, sc in zip(
-        #         netcombs, statcombs)]
-        # for call in isfile_calls:
-        #     isfile_mock.assert_any_call(call)
+
+    @mock.patch('seismic.db.corr_hdf5.DBHandler')
+    @mock.patch('seismic.correlate.correlate.glob.glob')
+    @mock.patch(
+        'seismic.correlate.correlate.compute_network_station_combinations')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_find_existing_times_autocorr(
+        self, makedirs_mock, logging_mock, open_mock, ccomb_mock, isfile_mock,
+            cdb_mock):
+        options = deepcopy(self.options)
+        options['net']['component'] = '*'
+        options['co']['combination_method'] = 'autoComponents'
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [
+            ['lala', 'lolo'], ['lala', 'lili']]
+        sc_mock._translate_wildcards.return_value = [
+            ['lala', 'lolo', '00', 'E'], ['lala', 'lili', '01', 'Z']]
+        c = correlate.Correlator(options, sc_mock)
+        netcombs = ['AA-AA']
+        statcombs = ['00-00']
+        ccomb_mock.return_value = (netcombs, statcombs)
+        isfile = [
+            ['AA-AA.00-00.00-00.E-E.h5', 'AA-AA.00-00.00-00.N-N.h5',
+            'AA-AA.00-00.00-01.E-E.h5', 'AA-AA.00-00.00-01.N-N.h5',
+            'AA-AA.00-00.00-00.E-Z.h5', 'AA-AA.00-00.00-00.N-Z.h5']]
+        # 3rd and 4th should be skipped
+        isfile_mock.side_effect = isfile
+        times = [
+            {'E-E': [0, 1, 2]}, {'N-N': [3, 4, 5, 6]}, {'c': [7, 8]}, {}]
+        cdb_mock().get_available_starttimes.side_effect = times
+        out = c.find_existing_times('mytag')
+        exp = {
+            'AA.00': {'AA.00': {'00-00': {'E-E': [0, 1, 2], 'N-N': [3, 4, 5, 6]}}}}
+        self.assertDictEqual(out, exp)
+
+    @mock.patch('seismic.db.corr_hdf5.DBHandler')
+    @mock.patch('seismic.correlate.correlate.glob.glob')
+    @mock.patch(
+        'seismic.correlate.correlate.compute_network_station_combinations')
+    @mock.patch('builtins.open')
+    @mock.patch('seismic.correlate.correlate.logfactory.LoggingMPIBaseClass')
+    @mock.patch('seismic.correlate.correlate.os.makedirs')
+    def test_find_existing_times_betweencomps(
+        self, makedirs_mock, logging_mock, open_mock, ccomb_mock, isfile_mock,
+            cdb_mock):
+        options = deepcopy(self.options)
+        options['net']['component'] = '*'
+        options['co']['combination_method'] = 'betweenComponents'
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [
+            ['lala', 'lolo'], ['lala', 'lili']]
+        sc_mock._translate_wildcards.return_value = [
+            ['lala', 'lolo', '00', 'E'], ['lala', 'lili', '01', 'Z']]
+        c = correlate.Correlator(options, sc_mock)
+        netcombs = ['AA-AA']
+        statcombs = ['00-00']
+        ccomb_mock.return_value = (netcombs, statcombs)
+        isfile = [[
+            'AA-AA.00-00.00-00.E-E.h5', 'AA-AA.00-00.00-00.N-N.h5',
+            'AA-AA.00-00.00-01.E-E.h5', 'AA-AA.00-00.00-01.N-N.h5',
+            'AA-AA.00-00.00-00.E-Z.h5', 'AA-AA.00-00.00-00.N-Z.h5']]
+        # 3rd and 4th should be skipped
+        isfile_mock.side_effect = isfile
+        times = [
+            {'E-Z': [0, 1, 2]}, {'N-Z': [3, 4, 5, 6]}, {'c': [7, 8]}, {}]
+        cdb_mock().get_available_starttimes.side_effect = times
+        out = c.find_existing_times('mytag')
+        exp = {
+            'AA.00': {'AA.00': {'00-00': {'E-Z': [0, 1, 2], 'N-Z': [3, 4, 5, 6]}}}}
+        self.assertDictEqual(out, exp)    
 
     @mock.patch("seismic.correlate.correlate.CorrStream")
     def test_pxcorr(self, cst_mock, makedirs_mock, logging_mock, open_mock):
@@ -944,11 +1015,13 @@ class TestCalcCrossCombis(unittest.TestCase):
         self.st = Stream()
         for station, network in zip(stat, net):
             for ch in channels:
-                stats = AttribDict(network=network, station=station, channel=ch)
+                stats = AttribDict(
+                    network=network, station=station, channel=ch,
+                    location='')
                 self.st.append(Trace(header=stats))
         self.N_stat = len(stat)
         self.N_chan = len(channels)
-
+    
     def test_result_betw_stations(self):
         # easiest probably to check the length
         # in this cas \Sum_1^N (N-n)*M^2 where N is the number of stations
@@ -966,6 +1039,19 @@ class TestCalcCrossCombis(unittest.TestCase):
             ),
         )
 
+    def test_result_betw_stations_varying_locs(self):
+        # change location codes assign a different location code
+        # to each trace with a different station
+        st = self.st.copy()
+        for ii, tr in enumerate(st):
+            tr.stats.station= 'SAME'
+            tr.stats.location = f'{ii//self.N_chan:02d}'
+        expected_len = sum([(self.N_stat-n)*self.N_chan**2
+                            for n in range(1, self.N_stat)])
+
+        self.assertEqual(expected_len, len(correlate.calc_cross_combis(
+            st, {}, method='betweenStations')))
+
     def test_result_betw_components(self):
         # easiest probably to check the length
         # Here, we are looking for the same station but different component
@@ -982,6 +1068,19 @@ class TestCalcCrossCombis(unittest.TestCase):
             ),
         )
 
+    def test_result_betw_components_varying_locs(self):
+        st = self.st.copy()
+        # copy the last three traces and assign a different location code
+        for ii, tr in enumerate(st[-3:]):
+            tr_new = tr.copy()
+            tr_new.stats.location = '00'
+            st.append(tr_new)
+        # should add three more combinations
+        expected_len = sum([(self.N_chan-n)*self.N_stat
+                            for n in range(1, self.N_chan)]) + 3
+        self.assertEqual(expected_len, len(correlate.calc_cross_combis(
+            st, {}, method='betweenComponents')))
+
     def test_result_auto_components(self):
         expected_len = self.st.count()
         self.assertEqual(
@@ -992,6 +1091,18 @@ class TestCalcCrossCombis(unittest.TestCase):
                 )
             ),
         )
+
+    def test_result_auto_components_varying_locs(self):
+        st = self.st.copy()
+        # copy the last three traces and assign a different location code
+        for ii, tr in enumerate(st[-3:]):
+            tr_new = tr.copy()
+            tr_new.stats.location = '00'
+            st.append(tr_new)
+        # should add three more combinations
+        expected_len = st.count()
+        self.assertEqual(expected_len, len(correlate.calc_cross_combis(
+            st, {}, method='autoComponents')))
 
     def test_result_all_simple(self):
         expected_len = sum(
