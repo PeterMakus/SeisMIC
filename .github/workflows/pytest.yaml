@@ -63,7 +63,12 @@ jobs:
       run: |
         conda info
         conda list
-
+    - name: Debug libgfortran (Linux only)
+      if: runner.os == 'Linux'
+      shell: bash -l {0}
+      run: |
+        find / -name "libgfortran*" 2>/dev/null
+        ldd /usr/share/miniconda/envs/seismic/lib/python3.11/site-packages/numpy/_core/_multiarray_umath.cpython-311-x86_64-linux-gnu.so
     - name: run pytest
       shell: bash -l {0}
       run: |
