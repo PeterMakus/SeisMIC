@@ -1,4 +1,4 @@
-"""
+'''
 :copyright:
 :license:
     `EUROPEAN UNION PUBLIC LICENCE v. 1.2
@@ -7,8 +7,9 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Thursday, 18th September 2025 04:04:43 pm
+Last Modified: Thursday, 26th February 2026 10:59:30 am
 '''
+
 from copy import deepcopy
 from math import e
 import unittest

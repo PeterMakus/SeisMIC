@@ -1,4 +1,4 @@
-"""
+'''
 :copyright:
    The SeisMIC development team (makus@gfz-potsdam.de).
 :license:
@@ -8,8 +8,8 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Wednesday, 18th February 2026 10:06:00 am
-"""
+Last Modified: Thursday, 26th February 2026 10:59:50 am
+'''
 from typing import List, Tuple
 import logging
 import re
