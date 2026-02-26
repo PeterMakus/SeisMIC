@@ -11,17 +11,12 @@ jobs:
       uses: actions/checkout@v2
       with:
         fetch-depth: ‘2’
-    - name: Install libgfortran
-      shell: bash -l {0}
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gfortran
     # Cache Conda environment installattion
     - name: Cache conda
       uses: actions/cache@v4
       env:
         # Increase this value to reset cache if etc/example-environment.yml has not changed
-        CACHE_NUMBER: 0
+        CACHE_NUMBER: 1
       with:
         path: ~/conda_pkgs_dir
         key:

@@ -24,7 +24,7 @@ jobs:
       uses: actions/cache@v4
       env:
         # Increase this value to reset cache if etc/example-environment.yml has not changed
-        CACHE_NUMBER: 0
+        CACHE_NUMBER: 1
       with:
         path: ~/conda_pkgs_dir
         key:
@@ -54,6 +54,9 @@ jobs:
       if: runner.os == 'Linux'
       shell: bash -l {0}
       run: |
+        pip uninstall numpy -y
+        conda uninstall -n seismic numpy --yes
+        conda clean --all --yes
         conda install -n seismic -c conda-forge numpy --yes
 
     # To keep Conda activated you have to use 'shell: bash -l {0}' line
@@ -63,12 +66,6 @@ jobs:
       run: |
         conda info
         conda list
-    - name: Debug libgfortran (Linux only)
-      if: runner.os == 'Linux'
-      shell: bash -l {0}
-      run: |
-        find / -name "libgfortran*" 2>/dev/null
-        ldd /usr/share/miniconda/envs/seismic/lib/python3.11/site-packages/numpy/_core/_multiarray_umath.cpython-311-x86_64-linux-gnu.so
     - name: run pytest
       shell: bash -l {0}
       run: |
