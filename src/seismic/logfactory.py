@@ -24,6 +24,7 @@ LOGGER_LOGLVL = "WARNING"
 HANDLER_LOGLVL = "DEBUG"
 HANDLERNAME_CONSOLE = "default-console"
 LOGDIR = None
+PERF_LOGLEVEL = "INFO"
 LOG_TSTRFMT = '%Y-%m-%dT%H%M%S'
 RANK_STRFMT = "{rank:03d}"  # "%03d"
 FILENAME_FMT = "{classname}-r"+RANK_STRFMT+"_{exectimestr}.log"
@@ -181,6 +182,37 @@ class LoggingMPIBaseClass():
         self.logger.debug("ID of core {:01d} is {:d}".format(
             self.rank, id(self.comm)))
         self.logger.debug("My parent logger is %s" % self.logger.parent.name)
+
+    def _set_perf_logger(self):
+        """
+        Set dedicated logger for performance metrics.
+
+        This logger does not propagate to the parent logger and can therefore
+        record timings independently from the package log level.
+        """
+        self.perf_logger = logging.getLogger(f"{self.logger.name}.perf")
+        self.perf_logger.setLevel(PERF_LOGLEVEL)
+        self.perf_logger.propagate = False
+
+        # Always add console handler for real-time monitoring
+        set_consoleHandler(
+            self.perf_logger,
+            loglevel=PERF_LOGLEVEL,
+            handlername="perf-console",
+        )
+
+        # Add file handler if logfilename is available
+        if self.logfilename is not None:
+            perf_logfile = f"{self.logfilename}.performance"
+            set_fileHandler(
+                self.perf_logger,
+                perf_logfile,
+                loglevel=PERF_LOGLEVEL,
+                handlername=f"perf-{os.path.basename(perf_logfile)}",
+            )
+            self.logger.debug("Performance logging to %s", perf_logfile)
+
+        remove_duplicate_handlers(self.perf_logger)
 
     def set_logger(self, loglevel=LOGGER_LOGLVL,
                    logdir=LOGDIR | str | os.PathLike,

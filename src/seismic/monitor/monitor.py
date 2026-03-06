@@ -15,6 +15,7 @@ import json
 import logging
 import logging.handlers
 import os
+import time
 from typing import Generator, List, Tuple, Iterator
 import warnings
 import yaml
@@ -65,6 +66,7 @@ class Monitor(logfactory.LoggingMPIBaseClass):
         # init MPI, logging
         super().__init__()
         self.set_logger(loglvl, logdir)
+        self._set_perf_logger()
 
         # directories:
         if self.rank == 0:
@@ -312,37 +314,61 @@ class Monitor(logfactory.LoggingMPIBaseClass):
         :meth:`~seismic.monitor.monitor.Monitor.compute_velocity_change`
         several times.
         """
-        tag = 'subdivision'
-        # get number of available channel combis
-        if self.rank == 0:
-            plist = []
-            for f, n, s in zip(self.infiles, self.netlist, self.statlist):
-                locs = os.path.basename(f).split('.')[2]
-                with CorrelationDataBase(f, mode='r') as cdb:
-                    ch = cdb.get_available_channels(
-                        tag, n, s, locs)
-                    plist.extend([f, n, s, locs, c] for c in ch)
-        else:
-            plist = None
-        plist = self.comm.bcast(plist, root=0)
-        pmap = np.arange(len(plist))*self.psize/len(plist)
-        pmap = pmap.astype(np.int32)
-        ind = pmap == self.rank
-        ind = np.arange(len(plist), dtype=int)[ind]
+        t_start = time.perf_counter()
+        utc_start = UTCDateTime.now().strftime('%Y-%m-%d-%H:%M:%S')
+        status = 'success'
+        processed = 0
+        try:
+            tag = 'subdivision'
+            # get number of available channel combis
+            if self.rank == 0:
+                plist = []
+                for f, n, s in zip(self.infiles, self.netlist, self.statlist):
+                    locs = os.path.basename(f).split('.')[2]
+                    with CorrelationDataBase(f, mode='r') as cdb:
+                        ch = cdb.get_available_channels(
+                            tag, n, s, locs)
+                        plist.extend([f, n, s, locs, c] for c in ch)
+            else:
+                plist = None
+            plist = self.comm.bcast(plist, root=0)
+            pmap = np.arange(len(plist))*self.psize/len(plist)
+            pmap = pmap.astype(np.int32)
+            ind = pmap == self.rank
+            ind = np.arange(len(plist), dtype=int)[ind]
 
-        # Assign a task to each rank
-        for ii in tqdm(ind):
-            corr_file, net, stat, loc, cha = plist[ii]
-            try:
-                self.compute_velocity_change(
-                    corr_file, tag, net, stat, loc, cha)
-            except KeyError:
-                self.logger.exception(
-                    f'No correlation data found for {net}.{stat}.{loc}.{cha}'
-                    + f'with tag {tag} in file {corr_file}.'
-                )
-            except Exception as e:
-                self.logger.exception(f'{e} for file {corr_file}.')
+            # Assign a task to each rank
+            for ii in tqdm(ind):
+                corr_file, net, stat, loc, cha = plist[ii]
+                try:
+                    self.compute_velocity_change(
+                        corr_file, tag, net, stat, loc, cha)
+                    processed += 1
+                except KeyError:
+                    self.logger.exception(
+                        'No correlation data found for '
+                        f'{net}.{stat}.{loc}.{cha}'
+                        + f'with tag {tag} in file {corr_file}.'
+                    )
+                except Exception as e:
+                    self.logger.exception(f'{e} for file {corr_file}.')
+        except Exception:
+            status = 'failed'
+            raise
+        finally:
+            utc_end = UTCDateTime.now().strftime('%Y-%m-%d-%H:%M:%S')
+            elapsed = time.perf_counter() - t_start
+            self.perf_logger.info(
+                'monitor runtime | method=compute_velocity_change_bulk | '
+                'status=%s | rank=%03d | start=%s | end=%s | tasks=%d | '
+                'elapsed_s=%.3f',
+                status,
+                self.rank,
+                utc_start,
+                utc_end,
+                processed,
+                elapsed,
+            )
 
     def compute_components_average(self, method: str = 'AutoComponents'):
         """
@@ -471,76 +497,106 @@ class Monitor(logfactory.LoggingMPIBaseClass):
         Subsequently, the average of the different component combinations will
         be computed.
         """
-        tag = 'subdivision'
-        # get number of available channel combis
-        if self.rank == 0:
-            plist = []
-            for f, n, s in zip(self.infiles, self.netlist, self.statlist):
-                locs = os.path.basename(f).split('.')[2]
-                with CorrelationDataBase(f, mode='r') as cdb:
-                    ch = cdb.get_available_channels(
-                        tag, n, s, locs)
-                    plist.extend([f, n, s, locs, c] for c in ch)
-        else:
-            plist = None
-        plist = self.comm.bcast(plist, root=0)
-        pmap = np.arange(len(plist))*self.psize/len(plist)
-        pmap = pmap.astype(np.int32)
-        ind = pmap == self.rank
-        ind = np.arange(len(plist), dtype=int)[ind]
+        t_start = time.perf_counter()
+        utc_start = UTCDateTime.now().strftime('%Y-%m-%d-%H:%M:%S')
+        status = 'success'
+        processed = 0
+        try:
+            tag = 'subdivision'
+            # get number of available channel combis
+            if self.rank == 0:
+                plist = []
+                for f, n, s in zip(self.infiles, self.netlist, self.statlist):
+                    locs = os.path.basename(f).split('.')[2]
+                    with CorrelationDataBase(f, mode='r') as cdb:
+                        ch = cdb.get_available_channels(
+                            tag, n, s, locs)
+                        plist.extend([f, n, s, locs, c] for c in ch)
+            else:
+                plist = None
+            plist = self.comm.bcast(plist, root=0)
+            pmap = np.arange(len(plist))*self.psize/len(plist)
+            pmap = pmap.astype(np.int32)
+            ind = pmap == self.rank
+            ind = np.arange(len(plist), dtype=int)[ind]
 
-        # Assign a task to each rank
-        wfcl = []
-        for ii in tqdm(ind):
-            corr_file, net, stat, loc, cha = plist[ii]
-            for wfc in self.compute_waveform_coherence(
-                    corr_file, tag, net, stat, loc, cha):
-                try:
-                    wfcl.append(wfc)
-                except Exception as e:
-                    self.logger.exception(e)
+            # Assign a task to each rank
+            wfcl = []
+            for ii in tqdm(ind):
+                corr_file, net, stat, loc, cha = plist[ii]
+                for wfc in self.compute_waveform_coherence(
+                        corr_file, tag, net, stat, loc, cha):
+                    try:
+                        wfcl.append(wfc)
+                        processed += 1
+                    except Exception as e:
+                        self.logger.exception(e)
 
-        outdir = os.path.join(
-            self.options['proj_dir'], self.options['wfc']['subdir'])
-        # Compute averages and everything
-        wfclu = self.comm.allgather(wfcl)
-        # concatenate
-        wfcl = [j for i in wfclu for j in i]
-        del wfclu
+            outdir = os.path.join(
+                self.options['proj_dir'], self.options['wfc']['subdir'])
+            # Compute averages and everything
+            wfclu = self.comm.allgather(wfcl)
+            # concatenate
+            wfcl = [j for i in wfclu for j in i]
+            del wfclu
 
-        # Find unique averaging groups
-        wfc_avl = []
-        for wfc in wfcl:
-            wfc_avl.append(
-                (wfc.stats.network, wfc.stats.station,
-                    wfc.wfc_processing['freq_min'],
-                    wfc.wfc_processing['freq_max'],
-                    wfc.wfc_processing['tw_start'],
-                    wfc.wfc_processing['tw_len']))
-        wfc_avl = list(set(wfc_avl))
-        wfcl_sub = []
-        for avl in wfc_avl:
-            net, stat, fmin, fmax, tw_start, tw_len = avl
-            wfcl_sub.append(
-                [wfc for wfc in wfcl if all(
-                    [
-                        wfc.stats.network == net, wfc.stats.station == stat,
-                        wfc.wfc_processing['freq_min'] == fmin,
-                        wfc.wfc_processing['freq_max'] == fmax,
-                        wfc.wfc_processing['tw_start'] == tw_start,
-                        wfc.wfc_processing['tw_len'] == tw_len
-                    ])])
-        for wfc_avl in wfcl_sub:
-            wfc = average_components_wfc(wfc_avl)
-            # Write files
-            outf = os.path.join(outdir, 'WFC-%s.%s.%s.%s.f%a-%a.tw%a-%a' % (
-                wfc.stats.network, wfc.stats.station, wfc.stats.location,
-                wfc.stats.channel,
-                wfc.wfc_processing['freq_min'],
-                wfc.wfc_processing['freq_max'],
-                wfc.wfc_processing['tw_start'],
-                wfc.wfc_processing['tw_len']))
-            wfc.save(outf)
+            # Find unique averaging groups
+            wfc_avl = []
+            for wfc in wfcl:
+                wfc_avl.append(
+                    (wfc.stats.network, wfc.stats.station,
+                        wfc.wfc_processing['freq_min'],
+                        wfc.wfc_processing['freq_max'],
+                        wfc.wfc_processing['tw_start'],
+                        wfc.wfc_processing['tw_len']))
+            wfc_avl = list(set(wfc_avl))
+            wfcl_sub = []
+            for avl in wfc_avl:
+                net, stat, fmin, fmax, tw_start, tw_len = avl
+                wfcl_sub.append(
+                    [wfc for wfc in wfcl if all(
+                        [
+                            wfc.stats.network == net,
+                            wfc.stats.station == stat,
+                            wfc.wfc_processing['freq_min'] == fmin,
+                            wfc.wfc_processing['freq_max'] == fmax,
+                            wfc.wfc_processing['tw_start'] == tw_start,
+                            wfc.wfc_processing['tw_len'] == tw_len
+                        ])])
+            for wfc_avl in wfcl_sub:
+                wfc = average_components_wfc(wfc_avl)
+                # Write files
+                outf = os.path.join(
+                    outdir,
+                    'WFC-%s.%s.%s.%s.f%a-%a.tw%a-%a' % (
+                        wfc.stats.network,
+                        wfc.stats.station,
+                        wfc.stats.location,
+                        wfc.stats.channel,
+                        wfc.wfc_processing['freq_min'],
+                        wfc.wfc_processing['freq_max'],
+                        wfc.wfc_processing['tw_start'],
+                        wfc.wfc_processing['tw_len'],
+                    ),
+                )
+                wfc.save(outf)
+        except Exception:
+            status = 'failed'
+            raise
+        finally:
+            utc_end = UTCDateTime.now().strftime('%Y-%m-%d-%H:%M:%S')
+            elapsed = time.perf_counter() - t_start
+            self.perf_logger.info(
+                'monitor runtime | method=compute_waveform_coherence_bulk | '
+                'status=%s | rank=%03d | start=%s | end=%s | tasks=%d | '
+                'elapsed_s=%.3f',
+                status,
+                self.rank,
+                utc_start,
+                utc_end,
+                processed,
+                elapsed,
+            )
 
     def compute_waveform_coherence(
         self, corr_file: str, tag: str, network: str, station: str, location,

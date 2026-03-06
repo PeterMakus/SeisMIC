@@ -15,6 +15,7 @@ from typing import Iterator, List, Tuple, Optional
 from warnings import warn
 import os
 import logging
+import time
 import json
 import warnings
 import yaml
@@ -100,6 +101,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
         logdir = os.path.join(self.proj_dir, options["log_subdir"])
         self.set_logger(options["log_level"], logdir)
+        self._set_perf_logger()
 
         # DEPRECATION: preprocess_subdiv option
         # Phase 1 (current): Warn when True, override to False
@@ -528,47 +530,69 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         Start the correlation with the parameters that were defined when
         initiating the object.
         """
-        cst = CorrStream()
-        if self.rank == 0:
-            self.logger.debug("Reading Inventory files.")
-        # Fetch station coordinates
-        if self.rank == 0:
-            try:
-                inv = self.store_client.read_inventory()
-            except Exception as e:
-                if self.options["remove_response"]:
-                    raise FileNotFoundError(
-                        "No response information could be found."
-                        + "If you set remove_response to True, you will need"
-                        + "a station inventory."
+        t_start = time.perf_counter()
+        utc_start = UTCDateTime.now().strftime(TSTR_FMT)
+        utc_end = None
+        status = "success"
+
+        try:
+            cst = CorrStream()
+            if self.rank == 0:
+                self.logger.debug("Reading Inventory files.")
+            # Fetch station coordinates
+            if self.rank == 0:
+                try:
+                    inv = self.store_client.read_inventory()
+                except Exception as e:
+                    if self.options["remove_response"]:
+                        raise FileNotFoundError(
+                            "No response information could be found."
+                            + "If you set remove_response to True, "
+                            + "you will need"
+                            + "a station inventory."
+                        )
+                    logging.warning(e)
+                    warnings.warn(
+                        "No Station Inventory found. Proceeding without.",
+                        UserWarning,
                     )
-                logging.warning(e)
-                warnings.warn(
-                    "No Station Inventory found. Proceeding without.",
-                    UserWarning,
-                )
+                    inv = None
+            else:
                 inv = None
-        else:
-            inv = None
-        inv = self.comm.bcast(inv, root=0)
+            inv = self.comm.bcast(inv, root=0)
 
-        for st, write_flag in self._generate_data():
-            cst.extend(self._pxcorr_inner(st, inv))
-            if write_flag:
-                self.logger.info("Writing %d correlations." % cst.count())
-                # Here, we can recombine the correlations for the read_len
-                # size (i.e., stack)
-                # Write correlations to HDF5
-                if cst.count():
-                    self._write(cst)
-                    cst.clear()
+            for st, write_flag in self._generate_data():
+                cst.extend(self._pxcorr_inner(st, inv))
+                if write_flag:
+                    self.logger.info("Writing %d correlations." % cst.count())
+                    # Here, we can recombine the correlations for the read_len
+                    # size (i.e., stack)
+                    # Write correlations to HDF5
+                    if cst.count():
+                        self._write(cst)
+                        cst.clear()
 
-        # write the remaining data
-        if cst.count():
-            self.logger.info(
-                "Writing %d remaining correlations." % cst.count())
-            self._write(cst)
-            cst.clear()
+            # write the remaining data
+            if cst.count():
+                self.logger.info(
+                    "Writing %d remaining correlations." % cst.count())
+                self._write(cst)
+                cst.clear()
+        except Exception:
+            status = "failed"
+            raise
+        finally:
+            utc_end = UTCDateTime.now().strftime(TSTR_FMT)
+            elapsed = time.perf_counter() - t_start
+            self.perf_logger.info(
+                "pxcorr runtime | status=%s | rank=%03d | start=%s | "
+                "end=%s | elapsed_s=%.3f",
+                status,
+                self.rank,
+                utc_start,
+                utc_end,
+                elapsed,
+            )
 
     def _pxcorr_inner(self, st: Stream, inv: Inventory) -> CorrStream:
         """

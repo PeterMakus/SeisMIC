@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added dedicated performance logger for runtime metrics that operates independently of main logger verbosity, enabling per-method timing instrumentation without affecting operational logging.
+- Performance log files are automatically derived from main logfile with `.performance` suffix (e.g., `correlate-000.log.performance`).
+- Performance logs now capture both start and end UTC timestamps for all timed operations, providing complete execution timeline visibility.
+- Console handler enabled by default for performance logger to provide real-time monitoring of computation metrics across all MPI ranks.
+
 ### Changed
 - Refactored MPI logging setup into a clearer pipeline with dedicated steps for logger initialization, filename generation, log-directory creation, and handler registration.
 - Centralized warning logging hookup in the logging base class so `py.warnings` is configured once, removing duplicate warning-handler wiring in downstream classes.
