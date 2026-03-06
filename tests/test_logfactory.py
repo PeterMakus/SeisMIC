@@ -76,7 +76,7 @@ class TestLogfactoryMock(TestCase):
 
     def test_remove_duplicate_handlers(self):
         logfactory.remove_duplicate_handlers(self.logger)
-        self.logger.removeHandler.assert_called_with(self.logger.handlers[2])
+        self.logger.removeHandler.assert_called_with(self.logger.handlers[1])
         self.logger.removeHandler.assert_called_once()
 
 
@@ -89,9 +89,20 @@ class TestLoggingMPIBaseClass(TestCase):
     def setUp(self) -> None:
         return super().setUp()
 
-    @mock.patch("seismic.logfactory.os")
+    def test_init(self):
+        """Test that logger name is set correctly."""
+        c = logfactory.LoggingMPIBaseClass()
+        self.assertEqual(
+            c.logger.name,
+            ".".join([
+                      logfactory.__name__, "", self.classname + "000"]
+                     ))
+
     @mock.patch("seismic.logfactory.datetime")
-    def test_set_logfilename(self, mock_time, mock_os):
+    def test_set_logfilename(self, mock_time):
+        logdir = "testlogdir"
+        filename = (f"{logdir}/{self.classname}" + "-r{:03d}_" +
+                    f"{self.exec_timestr}.log")
         mock_time.now.return_value = self.exec_time
         mock_comm = mock.create_autospec(logfactory.MPI.COMM_WORLD)
         mock_comm.bcast.return_value = self.exec_timestr
@@ -99,25 +110,31 @@ class TestLoggingMPIBaseClass(TestCase):
         c = logfactory.LoggingMPIBaseClass()
         c.comm = mock_comm
 
+        # No logdir given --> no filename set
         c.rank = 0
         c._set_filename()
-        mock_time.now.assert_called_once()
-        mock_os.path.join.assert_called_with(
-            logfactory.LOGDIR, logfactory.FILENAME_FMT.format(
-                classname=self.classname,
-                rank=c.rank,
-                exectimestr=self.exec_timestr))
+        mock_time.now.assert_not_called()
+        self.assertEqual(
+            c.logfilename, None)
 
+        # Logdir given on rank 0--> filename set
+        c.rank = 0
+        c._set_filename(logdir=logdir)
+        mock_comm.bcast.assert_called_with(self.exec_timestr, root=0)
+        mock_time.now.assert_called_once()
+        self.assertEqual(
+            c.logfilename,
+            filename.format(c.rank))
+
+        # Logdir given on rank 1 --> time received from rank 0, filename set
         mock_time.reset_mock()
         c.rank = 1
-        c._set_filename()
+        c._set_filename(logdir=logdir)
         mock_comm.bcast.assert_called_with(None, root=0)
         mock_time.now.assert_not_called()
-        mock_os.path.join.assert_called_with(
-            logfactory.LOGDIR, logfactory.FILENAME_FMT.format(
-                classname=self.classname,
-                rank=c.rank,
-                exectimestr=self.exec_timestr))
+        self.assertEqual(
+            c.logfilename,
+            filename.format(c.rank))
 
     @mock.patch("seismic.logfactory.os")
     def test_mk_logdir(self, mock_os):
@@ -136,112 +153,62 @@ class TestLoggingMPIBaseClass(TestCase):
         c._mk_logdir(logdir)
         mock_os.makedirs.assert_not_called()
 
-    @mock.patch("seismic.logfactory.get_handlers_by_name")
-    def test_default_handlers_set(self, mock_handlers):
-        mock_logger = mock.create_autospec(logging.Logger)
-        mock_logger.parent = mock.create_autospec(logging.Logger)
-        c = logfactory.LoggingMPIBaseClass()
-        c.logger = mock_logger
-        handlernames = logfactory.DEFAULT_HANDLERNAMES
-
-        # No handlers
-        mock_logger.parent.hasHandlers.return_value = False
-        self.assertFalse(c._default_handlers_set)
-        mock_logger.parent.hasHandlers.assert_called_once()
-        mock_handlers.assert_not_called()
-
-        # Handlers present, with default names
-        mock_logger.reset_mock()
-        mock_handlers.reset_mock()
-        mock_logger.parent.hasHandlers.return_value = True
-        mock_handlers.return_value = {hn: [] for hn in handlernames}
-        self.assertTrue(c._default_handlers_set)
-
-        # Handlers present, with one default name missing
-        mock_logger.reset_mock()
-        mock_handlers.reset_mock()
-        mock_logger.parent.hasHandlers.return_value = True
-        mock_handlers.return_value = {hn: [] for hn in handlernames}
-        mock_handlers.return_value.pop(handlernames[0])
-        mock_handlers.return_value["extra"] = []
-        self.assertFalse(c._default_handlers_set)
-
-        # Handlers present, with only one default name
-        mock_logger.reset_mock()
-        mock_handlers.reset_mock()
-        mock_logger.parent.hasHandlers.return_value = True
-        mock_handlers.return_value = {hn: [] for hn in handlernames}
-        mock_handlers.return_value.pop(handlernames[0])
-        self.assertFalse(c._default_handlers_set)
-
-    @mock.patch("seismic.logfactory.logging.getLogger")
-    def test__set_logger(self, mock_getLogger):
-        mock_logger = mock.create_autospec(logging.Logger)
-        mock_logger.name = "mocking.logger"
-        mock_logger.parent = mock.create_autospec(logging.Logger)
-        mock_logger.parent.name = "mocking"
-        mock_getLogger.return_value = mock_logger
-        loglevel = "INFO"
-
-        c = logfactory.LoggingMPIBaseClass()
-        c._set_logger(loglevel)
-        mock_getLogger.assert_called_with(".".join(
-            [c.__module__, "", c.__class__.__name__
-             + logfactory.RANK_STRFMT.format(rank=0)]))
-        mock_logger.parent.setLevel.assert_called_once_with(loglevel.upper())
-
-    @mock.patch("seismic.logfactory.set_consoleHandler")
     @mock.patch("seismic.logfactory.set_fileHandler")
+    @mock.patch("seismic.logfactory.set_consoleHandler")
     @mock.patch("seismic.logfactory.remove_duplicate_handlers")
-    @mock.patch.object(logfactory.LoggingMPIBaseClass,
-             "_default_handlers_set")
-    def test_set_check_default_handlers(self, mock_handlers_set, mock_remove,
-                                        mock_fh, mock_ch):
-        mock_logger = mock.create_autospec(logging.Logger)
-        mock_logger.parent = mock.create_autospec(logging.Logger)
-        mock_logger.parent.name = "mocking"
-        logfilename = "testlogfilename.log"
-        loglevel = "INFO"
-        mock_logger.parent.getEffectiveLevel.return_value = loglevel
+    def test_set_handlers_incl_filehandler(self, mock_remove, mock_ch, mock_fh):
+        logdir = "testlogdir"
+        filename = f"{logdir}/{self.classname}-r000_{self.exec_timestr}.log"
 
         c = logfactory.LoggingMPIBaseClass()
-        c.logger = mock_logger
-        c.logfilename = logfilename
+        c.logfilename = filename
+        c.logger = mock.create_autospec(logging.Logger)
+        c.logger.parent = mock.create_autospec(logging.Logger)
+        c.logger.parent.name = "mocking"
+        c._set_handlers()
+        mock_fh.assert_called_once_with(
+            c.logger.parent, filename, logfactory.HANDLER_LOGLVL, filename)
+        mock_ch.assert_called_once_with(
+            c.logger.parent, logfactory.HANDLER_LOGLVL,
+            logfactory.HANDLERNAME_CONSOLE)
+        mock_remove.assert_called_once_with(
+            c.logger.parent)
 
-        # Default handlers already set
-        c._default_handlers_set = True
-        c._set_check_default_handlers()
+    @mock.patch("seismic.logfactory.set_fileHandler")
+    @mock.patch("seismic.logfactory.set_consoleHandler")
+    @mock.patch("seismic.logfactory.remove_duplicate_handlers")
+    def test_set_handlers_no_filehandler(self, mock_remove, mock_ch, mock_fh):
+        c = logfactory.LoggingMPIBaseClass()
+        c.logfilename = None
+        c.logger = mock.create_autospec(logging.Logger)
+        c.logger.parent = mock.create_autospec(logging.Logger)
+        c.logger.parent.name = "mocking"
+        c._set_handlers()
         mock_fh.assert_not_called()
-        mock_ch.assert_not_called()
-        mock_remove.assert_called_once()
+        mock_ch.assert_called_once_with(
+            c.logger.parent, logfactory.HANDLER_LOGLVL,
+            logfactory.HANDLERNAME_CONSOLE)
+        mock_remove.assert_called_once_with(
+            c.logger.parent)
 
-        # Default handlers not set
-        for f in [mock_fh, mock_ch, mock_remove, mock_remove]:
-            f.reset_mock()
-        c._default_handlers_set = False
-        c._set_check_default_handlers()
-        mock_fh.assert_called_once_with(mock_logger.parent, logfilename,
-                                        loglevel, logfactory.HANDLERNAME_FILE)
-        mock_ch.assert_called_once_with(mock_logger.parent, loglevel,
-                                        logfactory.HANDLERNAME_CONSOLE)
-        mock_remove.assert_called_once()
-
-    @mock.patch.object(logfactory.LoggingMPIBaseClass, "_set_logger")
-    @mock.patch.object(logfactory.LoggingMPIBaseClass, "_set_filename")
-    @mock.patch.object(logfactory.LoggingMPIBaseClass, "_mk_logdir")
-    @mock.patch.object(logfactory.LoggingMPIBaseClass,
-             "_set_check_default_handlers")
-    def test_set_logger(self, mock_check, mock_mk, mock_fn, mock_sl):
-        loglevel = "DEBUG"
+    def test_set_logger(self):
+        """
+        Integration test for set_logger. Test that the filename, loglevel
+        and handlers are set correctly.
+        """
         logdir = "testlogdir"
         filename_fmt = "testfilename"
+        loglevel = "DEBUG"
+
         c = logfactory.LoggingMPIBaseClass()
-        c.logger = mock.create_autospec(logging.Logger)
+        c._set_filename = mock.MagicMock()
+        c._mk_logdir = mock.MagicMock()
+        c._set_handlers = mock.MagicMock()
+
         c.set_logger(loglevel, logdir, filename_fmt)
-        mock_sl.assert_called_once_with(loglevel)
-        mock_fn.assert_called_once_with(logdir, filename_fmt)
-        mock_mk.assert_called_once_with(logdir)
-        mock_check.assert_called_once()
+        c._set_filename.assert_called_once_with(logdir, filename_fmt)
+        c._mk_logdir.assert_called_once_with(logdir)
+        c._set_handlers.assert_called_once()
 
 
 if __name__ == "__main__":

@@ -100,17 +100,6 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
         logdir = os.path.join(self.proj_dir, options["log_subdir"])
         self.set_logger(options["log_level"], logdir)
-        warnlog = logging.getLogger("py.warnings")
-        warnlog.addHandler(
-            [
-                h
-                for h in self.logger.parent.handlers
-                if isinstance(h, logging.FileHandler)
-            ][0]
-        )
-        self.logger.debug(
-            "Warn logger has handler: {}".format(warnlog.hasHandlers())
-        )
 
         # DEPRECATION: preprocess_subdiv option
         # Phase 1 (current): Warn when True, override to False

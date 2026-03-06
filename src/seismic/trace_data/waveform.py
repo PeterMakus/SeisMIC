@@ -53,7 +53,7 @@ class Store_Client(logfactory.LoggingMPIBaseClass):
     """
     def __init__(self, Client: rClient, path: str, read_only: bool = False,
                  sds_dir: str = DEFAULT_SDS,
-                 logparams: dict = DEFAULT_LOGPARAMS):
+                 ):
         """
         Initialize the client
 
@@ -65,11 +65,12 @@ class Store_Client(logfactory.LoggingMPIBaseClass):
         :param path: path of the store's sds root directory
         :type read_only: Bool
         :param read_only: If True the local archive is not extended.
-        :param logparams: Variables passed to
-            :func:`~seismic.logfactory.LoggingMPIBaseClass.set_logger()`.
-            Keywords are "loglevel", "logdir" and filename_fmt.
-        :type logparams: dict [dict(loglevel="WARNING", logdir=LOGDIR,
-            filename_fmt=logfactory.FILENAME_FMT)]
+
+        Note
+        -----
+        Default logging behavior is to log to console with loglevel "WARNING"
+        using parent logger "seismic". To change this, use the
+        :func:`~seismic.logfactory.set_logger` method after initialization.
         """
         super().__init__()
         assert os.path.isdir(path), "{} is not a directory".format(path)
@@ -95,7 +96,7 @@ class Store_Client(logfactory.LoggingMPIBaseClass):
         self.rclient = Client
         self.read_only = read_only
         self.sds_fmtstr = self.lclient.FMTSTR
-        self.set_logger(**logparams)
+        # self.set_logger(**logparams)
 
     def download_waveforms_mdl(
         self, starttime: UTCDateTime, endtime: UTCDateTime,
@@ -313,6 +314,10 @@ class Store_Client(logfactory.LoggingMPIBaseClass):
             and channel codes
         :rtype: list
         """
+        self.logger.debug(
+            "Translating wildcards for network %s, station %s, "
+            "location %s, component %s"
+            % (network, station, location, component))
         # Create one nested list
         path = os.path.join(self.sds_root,
                             get_sdsfmtst_with_doy_as_wildcard(
@@ -569,7 +574,8 @@ class Local_Store_Client(Store_Client):
     Other keys are ignored. Thus, the configuration file for the entire
     correlation setup can be used to initialize the client.
     """
-    def __init__(self, config: dict, logparams: dict = DEFAULT_LOGPARAMS):
+    def __init__(self, config: dict, logparams: dict = DEFAULT_LOGPARAMS,
+                 ):
         """
         param config: Configuration dictionary.
         :type config: dict
@@ -601,7 +607,9 @@ class Local_Store_Client(Store_Client):
         self.sds_fmtstr = fmt_str
         self.sds_root = sds_root
 
-        super().__init__(sdscl, root, True, sds_root, logparams)
+        super().__init__(
+            sdscl, root, True, config.get('sds_dir', DEFAULT_SDS),
+            logparams)
         self.lclient = self.rclient
 
         self._set_inventory(config)

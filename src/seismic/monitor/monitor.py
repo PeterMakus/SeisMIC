@@ -65,11 +65,6 @@ class Monitor(logfactory.LoggingMPIBaseClass):
         # init MPI, logging
         super().__init__()
         self.set_logger(loglvl, logdir)
-        warnlog = logging.getLogger('py.warnings')
-        warnlog.addHandler([h for h in self.logger.parent.handlers if
-                            isinstance(h, logging.FileHandler)][0])
-        self.logger.debug('Warn logger has handler: {}'.format(
-            warnlog.hasHandlers()))
 
         # directories:
         if self.rank == 0:
