@@ -106,7 +106,7 @@ def remove_duplicate_handlers(logger):
     """
     handlers = get_duplicate_handlers(logger)
     if len(handlers) == 0:
-        logger.info("Found no duplicate loggers")
+        logger.debug("Found no duplicate loggers")
         return
 
     for h in handlers.values():
