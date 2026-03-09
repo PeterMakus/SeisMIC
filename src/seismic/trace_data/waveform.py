@@ -8,7 +8,7 @@
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 18th February 2021 02:30:02 pm
-Last Modified: Friday, 13th February 2026 04:05:39 pm
+Last Modified: Monday, 9th March 2026 03:39:01 pm
 '''
 
 import fnmatch
@@ -574,8 +574,7 @@ class Local_Store_Client(Store_Client):
     Other keys are ignored. Thus, the configuration file for the entire
     correlation setup can be used to initialize the client.
     """
-    def __init__(self, config: dict, logparams: dict = DEFAULT_LOGPARAMS,
-                 ):
+    def __init__(self, config: dict):
         """
         param config: Configuration dictionary.
         :type config: dict
@@ -608,8 +607,7 @@ class Local_Store_Client(Store_Client):
         self.sds_root = sds_root
 
         super().__init__(
-            sdscl, root, True, config.get('sds_dir', DEFAULT_SDS),
-            logparams)
+            sdscl, root, True, config.get('sds_dir', DEFAULT_SDS))
         self.lclient = self.rclient
 
         self._set_inventory(config)

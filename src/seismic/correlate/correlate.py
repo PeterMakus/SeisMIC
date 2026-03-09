@@ -151,12 +151,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         # Store_Client
         if store_client is None:
             store_client = Local_Store_Client(
-                options,
-                logparams=dict(
-                    loglevel=options["log_level"],
-                    logdir=logdir,
-                    filename_fmt=logfactory.FILENAME_FMT,
-                ),
+                options
             )
         self.store_client = store_client
 

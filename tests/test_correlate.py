@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Thursday, 26th February 2026 12:18:44 pm
+Last Modified: Monday, 9th March 2026 03:44:58 pm
 '''
 
 from copy import deepcopy
@@ -156,23 +156,11 @@ class TestCorrrelator(unittest.TestCase):
         mkdir_calls = [
             mock.call(
                 os.path.join(
-                    self.options["proj_dir"], self.options["log_subdir"]
-                ),
-                exist_ok=True,
-            ),
-            mock.call(
-                os.path.join(
                     self.options["proj_dir"], self.options["co"]["subdir"]
                 ),
                 exist_ok=True,
             ),
             mock.call(os.path.join(self.options["proj_dir"]), exist_ok=True),
-            mock.call(
-                os.path.join(
-                    self.options["proj_dir"], self.options["log_subdir"]
-                ),
-                exist_ok=True,
-            ),
         ]
         makedirs_mock.assert_has_calls(mkdir_calls)
         open_mock.assert_has_calls([mock.call(file=self.param_example)])
