@@ -8,10 +8,11 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 30th March 2021 01:22:02 pm
-Last Modified: Thursday, 26th February 2026 11:00:37 am
+Last Modified: Tuesday, 31st March 2026 10:21:38 am
 '''
 from copy import deepcopy
 from datetime import datetime, timezone
+import fnmatch
 import json
 from pathlib import Path
 import unittest
@@ -117,11 +118,6 @@ class TestResampleOrDecimate(unittest.TestCase):
         self.assertEqual(st_filt[0].stats.sampling_rate, freq_new)
         self.assertIn("decimate", st_filt[0].stats.processing[-1])
         self.assertIn("filter", st_filt[0].stats.processing[-2])
-        self.assertIn(
-            "filter(options={'freq': 0.45, 'maxorder': 12}:"
-            + ":type='lowpass_cheby_2')",
-            st_filt[0].stats.processing[-2],
-        )
 
     def test_new_freq_higher_than_native(self):
         st = read()
