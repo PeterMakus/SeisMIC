@@ -1110,46 +1110,16 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 )
             # faction of samples to be compenasated by shifting
             offset -= roffset
-            # normalization factor of fft correlation
-            if corr_args["normalize_correlation"]:
-                norm = (
-                    np.sqrt(
-                        2.0
-                        * np.sum(
-                            B[self.options["combinations"][ii][0], :]
-                            * B[self.options["combinations"][ii][0], :].conj()
-                        )
-                        - B[self.options["combinations"][ii][0], 0] ** 2
-                    )
-                    * np.sqrt(
-                        2.0
-                        * np.sum(
-                            B[self.options["combinations"][ii][1], :]
-                            * B[self.options["combinations"][ii][1], :].conj()
-                        )
-                        - B[self.options["combinations"][ii][1], 0] ** 2
-                    )
-                    / irfftsize
-                ).real
-            else:
-                norm = 1.0
 
-            M = (
-                B[self.options["combinations"][ii][0], :].conj()
-                * B[self.options["combinations"][ii][1], :]
-                * np.exp(1j * freqs * offset * 2 * np.pi)
-            )
-
-            ######################################
-            # frequency domain postProcessing
-            #
-            tmp = np.fft.irfft(M).real
-
-            # cut the center and do fftshift
-            self.logger.debug("Normalizing ccf index %d with %f" % (ii, norm))
-            C[ii, :] = (
-                np.concatenate((tmp[-sampleToSave:], tmp[: sampleToSave + 1]))
-                / norm
+            self.logger.debug("Doing ccf for index %d" % (ii))
+            C[ii, :] = do_xcorr_in_fd(
+                B[self.options["combinations"][ii][0], :],
+                B[self.options["combinations"][ii][1], :],
+                freqs,
+                offset,
+                sampleToSave,
+                irfftsize,
+                corr_args["normalize_correlation"]
             )
             startlags[ii] = -sampleToSave / self.sampling_rate - roffset
 
@@ -1206,6 +1176,51 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             ind = pmap == self.rank
 
         return ind
+
+
+def do_xcorr_in_fd(x0, x1, freqs, offset=0, sampleToSave=None,
+                   irfftsize=None, normalize=True):
+
+    if x0.size < 5 or x1.size < 5:
+        raise UserWarning(
+            "rfft is unstable for too short timeseries (<8 samples)"
+        )
+
+    assert x0.size == x1.size, "y1.size != y0.size"
+
+    if normalize:
+        norm = (
+            np.sqrt(2.0 * np.sum(x0 * x0.conj()) - x0[0] ** 2)
+            * np.sqrt(2.0 * np.sum(x1 * x1.conj()) - x1[0] ** 2)
+            / irfftsize
+        ).real
+        # if np.isclose(norm, 0):
+        #     norm = 1.0
+    else:
+        norm = 1.0
+
+    M = (
+        x0.conj() * x1 * np.exp(1j * freqs * offset * 2 * np.pi)
+    )
+
+    ######################################
+    # frequency domain postProcessing
+    #
+    tmp = np.fft.irfft(M).real
+
+    # cut the center and do fftshift
+    module_logger.debug("Normalizing ccf with norm = %f" % (norm))
+    try:
+        xcf = (
+            np.concatenate((tmp[-sampleToSave:], tmp[:sampleToSave+1]))
+            / norm
+        )
+    except TypeError:
+        xcf = (
+            np.concatenate((tmp[1:], tmp[:]))
+            / norm
+        )
+    return xcf
 
 
 def st_to_np_array(st: Stream, npts: int) -> Tuple[np.ndarray, Stream]:

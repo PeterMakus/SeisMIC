@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Monday, 9th March 2026 03:44:58 pm
+Last Modified: Saturday, 18th April 2026 03:05:23 pm
 '''
 
 from copy import deepcopy
@@ -1589,6 +1589,59 @@ class TestCheckForMissingChannels(unittest.TestCase):
         # Check if trace order corresponds to avail_channels
         nslc = [tr.id.split(".") for tr in st]
         self.assertEqual(nslc, avail_channels[:6])
+
+
+class TestDoXcorr(unittest.TestCase):
+
+    def setUp(self):
+        i0 = 7
+        self.shift = -2
+        y0 = np.zeros(18)
+        y0[i0] = 1
+        self.y0 = y0
+        self.y1 = np.roll(self.y0, self.shift)*0.5
+        self.sampling_rate = 1
+
+        self.x0 = np.fft.rfft(self.y0)
+        self.x1 = np.fft.rfft(self.y1)
+        self.freqs = np.fft.rfftfreq(y0.size, 1.0 / self.sampling_rate)
+        self.sampleToSave = self.y0.size // 2
+        self.irfftsize = (self.x0.size - 1) * 2
+
+    def test_norm_false(self):
+
+        normalize = False
+        offset = 0
+
+        xcf = correlate.do_xcorr_in_fd(self.x0, self.x1, self.freqs,
+                                       offset, self.sampleToSave,
+                                       self.irfftsize, normalize)
+
+        ref = np.correlate(self.y1, self.y0, mode="same")
+
+        # Are numpy and our result the same?
+        self.assertTrue(np.all(np.isclose(xcf[:ref.size], ref)))
+
+        # Is peak at correct shift position?
+        self.assertTrue(np.argmax(xcf), self.y0.size // 2 + self.shift)
+
+        # Is peak of right height?
+        self.assertTrue(np.max(xcf), 0.5)
+
+    def test_norm_true(self):
+
+        normalize = True
+        offset = 0
+
+        xcf = correlate.do_xcorr_in_fd(self.x0, self.x1, self.freqs,
+                                       offset, self.sampleToSave,
+                                       self.irfftsize, normalize)
+
+        # Skip comparison to numpy because they don't have normalized CCF
+        # Check position of max?
+        self.assertTrue(np.argmax(xcf), self.y0.size // 2 + self.shift)
+        # Max should be 1.
+        self.assertTrue(np.max(xcf), 1.0)
 
 
 if __name__ == "__main__":
