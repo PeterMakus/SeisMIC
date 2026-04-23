@@ -1178,8 +1178,38 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         return ind
 
 
-def do_xcorr_in_fd(x0, x1, freqs, offset=0, sampleToSave=None,
-                   irfftsize=None, normalize=True):
+def do_xcorr_in_fd(x0: np.array, x1: np.array, freqs: np.array,
+                   offset: float = 0, sampleToSave: int = None,
+                   irfftsize: int = None, normalize: bool = True
+                   ) -> np.array:
+    """
+    Compute the cross-correlation of two time series in the frequency domain.
+
+    Parameters
+    ----------
+    x0 : np.array
+        FFT of the first time series.
+    x1 : np.array
+        FFT of the second time series.
+    freqs : np.array
+        Frequencies corresponding to the FFT of the time series.
+    offset : float, optional
+        Time offset to apply to the cross-correlation (default is 0).
+    sampleToSave : int, optional
+        Number of samples to save in the output
+        (default is None, -> entire sequence).
+    irfftsize : int, optional
+        Size of the inverse real FFT. Only used if normalize is True
+        (default is None).
+    normalize : bool, optional
+        Whether to normalize the cross-correlation (default is True).
+
+    Returns
+    -------
+    np.array
+        Cross-correlation of the input time series in time domain,
+        with the specified number of samples to save.
+    """
 
     if x0.size < 5 or x1.size < 5:
         raise UserWarning(
