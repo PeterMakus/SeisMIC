@@ -10,7 +10,7 @@ Helper functions for preprocessing modules.
    Johanna Lehr (jlehr@gfz-potsdam.de)
 
 Created: Wednesday, 2025-03-20 15:15:21
-Last Modified: 2025-03-20 15:15:28
+Last Modified: Wednesday, 20th May 2026 05:22:27 pm
 '''
 
 import numpy as np
@@ -32,17 +32,18 @@ def get_joint_norm(B, args: dict) -> None:
     """
 
     if 'joint_norm' in list(args.keys()):
-        if args['joint_norm'] is True:
-            args['joint_norm'] = 3
+        jn = args['joint_norm']
+        if jn is True:
+            jn = 3
 
-        if args['joint_norm'] in [2, 3]:
-            k = args['joint_norm']
+        if jn in [2, 3]:
+            k = jn
             assert B.shape[0] % k == 0, "For joint normalization with %d the "\
                 "number of traces needs to the multiple of it, but is %d" % (
                     k, B.shape[0])
             B[:, :] = np.repeat(np.mean(B.reshape(-1, k, B.shape[1]), axis=1),
                                 k, axis=0)
-        elif args['joint_norm'] == 1 or args['joint_norm'] is False:
+        elif jn == 1 or jn is False:
             pass
         else:
             raise ValueError(

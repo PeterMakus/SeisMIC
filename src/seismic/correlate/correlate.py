@@ -1133,8 +1133,11 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
         ######################################
         # collect results
-        # self.logger.debug("%s %s" % (C.shape, C.dtype))
-        # self.logger.debug("combis: %s" % (self.options["combinations"]))
+        self.logger.debug(
+            "Corr matrix shape=%s, dtype=%s, memory=%s MB"
+            % (C.shape, C.dtype, C.nbytes / 1000**2)
+        )
+        self.logger.debug("combis: %s" % (self.options["combinations"]))
         self.logger.debug("Core %d summing corr matrix." % self.rank)
         self.comm.Allreduce(MPI.IN_PLACE, [C, MPI.FLOAT], op=MPI.SUM)
         self.logger.debug("Core %d summing startlags." % self.rank)
