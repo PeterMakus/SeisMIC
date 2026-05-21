@@ -7,7 +7,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 27th May 2021 04:27:14 pm
-Last Modified: Saturday, 18th April 2026 03:05:23 pm
+Last Modified: Thursday, 21st May 2026 06:02:22 pm
 '''
 
 from copy import deepcopy
@@ -1187,11 +1187,14 @@ class TestCalcCrossCombis(unittest.TestCase):
                 n2 = tr1.stats.network
                 s = tr.stats.station
                 s2 = tr1.stats.station
+                l1 = tr1.stats.location
+                l2 = tr1.stats.location
                 ch1 = tr.stats.channel
                 ch2 = tr1.stats.channel
                 if n != n2 or s != s2:
                     rcombis.append(
-                        "%s-%s.%s-%s.%s-%s" % (n, n2, s, s2, ch1, ch2)
+                        "%s-%s.%s-%s.%s-%s.%s-%s" % (
+                            n, n2, s, s2, l1, l2, ch1, ch2)
                     )
                     # remove duplicates
                     rcombis = list(set(rcombis))
@@ -1224,13 +1227,13 @@ class TestIsInXcombis(unittest.TestCase):
     def test_in_xcombis(self):
         id1 = "A.C.loc.E"
         id2 = "B.D.loc.F"
-        rcombis = ["A-B.C-D.E-F", "G-H.I-J.K-L"]
+        rcombis = ["A-B.C-D.loc-loc.E-F", "G-H.I-J.K-L"]
         self.assertTrue(correlate.is_in_xcombis(id1, id2, rcombis))
 
     def test_in_xcombis_other_way(self):
         id2 = "A.C.loc.E"
         id1 = "B.D.loc.F"
-        rcombis = ["A-B.C-D.E-F", "G-H.I-J.K-L"]
+        rcombis = ["A-B.C-D.loc-loc.E-F", "G-H.I-J.K-L"]
         self.assertTrue(correlate.is_in_xcombis(id1, id2, rcombis))
 
     def test_in_xcombis_no_chan(self):

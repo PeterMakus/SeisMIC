@@ -1320,17 +1320,32 @@ def is_in_xcombis(id1: str, id2: str, rcombis: List[str] = None) -> bool:
     """
     Check if the specific combination is to be calculated according to
     xcombinations including the channel. xcombination are expected as
-    Net1-Net2.Sta1-Sta2.Cha1-Cha2. (Channel information can be omitted)
+    Net1-Net2.Sta1-Sta2.Loc1-Loc2.Cha1-Cha2. Station, Location and Channel
+    information can be omitted, Wildcard "*" is allowed.
     """
-    n1, s1, _, c1 = id1.split(".")
-    n2, s2, _, c2 = id2.split(".")
-    tcombi = f"{n1}-{n2}.{s1}-{s2}.{c1}-{c2}"
-    tcombi2 = f"{n2}-{n1}.{s2}-{s1}.{c2}-{c1}"
+    n1, s1, l1, c1 = id1.split(".")
+    n2, s2, l2, c2 = id2.split(".")
+
+    if f"{n1}-{n2}" in rcombis or f"{n2}-{n1}" in rcombis:
+        return True
+    elif f"{n1}-{n2}.{s1}-{s2}" in rcombis or f"{n2}-{n1}.{s2}-{s1}" in rcombis:
+        return True
+    elif (f"{n1}-{n2}.{s1}-{s2}.{l1}-{l2}" in rcombis or
+          f"{n2}-{n1}.{s2}-{s1}.{l2}-{l1}" in rcombis):
+        return True
+    elif (f"{n1}-{n2}.{s1}-{s2}.{l1}-{l2}.{c1}-{c2}" in rcombis or
+          f"{n2}-{n1}.{s2}-{s1}.{l2}-{l1}.{c2}-{c1}" in rcombis):
+        return True
+
+    tcombi = f"{n1}-{n2}.{s1}-{s2}.{l1}-{l2}.{c1}-{c2}"
+    tcombi2 = f"{n2}-{n1}.{s2}-{s1}.{l2}-{l1}.{c2}-{c1}"
+
     for combi in rcombis:
-        if fnmatch.fnmatch(tcombi, combi + "*") or fnmatch.fnmatch(
-            tcombi2, combi + "*"
-        ):
-            return True
+        if "*" in combi:
+            if (fnmatch.fnmatch(tcombi, combi + "*") or
+                    fnmatch.fnmatch(tcombi2, combi + "*")):
+                return True
+
     return False
 
 
