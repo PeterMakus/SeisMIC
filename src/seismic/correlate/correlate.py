@@ -983,7 +983,15 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
                 if self.options["joint_norm"]:
                     self.logger.info("Checking if 3 channels are available.")
+                    old_win_len = len(win)
                     check_for_missing_channels(win, self.avail_raw_data)
+                    if len(win) != old_win_len:
+                        self.logger.info(
+                            "Core %d added missing channels. "
+                            "Recomputing combinations..."
+                            % self.rank
+                        )
+                        self._recalulate_combinations(win)
 
                 win = win.trim(winstart, winend, pad=True)
                 self.logger.info(
@@ -2052,5 +2060,6 @@ def check_for_missing_channels(st: Stream, avail_channels: list):
         trins = st[ind].copy()
         trins.id = nslc
         trins.data = np.zeros_like(trins.data)
-        st.insert(ind, trins)
+        # st.insert(ind, trins)
+        st.append(trins)
     st.sort()
