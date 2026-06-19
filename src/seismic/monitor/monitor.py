@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Thursday, 26th February 2026 01:47:45 pm
+Last Modified: Friday, 19th June 2026 01:28:16 pm
 '''
 from copy import deepcopy
 import json
@@ -889,6 +889,7 @@ def correct_dv_shift(
     dv0.sim_mat = np.roll(dv0.sim_mat, (roll, 0))
     dv0.value = dv0.second_axis[
         np.nanargmax(np.nan_to_num(dv0.sim_mat), axis=1)]
+    dv0.corr = np.nanmax(dv0.sim_mat, axis=1)
     return dv0, dv1
 
 
