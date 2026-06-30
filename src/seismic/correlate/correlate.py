@@ -1095,7 +1095,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
         ######################################
         # correlation
-        self.logger.info("Core %d performing correlation." % self.rank)
+        # self.logger.info("Core %d performing correlation." % self.rank)
         csize = len(self.options["combinations"])
         irfftsize = (fftsize - 1) * 2
         sampleToSave = int(
@@ -1248,6 +1248,7 @@ def do_xcorr_in_fd(
             * np.sqrt(2.0 * np.sum(x1 * x1.conj()) - x1[0] ** 2)
             / irfftsize
         ).real
+        module_logger.debug("Normalizing ccf with norm = %f" % (norm))
         # if np.isclose(norm, 0):
         #     norm = 1.0
     else:
@@ -1261,7 +1262,6 @@ def do_xcorr_in_fd(
     tmp = np.fft.irfft(M).real
 
     # cut the center and do fftshift
-    module_logger.debug("Normalizing ccf with norm = %f" % (norm))
     try:
         xcf = (
             np.concatenate((tmp[-sampleToSave:], tmp[: sampleToSave + 1]))
