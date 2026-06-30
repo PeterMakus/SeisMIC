@@ -130,11 +130,11 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
         # Write the options dictionary to the log file
         if self.rank == 0:
-            tstr = UTCDateTime.now().strftime('%Y-%m-%d-%H-%M')
-            with open(os.path.join(
-                    logdir, 'params%s.txt' % tstr), 'w') as file:
+            tstr = UTCDateTime.now().strftime("%Y-%m-%d-%H-%M")
+            with open(os.path.join(logdir, "params%s.txt" % tstr), "w") as file:
                 file.write(
-                    json.dumps(options, indent=1, default=mu.json_default))
+                    json.dumps(options, indent=1, default=mu.json_default)
+                )
 
         self.options = options["co"]
         self._set_joint_norm_arg()
@@ -150,9 +150,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
         # Store_Client
         if store_client is None:
-            store_client = Local_Store_Client(
-                options
-            )
+            store_client = Local_Store_Client(options)
         self.store_client = store_client
 
         self._find_available_data(options)
@@ -252,17 +250,18 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             ).tolist()
         else:
             self.avail_raw_data = None
-        self.avail_raw_data = self.comm.bcast(
-            self.avail_raw_data, root=0)
-        self.station = np.unique(np.array([
-            [d[0], d[1]] for d in self.avail_raw_data]), axis=0).tolist()
+        self.avail_raw_data = self.comm.bcast(self.avail_raw_data, root=0)
+        self.station = np.unique(
+            np.array([[d[0], d[1]] for d in self.avail_raw_data]), axis=0
+        ).tolist()
         # if no data is available, raise an error
         if not len(self.station):
             raise FileNotFoundError(
-                f'No data available in {self.store_client.sds_root}.\n'
-                f'I was looking for network and station {station} and '
-                f'the component {component}.\nAll these parameters can be '
-                'adjusted in your params.yaml.')
+                f"No data available in {self.store_client.sds_root}.\n"
+                f"I was looking for network and station {station} and "
+                f"the component {component}.\nAll these parameters can be "
+                "adjusted in your params.yaml."
+            )
         # if only certain combis are requested, remove stations not within
         # these
         self._filter_by_rcombis()
@@ -436,8 +435,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         if self.rcombis is None:
             self.rcombis = []
             for ii, (n0, s0) in enumerate(self.station):
-                inv0 = self.store_client.select_inventory_or_load_remote(
-                    n0, s0)
+                inv0 = self.store_client.select_inventory_or_load_remote(n0, s0)
                 for n1, s1 in self.station[ii:]:
                     inv1 = self.store_client.select_inventory_or_load_remote(
                         n1, s1
@@ -480,25 +478,38 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         )
         ex_dict = {}
         for nc, sc in zip(netcombs, statcombs):
-            outfs = glob.glob(h5_FMTSTR.format(
-                dir=self.corr_dir, network=nc, station=sc, location='*',
-                channel=channel))
+            outfs = glob.glob(
+                h5_FMTSTR.format(
+                    dir=self.corr_dir,
+                    network=nc,
+                    station=sc,
+                    location="*",
+                    channel=channel,
+                )
+            )
             if not len(outfs):
                 continue
             d = {}
             for outf in outfs:
                 # retrieve location codes
-                l0, l1 = os.path.basename(outf).split('.')[2].split('-')
-                cha0, cha1 = os.path.basename(outf).split('.')[3].split('-')
-                if self.options['combination_method'] in (
-                        'autoComponents', 'betweenComponents') and l0 != l1:
+                l0, l1 = os.path.basename(outf).split(".")[2].split("-")
+                cha0, cha1 = os.path.basename(outf).split(".")[3].split("-")
+                if (
+                    self.options["combination_method"]
+                    in ("autoComponents", "betweenComponents")
+                    and l0 != l1
+                ):
                     # skip this file, as it is not an autocorrelation
                     continue
-                if self.options['combination_method'] == 'betweenComponents' \
-                        and cha0 == cha1:
+                if (
+                    self.options["combination_method"] == "betweenComponents"
+                    and cha0 == cha1
+                ):
                     continue
-                if self.options['combination_method'] == 'autoComponents' \
-                        and cha0 != cha1:
+                if (
+                    self.options["combination_method"] == "autoComponents"
+                    and cha0 != cha1
+                ):
                     continue
                 with CorrelationDataBase(
                     outf,
@@ -570,7 +581,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             # write the remaining data
             if cst.count():
                 self.logger.info(
-                    "Writing %d remaining correlations." % cst.count())
+                    "Writing %d remaining correlations." % cst.count()
+                )
                 self._write(cst)
                 cst.clear()
         except Exception:
@@ -683,8 +695,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         pmap = np.arange(len(filelist)) * self.psize / len(filelist)
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
-        self.logger.info(
-            "Core %d writing to %d files." % (self.rank, len(ind)))
+        self.logger.info("Core %d writing to %d files." % (self.rank, len(ind)))
 
         for outf in np.array(filelist)[ind]:
             net, stat, loc, cha = os.path.basename(outf).split(".")[0:4]
@@ -701,7 +712,10 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 corr_options=self.options,
                 _force=self._allow_different_params,
             ) as cdb:
-                if cstselect.count():
+                if (
+                    cstselect.count()
+                    and not self.options["subdivision"]["delete_subdivision"]
+                ):
                     self.logger.debug(
                         "Writing %d correlations to %s",
                         cstselect.count(),
@@ -751,8 +765,9 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         if self.rank == 0:
             # find already available times
             self.ex_dict = self.find_existing_times(
-                'subdivision', channel=f'*{self.req_comps}-*{self.req_comps}')
-            self.logger.info('Already existing data: %s' % str(self.ex_dict))
+                "subdivision", channel=f"*{self.req_comps}-*{self.req_comps}"
+            )
+            self.logger.info("Already existing data: %s" % str(self.ex_dict))
         else:
             self.ex_dict = None
 
@@ -826,8 +841,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                     continue
                 st = st.extend(stext)
 
-            self.logger.info(
-                "Core %d loaded %d traces." % (self.rank, len(st)))
+            self.logger.info("Core %d loaded %d traces." % (self.rank, len(st)))
             self.logger.debug("IDs: %s" % str([tr.id for tr in st]))
 
             # The stream has to be tapered ebfore decimating!
@@ -864,11 +878,9 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 try:
                     self.logger.debug("Preprocessing read_len stream...")
                     st = preprocess_stream(
-                        st, self.store_client, startt, endt,
-                        tl, **self.options
+                        st, self.store_client, startt, endt, tl, **self.options
                     )
-                    self.logger.debug(
-                        "Finished preprocessing read_len stream.")
+                    self.logger.debug("Finished preprocessing read_len stream.")
                 except Exception as e:
                     self.logger.error(
                         "Stream preprocessing failed for "
@@ -879,10 +891,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
             # Slice the stream in correlation length
             # -> Loop over correlation increments
-            for ii, win in enumerate(
-                    generate_corr_inc(st, **self.options)):
-                winstart = startt + ii * self.options[
-                    "subdivision"]["corr_inc"]
+            for ii, win in enumerate(generate_corr_inc(st, **self.options)):
+                winstart = startt + ii * self.options["subdivision"]["corr_inc"]
                 winend = winstart + self.options["subdivision"]["corr_len"]
 
                 self.logger.info(
@@ -912,7 +922,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 # Remove traces that won't be accessed at all
                 win_indices = np.arange(len(win))
                 combindices = np.unique(
-                    np.hstack(tup=self.options["combinations"]))
+                    np.hstack(tup=self.options["combinations"])
+                )
                 popindices = np.flip(np.setdiff1d(win_indices, combindices))
                 self.logger.info(
                     "Core %d found %d traces not in combinations. Removing..."
@@ -988,8 +999,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                     if len(win) != old_win_len:
                         self.logger.info(
                             "Core %d added missing channels. "
-                            "Recomputing combinations..."
-                            % self.rank
+                            "Recomputing combinations..." % self.rank
                         )
                         self._recalulate_combinations(win)
 
@@ -1079,8 +1089,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         ######################################
         # collect results
         # ensure B is complex64 and contiguous
-        B = np.ascontiguousarray(
-            B, dtype=np.complex64)
+        B = np.ascontiguousarray(B, dtype=np.complex64)
         # perform complex reduction
         self.comm.Allreduce(MPI.IN_PLACE, [B, MPI.COMPLEX], op=MPI.SUM)
 
@@ -1106,8 +1115,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             # offset of starttimes in samples(just remove fractions of samples)
             offset = (
                 self.options["starttime"][self.options["combinations"][ii][0]]
-                - self.options[
-                    "starttime"][self.options["combinations"][ii][1]]
+                - self.options["starttime"][self.options["combinations"][ii][1]]
             )
             if corr_args["center_correlation"]:
                 roffset = 0.0
@@ -1127,7 +1135,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 offset,
                 sampleToSave,
                 irfftsize,
-                corr_args["normalize_correlation"]
+                corr_args["normalize_correlation"],
             )
             startlags[ii] = -sampleToSave / self.sampling_rate - roffset
 
@@ -1189,10 +1197,15 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         return ind
 
 
-def do_xcorr_in_fd(x0: np.array, x1: np.array, freqs: np.array,
-                   offset: float = 0, sampleToSave: int = None,
-                   irfftsize: int = None, normalize: bool = True
-                   ) -> np.array:
+def do_xcorr_in_fd(
+    x0: np.array,
+    x1: np.array,
+    freqs: np.array,
+    offset: float = 0,
+    sampleToSave: int = None,
+    irfftsize: int = None,
+    normalize: bool = True,
+) -> np.array:
     """
     Compute the cross-correlation of two time series in the frequency domain.
 
@@ -1240,9 +1253,7 @@ def do_xcorr_in_fd(x0: np.array, x1: np.array, freqs: np.array,
     else:
         norm = 1.0
 
-    M = (
-        x0.conj() * x1 * np.exp(1j * freqs * offset * 2 * np.pi)
-    )
+    M = x0.conj() * x1 * np.exp(1j * freqs * offset * 2 * np.pi)
 
     ######################################
     # frequency domain postProcessing
@@ -1253,14 +1264,11 @@ def do_xcorr_in_fd(x0: np.array, x1: np.array, freqs: np.array,
     module_logger.debug("Normalizing ccf with norm = %f" % (norm))
     try:
         xcf = (
-            np.concatenate((tmp[-sampleToSave:], tmp[:sampleToSave+1]))
+            np.concatenate((tmp[-sampleToSave:], tmp[: sampleToSave + 1]))
             / norm
         )
     except TypeError:
-        xcf = (
-            np.concatenate((tmp[1:], tmp[:]))
-            / norm
-        )
+        xcf = np.concatenate((tmp[1:], tmp[:])) / norm
     return xcf
 
 
@@ -1338,11 +1346,15 @@ def is_in_xcombis(id1: str, id2: str, rcombis: List[str] = None) -> bool:
         return True
     elif f"{n1}-{n2}.{s1}-{s2}" in rcombis or f"{n2}-{n1}.{s2}-{s1}" in rcombis:
         return True
-    elif (f"{n1}-{n2}.{s1}-{s2}.{l1}-{l2}" in rcombis or
-          f"{n2}-{n1}.{s2}-{s1}.{l2}-{l1}" in rcombis):
+    elif (
+        f"{n1}-{n2}.{s1}-{s2}.{l1}-{l2}" in rcombis
+        or f"{n2}-{n1}.{s2}-{s1}.{l2}-{l1}" in rcombis
+    ):
         return True
-    elif (f"{n1}-{n2}.{s1}-{s2}.{l1}-{l2}.{c1}-{c2}" in rcombis or
-          f"{n2}-{n1}.{s2}-{s1}.{l2}-{l1}.{c2}-{c1}" in rcombis):
+    elif (
+        f"{n1}-{n2}.{s1}-{s2}.{l1}-{l2}.{c1}-{c2}" in rcombis
+        or f"{n2}-{n1}.{s2}-{s1}.{l2}-{l1}.{c2}-{c1}" in rcombis
+    ):
         return True
 
     tcombi = f"{n1}-{n2}.{s1}-{s2}.{l1}-{l2}.{c1}-{c2}"
@@ -1350,8 +1362,9 @@ def is_in_xcombis(id1: str, id2: str, rcombis: List[str] = None) -> bool:
 
     for combi in rcombis:
         if "*" in combi:
-            if (fnmatch.fnmatch(tcombi, combi + "*") or
-                    fnmatch.fnmatch(tcombi2, combi + "*")):
+            if fnmatch.fnmatch(tcombi, combi + "*") or fnmatch.fnmatch(
+                tcombi2, combi + "*"
+            ):
                 return True
 
     return False
@@ -1435,7 +1448,7 @@ def calc_cross_combis(
                 loc2 = tr1.stats.location
                 c = tr.stats.component
                 c2 = tr1.stats.component
-                if ((n == n2) and (s == s2) and (c != c2) and (loc == loc2)):
+                if (n == n2) and (s == s2) and (c != c2) and (loc == loc2):
                     if _compare_existing_data(ex_corr, tr, tr1):
                         continue
                     combis.append((ii, jj))
@@ -1948,9 +1961,7 @@ def preprocess_stream(
         except Exception:
             msg = "Polarity correction failed"
             msg += ", data will be used without polarity check..."
-            module_logger.error(
-                msg,
-                exc_info=True)
+            module_logger.error(msg, exc_info=True)
 
     mu.discard_short_traces(st, subdivision["corr_len"] / 20)
 
