@@ -24,3 +24,5 @@ dependencies:
     - sphinxcontrib-mermaid
     - obspy==1.5.0
     - -e .
+exclude:
+  - gdk-pixbuf
