@@ -1,4 +1,10 @@
 #### Project wide parameters
+# These parameters modify the behaviour of correlate.Correlator and
+# monitor.Monitor
+# Note that yaml does not allow the use of None, as it
+# is interpreted as a string. Therefore, arguments
+# that should be None need to be commented out (allowed only for some)
+
 # lowest level project directory
 proj_dir : '/path/to/project/root/'
 # directory for logging information
@@ -29,8 +35,7 @@ net:
     network : 'D0'
     station : ['BZG', 'ESO', 'KBG', 'KIR']
     # For "component" only strings are allowed (no lists!)
-    component: 'Z'  # Use * or ? or None to allow all components
-
+    component: 'Z'  # Use * or ? for wildcards
 #### parameters for correlation (emperical Green's function creation)
 co:
     # subdirectory of 'proj_dir' to store correlation
@@ -67,7 +72,7 @@ co:
     # In the form [Net0-Net1.Stat0-Stat1] or [Net0-Net1.Stat0-Stat1.Cha0-Cha1]
     # This option will only be consider if combination_method == 'betweenStations'
     # Comment if not in use
-    #xcombinations : [Net0-Net1.Stat0-Stat1]
+    # xcombinations : [Net0-Net1.Stat0-Stat1.Cha0-Cha1]
 
     # preprocessing of the original length time series
     # these function work on an obspy.Stream object given as first argument
@@ -161,7 +166,7 @@ dv:
 
     ### Definition of lapse time window, i.e. time window in the coda that is used for the dv/v estimate
     tw_start : 20     # lapse time of first sample [s]
-    tw_len : 60       # length of window [s] Can be None if the whole (rest) of the coda should be used
+    tw_len : 60       # length of window [s] Comment if the whole (rest) of the coda should be used
     sides : 'both'   # options are left (for acausal), right (causal), both, or single (for active source experiments where the first sample is the trigger time)
     compute_tt : True  # Computes the travel time and adds it to tw_start (tt is 0 if not xstations). If true a rayleigh wave velocity has to be provided
     rayleigh_wave_velocity : 1  # rayleigh wave velocity in km/s, will be ignored if compute_tt=False
