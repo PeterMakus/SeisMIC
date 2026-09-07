@@ -45,10 +45,10 @@ jobs:
       with:
         activate-environment: seismic
         environment-file: environment.yml
-        # python-version: 3.8
         python-version: ${{ matrix.PYTHON }}
         auto-activate-base: false
         use-only-tar-bz2: true
+        channel-priority: strict
     # annoying fix for missing fortran (find gfortran that was used to compile numpy)
     - name: Fix NumPy libgfortran (Linux only)
       if: runner.os == 'Linux'
