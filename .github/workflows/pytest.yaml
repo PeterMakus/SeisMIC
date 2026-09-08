@@ -12,13 +12,14 @@ jobs:
     - name: checkout
       uses: actions/checkout@v2
       with:
-        fetch-depth: ‘2’
-    - name: Install libgfortran (Linux only)
-      if: runner.os == 'Linux'
-      shell: bash -l {0}
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gfortran
+        fetch-depth: 0
+        lfs: true
+    # - name: Install libgfortran (Linux only)
+    #   if: runner.os == 'Linux'
+    #   shell: bash -l {0}
+    #   run: |
+    #     sudo apt-get update
+    #     sudo apt-get install -y gfortran
     # Cache Conda environment installattion
     - name: Cache conda
       uses: actions/cache@v4
@@ -57,14 +58,14 @@ jobs:
         pip install -q sphinx<6.0 pydata-sphinx-theme sphinx-copybutton sphinxcontrib-mermaid obspy==1.5
         pip install -q -e .
     # annoying fix for missing fortran (find gfortran that was used to compile numpy)
-    - name: Fix NumPy libgfortran (Linux only)
-      if: runner.os == 'Linux'
-      shell: bash -l {0}
-      run: |
-        pip uninstall numpy -y
-        conda uninstall -n seismic numpy --yes
-        conda clean --all --yes
-        conda install -n seismic -c conda-forge numpy --yes
+    # - name: Fix NumPy libgfortran (Linux only)
+    #   if: runner.os == 'Linux'
+    #   shell: bash -l {0}
+    #   run: |
+    #     pip uninstall numpy -y
+    #     conda uninstall -n seismic numpy --yes
+    #     conda clean --all --yes
+    #     conda install -n seismic -c conda-forge numpy --yes
 
     # To keep Conda activated you have to use 'shell: bash -l {0}' line
     # To specifiy the shell
