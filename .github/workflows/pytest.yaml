@@ -2,11 +2,9 @@ name: pytest
 on: [push]
 jobs:
   run:
-    runs-on: ${{ matrix.os }}
-    strategy:
-        matrix:
-            os: "ubuntu-latest"
+    runs-on: ubuntu-latest
     env:
+      OS: ubuntu-latest
       PYTHON: '3.12'
     steps:
     - name: checkout
