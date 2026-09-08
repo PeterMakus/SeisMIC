@@ -73,17 +73,11 @@ jobs:
     #     conda clean --all --yes
     #     conda install -n seismic -c conda-forge numpy --yes
 
-    # To keep Conda activated you have to use 'shell: bash -l {0}' line
-    # To specifiy the shell
-    - name: INFO using bash shell
-      shell: bash -l {0}
-      run: |
-        conda info
-        conda list
 
     - name: Generate Report
       shell: bash -l {0}
       run: |
+        source seismic_env/bin/activate
         pip install pytest-cov
         pytest tests --cov=./ --cov-report=xml
 
