@@ -17,10 +17,11 @@ dependencies:
   - flake8
   - tqdm
   - ipykernel
+  - gdk-pixbuf=2.42.* # Use an earlier stable version
   - pip:
     - sphinx < 6.0
     - pydata-sphinx-theme
     - sphinx-copybutton
     - sphinxcontrib-mermaid
-    - obspy==1.5.0
+    - obspy==1.5
     - -e .

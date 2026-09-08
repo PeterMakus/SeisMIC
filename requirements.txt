@@ -9,7 +9,7 @@ matplotlib
 mpi4py
 openmpi
 numpy>2, <=2.4.2
-obspy==1.5.0
+obspy==1.5
 pip
 prov
 pyyaml
