@@ -10,7 +10,7 @@ Module that contains functions for preprocessing in the time domain
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:24:01 pm
-Last Modified: Friday, 10th January 2025 01:29:21 pm
+Last Modified: 2025-03-13 14:12:06 (J. Lehr)
 '''
 from copy import deepcopy
 
@@ -21,6 +21,13 @@ from scipy.signal import detrend as sp_detrend
 import obspy.signal as osignal
 
 from seismic.utils.fetch_func_from_str import func_from_str
+from ..utils import processing_helpers as ph
+
+import logging
+from .. import logfactory
+
+parentlogger = logfactory.create_logger()
+module_logger = logging.getLogger(parentlogger.name+".preprocessing_td")
 
 
 def clip(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
@@ -253,12 +260,18 @@ def normalizeStandardDeviation(
     Divide the time series by their standard deviation
 
     Divide the amplitudes of each trace by its standard deviation.
+    If `joint_norm` in `args` is set to 2 or 3, the arithmetic mean of the
+    standard deviation is computed over 2 or 3 consecutive rows in the array,
+    respectively. If set to True, we assume 3 traces. This is useful for later
+    rotation of correlated traces in the ZNE system into the ZRT system.
+    Normalization over 2 is useful if only NE components are available.
+    If not given or set to 1 or False no joint normalization is applied.
 
     :type A: numpy.ndarray
     :param A: time series data with time oriented along the first \\
         dimension (columns)
     :type args: dictionary
-    :param args: not used here
+    :param args: `joint_norm` can be 1, 2, 3 or True/False
     :type params: dictionary
     :param params: not used here
 
@@ -266,6 +279,7 @@ def normalizeStandardDeviation(
     :return: normalized time series data
     """
     std = np.std(A, axis=-1)
+    ph.get_joint_norm(std[:, None], args)
     # avoid creating nans or Zerodivisionerror
     std[np.where(std == 0)] = 1
     A = (A.T/std).T
@@ -337,21 +351,35 @@ def TDnormalization(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     Amplitude dependent time domain normalization
 
     Calculate the envelope of the filtered trace, smooth it in a window of
-    length `windowLength` and normalize the waveform by this trace. The two
-    used keywords in `args` are `filter and `windowLength` that describe the
+    length `windowLength` and normalize the waveform by this trace. Mandatory
+    keywords in `args` are `filter and `windowLength` that describe the
     filter and the length of the envelope smoothing window, respectively.
+    If no filtering is desired, `filter` can be an empty dictionary.
+    Additionally, `joint_norm` can be set to integers 1, 2, or 3 or True/False.
+    If 1 or False no normalization is applied. If 2 or 3, the arithmetic mean
+    of the envelope is computed over 2 or 3 consecutive rows in the array,
+    respectively. If True, we assume 3 traces. This is useful for later
+    rotation of correlated traces in the ZNE system into the ZRT system.
+    Normalization over 2 is useful if only NE components are available.
+
 
     `args` has the following structure:
 
         args = {'windowLength':`length of the envelope smoothing window in \\
-        [s]`,'filter':{'type':`filterType`, fargs}}``
+        [s]`,'filter':{'type':`filterType`, fargs}, 'joint_norm':`joint_norm`}
 
         `type` may be `bandpass` with the corresponding fargs `freqmin` and \\
         `freqmax` or `highpass`/`lowpass` with the `fargs` `freqmin`/`freqmax`
+        `joint_norm` can be 1, 2, 3 or True/False
 
         :Example:
             ``args = {'windowLength':5,'filter':{'type':'bandpass',
             'freqmin':0.5, 'freqmax':2.}}``
+
+            ``args = {'windowLength':5,'filter':{'type':'bandpass',
+            'freqmin':0.5, 'freqmax':2.}, 'joint_norm':3}``
+
+            ``args = {'windowLength':5,'filter':{}, 'joint_norm':True}``
 
     :type A: numpy.ndarray
     :param A: time series data with time oriented along the first \\
@@ -364,6 +392,7 @@ def TDnormalization(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     :rtype: numpy.ndarray
     :return: normalized time series data
     """
+
     if args['windowLength'] <= 0:
         raise ValueError('Window Length has to be greater than 0.')
     # filter if args['filter']
@@ -377,21 +406,18 @@ def TDnormalization(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
         B = deepcopy(A)
     # simple calculation of envelope
     B = B**2
-    # smoothing of envelope in both directions to avoid a shift
-    window = (
-        np.ones(int(np.ceil(args['windowLength'] * params['sampling_rate'])))
-        / np.ceil(args['windowLength']*params['sampling_rate']))
-    if len(B.shape) == 1:
-        B = np.convolve(B, window, mode='same')
-        B = np.convolve(B[::-1], window, mode='same')[::-1]
-        # damping factor
-        B += np.max(B)*1e-6
-    else:
-        for ind in range(B.shape[0]):
-            B[ind, :] = np.convolve(B[ind], window, mode='same')
-            B[ind, :] = np.convolve(B[ind, ::-1], window, mode='same')[::-1]
-            # damping factor
-            B[ind, :] += np.max(B[ind, :])*1e-6
+
+    # jointly normalize envelope if requested
+    ph.get_joint_norm(B, args)
+
+    # smooth envelope (returns 2d array)
+    B = ph.smooth_rows(B, args, params)
+
+    # damp the envelope
+    B += np.max(B, axis=1)[:, None]*1e-6
+
+    B = np.squeeze(B)
+
     # normalization
     A /= np.sqrt(B)
     return A
@@ -490,3 +516,7 @@ def zeroPadding(A: np.ndarray, args: dict, params: dict, axis=1) -> np.ndarray:
         A = np.concatenate(
             (A, np.zeros((ntrc, N-npts), dtype=np.float32)), axis=axis)
     return A
+
+
+functions_accepting_jointnorm = [
+    normalizeStandardDeviation, TDnormalization]

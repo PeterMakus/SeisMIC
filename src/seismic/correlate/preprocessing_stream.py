@@ -10,13 +10,19 @@ Module that contains functions for preprocessing on obspy streams
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th July 2021 03:47:00 pm
-Last Modified: Tuesday, 26th September 2023 05:42:28 pm
+Last Modified: Tuesday, 2025-03-13 14:11:20 (J. Lehr)
 '''
 from typing import List
 from warnings import warn
 
 import numpy as np
 from obspy import Stream, Trace, UTCDateTime
+
+import logging
+from .. import logfactory
+
+parentlogger = logfactory.create_logger()
+module_logger = logging.getLogger(parentlogger.name+".preprocessing_stream")
 
 
 def cos_taper_st(
@@ -49,7 +55,8 @@ def cos_taper_st(
         try:
             st[ii] = cos_taper(st[ii], taper_len, taper_at_masked, lossless)
         except ValueError as e:
-            warn('%s, corresponding trace not tapered.' % e)
+            warn('%s, corresponding trace not tapered.' % e,
+                 UserWarning)
     return st
 
 
@@ -88,7 +95,8 @@ def cos_taper(
     if taper_at_masked:
         if lossless:
             warn(
-                'Tapering lossless at masked values is not supported')
+                'Tapering lossless at masked values is not supported',
+                UserWarning)
         st = tr.split()
         st = cos_taper_st(st, taper_len, False, False)
         st = st.merge()
@@ -304,3 +312,31 @@ def trace_mask_at_utc(
     # Mask the array
     tr.data = np.ma.array(tr.data, mask=mask, hard_mask=True, fill_value=0)
     # Hard mask saves RAM as the data will essentially be discarded
+
+
+def cut_start_end(st: Stream, sec_after_start: float | int,
+                  sec_before_end: float | int) -> Stream:
+    """
+    Cut the start and end off of a Stream.
+
+    :param st: Input Stream
+    :type st: Stream
+    :param sec_after_start: Start time in seconds from the beginning
+        of the trace
+    :type sec_after_start: float
+    :param sec_before_end: End time in seconds before the end of the trace
+    :type sec_before_end: float
+    :return: Cut Stream
+    :rtype: Stream
+
+    .. note::
+        This action is performed in place. If you want to keep the
+        original data use :func:`~obspy.core.stream.Stream.copy`.
+    """
+    if isinstance(st, Trace):
+        st = Stream([st])
+    for tr in st:
+        tr.trim(tr.stats.starttime + sec_after_start,
+                tr.stats.endtime - sec_before_end,
+                pad=True)
+    return st

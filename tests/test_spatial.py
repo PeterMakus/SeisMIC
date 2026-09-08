@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 11:07:27 am
-Last Modified: Tuesday, 5th March 2024 02:55:54 pm
+Last Modified: Wednesday, 18th February 2026 10:00:38 am
 '''
 
 import unittest
@@ -195,6 +195,7 @@ class TestSensitivityKernel(unittest.TestCase):
         pbb_mock.side_effect = [1] + [np.ones((10, 10))]*50
         with warnings.catch_warnings(record=True) as w:
             spt.sensitivity_kernel(s1, s2, x, y, t, dt, vel, mf_path)
+        print(w)
         self.assertEqual(len(w), 1)
         self.assertTrue(issubclass(w[0].category, UserWarning))
 

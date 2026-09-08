@@ -24,7 +24,7 @@ HANDLERNAME_FILE = "default-file"
 HANDLERNAME_CONSOLE = "default-console"
 DEFAULT_HANDLERNAMES = [HANDLERNAME_CONSOLE, HANDLERNAME_FILE]
 LOGDIR = "log"
-LOG_TSTRFMT = '%Y-%m-%d-%H-%M-%S'
+LOG_TSTRFMT = '%Y-%m-%dT%H%M%S'
 RANK_STRFMT = "{rank:03d}"  # "%03d"
 FILENAME_FMT = "{classname}-r"+RANK_STRFMT+"_{exectimestr}.log"
 

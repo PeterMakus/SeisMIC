@@ -13,7 +13,7 @@ Implementation here is just for the 2D case
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 16th January 2023 10:53:31 am
-Last Modified: Tuesday, 5th March 2024 03:03:01 pm
+Last Modified: Wednesday, 18th February 2026 10:02:01 am
 '''
 from typing import Tuple, Optional, Iterator, Iterable, List
 import warnings
@@ -160,7 +160,7 @@ def sensitivity_kernel(
     if denom == 0:
         return np.zeros_like(dist_s1_x0)
     dist_s2_x0 = compute_grid_dist(x, y, s2[0], s2[1])
-    nom = np.trapz(
+    nom = np.trapezoid(
         [probability(
             dist_s1_x0, tt, vel, mf_path, atol=atol) * probability(
             dist_s2_x0, t-tt, vel, mf_path, atol=atol) for tt in T],

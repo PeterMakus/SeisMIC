@@ -10,9 +10,8 @@ Manages the file format and class for correlations.
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Friday, 16th April 2021 03:21:30 pm
-Last Modified: Wednesday, 25th Febuary 2025 01:48:00 pm (J. Lehr)
+Last Modified: Thursday, 26th February 2026 12:19:41 pm
 '''
-import ast
 import fnmatch
 import os
 import re
@@ -211,10 +210,10 @@ omitted." % path, category=UserWarning)
     def get_corr_options(self) -> dict:
         try:
             sco = str(self['co'].attrs['co'])
+
             # Run once more through co_to_hdf5 to account for
             # correlations that have been computed with older versions
-
-            co = co_to_hdf5(ast.literal_eval(sco))
+            co = co_to_hdf5(mu.literal_eval_with_numpy_scalars(sco))
         except KeyError:
             raise KeyError('No correlation options in file')
         return co
@@ -533,6 +532,7 @@ def read_hdf5_header(dataset: h5py.Dataset) -> Stats:
 
 
 def co_to_hdf5(co: dict) -> dict:
+    assert isinstance(co, dict)
     coc = deepcopy(co)
     remk = [
         'subdir', 'read_start', 'read_end', 'read_len', 'read_inc',

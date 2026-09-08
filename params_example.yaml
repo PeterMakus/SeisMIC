@@ -14,13 +14,6 @@ log_subdir : 'log'
 log_level: 'WARNING'
 # folder for figures
 fig_subdir : 'figures'
-# Path to stationxml files if not downloaded
-stationxml_file : '/path/to/stations/*.xml'
-# sds root directory, default is "mseed"
-sds_dir : '/path/to/sds_root'
-# sds format string of waveform file names, 
-# change if your filenames deviate from standard pattern
-sds_fmtstr : '{year}/{network}/{station}/{channel}.{sds_type}/{network}.{station}.{location}.{channel}.{sds_type}.{year}.{doy:03d}'
 
 #### parameters for the waveform database, if it was not downloaded
 #### Default values can be omitted
@@ -118,6 +111,7 @@ co:
 
     # parameters for correlation preprocessing
     # Standard functions reside in seismic.correlate.preprocessing_td and preprocessing_fd, respectively
+    joint_norm: False
     corr_args : {'TDpreProcessing':[
                                   {'function':'seismic.correlate.preprocessing_td.taper',
                                     'args':{'type':'cosine_taper', 'p': 0.02}},
@@ -139,7 +133,7 @@ co:
                   # Standard functions reside in seismic.correlate.preprocessing_fd
                  'FDpreProcessing':[
                                     {'function':'seismic.correlate.preprocessing_fd.spectralWhitening',
-                                     'args':{'joint_norm':False}},
+                                     'args':{}},
                                     {'function':'seismic.correlate.preprocessing_fd.FDfilter',
                                      'args':{'flimit':[0.01,0.02,9,10]}}
                                     #  {'function':seismic.correlate.preprocessing_fd.FDsignBitNormalization,

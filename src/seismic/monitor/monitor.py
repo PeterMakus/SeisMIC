@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Thursday, 3rd June 2021 04:15:57 pm
-Last Modified: Monday, 4th August 2025 11:30:40 am
+Last Modified: Friday, 19th June 2026 01:28:16 pm
 '''
 from copy import deepcopy
 import json
@@ -28,6 +28,7 @@ from tqdm import tqdm
 from seismic.db.corr_hdf5 import CorrelationDataBase, h5_FMTSTR
 from seismic.monitor.dv import DV, read_dv
 from seismic.monitor.wfc import WFC
+from seismic.utils import miic_utils as mu
 from .. import logfactory
 
 parentlogger = logfactory.create_logger()
@@ -97,7 +98,8 @@ class Monitor(logfactory.LoggingMPIBaseClass):
                 pass
             with open(os.path.join(
                     logdir, 'params%s.txt' % tstr), 'w') as file:
-                file.write(json.dumps(opt_dump, indent=1))
+                file.write(
+                    json.dumps(opt_dump, indent=1, default=mu.json_default))
 
         # Find available stations and network
         self.netlist, self.statlist, self.infiles = \
@@ -887,6 +889,7 @@ def correct_dv_shift(
     dv0.sim_mat = np.roll(dv0.sim_mat, (roll, 0))
     dv0.value = dv0.second_axis[
         np.nanargmax(np.nan_to_num(dv0.sim_mat), axis=1)]
+    dv0.corr = np.nanmax(dv0.sim_mat, axis=1)
     return dv0, dv1
 
 

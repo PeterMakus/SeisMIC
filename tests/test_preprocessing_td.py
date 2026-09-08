@@ -19,6 +19,7 @@ from scipy.fftpack import next_fast_len
 from scipy.signal.windows import gaussian
 
 from seismic.correlate import preprocessing_td as pptd
+from seismic.utils import processing_helpers as ph
 
 
 class TestClip(unittest.TestCase):
@@ -256,6 +257,22 @@ class TestNormalizeStd(unittest.TestCase):
         res = pptd.normalizeStandardDeviation(A.copy(), {}, {})
         self.assertTrue(np.all(res == A))
 
+    def test_result_jointnorm(self):
+        rng = np.random.default_rng(42)
+        A = rng.normal(size=6000).reshape(6, 1000)
+        norm = np.std(A, axis=1)
+        ARGS = [{"joint_norm": False},
+                {"joint_norm": True},
+                {"joint_norm": 2},
+                ]
+        for args in ARGS:
+            _norm = np.copy(norm)
+            ph.get_joint_norm(_norm[:, None], args)
+            expected = (A.T / _norm).T
+            with self.subTest(args=args):
+                self.assertTrue(np.allclose(
+                    expected, pptd.normalizeStandardDeviation(A, args, {})))
+
 
 class TestFDSignBitNormalisation(unittest.TestCase):
     # Not much to test here
@@ -291,6 +308,9 @@ class TestTDNormalisation(unittest.TestCase):
     def setUp(self):
         self.params = {}
         self.params['sampling_rate'] = 25
+        rng = np.random.default_rng(42)
+        A = rng.normal(size=6000)
+        self.A = np.reshape(A, (6, 1000))
 
     def test_win_length_error(self):
         args = {}
@@ -320,6 +340,24 @@ class TestTDNormalisation(unittest.TestCase):
         np.testing.assert_array_less(res, 1)
         np.testing.assert_allclose(res, 1, atol=1)
         tdf_mock.assert_called_once_with(A, 'blub', self.params)
+
+    def test_result(self):
+        ARGS = [{"windowLength": 5/25, "filter": {}, "joint_norm": False},
+                {"windowLength": 5/25, "filter": {}, "joint_norm": True},
+                {"windowLength": 5/25, "filter": {}, "joint_norm": 2},
+                ]
+        for args in ARGS:
+            norm = np.copy(self.A)**2
+            ph.get_joint_norm(norm, args)
+            norm = ph.smooth_rows(norm, args, self.params)
+            norm += np.max(norm, axis=1)[:, None]*1e-6
+
+            expected = self.A / np.sqrt(norm)
+
+            with self.subTest(args=args):
+                # TDnormalization works in-place so use copy of A!
+                res = pptd.TDnormalization(np.copy(self.A), args, self.params)
+                self.assertTrue(np.allclose(expected, res))
 
 
 class TestTDFilter(unittest.TestCase):

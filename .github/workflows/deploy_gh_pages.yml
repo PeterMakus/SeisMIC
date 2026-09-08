@@ -29,7 +29,7 @@ jobs:
         uses: actions/cache@v4
         env:
           # Increase this value to reset cache if etc/example-environment.yml has not changed
-          CACHE_NUMBER: 0
+          CACHE_NUMBER: 2
         with:
           path: ~/conda_pkgs_dir
           key:
@@ -46,13 +46,21 @@ jobs:
             ${{ runner.os }}-pip-
             ${{ runner.os }}-
       - name: Prepare Environment
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: seismic
-          environment-file: environment.yml
-          # python-version: 3.8
-          auto-activate-base: false
-          use-only-tar-bz2: true
+        shell: bash -l {0}
+        run: |
+            # Parse environment.yml to extract conda dependencies
+            CONDA_DEPS=$(grep "^  - " environment.yml | \
+            grep -v "pip:" | \
+            sed 's/^  - //' | \
+            tr '\n' ' ')
+            
+            # Create environment, explicitly skipping gdk-pixbuf
+            conda create -n seismic --no-scripts -y -c conda-forge $CONDA_DEPS
+            
+            # Activate and install pip packages
+            conda activate seismic
+            pip install -q sphinx<6.0 pydata-sphinx-theme sphinx-copybutton sphinxcontrib-mermaid obspy==1.51
+            pip install -q -e .
       
       # To keep Conda activated you have to use 'shell: bash -l {0}' line
       # To specifiy the shell
