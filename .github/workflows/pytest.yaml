@@ -21,52 +21,56 @@ jobs:
     #     sudo apt-get update
     #     sudo apt-get install -y gfortran
     # Cache Conda environment installattion
-    # - name: Cache conda
-    #   uses: actions/cache@v4
-    #   env:
-    #     # Increase this value to reset cache if etc/example-environment.yml has not changed
-    #     CACHE_NUMBER: 2
-    #   with:
-    #     path: ~/conda_pkgs_dir
-    #     key:
-    #       ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
-    #       hashFiles('environment.yml') }}
+    - name: Cache conda
+      uses: actions/cache@v4
+      env:
+        # Increase this value to reset cache if etc/example-environment.yml has not changed
+        CACHE_NUMBER: 2
+      with:
+        path: ~/conda_pkgs_dir
+        key:
+          ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+          hashFiles('environment.yml') }}
     
-    # # Setting Up Cache pip installations
-    # - name: Cache pip
-    #   uses: actions/cache@v4
-    #   with:
-    #     path: ~/.cache/pip
-    #     key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-    #     restore-keys: |
-    #       ${{ runner.os }}-pip-
-    #       ${{ runner.os }}-
+    # Setting Up Cache pip installations
+    - name: Cache pip
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          ${{ runner.os }}-
     - name: Prepare Environment
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        activate-environment: seismic
+        environment-file: environment.yml
+        python-version: '3.12'
+        auto-activate-base: false
+        channel-priority: strict
+
+    - name: Install packages (skip gdk-pixbuf)
       shell: bash -l {0}
       run: |
-        # Parse environment.yml to extract conda dependencies (excluding gdk-pixbuf)
-        CONDA_DEPS=$(grep "^  - " environment.yml | \
-        grep -v "pip:" | \
-        grep -v "gdk-pixbuf" | \
-        sed 's/^  - //' | \
-        tr '\n' ' ')
+        # Remove gdk-pixbuf from environment file and create a temporary file
+        grep -v "gdk-pixbuf" environment.yml > /tmp/environment_fixed.yml
         
-        # Create environment, explicitly skipping gdk-pixbuf
-        conda create -n seismic --no-scripts -y -c conda-forge $CONDA_DEPS
+        # Update the environment with the fixed file
+        conda env update -n seismic -f /tmp/environment_fixed.yml --no-deps
         
-        # Activate and install pip packages
-        conda activate seismic
-        pip install -q sphinx<6.0 pydata-sphinx-theme sphinx-copybutton sphinxcontrib-mermaid obspy==1.51
+        # Install pip packages
+        pip install -q sphinx<6.0 pydata-sphinx-theme sphinx-copybutton sphinxcontrib-mermaid obspy==1.5
         pip install -q -e .
-    # annoying fix for missing fortran (find gfortran that was used to compile numpy)
-    # - name: Fix NumPy libgfortran (Linux only)
-    #   if: runner.os == 'Linux'
-    #   shell: bash -l {0}
-    #   run: |
-    #     pip uninstall numpy -y
-    #     conda uninstall -n seismic numpy --yes
-    #     conda clean --all --yes
-    #     conda install -n seismic -c conda-forge numpy --yes
+        # annoying fix for missing fortran (find gfortran that was used to compile numpy)
+        # - name: Fix NumPy libgfortran (Linux only)
+        #   if: runner.os == 'Linux'
+        #   shell: bash -l {0}
+        #   run: |
+        #     pip uninstall numpy -y
+        #     conda uninstall -n seismic numpy --yes
+        #     conda clean --all --yes
+        #     conda install -n seismic -c conda-forge numpy --yes
 
     # To keep Conda activated you have to use 'shell: bash -l {0}' line
     # To specifiy the shell
