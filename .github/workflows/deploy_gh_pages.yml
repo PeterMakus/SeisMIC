@@ -46,14 +46,21 @@ jobs:
             ${{ runner.os }}-pip-
             ${{ runner.os }}-
       - name: Prepare Environment
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-            activate-environment: seismic
-            environment-file: environment.yml
-            python-version: ${{ matrix.PYTHON }}
-            auto-activate-base: false
-            use-mamba: true
-            channel-priority: strict
+        shell: bash -l {0}
+        run: |
+            # Parse environment.yml to extract conda dependencies
+            CONDA_DEPS=$(grep "^  - " environment.yml | \
+            grep -v "pip:" | \
+            sed 's/^  - //' | \
+            tr '\n' ' ')
+            
+            # Create environment with --no-scripts to skip post-link issues
+            conda create -n seismic --no-scripts -y -c conda-forge $CONDA_DEPS
+            
+            # Activate and install pip packages
+            conda activate seismic
+            pip install -q sphinx<6.0 pydata-sphinx-theme sphinx-copybutton sphinxcontrib-mermaid obspy==1.5
+            pip install -q -e .
       
       # To keep Conda activated you have to use 'shell: bash -l {0}' line
       # To specifiy the shell
