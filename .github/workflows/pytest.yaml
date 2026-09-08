@@ -33,23 +33,31 @@ jobs:
           hashFiles('environment.yml') }}
     
     # Setting Up Cache pip installations
-    - name: Cache pip
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-          ${{ runner.os }}-
+    # - name: Cache pip
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: ~/.cache/pip
+    #     key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-pip-
+    #       ${{ runner.os }}-
+    # - name: Prepare Environment
+    #   uses: conda-incubator/setup-miniconda@v2
+    #   with:
+    #     activate-environment: seismic
+    #     environment-file: environment.yml
+    #     python-version: '3.12'
+    #     auto-activate-base: false
+    #     channel-priority: strict
+    #     use-mamba: true
     - name: Prepare Environment
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        activate-environment: seismic
-        environment-file: environment.yml
-        python-version: '3.12'
-        auto-activate-base: false
-        channel-priority: strict
-        use-mamba: true
+      shell: bash {0}
+      run: |
+        python -m venv seismic_env
+        source seismic_env/bin/activate
+        pip install --upgrade pip
+        pip install numpy>2,<=2.4.2 scipy>=1.7 h5py matplotlib pytest prov pyyaml tqdm ipykernel flake8 geographiclib==2.0 mpi4py<=4.0.1 obspy==1.5 sphinx<6.0 pydata-sphinx-theme sphinx-copybutton sphinxcontrib-mermaid
+        pip install -e .
 
     # - name: Install packages (skip gdk-pixbuf)
     #   shell: bash -l {0}
