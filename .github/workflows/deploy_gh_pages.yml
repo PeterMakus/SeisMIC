@@ -54,12 +54,12 @@ jobs:
             sed 's/^  - //' | \
             tr '\n' ' ')
             
-            # Create environment with --no-scripts to skip post-link issues
+            # Create environment, explicitly skipping gdk-pixbuf
             conda create -n seismic --no-scripts -y -c conda-forge $CONDA_DEPS
             
             # Activate and install pip packages
             conda activate seismic
-            pip install -q sphinx<6.0 pydata-sphinx-theme sphinx-copybutton sphinxcontrib-mermaid obspy==1.5
+            pip install -q sphinx<6.0 pydata-sphinx-theme sphinx-copybutton sphinxcontrib-mermaid obspy==1.51
             pip install -q -e .
       
       # To keep Conda activated you have to use 'shell: bash -l {0}' line
