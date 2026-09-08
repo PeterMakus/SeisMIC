@@ -47,7 +47,7 @@ jobs:
         environment-file: environment.yml
         python-version: ${{ matrix.PYTHON }}
         auto-activate-base: false
-        use-only-tar-bz2: true
+        use-mamba: true
         channel-priority: strict
     # annoying fix for missing fortran (find gfortran that was used to compile numpy)
     - name: Fix NumPy libgfortran (Linux only)

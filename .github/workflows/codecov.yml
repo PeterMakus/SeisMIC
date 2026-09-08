@@ -39,7 +39,7 @@ jobs:
         environment-file: environment.yml
         python-version: ${{ matrix.PYTHON }}
         auto-activate-base: false
-        use-only-tar-bz2: true
+        use-mamba: true
         channel-priority: strict
 
     # To keep Conda activated you have to use 'shell: bash -l {0}' line
