@@ -33,15 +33,6 @@ jobs:
           ${{ runner.os }}-pip-
           ${{ runner.os }}-
     - name: Prepare Environment
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        activate-environment: seismic
-        environment-file: environment.yml
-        python-version: ${{ matrix.PYTHON }}
-        auto-activate-base: false
-        use-mamba: true
-        channel-priority: strict
-    - name: Prepare Environment
       shell: bash -l {0}
       run: |
         # Parse environment.yml to extract conda dependencies
