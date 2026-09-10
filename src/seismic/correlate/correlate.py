@@ -837,7 +837,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 st = mu.resample_or_decimate(st, sampling_rate)
                 self.logger.debug("Finished downsampling.")
             except ValueError as e:
-                self.logger.error(
+                self.logger.exception(
                     "Downsampling failed for "
                     f"{st[0].stats.network}.{st[0].stats.station} and time"
                     f" {t}.\nThe Original Error Message was {e}."
@@ -862,7 +862,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                     self.logger.debug(
                         "Finished preprocessing read_len stream.")
                 except Exception as e:
-                    self.logger.error(
+                    self.logger.exception(
                         "Stream preprocessing failed for "
                         f"time {t} and stream {st}.\n"
                         f"The Original Error Message was {e}."
@@ -945,14 +945,14 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                         )
                     except Exception as e:
                         if st.count():
-                            self.logger.error(
+                            self.logger.exception(
                                 "Stream preprocessing failed for "
                                 f"{st[0].stats.network}.{st[0].stats.station}"
                                 " and time "
                                 f"{t}.\nThe Original Error Message was {e}."
                             )
                         else:
-                            self.logger.error(
+                            self.logger.exception(
                                 "Stream preprocessing failed for "
                                 "time "
                                 f"{t}.\nThe Original Error Message was {e}."
@@ -1869,7 +1869,7 @@ def preprocess_stream(
         except Exception:
             msg = "Polarity correction failed"
             msg += ", data will be used without polarity check..."
-            module_logger.error(
+            module_logger.exception(
                 msg,
                 exc_info=True)
 
