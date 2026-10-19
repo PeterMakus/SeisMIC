@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 29th March 2021 12:54:05 pm
-Last Modified: Thursday, 26th February 2026 12:20:56 pm
+Last Modified: Monday, 19th October 2026 01:42:06 pm
 '''
 from typing import List, Tuple
 import logging
@@ -50,9 +50,9 @@ def trace_calc_az_baz_dist(
     ``tr.stats.sac.stla`` and ``tr.stats.sac.stlo``
 
     :type stats1: :class:`~obspy.core.Stats`
-    :param stats1: First trace to account
+    :param stats1: First trace to account. Corresponds to the virtual event.
     :type stats2: :class:`~obspy.core.Stats`
-    :param stats2: Second trace to account
+    :param stats2: Second trace to account. Corresponds to the virtual receiver.
 
     :rtype: float
     :return: **az**: Azimuth angle between tr1 and tr2

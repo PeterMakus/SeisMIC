@@ -486,6 +486,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             'NET2.STAT2': {'LOC0-LOC0': {'BHZ-BHH':[%list of starttimes]}}}
         """
         netlist, statlist = list(zip(*self.station))
+        # channel combinations are ignored here but taken into account
+        # later
         netcombs, statcombs = compute_network_station_combinations(
             netlist,
             statlist,
@@ -1795,7 +1797,7 @@ def preprocess_stream(
     taper_len: float,
     remove_response: bool,
     subdivision: dict,
-    preProcessing: List[dict] = None,
+    preProcessing: List[dict] = [],
     **kwargs,
 ) -> Stream:
     """
@@ -1863,36 +1865,35 @@ def preprocess_stream(
             inv += ninv
 
     # Sometimes Z has reversed polarity
-    if inv:
+    if inv is not None:
         try:
             mu.correct_polarity(st, inv)
         except Exception:
             msg = "Polarity correction failed"
             msg += ", data will be used without polarity check..."
-            module_logger.exception(
+            module_logger.warning(
                 msg,
                 exc_info=True)
 
     mu.discard_short_traces(st, subdivision["corr_len"] / 20)
 
-    if preProcessing:
-        for procStep in preProcessing:
-            module_logger.debug(
-                "Applying preprocessing function %s with args %s"
-                % (procStep["function"], procStep["args"])
+    for procStep in preProcessing:
+        module_logger.debug(
+            "Applying preprocessing function %s with args %s"
+            % (procStep["function"], procStep["args"])
+        )
+        if (
+            "detrend_st" in procStep["function"]
+            or "cos_taper_st" in procStep["function"]
+        ):
+            warnings.warn(
+                "Tapering and Detrending are now always perfomed "
+                "as part of the preprocessing. Ignoring parameter...",
+                DeprecationWarning,
             )
-            if (
-                "detrend_st" in procStep["function"]
-                or "cos_taper_st" in procStep["function"]
-            ):
-                warnings.warn(
-                    "Tapering and Detrending are now always perfomed "
-                    "as part of the preprocessing. Ignoring parameter...",
-                    DeprecationWarning,
-                )
-                continue
-            func = func_from_str(procStep["function"])
-            st = func(st, **procStep["args"])
+            continue
+        func = func_from_str(procStep["function"])
+        st = func(st, **procStep["args"])
     st.merge()
     st.trim(startt, endt, pad=True)
 

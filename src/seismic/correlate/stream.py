@@ -10,7 +10,7 @@ Manage objects holding correlations.
     Peter Makus (makus@gfz-potsdam.de)
 
 Created: Tuesday, 20th April 2021 04:19:35 pm
-Last Modified: Wednesday, 26th February 2025 04:40:39 pm
+Last Modified: Monday, 19th October 2026 11:55:25 am
 '''
 from typing import Iterator, List, Tuple, Optional, Union
 from copy import deepcopy
@@ -1562,19 +1562,19 @@ def combine_stats(
 
     try:
         if ('stla' and 'stlo' and 'stel') in stats1:
-            stats['stla'] = stats1.stla
-            stats['stlo'] = stats1.stlo
-            stats['stel'] = stats1.stel
-            stats['evla'] = stats2.stla
-            stats['evlo'] = stats2.stlo
-            stats['evel'] = stats2.stel
+            stats['stla'] = stats2.stla
+            stats['stlo'] = stats2.stlo
+            stats['stel'] = stats2.stel
+            stats['evla'] = stats1.stla
+            stats['evlo'] = stats1.stlo
+            stats['evel'] = stats1.stel
         else:
-            stats['stla'] = stats1.sac.stla
-            stats['stlo'] = stats1.sac.stlo
-            stats['stel'] = stats1.sac.stel
-            stats['evla'] = stats2.sac.stla
-            stats['evlo'] = stats2.sac.stlo
-            stats['evel'] = stats2.sac.stel
+            stats['stla'] = stats2.sac.stla
+            stats['stlo'] = stats2.sac.stlo
+            stats['stel'] = stats2.sac.stel
+            stats['evla'] = stats1.sac.stla
+            stats['evlo'] = stats1.sac.stlo
+            stats['evel'] = stats1.sac.stel
             stats1.update(stats1['sac'])
             stats2.update(stats2['sac'])
 
@@ -1589,12 +1589,12 @@ def combine_stats(
                 network=stats1.network, station=stats1.station)
             inv2 = inv.select(
                 network=stats2.network, station=stats2.station)
-            stats['stla'] = inv1[0][0].latitude
-            stats['stlo'] = inv1[0][0].longitude
-            stats['stel'] = inv1[0][0].elevation
-            stats['evla'] = inv2[0][0].latitude
-            stats['evlo'] = inv2[0][0].longitude
-            stats['evel'] = inv2[0][0].elevation
+            stats['stla'] = inv2[0][0].latitude
+            stats['stlo'] = inv2[0][0].longitude
+            stats['stel'] = inv2[0][0].elevation
+            stats['evla'] = inv1[0][0].latitude
+            stats['evlo'] = inv1[0][0].longitude
+            stats['evel'] = inv1[0][0].elevation
 
             az, baz, dist = m3ut.inv_calc_az_baz_dist(inv1, inv2)
 

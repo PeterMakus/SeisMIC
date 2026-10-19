@@ -8,7 +8,7 @@
    Peter Makus (makus@gfz-potsdam.de)
 
 Created: Monday, 5th July 2021 02:44:13 pm
-Last Modified: Monday, 30th January 2023 02:26:32 pm
+Last Modified: Monday, 19th October 2026 01:40:17 pm
 '''
 from obspy.core.util import AttribDict
 from obspy import UTCDateTime
@@ -28,6 +28,13 @@ class CorrStats(AttribDict):
     directly via a corresponding attribute. There are various default
     attributes which are required by every waveform import and export modules
     within ObsPy such as :mod:`obspy.io.mseed`.
+
+    .. versionchanged:: 0.8.0
+        ``stel``, ``evel``, ``stla``, ``stlo``, ``evlo``, and
+        ``evla`` follow now the physically more meaningful definition in that
+        **NET0-NET1.ST0-ST1** **NET0.ST0** is the event and not the station
+        any more. This is in line with larger lag times being closer to
+        ST1. For older version of SeisMIC, the definition was inverse.
 
     :type header: dict or :class:`~obspy.core.trace.Stats`, optional
     :param header: Dictionary containing meta information of a single
