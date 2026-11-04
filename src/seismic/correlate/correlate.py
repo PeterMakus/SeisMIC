@@ -838,11 +838,11 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             try:
                 st = mu.resample_or_decimate(st, sampling_rate)
                 self.logger.debug("Finished downsampling.")
-            except ValueError as e:
+            except ValueError:
                 self.logger.exception(
                     "Downsampling failed for "
                     f"{st[0].stats.network}.{st[0].stats.station} and time"
-                    f" {t}.\nThe Original Error Message was {e}."
+                    f" {t}."
                 )
                 st = Stream()
             # The actual data in the mseeds was changed from int to float64
@@ -863,11 +863,10 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                     )
                     self.logger.debug(
                         "Finished preprocessing read_len stream.")
-                except Exception as e:
+                except Exception:
                     self.logger.exception(
                         "Stream preprocessing failed for "
-                        f"time {t} and stream {st}.\n"
-                        f"The Original Error Message was {e}."
+                        f"time {t} and stream {st}."
                     )
                     st = Stream()
 
@@ -945,21 +944,18 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                             "Core %d finished preprocessing corr_len stream"
                             % self.rank
                         )
-                    except Exception as e:
+                    except Exception:
                         if win.count():
-                            self.logger.exception(
-                                "Stream preprocessing failed for "
+                            where = (
                                 f"{win[0].stats.network}."
-                                f"{win[0].stats.station}"
-                                " and time "
-                                f"{t}.\nThe Original Error Message was {e}."
+                                f"{win[0].stats.station} and "
                             )
                         else:
-                            self.logger.exception(
-                                "Stream preprocessing failed for "
-                                "time "
-                                f"{t}.\nThe Original Error Message was {e}."
-                            )
+                            where = ""
+                        self.logger.exception(
+                            "Stream preprocessing failed for "
+                            f"{where}time {t}."
+                        )
                         continue
                     self._recalulate_combinations(win)
 

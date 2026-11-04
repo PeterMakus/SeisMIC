@@ -1493,9 +1493,13 @@ def alphabetical_correlation(
     return header, data
 
 
+#: Attribute names of the geographical coordinates (latitude, longitude,
+#: elevation) in a Stats object or its ``sac`` sub-dictionary.
+_GEO_KEYS: Tuple[str, str, str] = ('stla', 'stlo', 'stel')
+
+
 def _assign_coords(
-        stats: CorrStats, receiver, event,
-        keys: Tuple[str, str, str] = ('stla', 'stlo', 'stel')):
+        stats: CorrStats, receiver, event, keys: Tuple[str, str, str] = None):
     """
     Assign the geographical headers ``stla``/``stlo``/``stel`` and
     ``evla``/``evlo``/``evel`` of a combined correlation stats object.
@@ -1518,8 +1522,9 @@ def _assign_coords(
     :param keys: Names of the latitude, longitude, and elevation
         attributes of ``receiver`` and ``event``. Inventory stations use
         ``('latitude', 'longitude', 'elevation')``. Defaults to
-        ``('stla', 'stlo', 'stel')``.
+        :data:`_GEO_KEYS`.
     """
+    keys = keys or _GEO_KEYS
     for pfx, src in (('st', receiver), ('ev', event)):
         for suffix, key in zip(('la', 'lo', 'el'), keys):
             stats[pfx + suffix] = getattr(src, key)
@@ -1596,7 +1601,7 @@ def combine_stats(
         # Check that both traces carry their own (top-level) coordinates.
         # Note that `all` is required here: a chained boolean like
         # ('stla' and 'stlo' and 'stel') in stats1 would only test 'stel'.
-        coord_keys = ('stla', 'stlo', 'stel')
+        coord_keys = _GEO_KEYS
         if all(k in stats1 for k in coord_keys) and all(
                 k in stats2 for k in coord_keys):
             _assign_coords(stats, stats2, stats1)

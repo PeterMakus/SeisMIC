@@ -26,7 +26,8 @@ from obspy.core import Stats
 import h5py
 
 from seismic.correlate.stats import (
-    HEADER_CONVENTION_MARKER, HEADER_CONVENTION_SINCE)
+    HEADER_CONVENTION_LEGACY_MARKER, HEADER_CONVENTION_MARKER,
+    HEADER_CONVENTION_SINCE)
 from seismic.correlate.stream import CorrStream, CorrTrace
 import seismic.utils.miic_utils as mu
 
@@ -115,38 +116,41 @@ class DBHandler(h5py.File):
         warning fires only once per file), and opening a legacy file in read
         mode raises a warning.
         """
+        # Guard only the initial attribute probe: file handlers that are
+        # not fully initialized (e.g., tests that patch
+        # h5py.File.__init__) raise here. The warn-and-mark logic below
+        # runs unguarded so that genuine attribute errors surface.
         try:
-            if 'header_convention' in self.attrs:
-                return
-            if len(self):
-                # File contains data, but no marker: it was written by
-                # SeisMIC < 0.8.0
-                warnings.warn(
-                    f'The correlation file {self.filename} does not contain '
-                    f'a header convention marker and was most likely written '
-                    f'by SeisMIC < {HEADER_CONVENTION_SINCE}. In versions < '
-                    f'{HEADER_CONVENTION_SINCE}, the geographical headers '
-                    'stla/stlo/stel and evla/evlo/evel use the INVERSE '
-                    'definition (the second station of the combination is '
-                    f'the virtual event). SeisMIC >= '
-                    f'{HEADER_CONVENTION_SINCE} '
-                    'interprets them with the new definition. See the '
-                    'CorrStats docstring for details.',
-                    UserWarning)
-                if self.mode != 'r':
-                    # Record the legacy convention so that this warning is
-                    # emitted only once for this file
-                    self.attrs['header_convention'] = (
-                        '<' + HEADER_CONVENTION_SINCE)
-            elif self.mode != 'r':
-                # Fresh file: mark it as following the 0.8.0 convention
-                self.attrs['header_convention'] = HEADER_CONVENTION_MARKER
+            has_marker = 'header_convention' in self.attrs
         except (AttributeError, KeyError):
-            # Can happen if the underlying file handler is not fully
-            # initialized (e.g., tests that patch h5py.File.__init__). The
-            # check is purely informational and must never prevent opening
-            # the database.
+            # The check is purely informational and must never prevent
+            # opening the database.
             return
+        if has_marker:
+            return
+        if len(self):
+            # File contains data, but no marker: it was written by
+            # SeisMIC < 0.8.0
+            warnings.warn(
+                f'The correlation file {self.filename} does not contain '
+                f'a header convention marker and was most likely written '
+                f'by SeisMIC < {HEADER_CONVENTION_SINCE}. In versions < '
+                f'{HEADER_CONVENTION_SINCE}, the geographical headers '
+                'stla/stlo/stel and evla/evlo/evel use the INVERSE '
+                'definition (the second station of the combination is '
+                f'the virtual event). SeisMIC >= '
+                f'{HEADER_CONVENTION_SINCE} '
+                'interprets them with the new definition. See the '
+                'CorrStats docstring for details.',
+                UserWarning)
+            if self.mode != 'r':
+                # Record the legacy convention so that this warning is
+                # emitted only once for this file
+                self.attrs['header_convention'] = (
+                    HEADER_CONVENTION_LEGACY_MARKER)
+        elif self.mode != 'r':
+            # Fresh file: mark it as following the 0.8.0 convention
+            self.attrs['header_convention'] = HEADER_CONVENTION_MARKER
 
     def add_corr_options(self, co: dict):
         sco = str(co_to_hdf5(co))

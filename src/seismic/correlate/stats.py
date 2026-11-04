@@ -22,6 +22,10 @@ HEADER_CONVENTION_SINCE = '0.8.0'
 #: archives following the convention introduced with
 #: :data:`HEADER_CONVENTION_SINCE`.
 HEADER_CONVENTION_MARKER = '>=' + HEADER_CONVENTION_SINCE
+#: Value of the ``header_convention`` file attribute marking correlation
+#: archives written by versions older than
+#: :data:`HEADER_CONVENTION_SINCE`.
+HEADER_CONVENTION_LEGACY_MARKER = '<' + HEADER_CONVENTION_SINCE
 
 
 class CorrStats(AttribDict):
