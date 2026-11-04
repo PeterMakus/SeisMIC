@@ -52,7 +52,7 @@ def trace_calc_az_baz_dist(
     :type stats1: :class:`~obspy.core.Stats`
     :param stats1: First trace to account. Corresponds to the virtual event.
     :type stats2: :class:`~obspy.core.Stats`
-    :param stats2: Second trace to account.@
+    :param stats2: Second trace to account.
         Corresponds to the virtual receiver.
 
     :rtype: float
@@ -107,15 +107,17 @@ def inv_calc_az_baz_dist(
     """Return azimuth, back azimuth and distance between stat1 and stat2
 
 
-    :type tr1: :class:`~obspy.core.inventory.Inventory`
-    :param tr1: First trace to account
-    :type tr2: :class:`~obspy.core.inventory.Inventory`
-    :param tr2: Second trace to account
+    :type inv1: :class:`~obspy.core.inventory.Inventory`
+    :param inv1: First inventory to account. Corresponds to the virtual
+        event.
+    :type inv2: :class:`~obspy.core.inventory.Inventory`
+    :param inv2: Second inventory to account. Corresponds to the virtual
+        receiver.
 
     :rtype: float
-    :return: **az**: Azimuth angle between stat1 and stat2
+    :return: **az**: Azimuth angle between inv1 and inv2
     :rtype: float
-    :return: **baz**: Back-azimuth angle between stat2 and stat2
+    :return: **baz**: Back-azimuth angle between inv2 and inv1
     :rtype: float
     :return: **dist**: Distance between stat1 and stat2 in m
     """
