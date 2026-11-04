@@ -1867,24 +1867,19 @@ def preprocess_stream(
             inv += ninv
 
     # Sometimes Z has reversed polarity
-    # Note that an empty Inventory (no station metadata downloaded) is falsy:
-    # in that case, the polarity check would raise for every trace, so it is
-    # skipped entirely
-    if inv:
-        try:
-            mu.correct_polarity(st, inv)
-        except Exception:
-            msg = "Polarity correction failed"
-            msg += ", data will be used without polarity check..."
-            module_logger.warning(
-                msg,
-                exc_info=True)
+    # correct_polarity skips empty/missing inventories itself
+    try:
+        mu.correct_polarity(st, inv)
+    except Exception:
+        msg = "Polarity correction failed"
+        msg += ", data will be used without polarity check..."
+        module_logger.warning(
+            msg,
+            exc_info=True)
 
     mu.discard_short_traces(st, subdivision["corr_len"] / 20)
 
-    if preProcessing is None:
-        preProcessing = []
-    for procStep in preProcessing:
+    for procStep in preProcessing or []:
         module_logger.debug(
             "Applying preprocessing function %s with args %s"
             % (procStep["function"], procStep["args"])
