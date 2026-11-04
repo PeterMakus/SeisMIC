@@ -1881,8 +1881,8 @@ def preprocess_stream(
 
     for procStep in preProcessing or []:
         module_logger.debug(
-            "Applying preprocessing function %s with args %s"
-            % (procStep["function"], procStep["args"])
+            "Applying preprocessing function %s with args %s",
+            procStep["function"], procStep["args"]
         )
         if (
             "detrend_st" in procStep["function"]

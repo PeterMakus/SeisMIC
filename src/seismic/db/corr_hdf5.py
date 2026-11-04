@@ -25,6 +25,8 @@ from obspy.core.utcdatetime import UTCDateTime
 from obspy.core import Stats
 import h5py
 
+from seismic.correlate.stats import (
+    HEADER_CONVENTION_MARKER, HEADER_CONVENTION_SINCE)
 from seismic.correlate.stream import CorrStream, CorrTrace
 import seismic.utils.miic_utils as mu
 
@@ -99,17 +101,19 @@ class DBHandler(h5py.File):
     def _check_header_convention(self):
         """
         Mark files written by SeisMIC >= 0.8.0 and warn when opening a file
-        that predates the 0.8.0 header convention change.
+        that predates the header convention change.
 
         Since SeisMIC 0.8.0, the geographical headers ``stla``/``stlo``/
         ``stel`` and ``evla``/``evlo``/``evel`` of correlation traces follow
         the convention that the FIRST station in the combination id
-        (``NET0.ST0``) is the virtual event (see :class:`CorrStats`).
+        (``NET0.ST0``) is the virtual event (see
+        :class:`~seismic.correlate.stats.CorrStats`).
         Files written by older versions store the inverse definition and are
         not distinguishable by their headers alone. Hence, new files are
-        marked as ``'>=0.8.0'``, legacy files opened in write mode are marked
-        as ``'<0.8.0'`` (so the warning fires only once per file), and
-        opening a legacy file in read mode raises a warning.
+        marked with :data:`~seismic.correlate.stats.HEADER_CONVENTION_MARKER`,
+        legacy files opened in write mode are marked as ``'<0.8.0'`` (so the
+        warning fires only once per file), and opening a legacy file in read
+        mode raises a warning.
         """
         try:
             if 'header_convention' in self.attrs:
@@ -119,25 +123,29 @@ class DBHandler(h5py.File):
                 # SeisMIC < 0.8.0
                 warnings.warn(
                     f'The correlation file {self.filename} does not contain '
-                    'a header convention marker and was most likely written '
-                    'by SeisMIC < 0.8.0. In versions < 0.8.0, the '
-                    'geographical headers stla/stlo/stel and evla/evlo/evel '
-                    'use the INVERSE definition (the second station of the '
-                    'combination is the virtual event). SeisMIC >= 0.8.0 '
+                    f'a header convention marker and was most likely written '
+                    f'by SeisMIC < {HEADER_CONVENTION_SINCE}. In versions < '
+                    f'{HEADER_CONVENTION_SINCE}, the geographical headers '
+                    'stla/stlo/stel and evla/evlo/evel use the INVERSE '
+                    'definition (the second station of the combination is '
+                    f'the virtual event). SeisMIC >= '
+                    f'{HEADER_CONVENTION_SINCE} '
                     'interprets them with the new definition. See the '
                     'CorrStats docstring for details.',
                     UserWarning)
                 if self.mode != 'r':
                     # Record the legacy convention so that this warning is
                     # emitted only once for this file
-                    self.attrs['header_convention'] = '<0.8.0'
+                    self.attrs['header_convention'] = (
+                        '<' + HEADER_CONVENTION_SINCE)
             elif self.mode != 'r':
                 # Fresh file: mark it as following the 0.8.0 convention
-                self.attrs['header_convention'] = '>=0.8.0'
+                self.attrs['header_convention'] = HEADER_CONVENTION_MARKER
         except (AttributeError, KeyError):
             # Can happen if the underlying file handler is not fully
-            # initialized (e.g., mocked in tests). The check is purely
-            # informational and must never prevent opening the database.
+            # initialized (e.g., tests that patch h5py.File.__init__). The
+            # check is purely informational and must never prevent opening
+            # the database.
             return
 
     def add_corr_options(self, co: dict):

@@ -47,7 +47,7 @@ def trace_calc_az_baz_dist(
     This funtions calculates the azimut, back azimut and distance between tr1
     and tr2 if both have geo information in their stats dictonary.
     Required fields are:
-    ``tr.stats.sac.stla`` and ``tr.stats.sac.stlo``
+    ``stats1.stla``, ``stats1.stlo``, ``stats2.stla``, and ``stats2.stlo``
 
     :type stats1: :class:`~obspy.core.Stats`
     :param stats1: First trace to account. Corresponds to the virtual event.
