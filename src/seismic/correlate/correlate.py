@@ -1125,11 +1125,22 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             else:
                 norm = 1.0
 
-            M = (
-                B[self.options["combinations"][ii][0], :].conj()
-                * B[self.options["combinations"][ii][1], :]
-                * np.exp(1j * freqs * offset * 2 * np.pi)
-            )
+            # The phase rotation exp(1j*freqs*offset*2*pi) is the identity
+            # for aligned windows (offset == 0): skip the O(fftsize)
+            # transcendental evaluation. The baseline evaluates the exp()
+            # in complex128, promoting the product -- upcast explicitly to
+            # keep results bitwise identical (exp(0j*f) == 1+0j exactly).
+            if offset == 0.0:
+                M = (
+                    B[self.options["combinations"][ii][0], :].conj()
+                    * B[self.options["combinations"][ii][1], :]
+                ).astype(np.complex128)
+            else:
+                M = (
+                    B[self.options["combinations"][ii][0], :].conj()
+                    * B[self.options["combinations"][ii][1], :]
+                    * np.exp(1j * freqs * offset * 2 * np.pi)
+                )
 
             ######################################
             # frequency domain postProcessing
