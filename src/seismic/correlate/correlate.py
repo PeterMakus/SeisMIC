@@ -946,10 +946,11 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                             % self.rank
                         )
                     except Exception as e:
-                        if st.count():
+                        if win.count():
                             self.logger.exception(
                                 "Stream preprocessing failed for "
-                                f"{st[0].stats.network}.{st[0].stats.station}"
+                                f"{win[0].stats.network}."
+                                f"{win[0].stats.station}"
                                 " and time "
                                 f"{t}.\nThe Original Error Message was {e}."
                             )
