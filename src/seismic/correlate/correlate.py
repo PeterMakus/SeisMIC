@@ -1077,6 +1077,15 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         )
         C = np.zeros((csize, sampleToSave * 2 + 1), dtype=np.float32)
 
+        # Precompute the per-trace spectral power once per window: the
+        # per-pair normalization below needs it for both traces of every
+        # combination, and each trace appears in ~ntrc combinations. The
+        # row-wise arithmetic (elementwise square, then pairwise sum over
+        # the contiguous row) is identical to evaluating
+        # np.sum(B[i, :] * B[i, :].conj()) per pair -- results are
+        # bitwise identical.
+        pw = (B * B.conj()).sum(axis=1)
+
         pmap = np.arange(csize) * self.psize / csize
         pmap = pmap.astype(np.int32)
         ind = pmap == self.rank
@@ -1103,22 +1112,14 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             offset -= roffset
             # normalization factor of fft correlation
             if corr_args["normalize_correlation"]:
+                i0 = self.options["combinations"][ii][0]
+                i1 = self.options["combinations"][ii][1]
                 norm = (
                     np.sqrt(
-                        2.0
-                        * np.sum(
-                            B[self.options["combinations"][ii][0], :]
-                            * B[self.options["combinations"][ii][0], :].conj()
-                        )
-                        - B[self.options["combinations"][ii][0], 0] ** 2
+                        2.0 * pw[i0] - B[i0, 0] ** 2
                     )
                     * np.sqrt(
-                        2.0
-                        * np.sum(
-                            B[self.options["combinations"][ii][1], :]
-                            * B[self.options["combinations"][ii][1], :].conj()
-                        )
-                        - B[self.options["combinations"][ii][1], 0] ** 2
+                        2.0 * pw[i1] - B[i1, 0] ** 2
                     )
                     / irfftsize
                 ).real
