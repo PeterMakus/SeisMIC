@@ -47,7 +47,7 @@ def trace_calc_az_baz_dist(
     This funtions calculates the azimut, back azimut and distance between tr1
     and tr2 if both have geo information in their stats dictonary.
     Required fields are:
-    ``tr.stats.sac.stla`` and ``tr.stats.sac.stlo``
+    ``stats1.stla``, ``stats1.stlo``, ``stats2.stla``, and ``stats2.stlo``
 
     :type stats1: :class:`~obspy.core.Stats`
     :param stats1: First trace to account. Corresponds to the virtual event.
@@ -480,9 +480,13 @@ def correct_polarity(st: Stream, inv: Inventory):
 
     :param st: input stream. If there is no Z-component, nothing will happen.
     :type st: Stream
-    :param inv: Inventory holding the orientation information.
+    :param inv: Inventory holding the orientation information. If the
+        inventory is empty or None, nothing will happen.
     :type inv: Inventory
     """
+    # An empty or missing inventory carries no orientation information
+    if not inv:
+        return
     st_z = st.select(component="Z")
     for tr in st_z:
         dip = inv.get_orientation(tr.id, datetime=tr.stats.starttime)["dip"]

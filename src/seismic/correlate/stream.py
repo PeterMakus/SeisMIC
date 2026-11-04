@@ -1493,6 +1493,38 @@ def alphabetical_correlation(
     return header, data
 
 
+def _assign_coords(
+        stats: CorrStats, receiver, event,
+        keys: Tuple[str, str, str] = ('stla', 'stlo', 'stel')):
+    """
+    Assign the geographical headers ``stla``/``stlo``/``stel`` and
+    ``evla``/``evlo``/``evel`` of a combined correlation stats object.
+
+    This is the single place encoding the header convention introduced
+    with SeisMIC :data:`~seismic.correlate.stats.HEADER_CONVENTION_SINCE`:
+    ``receiver`` (the second station of the combination) becomes the
+    station (``st*``), ``event`` (the first station of the combination)
+    the virtual event (``ev*``). For older versions of SeisMIC, this
+    definition was inverse.
+
+    :type stats: :class:`~seismic.correlate.stats.CorrStats`
+    :param stats: The combined stats object to write to.
+    :param receiver: Object providing the receiver's coordinates as
+        attributes named after ``keys`` (e.g., a Stats object or its
+        ``sac`` sub-dictionary).
+    :param event: Object providing the virtual event's coordinates (same
+        requirements as ``receiver``).
+    :type keys: tuple of str, optional
+    :param keys: Names of the latitude, longitude, and elevation
+        attributes of ``receiver`` and ``event``. Inventory stations use
+        ``('latitude', 'longitude', 'elevation')``. Defaults to
+        ``('stla', 'stlo', 'stel')``.
+    """
+    for pfx, src in (('st', receiver), ('ev', event)):
+        for suffix, key in zip(('la', 'lo', 'el'), keys):
+            stats[pfx + suffix] = getattr(src, key)
+
+
 def combine_stats(
     stats1: Stats, stats2: Stats, start_lag: float,
         inv: Inventory = None) -> CorrStats:
@@ -1567,19 +1599,9 @@ def combine_stats(
         coord_keys = ('stla', 'stlo', 'stel')
         if all(k in stats1 for k in coord_keys) and all(
                 k in stats2 for k in coord_keys):
-            stats['stla'] = stats2.stla
-            stats['stlo'] = stats2.stlo
-            stats['stel'] = stats2.stel
-            stats['evla'] = stats1.stla
-            stats['evlo'] = stats1.stlo
-            stats['evel'] = stats1.stel
+            _assign_coords(stats, stats2, stats1)
         else:
-            stats['stla'] = stats2.sac.stla
-            stats['stlo'] = stats2.sac.stlo
-            stats['stel'] = stats2.sac.stel
-            stats['evla'] = stats1.sac.stla
-            stats['evlo'] = stats1.sac.stlo
-            stats['evel'] = stats1.sac.stel
+            _assign_coords(stats, stats2.sac, stats1.sac)
             stats1.update(stats1['sac'])
             stats2.update(stats2['sac'])
 
@@ -1594,12 +1616,9 @@ def combine_stats(
                 network=stats1.network, station=stats1.station)
             inv2 = inv.select(
                 network=stats2.network, station=stats2.station)
-            stats['stla'] = inv2[0][0].latitude
-            stats['stlo'] = inv2[0][0].longitude
-            stats['stel'] = inv2[0][0].elevation
-            stats['evla'] = inv1[0][0].latitude
-            stats['evlo'] = inv1[0][0].longitude
-            stats['evel'] = inv1[0][0].elevation
+            _assign_coords(
+                stats, inv2[0][0], inv1[0][0],
+                keys=('latitude', 'longitude', 'elevation'))
 
             az, baz, dist = m3ut.inv_calc_az_baz_dist(inv1, inv2)
 

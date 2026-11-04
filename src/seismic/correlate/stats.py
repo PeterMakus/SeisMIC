@@ -13,6 +13,16 @@ Last Modified: Monday, 19th October 2026 01:40:17 pm
 from obspy.core.util import AttribDict
 from obspy import UTCDateTime
 
+#: Since this version, the geographical headers of correlation traces
+#: (``stla``/``stlo``/``stel`` and ``evla``/``evlo``/``evel``) follow the
+#: convention that the FIRST station of a combination is the virtual event
+#: (see :class:`CorrStats`). Older versions used the inverse definition.
+HEADER_CONVENTION_SINCE = '0.8.0'
+#: Value of the ``header_convention`` file attribute that marks correlation
+#: archives following the convention introduced with
+#: :data:`HEADER_CONVENTION_SINCE`.
+HEADER_CONVENTION_MARKER = '>=' + HEADER_CONVENTION_SINCE
+
 
 class CorrStats(AttribDict):
     """
