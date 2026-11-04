@@ -946,10 +946,11 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                             % self.rank
                         )
                     except Exception as e:
-                        if st.count():
+                        if win.count():
                             self.logger.exception(
                                 "Stream preprocessing failed for "
-                                f"{st[0].stats.network}.{st[0].stats.station}"
+                                f"{win[0].stats.network}."
+                                f"{win[0].stats.station}"
                                 " and time "
                                 f"{t}.\nThe Original Error Message was {e}."
                             )
@@ -1797,7 +1798,7 @@ def preprocess_stream(
     taper_len: float,
     remove_response: bool,
     subdivision: dict,
-    preProcessing: List[dict] = [],
+    preProcessing: Optional[List[dict]] = None,
     **kwargs,
 ) -> Stream:
     """
@@ -1824,7 +1825,8 @@ def preprocess_stream(
         lenghts and increments.
     :type subdivision: dict
     :param preProcessing: List holding information about the different external
-        preprocessing functions to be applied, defaults to None
+        preprocessing functions to be applied, defaults to None (i.e., no
+        external preprocessing steps will be applied)
     :type preProcessing: List[dict], optional
     :raises ValueError: For sampling rates higher than the stream's native
         sampling rate (upsampling is not permitted).
@@ -1865,7 +1867,10 @@ def preprocess_stream(
             inv += ninv
 
     # Sometimes Z has reversed polarity
-    if inv is not None:
+    # Note that an empty Inventory (no station metadata downloaded) is falsy:
+    # in that case, the polarity check would raise for every trace, so it is
+    # skipped entirely
+    if inv:
         try:
             mu.correct_polarity(st, inv)
         except Exception:
@@ -1877,6 +1882,8 @@ def preprocess_stream(
 
     mu.discard_short_traces(st, subdivision["corr_len"] / 20)
 
+    if preProcessing is None:
+        preProcessing = []
     for procStep in preProcessing:
         module_logger.debug(
             "Applying preprocessing function %s with args %s"

@@ -1561,7 +1561,12 @@ def combine_stats(
                         pass
 
     try:
-        if ('stla' and 'stlo' and 'stel') in stats1:
+        # Check that both traces carry their own (top-level) coordinates.
+        # Note that `all` is required here: a chained boolean like
+        # ('stla' and 'stlo' and 'stel') in stats1 would only test 'stel'.
+        coord_keys = ('stla', 'stlo', 'stel')
+        if all(k in stats1 for k in coord_keys) and all(
+                k in stats2 for k in coord_keys):
             stats['stla'] = stats2.stla
             stats['stlo'] = stats2.stlo
             stats['stel'] = stats2.stel
