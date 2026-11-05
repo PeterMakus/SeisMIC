@@ -1700,5 +1700,90 @@ class TestCheckForMissingChannels(unittest.TestCase):
         self.assertEqual(nslc, avail_channels[:6])
 
 
+class TestRowPmap(unittest.TestCase):
+    """
+    Tests the row -> rank partition used for the local-row FFT and
+    correlation matrices (B1/B2). The partition must be contiguous,
+    order-preserving, and cover all rows.
+    """
+    @staticmethod
+    def _dummy(psize, joint_norm):
+        d = mock.MagicMock()
+        d.psize = psize
+        d.options = {"joint_norm": joint_norm}
+        return d
+
+    def test_single_core(self):
+        pmap = correlate.Correlator._row_pmap(self._dummy(1, False), 10)
+        self.assertTrue(np.all(pmap == 0))
+
+    def test_partition(self):
+        for psize, n in ((2, 10), (4, 10), (3, 7), (2, 1)):
+            pmap = correlate.Correlator._row_pmap(
+                self._dummy(psize, False), n)
+            # same formula as the pre-B1 implementation
+            self.assertTrue(np.array_equal(
+                pmap, np.arange(n) * psize // n))
+            # ranks are valid, non-decreasing (contiguous blocks), and
+            # every row is assigned
+            self.assertTrue(np.all(pmap >= 0) and np.all(pmap < psize))
+            self.assertTrue(np.all(np.diff(pmap) >= 0))
+            self.assertEqual(len(pmap), n)
+
+    def test_joint_norm(self):
+        pmap = correlate.Correlator._row_pmap(self._dummy(2, True), 12)
+        # each station (three consecutive rows) is on exactly one rank
+        self.assertTrue(np.array_equal(
+            pmap, np.repeat(np.arange(4) * 2 // 4, 3)))
+        self.assertTrue(np.all(
+            pmap.reshape(-1, 3) == pmap.reshape(-1, 3)[:, :1]))
+
+    def test_joint_norm_single_core(self):
+        pmap = correlate.Correlator._row_pmap(self._dummy(1, True), 9)
+        self.assertTrue(np.all(pmap == 0))
+
+    def test_joint_norm_not_divisible(self):
+        with self.assertRaises(ValueError):
+            correlate.Correlator._row_pmap(self._dummy(2, True), 10)
+
+
+class TestCombinedNetStatLocCha(unittest.TestCase):
+    @staticmethod
+    def _trace(net, sta, loc, cha):
+        tr = Trace(np.zeros(3))
+        tr.stats.network = net
+        tr.stats.station = sta
+        tr.stats.location = loc
+        tr.stats.channel = cha
+        return tr
+
+    def test_ordered_pair(self):
+        st = Stream([self._trace("AA", "B", "00", "HHE"),
+                     self._trace("CC", "D", "10", "HHN")])
+        expected = ("AA-CC", "B-D", "00-10", "HHE-HHN")
+        # the pair order must not matter for an already sorted pair
+        for comb in ((0, 1), (1, 0)):
+            self.assertEqual(
+                correlate._combined_net_stat_loc_cha(st, comb), expected)
+
+    def test_swaps_unsorted_pair(self):
+        # sort key is network + station + channel (no location)
+        st = Stream([self._trace("AA", "BBB", "00", "HHE"),
+                     self._trace("AA", "AAA", "10", "HHE")])
+        expected = ("AA-AA", "AAA-BBB", "10-00", "HHE-HHE")
+        for comb in ((0, 1), (1, 0)):
+            self.assertEqual(
+                correlate._combined_net_stat_loc_cha(st, comb), expected)
+
+    def test_location_not_in_sort_key(self):
+        # identical net/sta/cha: headers stay in the given pair order and
+        # only the locations are joined
+        st = Stream([self._trace("AA", "B", "10", "HHE"),
+                     self._trace("AA", "B", "00", "HHE")])
+        self.assertEqual(
+            correlate._combined_net_stat_loc_cha(st, (0, 1)),
+            ("AA-AA", "B-B", "10-00", "HHE-HHE"))
+
+
 if __name__ == "__main__":
     unittest.main()
