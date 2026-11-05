@@ -690,6 +690,10 @@ class TestCombineStats(unittest.TestCase):
     def setUp(self):
         self.inv = read_inventory()
         self.st = read()
+        # the az/baz/dist results are memoized per coordinate tuple; clear
+        # the cache so that the mocked geodesic function is observed fresh
+        # in every test
+        stream._AZBAZ_CACHE.clear()
 
     def test_result(self):
         # We test this by using two different components
