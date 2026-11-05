@@ -270,8 +270,11 @@ class TestNormalizeStd(unittest.TestCase):
             ph.get_joint_norm(_norm[:, None], args)
             expected = (A.T / _norm).T
             with self.subTest(args=args):
+                # normalizeStandardDeviation mutates its input in place,
+                # like the other TD preprocessing functions, so pass a copy
                 self.assertTrue(np.allclose(
-                    expected, pptd.normalizeStandardDeviation(A, args, {})))
+                    expected,
+                    pptd.normalizeStandardDeviation(A.copy(), args, {})))
 
 
 class TestFDSignBitNormalisation(unittest.TestCase):

@@ -232,7 +232,7 @@ def mute(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
 
     # calculate mask
     mask = np.ones_like(D)
-    mask[D > np.tile(thres, (D.shape[1], 1)).T] = 0
+    mask[D > thres[:, None]] = 0
     # extend the muted segments to make sure the whole segment is zero after
     if args['extend_gaps']:
         tap = np.ones(ntap)/ntap
@@ -282,7 +282,7 @@ def normalizeStandardDeviation(
     ph.get_joint_norm(std[:, None], args)
     # avoid creating nans or Zerodivisionerror
     std[np.where(std == 0)] = 1
-    A = (A.T/std).T
+    A /= std[:, None]
     return A
 
 
@@ -403,9 +403,9 @@ def TDnormalization(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
         # fargs.pop('type')
         # B = func(A.T, df=params['sampling_rate'], **fargs).T
     else:
-        B = deepcopy(A)
+        B = A.copy()
     # simple calculation of envelope
-    B = B**2
+    B *= B
 
     # jointly normalize envelope if requested
     ph.get_joint_norm(B, args)
@@ -419,7 +419,8 @@ def TDnormalization(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     B = np.squeeze(B)
 
     # normalization
-    A /= np.sqrt(B)
+    np.sqrt(B, out=B)
+    A /= B
     return A
 
 
