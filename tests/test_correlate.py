@@ -694,12 +694,23 @@ class TestCorrrelator(unittest.TestCase):
         shape = (25, 101)
         ftshape = (25, 51)
         ri_mock.return_value = np.ones(shape[0], dtype=bool)
-        return_func = mock.MagicMock(
+
+        # The FD preprocessing function is called with a live view of the
+        # local B block, which is overwritten once the call returns, so the
+        # recorded calls must hold copies of array arguments.
+        recorded_func = mock.MagicMock(
             side_effect=[
                 np.ones(shape, dtype=np.float32),
                 np.ones(ftshape, dtype=np.float32),
             ]
         )
+
+        def snap_side_effect(*args, **kwargs):
+            return recorded_func(
+                *[a.copy() if isinstance(a, np.ndarray) else a for a in args],
+                **kwargs)
+
+        return_func = mock.MagicMock(side_effect=snap_side_effect)
         ffs_mock.return_value = return_func
         zp_mock.return_value = np.ones(shape) * 2
         C, startlags = c._pxcorr_matrix(np.zeros(shape))
@@ -708,12 +719,12 @@ class TestCorrrelator(unittest.TestCase):
         ffs_mock.assert_any_call("TDPP")
         # This is the same as asserthascalls, but it can also check np arrays
         np.testing.assert_array_equal(
-            np.zeros(shape), return_func.call_args_list[0][0][0]
+            np.zeros(shape), recorded_func.call_args_list[0][0][0]
         )
-        self.assertListEqual([], return_func.call_args_list[0][0][1])
+        self.assertListEqual([], recorded_func.call_args_list[0][0][1])
         # Check if the fft worked
         np.testing.assert_array_almost_equal(
-            np.fft.rfft(np.ones(shape) * 2), return_func.call_args_list[1][0][0]
+            np.fft.rfft(np.ones(shape) * 2), recorded_func.call_args_list[1][0][0]
         )
         np.testing.assert_array_equal(-np.ones((3,)), startlags)
         # Correlation should be one in the middle

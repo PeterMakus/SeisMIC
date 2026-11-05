@@ -1058,15 +1058,16 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         # FFT
         self.logger.info("Core %d performing FFT." % self.rank)
 
-        # Allocate space for rfft of data
-        # The rfft will only return the
+        # Allocate space for rfft of data -- only the local rows; the full
+        # matrix is assembled by Allgatherv afterwards. This bounds the
+        # memory during FFT/FD-preprocessing to 1/psize of the full matrix.
         zmsize = A.shape
 
         # use next fast len instead?
         fftsize = zmsize[1] // 2 + 1
-        B = np.zeros((ntrc, fftsize), dtype=np.csingle)
+        B = np.zeros((int(np.sum(ind)), fftsize), dtype=np.csingle)
 
-        B[ind, :] = np.fft.rfft(A[ind, :], axis=1)
+        B[:, :] = np.fft.rfft(A[ind, :], axis=1)
 
         freqs = np.fft.rfftfreq(zmsize[1], 1.0 / self.sampling_rate)
 
@@ -1080,16 +1081,31 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             # not only within the miic framework)
             self.logger.info("Running %s" % proc["function"])
             func = func_from_str(proc["function"])
-            B[ind, :] = func(B[ind, :], proc["args"], params)
+            # B holds exactly the local rows, so it can be passed as a whole
+            B[:, :] = func(B, proc["args"], params)
             self.logger.info("Finished %s" % proc["function"])
 
         ######################################
         # collect results
-        # ensure B is complex64 and contiguous
-        B = np.ascontiguousarray(
-            B, dtype=np.complex64)
-        # perform complex reduction
-        self.comm.Allreduce(MPI.IN_PLACE, [B, MPI.COMPLEX], op=MPI.SUM)
+        # B is complex64 and contiguous by construction, so no copy is
+        # required before communication. Each row of the full matrix is
+        # owned by exactly one rank and zero elsewhere, so a gather is
+        # equivalent to the old sum reduction.
+        if self.psize > 1:
+            pmap_trc = self._row_pmap(ntrc)
+            B_full = np.zeros((ntrc, fftsize), dtype=np.complex64)
+            counts = [int(np.sum(pmap_trc == rk)) for rk in range(self.psize)]
+            displs = [0]
+            for cnt in counts[:-1]:
+                displs.append(displs[-1] + cnt)
+            self.logger.debug("Core %d gathering FFT matrix." % self.rank)
+            # MPI counts are in datatype elements: rows * fftsize
+            self.comm.Allgatherv(
+                [B, MPI.C_FLOAT_COMPLEX],
+                [B_full, [c * fftsize for c in counts],
+                 [d * fftsize for d in displs], MPI.C_FLOAT_COMPLEX],
+            )
+            B = B_full
 
         ######################################
         # correlation
@@ -1213,14 +1229,37 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             np.zeros(0, dtype=np.float32),
         )
 
+    def _row_pmap(self, n: int) -> np.ndarray:
+        """
+        Map of ``n`` rows (traces or correlations) to process ranks: row
+        ``i`` belongs to rank ``pmap[i]``. Used both for the traces (A/B
+        matrices) and the correlations (C matrix).
+
+        If joint_norm is set to True, the same station has to be processed
+        by the same core. We assume that three consecutive rows in the
+        matrix belong to the same station. Thus, we make sure that number
+        of rows in submatrix is divisible by 3.
+
+        :param n: Number of rows
+        :return: Rank of each row
+        """
+        if self.options["joint_norm"]:
+            # For joint normalization, we need to make sure that the same
+            # station is processed by the same core
+            if n % 3 != 0:
+                raise ValueError(
+                    "Matrix size is not divisible by 3. Joint normalization "
+                    + "is not possible."
+                )
+
+            nsta = n // 3
+            pmap = np.arange(nsta) * self.psize // nsta
+            return np.repeat(pmap, 3)
+        return np.arange(n) * self.psize // n
+
     def _get_row_index_per_core(self, A: np.ndarray) -> np.ndarray:
         """
         Get indices for matrix rows to be processed by each core.
-
-        If joint_norm is set to True, the same station has to be processed by
-        the same core. We assume that three consecutive rows in the matrix
-        belong to the same station. Thus, we make sure that number of rows
-        in submatrix is divisible by 3.
 
         :param A: Input matrix
         :type A: np.ndarray
@@ -1228,25 +1267,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         :rtype: np.ndarray
         :note: The function is called in the _pxcorr_matrix function.
         """
-        if self.options["joint_norm"]:
-            # For joint normalization, we need to make sure that the same
-            # station is processed by the same core
-            if A.shape[0] % 3 != 0:
-                raise ValueError(
-                    "Matrix size is not divisible by 3. Joint normalization "
-                    + "is not possible."
-                )
-
-            nsta = A.shape[0] / 3
-            pmap = np.arange(nsta) * self.psize // nsta
-            pmap = np.repeat(pmap, 3)
-            ind = pmap == self.rank
-        else:
-            ntrc = A.shape[0]
-            pmap = np.arange(ntrc) * self.psize // ntrc
-            ind = pmap == self.rank
-
-        return ind
+        return self._row_pmap(A.shape[0]) == self.rank
 
 
 def st_to_np_array(st: Stream, npts: int) -> Tuple[np.ndarray, Stream]:
