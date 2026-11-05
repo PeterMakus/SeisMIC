@@ -526,6 +526,64 @@ class TestCorrrelator(unittest.TestCase):
             c._write.assert_has_calls(write_calls)
         cst_mock().extend.assert_called_once()
 
+    @mock.patch("seismic.correlate.correlate.CorrStream")
+    def test_pxcorr_write_every(self, cst_mock, makedirs_mock,
+                                logging_mock, open_mock):
+        options = deepcopy(self.options)
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [
+            ["lala", "lolo"],
+            ["lala", "lili"],
+        ]
+        sc_mock._translate_wildcards.return_value = [
+            ["lala", "lolo", "E"],
+            ["lala", "lili", "Z"],
+        ]
+        sc_mock.read_inventory.return_value = self.inv
+        c = correlate.Correlator(options, sc_mock)
+        # two read_len periods, each with two windows; write_flag True
+        # marks the first window of each period. The mocked CorrStream's
+        # count() is truthy, so every flush writes.
+        windows = [[self.st, True], [self.st, False],
+                   [self.st, True], [self.st, False]]
+        # default cadence (write_every absent): writes on the two
+        # write_flag windows plus the final flush
+        with mock.patch.multiple(
+            c,
+            _generate_data=mock.MagicMock(return_value=windows),
+            _pxcorr_inner=mock.MagicMock(return_value=self.st),
+            _write=mock.MagicMock(),
+        ):
+            c.pxcorr()
+            self.assertEqual(c._write.call_count, 3)
+        # write_every=1: a write after every window plus the final flush
+        c.options["corr_args"]["write_every"] = 1
+        with mock.patch.multiple(
+            c,
+            _generate_data=mock.MagicMock(return_value=windows),
+            _pxcorr_inner=mock.MagicMock(return_value=self.st),
+            _write=mock.MagicMock(),
+        ):
+            c.pxcorr()
+            self.assertEqual(c._write.call_count, 5)
+        # write_every larger than the number of windows: only the final
+        # flush writes
+        c.options["corr_args"]["write_every"] = 10
+        with mock.patch.multiple(
+            c,
+            _generate_data=mock.MagicMock(return_value=windows),
+            _pxcorr_inner=mock.MagicMock(return_value=self.st),
+            _write=mock.MagicMock(),
+        ):
+            c.pxcorr()
+            self.assertEqual(c._write.call_count, 1)
+        # invalid values are rejected
+        for bad in (0, -1, 1.5, True):
+            c.options["corr_args"]["write_every"] = bad
+            with self.assertRaises(ValueError):
+                c.pxcorr()
+        del c.options["corr_args"]["write_every"]
+
     @mock.patch("seismic.correlate.correlate.st_to_np_array")
     def test_pxcorr_inner(
         self, st_a_mock, makedirs_mock, logging_mock, open_mock

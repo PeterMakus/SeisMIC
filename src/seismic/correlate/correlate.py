@@ -565,9 +565,23 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             inv = None
         inv = self.comm.bcast(inv, root=0)
 
+        # Optional: write the correlations every ``write_every``
+        # correlation windows instead of batching one read_len period
+        # (the default, which writes when the next period's first window
+        # arrives). The default preserves today's cadence exactly.
+        write_every = self.options["corr_args"].get("write_every")
+        if write_every is not None and (
+                not isinstance(write_every, int) or isinstance(
+                    write_every, bool) or write_every < 1):
+            raise ValueError(
+                "corr_arg 'write_every' must be a positive integer "
+                + "or None/absent for the default cadence.")
+        nwin = 0
         for st, write_flag in self._generate_data():
             cst.extend(self._pxcorr_inner(st, inv))
-            if write_flag:
+            nwin += 1
+            if ((write_every is not None and nwin >= write_every)
+                    or (write_every is None and write_flag)):
                 self.logger.info("Writing %d correlations." % cst.count())
                 # Here, we can recombine the correlations for the read_len
                 # size (i.e., stack)
@@ -575,6 +589,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 if cst.count():
                     self._write(cst)
                     cst.clear()
+                nwin = 0
 
         # write the remaining data
         if cst.count():
