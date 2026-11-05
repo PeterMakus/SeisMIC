@@ -2019,7 +2019,10 @@ def preprocess_stream(
     """
     if not st.count():
         return st
-    st = ppst.detrend_st(st, "linear")
+    # Note: no detrend here. The correlation pipeline detrends in
+    # _generate_data before the taper and decimation; a second linear
+    # detrend on the already-detrended stream is a near no-op and only
+    # costs a pass over the data.
     # deal with overlaps
     # This should be a setting in the parameter file
     st = mu.gap_handler(st, 1, taper_len * 4, taper_len)
