@@ -11,12 +11,13 @@ Created: Monday, 29th March 2021 07:58:18 am
 Last Modified: 2026-02-13 14:12:33 (J. Lehr)
 """
 
-from typing import Iterator, List, Tuple, Optional
+from typing import Dict, Iterator, List, Tuple, Optional
 from warnings import warn
 import os
 import logging
 import json
 import warnings
+from datetime import datetime
 import yaml
 import glob
 import fnmatch
@@ -917,15 +918,23 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                     )
                     del win[popi]
                 if len(popindices):
-                    # now we have to recompute the combinations
-                    self._recalulate_combinations(win)
-
-                    if not len(self.options["combinations"]):
-                        # no new combinations for this time period
-                        self.logger.info(
-                            f"No new data for times {winstart}-{winend}"
-                        )
-                        continue
+                    # The removed traces are by construction referenced by
+                    # no combination, so the combinations themselves are
+                    # unchanged -- only their indices into the shortened
+                    # stream shifted. Remap the indices instead of running
+                    # the O(ntrc^2) recalculation a second time. Every rank
+                    # holds an identical (gathered, sorted) win and identical
+                    # combinations, so the remap is deterministic across
+                    # ranks and needs no broadcast.
+                    nold = win_indices.size
+                    newindex = np.full(nold, -1, dtype=np.intp)
+                    newindex[np.setdiff1d(win_indices, popindices)] = (
+                        np.arange(nold - len(popindices), dtype=np.intp)
+                    )
+                    self.options["combinations"] = [
+                        (int(newindex[i0]), int(newindex[i1]))
+                        for i0, i1 in self.options["combinations"]
+                    ]
                 # DEPRECATED: This entire block can be removed in version 1.0.0
                 # since preprocess_subdiv is always False
                 # TODO: Remove in version 1.0.0
@@ -1230,45 +1239,67 @@ def st_to_np_array(st: Stream, npts: int) -> Tuple[np.ndarray, Stream]:
     return A, st
 
 
+#: Cache for the pair metadata of :func:`_compare_existing_data`: the flip
+#: flag and the four nested dictionary keys are pure functions of the two
+#: trace ids, so they are computed once per ordered id pair per process
+#: instead of once per pair per window.
+_EXISTING_META_CACHE: Dict[Tuple[str, str], Tuple[bool, Tuple[str, ...]]] = {}
+
+#: Cache for :meth:`~obspy.UTCDateTime.format_fissures` results, keyed by
+#: the ``datetime`` value: the formatting is a pure function of the datetime
+#: fields, while taking few distinct values per run (one per window). UTC
+#: DateTimes are unhashable, but their ``datetime`` value is not.
+_FISSURES_CACHE: Dict[datetime, str] = {}
+
+
 def _compare_existing_data(ex_corr: dict, tr0: Trace, tr1: Trace) -> bool:
     # The actual starttime for the header is the later one of the two
-    net0 = tr0.stats.network
-    stat0 = tr0.stats.station
-    loc0 = tr0.stats.location
-    cha0 = tr0.stats.channel
-
-    net1 = tr1.stats.network
-    stat1 = tr1.stats.station
-    loc1 = tr1.stats.location
-    cha1 = tr1.stats.channel
-
-    # Probably faster than checking a huge dict twice
-    flip = (
-        [net0, net1],
-        [stat0, stat1],
-        [loc0, loc1],
-        [cha0, cha1],
-    ) != sort_comb_name_alphabetically(
-        net0, stat0, net1, stat1, loc0, loc1, cha0, cha1
+    s0 = tr0.stats
+    s1 = tr1.stats
+    key = (
+        s0.network, s0.station, s0.location, s0.channel,
+        s1.network, s1.station, s1.location, s1.channel,
     )
-    corr_start = max(tr0.stats.starttime, tr1.stats.starttime)
     try:
+        flip, k = _EXISTING_META_CACHE[key]
+    except KeyError:
+        net0, stat0, loc0, cha0, net1, stat1, loc1, cha1 = key
+        # Probably faster than checking a huge dict twice
+        flip = (
+            [net0, net1],
+            [stat0, stat1],
+            [loc0, loc1],
+            [cha0, cha1],
+        ) != sort_comb_name_alphabetically(
+            net0, stat0, net1, stat1, loc0, loc1, cha0, cha1
+        )
         if flip:
-            return (
-                corr_start.format_fissures()
-                in ex_corr[f"{net1}.{stat1}"][f"{net0}.{stat0}"][
-                    f"{loc1}-{loc0}"
-                ][f"{cha1}-{cha0}"]
+            k = (
+                f"{net1}.{stat1}", f"{net0}.{stat0}",
+                f"{loc1}-{loc0}", f"{cha1}-{cha0}",
             )
         else:
-            return (
-                corr_start.format_fissures()
-                in ex_corr[f"{net0}.{stat0}"][f"{net1}.{stat1}"][
-                    f"{loc0}-{loc1}"
-                ][f"{cha0}-{cha1}"]
+            k = (
+                f"{net0}.{stat0}", f"{net1}.{stat1}",
+                f"{loc0}-{loc1}", f"{cha0}-{cha1}",
             )
+        _EXISTING_META_CACHE[key] = (flip, k)
+    corr_start = max(s0.starttime, s1.starttime)
+    cdt = corr_start.datetime
+    fstart = _FISSURES_CACHE.get(cdt)
+    if fstart is None:
+        fstart = corr_start.format_fissures()
+        _FISSURES_CACHE[cdt] = fstart
+    try:
+        return fstart in ex_corr[k[0]][k[1]][k[2]][k[3]]
     except KeyError:
         return False
+
+
+#: Cache for the verdicts of :func:`is_in_xcombis`: a pure function of the
+#: two trace ids and the requested-combination patterns, both fixed across
+#: windows, so each pair is matched only once per process.
+_XCOMBI_CACHE: Dict[Tuple[str, str, Tuple[str, ...]], bool] = {}
 
 
 def is_in_xcombis(id1: str, id2: str, rcombis: List[str] = None) -> bool:
@@ -1277,6 +1308,15 @@ def is_in_xcombis(id1: str, id2: str, rcombis: List[str] = None) -> bool:
     xcombinations including the channel. xcombination are expected as
     Net1-Net2.Sta1-Sta2.Cha1-Cha2. (Channel information can be omitted)
     """
+    if rcombis is None:
+        # former behavior: iterating over None raised a TypeError
+        raise TypeError(
+            "is_in_xcombis requires a list of requested combinations.")
+    key = (id1, id2, tuple(rcombis))
+    try:
+        return _XCOMBI_CACHE[key]
+    except KeyError:
+        pass
     n1, s1, _, c1 = id1.split(".")
     n2, s2, _, c2 = id2.split(".")
     tcombi = f"{n1}-{n2}.{s1}-{s2}.{c1}-{c2}"
@@ -1285,8 +1325,12 @@ def is_in_xcombis(id1: str, id2: str, rcombis: List[str] = None) -> bool:
         if fnmatch.fnmatch(tcombi, combi + "*") or fnmatch.fnmatch(
             tcombi2, combi + "*"
         ):
-            return True
-    return False
+            res = True
+            break
+    else:
+        res = False
+    _XCOMBI_CACHE[key] = res
+    return res
 
 
 def calc_cross_combis(
