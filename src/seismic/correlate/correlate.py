@@ -621,26 +621,49 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         if A is None:
             # No new data
             return cst
-        if self.rank == 0:
-            for ii, (startlag, comb) in enumerate(
-                zip(startlags, self.options["combinations"])
-            ):
-                endlag = (
-                    startlag + len(A[ii, :]) / self.options["sampling_rate"]
+        # Each rank builds the CorrTraces for the files it will write only.
+        # The file list and its partition among the ranks are deterministic
+        # functions of the combinations and stream headers, so every rank
+        # derives the same partition locally -- no broadcast of a full
+        # CorrStream is needed (the former rank-0 construction + bcast
+        # materialized every correlation on every rank).
+        filelist = []
+        pairfiles = []
+        for comb in self.options["combinations"]:
+            net, stat, loc, cha = _combined_net_stat_loc_cha(st, comb)
+            outf = h5_FMTSTR.format(
+                dir=self.corr_dir, network=net, station=stat,
+                location=loc, channel=cha,
+            )
+            pairfiles.append(outf)
+            filelist.append(outf)
+        # same partition as _write applies to its files
+        filelist = list(set(filelist))
+        filelist.sort()
+        pmap = np.arange(len(filelist)) * self.psize / len(filelist)
+        pmap = pmap.astype(np.int32)
+        own_files = set(np.array(filelist)[pmap == self.rank])
+        for ii, (startlag, comb, outf) in enumerate(
+            zip(startlags, self.options["combinations"], pairfiles)
+        ):
+            if outf not in own_files:
+                continue
+            endlag = (
+                startlag + len(A[ii, :]) / self.options["sampling_rate"]
+            )
+            cst.append(
+                CorrTrace(
+                    # copy the row: CorrTraces accumulate in memory until
+                    # the batched write, and views would pin the whole
+                    # gathered correlation matrix
+                    A[ii].copy(),
+                    header1=st[comb[0]].stats,
+                    header2=st[comb[1]].stats,
+                    inv=inv,
+                    start_lag=startlag,
+                    end_lag=endlag,
                 )
-                cst.append(
-                    CorrTrace(
-                        A[ii],
-                        header1=st[comb[0]].stats,
-                        header2=st[comb[1]].stats,
-                        inv=inv,
-                        start_lag=startlag,
-                        end_lag=endlag,
-                    )
-                )
-        else:
-            cst = None
-        cst = self.comm.bcast(cst, root=0)
+            )
         self.logger.info(
             "Core %d finished processing %d correlations."
             % (self.rank, cst.count())
@@ -651,6 +674,11 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         """
         Write correlation stream to files.
 
+        The stream is expected to hold only the correlations of the files
+        assigned to this rank (the partitioning happens when the
+        CorrTraces are built in :meth:`_pxcorr_inner`), so every file
+        present in ``cst`` is written by this rank.
+
         :param cst: CorrStream containing the correlations
         :type cst: :class:`~seismic.correlate.stream.CorrStream`
         """
@@ -658,7 +686,6 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             self.logger.debug("No new data written.")
             return
 
-        # Make sure that each core writes to a different file
         filelist = list(
             set(
                 h5_FMTSTR.format(
@@ -672,15 +699,12 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             )
         )
         # Better if the same cores keep writing to the same files
+        # (ensured by the deterministic file partitioning upstream)
         filelist.sort()
-        # Decide which process writes to which station
-        pmap = np.arange(len(filelist)) * self.psize / len(filelist)
-        pmap = pmap.astype(np.int32)
-        ind = pmap == self.rank
         self.logger.info(
-            "Core %d writing to %d files." % (self.rank, len(ind)))
+            "Core %d writing to %d files." % (self.rank, len(filelist)))
 
-        for outf in np.array(filelist)[ind]:
+        for outf in filelist:
             net, stat, loc, cha = os.path.basename(outf).split(".")[0:4]
             cstselect = cst.select(
                 network=net, station=stat, location=loc, channel=cha
@@ -1075,17 +1099,21 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         sampleToSave = int(
             np.ceil(corr_args["lengthToSave"] * self.sampling_rate)
         )
-        C = np.zeros((csize, sampleToSave * 2 + 1), dtype=np.float32)
 
+        # Each rank allocates, fills, and holds only its own rows of the
+        # correlation matrix; an Allgatherv assembles the full matrix
+        # afterwards. This bounds the sustained memory per rank to
+        # 1/psize of the correlation matrix instead of the full size
+        # (the gathered matrix exists only transiently).
         pmap = np.arange(csize) * self.psize / csize
         pmap = pmap.astype(np.int32)
-        ind = pmap == self.rank
-        ind = np.arange(csize)[ind]
-        startlags = np.zeros(csize, dtype=np.float32)
+        ind = np.arange(csize)[pmap == self.rank]
+        C = np.zeros((ind.size, sampleToSave * 2 + 1), dtype=np.float32)
+        startlags = np.zeros(ind.size, dtype=np.float32)
         self.logger.info(
             "Core %d correlating %d matrix rows" % (self.rank, ind.size)
         )
-        for ii in ind:
+        for k, ii in enumerate(ind):
             # offset of starttimes in samples(just remove fractions of samples)
             offset = (
                 self.options["starttime"][self.options["combinations"][ii][0]]
@@ -1138,11 +1166,11 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
             # cut the center and do fftshift
             self.logger.debug("Normalizing ccf index %d with %f" % (ii, norm))
-            C[ii, :] = (
+            C[k, :] = (
                 np.concatenate((tmp[-sampleToSave:], tmp[: sampleToSave + 1]))
                 / norm
             )
-            startlags[ii] = -sampleToSave / self.sampling_rate - roffset
+            startlags[k] = -sampleToSave / self.sampling_rate - roffset
 
         self.logger.info(
             "Core %d finished correlation for %d combinations."
@@ -1154,14 +1182,36 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
         ######################################
         # collect results
-        # self.logger.debug("%s %s" % (C.shape, C.dtype))
-        # self.logger.debug("combis: %s" % (self.options["combinations"]))
-        self.logger.debug("Core %d summing corr matrix." % self.rank)
-        self.comm.Allreduce(MPI.IN_PLACE, [C, MPI.FLOAT], op=MPI.SUM)
-        self.logger.debug("Core %d summing startlags." % self.rank)
-        self.comm.Allreduce(MPI.IN_PLACE, [startlags, MPI.FLOAT], op=MPI.SUM)
-        self.logger.info("Core %d shared results between cores." % self.rank)
-        return (C, startlags)
+        if self.psize == 1:
+            return (C, startlags)
+        if csize:
+            # every rank derives the same row counts/displacements from
+            # pmap, so no metadata exchange is required
+            counts = [int(np.sum(pmap == rk)) for rk in range(self.psize)]
+            displs = [0]
+            for cnt in counts[:-1]:
+                displs.append(displs[-1] + cnt)
+            ncols = sampleToSave * 2 + 1
+            gathered = np.zeros((csize, ncols), dtype=np.float32)
+            startlags_full = np.zeros(csize, dtype=np.float32)
+            self.logger.debug("Core %d gathering corr matrix." % self.rank)
+            # MPI counts are in datatype elements: rows * ncols for the
+            # matrix, plain rows for startlags
+            self.comm.Allgatherv(
+                [C, MPI.FLOAT],
+                [gathered, [c * ncols for c in counts],
+                 [d * ncols for d in displs], MPI.FLOAT],
+            )
+            self.comm.Allgatherv(
+                [startlags, MPI.FLOAT],
+                [startlags_full, counts, displs, MPI.FLOAT],
+            )
+            self.logger.info("Core %d shared results between cores." % self.rank)
+            return (gathered, startlags_full)
+        return (
+            np.zeros((0, sampleToSave * 2 + 1), dtype=np.float32),
+            np.zeros(0, dtype=np.float32),
+        )
 
     def _get_row_index_per_core(self, A: np.ndarray) -> np.ndarray:
         """
@@ -1216,6 +1266,34 @@ def st_to_np_array(st: Stream, npts: int) -> Tuple[np.ndarray, Stream]:
         A[ii, : tr.stats.npts] = tr.data
         del tr.data  # Not needed any more, just uses up RAM
     return A, st
+
+
+def _combined_net_stat_loc_cha(
+        st: Stream, comb: Tuple[int, int]) -> Tuple[str, str, str, str]:
+    """
+    Return the ``(network, station, location, channel)`` components of the
+    combined correlation id for the trace pair ``comb`` of stream ``st``,
+    in the alphabetical order that :func:`~seismic.correlate.stream.\
+alphabetical_correlation` applies when a :class:`CorrTrace` is built.
+
+    Used to derive the output file names of correlations without building
+    the CorrTraces themselves; must stay consistent with
+    :func:`~seismic.correlate.stream.combine_stats`, which joins the
+    components of the alphabetically first header first.
+    """
+    h1 = st[comb[0]].stats
+    h2 = st[comb[1]].stats
+    # alphabetical_correlation sorts by network + station + channel
+    # (no location) and swaps the headers if they are out of order
+    if h1.network + h1.station + h1.channel > \
+            h2.network + h2.station + h2.channel:
+        h1, h2 = h2, h1
+    return (
+        h1.network + '-' + h2.network,
+        h1.station + '-' + h2.station,
+        h1.location + '-' + h2.location,
+        h1.channel + '-' + h2.channel,
+    )
 
 
 def _compare_existing_data(ex_corr: dict, tr0: Trace, tr1: Trace) -> bool:
