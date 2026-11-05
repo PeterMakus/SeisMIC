@@ -16,6 +16,7 @@ from copy import deepcopy
 
 import numpy as np
 from scipy.fftpack import next_fast_len
+from scipy.ndimage import uniform_filter1d
 from scipy import signal
 from scipy.signal import detrend as sp_detrend
 import obspy.signal as osignal
@@ -235,9 +236,10 @@ def mute(A: np.ndarray, args: dict, params: dict) -> np.ndarray:
     mask[D > thres[:, None]] = 0
     # extend the muted segments to make sure the whole segment is zero after
     if args['extend_gaps']:
-        tap = np.ones(ntap)/ntap
-        for ind in range(A.shape[0]):
-            mask[ind, :] = np.convolve(mask[ind, :], tap, mode='same')
+        # moving average over the rectangular tap via uniform_filter1d --
+        # same zero-padded 'same' convolution as np.convolve, but O(N)
+        # instead of O(N*ntap)
+        mask = uniform_filter1d(mask, ntap, axis=1, mode='constant')
         nmask = np.ones_like(D)
         nmask[mask < 1.] = 0
     else:
