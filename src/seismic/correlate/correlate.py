@@ -24,6 +24,7 @@ import fnmatch
 
 from mpi4py import MPI
 import numpy as np
+import scipy.fft
 from obspy import Stream, UTCDateTime, Inventory, Trace
 from tqdm import tqdm
 
@@ -1105,7 +1106,10 @@ class Correlator(logfactory.LoggingMPIBaseClass):
         fftsize = zmsize[1] // 2 + 1
         B = np.zeros((int(np.sum(ind)), fftsize), dtype=np.csingle)
 
-        B[:, :] = np.fft.rfft(A[ind, :], axis=1)
+        # scipy.fft computes the rfft natively in single precision
+        # (complex64 out for float32 in); numpy would promote the data to
+        # complex128 and double the FFT time and the transient memory.
+        B[:, :] = scipy.fft.rfft(A[ind, :], axis=1)
 
         freqs = np.fft.rfftfreq(zmsize[1], 1.0 / self.sampling_rate)
 
