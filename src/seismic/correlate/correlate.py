@@ -563,6 +563,16 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 inv = None
         else:
             inv = None
+        if self.rank == 0 and inv is not None \
+                and not self.options["remove_response"]:
+            # Only the station coordinates are used downstream
+            # (combine_stats, correct_polarity). Drop the response objects
+            # on a copy so the bcast and every rank's inventory stay small.
+            inv = inv.copy()
+            for net in inv.networks:
+                for sta in net.stations:
+                    for cha in sta.channels:
+                        cha.response = None
         inv = self.comm.bcast(inv, root=0)
 
         # Optional: write the correlations every ``write_every``
@@ -845,9 +855,12 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 self.logger.debug(
                     "Core %d reading %s, %s, %s" % (self.rank, net, stat, cha)
                 )
-                # Load data
+                # Load data. Attach responses only when they will actually
+                # be removed later: attaching walks the full inventory per
+                # trace and pins a response object to every trace's stats.
                 stext = self.store_client._load_local(
-                    net, stat, loc, cha, startt, endt, True, False
+                    net, stat, loc, cha, startt, endt,
+                    self.options["remove_response"], False
                 )
                 try:
                     mu.get_valid_traces(stext)
@@ -1974,8 +1987,9 @@ def preprocess_stream(
                 level="response",
             )
             st.remove_response(taper=False, inventory=ninv)
-            store_client._write_inventory(ninv)
-            inv += ninv
+            # _write_inventory has already merged ninv into
+            # store_client.inventory in place, and inv is that same
+            # object -- do not append a duplicate network copy here.
 
     # Sometimes Z has reversed polarity
     # correct_polarity skips empty/missing inventories itself

@@ -487,7 +487,22 @@ class TestCorrrelator(unittest.TestCase):
         ):
             c.pxcorr()
             c._generate_data.assert_called_once()
-            c._pxcorr_inner.assert_called_once_with(self.st, self.inv)
+            # With remove_response=False, pxcorr passes a response-stripped
+            # copy of the inventory (only the coordinates are used
+            # downstream); the original inventory stays untouched
+            c._pxcorr_inner.assert_called_once()
+            inv_used = c._pxcorr_inner.call_args[0][1]
+            self.assertIsNot(inv_used, self.inv)
+            self.assertTrue(all(
+                cha.response is None
+                for net in inv_used.networks
+                for sta in net.stations
+                for cha in sta.channels))
+            self.assertTrue(all(
+                cha.response is not None
+                for net in self.inv.networks
+                for sta in net.stations
+                for cha in sta.channels))
             cst_mock().count.assert_called()
             write_calls = [mock.call(cst_mock()), mock.call(cst_mock())]
             c._write.assert_has_calls(write_calls)
@@ -519,7 +534,20 @@ class TestCorrrelator(unittest.TestCase):
         ):
             c.pxcorr()
             c._generate_data.assert_called_once()
-            c._pxcorr_inner.assert_called_once_with(self.st, self.inv)
+            # Same response-stripped inventory copy as in test_pxcorr
+            c._pxcorr_inner.assert_called_once()
+            inv_used = c._pxcorr_inner.call_args[0][1]
+            self.assertIsNot(inv_used, self.inv)
+            self.assertTrue(all(
+                cha.response is None
+                for net in inv_used.networks
+                for sta in net.stations
+                for cha in sta.channels))
+            self.assertTrue(all(
+                cha.response is not None
+                for net in self.inv.networks
+                for sta in net.stations
+                for cha in sta.channels))
             cst_mock().stack.assert_not_called()
             cst_mock().count.assert_called()
             write_calls = [mock.call(mock.ANY), mock.call(mock.ANY)]
