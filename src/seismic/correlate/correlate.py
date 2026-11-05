@@ -914,6 +914,7 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 win = Stream()
                 for winp in winl:
                     win.extend(winp)
+                del winl
                 win = win.sort()
 
                 # Get correlation combinations
