@@ -1276,7 +1276,8 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                 [startlags, MPI.FLOAT],
                 [startlags_full, counts, displs, MPI.FLOAT],
             )
-            self.logger.info("Core %d shared results between cores." % self.rank)
+            self.logger.info(
+                "Core %d shared results between cores." % self.rank)
             return (gathered, startlags_full)
         return (
             np.zeros((0, sampleToSave * 2 + 1), dtype=np.float32),
