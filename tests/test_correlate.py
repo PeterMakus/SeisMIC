@@ -487,7 +487,22 @@ class TestCorrrelator(unittest.TestCase):
         ):
             c.pxcorr()
             c._generate_data.assert_called_once()
-            c._pxcorr_inner.assert_called_once_with(self.st, self.inv)
+            # With remove_response=False, pxcorr passes a response-stripped
+            # copy of the inventory (only the coordinates are used
+            # downstream); the original inventory stays untouched
+            c._pxcorr_inner.assert_called_once()
+            inv_used = c._pxcorr_inner.call_args[0][1]
+            self.assertIsNot(inv_used, self.inv)
+            self.assertTrue(all(
+                cha.response is None
+                for net in inv_used.networks
+                for sta in net.stations
+                for cha in sta.channels))
+            self.assertTrue(all(
+                cha.response is not None
+                for net in self.inv.networks
+                for sta in net.stations
+                for cha in sta.channels))
             cst_mock().count.assert_called()
             write_calls = [mock.call(cst_mock()), mock.call(cst_mock())]
             c._write.assert_has_calls(write_calls)
@@ -519,12 +534,83 @@ class TestCorrrelator(unittest.TestCase):
         ):
             c.pxcorr()
             c._generate_data.assert_called_once()
-            c._pxcorr_inner.assert_called_once_with(self.st, self.inv)
+            # Same response-stripped inventory copy as in test_pxcorr
+            c._pxcorr_inner.assert_called_once()
+            inv_used = c._pxcorr_inner.call_args[0][1]
+            self.assertIsNot(inv_used, self.inv)
+            self.assertTrue(all(
+                cha.response is None
+                for net in inv_used.networks
+                for sta in net.stations
+                for cha in sta.channels))
+            self.assertTrue(all(
+                cha.response is not None
+                for net in self.inv.networks
+                for sta in net.stations
+                for cha in sta.channels))
             cst_mock().stack.assert_not_called()
             cst_mock().count.assert_called()
             write_calls = [mock.call(mock.ANY), mock.call(mock.ANY)]
             c._write.assert_has_calls(write_calls)
         cst_mock().extend.assert_called_once()
+
+    @mock.patch("seismic.correlate.correlate.CorrStream")
+    def test_pxcorr_write_every(self, cst_mock, makedirs_mock,
+                                logging_mock, open_mock):
+        options = deepcopy(self.options)
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [
+            ["lala", "lolo"],
+            ["lala", "lili"],
+        ]
+        sc_mock._translate_wildcards.return_value = [
+            ["lala", "lolo", "E"],
+            ["lala", "lili", "Z"],
+        ]
+        sc_mock.read_inventory.return_value = self.inv
+        c = correlate.Correlator(options, sc_mock)
+        # two read_len periods, each with two windows; write_flag True
+        # marks the first window of each period. The mocked CorrStream's
+        # count() is truthy, so every flush writes.
+        windows = [[self.st, True], [self.st, False],
+                   [self.st, True], [self.st, False]]
+        # default cadence (write_every absent): writes on the two
+        # write_flag windows plus the final flush
+        with mock.patch.multiple(
+            c,
+            _generate_data=mock.MagicMock(return_value=windows),
+            _pxcorr_inner=mock.MagicMock(return_value=self.st),
+            _write=mock.MagicMock(),
+        ):
+            c.pxcorr()
+            self.assertEqual(c._write.call_count, 3)
+        # write_every=1: a write after every window plus the final flush
+        c.options["corr_args"]["write_every"] = 1
+        with mock.patch.multiple(
+            c,
+            _generate_data=mock.MagicMock(return_value=windows),
+            _pxcorr_inner=mock.MagicMock(return_value=self.st),
+            _write=mock.MagicMock(),
+        ):
+            c.pxcorr()
+            self.assertEqual(c._write.call_count, 5)
+        # write_every larger than the number of windows: only the final
+        # flush writes
+        c.options["corr_args"]["write_every"] = 10
+        with mock.patch.multiple(
+            c,
+            _generate_data=mock.MagicMock(return_value=windows),
+            _pxcorr_inner=mock.MagicMock(return_value=self.st),
+            _write=mock.MagicMock(),
+        ):
+            c.pxcorr()
+            self.assertEqual(c._write.call_count, 1)
+        # invalid values are rejected
+        for bad in (0, -1, 1.5, True):
+            c.options["corr_args"]["write_every"] = bad
+            with self.assertRaises(ValueError):
+                c.pxcorr()
+        del c.options["corr_args"]["write_every"]
 
     @mock.patch("seismic.correlate.correlate.st_to_np_array")
     def test_pxcorr_inner(
@@ -694,12 +780,23 @@ class TestCorrrelator(unittest.TestCase):
         shape = (25, 101)
         ftshape = (25, 51)
         ri_mock.return_value = np.ones(shape[0], dtype=bool)
-        return_func = mock.MagicMock(
+
+        # The FD preprocessing function is called with a live view of the
+        # local B block, which is overwritten once the call returns, so the
+        # recorded calls must hold copies of array arguments.
+        recorded_func = mock.MagicMock(
             side_effect=[
                 np.ones(shape, dtype=np.float32),
                 np.ones(ftshape, dtype=np.float32),
             ]
         )
+
+        def snap_side_effect(*args, **kwargs):
+            return recorded_func(
+                *[a.copy() if isinstance(a, np.ndarray) else a for a in args],
+                **kwargs)
+
+        return_func = mock.MagicMock(side_effect=snap_side_effect)
         ffs_mock.return_value = return_func
         zp_mock.return_value = np.ones(shape) * 2
         C, startlags = c._pxcorr_matrix(np.zeros(shape))
@@ -708,12 +805,12 @@ class TestCorrrelator(unittest.TestCase):
         ffs_mock.assert_any_call("TDPP")
         # This is the same as asserthascalls, but it can also check np arrays
         np.testing.assert_array_equal(
-            np.zeros(shape), return_func.call_args_list[0][0][0]
+            np.zeros(shape), recorded_func.call_args_list[0][0][0]
         )
-        self.assertListEqual([], return_func.call_args_list[0][0][1])
+        self.assertListEqual([], recorded_func.call_args_list[0][0][1])
         # Check if the fft worked
         np.testing.assert_array_almost_equal(
-            np.fft.rfft(np.ones(shape) * 2), return_func.call_args_list[1][0][0]
+            np.fft.rfft(np.ones(shape) * 2), recorded_func.call_args_list[1][0][0]
         )
         np.testing.assert_array_equal(-np.ones((3,)), startlags)
         # Correlation should be one in the middle
