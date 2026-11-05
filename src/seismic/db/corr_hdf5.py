@@ -590,16 +590,20 @@ def read_hdf5_header(dataset: h5py.Dataset) -> Stats:
 
 def co_to_hdf5(co: dict) -> dict:
     assert isinstance(co, dict)
-    coc = deepcopy(co)
-    remk = [
-        'subdir', 'read_start', 'read_end', 'read_len', 'read_inc',
-        'combination_method', 'combinations', 'starttime',
-        'xcombinations', 'preprocess_subdiv', 'allow_different_params']
-    for key in remk:
+    # Drop the bulky keys before the deep copy: the O(N^2) combinations
+    # list dominates the copy cost, and this function runs on every
+    # database open during the write cycle.
+    coc = {k: v for k, v in co.items()}
+    for key in [
+            'subdir', 'read_start', 'read_end', 'read_len', 'read_inc',
+            'combination_method', 'combinations', 'starttime',
+            'xcombinations', 'preprocess_subdiv',
+            'allow_different_params']:
         coc.pop(key, None)
-        coc['corr_args'].pop('combinations', None)
-        coc['subdivision'].pop('recombine_subdivision', None)
-        coc['subdivision'].pop('delete_subdivision', None)
+    coc = deepcopy(coc)
+    coc['corr_args'].pop('combinations', None)
+    coc['subdivision'].pop('recombine_subdivision', None)
+    coc['subdivision'].pop('delete_subdivision', None)
     try:
         [coc['preProcessing'].remove(step) for step in coc['preProcessing']
             if 'stream_mask_at_utc' in step['function']]
