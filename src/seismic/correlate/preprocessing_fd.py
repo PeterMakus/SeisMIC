@@ -51,7 +51,7 @@ def FDfilter(B: np.ndarray, args: dict, params: dict) -> np.ndarray:
     args = deepcopy(args)
     args.update({'freqs': params['freqs']})
     tap = osignal.invsim.cosine_taper(B.shape[1], **args)
-    B *= np.tile(np.atleast_2d(tap), (B.shape[0], 1))
+    B *= tap
     return B
 
 

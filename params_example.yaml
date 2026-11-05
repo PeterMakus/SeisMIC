@@ -104,6 +104,13 @@ co:
         # type: float [seconds]
         corr_inc : 3600
         corr_len : 3600
+        # optional: write every k corr_len into the 
+        # hdf file. If not set, it will write every
+        # read_len. Setting k will increase the number of 
+        # writes and, therefore, the processing time.
+        # However, it will also reduce the RAM usage
+        # k is an integer
+        # write_every: k
         # recombine these subdivisions
         # unused at the time
         # type: boolean
