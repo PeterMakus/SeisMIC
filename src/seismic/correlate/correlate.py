@@ -13,6 +13,7 @@ Last Modified: 2026-02-13 14:12:33 (J. Lehr)
 
 from typing import Dict, Iterator, List, Tuple, Optional
 from warnings import warn
+import hashlib
 import os
 import logging
 import json
@@ -649,9 +650,10 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             # No new data
             return cst
         # Each rank builds the CorrTraces for the files it will write only.
-        # The file list and its partition among the ranks are deterministic
-        # functions of the combinations and stream headers, so every rank
-        # derives the same partition locally -- no broadcast of a full
+        # File ownership is a stable function of the file path alone
+        # (see _file_owner), so every rank derives the same partition
+        # locally and a file cannot migrate between ranks when the data
+        # availability changes between windows -- no broadcast of a full
         # CorrStream is needed (the former rank-0 construction + bcast
         # materialized every correlation on every rank).
         filelist = []
@@ -664,12 +666,13 @@ class Correlator(logfactory.LoggingMPIBaseClass):
             )
             pairfiles.append(outf)
             filelist.append(outf)
-        # same partition as _write applies to its files
-        filelist = list(set(filelist))
-        filelist.sort()
-        pmap = np.arange(len(filelist)) * self.psize / len(filelist)
-        pmap = pmap.astype(np.int32)
-        own_files = set(np.array(filelist)[pmap == self.rank])
+        # Ownership must not depend on which files exist in *this* window
+        # (see _file_owner): assign every candidate file by its stable
+        # hash and keep the ones owned by this rank.
+        own_files = {
+            outf for outf in set(filelist)
+            if _file_owner(outf, self.psize) == self.rank
+        }
         for ii, (startlag, comb, outf) in enumerate(
             zip(startlags, self.options["combinations"], pairfiles)
         ):
@@ -1355,6 +1358,40 @@ _EXISTING_META_CACHE: Dict[Tuple[str, str], Tuple[bool, Tuple[str, ...]]] = {}
 #: fields, while taking few distinct values per run (one per window). UTC
 #: DateTimes are unhashable, but their ``datetime`` value is not.
 _FISSURES_CACHE: Dict[datetime, str] = {}
+
+#: Output file -> owning rank. Ownership must be identical on every rank
+#: and independent of the data availability of any single window, so it
+#: is derived from a stable hash of the file path (see :func:`_file_owner`).
+_FILE_OWNER_CACHE: Dict[Tuple[str, int], int] = {}
+
+
+def _file_owner(outf: str, psize: int) -> int:
+    """
+    The rank that owns the output file ``outf`` -- the only rank that
+    builds its CorrTraces and writes it.
+
+    Ownership is a stable hash of the file path modulo the number of
+    ranks. An index-based partition of the current window's file list is
+    **not** safe: combinations are recalculated per window and files
+    disappear/reappear when stations drop in or out (real data with
+    gaps), which shifts the indices and would assign the same file to
+    different ranks in different windows. Two ranks would then
+    accumulate CorrTraces for the same file in one write batch and both
+    open it for writing -- the second open fails on the HDF5 file lock
+    (``BlockingIOError``). A hash of the path itself cannot shift.
+
+    :param outf: Output file path (as formatted by ``h5_FMTSTR``)
+    :param psize: Number of ranks
+    :return: Rank in ``[0, psize)``
+    """
+    try:
+        return _FILE_OWNER_CACHE[(outf, psize)]
+    except KeyError:
+        # md5, not hash(): stable across interpreter runs and processes
+        owner = int.from_bytes(
+            hashlib.md5(outf.encode()).digest()[:8], 'big') % psize
+        _FILE_OWNER_CACHE[(outf, psize)] = owner
+        return owner
 
 
 def _combined_net_stat_loc_cha(

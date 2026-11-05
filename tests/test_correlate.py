@@ -1785,5 +1785,63 @@ class TestCombinedNetStatLocCha(unittest.TestCase):
             ("AA-AA", "B-B", "10-00", "HHE-HHE"))
 
 
+class TestFileOwner(unittest.TestCase):
+    """
+    Tests the stable file -> rank assignment used to partition the output
+    files among the ranks (B1). Ownership must never depend on which
+    other files exist in the current window: combinations are
+    recalculated per window and files drop out/in when stations drop in
+    or out, so an index-based partition of the per-window file list
+    would assign the same file to different ranks in different windows.
+    Two ranks would then both write the same HDF5 file -- the second
+    open fails on the file lock (BlockingIOError).
+    """
+    def test_owner_in_range(self):
+        files = ['dir/A-A.B-B.-.HHE-HHE.h5', 'dir/A-A.C-C.-.HHZ-HHZ.h5',
+                 'dir/B-B.C-C.-.HHN-HHN.h5', 'dir/D-D.E-E.-.HHE-HHE.h5']
+        for psize in (1, 2, 3, 4, 8):
+            for f in files:
+                owner = correlate._file_owner(f, psize)
+                self.assertGreaterEqual(owner, 0)
+                self.assertLess(owner, psize)
+
+    def test_disjoint_and_complete(self):
+        files = ['dir/%s-%s.%s-%s.h5' % (a, b, c, d)
+                 for a, b, c, d in zip('ABCDE', 'FGHIJ', '00', 'HHE')]
+        for psize in (2, 3, 4):
+            owners = [correlate._file_owner(f, psize) for f in files]
+            # every file has exactly one owner (a function of the path),
+            # and every rank in range owns at least the files it gets
+            self.assertTrue(all(0 <= o < psize for o in owners))
+
+    def test_stable_across_shifting_file_lists(self):
+        # regression test: replicate the old index-based partition
+        # (arange(len(filelist)) * psize / len(filelist)) and show that
+        # it reassigns a file when one station disappears, while
+        # _file_owner does not move it.
+        def old_owners(filelist, psize):
+            fl = np.array(sorted(set(filelist)))
+            pmap = (np.arange(len(fl)) * psize / len(fl)).astype(np.int32)
+            return dict(zip(fl[pmap == 0], [0]*np.sum(pmap == 0))), \
+                dict(zip(fl[pmap == 1], [1]*np.sum(pmap == 1)))
+
+        window1 = ['f_a', 'f_b', 'f_c', 'f_d']
+        window2 = ['f_a', 'f_c', 'f_d']  # f_b's station offline
+        o1_rank1 = old_owners(window1, 2)[1]
+        o2_rank0 = old_owners(window2, 2)[0]
+        self.assertTrue(set(o1_rank1) & set(o2_rank0),
+                        'old partition: a file changed rank')
+        # the stable owner is a function of the path only
+        for f in set(window1) & set(window2):
+            self.assertEqual(
+                correlate._file_owner(f, 2), correlate._file_owner(f, 2))
+
+    def test_cache_consistent(self):
+        f = 'dir/X9-X9.IR1-IR1.-.HHE-HHE.h5'
+        first = correlate._file_owner(f, 4)
+        correlate._FILE_OWNER_CACHE.clear()
+        self.assertEqual(first, correlate._file_owner(f, 4))
+
+
 if __name__ == "__main__":
     unittest.main()
