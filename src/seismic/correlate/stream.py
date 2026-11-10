@@ -444,46 +444,6 @@ class CorrBulk(object):
         self.ref_trc = ref_trcs
         return ref_trcs
 
-    def find_clock_shift(
-        self, ref_trc: np.ndarray = None, tw: List[np.ndarray] = None,
-        shift_range: int = 10, shift_steps: int = 101,
-            sides: str = 'both', return_sim_mat: bool = False) -> DV:
-        """
-        Compute the shift of correlations as they can occur due to a clock
-        drift.
-
-        :param ref_trc: Reference trace to use for the computation,
-            defaults to None. Will extract a single trace if = None.
-        :type ref_trc: np.ndarray, optional
-        :param tw: Lapse Time window to use for the computation,
-            defaults to None
-        :type tw: List[np.ndarray], optional
-        :param shift_range: Maximum shift value to test
-            (in n samples not seconds!). Defaults to 10.
-        :type shift_range: int, optional
-        :param shift_steps: Number of shift steps, defaults to 101
-        :type shift_steps: int, optional
-        :param sides: Which sides to use. Can be 'right',
-            or 'both'. Defaults to 'both'
-        :type sides: str, optional
-        :param return_sim_mat: Return the similarity matrix, defaults to False
-        :type return_sim_mat: bool, optional
-        :return: The shift as :class:`~seismic.monitor.dv.DV` object.
-        :rtype: DV
-        """
-        warnings.warn(
-            'This function is deprecated. Use measure_shift instead.'
-            ' This function will be removed in version 0.7.x',
-            DeprecationWarning)
-        if ref_trc is None:
-            ref_trc = self.ref_trc
-        dv_dict = pcp.corr_mat_shift(
-            self.data, self.stats, ref_trc, tw, shift_range, shift_steps,
-            sides, return_sim_mat)
-        if not return_sim_mat:
-            dv_dict['sim_mat'] = np.array([])
-        return DV(**dv_dict)
-
     def measure_shift(
         self, ref_trc: Optional[np.ndarray] = None,
         tw: Optional[List[Tuple[float, float]]] = None,

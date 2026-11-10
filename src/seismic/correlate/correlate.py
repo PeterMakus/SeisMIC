@@ -806,17 +806,6 @@ class Correlator(logfactory.LoggingMPIBaseClass):
 
         self.ex_dict = self.comm.bcast(self.ex_dict, root=0)
 
-        # DEPRECATED: This check is no longer needed as
-        # preprocess_subdiv is always False
-        # TODO: Remove in version 1.0.0
-        if not self.ex_dict and self.options["preprocess_subdiv"]:
-            self.options["preprocess_subdiv"] = False
-            if self.rank == 0:
-                self.logger.warning(
-                    "No existing data found.\nAutomatically setting "
-                    "preprocess_subdiv to False to optimise performance."
-                )
-
         # the time window that the loop will go over
         t0 = UTCDateTime(self.options["read_start"]).timestamp
         t1 = UTCDateTime(self.options["read_end"]).timestamp
@@ -992,39 +981,6 @@ class Correlator(logfactory.LoggingMPIBaseClass):
                         (int(newindex[i0]), int(newindex[i1]))
                         for i0, i1 in self.options["combinations"]
                     ]
-                # DEPRECATED: This entire block can be removed in version 1.0.0
-                # since preprocess_subdiv is always False
-                # TODO: Remove in version 1.0.0
-                if self.options["preprocess_subdiv"]:
-                    self.logger.debug("Core %d preprocessing corr_len stream")
-                    try:
-                        win = preprocess_stream(
-                            win,
-                            self.store_client,
-                            winstart,
-                            winend,
-                            tl,
-                            **self.options,
-                        )
-                        self.logger.debug(
-                            "Core %d finished preprocessing corr_len stream"
-                            % self.rank
-                        )
-                    except Exception:
-                        if win.count():
-                            where = (
-                                f"{win[0].stats.network}."
-                                f"{win[0].stats.station} and "
-                            )
-                        else:
-                            where = ""
-                        self.logger.exception(
-                            "Stream preprocessing failed for "
-                            f"{where}time {t}."
-                        )
-                        continue
-                    self._recalulate_combinations(win)
-
                 if not len(win):
                     # no new combinations for this time period
                     self.logger.info(
