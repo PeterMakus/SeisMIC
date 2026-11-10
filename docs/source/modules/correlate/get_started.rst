@@ -169,6 +169,9 @@ Setting the parameters
                     'lengthToSave':100,
                     'center_correlation':True,      # make sure zero correlation time is in the center
                     'normalize_correlation':True,
+                    # optional: write the correlations every K correlation
+                    # windows instead of once per read_len period (default)
+                    #'write_every':10,
                     'combinations':[]
                     }
 
@@ -519,6 +522,9 @@ If ``recombine_subdivision=True``, the correlations will be stacked to ``read_le
         corr_args : {'lengthToSave':100,
                     'center_correlation':True,      # make sure zero correlation time is in the center
                     'normalize_correlation':True,
+                    # optional: write the correlations every K correlation
+                    # windows instead of once per read_len period (default)
+                    #'write_every':10,
                     'combinations':[]
                     }
 

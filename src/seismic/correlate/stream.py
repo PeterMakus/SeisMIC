@@ -12,7 +12,7 @@ Manage objects holding correlations.
 Created: Tuesday, 20th April 2021 04:19:35 pm
 Last Modified: Monday, 19th October 2026 11:55:25 am
 '''
-from typing import Iterator, List, Tuple, Optional, Union
+from typing import Dict, Iterator, List, Tuple, Optional, Union
 from copy import deepcopy
 import warnings
 from matplotlib import pyplot as plt
@@ -443,46 +443,6 @@ class CorrBulk(object):
         ref_trcs = np.array(ref_trcs)
         self.ref_trc = ref_trcs
         return ref_trcs
-
-    def find_clock_shift(
-        self, ref_trc: np.ndarray = None, tw: List[np.ndarray] = None,
-        shift_range: int = 10, shift_steps: int = 101,
-            sides: str = 'both', return_sim_mat: bool = False) -> DV:
-        """
-        Compute the shift of correlations as they can occur due to a clock
-        drift.
-
-        :param ref_trc: Reference trace to use for the computation,
-            defaults to None. Will extract a single trace if = None.
-        :type ref_trc: np.ndarray, optional
-        :param tw: Lapse Time window to use for the computation,
-            defaults to None
-        :type tw: List[np.ndarray], optional
-        :param shift_range: Maximum shift value to test
-            (in n samples not seconds!). Defaults to 10.
-        :type shift_range: int, optional
-        :param shift_steps: Number of shift steps, defaults to 101
-        :type shift_steps: int, optional
-        :param sides: Which sides to use. Can be 'right',
-            or 'both'. Defaults to 'both'
-        :type sides: str, optional
-        :param return_sim_mat: Return the similarity matrix, defaults to False
-        :type return_sim_mat: bool, optional
-        :return: The shift as :class:`~seismic.monitor.dv.DV` object.
-        :rtype: DV
-        """
-        warnings.warn(
-            'This function is deprecated. Use measure_shift instead.'
-            ' This function will be removed in version 0.7.x',
-            DeprecationWarning)
-        if ref_trc is None:
-            ref_trc = self.ref_trc
-        dv_dict = pcp.corr_mat_shift(
-            self.data, self.stats, ref_trc, tw, shift_range, shift_steps,
-            sides, return_sim_mat)
-        if not return_sim_mat:
-            dv_dict['sim_mat'] = np.array([])
-        return DV(**dv_dict)
 
     def measure_shift(
         self, ref_trc: Optional[np.ndarray] = None,
@@ -1497,6 +1457,15 @@ def alphabetical_correlation(
 #: elevation) in a Stats object or its ``sac`` sub-dictionary.
 _GEO_KEYS: Tuple[str, str, str] = ('stla', 'stlo', 'stel')
 
+#: Cache for the geodesic az/baz/dist results of combine_stats, keyed by the
+#: ordered ``(stla, stlo)`` coordinates of both stations. The geodesic solve
+#: (geographiclib) is the dominant cost of header combination, and station
+#: coordinates are constant for a given coordinate tuple, so each distinct
+#: station pair is only solved once per process. The key contains the
+#: coordinates themselves, so moved stations can never hit a stale entry.
+_AZBAZ_CACHE: Dict[Tuple[float, float, float, float],
+                   Tuple[float, float, float]] = {}
+
 
 def _assign_coords(
         stats: CorrStats, receiver, event, keys: Tuple[str, str, str] = None):
@@ -1528,6 +1497,29 @@ def _assign_coords(
     for pfx, src in (('st', receiver), ('ev', event)):
         for suffix, key in zip(('la', 'lo', 'el'), keys):
             stats[pfx + suffix] = getattr(src, key)
+
+
+def _az_baz_dist_cached(
+        stats1: Stats, stats2: Stats) -> Tuple[float, float, float]:
+    """
+    Memoizing wrapper around :func:`m3ut.trace_calc_az_baz_dist` for
+    :func:`combine_stats`: the geodesic solve is by far the most expensive
+    step of header combination, while its result only depends on the two
+    stations' coordinates. Results are cached per ordered coordinate
+    quadruple, so repeated correlations of the same station pair (i.e.,
+    every window after the first) skip it entirely.
+
+    :param stats1: First trace's stats (the virtual event).
+    :param stats2: Second trace's stats (the virtual receiver).
+    :return: az, baz, and the distance in m, as ``trace_calc_az_baz_dist``
+    """
+    key = (stats1['stla'], stats1['stlo'], stats2['stla'], stats2['stlo'])
+    try:
+        return _AZBAZ_CACHE[key]
+    except KeyError:
+        res = m3ut.trace_calc_az_baz_dist(stats1, stats2)
+        _AZBAZ_CACHE[key] = res
+        return res
 
 
 def combine_stats(
@@ -1610,7 +1602,7 @@ def combine_stats(
             stats1.update(stats1['sac'])
             stats2.update(stats2['sac'])
 
-        az, baz, dist = m3ut.trace_calc_az_baz_dist(stats1, stats2)
+        az, baz, dist = _az_baz_dist_cached(stats1, stats2)
 
         stats['dist'] = dist / 1000
         stats['az'] = az

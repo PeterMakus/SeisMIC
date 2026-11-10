@@ -93,10 +93,6 @@ def cos_taper(
     if taper_len <= 0:
         raise ValueError('Taper length must be larger than 0 s')
     if taper_at_masked:
-        if lossless:
-            warn(
-                'Tapering lossless at masked values is not supported',
-                UserWarning)
         st = tr.split()
         st = cos_taper_st(st, taper_len, False, False)
         st = st.merge()

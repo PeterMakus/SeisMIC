@@ -487,7 +487,22 @@ class TestCorrrelator(unittest.TestCase):
         ):
             c.pxcorr()
             c._generate_data.assert_called_once()
-            c._pxcorr_inner.assert_called_once_with(self.st, self.inv)
+            # With remove_response=False, pxcorr passes a response-stripped
+            # copy of the inventory (only the coordinates are used
+            # downstream); the original inventory stays untouched
+            c._pxcorr_inner.assert_called_once()
+            inv_used = c._pxcorr_inner.call_args[0][1]
+            self.assertIsNot(inv_used, self.inv)
+            self.assertTrue(all(
+                cha.response is None
+                for net in inv_used.networks
+                for sta in net.stations
+                for cha in sta.channels))
+            self.assertTrue(all(
+                cha.response is not None
+                for net in self.inv.networks
+                for sta in net.stations
+                for cha in sta.channels))
             cst_mock().count.assert_called()
             write_calls = [mock.call(cst_mock()), mock.call(cst_mock())]
             c._write.assert_has_calls(write_calls)
@@ -519,12 +534,83 @@ class TestCorrrelator(unittest.TestCase):
         ):
             c.pxcorr()
             c._generate_data.assert_called_once()
-            c._pxcorr_inner.assert_called_once_with(self.st, self.inv)
+            # Same response-stripped inventory copy as in test_pxcorr
+            c._pxcorr_inner.assert_called_once()
+            inv_used = c._pxcorr_inner.call_args[0][1]
+            self.assertIsNot(inv_used, self.inv)
+            self.assertTrue(all(
+                cha.response is None
+                for net in inv_used.networks
+                for sta in net.stations
+                for cha in sta.channels))
+            self.assertTrue(all(
+                cha.response is not None
+                for net in self.inv.networks
+                for sta in net.stations
+                for cha in sta.channels))
             cst_mock().stack.assert_not_called()
             cst_mock().count.assert_called()
             write_calls = [mock.call(mock.ANY), mock.call(mock.ANY)]
             c._write.assert_has_calls(write_calls)
         cst_mock().extend.assert_called_once()
+
+    @mock.patch("seismic.correlate.correlate.CorrStream")
+    def test_pxcorr_write_every(self, cst_mock, makedirs_mock,
+                                logging_mock, open_mock):
+        options = deepcopy(self.options)
+        sc_mock = mock.Mock(Store_Client)
+        sc_mock.get_available_stations.return_value = [
+            ["lala", "lolo"],
+            ["lala", "lili"],
+        ]
+        sc_mock._translate_wildcards.return_value = [
+            ["lala", "lolo", "E"],
+            ["lala", "lili", "Z"],
+        ]
+        sc_mock.read_inventory.return_value = self.inv
+        c = correlate.Correlator(options, sc_mock)
+        # two read_len periods, each with two windows; write_flag True
+        # marks the first window of each period. The mocked CorrStream's
+        # count() is truthy, so every flush writes.
+        windows = [[self.st, True], [self.st, False],
+                   [self.st, True], [self.st, False]]
+        # default cadence (write_every absent): writes on the two
+        # write_flag windows plus the final flush
+        with mock.patch.multiple(
+            c,
+            _generate_data=mock.MagicMock(return_value=windows),
+            _pxcorr_inner=mock.MagicMock(return_value=self.st),
+            _write=mock.MagicMock(),
+        ):
+            c.pxcorr()
+            self.assertEqual(c._write.call_count, 3)
+        # write_every=1: a write after every window plus the final flush
+        c.options["corr_args"]["write_every"] = 1
+        with mock.patch.multiple(
+            c,
+            _generate_data=mock.MagicMock(return_value=windows),
+            _pxcorr_inner=mock.MagicMock(return_value=self.st),
+            _write=mock.MagicMock(),
+        ):
+            c.pxcorr()
+            self.assertEqual(c._write.call_count, 5)
+        # write_every larger than the number of windows: only the final
+        # flush writes
+        c.options["corr_args"]["write_every"] = 10
+        with mock.patch.multiple(
+            c,
+            _generate_data=mock.MagicMock(return_value=windows),
+            _pxcorr_inner=mock.MagicMock(return_value=self.st),
+            _write=mock.MagicMock(),
+        ):
+            c.pxcorr()
+            self.assertEqual(c._write.call_count, 1)
+        # invalid values are rejected
+        for bad in (0, -1, 1.5, True):
+            c.options["corr_args"]["write_every"] = bad
+            with self.assertRaises(ValueError):
+                c.pxcorr()
+        del c.options["corr_args"]["write_every"]
 
     @mock.patch("seismic.correlate.correlate.st_to_np_array")
     def test_pxcorr_inner(
@@ -694,12 +780,23 @@ class TestCorrrelator(unittest.TestCase):
         shape = (25, 101)
         ftshape = (25, 51)
         ri_mock.return_value = np.ones(shape[0], dtype=bool)
-        return_func = mock.MagicMock(
+
+        # The FD preprocessing function is called with a live view of the
+        # local B block, which is overwritten once the call returns, so the
+        # recorded calls must hold copies of array arguments.
+        recorded_func = mock.MagicMock(
             side_effect=[
                 np.ones(shape, dtype=np.float32),
                 np.ones(ftshape, dtype=np.float32),
             ]
         )
+
+        def snap_side_effect(*args, **kwargs):
+            return recorded_func(
+                *[a.copy() if isinstance(a, np.ndarray) else a for a in args],
+                **kwargs)
+
+        return_func = mock.MagicMock(side_effect=snap_side_effect)
         ffs_mock.return_value = return_func
         zp_mock.return_value = np.ones(shape) * 2
         C, startlags = c._pxcorr_matrix(np.zeros(shape))
@@ -708,12 +805,12 @@ class TestCorrrelator(unittest.TestCase):
         ffs_mock.assert_any_call("TDPP")
         # This is the same as asserthascalls, but it can also check np arrays
         np.testing.assert_array_equal(
-            np.zeros(shape), return_func.call_args_list[0][0][0]
+            np.zeros(shape), recorded_func.call_args_list[0][0][0]
         )
-        self.assertListEqual([], return_func.call_args_list[0][0][1])
+        self.assertListEqual([], recorded_func.call_args_list[0][0][1])
         # Check if the fft worked
         np.testing.assert_array_almost_equal(
-            np.fft.rfft(np.ones(shape) * 2), return_func.call_args_list[1][0][0]
+            np.fft.rfft(np.ones(shape) * 2), recorded_func.call_args_list[1][0][0]
         )
         np.testing.assert_array_equal(-np.ones((3,)), startlags)
         # Correlation should be one in the middle
@@ -1601,6 +1698,149 @@ class TestCheckForMissingChannels(unittest.TestCase):
         # Check if trace order corresponds to avail_channels
         nslc = [tr.id.split(".") for tr in st]
         self.assertEqual(nslc, avail_channels[:6])
+
+
+class TestRowPmap(unittest.TestCase):
+    """
+    Tests the row -> rank partition used for the local-row FFT and
+    correlation matrices (B1/B2). The partition must be contiguous,
+    order-preserving, and cover all rows.
+    """
+    @staticmethod
+    def _dummy(psize, joint_norm):
+        d = mock.MagicMock()
+        d.psize = psize
+        d.options = {"joint_norm": joint_norm}
+        return d
+
+    def test_single_core(self):
+        pmap = correlate.Correlator._row_pmap(self._dummy(1, False), 10)
+        self.assertTrue(np.all(pmap == 0))
+
+    def test_partition(self):
+        for psize, n in ((2, 10), (4, 10), (3, 7), (2, 1)):
+            pmap = correlate.Correlator._row_pmap(
+                self._dummy(psize, False), n)
+            # same formula as the pre-B1 implementation
+            self.assertTrue(np.array_equal(
+                pmap, np.arange(n) * psize // n))
+            # ranks are valid, non-decreasing (contiguous blocks), and
+            # every row is assigned
+            self.assertTrue(np.all(pmap >= 0) and np.all(pmap < psize))
+            self.assertTrue(np.all(np.diff(pmap) >= 0))
+            self.assertEqual(len(pmap), n)
+
+    def test_joint_norm(self):
+        pmap = correlate.Correlator._row_pmap(self._dummy(2, True), 12)
+        # each station (three consecutive rows) is on exactly one rank
+        self.assertTrue(np.array_equal(
+            pmap, np.repeat(np.arange(4) * 2 // 4, 3)))
+        self.assertTrue(np.all(
+            pmap.reshape(-1, 3) == pmap.reshape(-1, 3)[:, :1]))
+
+    def test_joint_norm_single_core(self):
+        pmap = correlate.Correlator._row_pmap(self._dummy(1, True), 9)
+        self.assertTrue(np.all(pmap == 0))
+
+    def test_joint_norm_not_divisible(self):
+        with self.assertRaises(ValueError):
+            correlate.Correlator._row_pmap(self._dummy(2, True), 10)
+
+
+class TestCombinedNetStatLocCha(unittest.TestCase):
+    @staticmethod
+    def _trace(net, sta, loc, cha):
+        tr = Trace(np.zeros(3))
+        tr.stats.network = net
+        tr.stats.station = sta
+        tr.stats.location = loc
+        tr.stats.channel = cha
+        return tr
+
+    def test_ordered_pair(self):
+        st = Stream([self._trace("AA", "B", "00", "HHE"),
+                     self._trace("CC", "D", "10", "HHN")])
+        expected = ("AA-CC", "B-D", "00-10", "HHE-HHN")
+        # the pair order must not matter for an already sorted pair
+        for comb in ((0, 1), (1, 0)):
+            self.assertEqual(
+                correlate._combined_net_stat_loc_cha(st, comb), expected)
+
+    def test_swaps_unsorted_pair(self):
+        # sort key is network + station + channel (no location)
+        st = Stream([self._trace("AA", "BBB", "00", "HHE"),
+                     self._trace("AA", "AAA", "10", "HHE")])
+        expected = ("AA-AA", "AAA-BBB", "10-00", "HHE-HHE")
+        for comb in ((0, 1), (1, 0)):
+            self.assertEqual(
+                correlate._combined_net_stat_loc_cha(st, comb), expected)
+
+    def test_location_not_in_sort_key(self):
+        # identical net/sta/cha: headers stay in the given pair order and
+        # only the locations are joined
+        st = Stream([self._trace("AA", "B", "10", "HHE"),
+                     self._trace("AA", "B", "00", "HHE")])
+        self.assertEqual(
+            correlate._combined_net_stat_loc_cha(st, (0, 1)),
+            ("AA-AA", "B-B", "10-00", "HHE-HHE"))
+
+
+class TestFileOwner(unittest.TestCase):
+    """
+    Tests the stable file -> rank assignment used to partition the output
+    files among the ranks (B1). Ownership must never depend on which
+    other files exist in the current window: combinations are
+    recalculated per window and files drop out/in when stations drop in
+    or out, so an index-based partition of the per-window file list
+    would assign the same file to different ranks in different windows.
+    Two ranks would then both write the same HDF5 file -- the second
+    open fails on the file lock (BlockingIOError).
+    """
+    def test_owner_in_range(self):
+        files = ['dir/A-A.B-B.-.HHE-HHE.h5', 'dir/A-A.C-C.-.HHZ-HHZ.h5',
+                 'dir/B-B.C-C.-.HHN-HHN.h5', 'dir/D-D.E-E.-.HHE-HHE.h5']
+        for psize in (1, 2, 3, 4, 8):
+            for f in files:
+                owner = correlate._file_owner(f, psize)
+                self.assertGreaterEqual(owner, 0)
+                self.assertLess(owner, psize)
+
+    def test_disjoint_and_complete(self):
+        files = ['dir/%s-%s.%s-%s.h5' % (a, b, c, d)
+                 for a, b, c, d in zip('ABCDE', 'FGHIJ', '00', 'HHE')]
+        for psize in (2, 3, 4):
+            owners = [correlate._file_owner(f, psize) for f in files]
+            # every file has exactly one owner (a function of the path),
+            # and every rank in range owns at least the files it gets
+            self.assertTrue(all(0 <= o < psize for o in owners))
+
+    def test_stable_across_shifting_file_lists(self):
+        # regression test: replicate the old index-based partition
+        # (arange(len(filelist)) * psize / len(filelist)) and show that
+        # it reassigns a file when one station disappears, while
+        # _file_owner does not move it.
+        def old_owners(filelist, psize):
+            fl = np.array(sorted(set(filelist)))
+            pmap = (np.arange(len(fl)) * psize / len(fl)).astype(np.int32)
+            return dict(zip(fl[pmap == 0], [0]*np.sum(pmap == 0))), \
+                dict(zip(fl[pmap == 1], [1]*np.sum(pmap == 1)))
+
+        window1 = ['f_a', 'f_b', 'f_c', 'f_d']
+        window2 = ['f_a', 'f_c', 'f_d']  # f_b's station offline
+        o1_rank1 = old_owners(window1, 2)[1]
+        o2_rank0 = old_owners(window2, 2)[0]
+        self.assertTrue(set(o1_rank1) & set(o2_rank0),
+                        'old partition: a file changed rank')
+        # the stable owner is a function of the path only
+        for f in set(window1) & set(window2):
+            self.assertEqual(
+                correlate._file_owner(f, 2), correlate._file_owner(f, 2))
+
+    def test_cache_consistent(self):
+        f = 'dir/X9-X9.IR1-IR1.-.HHE-HHE.h5'
+        first = correlate._file_owner(f, 4)
+        correlate._FILE_OWNER_CACHE.clear()
+        self.assertEqual(first, correlate._file_owner(f, 4))
 
 
 if __name__ == "__main__":

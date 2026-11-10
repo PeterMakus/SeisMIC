@@ -291,6 +291,9 @@ look at it using bash.
                      'lengthToSave':25,
                      'center_correlation':True,      # make sure zero correlation time is in the center
                      'normalize_correlation':True,
+                     # optional: write the correlations every K correlation
+                     # windows instead of once per read_len period (default)
+                     #'write_every':10,
                      'combinations':[]
                     }
     

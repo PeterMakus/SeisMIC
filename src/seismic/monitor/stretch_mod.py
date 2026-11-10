@@ -361,7 +361,9 @@ def time_stretch_estimate(
     in the ``corr_data`` matrix (one for each row) with ``stretch_steps``
     stretched versions  of reference trace stored in ``ref_trc``.
     The maximum amount of stretching may be passed in ``stretch_range``. The
-    time axis is multiplied by 1/(1 + stretch).
+    reference trace is evaluated at ``t * exp(-stretch)`` for each tested
+    stretch value (logarithmic stretching convention; a stretch of ``s``
+    corresponds to a relative velocity change of ``-s``).
     The best match (stretching amount and corresponding correlation value) is
     calculated on different time windows. If ``tw = None`` the stretching is
     estimated on the whole trace.
@@ -1173,7 +1175,12 @@ def time_stretch_apply(
     Such shifts can occur in corrlation traces in case of a drifting clock.
     This function applies the stretches. To correct for stretching
     estimated with :func:`~seismic.monitor.stretch_mod.time_stretch_estimate`
-    you need to apply negative stretching.
+    you need to apply the estimated stretch itself. Note that the two
+    functions use opposite sign conventions:
+    :func:`~seismic.monitor.stretch_mod.time_stretch_estimate` returns the
+    negative relative velocity change -dv/v, while this function evaluates
+    the input trace at ``t * exp(stretch)`` (i.e., a positive ``stretch``
+    compresses the trace).
 
     :type corr_data: :class:`~numpy.ndarray`
     :param corr_data: 2d ndarray containing the correlation functions that are
@@ -1220,7 +1227,6 @@ def time_stretch_apply(
     # stretch every line
     for (ii, line) in enumerate(mat):
         s = UnivariateSpline(time_idx, line, s=0)
-        stretched_mat[ii, :] = s(time_idx * (1 + stretch[ii]))
         stretched_mat[ii, :] = s(time_idx * np.exp(stretch[ii]))
 
     return stretched_mat

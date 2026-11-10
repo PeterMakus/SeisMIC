@@ -17,9 +17,11 @@ from copy import deepcopy
 
 import numpy as np
 from obspy import read, read_inventory, Stream
+from obspy.core.trace import Stats
 from obspy.core.utcdatetime import UTCDateTime
 
 from seismic.correlate import stream
+from seismic.utils import miic_utils as m3ut
 
 
 class TestCorrBulk(unittest.TestCase):
@@ -416,32 +418,6 @@ class TestCorrBulk(unittest.TestCase):
             cb.stats.processing_bulk)
 
     @mock.patch('seismic.correlate.stream.DV')
-    @mock.patch('seismic.correlate.stream.pcp.corr_mat_shift')
-    def test_shift(self, shift_mock, dv_mock):
-        shift_mock.return_value = {'test': 0}
-        self.cb.find_clock_shift(
-            np.zeros((25,)), [1, 2, 3], 0.5, 105, 'bla', True)
-        shift_mock.assert_called_once_with(
-            mock.ANY, self.cb.stats, mock.ANY, [1, 2, 3], 0.5, 105, 'bla',
-            True)
-        np.testing.assert_array_equal(
-            shift_mock.call_args[0][2], np.zeros((25,)))
-        dv_mock.assert_called_once_with(test=0)
-
-    @mock.patch('seismic.correlate.stream.DV')
-    @mock.patch('seismic.correlate.stream.pcp.corr_mat_shift')
-    def test_shift2(self, shift_mock, dv_mock):
-        shift_mock.return_value = {'test': 0}
-        self.cb.ref_trc = 'ha_funny!'
-        self.cb.find_clock_shift()
-        shift_mock.assert_called_once_with(
-            mock.ANY, self.cb.stats, 'ha_funny!', None, 10, 101, 'both',
-            False)
-        np.testing.assert_array_equal(
-            shift_mock.call_args[0][0], self.cb.data)
-        dv_mock.assert_called_once_with(test=0, sim_mat=mock.ANY)
-
-    @mock.patch('seismic.correlate.stream.DV')
     @mock.patch('seismic.correlate.stream.pcp.corr_mat_stretch')
     def test_stretch(self, stretch_mock, dv_mock):
         stretch_mock.return_value = {'test': 0}
@@ -690,6 +666,10 @@ class TestCombineStats(unittest.TestCase):
     def setUp(self):
         self.inv = read_inventory()
         self.st = read()
+        # the az/baz/dist results are memoized per coordinate tuple; clear
+        # the cache so that the mocked geodesic function is observed fresh
+        # in every test
+        stream._AZBAZ_CACHE.clear()
 
     def test_result(self):
         # We test this by using two different components
@@ -1248,6 +1228,54 @@ class TestConvertStatlistToBulkStats(unittest.TestCase):
         stcomb = stream.convert_statlist_to_bulk_stats(
             [self.stats, stats1], varying_channel=True)
         self.assertIsInstance(stcomb['channel'], str)
+
+
+class TestAzBazDistCached(unittest.TestCase):
+    """
+    Tests the memoizing wrapper around trace_calc_az_baz_dist used by
+    combine_stats (A4).
+    """
+    def setUp(self):
+        # the cache is module level -- keep tests independent
+        stream._AZBAZ_CACHE.clear()
+        self.s1 = Stats()
+        self.s2 = Stats()
+        self.s1['stla'], self.s1['stlo'] = 52.1, 13.2
+        self.s2['stla'], self.s2['stlo'] = -33.4, -70.7
+
+    def test_matches_underlying(self):
+        expected = m3ut.trace_calc_az_baz_dist(self.s1, self.s2)
+        res = stream._az_baz_dist_cached(self.s1, self.s2)
+        self.assertEqual(len(res), 3)
+        for r, e in zip(res, expected):
+            self.assertEqual(r, e)
+
+    def test_memoized(self):
+        with mock.patch(
+            'seismic.correlate.stream.m3ut.trace_calc_az_baz_dist',
+                side_effect=m3ut.trace_calc_az_baz_dist) as tc_mock:
+            r1 = stream._az_baz_dist_cached(self.s1, self.s2)
+            r2 = stream._az_baz_dist_cached(self.s1, self.s2)
+        tc_mock.assert_called_once()
+        self.assertIs(r1, r2)
+
+    def test_different_coordinates_recompute(self):
+        with mock.patch(
+            'seismic.correlate.stream.m3ut.trace_calc_az_baz_dist',
+                side_effect=m3ut.trace_calc_az_baz_dist) as tc_mock:
+            stream._az_baz_dist_cached(self.s1, self.s2)
+            self.s2['stla'], self.s2['stlo'] = 1.0, 2.0
+            stream._az_baz_dist_cached(self.s1, self.s2)
+        self.assertEqual(tc_mock.call_count, 2)
+
+    def test_key_is_ordered(self):
+        # az/baz are antisymmetric, dist symmetric: the cache must treat
+        # the coordinate quadruple as ordered
+        stream._az_baz_dist_cached(self.s1, self.s2)
+        r = stream._az_baz_dist_cached(self.s2, self.s1)
+        expected = m3ut.trace_calc_az_baz_dist(self.s2, self.s1)
+        for x, e in zip(r, expected):
+            self.assertEqual(x, e)
 
 
 if __name__ == "__main__":
