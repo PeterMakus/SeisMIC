@@ -2057,10 +2057,15 @@ def preprocess_stream(
     """
     if not st.count():
         return st
-    # Note: no detrend here. The correlation pipeline detrends in
-    # _generate_data before the taper and decimation; a second linear
-    # detrend on the already-detrended stream is a near no-op and only
-    # costs a pass over the data.
+    # Detrend again on the decimated stream. _generate_data already detrends
+    # the raw data before the taper and decimation, but this pass is not
+    # redundant: detrend_st works per gap-free segment, and decimation and
+    # gap handling can leave small residual trends that the raw-stage pass
+    # cannot see. With sign-bit normalization and spectral whitening, even
+    # tiny residuals flip sample signs at data discontinuities (measured:
+    # ccfs shifts of up to 4e-2 at weekly calibration windows when this pass
+    # is skipped), so it is kept for numerical continuity despite the cost.
+    st = ppst.detrend_st(st, "linear")
     # deal with overlaps
     # This should be a setting in the parameter file
     st = mu.gap_handler(st, 1, taper_len * 4, taper_len)
